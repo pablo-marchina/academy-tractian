@@ -2,6 +2,20 @@
 
 This is the execution queue for the systematic research phase. Items are ordered by expected impact on architecture and experimental validity.
 
+## Wave 3 checkpoint
+
+Pre-onboarding work now complete:
+
+- [x] deep-review runtime finalists against project-specific gates;
+- [x] review current MCP 2026-07-28 + Python SDK v2 implementation surface;
+- [x] define machine-readable `ScenarioSchema v0`;
+- [x] define machine-readable `TraceSchema v0`;
+- [x] pre-register runtime/MCP/client/observability discriminating spikes;
+- [x] define Swagger/OpenAPI ingestion + audit pipeline;
+- [x] separate contract audit from generated-client choice.
+
+Remaining blockers are primarily actual API/partner dependencies or experiments that cannot be validly executed until the contract arrives.
+
 ## P0 — Before / immediately after TRACTIAN onboarding
 
 ### R01 — Requirements audit
@@ -13,138 +27,144 @@ This is the execution queue for the systematic research phase. Items are ordered
 
 ### R02 — API/domain discovery
 
-- [ ] Import/version the OpenAPI/Swagger contract.
-- [ ] Enumerate every endpoint by read vs mutate, entity, permission and risk.
+- [x] Define version-aware OpenAPI intake/audit methodology and output artifacts.
+- [ ] Import/archive/hash the supplied OpenAPI/Swagger contract.
+- [ ] Enumerate every endpoint by entity, effective security and semantics.
+- [ ] Classify read/mutate/high-impact/idempotency with provenance; do not infer from HTTP method alone.
 - [ ] Build entity/relation map from actual schemas.
-- [ ] Identify all fields related to confidence, limitation, quality, freshness and conflict.
-- [ ] Confirm reset/snapshot/replay capabilities.
-- [ ] Confirm API stochastic behavior and whether seeds/control exist.
+- [ ] Identify confidence/limitation/quality/freshness/conflict fields.
+- [ ] Confirm reset/snapshot/replay/idempotency capabilities.
+- [ ] Confirm stochastic behavior and whether seeds/control exist.
 - [ ] Document auth/rate limits.
 
 ### R03 — Canonical tool boundary
 
-- [ ] Compare generated OpenAPI client vs manual typed client.
-- [ ] Define one canonical tool schema independent of agent runtime.
-- [ ] Verify Pydantic/JSON Schema fidelity against Swagger.
-- [x] Define conceptual transport/fault-injection boundary.
-- [x] Establish requirement for read-only vs mutating tool metadata.
+- [x] Establish one project-owned ToolSpec boundary independent of runtime/protocol.
+- [x] Define transport/fault-injection boundary.
+- [x] Require mutation/high-impact/risk/permission metadata outside generic model descriptions.
+- [x] Pre-register generated-client vs project-owned client spike.
+- [ ] Derive ToolSpec candidate schemas from actual Swagger.
+- [ ] Compare compatible generated clients vs project-owned typed adapter.
+- [ ] Verify JSON Schema fidelity against the supplied contract.
+- [ ] Write client/tool ADR.
 
 ### R04 — Safety/policy model
 
-- [x] Establish provisional principle: model proposes, deterministic policy authorizes.
-- [x] Define layered pre-execution/postcondition security architecture conceptually.
-- [x] Define severity model and adversarial scenario families provisionally.
-- [ ] Map actual permissions and high-impact actions.
+- [x] Model proposes; deterministic policy authorizes.
+- [x] Define layered pre-execution/postcondition architecture.
+- [x] Define severity/adversarial families provisionally.
+- [x] Define mutation boundary as a hard runtime-spike gate.
+- [ ] Map actual permissions/tenancy/high-impact actions.
 - [ ] Define API-specific hard invariants.
-- [ ] Define mutation-gated verification experiment against real tools.
-- [ ] Define HITL/escalation policy if relevant.
+- [ ] Execute mutation-gated verification experiment.
+- [ ] Finalize HITL/escalation policy from real action classes.
 
 ### R05 — Evaluation oracle design
 
-- [x] Establish final-state oracle preference for side-effect tasks.
-- [ ] Determine which state can actually be queried/reset.
-- [ ] Define scenario schema v1 from real API entities.
-- [ ] Define tool/argument/trajectory/evidence/policy evaluators against actual API.
-- [ ] Define evaluator validation tests.
+- [x] Establish final-state oracle preference for side effects.
+- [x] Define `ScenarioSchema v0` separating policy/evidence/state/communication/trajectory oracles.
+- [x] Add controlled-pair and split-group semantics.
+- [ ] Determine which environment state can be queried/reset.
+- [ ] Instantiate `ScenarioSchema v1` with real entities/predicates.
+- [ ] Implement tool/argument/trajectory/evidence/policy evaluators.
+- [ ] Validate evaluator correctness with golden tests.
 
 ## P1 — Architecture decision research
 
 ### R06 — Runtime comparison spike
 
-Finalists after documentation review: LangGraph, Pydantic AI/Graph, OpenAI Agents SDK; Google ADK/AutoGen retained as references/candidates if requirements justify.
+Finalists: **LangGraph, Pydantic AI/Graph, OpenAI Agents SDK**. ADK/AutoGen remain references unless requirements reopen the shortlist.
 
-- [x] Define framework-neutral state/context/trace requirements for the spike.
-- [ ] Implement identical minimal contract in finalists.
+- [x] Define framework-neutral state/context/trace requirements.
+- [x] Deep-review each finalist's current persistence/HITL/testing/provider/trace surfaces.
+- [x] Pre-register identical runtime spike scenarios and hard gates.
+- [x] Include restart tests immediately before/after mutation boundary.
+- [ ] Implement identical minimal contract in finalists after API map.
 - [ ] Measure pre-side-effect interception.
-- [ ] Measure state persistence/resume.
-- [ ] Measure fake-tool/fake-model testability.
-- [ ] Measure OTel trace completeness.
-- [ ] Measure model-provider portability.
-- [ ] Measure framework overhead/complexity.
+- [ ] Measure pause/state persistence/resume and duplicate-side-effect behavior.
+- [ ] Measure deterministic fake-model/fake-tool testability.
+- [ ] Measure normalized trace completeness.
+- [ ] Measure provider portability and framework-only overhead/complexity.
 - [ ] Write ADR-001.
 
 ### R07 — MCP ADR
 
-- [x] Review current 2026-07-28 specification.
-- [x] Review current security requirements (token passthrough, audience validation, least privilege, SSRF considerations).
-- [ ] Review current Python SDK v2 implementation surface.
-- [ ] Compare native-only vs canonical-tools+MCP-adapter vs MCP-first.
-- [ ] Measure schema fidelity and latency/complexity overhead.
-- [ ] Verify trace propagation/security boundaries in spike.
+- [x] Review MCP 2026-07-28 specification/security changes.
+- [x] Review current Python SDK v2 stable-line semantics.
+- [x] Reject legacy-session/SSE assumptions for new-path architecture.
+- [x] Establish canonical-tools + optional MCP adapter as leading pre-API topology hypothesis.
+- [x] Pre-register native-vs-MCP adapter spike.
+- [ ] Measure schema/result/policy equivalence and overhead.
+- [ ] Verify W3C trace propagation/security boundary in live spike.
+- [ ] Promote MCP-first only if partner requirement/evidence justifies it.
 - [ ] Write ADR-002.
 
 ### R08 — Single vs multi-agent
 
-- [x] Evidence review indicates multi-agent should not be assumed.
-- [ ] Define failure condition that would justify decomposition.
+- [x] Evidence review indicates multi-agent must not be assumed.
 - [ ] Establish strong single structured baseline first.
-- [ ] Only run planner/executor or specialist experiment if failure analysis motivates it.
-- [ ] Write ADR when evidence exists.
+- [ ] Define failure-analysis trigger that would justify decomposition.
+- [ ] Only test planner/executor/specialists if failures motivate it.
+- [ ] Write ADR if decomposition is evaluated.
 
 ### R09 — State and memory
 
-- [x] Distinguish environment state, execution state, conversation state, persistent memory, evidence cache, model context and trace log.
-- [x] Establish persistent cross-session memory OFF by default pending task requirement.
-- [x] Establish explicit per-scenario namespaces/reset to prevent contamination.
-- [x] Research long-context/context-cleaning strategies and define curated-context hypothesis.
-- [x] Define stale evidence/cache provenance and invalidation requirements conceptually.
-- [ ] Determine what the real TRACTIAN tasks actually require to persist.
-- [ ] Validate reset/freshness/version semantics against the API.
-- [ ] Run context strategy experiment only if long interactions justify it.
-- [ ] Write state/memory ADR.
+- [x] Separate environment state, workflow state, session state, optional persistent memory, evidence cache, model context and trace.
+- [x] Persistent cross-session memory OFF by default.
+- [x] Per-scenario namespaces/reset required.
+- [x] Curated-context/staleness principles defined.
+- [ ] Determine actual task persistence needs.
+- [ ] Validate reset/freshness/version semantics against API.
+- [ ] Run context-memory experiment only if required.
+- [ ] Write ADR.
 
 ### R10 — Evidence acquisition / stopping
 
-- [x] Establish that evidence sufficiency must use observable metadata/rules before learned confidence.
-- [x] Establish stale/conflicting evidence as first-class state.
-- [ ] Formalize evidence sufficiency from actual API metadata.
-- [ ] Compare fixed investigation vs adaptive investigate-until-sufficient policy.
-- [ ] Define API-specific conflict handling policy.
-- [ ] Define retry limits and stopping rule.
-- [ ] Study calibrated uncertainty/risk predictor only after rule baseline.
+- [x] Observable metadata/rules before learned confidence.
+- [x] Stale/conflicting evidence first-class.
+- [ ] Formalize sufficiency/conflict rules from actual API metadata.
+- [ ] Compare fixed investigation vs adaptive investigate-until-sufficient.
+- [ ] Freeze retry/stopping rule.
+- [ ] Test calibrated risk predictor only after rule baseline if justified.
 
 ## P1 — Benchmark and quantitative method
 
 ### R11 — Gold dataset methodology
 
-- [x] Establish controlled pair methodology (act vs abstain, complete vs partial, authorized vs non-authorized, etc.).
-- [x] Establish group split by base scenario/template to prevent leakage.
-- [x] Establish locked final test before optimization.
-- [ ] Define scenario families from real endpoint/action taxonomy.
-- [ ] Define scenario QA checklist against API semantics.
-- [ ] Define versioning and change log implementation.
+- [x] Controlled-pair methodology.
+- [x] Group split by base scenario/template.
+- [x] Locked final test before optimization.
+- [x] Encode pair/split metadata in ScenarioSchema v0.
+- [ ] Define families from actual endpoint/action taxonomy.
+- [ ] Finalize scenario QA checklist/versioning after API map.
 
 ### R12 — Reliability protocol
 
-- [x] Repeated trials required.
-- [x] Establish scenario as primary generalization/clustering unit.
-- [x] Establish live vs replay vs fault-injection as separate experiment modes.
-- [x] Define that exact `k` is chosen from pilot variability + budget rather than guessed now.
+- [x] Repeated trials mandatory.
+- [x] Scenario is primary clustering/generalization unit.
+- [x] Live vs replay vs fault-injection are distinct modes.
+- [x] Exact `k` selected from pilot variability + budget.
 - [ ] Run pilot and select `k`.
-- [ ] Define final success/reliability aggregation precisely from real scenario structure.
-- [ ] Finalize denominator treatment of infrastructure failures.
+- [ ] Freeze final aggregation/infra-failure denominator policy.
 
 ### R13 — Statistical plan
 
-- [x] Review binomial confidence-interval options; Wilson preferred for ordinary proportions, conservative exact/binomial bound for zero severe events.
-- [x] Review paired binary comparison; exact McNemar candidate for small discordant counts.
-- [x] Review paired/cluster-aware bootstrap; scenario-level resampling principle established.
-- [x] Define effect-size families for latency/tool calls and binary outcomes.
-- [x] Define multiple-comparison principle; pre-register primary family and use correction such as Holm when interpreted jointly.
-- [x] Define staged sample/compute-budget selection procedure.
-- [x] Define scenario macro/micro/per-family sensitivity reporting.
-- [x] If risk prediction is used: calibration curves, Brier/log score and selective-risk evaluation required.
-- [ ] Run API-derived pilot and freeze exact N/k/precision targets.
+- [x] Wilson interval for ordinary proportions; conservative bound for zero severe events.
+- [x] Exact McNemar candidate for paired binary comparison.
+- [x] Scenario-level/cluster-aware bootstrap principle.
+- [x] Effect-size, multiple-comparison, macro/micro/per-family reporting principles.
+- [x] Staged sample/compute-budget selection procedure.
+- [ ] Run API-derived pilot and freeze exact N/k/precision.
 
 ### R14 — Baselines and ablations
 
-- [ ] Minimal direct tool-calling baseline.
-- [ ] ReAct-style baseline if distinct from native loop.
+- [ ] Minimal direct/native tool-calling baseline.
+- [ ] ReAct-style baseline if genuinely distinct.
 - [ ] Structured-state candidate.
-- [ ] Add deterministic gates.
-- [ ] Add mutation-specific verification.
-- [ ] Add adaptive evidence/abstention policy.
-- [ ] Only later test routing/prompt optimization.
+- [ ] + deterministic gates.
+- [ ] + mutation-specific verification.
+- [ ] + adaptive evidence/abstention policy.
+- [ ] routing/RAG/prompt optimization only later if justified.
 - [ ] Pre-register final ablation matrix after API mapping.
 
 ## P1 — Security / red team
@@ -152,117 +172,104 @@ Finalists after documentation review: LangGraph, Pydantic AI/Graph, OpenAI Agent
 ### R15 — Threat model
 
 - [x] Prompt/tool-output injection recognized.
-- [x] Capability/permission enforcement must not be prompt-only.
-- [x] Define pre-API protected assets, trust boundaries and attack surfaces.
-- [x] Define provisional security severity categories.
-- [x] Add memory poisoning, trace leakage, boundedness and optional MCP/programmatic-tool surfaces.
-- [x] Define prompt-only vs deterministic-gate vs mutation-verification experiment structure.
-- [ ] Map attack surface to actual API resources/tenants.
-- [ ] Add API-specific cross-user/company/resource access cases if supported.
-- [ ] Add API-specific high-impact mutation cases.
+- [x] Capability/permission enforcement not prompt-only.
+- [x] Protected assets/trust boundaries/severity defined provisionally.
+- [x] Memory poisoning, trace leakage, boundedness and MCP surfaces included.
+- [x] Proposal vs unsafe execution separated in evaluation.
+- [ ] Map threats to actual API resources/tenants/actions.
 - [ ] Finalize safe trace redaction from actual payloads.
 
 ### R16 — Red-team tooling
 
-- [x] Promptfoo identified as leading complementary candidate.
-- [x] Establish hand-authored project-specific adversarial gold cases as canonical, generated attacks only complementary.
-- [ ] Verify local Promptfoo target integration.
-- [ ] Verify OTel trajectory evidence.
-- [ ] Build project-specific assertions for forbidden tool/args/policy.
-- [ ] Compare generated attacks vs hand-authored adversarial gold cases.
+- [x] Hand-authored project adversarial gold cases are canonical; generated attacks complementary.
+- [x] Promptfoo retained as leading complementary candidate.
+- [ ] Verify local integration after target exists.
+- [ ] Build project assertions for forbidden tools/args/policy.
 
 ## P1 — Observability and reproducibility
 
 ### R17 — Trace schema
 
-- [x] OTel-first principle established.
-- [x] Review current GenAI semantic conventions; note active-development status and require version pinning.
-- [x] Define project-owned identifiers/semantics for scenario, run, config, policy, mutation, evidence, state and fault profiles.
-- [x] Define metadata-first sensitive-content/redaction principles.
-- [x] Define canonical trace-completeness test for runtime finalists.
-- [ ] Implement normalized trace schema v1.
-- [ ] Ensure all runtime finalists export equivalent traces in spike.
-- [ ] Validate cardinality/redaction on real payloads.
+- [x] OTel-first principle.
+- [x] Current GenAI conventions reviewed; project namespace/version pinning required.
+- [x] Define `TraceSchema v0` and machine-readable schema.
+- [x] Explicitly exclude hidden chain-of-thought from canonical trace requirements.
+- [x] Define canonical operation taxonomy and trace-completeness concept.
+- [x] Define metadata-first redaction policy.
+- [ ] Instantiate `TraceSchema v1` after real payload review.
+- [ ] Make all runtime finalists export equivalent normalized traces.
+- [ ] Validate cardinality/redaction/storage on real payloads.
 
 ### R18 — Observability backend ADR
 
-- [x] Phoenix identified as strong candidate.
-- [x] Langfuse added as serious comparison candidate.
-- [x] Establish backend as downstream/non-canonical; project-owned experiment artifacts remain source of truth.
-- [ ] Export same normalized test traces to Phoenix and Langfuse.
-- [ ] Compare local self-host footprint, OTel fidelity, experiment UX, exportability and replay/debug value.
-- [ ] Select backend in ADR.
+- [x] Phoenix and Langfuse retained as serious candidates.
+- [x] Backend is downstream/non-canonical.
+- [x] Pre-register same-trace backend comparison.
+- [ ] Export same normalized traces and compare fidelity/footprint/UX/exportability.
+- [ ] Write ADR.
 
 ### R19 — Replay/reproducibility
 
-- [x] Define required configuration/version manifest fields conceptually.
-- [x] Define no false determinism claim when providers lack guaranteed determinism.
-- [x] Establish API observation replay as separate mode for isolating agent/model reasoning.
-- [x] Establish per-scenario state isolation requirement.
-- [ ] Implement configuration hash.
-- [ ] Define exact API observation recording/replay format after Swagger.
-- [ ] Define environment reset from actual API semantics.
-- [ ] Container/environment strategy ADR.
+- [x] Required run/version manifest defined in TraceSchema v0.
+- [x] No false determinism claims for providers.
+- [x] API observation replay separated from live mode.
+- [x] Per-scenario isolation required.
+- [ ] Implement configuration hash/manifest.
+- [ ] Define observation replay format after Swagger.
+- [ ] Define actual environment reset semantics.
+- [ ] Container/environment ADR.
 
 ## P2 — Conditional techniques
 
 ### R20 — Retrieval/RAG
 
-- [x] Establish RAG as conditional on an actual unstructured/mixed retrieval problem.
-- [x] Define experiment ladder: structured/direct → sparse → dense → hybrid → rerank only if diagnostics justify it.
-- [x] Define retrieval component metrics plus end-to-end task metrics.
-- [x] Establish permission/provenance requirements and “live mutable state stays in API” principle.
-- [ ] Inspect actual knowledge resources.
-- [ ] If needed, construct labeled retrieval query/evidence set.
-- [ ] Run retrieval ladder only if direct/structured baseline is insufficient.
-- [ ] Choose vector/search backend only after strategy wins.
+- [x] RAG conditional on actual unstructured/mixed retrieval need.
+- [x] Experiment ladder: structured/direct → sparse → dense → hybrid → rerank if diagnostics justify.
+- [ ] Inspect actual knowledge resources and execute ladder only if needed.
+- [ ] Choose backend only after strategy wins.
 
 ### R21 — Model benchmark / routing
 
-- [x] Define public benchmark/provider docs as candidate filters only.
-- [x] Define fair project-native model comparison contract.
-- [x] Define staged screening/development/validation/locked-test process.
-- [x] Define Pareto vector: quality/reliability/safety/latency/resource use.
-- [x] Define routing gate: test only if validation reveals complementary model strengths.
-- [x] Define model/version drift recording requirement.
-- [ ] Re-verify current accessible tool-capable model shortlist immediately before experiment.
-- [ ] Run same scenarios across candidates.
-- [ ] Build project Pareto frontier.
-- [ ] Test adaptive routing only if justified.
+- [x] Public benchmark/provider docs are filters only.
+- [x] Fair project-native/Pareto selection protocol defined.
+- [x] Routing tested only if complementary model strengths appear.
+- [ ] Re-verify accessible tool-capable candidates immediately before experiment.
+- [ ] Run project benchmark and Pareto analysis.
+- [ ] Test routing only if justified.
 
 ### R22 — Prompt/policy optimization
 
 - [ ] Freeze valid objective first.
 - [ ] Establish manual baseline.
-- [ ] Evaluate DSPy/GEPA only on development/validation.
-- [ ] Evaluate Optuna for thresholds/routing/runtime parameters if search space warrants it.
-- [ ] Preserve hard safety constraints outside optimization objective.
+- [ ] Evaluate DSPy/GEPA only on development/validation if useful.
+- [ ] Evaluate Optuna only if parameter search warrants it.
+- [ ] Keep hard safety constraints outside optimizer control.
 
 ### R23 — Demo research
 
-- [ ] Define the minimal visualization that proves every rubric criterion.
-- [ ] Compare Streamlit/Gradio vs custom UI only if needed.
-- [ ] Ensure demo includes state before/after, trace, reliability and fault/adversarial comparison.
+- [ ] Define minimal visualization proving every rubric criterion.
+- [ ] Compare Streamlit/Gradio/custom only if needed.
+- [ ] Show state before/after, trace, reliability and fault/adversarial comparisons.
 
 ## Research Gate completion definition
 
 Research phase is complete only when:
 
 1. all P0 questions are resolved;
-2. all architecture-changing P1 questions are resolved or have completed discriminating experiments;
-3. remaining P2 choices are either rejected as unnecessary or have a clearly scheduled experiment;
+2. all architecture-changing P1 questions are resolved or discriminating experiments completed;
+3. remaining P2 choices are rejected as unnecessary or experimentally scheduled;
 4. ADRs describe final `FROZEN-v1` architecture;
 5. no material researchable unknown remains undocumented.
 
-## Immediate execution sequence
+## Immediate execution sequence after API arrival
 
-1. TRACTIAN onboarding + Swagger/API acquisition.
-2. API/domain/action/permission/risk mapping.
-3. Canonical typed tool boundary + fault/reset harness.
-4. Deterministic evaluator/scenario schema v1.
-5. Normalized OTel trace implementation.
-6. Runtime + MCP discriminating spikes.
-7. API-derived pilot + model screening + compute estimate.
-8. Freeze N/k/splits and run validation architecture experiments.
-9. Conditional RAG/memory/routing experiments only if real failures/requirements justify them.
-10. ADR set → `FROZEN-v1` architecture.
+1. Archive/hash/validate Swagger and generate `API-MAP-v0` reports.
+2. Resolve permission/mutation/reset/stochasticity P0 questions with TRACTIAN.
+3. Instantiate ScenarioSchema v1 + real evaluators/reset/fault harness.
+4. Implement canonical typed client/ToolSpec.
+5. Implement baseline-zero TraceSchema v1/OTel adapter.
+6. Run client + runtime + MCP discriminating spikes.
+7. Run API-derived statistical pilot + model screening.
+8. Freeze N/k/splits and architecture experiment matrix.
+9. Run conditional RAG/memory/routing/multi-agent experiments only if failures/requirements justify them.
+10. ADR set → `FROZEN-v1`.
