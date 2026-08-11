@@ -2,14 +2,19 @@
 
 This registry contains primary research, specifications and official documentation reviewed during the systematic research phase. Presence here means “reviewed/relevant”, **not automatically selected for implementation**.
 
-## Benchmarking, tool use and reliability
+## Benchmarking, tool use, planning and reliability
 
 - **ReAct: Synergizing Reasoning and Acting in Language Models** — https://arxiv.org/abs/2210.03629
 - **Toolformer: Language Models Can Teach Themselves to Use Tools** — https://arxiv.org/abs/2302.04761
 - **τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains** — https://arxiv.org/abs/2406.12045
 - **Berkeley Function-Calling Leaderboard (BFCL)** — https://gorilla.cs.berkeley.edu/leaderboard.html
+- **Agent Planning Benchmark (APB)** — https://arxiv.org/abs/2606.04874
+- **ReliabilityBench: Evaluating LLM Agent Reliability Under Repetition, Perturbation, and Faults** — https://arxiv.org/abs/2601.06112
+- **Beyond the Leaderboard: Failure Modes and Reliability of LLM Agents** — https://arxiv.org/abs/2607.05775
 - **AgentAbstain: Do LLM Agents Know When Not to Act?** — https://arxiv.org/abs/2607.10059
 - **SABER: Small Actions, Big Errors — Safeguarding Mutating Steps in LLM Agents** — https://arxiv.org/abs/2512.07850
+- **SpeakRL: Proactive Clarification in Task-Oriented Agents** — https://arxiv.org/abs/2512.13159
+- **The Bitter Lesson of Tool Calling** — https://arxiv.org/abs/2608.06370
 
 ## Agent security
 
@@ -31,11 +36,21 @@ This registry contains primary research, specifications and official documentati
 - **Arize Phoenix** — https://arize.com/docs/phoenix/
 - **Promptfoo Agent Red Teaming** — https://www.promptfoo.dev/docs/red-team/agents/
 
-## Protocols and telemetry
+## API contracts, protocols and telemetry
 
+- **OpenAPI Specification 3.1.x** — https://spec.openapis.org/oas/latest.html
+- **OpenAPI Generator — Python** — https://openapi-generator.tech/docs/generators/python/
+- **Pydantic JSON Schema** — https://docs.pydantic.dev/latest/concepts/json_schema/
 - **Model Context Protocol specification — 2026-07-28** — https://modelcontextprotocol.io/specification/2026-07-28
 - **OpenTelemetry Semantic Conventions** — https://opentelemetry.io/docs/specs/semconv/
 - **OpenTelemetry GenAI Semantic Conventions repository** — https://github.com/open-telemetry/semantic-conventions-genai
+
+## Statistics and experimental inference
+
+- **SciPy bootstrap** — https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html
+- **statsmodels proportion confidence intervals** — https://www.statsmodels.org/stable/generated/statsmodels.stats.proportion.proportion_confint.html
+- **statsmodels McNemar test** — https://www.statsmodels.org/stable/generated/statsmodels.stats.contingency_tables.mcnemar.html
+- **statsmodels Cochran's Q** — https://www.statsmodels.org/stable/generated/statsmodels.stats.contingency_tables.cochrans_q.html
 
 ## Optimization candidates
 
@@ -57,4 +72,5 @@ For any final ADR:
 - prefer primary papers/specifications over secondary summaries;
 - record version/date for fast-moving frameworks/protocols;
 - never infer that a benchmark result transfers directly to the TRACTIAN task distribution;
-- validate important framework claims with a minimal repository spike before architecture freeze.
+- validate important framework claims with a minimal repository spike before architecture freeze;
+- label very recent preprints as provisional evidence and avoid promoting them to architecture invariants without replication/project-specific tests.
