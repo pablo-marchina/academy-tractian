@@ -72,4 +72,7 @@ These are **research conclusions, not frozen implementation choices**:
 - `04-evaluation-safety-reliability.md` — evaluation architecture and threat/reliability findings.
 - `05-tractian-open-questions.md` — questions that cannot be resolved without partner/API information.
 - `06-research-backlog.md` — remaining research work before architecture freeze.
+- `07-statistical-plan-wave-1.md` — provisional quantitative/statistical protocol.
+- `08-tool-use-planning-wave-1.md` — tool-use, planning, clarification and orchestration evidence.
+- `09-openapi-tooling-wave-1.md` — contract-first API/tool boundary research.
 - `sources.md` — reviewed primary/official source registry.
