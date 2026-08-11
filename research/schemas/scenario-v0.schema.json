@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://academy-tractian.local/schemas/scenario-v0.schema.json",
+  "title": "TRACTIAN Industrial Agent Scenario v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "family",
+    "split_group_id",
+    "risk",
+    "actor",
+    "conversation",
+    "initial_state",
+    "policy_oracle",
+    "evidence_oracle",
+    "state_oracle",
+    "communication_oracle",
+    "trajectory_oracle",
+    "fault_profile",
+    "limits"
+  ],
+  "properties": {
+    "schema_version": {"const": "scenario-v0"},
+    "scenario_id": {"type": "string", "minLength": 1},
+    "family": {"type": "string", "minLength": 1},
+    "split_group_id": {"type": "string", "minLength": 1},
+    "pair": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "pair_id": {"type": "string"},
+        "variant": {"type": "string"},
+        "controlled_changes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "source": {"type": "string"},
+        "api_contract_hash": {"type": ["string", "null"]},
+        "created_at": {"type": ["string", "null"]},
+        "reviewed_by": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "tags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "difficulty": {"type": ["string", "number", "null"]},
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mutation", "high_impact", "class"],
+      "properties": {
+        "mutation": {"type": "boolean"},
+        "high_impact": {"type": "boolean"},
+        "class": {"type": "string"}
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["permissions"],
+      "properties": {
+        "actor_id": {"type": ["string", "null"]},
+        "tenant_id": {"type": ["string", "null"]},
+        "role": {"type": ["string", "null"]},
+        "permissions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "conversation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initial_request", "prior_turns"],
+      "properties": {
+        "initial_request": {"type": "string"},
+        "prior_turns": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "initial_state": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["mode"],
+      "properties": {
+        "mode": {"enum": ["reference", "inline", "none"]},
+        "snapshot_ref": {"type": ["string", "null"]},
+        "state_hash": {"type": ["string", "null"]},
+        "fixtures": {}
+      }
+    },
+    "policy_oracle": {"$ref": "#/$defs/policyOracle"},
+    "evidence_oracle": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["required_evidence", "acceptable_evidence_sets", "freshness_requirements", "conflict_requirements"],
+      "properties": {
+        "required_evidence": {"type": "array"},
+        "acceptable_evidence_sets": {"type": "array"},
+        "freshness_requirements": {"type": "array"},
+        "conflict_requirements": {"type": "array"}
+      }
+    },
+    "state_oracle": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["mode", "predicates", "ignored_paths"],
+      "properties": {
+        "mode": {"enum": ["none", "exact", "predicate", "reference"]},
+        "expected_state_ref": {"type": ["string", "null"]},
+        "predicates": {"type": "array"},
+        "ignored_paths": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "communication_oracle": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["required_facts", "forbidden_claims", "required_disclosures"],
+      "properties": {
+        "required_facts": {"type": "array"},
+        "forbidden_claims": {"type": "array"},
+        "required_disclosures": {"type": "array"}
+      }
+    },
+    "trajectory_oracle": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["mode", "reference_actions", "forbidden_patterns"],
+      "properties": {
+        "mode": {"enum": ["unconstrained", "policy_constrained", "reference_required"]},
+        "reference_actions": {"type": "array"},
+        "max_tool_calls": {"type": ["integer", "null"], "minimum": 0},
+        "max_turns": {"type": ["integer", "null"], "minimum": 0},
+        "forbidden_patterns": {"type": "array"}
+      }
+    },
+    "fault_profile": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "injections"],
+      "properties": {
+        "id": {"type": "string"},
+        "injections": {"type": "array"}
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "wall_time_s": {"type": ["number", "null"], "minimum": 0},
+        "max_model_calls": {"type": ["integer", "null"], "minimum": 0},
+        "max_tool_calls": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "metadata": {"type": "object", "additionalProperties": true}
+  },
+  "$defs": {
+    "decision": {"enum": ["ASK", "INVESTIGATE", "ACT", "ABSTAIN", "ESCALATE"]},
+    "policyOracle": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "allowed_decisions",
+        "required_decisions",
+        "forbidden_decisions",
+        "required_tools",
+        "allowed_tools",
+        "forbidden_tools",
+        "required_actions",
+        "forbidden_actions",
+        "preconditions"
+      ],
+      "properties": {
+        "allowed_decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}, "uniqueItems": true},
+        "required_decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}, "uniqueItems": true},
+        "forbidden_decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}, "uniqueItems": true},
+        "required_tools": {"type": "array", "items": {"type": "string"}},
+        "allowed_tools": {"type": "array", "items": {"type": "string"}},
+        "forbidden_tools": {"type": "array", "items": {"type": "string"}},
+        "required_actions": {"type": "array"},
+        "forbidden_actions": {"type": "array"},
+        "preconditions": {"type": "array"}
+      }
+    }
+  }
+}
