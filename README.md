@@ -10,12 +10,12 @@ Nenhuma arquitetura, framework, modelo, estratégia de retrieval, protocolo de a
 
 ## Project goal
 
-Construir uma solução integrada que cubra, em profundidade:
+O TAPI atualizado de 2026-08-13 torna explícito que a solução deve **conter os dois componentes** abaixo:
 
 1. **Industrial Agent Engineering** — agente capaz de contextualizar, investigar, executar e escalar de forma confiável sobre a API industrial fornecida pela TRACTIAN.
 2. **Agent Evaluation & Reliability** — framework quantitativo para medir seleção de ferramentas, argumentos, trajetória, evidências, resposta, segurança, robustez, estabilidade e ações de maior impacto.
 
-A trilha formal a ser declarada no TAPI será confirmada com o parceiro; até lá, o projeto é desenhado para cobrir ambas de forma coesa, com avaliação sendo parte do ciclo de desenvolvimento do agente.
+Portanto, o projeto é deliberadamente uma arquitetura única: o framework de avaliação mede, testa e orienta o desenvolvimento do próprio agente industrial. As duas frentes são obrigatórias e não são tratadas como projetos independentes.
 
 ## Guiding principle
 
