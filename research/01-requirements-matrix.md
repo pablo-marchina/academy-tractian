@@ -1,8 +1,17 @@
 # TAPI Requirement Matrix
 
-Source: TAPI — **Engenharia e Avaliação de Agentes Industriais**, Inteli × TRACTIAN.
+Source: **[UPDATED] TAPI — Engenharia e Avaliação de Agentes Industriais**, Inteli × TRACTIAN, received 2026-08-13.
 
 Status legend: `CONFIRMED` = explicitly supported by TAPI; `DEPENDENCY` = requires TRACTIAN/API clarification; `PROJECT_CHOICE` = our optional extension.
+
+## Critical scope update — 2026-08-13
+
+The updated TAPI changed the project objective from selecting **one of two tracks** to developing a solution **containing both**:
+
+1. **Construção de agente**; and
+2. **Framework de avaliação de agentes**.
+
+Therefore, dual-track coverage is no longer a project extension or framing choice. It is a **confirmed project requirement**. The project architecture should remain unified: the evaluation framework evaluates and drives development of the industrial agent rather than being a disconnected second deliverable.
 
 ## Core project requirements
 
@@ -24,10 +33,11 @@ Status legend: `CONFIRMED` = explicitly supported by TAPI; `DEPENDENCY` = requir
 | REQ-014 | High-impact actions require valid parameters and adequate justification | API behavior | CONFIRMED | Schema/policy/action gate evaluation |
 | REQ-015 | Accepted action call represents execution; no additional status loop required | API behavior | CONFIRMED | Tool adapter semantics |
 | REQ-016 | Calls and results must be inspectable | Reference architecture | CONFIRMED | End-to-end trace view |
+| REQ-017 | Deliver a solution containing both agent construction and an agent-evaluation framework | Objective | CONFIRMED | Integrated runtime + evaluation subsystem demonstrated end-to-end |
 
 ## Agent-construction coverage
 
-The TAPI presents these as areas the construction solution **may explore**. Our research goal is to cover all that materially apply.
+The construction component is now mandatory. The TAPI says the solution **may explore** the capabilities below; our research goal is to cover all that materially apply and measure them where possible.
 
 | ID | Capability | Status | Planned evidence |
 |---|---|---|---|
@@ -44,6 +54,8 @@ The TAPI presents these as areas the construction solution **may explore**. Our 
 
 ## Evaluation-framework coverage
 
+The evaluation framework is now a mandatory component of the project objective. The TAPI explicitly lists the following analysis objects.
+
 | ID | Evaluation object explicitly listed by TAPI | Planned canonical signal |
 |---|---|---|
 | EV-001 | Function choice | Tool precision/recall/correctness |
@@ -58,7 +70,7 @@ The TAPI presents these as areas the construction solution **may explore**. Our 
 
 ## Evaluation-framework deliverable forms explicitly supported by TAPI
 
-We intend the integrated framework to provide equivalents of all of these where feasible:
+The format remains open. We intend the integrated framework to provide equivalents of all of these where feasible:
 
 - automated test suite;
 - metrics library;
@@ -73,7 +85,7 @@ We intend the integrated framework to provide equivalents of all of these where 
 Final README must cover:
 
 - chosen problem;
-- formal track and scope;
+- integrated dual-track scope;
 - architecture;
 - installation and execution;
 - models and configurations;
@@ -87,19 +99,23 @@ Final README must cover:
 | Rubric criterion | Evidence we must produce |
 |---|---|
 | API integration quality | Contract-aware typed client/tools, failure handling, live traces |
-| Technical coherence | ADR-backed architecture + ablation results |
+| Technical coherence | Unified agent+evaluation architecture, ADRs, ablation results |
 | Hypothesis and experiment clarity | Pre-registered hypotheses, baselines, splits, protocol |
 | Result analysis quality | Quantitative metrics, CIs, failure slices, qualitative trace examples |
 | Limitations and risks | Threat model, failure taxonomy, explicit validity limitations |
 | Reproducibility | Versioned configs/datasets, reset/replay, deterministic evaluators, environment setup |
 | Documentation | README + research + ADRs + experiment reports |
-| Demo quality | Live run, trace, state verification, repeated-run/fault comparison dashboard |
+| Demo quality | Live agent run + evaluation trace + state verification + repeated-run/fault comparison dashboard |
 
-## Formal-track ambiguity
+## Scope interpretation after the update
 
-The TAPI objective says the student develops a solution in **one of the two tracks**. This repository intentionally researches and designs a unified system that implements a complete agent and a complete evaluation subsystem. We must ask the partner/instructors whether the final submission may formally declare both tracks or whether one must be designated primary.
+`RESOLVED_BY_UPDATED_TAPI`:
 
-Status: `TRACTIAN/INTELI_DEPENDENCY`.
+- We no longer need to ask whether one track must be designated primary.
+- We no longer frame the evaluation framework as an optional subsystem of the construction track.
+- The project must integrate both components coherently.
+
+The wording `Nesta trilha` in the evaluation-deliverable section is treated as a section label/legacy wording, because the updated objective explicitly states that the solution must contain both components. If partner guidance contradicts this interpretation, record that guidance as a superseding project requirement.
 
 ## API-dependent requirements still unknown
 
