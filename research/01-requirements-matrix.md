@@ -2,7 +2,7 @@
 
 Source: **[UPDATED] TAPI — Engenharia e Avaliação de Agentes Industriais**, Inteli × TRACTIAN, received 2026-08-13.
 
-Status legend: `CONFIRMED` = explicitly supported by TAPI; `DEPENDENCY` = requires TRACTIAN/API clarification; `PROJECT_CHOICE` = our optional extension.
+Status legend: `CONFIRMED` = explicitly supported by TAPI; `PARTNER_GUIDANCE` = clearly stated in kickoff and should be validated against delivered artifacts/API; `DEPENDENCY` = requires TRACTIAN/API clarification; `PROJECT_CHOICE` = our optional extension.
 
 ## Critical scope update — 2026-08-13
 
@@ -35,6 +35,25 @@ Therefore, dual-track coverage is no longer a project extension or framing choic
 | REQ-016 | Calls and results must be inspectable | Reference architecture | CONFIRMED | End-to-end trace view |
 | REQ-017 | Deliver a solution containing both agent construction and an agent-evaluation framework | Objective | CONFIRMED | Integrated runtime + evaluation subsystem demonstrated end-to-end |
 
+## Kickoff-derived partner guidance — 2026-08-13
+
+These items are strong partner statements from a noisy automatic transcript. They are treated as engineering/evaluation requirements unless the delivered API/dataset clarifies otherwise. Full evidence notes: `25-kickoff-evidence-2026-08-13.md`.
+
+| ID | Partner guidance | Type | Planned verification/evidence |
+|---|---|---|---|
+| KO-001 | Optimize for automating the existing customer-support investigation/resolution workflow, with safe human fallback when needed | PARTNER_GUIDANCE | End-to-end ticket scenarios + fallback cases |
+| KO-002 | Partner cases include customer-question-derived inputs, engineer investigation trajectory/reference accesses, and expected final output/conclusion | PARTNER_GUIDANCE | Dataset ingestion + provenance fields |
+| KO-003 | Evaluate intermediate process/tool use as well as final answer | PARTNER_GUIDANCE | Tool/argument/trajectory/evidence evaluators |
+| KO-004 | Final-answer correctness should prioritize the operational conclusion/decision rather than exact wording | PARTNER_GUIDANCE | Conclusion/fact oracle; no exact-string primary metric |
+| KO-005 | Customer-facing answers should not expose unnecessary internal system/implementation details | PARTNER_GUIDANCE | Communication policy evaluator / forbidden-disclosure checks |
+| KO-006 | Insufficient or meaningfully ambiguous evidence is a valid reason to escalate to human analysis | PARTNER_GUIDANCE | Escalation target scenarios + confusion matrix |
+| KO-007 | Escalation handoff should contain collected evidence, attempted analysis, unresolved contradiction/question and reason for escalation | PARTNER_GUIDANCE | Escalation-package completeness evaluator |
+| KO-008 | State-changing platform actions should require explicit requester confirmation/approval | PARTNER_GUIDANCE | Deterministic confirmation gate + negative tests; exact action classes from API |
+| KO-009 | Keep one stable agent-facing integration contract across underlying sources where practical; avoid unnecessary integration heterogeneity | PARTNER_GUIDANCE | Canonical ToolSpec + native/MCP adapter experiment |
+| KO-010 | Adding the agent to an existing process must fail safely rather than break the original workflow | PARTNER_GUIDANCE | Fault injection + fallback/escalation assertions |
+| KO-011 | Prevent development/evaluation leakage; do not use the same cases as both optimization and final validation | PARTNER_GUIDANCE | Grouped dev/validation/locked-test split |
+| KO-012 | Student must be able to explain architectural choices, alternatives and trade-offs | PARTNER_GUIDANCE | ADRs + ablations + presentation evidence |
+
 ## Agent-construction coverage
 
 The construction component is now mandatory. The TAPI says the solution **may explore** the capabilities below; our research goal is to cover all that materially apply and measure them where possible.
@@ -62,11 +81,13 @@ The evaluation framework is now a mandatory component of the project objective. 
 | EV-002 | Argument accuracy | Schema validity + exact/semantic argument correctness |
 | EV-003 | Execution trajectory | Trajectory constraints/goal path/step efficiency |
 | EV-004 | Evidence use | Evidence coverage, provenance, conflict handling, unsupported claims |
-| EV-005 | Response quality | Deterministic reference checks where possible; semantic evaluator only where needed |
-| EV-006 | Safety | Permission/policy/forbidden-action checks |
-| EV-007 | Performance under failures | Robust task success by fault profile |
+| EV-005 | Response quality | Deterministic conclusion/fact checks where possible; semantic evaluator only where needed |
+| EV-006 | Safety | Permission/policy/confirmation/forbidden-action checks |
+| EV-007 | Performance under failures | Robust task success + safe fallback by fault profile |
 | EV-008 | Stability across executions | Repeated-run reliability / pass-style metrics / variance |
-| EV-009 | High-impact action behavior | Mutation/action correctness + pre-execution gate + final state |
+| EV-009 | High-impact action behavior | Mutation/action correctness + approval/pre-execution gate + final state |
+| EV-010 | Escalation quality | Correct escalation decision + handoff evidence/unresolved-point completeness |
+| EV-011 | Customer-safe communication | Correct conclusion with unnecessary internal-detail leakage controlled |
 
 ## Evaluation-framework deliverable forms explicitly supported by TAPI
 
@@ -117,19 +138,22 @@ Final README must cover:
 
 The wording `Nesta trilha` in the evaluation-deliverable section is treated as a section label/legacy wording, because the updated objective explicitly states that the solution must contain both components. If partner guidance contradicts this interpretation, record that guidance as a superseding project requirement.
 
-## API-dependent requirements still unknown
+## API/dataset-dependent requirements still unknown
 
-The TAPI explicitly states that the final endpoint/parameter list will be provided in the API contract. Therefore we must not invent:
+The TAPI explicitly states that the final endpoint/parameter list will be provided in the API contract, and the kickoff transcript is not precise enough to resolve these. Therefore we must not invent:
 
 - exact endpoint catalog;
 - exact resource schemas;
 - permission representation;
-- exact high-impact action classification;
+- exact high-impact/mutation/confirmation classification;
 - reset/snapshot semantics;
 - stable identifiers;
 - rate limits;
 - timestamps/freshness semantics;
 - conflict/partial-result metadata;
-- authentication details.
+- authentication details;
+- exact case count and official split packaging;
+- hidden-evaluation policy;
+- exact model/provider constraints for students.
 
 These are tracked in `05-tractian-open-questions.md`.
