@@ -1,11 +1,11 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 FREE PILOT SMOKE**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 FREE-ANYWHERE CANDIDATE DISCOVERY**  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 12:34 BRT  
+**Progress checkpoint:** 2026-08-16 12:40 BRT  
 **Target final delivery:** 2026-09-08
 
-This is the active execution plan after the real TRACTIAN package was audited. It separates frozen evidence/contracts from experimental architecture decisions, explicitly forbids demo-first development and now records the zero-cost E8 pilot execution smoke.
+This is the active execution plan after the real TRACTIAN package was audited. It separates frozen evidence/contracts from experimental architecture decisions, explicitly forbids demo-first development and records that E8 is not local-only: any remote API, hosted service or local system is allowed if the total project cost remains USD 0.
 
 ## 1. Current state
 
@@ -23,6 +23,7 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - E7 topology ADR recorded: native ToolSpec calls are the internal default candidate; MCP-compatible adapter remains the external interoperability candidate.
 - E8 statistical pilot/model benchmark prep registered and validated without model calls.
 - E8 free-only pilot execution smoke passed with zero paid calls.
+- E8 free-anywhere candidate scope/discovery recorded: remote free APIs, free hosted systems and local systems are all eligible if guarded to USD 0.
 
 ### Current candidate bundle
 
@@ -34,6 +35,9 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - **Internal tool surface candidate:** native ToolSpec calls.
 - **External interoperability surface candidate:** MCP-compatible `tools/list` + `tools/call` adapter.
 - **Budget stance:** completely free; paid OpenAI/Anthropic reference candidates disabled.
+- **Free candidate universe:** no-model policy baseline, free remote APIs, free hosted routers/credits and local runtimes.
+- **Remote/free candidates to check:** Groq free API, Gemini free API, OpenRouter free router, Hugging Face free inference credits.
+- **Local candidate to check:** Ollama, only if latency is acceptable.
 - **Baselines/comparators retained:** B0, free tool loop, fixed/reference-like anchor, Pydantic AI/Graph, OpenAI Agents SDK.
 
 This is still not a final model/provider, MCP topology, RAG/vector DB, multi-agent, observability, memory, prompt, UI or final architecture freeze.
@@ -96,7 +100,24 @@ This is still not a final model/provider, MCP topology, RAG/vector DB, multi-age
 | Cost USD | 0.0 |
 | LOCKED_TEST accessed | false |
 
-Interpretation: E8 now has a zero-cost pilot execution smoke. This validates the free-only benchmark harness, not external model quality. Free Groq/Gemini/local Ollama can be added only through explicit local opt-in environment variables.
+Interpretation: E8 has a zero-cost pilot execution smoke. This validates the free-only benchmark harness, not external model quality.
+
+### E8 free-anywhere candidate discovery
+
+| Metric | Result |
+|---|---:|
+| Status | `E8_FREE_ANYWHERE_CANDIDATE_DISCOVERY_PASS` |
+| Locality required | false |
+| Remote free APIs allowed | true |
+| Local systems allowed | true |
+| Project cost limit USD | 0 |
+| Paid models enabled | false |
+| Default CI external model calls | false |
+| Free candidate slots | 6 |
+| Paid candidate slots blocked | OpenAI, Anthropic |
+| LOCKED_TEST accessed | false |
+
+Interpretation: the next E8 model-quality run may use any API or system, local or remote, but only with explicit zero-cost guardrails and opt-in.
 
 ## 3. Non-negotiable integrity rules
 
@@ -108,6 +129,7 @@ Interpretation: E8 now has a zero-cost pilot execution smoke. This validates the
 - Hard identity/schema/policy constraints remain deterministic where possible.
 - Optional complexity survives only if required or supported by experiment evidence.
 - No paid model execution without explicit approval; current project constraint is fully free.
+- Remote free APIs are allowed, but only with explicit `E8_CONFIRM_ZERO_COST=1` and provider-specific opt-in.
 
 ## 4. Execution sequence
 
@@ -121,15 +143,17 @@ Interpretation: E8 now has a zero-cost pilot execution smoke. This validates the
 - E6 runtime/live API integration.
 - E7 native/MCP-compatible surface and topology ADR.
 - E8 prep and free-only pilot smoke.
+- E8 free-anywhere candidate discovery.
 
-### E8 free/local candidate run — NEXT
+### E8 free-anywhere candidate run — NEXT
 
-- confirm local availability of Groq free-tier, Gemini free-tier or local Ollama without paid providers;
+- check any fully free remote API or hosted system, not just local systems;
+- candidate examples: Groq free API, Gemini free API, OpenRouter free router, Hugging Face free inference credits, Ollama local;
+- require explicit zero-cost confirmation for remote providers;
 - keep OpenAI/Anthropic disabled;
-- run the same E8 free pilot runner locally with explicit opt-in for any available free/local candidate;
-- keep DEV smoke before VALIDATION;
+- run DEV smoke before VALIDATION;
 - preserve fixed observation packets and repeated outputs;
-- measure task-success proxy or scored model output, action/escalation correctness, evidence coverage, trace completeness, latency and cost;
+- measure task-success/model output quality, action/escalation correctness, evidence coverage, trace completeness, latency and cost;
 - keep native ToolSpec + optional MCP-compatible adapter;
 - keep LOCKED_TEST blocked;
 - do not freeze model/provider or architecture.
@@ -142,8 +166,8 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 live pass; E7 topology ADR; E8 prep + free-only pilot smoke |
-| **17–20 Aug** | free/local model candidate availability + E8 DEV smoke with enabled free candidates |
+| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 live pass; E7 topology ADR; E8 prep + free-only pilot smoke + free-anywhere discovery |
+| **17–20 Aug** | free-anywhere model candidate availability + E8 DEV smoke with enabled free candidates |
 | **21–22 Aug** | runtime/MCP/model ADRs + error analysis |
 | **23–24 Aug** | statistical pilot continuation |
 | **25 Aug** | statistical pilot/model screening |
