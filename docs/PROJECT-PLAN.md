@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API CONTRACT PASS**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS**  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 10:28 BRT  
+**Progress checkpoint:** 2026-08-16 11:11 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan after the real TRACTIAN package was audited. It separates frozen evidence/contracts from experimental architecture decisions and explicitly forbids demo-first development.
@@ -22,13 +22,15 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - E6 minimal LangGraph integration spike executed.
 - E6 adaptive real ToolSpec/HarnessRunner LangGraph spike executed.
 - E6 live API integration implementation path and CI contract gate complete.
+- E6 local live API execution passed against the supplied TRACTIAN API.
 
 ### Current candidate bundle
 
 - **Boundary:** B3 guarded boundary.
 - **Evidence/stopping:** evidence-sufficiency policy.
 - **Runtime candidate:** LangGraph.
-- **Transport path:** `HttpxTransport` against the supplied TRACTIAN API, pending local live execution.
+- **Transport path:** `HttpxTransport` against the supplied TRACTIAN API, live execution passed locally.
+- **Live integration status:** `LIVE_PASS` over representative DEV + VALIDATION cases.
 - **Baselines/comparators retained:** B0, free tool loop, fixed/reference-like anchor, Pydantic AI/Graph, OpenAI Agents SDK.
 
 This is still not a final model/provider, MCP topology, RAG/vector DB, multi-agent, observability, memory, prompt or UI freeze.
@@ -95,7 +97,7 @@ This is still not a final model/provider, MCP topology, RAG/vector DB, multi-age
 | LangGraph avg ms | 20.3439 |
 | Overhead ratio | 14.979 |
 
-Decision: LangGraph advances to real DEV/VALIDATION integration implementation, with Pydantic AI/Graph and OpenAI Agents SDK retained as comparators. The adaptive spike is more realistic than the toy micro-spike because it uses the existing ToolSpec registry and HarnessRunner and chooses evidence tools from missing evidence requirements.
+Decision: LangGraph advanced to real DEV/VALIDATION integration implementation, with Pydantic AI/Graph and OpenAI Agents SDK retained as comparators. The adaptive spike is more realistic than the toy micro-spike because it uses the existing ToolSpec registry and HarnessRunner and chooses evidence tools from missing evidence requirements.
 
 ### E6 live API integration contract
 
@@ -113,7 +115,40 @@ Decision: LangGraph advances to real DEV/VALIDATION integration implementation, 
 | LOCKED_TEST accessed | false |
 | Live supplied API executed | false |
 
-Interpretation: the live path is implemented and contract-validated, but it is not yet live task-success evidence because the public CI does not run the private supplied API package. The next required gate is the local live execution against the running TRACTIAN API.
+Interpretation: the contract gate validated the implementation path without exercising the private supplied API in public CI.
+
+### E6 live API execution
+
+| Metric | Result |
+|---|---:|
+| Status | `LIVE_PASS` |
+| Live API transport configured | true |
+| Transport class | `HttpxTransport` |
+| Live API executed | true |
+| API base URL | `http://localhost:8000` |
+| Seed binding | runner-bound |
+| ToolSpec registry size | 18 |
+| HarnessRunner used | true |
+| B3 external guard preserved | true |
+| Evidence-sufficiency explicit | true |
+| Adaptive evidence planning | true |
+| Model/proposal generation connected | true |
+| Proposal source class | `safe_agent_input_proposal_generator` |
+| Proposal gold leakage blocked | true |
+| Checkpoint pause/resume roundtrip | true |
+| Representative cases | 8 |
+| Splits | DEV + VALIDATION |
+| Live request count | 37 |
+| Successful live request count | 37 |
+| Live success rate | 1.000 |
+| Action execution proxy | 4/4 |
+| Action accepted proxy | 4/4 |
+| RunTrace-compatible output | true |
+| LOCKED_TEST accessed | false |
+| Live latency avg ms | 2422.9925 |
+| Live latency p95 ms | 2108.5737 |
+
+Decision: promote LangGraph + adaptive evidence planning + B3 + HarnessRunner + `HttpxTransport` as the current live integration candidate. This is still not a final architecture freeze.
 
 ## 3. Non-negotiable integrity rules
 
@@ -158,7 +193,7 @@ Artifacts:
 - `research/results/e5-evidence-stopping-summary-2026-08-16.json`
 - `scripts/research/e5_evidence_stopping_runner.py`
 
-### E6 — CONTRACT PASS / LIVE EXECUTION PENDING
+### E6 — LIVE PASS
 
 Artifacts:
 
@@ -169,6 +204,7 @@ Artifacts:
 - `research/53-e6-real-toolspec-langgraph-preregistration.md`
 - `research/54-e6-real-toolspec-langgraph-results.md`
 - `research/55-e6-live-api-integration-contract-results.md`
+- `research/56-e6-live-api-integration-live-results.md`
 - `research/experiments/e6-runtime-spike-manifest.json`
 - `research/experiments/e6-langgraph-integration-spike-manifest.json`
 - `research/experiments/e6-real-toolspec-langgraph-manifest.json`
@@ -177,28 +213,28 @@ Artifacts:
 - `research/results/e6-langgraph-integration-summary-2026-08-16.json`
 - `research/results/e6-real-toolspec-langgraph-summary-2026-08-16.json`
 - `research/results/e6-live-api-integration-contract-summary-2026-08-16.json`
+- `research/results/e6-live-api-integration-live-summary-2026-08-16.json`
 - `scripts/research/e6_runtime_spike_runner.py`
 - `scripts/research/e6_langgraph_integration_spike.py`
 - `scripts/research/e6_langgraph_toolspec_runner.py`
 - `scripts/research/e6_langgraph_toolspec_runner_v3.py`
 - `scripts/research/e6_live_api_langgraph_runner.py`
 
-### E6 live execution — NEXT
+### E7 — Native tools vs MCP — NEXT
 
-- start the supplied TRACTIAN API locally;
-- run `e6_live_api_langgraph_runner.py` in live mode with `--api-base-url` and `--agent-input-cases`;
-- keep adaptive evidence planning;
-- keep B3 and evidence-sufficiency deterministic;
-- run representative DEV + VALIDATION scenarios end-to-end;
-- measure task success, trace completeness and live latency;
-- inspect 4xx/5xx/action-policy failures;
+Expose the same ToolSpec through native tools and MCP-compatible surfaces while holding the live integration bundle constant.
+
+Required work:
+
+- expose the same ToolSpec through native tool calls and MCP-compatible surface;
+- keep B3 + evidence-sufficiency constant;
+- keep adaptive evidence planning constant;
+- preserve `HttpxTransport` live API path;
+- run DEV + VALIDATION only;
+- compare trace completeness, guard fidelity, latency, portability and complexity;
 - keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
 - keep LOCKED_TEST blocked;
 - do not freeze model/MCP/RAG/multi-agent/UI yet.
-
-### E7 — Native tools vs MCP
-
-Expose the same ToolSpec through native tools and MCP v2 after the live API execution gate.
 
 ### E8 — Statistical pilot + model benchmark
 
@@ -212,8 +248,8 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 runtime + minimal + adaptive ToolSpec LangGraph spikes + live API contract gate |
-| **17–20 Aug** | live API execution + native/MCP discriminating setup |
+| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 runtime + minimal + adaptive ToolSpec LangGraph spikes + live API contract + live API execution pass |
+| **17–20 Aug** | native/MCP discriminating setup + runtime/MCP ADR prep |
 | **21–22 Aug** | runtime/MCP ADRs + error analysis |
 | **23–24 Aug** | statistical pilot preparation |
 | **25 Aug** | statistical pilot/model screening |
