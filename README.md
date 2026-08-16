@@ -4,16 +4,16 @@ Repository central do TAPI individual **Engenharia e Avaliação de Agentes Indu
 
 ## Status
 
-**E4 NEXT — Guarded Boundary Experiment B0–B3**
+**E4 ACTIVE — Guarded Boundary Experiment B0–B3**
 
-The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN package. Three prerequisite gates are frozen and one harness gate is complete:
+The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN package. Four prerequisite gates are frozen or complete:
 
 - `NORMALIZED-CONTRACT-v1`;
 - ScenarioSchema/gold semantics v1;
 - E2 framework-neutral harness;
 - `BENCHMARK-SPLIT-v1`.
 
-The production architecture is still **not frozen**. Runtime, model, MCP, RAG, multi-agent, routing, memory and observability remain experimental decisions.
+E4 has started with a preregistered B0-B3 experiment manifest. The production architecture is still **not frozen**. Runtime, model, MCP, RAG, multi-agent, routing, memory and observability remain experimental decisions.
 
 Plan: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
 Research hub: [`research/README.md`](research/README.md)  
@@ -84,7 +84,7 @@ E2 does **not** choose LangGraph, Pydantic AI/Graph, OpenAI Agents SDK, MCP, RAG
 
 Locked-test groups are unavailable for architecture/model/prompt/runtime selection.
 
-## Central experiment
+## E4 — active central experiment
 
 H1 tests whether a **guarded contract-aware tool boundary** improves argument correctness and safety without materially reducing task success.
 
@@ -94,9 +94,16 @@ H1 tests whether a **guarded contract-aware tool boundary** improves argument co
 - **B3:** + evidence-aware action/escalation;
 - **B4:** confirmation as a separate safety extension unless canonical policy changes.
 
+E4 artifacts:
+
+- `research/41-e4-guarded-boundary-experiment-preregistration.md`
+- `research/42-e4-execution-start-report.md`
+- `research/experiments/e4-b0-b3-experiment-manifest.json`
+- `scripts/research/e4_validate_experiment_manifest.py`
+
 ## Critical path
 
-`E0 freeze → E1 freeze → E2 complete → E3 split frozen → B0–B3 → evidence/stopping → runtime/MCP → pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
+`E0 freeze → E1 freeze → E2 complete → E3 split frozen → E4 B0–B3 → evidence/stopping → runtime/MCP → pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
 
 Target `FROZEN-v1`: **2026-08-27** (internal project target).  
 Final delivery/presentation: **2026-09-08**.
