@@ -1,11 +1,40 @@
 # Academy × TRACTIAN — Project Action Plan
 
-Status: **ACTIVE — post-artifact research and experimental execution**
+Status: **ACTIVE — E0 + E1 executing in parallel; architecture not frozen**
 
 Planning date: **2026-08-16**  
 Final delivery: **2026-09-08**
 
 This plan converts the updated TAPI, kickoff evidence and delivered TRACTIAN package into an execution sequence. It is a **project plan**, not an architecture freeze: runtime, MCP topology, model, RAG, multi-agent decomposition, observability backend and optimization remain undecided until the corresponding project-specific experiment/ADR is complete.
+
+## Current execution snapshot
+
+E0 and E1 have started in parallel.
+
+### E0 status
+
+Completed first pass:
+
+- duplicate-key-aware OpenAPI loader implemented;
+- duplicate asset GET/PATCH path merged losslessly in a private normalized candidate;
+- normalized and FastAPI runtime route surfaces structurally match at **18 operations / 17 path templates**;
+- runtime semantic probes executed;
+- declared-vs-runtime differences classified;
+- final `NORMALIZED-CONTRACT-v1` naming/transformation policy and machine-readable behavior map still pending.
+
+### E1 status
+
+Completed first pass:
+
+- 16/16 narrative scenarios mechanically normalized from source;
+- 17/17 tickets mapped to 10 split groups;
+- no missing narrative sections;
+- 10/16 scenarios show machine-vs-narrative endpoint divergence;
+- ScenarioSchema v1 draft created;
+- 4/16 cross-modality scenario reviews completed;
+- 12/16 reviews remain before benchmark authority.
+
+Detailed execution evidence: `research/31-e0-contract-normalization-execution.md`, `research/32-e1-gold-normalization-execution.md`, and `research/33-e1-cross-modality-pilot-review.md`.
 
 ## 1. Project objective
 
@@ -89,18 +118,25 @@ The purpose of staged variants is attribution: we must know which layer produced
 
 **Goal:** produce `NORMALIZED-CONTRACT-v1` suitable for tool/client generation.
 
+Current status: **first executable pass complete; final freeze pending**.
+
 Done when:
 
-- duplicate YAML keys are detected before parsing;
-- raw contract and package hashes are recorded;
-- duplicate asset GET/PATCH mapping is normalized without modifying the raw artifact;
-- transformation manifest is generated;
-- normalized operations are compared with FastAPI runtime `/openapi.json`;
-- request/response semantics used by the project pass conformance probes.
+- [x] duplicate YAML keys are detected before parsing;
+- [x] raw contract/package hashes are recorded;
+- [x] duplicate asset GET/PATCH mapping is normalized without modifying the raw artifact;
+- [x] normalized route surface is compared with FastAPI runtime `/openapi.json`;
+- [x] key request/auth/action semantics have executable probes;
+- [ ] exact naming/transformation policy is frozen;
+- [ ] final transformation manifest and `API-BEHAVIOR-MAP-v1` are emitted;
+- [ ] final normalized contract validation passes;
+- [ ] `NORMALIZED-CONTRACT-v1` hash is frozen.
 
 ### E1 — Gold normalization / ScenarioSchema v1
 
 **Goal:** turn machine + narrative gold into executable, reviewed oracles.
+
+Current status: **16/16 mechanically normalized; 4/16 cross-modality reviews complete; 12/16 pending**.
 
 For each base scenario capture:
 
@@ -114,7 +150,7 @@ For each base scenario capture:
 - environment mode/seed/override profile;
 - narrative P1 success criterion and P2 diagnostics.
 
-A human review pass is mandatory before the normalized gold becomes benchmark-authoritative.
+A review pass is mandatory before the normalized gold becomes benchmark-authoritative.
 
 ### E2 — Canonical ToolSpec + evaluation harness
 
@@ -309,7 +345,7 @@ If an upstream gate slips, protect the locked-test/documentation/demo window by 
 Architecture may be frozen only when:
 
 1. normalized API contract passes conformance checks;
-2. ScenarioSchema v1/gold oracles are human-reviewed;
+2. ScenarioSchema v1/gold oracles are reviewed;
 3. benchmark split is leakage-aware and locked;
 4. central guarded-boundary and evidence/stopping experiments have produced interpretable results;
 5. runtime and MCP choices have experiment-backed ADRs;
@@ -340,10 +376,8 @@ The final repository should make it possible to answer, with evidence:
 
 ## 11. Immediate next action
 
-Start with **E0 + E1 in parallel**:
+Continue the two active streams:
 
-1. normalize/conformance-test the OpenAPI contract;
-2. normalize every partner scenario into reviewed ScenarioSchema v1 oracles;
-3. only then implement the canonical ToolSpec/evaluator harness against those two trusted contracts.
-
-This is the shortest path from research to implementation without hard-coding assumptions or contaminating the benchmark.
+1. **E0:** freeze naming/transformation policy, produce final manifest + `API-BEHAVIOR-MAP-v1`, validate and freeze normalized contract candidate.
+2. **E1:** review the remaining 12 scenarios into structured oracles and resolve/log machine-vs-narrative discrepancies.
+3. Only after these two contracts are trustworthy, start E2 Canonical ToolSpec/evaluator/trace harness.
