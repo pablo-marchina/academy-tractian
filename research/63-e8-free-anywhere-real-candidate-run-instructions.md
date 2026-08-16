@@ -22,6 +22,15 @@ Do not commit API keys and do not paste them into issues, PR descriptions or mar
 
 The user has Groq and Gemini keys available, so no additional key is needed for the first model-quality pilot. The run should start with Groq because it uses an OpenAI-compatible API surface and tends to be simple to integrate, then repeat with Gemini for comparison.
 
+## Provider connectivity notes after first attempt
+
+The first keyed attempt reached the providers but did not produce model-quality evidence:
+
+- Groq returned HTTP 403 / code 1010 and intermittent connection resets. The runner now sends an explicit `User-Agent` header because bare `urllib` clients can be blocked by Groq/Cloudflare.
+- Gemini returned HTTP 404 for `gemini-2.5-flash-lite` because that model was unavailable to the current user/account. The default was changed to `gemini-2.5-flash`; override with `E8_GEMINI_MODEL` if `models.list` shows a different available free model.
+
+These are provider/connectivity issues, not model-quality failures.
+
 ## Required local setup
 
 Use the supplied TRACTIAN API and `agent-input/cases.json` when available. The model prompt must receive only agent-visible cases. It must not receive `eval/`, `docs/test-scenarios.md`, `data/cases.parquet`, expected answers, or scorer-only oracles.
@@ -40,6 +49,7 @@ $env:GROQ_API_KEY = "COLE_SUA_CHAVE_AQUI_SOMENTE_NO_TERMINAL"
 $env:E8_ENABLE_GROQ = "1"
 $env:E8_CONFIRM_ZERO_COST = "1"
 $env:E8_GROQ_MODEL = "llama-3.1-8b-instant"
+$env:E8_HTTP_USER_AGENT = "academy-tractian-e8-free-anywhere-runner/1.1"
 
 python scripts/research/e8_free_anywhere_model_runner.py `
   --provider groq `
@@ -64,7 +74,7 @@ $TRACTIAN_PACKAGE = "C:\Users\Inteli\Documents\Projetos\academy-tractian\inteli-
 $env:GEMINI_API_KEY = "COLE_SUA_CHAVE_AQUI_SOMENTE_NO_TERMINAL"
 $env:E8_ENABLE_GEMINI = "1"
 $env:E8_CONFIRM_ZERO_COST = "1"
-$env:E8_GEMINI_MODEL = "gemini-2.5-flash-lite"
+$env:E8_GEMINI_MODEL = "gemini-2.5-flash"
 
 python scripts/research/e8_free_anywhere_model_runner.py `
   --provider gemini `
@@ -74,6 +84,22 @@ python scripts/research/e8_free_anywhere_model_runner.py `
   --out "$env:TEMP\e8-gemini-free-anywhere-model-run-summary.json"
 
 Get-Content "$env:TEMP\e8-gemini-free-anywhere-model-run-summary.json"
+```
+
+## Quick Gemini model probe
+
+If Gemini returns `NOT_FOUND`, list the models available to the key and choose one that supports `generateContent`:
+
+```powershell
+$headers = @{ "x-goog-api-key" = $env:GEMINI_API_KEY }
+Invoke-RestMethod -Uri "https://generativelanguage.googleapis.com/v1beta/models" -Headers $headers |
+  ConvertTo-Json -Depth 8
+```
+
+Then rerun with the model name without the `models/` prefix, for example:
+
+```powershell
+$env:E8_GEMINI_MODEL = "gemini-2.5-flash"
 ```
 
 ## Expected successful status
