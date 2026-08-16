@@ -1,0 +1,41 @@
+name: research-e11
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+    paths:
+      - "scripts/research/e11_dev_only_independent_action_authorization.py"
+      - "scripts/research/e10g_dev_only_balanced_safety_action_guard.py"
+      - "scripts/research/e10e_dev_only_premature_action_guard.py"
+      - "scripts/research/e10d_dev_only_escalation_consistency_guard.py"
+      - "scripts/research/e10c_dev_only_escalation_capture.py"
+      - "scripts/research/e10b_dev_only_action_escalation_capture.py"
+      - "scripts/research/e10_dev_only_groq_quality_capture_v2.py"
+      - "scripts/research/e8_capture_fixed_groq_outputs.py"
+      - "research/experiments/e11-dev-only-independent-action-authorization-manifest.json"
+      - "research/experiments/e10g-dev-only-balanced-safety-action-guard-manifest.json"
+      - "research/frozen/benchmark-split-v1.json"
+      - ".github/workflows/research-e11.yml"
+  pull_request:
+    paths:
+      - "scripts/research/e11_dev_only_independent_action_authorization.py"
+      - "research/experiments/e11-dev-only-independent-action-authorization-manifest.json"
+      - ".github/workflows/research-e11.yml"
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: E11 dry-run
+        run: |
+          python scripts/research/e11_dev_only_independent_action_authorization.py \
+            --manifest research/experiments/e11-dev-only-independent-action-authorization-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --dry-run \
+            --out "$RUNNER_TEMP/e11-dry-run.json"
+          test -s "$RUNNER_TEMP/e11-dry-run.json"
