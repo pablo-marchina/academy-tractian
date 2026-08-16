@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 ADAPTIVE TOOLSPEC LANGGRAPH EXECUTED**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API CONTRACT PASS**  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 10:12 BRT  
+**Progress checkpoint:** 2026-08-16 10:28 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan after the real TRACTIAN package was audited. It separates frozen evidence/contracts from experimental architecture decisions and explicitly forbids demo-first development.
@@ -21,12 +21,14 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - E6 runtime discriminating spike executed.
 - E6 minimal LangGraph integration spike executed.
 - E6 adaptive real ToolSpec/HarnessRunner LangGraph spike executed.
+- E6 live API integration implementation path and CI contract gate complete.
 
 ### Current candidate bundle
 
 - **Boundary:** B3 guarded boundary.
 - **Evidence/stopping:** evidence-sufficiency policy.
 - **Runtime candidate:** LangGraph.
+- **Transport path:** `HttpxTransport` against the supplied TRACTIAN API, pending local live execution.
 - **Baselines/comparators retained:** B0, free tool loop, fixed/reference-like anchor, Pydantic AI/Graph, OpenAI Agents SDK.
 
 This is still not a final model/provider, MCP topology, RAG/vector DB, multi-agent, observability, memory, prompt or UI freeze.
@@ -95,6 +97,24 @@ This is still not a final model/provider, MCP topology, RAG/vector DB, multi-age
 
 Decision: LangGraph advances to real DEV/VALIDATION integration implementation, with Pydantic AI/Graph and OpenAI Agents SDK retained as comparators. The adaptive spike is more realistic than the toy micro-spike because it uses the existing ToolSpec registry and HarnessRunner and chooses evidence tools from missing evidence requirements.
 
+### E6 live API integration contract
+
+| Check | Result |
+|---|---:|
+| Implementation path | complete |
+| CI contract gate | pass |
+| Transport surface | `HttpxTransport` |
+| HarnessRunner path configured | true |
+| B3 preserved | true |
+| Evidence-sufficiency explicit | true |
+| Adaptive evidence planning | true |
+| Model/proposal generation connected | true |
+| Gold leakage guard | true |
+| LOCKED_TEST accessed | false |
+| Live supplied API executed | false |
+
+Interpretation: the live path is implemented and contract-validated, but it is not yet live task-success evidence because the public CI does not run the private supplied API package. The next required gate is the local live execution against the running TRACTIAN API.
+
 ## 3. Non-negotiable integrity rules
 
 - Raw partner artifacts remain immutable.
@@ -105,7 +125,7 @@ Decision: LangGraph advances to real DEV/VALIDATION integration implementation, 
 - Hard identity/schema/policy constraints remain deterministic where possible.
 - Action success follows supplied `accepted_event_non_persistent` semantics; no invented final-state oracle.
 - Optional complexity survives only if required or supported by experiment evidence.
-- No demo-first development: test doubles and scripted paths validate infrastructure only.
+- No demo-first development: test doubles and scripted paths validate instrumentation, contracts, splits and evaluator behavior only.
 
 ## 4. Execution sequence
 
@@ -138,7 +158,7 @@ Artifacts:
 - `research/results/e5-evidence-stopping-summary-2026-08-16.json`
 - `scripts/research/e5_evidence_stopping_runner.py`
 
-### E6 — EXECUTED
+### E6 — CONTRACT PASS / LIVE EXECUTION PENDING
 
 Artifacts:
 
@@ -148,31 +168,37 @@ Artifacts:
 - `research/52-e6-langgraph-integration-spike-results.md`
 - `research/53-e6-real-toolspec-langgraph-preregistration.md`
 - `research/54-e6-real-toolspec-langgraph-results.md`
+- `research/55-e6-live-api-integration-contract-results.md`
 - `research/experiments/e6-runtime-spike-manifest.json`
 - `research/experiments/e6-langgraph-integration-spike-manifest.json`
 - `research/experiments/e6-real-toolspec-langgraph-manifest.json`
+- `research/experiments/e6-live-api-integration-manifest.json`
 - `research/results/e6-runtime-spike-summary-2026-08-16.json`
 - `research/results/e6-langgraph-integration-summary-2026-08-16.json`
 - `research/results/e6-real-toolspec-langgraph-summary-2026-08-16.json`
+- `research/results/e6-live-api-integration-contract-summary-2026-08-16.json`
 - `scripts/research/e6_runtime_spike_runner.py`
 - `scripts/research/e6_langgraph_integration_spike.py`
 - `scripts/research/e6_langgraph_toolspec_runner.py`
 - `scripts/research/e6_langgraph_toolspec_runner_v3.py`
+- `scripts/research/e6_live_api_langgraph_runner.py`
 
-### E6 real integration continuation — NEXT
+### E6 live execution — NEXT
 
-- replace deterministic stub transport with live supplied API transport;
-- connect model proposal generation without leaking evaluator-only gold;
+- start the supplied TRACTIAN API locally;
+- run `e6_live_api_langgraph_runner.py` in live mode with `--api-base-url` and `--agent-input-cases`;
 - keep adaptive evidence planning;
 - keep B3 and evidence-sufficiency deterministic;
 - run representative DEV + VALIDATION scenarios end-to-end;
 - measure task success, trace completeness and live latency;
+- inspect 4xx/5xx/action-policy failures;
 - keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
-- keep LOCKED_TEST blocked.
+- keep LOCKED_TEST blocked;
+- do not freeze model/MCP/RAG/multi-agent/UI yet.
 
 ### E7 — Native tools vs MCP
 
-Expose the same ToolSpec through native tools and MCP v2 after the real integration continuation.
+Expose the same ToolSpec through native tools and MCP v2 after the live API execution gate.
 
 ### E8 — Statistical pilot + model benchmark
 
@@ -186,8 +212,8 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 runtime + minimal + adaptive ToolSpec LangGraph spikes |
-| **17–20 Aug** | live API LangGraph integration + native/MCP discriminating setup |
+| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 runtime + minimal + adaptive ToolSpec LangGraph spikes + live API contract gate |
+| **17–20 Aug** | live API execution + native/MCP discriminating setup |
 | **21–22 Aug** | runtime/MCP ADRs + error analysis |
 | **23–24 Aug** | statistical pilot preparation |
 | **25 Aug** | statistical pilot/model screening |
@@ -200,4 +226,4 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 ## 6. Research Gate → `FROZEN-v1`
 
-The architecture is frozen only after E0/E1/E3 freezes, B0-B3 DEV+VALIDATION evidence, evidence/stopping evidence, runtime and MCP ADRs, statistical pilot/model benchmark, conditional technique decisions and package inconsistency documentation.
+The architecture is frozen only after E0/E1/E3 freezes, B0-B3 DEV+VALIDATION evidence, evidence/stopping evidence, runtime and MCP ADRs, statistical pilot/model benchmark, conditional technique decisions, package inconsistency documentation and the approved live API execution gate.
