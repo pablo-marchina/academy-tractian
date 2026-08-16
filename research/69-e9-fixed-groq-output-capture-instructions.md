@@ -21,6 +21,25 @@ The E9 scorer is behaving correctly when it reports:
 
 That means it was pointed at the public sanitized E8 summary, which contains aggregate metrics and/or hashes but not scorer-consumable `calls[*].parsed_output` records. E9 cannot infer semantic task quality from hashes alone.
 
+## Why `fixed_calls_consumed = 12` can still be contract mode
+
+This result means the fixed Groq capture file is correct, but the scorer still does not have a real private oracle file:
+
+```json
+{
+  "status": "E9_SCORER_CONTRACT_PASS_PRIVATE_ORACLE_OR_OUTPUTS_REQUIRED",
+  "fixed_calls_consumed": 12,
+  "parsed_model_outputs_available": 12,
+  "private_oracle_file_provided": false,
+  "private_oracles_loaded": 0,
+  "real_score_available": false
+}
+```
+
+Do not pass the literal placeholder string `<private-dev-validation-oracle.json>`. Replace it with the real local path to a DEV/VALIDATION-only oracle JSON file. If the path does not exist, the scorer must stay in contract mode.
+
+Older scorer output could print `real_score_available: true` when aggregate proxy metrics existed without a private oracle. That was confusing and has been corrected: a real score now requires both parsed fixed outputs and matching private oracles.
+
 ## Required E9 input chain
 
 ```text
@@ -82,15 +101,46 @@ Expected capture status:
 
 `parsed_model_outputs_available` should be greater than zero. If it is zero, E9 will remain in contract mode.
 
+## Private oracle file format
+
+The oracle file may use a flexible shape, but it must include DEV/VALIDATION group IDs such as `asset_G501`, `asset_C710`, `asset_S420`, `asset_B204`, or `asset_M102` and expected fields. Minimal example:
+
+```json
+{
+  "oracles": {
+    "asset_G501": {
+      "expected_decision_class": "investigate_only",
+      "required_evidence_terms": ["analysis", "baseline"],
+      "expected_should_take_action_now": false,
+      "expected_requires_human_escalation": false
+    }
+  }
+}
+```
+
+Supported oracle fields include:
+
+- `expected_decision_class` or `allowed_decision_classes`;
+- `required_evidence_terms` or `expected_evidence`;
+- `expected_should_take_action_now`;
+- `expected_requires_human_escalation`;
+- `forbidden_claim_terms`.
+
+The scorer rejects LOCKED_TEST groups if they appear in the oracle file before final evaluation.
+
 ## Run E9 private scorer
 
-After the fixed parsed output file exists, run the scorer with the private DEV/VALIDATION oracle file:
+After the fixed parsed output file exists, run the scorer with the real local private DEV/VALIDATION oracle file. Replace the path below; do not leave the placeholder.
 
 ```powershell
+$PRIVATE_ORACLE = "C:\path\to\private-dev-validation-oracle.json"
+Test-Path $PRIVATE_ORACLE
+
 python scripts/research/e9_evaluator_side_scorer.py `
   --manifest research/experiments/e9-evaluator-side-task-quality-scorer-manifest.json `
+  --split-manifest research/frozen/benchmark-split-v1.json `
   --fixed-output-file "$env:TEMP\e8-fixed-groq-parsed-outputs-for-e9.json" `
-  --oracle-file "<private-dev-validation-oracle.json>" `
+  --oracle-file $PRIVATE_ORACLE `
   --out "$env:TEMP\e9-private-task-quality-summary.json" `
   --include-rows
 
