@@ -23,6 +23,8 @@ on:
       - 'research/60-e8-statistical-pilot-model-benchmark-preregistration.md'
       - 'research/61-e8-free-pilot-execution-results.md'
       - 'research/62-e8-free-anywhere-candidate-discovery.md'
+      - 'research/63-e8-free-anywhere-real-candidate-run-instructions.md'
+      - 'research/64-e8-free-provider-connectivity-review.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
@@ -60,6 +62,8 @@ on:
       - 'research/60-e8-statistical-pilot-model-benchmark-preregistration.md'
       - 'research/61-e8-free-pilot-execution-results.md'
       - 'research/62-e8-free-anywhere-candidate-discovery.md'
+      - 'research/63-e8-free-anywhere-real-candidate-run-instructions.md'
+      - 'research/64-e8-free-provider-connectivity-review.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
@@ -121,6 +125,8 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e8_free_pilot_runner.py --manifest research/experiments/e8-free-pilot-execution-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e8-free-pilot-execution-summary.json
       - name: Execute E8 free-anywhere candidate discovery
         run: PYTHONPATH=. python scripts/research/e8_free_anywhere_candidate_discovery.py --manifest research/experiments/e8-free-anywhere-candidate-discovery-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e8-free-anywhere-candidate-discovery-summary.json
+      - name: Execute E8 free-anywhere real candidate dry-run
+        run: PYTHONPATH=. python scripts/research/e8_free_anywhere_model_runner.py --dry-run --provider groq --manifest research/experiments/e8-free-anywhere-real-candidate-run-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e8-free-anywhere-model-dry-run-summary.json
       - name: Upload E4 DEV model-proposal metrics
         uses: actions/upload-artifact@v4
         with:
@@ -181,3 +187,8 @@ jobs:
         with:
           name: e8-free-anywhere-candidate-discovery-summary
           path: /tmp/e8-free-anywhere-candidate-discovery-summary.json
+      - name: Upload E8 free-anywhere model dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e8-free-anywhere-model-dry-run-summary
+          path: /tmp/e8-free-anywhere-model-dry-run-summary.json
