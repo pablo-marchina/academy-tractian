@@ -29,6 +29,7 @@ FORBIDDEN_SPLITS = {"LOCKED_TEST"}
 ALLOWED_SPLITS = {"DEV", "VALIDATION"}
 DECISION_CLASSES = {"investigate_only", "action_candidate", "escalation_candidate", "insufficient_evidence"}
 DEFAULT_FIXED_OUTPUT = Path("research/results/e8-groq-free-anywhere-model-run-summary-2026-08-16.json")
+DEFAULT_SPLIT_MANIFEST = Path("research/frozen/benchmark-split-v1.json")
 
 
 def load_json(path: Path) -> Any:
@@ -85,6 +86,19 @@ def normalize_text(payload: Any) -> str:
     return "\n".join(text_values(payload)).lower()
 
 
+def split_groups(split_manifest: dict[str, Any]) -> dict[str, set[str]]:
+    result: dict[str, set[str]] = {}
+    for split_name, split_payload in (split_manifest.get("splits") or {}).items():
+        groups: set[str] = set()
+        for group in split_payload.get("groups", []):
+            if isinstance(group, dict) and group.get("group_id"):
+                groups.add(str(group["group_id"]))
+            elif isinstance(group, str):
+                groups.add(group)
+        result[str(split_name)] = groups
+    return result
+
+
 def collect_oracles(payload: Any) -> dict[str, dict[str, Any]]:
     """Collect flexible DEV/VALIDATION private oracles by group/asset id.
 
@@ -124,6 +138,21 @@ def assert_scope(fixed_summary: dict[str, Any], calls: list[dict[str, Any]]) -> 
             raise AssertionError(f"LOCKED_TEST call present: {call.get('group_id')}")
         if split is not None and split not in ALLOWED_SPLITS:
             raise AssertionError(f"unexpected split in fixed outputs: {split}")
+
+
+def assert_oracle_scope(oracles: dict[str, dict[str, Any]], split_manifest: dict[str, Any]) -> dict[str, Any]:
+    groups_by_split = split_groups(split_manifest)
+    locked_groups = groups_by_split.get("LOCKED_TEST", set())
+    allowed_groups = set().union(*(groups_by_split.get(split, set()) for split in ALLOWED_SPLITS))
+    locked_hits = sorted(set(oracles) & locked_groups)
+    if locked_hits:
+        raise AssertionError(f"private oracle contains LOCKED_TEST groups before final evaluation: {locked_hits}")
+    outside_known_allowed = sorted(group for group in oracles if group.startswith("asset_") and group not in allowed_groups)
+    return {
+        "locked_test_oracle_groups_detected": locked_hits,
+        "known_allowed_oracle_groups": sorted(set(oracles) & allowed_groups),
+        "outside_known_allowed_asset_groups": outside_known_allowed,
+    }
 
 
 def bool_expected(oracle: dict[str, Any], names: tuple[str, ...]) -> bool | None:
@@ -230,19 +259,28 @@ def aggregate(scores: list[dict[str, Any]]) -> dict[str, Any]:
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
     manifest = load_json(args.manifest) if args.manifest else {}
+    split_manifest = load_json(args.split_manifest) if args.split_manifest and args.split_manifest.exists() else {"splits": {}}
     fixed_summary = load_json(args.fixed_output_file) if args.fixed_output_file and args.fixed_output_file.exists() else {}
     if not isinstance(fixed_summary, dict):
         raise AssertionError("fixed output file must be a JSON object")
+    if not isinstance(split_manifest, dict):
+        raise AssertionError("split manifest must be a JSON object")
     calls = collect_calls(fixed_summary)
     assert_scope(fixed_summary, calls)
     output_hashes = sorted({str(call.get("output_hash")) for call in calls if call.get("output_hash")})
     parsed_outputs = [call for call in calls if output_payload(call) is not None]
     oracle_path = args.oracle_file
     oracles: dict[str, dict[str, Any]] = {}
+    oracle_scope = {
+        "locked_test_oracle_groups_detected": [],
+        "known_allowed_oracle_groups": [],
+        "outside_known_allowed_asset_groups": [],
+    }
     if oracle_path is not None and oracle_path.exists():
         if "LOCKED_TEST" in str(oracle_path).upper():
             raise AssertionError("LOCKED_TEST oracle path is forbidden before final evaluation")
         oracles = collect_oracles(load_json(oracle_path))
+        oracle_scope = assert_oracle_scope(oracles, split_manifest)
     scores: list[dict[str, Any]] = []
     for call in calls:
         oracle = oracles.get(str(call.get("group_id")), {})
@@ -258,6 +296,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "allowed_splits": sorted(ALLOWED_SPLITS),
             "forbidden_splits": sorted(FORBIDDEN_SPLITS),
             "locked_test_accessed": False,
+            "oracle_scope": oracle_scope,
         },
         "inputs": {
             "fixed_output_file": str(args.fixed_output_file) if args.fixed_output_file else None,
@@ -272,6 +311,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "scorer_reads_oracle_after_outputs_fixed": True,
             "outputs_hashed_before_scoring": bool(output_hashes),
             "evaluator_only_paths_blocked_from_model": True,
+            "locked_test_oracle_groups_rejected": True,
         },
         "constants_preserved": manifest.get("constants_preserved", {}),
         "aggregate_metrics": aggregate_metrics,
@@ -292,6 +332,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, default=Path("research/experiments/e9-evaluator-side-task-quality-scorer-manifest.json"))
+    parser.add_argument("--split-manifest", type=Path, default=DEFAULT_SPLIT_MANIFEST)
     parser.add_argument("--fixed-output-file", type=Path, default=DEFAULT_FIXED_OUTPUT)
     parser.add_argument("--oracle-file", type=Path, default=None)
     parser.add_argument("--out", type=Path, required=True)
