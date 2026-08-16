@@ -1,15 +1,15 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT RECORDED; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d NEXT  
+**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT RECORDED; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d DEV-ONLY CONSISTENCY GUARD READY  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 16:40 BRT  
+**Progress checkpoint:** 2026-08-16 16:46 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan. It separates frozen evidence/contracts from experimental architecture decisions, preserves the USD 0 provider constraint, and treats private task-quality score as the acceptance signal instead of proxy/schema success.
 
 ## Current gate
 
-E10c ran locally and scored successfully, but it did not improve escalation correctness. The next gate is E10d: a DEV-only visible-output escalation consistency guard. E10d must not use private oracle values; it may only enforce consistency between the model's own visible output fields, such as `decision_class`, `action_escalation_rubric`, `action_endpoint`, `proposed_next_step`, and `risk_notes`.
+E10d is ready for local DEV-only execution. It has not yet produced a real quality score. E10d is a visible-output consistency guard, not an oracle adapter: it must not use private expected paths, VALIDATION feedback, or LOCKED_TEST. The next accepted evidence must come from a local E10d capture scored by `scripts/research/e9_evaluator_side_scorer_v3.py` after outputs are fixed.
 
 ## Frozen / complete
 
@@ -25,6 +25,7 @@ E10c ran locally and scored successfully, but it did not improve escalation corr
 - E10 DEV-only evidence-first loop improved evidence but not action/escalation.
 - E10b DEV-only action/escalation loop improved decision/evidence/action but not escalation.
 - E10c DEV-only escalation loop preserved E10b gains but did not improve escalation.
+- E10d DEV-only visible-output escalation consistency guard manifest, runner, documentation and dry-run CI guard are ready.
 
 ## Current candidate bundle
 
@@ -55,14 +56,22 @@ Interpretation: E8 proxy/schema success was over-optimistic. E10 fixed evidence 
 
 ## E10d DEV-only escalation consistency guard
 
-E10d should not be another prompt-only escalation instruction. It should preserve E10b/E10c evidence, decision and action gains while enforcing output-level consistency based only on the model's own visible response.
+E10d is no longer prompt-only. It preserves E10c generation, then applies a deterministic visible-output guard before private scoring.
+
+### E10d artifacts ready
+
+- `research/experiments/e10d-dev-only-escalation-consistency-guard-manifest.json`
+- `scripts/research/e10d_dev_only_escalation_consistency_guard.py`
+- `research/80-e10d-dev-only-escalation-consistency-guard.md`
+- `.github/workflows/research-e10d.yml`
 
 ### E10d design direction
 
 - If `decision_class=escalation_candidate`, then `requires_human_escalation=true`.
 - If `action_escalation_rubric.needs_human_escalation=true`, then `requires_human_escalation=true`.
 - If `action_endpoint`, `proposed_next_step`, or `risk_notes` names `request-specialist`, `case escalation`, `escalate`, `specialist`, `human approval`, `engineering approval`, `permission`, safety, severity or high operational impact, then `requires_human_escalation=true`.
-- Preserve the model's existing evidence/action decision unless the output is internally inconsistent.
+- If a state-changing maintenance action is selected, the guard may mark human escalation as a human-in-the-loop consistency requirement.
+- Preserve the model's existing `decision_class`, `evidence_plan`, `should_take_action_now`, and `proposed_next_step` unless the escalation field is internally inconsistent.
 - Do not use expected paths, private oracle rows, evaluator labels or validation feedback.
 
 ### E10d acceptance target before full remeasurement
@@ -94,7 +103,8 @@ Do not promote E10d to full DEV+VALIDATION unless a DEV-only private scorer run 
 - [x] E10b DEV-only action/escalation iteration run and scored.
 - [x] E10c DEV-only escalation iteration run and scored.
 - [x] Record E10c as no escalation improvement.
-- [ ] Build E10d DEV-only escalation consistency guard.
+- [x] Build E10d DEV-only escalation consistency guard.
+- [x] Add E10d dry-run CI guard.
 - [ ] Run E10d real DEV-only Groq capture locally.
 - [ ] Score E10d with E9 v3 private scorer.
 - [ ] Compare E10d against E10b/E10c and the acceptance target.
