@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT RECORDED; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d DEV-ONLY PASS; FULL DEV+VALIDATION REMEASUREMENT NEXT  
+**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT RECORDED; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d DEV-ONLY PASS; FULL DEV+VALIDATION REMEASUREMENT READY  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 17:07 BRT  
+**Progress checkpoint:** 2026-08-16 17:15 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan. It separates frozen evidence/contracts from experimental architecture decisions, preserves the USD 0 provider constraint, and treats private task-quality score as the acceptance signal instead of proxy/schema success.
@@ -11,7 +11,7 @@ This is the active execution plan. It separates frozen evidence/contracts from e
 
 E10d ran locally and passed the DEV-only private scorer target. It preserved decision, evidence and action correctness, fixed escalation correctness, kept premature actions and unsupported final claims at 0.0, and kept LOCKED_TEST blocked.
 
-This allows full DEV+VALIDATION remeasurement of the E10d candidate. It does not freeze the final model, provider or architecture.
+The full DEV+VALIDATION remeasurement runner is now ready. It has not yet produced a real full score. The next accepted evidence must come from a local full E10d capture scored by `scripts/research/e9_evaluator_side_scorer_v3.py` after outputs are fixed.
 
 ## Frozen / complete
 
@@ -28,6 +28,7 @@ This allows full DEV+VALIDATION remeasurement of the E10d candidate. It does not
 - E10b DEV-only action/escalation loop improved decision/evidence/action but not escalation.
 - E10c DEV-only escalation loop preserved E10b gains but did not improve escalation.
 - E10d DEV-only visible-output escalation consistency guard passed private DEV-only scoring.
+- E10d full DEV+VALIDATION remeasurement manifest, runner, documentation and dry-run CI are ready.
 
 ## Current candidate bundle
 
@@ -66,6 +67,15 @@ The guard is allowed because it uses only the model's own visible parsed output 
 ## Immediate next gate — full DEV+VALIDATION E10d remeasurement
 
 Now that E10d passed DEV-only, the next step is to run a fixed full DEV+VALIDATION capture for the E10d candidate and score it with E9 v3.
+
+### Full remeasurement artifacts ready
+
+- `research/experiments/e10d-full-dev-validation-remeasurement-manifest.json`
+- `scripts/research/e10d_full_dev_validation_capture.py`
+- `research/82-e10d-full-dev-validation-remeasurement.md`
+- `.github/workflows/research-e10d-full.yml`
+
+The full dry-run CI validates the capture shape without external model calls. The real full Groq capture must still be run locally before claiming any full DEV+VALIDATION quality gain.
 
 ### Full remeasurement rules
 
@@ -110,6 +120,8 @@ The full DEV+VALIDATION E10d candidate should improve over the E9 full baseline 
 - [x] Score E10d with E9 v3 private scorer.
 - [x] Compare E10d against E10b/E10c and the acceptance target.
 - [x] Record E10d as DEV-only acceptance target met.
+- [x] Build full DEV+VALIDATION E10d remeasurement runner.
+- [x] Add full E10d dry-run CI guard.
 - [ ] Run full DEV+VALIDATION E10d capture locally.
 - [ ] Score full DEV+VALIDATION E10d with E9 v3 private scorer.
 - [ ] Compare full E10d against E9 full baseline.
