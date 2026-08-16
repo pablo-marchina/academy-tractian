@@ -18,7 +18,6 @@ import re
 import statistics
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -40,6 +39,9 @@ REQUIRED_OUTPUT_KEYS = {
     "risk_notes",
     "trace_quality_self_check",
 }
+DEFAULT_USER_AGENT = "academy-tractian-e8-free-anywhere-runner/1.1"
+DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 
 SYSTEM_PROMPT = """
 You are an industrial maintenance agent candidate in a benchmark pilot.
@@ -208,7 +210,13 @@ def build_prompt(packet: dict[str, Any], repeat_index: int) -> str:
 
 def post_json(url: str, headers: dict[str, str], payload: dict[str, Any], timeout: int) -> dict[str, Any]:
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers={**headers, "Content-Type": "application/json"}, method="POST")
+    request_headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": os.getenv("E8_HTTP_USER_AGENT", DEFAULT_USER_AGENT),
+        **headers,
+    }
+    req = urllib.request.Request(url, data=data, headers=request_headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             body = resp.read().decode("utf-8")
@@ -219,7 +227,7 @@ def post_json(url: str, headers: dict[str, str], payload: dict[str, Any], timeou
 
 
 def call_groq(prompt: str, timeout: int) -> tuple[str, dict[str, Any]]:
-    model = os.getenv("E8_GROQ_MODEL", "llama-3.1-8b-instant")
+    model = os.getenv("E8_GROQ_MODEL", DEFAULT_GROQ_MODEL)
     payload = {
         "model": model,
         "messages": [
@@ -244,9 +252,8 @@ def call_gemini(prompt: str, timeout: int) -> tuple[str, dict[str, Any]]:
     key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not key:
         raise RuntimeError("Gemini key missing")
-    model = os.getenv("E8_GEMINI_MODEL", "gemini-2.5-flash-lite")
-    encoded_key = urllib.parse.quote(key, safe="")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={encoded_key}"
+    model = os.getenv("E8_GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     payload = {
         "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
@@ -256,7 +263,7 @@ def call_gemini(prompt: str, timeout: int) -> tuple[str, dict[str, Any]]:
             "responseMimeType": "application/json",
         },
     }
-    response = post_json(url, {}, payload, timeout)
+    response = post_json(url, {"x-goog-api-key": key}, payload, timeout)
     candidates = response.get("candidates") or []
     parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
     content = "".join(str(part.get("text", "")) for part in parts)
