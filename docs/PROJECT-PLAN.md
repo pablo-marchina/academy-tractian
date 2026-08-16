@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E10h non-validation-tuned safety blocker analysis recorded; E11 independent action authorization next  
+**Status:** E10h blocker analysis recorded; E11 independent action authorization ready  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 19:31 BRT  
+**Progress checkpoint:** 2026-08-16 19:44 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
@@ -13,7 +13,7 @@ Decision: do not promote E10g to integration gates. E10g full matches E10d/E10e 
 
 E10h records a non-validation-tuned blocker analysis. The analysis concludes that the failed assumption is reliance on post-hoc visible-output self-consistency: when the model produces an internally coherent but overconfident action recommendation, the visible guard may trust the model's own action-safety assertions.
 
-The next design step should not be another VALIDATION-tuned guard. It should be E11: an independent action-authorization policy derived from DEV/public invariants only.
+E11 is now ready as a DEV-only independent action-authorization policy. It does not use VALIDATION for tuning, does not use private oracle values in the model/policy, keeps LOCKED_TEST blocked, and does not treat model `safe_to_act` as sufficient authorization.
 
 ## Full score history
 
@@ -50,13 +50,27 @@ The next design step should not be another VALIDATION-tuned guard. It should be 
 - `research/results/e10h-non-validation-tuned-safety-blocker-analysis-summary-2026-08-16.json`
 - `research/94-e10h-non-validation-tuned-safety-blocker-analysis.md`
 
-## E10h blocker analysis conclusion
+## E11 artifacts ready
 
-E10h is not a new guard and not a tuning step. It uses only sanitized aggregate results and general public/project safety invariants.
+- `research/experiments/e11-dev-only-independent-action-authorization-manifest.json`
+- `scripts/research/e11_dev_only_independent_action_authorization.py`
+- `research/95-e11-dev-only-independent-action-authorization.md`
+- `.github/workflows/research-e11.yml`
 
-The observed failure is class-level: visible-output guards are checking the model's own stated action safety, endpoint, evidence and escalation fields. If those fields are internally coherent but overconfident, the guard has no independent authorization layer strong enough to reject the action.
+## E11 design
 
-Next design direction: independent action authorization. A future candidate should decide whether action is allowed before trusting `safe_to_act` or other model self-attestation.
+E11 adds an independent authorization layer after E10g DEV-only capture. It uses visible parsed output plus public/project tool invariants, but does not use private expected paths, VALIDATION feedback, evaluator labels, reference trajectories or LOCKED_TEST.
+
+The policy authorizes action only after independently checking:
+
+- exact supported endpoint classification;
+- human handoff/review path vs autonomous state-changing maintenance;
+- required endpoint identifiers;
+- endpoint-specific evidence-family sufficiency;
+- human review/escalation support for autonomous state-changing actions;
+- a policy-level explanation for why immediate action is allowed.
+
+Model `safe_to_act=true` is not sufficient authorization.
 
 ## Current action checklist
 
@@ -66,9 +80,24 @@ Next design direction: independent action authorization. A future candidate shou
 - [x] Record E10h non-validation-tuned blocker analysis.
 - [x] Identify the general safety-design failure mode without tuning on VALIDATION.
 - [x] Record that the next candidate should be independent action authorization.
-- [ ] Prepare E11 independent action-authorization policy from DEV/public invariants only.
-- [ ] Run E11 DEV-only before any new full DEV+VALIDATION measurement.
+- [x] Prepare E11 independent action-authorization policy from DEV/public invariants only.
+- [x] Add E11 dry-run CI guard.
+- [ ] Run E11 DEV-only capture locally.
+- [ ] Score E11 DEV-only with E9 v3 private scorer.
+- [ ] Only after DEV-only acceptance, consider a new full DEV+VALIDATION measurement.
 - [ ] Keep final architecture unfrozen.
+
+## E11 acceptance target before any new full remeasurement
+
+- `premature_action_rate = 0.0` on DEV.
+- `unsupported_final_claim_rate = 0.0` on DEV.
+- `evidence_correctness = 1.0` on DEV.
+- `action_correctness >= 0.75` on DEV.
+- `decision_correctness >= 0.75` on DEV.
+- `escalation_correctness = 1.0` on DEV.
+- `real_task_quality >= 0.8571` on DEV.
+- LOCKED_TEST remains blocked.
+- No raw private or fixed-output material is committed.
 
 ## Methodological constraints
 
