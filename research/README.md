@@ -1,168 +1,66 @@
 # Systematic Research Hub
 
-Status: **ACTIVE — Wave 4 complete / post-artifact experiment execution starting**
+**Status: E0 + E1 FROZEN; E2 ACTIVE**  
+**Date:** 2026-08-16
 
-The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN project package. Production architecture is still **not frozen**: partner artifacts have replaced many hypotheses with executable facts, but runtime/model/MCP/policy/evidence decisions must now be resolved through project-specific experiments.
+The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN package. Research has moved from generic architecture exploration to controlled, project-specific experimentation.
 
-Execution plan: [`../docs/PROJECT-PLAN.md`](../docs/PROJECT-PLAN.md)
+## Frozen evidence/contracts
+
+### E0 — Contract
+
+- `research/34-e0-contract-freeze-v1.md`
+- `research/frozen/e0-contract-freeze.manifest.json`
+- `research/frozen/API-BEHAVIOR-MAP-v1.json`
+
+Frozen facts include 18 operations / 17 path templates, the duplicate `/assets/{assetId}` GET+PATCH mapping, explicit `camelCase → snake_case` canonical argument transformation, runner-bound identity/seed and accepted-event/non-persistent action semantics.
+
+### E1 — Gold / ScenarioSchema
+
+- `research/35-e1-gold-freeze-v1.md`
+- `research/frozen/e1-gold-freeze.manifest.json`
+
+Frozen benchmark structure: 16 narrative scenarios, 17 tickets and 10 asset/story groups. Machine trajectories are references, not scripts. Gold remains evaluator-only and is not copied into agent context.
+
+## E2 — Active executable harness
+
+`research/e2/` contains framework-neutral contracts and testable infrastructure:
+
+- executable ScenarioSchema v1 models;
+- 18-operation Canonical ToolSpec registry;
+- runner-owned identity/seed binding;
+- TraceSchema v1 and deterministic trace invariants;
+- observation replay;
+- configuration/artifact hashing;
+- structured deterministic evaluator interfaces.
+
+E2 intentionally does **not** choose the agent runtime, model, MCP, RAG, multi-agent design, routing or observability vendor.
+
+Execution report: `research/36-e2-execution-report.md`  
+Active backlog: `research/37-post-freeze-execution-backlog.md`
 
 ## Source hierarchy
 
-1. Updated TAPI / written Student Guide and partner package.
+1. Updated TAPI / written Student Guide / explicit partner requirements.
 2. Executable supplied API behavior/source.
-3. Raw OpenAPI + agent/eval/data artifacts.
-4. Confidence-labeled kickoff guidance where not contradicted by artifacts.
-5. Primary research/specifications/official framework docs.
-6. Reproducible experiments in this repository.
-7. Project hypotheses.
+3. Raw OpenAPI and supplied agent/eval/data artifacts.
+4. Kickoff guidance when not contradicted by delivered artifacts.
+5. Primary research and official framework documentation.
+6. Reproducible project experiments.
+7. Hypotheses.
 
-Raw package hash and derived findings are recorded in `26-tractian-artifact-ingestion-wave-4.md`. The raw package/eval gold is not copied into the public branch until publication policy is confirmed.
-
-## What the delivered artifacts resolve
-
-- 17 agent-input cases and 16 narrative evaluation scenarios are available.
-- Agent-visible material and evaluator-only gold are explicitly separated.
-- Reference engineer trajectories are references, **not scripts**.
-- The local FastAPI runtime exposes 18 operations across 17 path templates.
-- Actual permission/action classes, synthetic entities and response-mode implementation are inspectable.
-- Actions return accepted execution events and do not persist state in the supplied store.
-- API response modes are controllable through deterministic explicit seeds; omitted seed is also deterministic in executable code.
-- Knowledge corpus is five documents with dedicated search/document endpoints.
-- Only 10 primary asset/story groups support 17 cases, so random ticket splitting would leak related stories.
-
-## High-impact package findings
-
-### Contract integrity
-
-The raw OpenAPI YAML contains `/assets/{assetId}` twice (GET and PATCH). A naïve YAML loader can silently overwrite one operation. Therefore raw contract → duplicate-aware audit → normalized derived contract → runtime conformance is mandatory before tool/code generation.
-
-### Raw API is intentionally/coarsely permissive
-
-The supplied action handlers mainly enforce resource existence, coarse permission and justification length. Independent probes show malformed semantic action payloads can still be accepted.
-
-This creates a strong project-specific experiment around a **guarded contract-aware tool boundary** rather than assuming raw API acceptance equals correct agent behavior.
-
-### Backend does not enforce company/resource ownership
-
-User context exposes company/permissions, but the simplified backend does not reject cross-company action targets when the caller has the coarse permission. Agent/system policy and API enforcement must therefore be evaluated separately.
-
-### Benchmark integrity requires bound context
-
-- `x-user-id` must be bound by the case/session, not selected by the model.
-- response `seed` must be bound by the runner/evaluator, not exposed as a semantic tool argument.
-
-These are experiment-integrity/security constraints, not optional agent reasoning choices.
-
-### Action oracle changed from pre-API assumption
-
-Because accepted actions do not persist state, final-state equality is not the correct primary oracle for these action scenarios. Evaluate decision/tool/target/args/policy/justification/accepted response/no duplicate instead.
-
-### Gold requires normalization
-
-`eval/expected-paths.json` is useful but materially less complete than narrative scenario policies, expected resolutions and P1/P2 criteria. Exact sequence match must not be the benchmark. ScenarioSchema v1 must merge both sources into structured oracles.
-
-### Kickoff confirmation guidance is now demoted
-
-The kickoff described requester confirmation for mutations, but canonical delivered action scenarios do not model confirmation as a universal precondition. Confirmation remains a **separate guarded safety experiment** unless partner clarification promotes it to official case policy.
-
-## Research status
-
-| Area | Status after Wave 4 |
-|---|---|
-| Requirements/scope | Strongly resolved; a few instructor/model/publication questions remain |
-| API/domain | Actual runtime/source mapped (`API-MAP-v0`) |
-| Package/gold | Inventory and divergence audit complete (`GOLD-MAP-v0`) |
-| Contract | Critical duplicate-key/typing issues identified; normalization implementation is next |
-| Canonical ToolSpec | Exact integrity constraints now known; implementation/experiment pending |
-| Evaluation | v0 contracts exist; v1 normalization from actual scenarios is next |
-| Safety/policy | Real raw-API weaknesses support controlled guarded-boundary experiment |
-| Evidence/stopping | Actual response modes/overrides known; experiment ready to implement |
-| Reliability | Can separate fixed-environment agent reliability from seed-based API robustness |
-| Runtime | LangGraph / Pydantic AI/Graph / OpenAI Agents SDK remain candidates; spike pending |
-| MCP | Same ToolSpec native-vs-MCP experiment pending |
-| Models | Project benchmark method ready; provider availability still to confirm at execution time |
-| RAG | Direct knowledge API baseline strongly favored; external RAG conditional |
-| Multi-agent/routing/optimization | Still conditional; no evidence yet to add them |
-| Statistics | Pilot unlocked; exact `k` still not guessed |
-
-## Central experiment program
-
-The strongest current hypothesis candidate is not “framework X is best”; it is:
+## Central hypothesis
 
 > **Does a guarded, contract-aware tool boundary materially improve argument correctness and safety over a minimally wrapped baseline while preserving task success and acceptable efficiency?**
 
-Staged variants:
+Variants B0–B3 are the core attribution experiment; B4 confirmation remains a separate safety extension unless partner policy changes.
 
-- B0 benchmark-valid minimal wrapper;
-- B1 + strict typed argument validation;
-- B2 + deterministic permission/company/resource policy guard;
-- B3 + explicit evidence-aware action/escalation policy;
-- B4 confirmation extension, separately reported unless official policy changes.
+## Critical path
 
-After this, runtime/MCP/model choices are evaluated while holding canonical tools/scenarios/evaluator constant.
+`E0 freeze → E1 freeze → E2 harness → E3 leakage-aware split → B0–B3 → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
 
-## Experiment decomposition enabled by actual seed semantics
+## Important methodological rule
 
-### Canonical task correctness
+Do not freeze a framework because implementation has started. Framework-neutral infrastructure can be built now; architecture-changing choices require project-specific evidence and an ADR.
 
-Use a fixed environment (typically explicit complete seed where not overridden) and normalized scenario oracles.
-
-### Environment robustness
-
-Vary deterministic explicit seeds to induce targeted complete/partial/inconclusive/conflict/unavailable observations.
-
-### Agent/model reliability
-
-Hold environment seed/observations fixed and repeat stochastic agent/model runs.
-
-This prevents API variability and model variability from being mixed into one uninterpretable score.
-
-## Current critical path
-
-The order is now intentionally strict:
-
-1. **E0 — normalize/conformance-test OpenAPI** → `NORMALIZED-CONTRACT-v1`.
-2. **E1 — human-review machine+narrative gold** → ScenarioSchema v1.
-3. **E2 — implement Canonical ToolSpec + evaluator + TraceSchema v1 + replay/provenance**.
-4. **E3 — freeze asset/story-aware dev/validation/locked-test split**.
-5. **E4 — execute B0–B3 guarded-boundary experiment**.
-6. **E5 — execute fixed/free/evidence-aware stopping experiment**.
-7. **E6/E7 — identical runtime and native-vs-MCP spikes**.
-8. **E8 — statistical pilot + project-native model benchmark**.
-9. **E9 — test optional complexity only where residual failures justify it**.
-10. Close ADR set → **`FROZEN-v1` target: 2026-08-27**.
-
-The detailed calendar, exit conditions and MUST/SHOULD/CONDITIONAL priorities are in [`../docs/PROJECT-PLAN.md`](../docs/PROJECT-PLAN.md).
-
-## Files
-
-### Waves 1–3
-
-`00`–`23` contain research protocol, requirements, literature/evidence synthesis, candidate stack, safety/reliability/statistics, state/memory/context, observability, model/RAG methodology, runtime/MCP deep dives, ScenarioSchema v0, TraceSchema v0, spikes and Swagger-audit preparation.
-
-### 2026-08-13 evidence updates
-
-- `24-updated-tapi-impact-2026-08-13.md`
-- `25-kickoff-evidence-2026-08-13.md`
-
-### Wave 4 — delivered TRACTIAN artifacts
-
-- `26-tractian-artifact-ingestion-wave-4.md` — package inventory, hash, source hierarchy and validation notes.
-- `27-api-map-v0-wave-4.md` — actual endpoints/actions/permissions/state/seed semantics.
-- `28-gold-map-v0-wave-4.md` — cases/scenarios/reference-path analysis and split/oracle implications.
-- `29-contract-and-package-quality-audit-wave-4.md` — contract/data/documentation inconsistencies and normalization policy.
-- `30-post-artifact-experiment-program-wave-4.md` — pre-registered implementation/experiment sequence.
-
-### Schemas / plans / decisions
-
-- `schemas/scenario-v0.schema.json`
-- `schemas/trace-v0.schema.json`
-- `sources.md`
-- `../docs/PROJECT-PLAN.md`
-- `../docs/adr/000-template.md`
-
-## Research Gate principle
-
-Do not freeze a framework simply because implementation has started. Infrastructure can be implemented framework-neutrally, but every architecture-changing choice remains a hypothesis until its designated project experiment/ADR is complete.
-
-If schedule pressure appears, cut optional complexity first. Do **not** weaken gold isolation, split integrity, conformance, evaluator validity or locked-test discipline.
+If schedule pressure appears, cut optional complexity first. Do not weaken contract conformance, gold isolation, evaluator validity, split integrity or locked-test discipline.
