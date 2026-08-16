@@ -1,0 +1,82 @@
+{
+  "schema_version": "e7-native-tools-vs-mcp-v1",
+  "id": "E7-native-tools-vs-mcp-discriminating-setup",
+  "date": "2026-08-16",
+  "status": "PREREGISTERED",
+  "purpose": "Compare native tool-call and MCP-compatible exposure surfaces over the same ToolSpec, HarnessRunner, B3 boundary, evidence-sufficiency policy and live API transport path.",
+  "scope": {
+    "allowed_splits": [
+      "DEV",
+      "VALIDATION"
+    ],
+    "forbidden_splits": [
+      "LOCKED_TEST"
+    ],
+    "locked_test_accessed": false
+  },
+  "constants": {
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "execution_boundary": "HarnessRunner",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "runtime_candidate": "LangGraph",
+    "transport_path": "HttpxTransport",
+    "identity_binding": "runner",
+    "seed_binding": "runner",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "observability_freeze": false,
+    "ui_freeze": false
+  },
+  "surfaces": [
+    {
+      "id": "native_tools",
+      "description": "Internal native tool-call envelope over ToolSpec: {tool_name, arguments}.",
+      "must_use_same_registry": true,
+      "must_use_harness_runner": true
+    },
+    {
+      "id": "mcp_compatible",
+      "description": "JSON-RPC-style tools/list and tools/call envelope mapped back into ToolSpec and HarnessRunner.",
+      "must_use_same_registry": true,
+      "must_use_harness_runner": true,
+      "mcp_topology_freeze": false
+    }
+  ],
+  "representative_groups": {
+    "DEV": [
+      "asset_G501",
+      "asset_C710"
+    ],
+    "VALIDATION": [
+      "asset_B204",
+      "asset_M102"
+    ]
+  },
+  "required_checks": [
+    "same_ToolSpec_registry_exposed_by_both_surfaces",
+    "schema_equivalence_between_native_and_mcp_compatible_tools",
+    "same_HarnessRunner_execution_boundary",
+    "B3_policy_events_preserved",
+    "evidence_sufficiency_events_preserved",
+    "RunTrace_compatible_output",
+    "DEV_and_VALIDATION_only",
+    "LOCKED_TEST_blocked",
+    "HttpxTransport_live_path_preserved",
+    "latency_overhead_measured",
+    "complexity_proxy_measured",
+    "portability_proxy_measured"
+  ],
+  "comparators_retained": [
+    "pydantic_ai_graph",
+    "openai_agents_sdk"
+  ],
+  "success_interpretation": {
+    "e7_pass": "Both native and MCP-compatible surfaces preserve ToolSpec coverage, schema equivalence, HarnessRunner execution, B3 guard fidelity and RunTrace compatibility over DEV+VALIDATION only.",
+    "not_mcp_topology_freeze": true,
+    "not_final_architecture_freeze": true
+  }
+}
