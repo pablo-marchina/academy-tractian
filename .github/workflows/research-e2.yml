@@ -59,8 +59,15 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e4_dev_runner.py --split-manifest research/frozen/benchmark-split-v1.json --split DEV --proposal-source-class scripted_reference --out /tmp/e4-dev-runner-smoke.json
       - name: Execute E4 DEV model-proposal adapter
         run: PYTHONPATH=. python scripts/research/e4_model_proposal_adapter.py --split-manifest research/frozen/benchmark-split-v1.json --proposal-plan research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json --split DEV --out /tmp/e4-dev-model-proposal-boundary.json
+      - name: Execute E4 DEV scoreable proposal adapter
+        run: PYTHONPATH=. python scripts/research/e4_model_proposal_adapter.py --split-manifest research/frozen/benchmark-split-v1.json --proposal-plan research/experiments/e4-dev-scoreable-proposal-plan-gpt-5-5-thinking-2026-08-16.json --split DEV --out /tmp/e4-dev-scoreable-proposal-boundary.json
       - name: Upload E4 DEV model-proposal metrics
         uses: actions/upload-artifact@v4
         with:
           name: e4-dev-model-proposal-boundary
           path: /tmp/e4-dev-model-proposal-boundary.json
+      - name: Upload E4 DEV scoreable proposal metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: e4-dev-scoreable-proposal-boundary
+          path: /tmp/e4-dev-scoreable-proposal-boundary.json
