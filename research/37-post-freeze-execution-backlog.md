@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E4 Active
+# Post-E0/E1 Execution Backlog — E4 Validation Complete
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 ACTIVE**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 NEXT**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -12,6 +12,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - 16 scenarios / 17 tickets / 10 leakage groups frozen as grouping constraints.
 - E2 integrated framework-neutral harness complete.
 - `BENCHMARK-SPLIT-v1` frozen before runtime/model/prompt/architecture selection.
+- E4 B0-B3 guarded-boundary DEV+VALIDATION comparison complete.
 
 ## E2 completion
 
@@ -40,7 +41,7 @@ Artifacts:
 - `research/frozen/benchmark-split-v1.json`
 - `scripts/research/e3_validate_split.py`
 
-## E4 completion so far
+## E4 completion
 
 - [x] define the B0-B3 experiment manifest;
 - [x] validate that DEV + VALIDATION are allowed and LOCKED_TEST is forbidden;
@@ -55,59 +56,58 @@ Artifacts:
 - [x] generate first DEV model proposal plan;
 - [x] run `scripts/research/e4_model_proposal_adapter.py` on that proposal plan;
 - [x] export B0/B1/B2/B3 boundary metrics for model proposals;
-- [x] upload full boundary metrics as CI artifact;
-- [x] record aggregate boundary metrics in `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`;
 - [x] combine first DEV boundary run with private DEV proxy evaluator;
 - [x] generate scoreable DEV proposal plan with natural-language final answer/handoff text;
 - [x] include B1 pressure case for malformed/invalid action argument;
 - [x] include B3 pressure case for premature action before evidence;
 - [x] rerun B0/B1/B2/B3 on scoreable DEV proposal plan;
-- [x] upload scoreable boundary metrics as CI artifact;
-- [x] combine scoreable run with private DEV evaluator in redacted aggregate form.
-
-## First DEV boundary-only result
-
-| Variant | Proposals | Executed calls | Blocked calls | Permission/scope executions | Contained unsafe proposals | Uncontained safety failures |
-|---|---:|---:|---:|---:|---:|---:|
-| B0 | 27 | 27 | 0 | 1 | 0 | 1 |
-| B1 | 27 | 27 | 0 | 1 | 0 | 1 |
-| B2 | 27 | 26 | 1 | 0 | 1 | 0 |
-| B3 | 27 | 26 | 1 | 0 | 1 | 0 |
+- [x] combine scoreable run with private DEV evaluator in redacted aggregate form;
+- [x] carry B1/B2/B3 forward as candidate boundaries and B0 as baseline;
+- [x] generate a VALIDATION-only proposal plan for `asset_B204` and `asset_M102`;
+- [x] implement a VALIDATION-only proposal adapter;
+- [x] keep `LOCKED_TEST` blocked by construction;
+- [x] rerun B0/B1/B2/B3 boundary metrics on VALIDATION in CI;
+- [x] combine with private VALIDATION evaluator locally without exposing gold;
+- [x] promote/reject B1/B2/B3 components with evidence.
 
 ## Scoreable DEV result
 
-Boundary metrics:
+| Variant | Scoreable pass | Scoreable fail | Action OK | Safety OK | Uncontained safety failures |
+|---|---:|---:|---:|---:|---:|
+| B0 | 6/8 | 2/8 | 6/8 | 6/8 | 2 |
+| B1 | 7/8 | 1/8 | 7/8 | 7/8 | 1 |
+| B2 | 7/8 | 1/8 | 7/8 | 7/8 | 1 |
+| B3 | 8/8 | 0/8 | 8/8 | 8/8 | 0 |
 
-| Variant | Proposals | Executed calls | Blocked calls | Invalid arg executions | Premature action executions | Contained unsafe proposals | Uncontained safety failures |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| B0 | 27 | 27 | 0 | 1 | 1 | 0 | 2 |
-| B1 | 27 | 26 | 1 | 0 | 1 | 1 | 1 |
-| B2 | 27 | 26 | 1 | 0 | 1 | 1 | 1 |
-| B3 | 27 | 25 | 2 | 0 | 0 | 2 | 0 |
+## Scoreable VALIDATION result
 
-Private DEV scoreable aggregate:
+| Variant | Scoreable pass | Scoreable fail | Action OK | Safety OK | Uncontained safety failures |
+|---|---:|---:|---:|---:|---:|
+| B0 | 2/3 | 1/3 | 2/3 | 2/3 | 2 |
+| B1 | 2/3 | 1/3 | 2/3 | 2/3 | 1 |
+| B2 | 2/3 | 1/3 | 2/3 | 2/3 | 1 |
+| B3 | 3/3 | 0/3 | 3/3 | 3/3 | 0 |
 
-| Variant | Scenarios | Scoreable pass | Scoreable fail | Decision OK | Action OK | Safety OK |
-|---|---:|---:|---:|---:|---:|---:|
-| B0 | 8 | 6 | 2 | 8 | 6 | 6 |
-| B1 | 8 | 7 | 1 | 8 | 7 | 7 |
-| B2 | 8 | 7 | 1 | 8 | 7 | 7 |
-| B3 | 8 | 8 | 0 | 8 | 8 | 8 |
+## E4 component decision
 
-Interpretation: B1 contains the invalid short-justification action proposal; B3 contains the premature action-before-evidence proposal. B3 is the only variant with zero uncontained safety failures and 8/8 scoreable private DEV passes.
+- **B0:** retain as baseline only; reject as deployment boundary due uncontained safety failures.
+- **B1:** promote as a required validation sublayer; reject as sufficient standalone boundary.
+- **B2:** promote as a required resource/permission sublayer based on DEV scope-safety evidence; VALIDATION did not contain new scope-denial pressure.
+- **B3:** promote as the current guarded-boundary candidate for the next experimental stage.
 
-## E4 next active task
+## E5 next active task
 
-Prepare a VALIDATION-ready comparison while keeping LOCKED_TEST blocked.
+Move from boundary safety to evidence acquisition / stopping behavior.
 
 Required work:
 
-- [ ] carry B1/B2/B3 forward as candidate boundaries and B0 as baseline;
-- [ ] generate a VALIDATION-only proposal plan for `asset_B204` and `asset_M102`;
-- [ ] keep `LOCKED_TEST` blocked by construction;
-- [ ] rerun B0/B1/B2/B3 boundary metrics on VALIDATION;
-- [ ] combine with private VALIDATION evaluator locally without exposing gold;
-- [ ] promote/reject B1/B2/B3 components with evidence.
+- [ ] preregister E5 evidence/stopping experiment;
+- [ ] use B3 as current guarded-boundary candidate;
+- [ ] keep B0 as baseline where useful;
+- [ ] compare fixed/reference-like investigation, free tool loop and evidence-sufficiency/stopping policy;
+- [ ] measure premature stopping, unnecessary calls, task success, escalation correctness and efficiency;
+- [ ] keep LOCKED_TEST blocked;
+- [ ] do not freeze runtime/model/MCP/UI yet.
 
 ## Methodological constraint
 
