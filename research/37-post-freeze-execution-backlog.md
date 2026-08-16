@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E2 Complete, E3 Next
+# Post-E0/E1 Execution Backlog — E3 Frozen, E4 Next
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 UNLOCKED**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 NEXT**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -11,6 +11,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - `ScenarioSchema v1` semantics frozen.
 - 16 scenarios / 17 tickets / 10 leakage groups frozen as grouping constraints.
 - E2 integrated framework-neutral harness complete.
+- `BENCHMARK-SPLIT-v1` frozen before runtime/model/prompt/architecture selection.
 
 ## E2 completion
 
@@ -68,21 +69,48 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 
 Completion report: `research/39-e2-integrated-completion-report.md`.
 
-## E3 — next active gate
+## E3 completion
 
-Freeze `DEV / VALIDATION / LOCKED_TEST` across the already frozen 10 asset/story groups before any model/runtime/prompt optimization.
+Frozen assignment:
+
+- [x] **DEV:** `asset_G501`, `asset_C710`, `asset_S420`, `asset_M208`, `asset_M101` — 5 groups / 8 scenarios;
+- [x] **VALIDATION:** `asset_B204`, `asset_M102` — 2 groups / 3 scenarios;
+- [x] **LOCKED_TEST:** `asset_V301`, `asset_M605`, `asset_M205` — 3 groups / 5 scenarios.
+
+Completed work:
+
+- [x] construct a group-level coverage matrix for contextualization / investigation / execution;
+- [x] map action types, permission classes, response modes and uncertainty behaviors by group;
+- [x] generate group assignment without splitting any storyline;
+- [x] choose a split using explicit coverage objectives, not random ticket-level sampling;
+- [x] document unavoidable coverage compromises caused by only 10 independent groups;
+- [x] freeze `BENCHMARK-SPLIT-v1` public manifest;
+- [x] add a programmatic leakage assertion;
+- [x] make locked-test assignment unavailable to later architecture/model/prompt selection by policy.
+
+Artifacts:
+
+- `research/40-e3-benchmark-split-freeze-v1.md`
+- `research/frozen/benchmark-split-v1.json`
+- `scripts/research/e3_validate_split.py`
+
+## E4 — next active gate
+
+Run the guarded-boundary experiment B0-B3 using DEV for development/debugging and VALIDATION for selection. Do not inspect or optimize against LOCKED_TEST.
 
 Required work:
 
-- [ ] construct a group-level coverage matrix for contextualization / investigation / execution;
-- [ ] map action types, permission classes, response modes and uncertainty behaviors by group;
-- [ ] generate candidate group assignments without splitting any storyline;
-- [ ] choose a split using explicit coverage objectives, not random ticket-level sampling;
-- [ ] document unavoidable coverage compromises caused by only 10 independent groups;
-- [ ] freeze `BENCHMARK-SPLIT-v1` + SHA-256 manifest;
-- [ ] add a programmatic leakage assertion;
-- [ ] make locked-test assignment unavailable to later architecture/model/prompt selection code.
+- [ ] define the B0-B3 experiment manifest;
+- [ ] bind DEV/VALIDATION groups into the runner without exposing locked-test gold;
+- [ ] implement or connect the first non-demo model/tool proposal generator;
+- [ ] run B0 minimal wrapper on DEV;
+- [ ] run B1 strict typed validation;
+- [ ] run B2 permission/resource guard;
+- [ ] run B3 evidence-aware action/escalation;
+- [ ] report contained unsafe proposals separately from executed safety failures;
+- [ ] compute task/conclusion success, argument correctness, evidence coverage, action correctness and efficiency;
+- [ ] promote/reject each boundary component by measured value.
 
 ## Methodological constraint
 
-No item in E2 was an agent demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment.
+No item in E2 or E3 is an agent demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment.
