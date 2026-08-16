@@ -1,20 +1,24 @@
-name: research-e2
+name: research-e2-e3
 
 on:
   push:
     branches: [research/systematic-foundation]
     paths:
       - 'research/e2/**'
+      - 'research/frozen/benchmark-split-v1.json'
       - 'scripts/research/e2_*.py'
+      - 'scripts/research/e3_validate_split.py'
       - '.github/workflows/research-e2.yml'
   pull_request:
     paths:
       - 'research/e2/**'
+      - 'research/frozen/benchmark-split-v1.json'
       - 'scripts/research/e2_*.py'
+      - 'scripts/research/e3_validate_split.py'
       - '.github/workflows/research-e2.yml'
 
 jobs:
-  e2-unit:
+  e2-e3-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,3 +29,5 @@ jobs:
         run: python -m pip install 'pydantic>=2.6,<3' 'pytest>=8'
       - name: Run E2 suite
         run: python -m pytest research/e2/tests -q
+      - name: Validate E3 benchmark split
+        run: python scripts/research/e3_validate_split.py --split research/frozen/benchmark-split-v1.json
