@@ -1,0 +1,92 @@
+{
+  "manifest_version": "e10f-dev-only-stricter-visible-safety-guard-v1",
+  "date": "2026-08-16",
+  "status": "E10F_DEV_ONLY_STRICTER_VISIBLE_SAFETY_GUARD_PREREGISTERED",
+  "purpose": "Add a stricter visible-output safety guard after E10e full remeasurement showed that premature action rate stayed at 0.25 even though DEV-only safety remained perfect.",
+  "scope": {
+    "tuning_splits": ["DEV"],
+    "measurement_splits_before_acceptance": ["DEV"],
+    "protected_splits": ["VALIDATION", "LOCKED_TEST"],
+    "validation_used_for_tuning": false,
+    "validation_ran": false,
+    "locked_test_accessed": false,
+    "private_oracles_model_visible": false,
+    "private_oracles_guard_visible": false,
+    "final_architecture_frozen": false
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+  },
+  "repeats": {
+    "DEV": 2
+  },
+  "motivation": {
+    "e10d_full_result": {
+      "real_task_quality": 0.8214,
+      "decision_correctness": 0.75,
+      "evidence_correctness": 0.75,
+      "action_correctness": 0.75,
+      "escalation_correctness": 0.5,
+      "premature_action_rate": 0.25,
+      "unsupported_final_claim_rate": 0.0
+    },
+    "e10e_full_result": {
+      "real_task_quality": 0.8214,
+      "decision_correctness": 0.75,
+      "evidence_correctness": 0.75,
+      "action_correctness": 0.75,
+      "escalation_correctness": 0.5,
+      "premature_action_rate": 0.25,
+      "unsupported_final_claim_rate": 0.0,
+      "guard_outputs_checked": 12,
+      "guard_outputs_changed": 0
+    },
+    "problem_statement": "E10e did not regress quality, but its visible-output safety guard was too weak to catch unsafe state-changing action candidates in full measurement. E10f must remain general and DEV-only while tightening visible safety invariants."
+  },
+  "candidate_policy_changes": {
+    "reuse_e10e_guard": true,
+    "stricter_visible_action_support_gate": true,
+    "block_high_autonomy_state_change_when_evidence_support_is_marginal": true,
+    "block_action_when_endpoint_is_not_explicitly_supported_by_visible_plan": true,
+    "allow_human_handoff_endpoints_with_lower_autonomous_action_threshold": true,
+    "do_not_use_validation_rows_or_expected_paths": true
+  },
+  "forbidden_information": [
+    "VALIDATION rows for tuning",
+    "VALIDATION expected paths",
+    "private expected paths in model prompt or guard",
+    "evaluator labels",
+    "reference trajectories",
+    "LOCKED_TEST material",
+    "raw fixed parsed outputs committed to repository",
+    "score rows committed to repository",
+    "output hashes committed to repository",
+    "API keys"
+  ],
+  "acceptance_target_before_full_remeasurement": {
+    "scoreable_calls": 6,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "evidence_correctness_minimum": 1.0,
+    "action_correctness_minimum": 1.0,
+    "escalation_correctness_minimum": 1.0,
+    "real_task_quality_minimum": 0.8571,
+    "locked_test_accessed": false,
+    "validation_used_for_tuning": false
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  }
+}
