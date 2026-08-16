@@ -1,10 +1,10 @@
 # E4 — Execution Start Report
 
 **Date:** 2026-08-16  
-**Status:** ACTIVE / DEV-RUNNER-SMOKE-GREEN  
+**Status:** ACTIVE / MODEL-PROPOSAL-ADAPTER-GREEN  
 **Scope:** DEV + VALIDATION only; `LOCKED_TEST` blocked
 
-E4 has started with a preregistered B0-B3 manifest, CI-level validation and a DEV-only runner smoke execution. This report records the transition from E3 split freeze to E4 controlled execution.
+E4 has started with a preregistered B0-B3 manifest, CI-level validation, a DEV-only runner smoke execution and a DEV-only model-proposal adapter. This report records the transition from E3 split freeze to E4 controlled execution.
 
 ## What was executed
 
@@ -14,7 +14,9 @@ Created:
 - `research/experiments/e4-b0-b3-experiment-manifest.json`
 - `scripts/research/e4_validate_experiment_manifest.py`
 - `scripts/research/e4_dev_runner.py`
+- `scripts/research/e4_model_proposal_adapter.py`
 - `research/e4/tests/test_dev_runner.py`
+- `research/e4/tests/test_model_proposal_adapter.py`
 
 Updated:
 
@@ -24,14 +26,15 @@ The workflow now validates:
 
 1. E2 unit suite;
 2. E4 DEV runner tests;
-3. E3 frozen split;
-4. E4 experiment manifest;
-5. E4 DEV runner smoke execution.
+3. E4 model-proposal adapter tests;
+4. E3 frozen split;
+5. E4 experiment manifest;
+6. E4 DEV runner smoke execution.
 
 Latest green CI run:
 
 - E2 suite: 24 passed;
-- E4 DEV runner tests: 3 passed;
+- E4 test suite: DEV runner + model-proposal adapter tests passed;
 - E3 split validator: PASS;
 - E4 experiment manifest validator: PASS;
 - E4 DEV smoke execution: success.
@@ -49,6 +52,23 @@ The E4 DEV runner:
 - executes B0/B1/B2/B3 variants through the framework-neutral `HarnessRunner`;
 - exports per-variant metrics as JSON;
 - records contained unsafe proposals separately from uncontained/executed safety failures.
+
+## Model-proposal adapter behavior
+
+The E4 model-proposal adapter:
+
+- consumes a recorded model/agent proposal plan;
+- requires `proposal_source_class=model_agent`;
+- requires a non-scripted provider/model identity in the proposal plan;
+- loads only public `BENCHMARK-SPLIT-v1` metadata;
+- permits only DEV in the adapter;
+- rejects `LOCKED_TEST` and non-DEV groups by construction;
+- uses runner-bound identity and seed;
+- runs B0/B1/B2/B3 over the same model proposal stream;
+- exports per-variant boundary metrics;
+- reports `agent_quality_evidence=true` but `task_success_evidence=false` because private evaluator-only gold is not loaded by this adapter.
+
+This distinction is intentional. The adapter can now evaluate whether B1/B2/B3 contain unsafe model proposals on DEV, but task/conclusion success still requires the private DEV evaluator path.
 
 ## E4 scope
 
@@ -95,31 +115,33 @@ Expected smoke progression:
 Allowed E4 splits are:
 
 - DEV for debugging;
-- VALIDATION for selection after DEV harness and proposal source are ready.
+- VALIDATION for selection after DEV harness and model proposal source are ready.
 
 ## Non-demo protection
 
-The manifest and runner explicitly reject demo-first development:
+The manifest, runner and adapter explicitly reject demo-first development:
 
 - scripted reference paths are not agent-quality evidence;
 - test doubles are not agent-quality evidence;
 - quality claims require a non-demo proposal source;
 - hard safety is reported separately from quality metrics;
-- contained unsafe proposals are not treated as executed safety failures, but remain visible as agent-layer failures.
+- contained unsafe proposals are not treated as executed safety failures, but remain visible as agent-layer failures;
+- boundary metrics are not silently promoted to full task success.
 
 ## Next executable step
 
-The next E4 task is to replace the smoke proposal source with the first **non-demo model/tool proposal generator** for DEV only:
+The next E4 task is to connect the first actual DEV model/agent proposal generator to produce a proposal plan compatible with `scripts/research/e4_model_proposal_adapter.py`:
 
 ```text
-E4 DEV model-proposal adapter
-├── consume only DEV scenarios
+E4 DEV model-proposal generation
+├── consume only DEV cases
 ├── keep LOCKED_TEST blocked by construction
 ├── bind identity/seed through runner
-├── emit explicit proposal_source_class=model_agent
-├── run B0/B1/B2/B3 on DEV
-├── export per-variant metric tables
-└── keep all failures visible
+├── emit proposal_source_class=model_agent
+├── write recorded proposal plan
+├── run e4_model_proposal_adapter.py
+├── export boundary metrics by B0/B1/B2/B3
+└── then combine with private DEV evaluator for task/conclusion success
 ```
 
 No runtime/prompt/architecture decision is allowed until non-demo DEV evidence exists and is then checked on VALIDATION.
