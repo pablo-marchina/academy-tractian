@@ -9,6 +9,10 @@
     "e10f_dev_result": "Safety preserved but action/decision overblocked on DEV.",
     "e10g_dev_result": "DEV-only safety/action target met with real_task_quality=1.0 and premature_action_rate=0.0."
   },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"],
+    "VALIDATION": ["asset_B204", "asset_M102"]
+  },
   "scope": {
     "measurement_splits": ["DEV", "VALIDATION"],
     "validation_used_for_tuning": false,
