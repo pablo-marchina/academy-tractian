@@ -1,0 +1,49 @@
+{
+  "report_version": "e6-live-api-integration-summary-v1",
+  "date": "2026-08-16",
+  "status": "CONTRACT_PASS_LIVE_ENDPOINT_REQUIRED",
+  "scope": {
+    "allowed_splits": [
+      "DEV",
+      "VALIDATION"
+    ],
+    "forbidden_splits": [
+      "LOCKED_TEST"
+    ],
+    "locked_test_accessed": false,
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "ui_freeze": false
+  },
+  "live_api_transport_configured": true,
+  "live_api_transport": "HttpxTransport",
+  "live_api_executed": false,
+  "live_api_missing_reason": "No --api-base-url was provided in CI/contract mode.",
+  "tool_spec_registry_size": 18,
+  "harness_runner_used": "configured_for_live_mode",
+  "b3_external_guard_preserved": true,
+  "evidence_sufficiency_policy_explicit": true,
+  "adaptive_evidence_planning": true,
+  "model_proposal_generation_connected": true,
+  "proposal_generation_gold_leakage_blocked": true,
+  "representative_groups": {
+    "DEV": [
+      "asset_G501",
+      "asset_C710"
+    ],
+    "VALIDATION": [
+      "asset_B204",
+      "asset_M102"
+    ]
+  },
+  "comparators_retained": [
+    "pydantic_ai_graph",
+    "openai_agents_sdk"
+  ],
+  "ci_run_id": 31949759607,
+  "ci_artifact_id": 9264308984,
+  "ci_job_status": "success",
+  "next_required_command": "PYTHONPATH=. python scripts/research/e6_live_api_langgraph_runner.py --transport-mode live --api-base-url http://localhost:8000 --agent-input-cases <TRACTIAN_PACKAGE>/agent-input/cases.json --manifest research/experiments/e6-live-api-integration-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e6-live-api-integration-summary.json --require-live"
+}
