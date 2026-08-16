@@ -1,9 +1,9 @@
 # Systematic Research Hub
 
-**Status: E0 + E1 FROZEN; E2 ACTIVE — Wave 2**  
+**Status: E0 + E1 FROZEN; E2 COMPLETE; E3 UNLOCKED**  
 **Date:** 2026-08-16
 
-The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN package. Research has moved from generic architecture exploration to controlled, project-specific experimentation.
+The project now has the updated TAPI, kickoff evidence, the actual TRACTIAN package, frozen contract/gold semantics and a validated framework-neutral experimental harness. Research has moved from generic architecture exploration to controlled, project-specific experimentation.
 
 ## Frozen evidence/contracts
 
@@ -22,32 +22,43 @@ Frozen facts include 18 operations / 17 path templates, the duplicate `/assets/{
 
 Frozen benchmark structure: 16 narrative scenarios, 17 tickets and 10 asset/story groups. Machine trajectories are references, not scripts. Gold remains evaluator-only and is not copied into agent context.
 
-## E2 — Active executable harness
+## E2 — Complete executable harness
 
-`research/e2/` now contains framework-neutral contracts and testable infrastructure:
+`research/e2/` contains framework-neutral contracts and validated experimental infrastructure:
 
 - executable ScenarioSchema v1 models;
 - 18-operation Canonical ToolSpec registry;
-- runner-owned identity/seed binding;
+- explicit per-tool runner-bound seed support;
+- runner-owned identity boundary;
 - deterministic B0 HTTP transport;
-- TraceSchema v1 and deterministic trace invariants;
-- observation replay and volatile trace normalization;
-- configuration/artifact hashing;
-- deterministic B1/B2 foundations;
+- strict B1 argument validation;
+- deterministic B2 permission/resource guard;
 - evidence-aware B3 action gate;
-- structured argument, conclusion/fact and escalation/handoff evaluators;
-- deterministic pass/fail fixtures.
+- integrated `HarnessRunner` with separate proposal/call/result/observation events;
+- TraceSchema v1 and deterministic trace invariants;
+- live capture, replay and volatile trace normalization;
+- configuration/artifact hashing;
+- integrated deterministic evaluator suite;
+- registry-vs-contract conformance tooling;
+- reproducible real-API transport/trace/replay probe;
+- GitHub Actions verification.
 
-A reproducible CEN-01 real-API transport/conformance probe lives at `scripts/research/e2_b0_real_api_probe.py`. It validates infrastructure only; it is not a demo and is not evidence of agent quality.
+Validation evidence:
 
-E2 intentionally does **not** choose the agent runtime, model, MCP, RAG, multi-agent design, routing or observability vendor.
+- **24 tests passed** on Python 3.13.15 in GitHub Actions;
+- independent registry check matched all **18/18** operations, methods, paths and canonical parameters;
+- **12** seed-capable reads confirmed from the supplied OpenAPI;
+- supplied CEN-01 transport path returned 5/5 HTTP 200 with final escalation `accepted=true`.
 
-Execution reports:
+Completion report: `research/39-e2-integrated-completion-report.md`.
 
-- `research/36-e2-execution-report.md`
-- `research/38-e2-wave-2-execution-report.md`
+E2 intentionally selected **no** agent runtime, model, MCP topology, RAG stack, multi-agent design, routing strategy, persistent-memory design or observability vendor.
 
-Active backlog: `research/37-post-freeze-execution-backlog.md`
+## E3 — Benchmark split freeze
+
+E3 is the next gate. It must assign the frozen 10 asset/story groups to development, validation and locked test before any architecture/model/prompt optimization begins.
+
+The split must be group-aware and coverage-aware, not ticket-random. It must preserve controlled variants inside their storyline group and explicitly document coverage compromises caused by the small number of independent groups.
 
 ## Source hierarchy
 
@@ -67,12 +78,12 @@ Variants B0–B3 are the core attribution experiment; B4 confirmation remains a 
 
 ## Critical path
 
-`E0 freeze → E1 freeze → E2 integrated runner → E3 leakage-aware split → B0–B3 → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
+`E0 freeze → E1 freeze → E2 complete → E3 leakage-aware split → B0–B3 → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
 
 ## Important methodological rules
 
 - Do not freeze a framework because implementation has started.
-- Framework-neutral infrastructure can be built now; architecture-changing choices require project-specific evidence and an ADR.
+- Framework-neutral infrastructure may be implemented before architecture selection; architecture-changing choices require project-specific evidence and an ADR.
 - Test doubles and scripted reference paths may validate instrumentation/transport/evaluators, but they are never evidence that the agent solves the task.
 - The final demonstration is downstream of the experiments and must show measured behavior rather than hand-scripted success.
 
