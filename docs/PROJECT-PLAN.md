@@ -1,6 +1,6 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 ACTIVE — Wave 2**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 UNLOCKED**  
 **Planning date:** 2026-08-16  
 **Target final delivery:** 2026-09-08
 
@@ -15,17 +15,20 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - `ScenarioSchema v1` semantics — 16 scenarios / 17 tickets / 10 asset-story groups; machine paths are reference supervision, not exact scripts.
 - Gold/evaluator boundary — evaluator-only material never enters model context.
 
-### E2 active
+### E2 complete
 
 - executable ScenarioSchema/ToolSpec/Trace contracts;
 - runner-owned identity/seed boundary;
-- replay and provenance;
-- deterministic B0 HTTP transport boundary;
-- strict argument validation foundation;
-- deterministic permission/resource guard;
-- evidence-aware action gate;
-- structured argument, conclusion and escalation/handoff evaluators;
-- volatile trace normalization.
+- explicit seed capability per canonical tool;
+- B0 HTTP transport + integrated trace/replay runner;
+- strict B1 argument validation;
+- deterministic B2 permission/resource guard;
+- deterministic B3 evidence-aware action gate;
+- integrated deterministic evaluator suite;
+- registry-vs-contract conformance tooling;
+- provenance/config hashing;
+- GitHub Actions verification: 24 tests passed on Python 3.13.15;
+- supplied CEN-01 transport path independently validated against the supplied API.
 
 ### Not frozen
 
@@ -73,43 +76,38 @@ Variants:
 
 ## 5. Execution sequence
 
-### E2 — Canonical ToolSpec + evaluation harness — ACTIVE
+### E2 — Canonical ToolSpec + evaluation harness — COMPLETE
 
-Implemented:
+Exit evidence:
 
-- executable ScenarioSchema v1 models;
-- 18-operation Canonical ToolSpec registry;
-- runner-owned identity/seed binding;
-- TraceSchema v1 models and invariants;
-- replay/observation store;
-- canonical configuration/artifact hashing;
-- deterministic baseline evaluators;
-- B0 contract-valid HTTP transport adapter;
-- deterministic evidence-aware action gate;
-- structured argument/conclusion/escalation evaluators;
-- volatile trace normalization;
-- reproducible CEN-01 real-API transport probe.
+- 18-operation registry mechanically aligned to the supplied OpenAPI after frozen transformations;
+- 12 runner-seeded read operations explicitly represented;
+- B0 live transport + replay integrated into `HarnessRunner`;
+- B1/B2/B3 deterministic boundaries executable;
+- proposal vs executed-call trace separation;
+- integrated evaluator suite executable;
+- representative pass/fail fixtures;
+- GitHub Actions: **24 passed**;
+- reproducible registry and supplied-API conformance scripts retained.
 
-Remaining before E3:
+Completion report: `research/39-e2-integrated-completion-report.md`.
 
-1. integrate B0 + trace emission + replay into one harness runner;
-2. add representative investigation/contextualization/execution fixtures;
-3. mechanically verify the 18-operation registry against frozen E0 operation evidence;
-4. complete full E2 test-suite execution and record the environment/result;
-5. verify one complete reference scenario through the integrated B0 runner;
-6. confirm evaluator outputs are stable on canonical pass/fail fixtures.
-
-### E3 — Benchmark split freeze
+### E3 — Benchmark split freeze — NEXT
 
 Use the already frozen 10 asset/story groups. Before assigning dev/validation/locked-test:
 
 - preserve every controlled variant inside its base group;
-- inspect investigation/contextualize/execute coverage;
-- inspect action/permission/evidence-mode coverage;
+- construct a group-level coverage matrix;
+- map contextualize/investigate/execute coverage;
+- map action type and impact coverage;
+- map permission classes;
+- map response modes and uncertainty behaviors;
 - reserve locked groups before any model/runtime/prompt optimization;
-- document coverage compromises caused by only 10 independent groups.
+- document coverage compromises caused by only 10 independent groups;
+- add a programmatic no-leakage assertion;
+- freeze `BENCHMARK-SPLIT-v1` + manifest/hash.
 
-Output: `BENCHMARK-SPLIT-v1` + manifest/hash.
+No agent runtime/model/prompt may be selected using locked-test groups.
 
 ### E4 — Guarded boundary experiment B0–B3
 
@@ -174,9 +172,9 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0 + E1 freezes complete; E2 Wave 1–2 active |
-| **17–20 Aug** | integrated E2 harness + B0 transport operational |
-| **21–22 Aug** | E3 benchmark split frozen + B0/B1/B2 runnable |
+| **16 Aug** | E0 + E1 frozen; E2 integrated harness complete |
+| **17–20 Aug** | E3 split freeze + B0/B1/B2 experiment setup |
+| **21–22 Aug** | B0/B1/B2 experiment execution |
 | **23–24 Aug** | B3 + evidence/stopping |
 | **25 Aug** | runtime + MCP spikes |
 | **26 Aug** | statistical pilot + model screening |
@@ -211,7 +209,10 @@ The architecture is frozen only after:
 - `research/35-e1-gold-freeze-v1.md`
 - `research/frozen/e1-gold-freeze.manifest.json`
 - `research/36-e2-execution-report.md`
-- `research/37-post-freeze-execution-backlog.md`
 - `research/38-e2-wave-2-execution-report.md`
+- `research/39-e2-integrated-completion-report.md`
+- `research/37-post-freeze-execution-backlog.md`
 - `research/e2/`
+- `scripts/research/e2_registry_conformance.py`
 - `scripts/research/e2_b0_real_api_probe.py`
+- `.github/workflows/research-e2.yml`
