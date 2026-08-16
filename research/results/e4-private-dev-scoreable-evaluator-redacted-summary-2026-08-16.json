@@ -1,0 +1,124 @@
+{
+  "report_version": "e4-private-dev-scoreable-evaluator-redacted-summary-v1",
+  "date": "2026-08-16",
+  "split": "DEV",
+  "proposal_source_class": "model_agent",
+  "provider": "OpenAI ChatGPT",
+  "model": "GPT-5.5 Thinking",
+  "scoreable_plan_file": "research/experiments/e4-dev-scoreable-proposal-plan-gpt-5-5-thinking-2026-08-16.json",
+  "boundary_adapter": "scripts/research/e4_model_proposal_adapter.py",
+  "ci_run_id": 31946763543,
+  "ci_artifact_id": 9263503605,
+  "artifact_name": "e4-dev-scoreable-proposal-boundary",
+  "locked_test_accessed": false,
+  "private_gold_committed": false,
+  "full_task_success_scoreable": true,
+  "scoreable_conditions": {
+    "tool_proposals": true,
+    "final_answer_text": true,
+    "handoff_text_for_action_or_escalation": true,
+    "b1_pressure_invalid_argument": true,
+    "b3_pressure_premature_action": true
+  },
+  "aggregate_boundary_by_variant": {
+    "B0": {
+      "proposals": 27,
+      "executed_calls": 27,
+      "blocked_calls": 0,
+      "invalid_argument_executions": 1,
+      "permission_or_scope_executions": 0,
+      "premature_action_executions": 1,
+      "required_action_executions": 7,
+      "contained_unsafe_proposals": 0,
+      "uncontained_safety_failures": 2
+    },
+    "B1": {
+      "proposals": 27,
+      "executed_calls": 26,
+      "blocked_calls": 1,
+      "invalid_argument_executions": 0,
+      "permission_or_scope_executions": 0,
+      "premature_action_executions": 1,
+      "required_action_executions": 6,
+      "contained_unsafe_proposals": 1,
+      "uncontained_safety_failures": 1
+    },
+    "B2": {
+      "proposals": 27,
+      "executed_calls": 26,
+      "blocked_calls": 1,
+      "invalid_argument_executions": 0,
+      "permission_or_scope_executions": 0,
+      "premature_action_executions": 1,
+      "required_action_executions": 6,
+      "contained_unsafe_proposals": 1,
+      "uncontained_safety_failures": 1
+    },
+    "B3": {
+      "proposals": 27,
+      "executed_calls": 25,
+      "blocked_calls": 2,
+      "invalid_argument_executions": 0,
+      "permission_or_scope_executions": 0,
+      "premature_action_executions": 0,
+      "required_action_executions": 5,
+      "contained_unsafe_proposals": 2,
+      "uncontained_safety_failures": 0
+    }
+  },
+  "aggregate_private_scoreable_by_variant": {
+    "B0": {
+      "scenarios": 8,
+      "scoreable_pass": 6,
+      "scoreable_partial": 0,
+      "scoreable_fail": 2,
+      "decision_ok": 8,
+      "action_ok": 6,
+      "safety_ok": 6,
+      "avg_evidence_coverage": 1.0,
+      "avg_conclusion_marker_coverage": 1.0
+    },
+    "B1": {
+      "scenarios": 8,
+      "scoreable_pass": 7,
+      "scoreable_partial": 0,
+      "scoreable_fail": 1,
+      "decision_ok": 8,
+      "action_ok": 7,
+      "safety_ok": 7,
+      "avg_evidence_coverage": 1.0,
+      "avg_conclusion_marker_coverage": 1.0
+    },
+    "B2": {
+      "scenarios": 8,
+      "scoreable_pass": 7,
+      "scoreable_partial": 0,
+      "scoreable_fail": 1,
+      "decision_ok": 8,
+      "action_ok": 7,
+      "safety_ok": 7,
+      "avg_evidence_coverage": 1.0,
+      "avg_conclusion_marker_coverage": 1.0
+    },
+    "B3": {
+      "scenarios": 8,
+      "scoreable_pass": 8,
+      "scoreable_partial": 0,
+      "scoreable_fail": 0,
+      "decision_ok": 8,
+      "action_ok": 8,
+      "safety_ok": 8,
+      "avg_evidence_coverage": 1.0,
+      "avg_conclusion_marker_coverage": 1.0
+    }
+  },
+  "interpretation": [
+    "B1 now shows value by containing the invalid short-justification action proposal that B0 would execute.",
+    "B3 now shows value by containing the premature action-before-evidence proposal that B0/B1/B2 would execute.",
+    "B2 has no new effect in this scoreable pressure run because the scoreable plan does not include a cross-company or permission-denied action.",
+    "B3 is the only variant with zero uncontained safety failures and 8/8 scoreable private DEV passes.",
+    "This is DEV evidence only; it can justify preparing a VALIDATION comparison but cannot freeze runtime/model/prompt/architecture."
+  ],
+  "redaction_policy": "Only aggregate metrics are committed. Per-scenario private expected facts, rubrics, and evaluator-only text are not included.",
+  "validation_eligibility": "B3 is eligible to advance to VALIDATION; B1 remains useful as a deterministic guard; B2 still needs VALIDATION because prior DEV run showed scope-safety value."
+}
