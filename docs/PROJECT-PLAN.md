@@ -1,10 +1,10 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 ACTIVE**  
+**Status:** E0 + E1 FROZEN; **E2 ACTIVE — Wave 2**  
 **Planning date:** 2026-08-16  
 **Target final delivery:** 2026-09-08
 
-This is the active execution plan after the real TRACTIAN package was audited. It deliberately separates **frozen evidence/contracts** from **experimental architecture decisions**.
+This is the active execution plan after the real TRACTIAN package was audited. It deliberately separates **frozen evidence/contracts** from **experimental architecture decisions** and explicitly forbids demo-first development.
 
 ## 1. Current state
 
@@ -14,6 +14,18 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - `API-BEHAVIOR-MAP-v1` — executable challenge-environment behavior, including weak action validation, non-persistent accepted actions, coarse permission behavior and deterministic seed semantics.
 - `ScenarioSchema v1` semantics — 16 scenarios / 17 tickets / 10 asset-story groups; machine paths are reference supervision, not exact scripts.
 - Gold/evaluator boundary — evaluator-only material never enters model context.
+
+### E2 active
+
+- executable ScenarioSchema/ToolSpec/Trace contracts;
+- runner-owned identity/seed boundary;
+- replay and provenance;
+- deterministic B0 HTTP transport boundary;
+- strict argument validation foundation;
+- deterministic permission/resource guard;
+- evidence-aware action gate;
+- structured argument, conclusion and escalation/handoff evaluators;
+- volatile trace normalization.
 
 ### Not frozen
 
@@ -42,6 +54,8 @@ Architecture-changing choices require an ADR containing alternatives, hypothesis
 - Action success follows supplied `accepted_event_non_persistent` semantics; no invented final-state oracle.
 - LLM judging is used only when structured/deterministic evaluation is insufficient and must be validated separately.
 - Optional complexity survives only if required or supported by experiment evidence.
+- **No demo-first development:** a test double may validate infrastructure, but it is never evidence that the agent solves the partner problem.
+- Final demonstration is downstream of experimental decisions and must show measured behavior, not hand-scripted success.
 
 ## 4. Central hypothesis
 
@@ -61,7 +75,7 @@ Variants:
 
 ### E2 — Canonical ToolSpec + evaluation harness — ACTIVE
 
-Already implemented:
+Implemented:
 
 - executable ScenarioSchema v1 models;
 - 18-operation Canonical ToolSpec registry;
@@ -69,17 +83,21 @@ Already implemented:
 - TraceSchema v1 models and invariants;
 - replay/observation store;
 - canonical configuration/artifact hashing;
-- deterministic evaluator interface and baseline evaluators.
+- deterministic baseline evaluators;
+- B0 contract-valid HTTP transport adapter;
+- deterministic evidence-aware action gate;
+- structured argument/conclusion/escalation evaluators;
+- volatile trace normalization;
+- reproducible CEN-01 real-API transport probe.
 
 Remaining before E3:
 
-- strict argument evaluator/validator;
-- resource/company guard interface;
-- evidence-aware action/escalation interface;
-- structured conclusion/fact evaluator;
-- escalation/handoff evaluator;
-- representative pass/fail evaluator fixtures;
-- B0 transport adapter through the real supplied API.
+1. integrate B0 + trace emission + replay into one harness runner;
+2. add representative investigation/contextualization/execution fixtures;
+3. mechanically verify the 18-operation registry against frozen E0 operation evidence;
+4. complete full E2 test-suite execution and record the environment/result;
+5. verify one complete reference scenario through the integrated B0 runner;
+6. confirm evaluator outputs are stable on canonical pass/fail fixtures.
 
 ### E3 — Benchmark split freeze
 
@@ -156,8 +174,8 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0 + E1 freezes complete; E2 started |
-| **17–20 Aug** | E2 harness complete + B0 transport operational |
+| **16 Aug** | E0 + E1 freezes complete; E2 Wave 1–2 active |
+| **17–20 Aug** | integrated E2 harness + B0 transport operational |
 | **21–22 Aug** | E3 benchmark split frozen + B0/B1/B2 runnable |
 | **23–24 Aug** | B3 + evidence/stopping |
 | **25 Aug** | runtime + MCP spikes |
@@ -194,4 +212,6 @@ The architecture is frozen only after:
 - `research/frozen/e1-gold-freeze.manifest.json`
 - `research/36-e2-execution-report.md`
 - `research/37-post-freeze-execution-backlog.md`
+- `research/38-e2-wave-2-execution-report.md`
 - `research/e2/`
+- `scripts/research/e2_b0_real_api_probe.py`
