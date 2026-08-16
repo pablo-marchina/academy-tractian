@@ -72,7 +72,15 @@
   "interpretation": {
     "candidate_selected_for_full_validation": false,
     "reason": "DEV evidence grounding improved strongly, but action/escalation calibration did not improve and real task quality remains insufficient.",
-    "next_iteration": "E10b DEV-only action/escalation calibration before any full DEV+VALIDATION rerun."
+    "next_iteration": "E10b DEV-only action/escalation calibration before any full DEV+VALIDATION rerun.",
+    "minimum_next_acceptance_target": {
+      "evidence_correctness_retained_above_e9_dev_baseline": true,
+      "action_correctness_must_improve_above": 0.0,
+      "escalation_correctness_must_improve_above": 0.0,
+      "premature_action_rate_must_remain": 0.0,
+      "unsupported_final_claim_rate_must_remain": 0.0,
+      "locked_test_accessed_must_remain": false
+    }
   },
   "constants_preserved": {
     "runtime_candidate": "LangGraph",
