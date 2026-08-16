@@ -1,4 +1,4 @@
-name: research-e2-e3-e4
+name: research-e2-e3-e4-e5
 
 on:
   push:
@@ -13,11 +13,14 @@ on:
       - 'research/40-e3-benchmark-split-freeze-v1.md'
       - 'research/41-e4-guarded-boundary-experiment-preregistration.md'
       - 'research/42-e4-execution-start-report.md'
+      - 'research/47-e5-evidence-stopping-preregistration.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
+      - 'research/experiments/e5-*.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
       - 'scripts/research/e4_*.py'
+      - 'scripts/research/e5_*.py'
       - '.github/workflows/research-e2.yml'
   pull_request:
     paths:
@@ -30,15 +33,18 @@ on:
       - 'research/40-e3-benchmark-split-freeze-v1.md'
       - 'research/41-e4-guarded-boundary-experiment-preregistration.md'
       - 'research/42-e4-execution-start-report.md'
+      - 'research/47-e5-evidence-stopping-preregistration.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
+      - 'research/experiments/e5-*.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
       - 'scripts/research/e4_*.py'
+      - 'scripts/research/e5_*.py'
       - '.github/workflows/research-e2.yml'
 
 jobs:
-  e2-e3-e4-unit:
+  e2-e3-e4-e5-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,6 +69,8 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e4_model_proposal_adapter.py --split-manifest research/frozen/benchmark-split-v1.json --proposal-plan research/experiments/e4-dev-scoreable-proposal-plan-gpt-5-5-thinking-2026-08-16.json --split DEV --out /tmp/e4-dev-scoreable-proposal-boundary.json
       - name: Execute E4 VALIDATION proposal adapter
         run: PYTHONPATH=. python scripts/research/e4_validation_proposal_adapter.py --split-manifest research/frozen/benchmark-split-v1.json --proposal-plan research/experiments/e4-validation-scoreable-proposal-plan-gpt-5-5-thinking-2026-08-16.json --split VALIDATION --out /tmp/e4-validation-scoreable-proposal-boundary.json
+      - name: Execute E5 evidence stopping runner
+        run: PYTHONPATH=. python scripts/research/e5_evidence_stopping_runner.py --manifest research/experiments/e5-evidence-stopping-experiment-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e5-evidence-stopping-summary.json
       - name: Upload E4 DEV model-proposal metrics
         uses: actions/upload-artifact@v4
         with:
@@ -78,3 +86,8 @@ jobs:
         with:
           name: e4-validation-scoreable-proposal-boundary
           path: /tmp/e4-validation-scoreable-proposal-boundary.json
+      - name: Upload E5 evidence stopping summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e5-evidence-stopping-summary
+          path: /tmp/e5-evidence-stopping-summary.json
