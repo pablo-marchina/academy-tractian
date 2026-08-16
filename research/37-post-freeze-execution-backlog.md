@@ -33,7 +33,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - [x] deterministic evaluator result contract;
 - [x] trajectory evaluator without exact reference-sequence matching;
 - [x] decision evaluator;
-- [x] policy evaluator;
+- [x] policy evaluator separating contained unsafe proposals from uncontained/executed violations;
 - [x] action evaluator with accepted-event semantics;
 - [x] evidence evaluator interface;
 - [x] safety evaluator for identity/seed integrity;
@@ -59,7 +59,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 ### Validation
 
 - [x] GitHub Actions E2 workflow;
-- [x] **24 tests passed** on Python 3.13.15;
+- [x] **24 tests passed** on Python 3.13.15 in the latest integrated safety-semantics run;
 - [x] initial failing CI exposed a real action-scope metadata defect; defect fixed and rerun green;
 - [x] independent OpenAPI registry check: 18/18 operations, methods, paths and canonical parameters matched;
 - [x] 12 read operations independently confirmed seed-capable;
