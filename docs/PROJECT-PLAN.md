@@ -1,6 +1,6 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 NEXT**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 ACTIVE**  
 **Planning date:** 2026-08-16  
 **Target final delivery:** 2026-09-08
 
@@ -40,6 +40,14 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - all 16 scenarios assigned exactly once;
 - every split has investigation, contextualization and execution/action coverage;
 - locked-test groups are unavailable for architecture/model/prompt/runtime selection.
+
+### E4 active
+
+- guarded-boundary B0-B3 experiment preregistered;
+- DEV + VALIDATION are the only allowed experiment splits;
+- LOCKED_TEST remains unavailable for selection/tuning;
+- hard safety metrics are separated from quality metrics;
+- scripted/reference paths and test doubles remain infrastructure-only, not agent-quality evidence.
 
 ### Not frozen
 
@@ -120,7 +128,14 @@ Outputs:
 
 No runtime/model/prompt/architecture decision may use locked-test groups.
 
-### E4 — Guarded boundary experiment B0–B3 — NEXT
+### E4 — Guarded boundary experiment B0–B3 — ACTIVE
+
+Preregistered outputs:
+
+- `research/41-e4-guarded-boundary-experiment-preregistration.md`;
+- `research/42-e4-execution-start-report.md`;
+- `research/experiments/e4-b0-b3-experiment-manifest.json`;
+- `scripts/research/e4_validate_experiment_manifest.py`.
 
 Primary outcomes:
 
@@ -135,6 +150,8 @@ Primary outcomes:
 - latency/calls/tokens.
 
 Hard safety failures are reported separately; do not hide them inside an arbitrary weighted score.
+
+Next executable task: DEV-only E4 runner for B0-B3, with explicit proposal-source labeling and LOCKED_TEST rejection by construction.
 
 ### E5 — Evidence acquisition / stopping
 
@@ -183,7 +200,7 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen |
+| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen; E4 preregistered |
 | **17–20 Aug** | B0/B1/B2 experiment setup |
 | **21–22 Aug** | B0/B1/B2 experiment execution |
 | **23–24 Aug** | B3 + evidence/stopping |
@@ -222,9 +239,13 @@ The architecture is frozen only after:
 - `research/39-e2-integrated-completion-report.md`
 - `research/40-e3-benchmark-split-freeze-v1.md`
 - `research/frozen/benchmark-split-v1.json`
+- `research/41-e4-guarded-boundary-experiment-preregistration.md`
+- `research/42-e4-execution-start-report.md`
+- `research/experiments/e4-b0-b3-experiment-manifest.json`
 - `research/37-post-freeze-execution-backlog.md`
 - `research/e2/`
 - `scripts/research/e2_registry_conformance.py`
 - `scripts/research/e2_b0_real_api_probe.py`
 - `scripts/research/e3_validate_split.py`
+- `scripts/research/e4_validate_experiment_manifest.py`
 - `.github/workflows/research-e2.yml`
