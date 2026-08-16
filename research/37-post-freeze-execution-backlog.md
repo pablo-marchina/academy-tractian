@@ -30,8 +30,6 @@ Completion report: `research/39-e2-integrated-completion-report.md`.
 
 ## E3 completion
 
-Frozen assignment:
-
 - [x] **DEV:** `asset_G501`, `asset_C710`, `asset_S420`, `asset_M208`, `asset_M101` — 5 groups / 8 scenarios;
 - [x] **VALIDATION:** `asset_B204`, `asset_M102` — 2 groups / 3 scenarios;
 - [x] **LOCKED_TEST:** `asset_V301`, `asset_M605`, `asset_M205` — 3 groups / 5 scenarios.
@@ -59,13 +57,15 @@ Artifacts:
 - [x] export B0/B1/B2/B3 boundary metrics for model proposals;
 - [x] upload full boundary metrics as CI artifact;
 - [x] record aggregate boundary metrics in `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`;
-- [x] implement `scripts/research/e4_private_dev_evaluator.py` as a private-gold combiner;
-- [x] combine the first DEV boundary metrics with private DEV expectations locally;
-- [x] preserve evaluator-only gold outside the public repository;
-- [x] record only redacted aggregate private proxy metrics in `research/results/e4-private-dev-evaluator-redacted-summary-2026-08-16.json`;
-- [x] document the result in `research/44-e4-private-dev-evaluator-integration.md`.
+- [x] combine first DEV boundary run with private DEV proxy evaluator;
+- [x] generate scoreable DEV proposal plan with natural-language final answer/handoff text;
+- [x] include B1 pressure case for malformed/invalid action argument;
+- [x] include B3 pressure case for premature action before evidence;
+- [x] rerun B0/B1/B2/B3 on scoreable DEV proposal plan;
+- [x] upload scoreable boundary metrics as CI artifact;
+- [x] combine scoreable run with private DEV evaluator in redacted aggregate form.
 
-First DEV model-proposal boundary result:
+## First DEV boundary-only result
 
 | Variant | Proposals | Executed calls | Blocked calls | Permission/scope executions | Contained unsafe proposals | Uncontained safety failures |
 |---|---:|---:|---:|---:|---:|---:|
@@ -74,34 +74,41 @@ First DEV model-proposal boundary result:
 | B2 | 27 | 26 | 1 | 0 | 1 | 0 |
 | B3 | 27 | 26 | 1 | 0 | 1 | 0 |
 
-Private DEV proxy evaluator result:
+## Scoreable DEV result
 
-| Variant | Scenarios | Proxy pass | Proxy partial | Proxy fail | Decision OK | Action OK | Safety OK | Avg evidence coverage | Avg conclusion marker coverage |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| B0 | 8 | 0 | 7 | 1 | 6 | 6 | 7 | 0.498 | 0.292 |
-| B1 | 8 | 0 | 7 | 1 | 6 | 6 | 7 | 0.498 | 0.292 |
-| B2 | 8 | 0 | 8 | 0 | 6 | 6 | 8 | 0.498 | 0.292 |
-| B3 | 8 | 0 | 8 | 0 | 6 | 6 | 8 | 0.498 | 0.292 |
+Boundary metrics:
 
-Interpretation: B2 contained one unsafe permission/resource-scope proposal that B0/B1 would execute. B1 had no effect in this first plan because arguments were structurally valid. B3 did not add blocking beyond B2 because the generated action proposals were placed after declared evidence. The private evaluator pipeline is integrated, but full task/conclusion success is not scoreable yet because the first proposal plan lacks natural-language final responses/handoff text.
+| Variant | Proposals | Executed calls | Blocked calls | Invalid arg executions | Premature action executions | Contained unsafe proposals | Uncontained safety failures |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| B0 | 27 | 27 | 0 | 1 | 1 | 0 | 2 |
+| B1 | 27 | 26 | 1 | 0 | 1 | 1 | 1 |
+| B2 | 27 | 26 | 1 | 0 | 1 | 1 | 1 |
+| B3 | 27 | 25 | 2 | 0 | 0 | 2 | 0 |
+
+Private DEV scoreable aggregate:
+
+| Variant | Scenarios | Scoreable pass | Scoreable fail | Decision OK | Action OK | Safety OK |
+|---|---:|---:|---:|---:|---:|---:|
+| B0 | 8 | 6 | 2 | 8 | 6 | 6 |
+| B1 | 8 | 7 | 1 | 8 | 7 | 7 |
+| B2 | 8 | 7 | 1 | 8 | 7 | 7 |
+| B3 | 8 | 8 | 0 | 8 | 8 | 8 |
+
+Interpretation: B1 contains the invalid short-justification action proposal; B3 contains the premature action-before-evidence proposal. B3 is the only variant with zero uncontained safety failures and 8/8 scoreable private DEV passes.
 
 ## E4 next active task
 
-Generate and evaluate a scoreable DEV proposal run.
+Prepare a VALIDATION-ready comparison while keeping LOCKED_TEST blocked.
 
 Required work:
 
-- [ ] generate DEV-only model proposals that include tool calls **and** natural-language final response/handoff text;
-- [ ] include B1 pressure cases for malformed/invalid action arguments;
-- [ ] include B3 pressure cases for premature action before evidence;
-- [ ] rerun `scripts/research/e4_model_proposal_adapter.py`;
-- [ ] rerun the private DEV evaluator combiner locally;
-- [ ] preserve boundary metrics separately from task/conclusion success;
-- [ ] report contained unsafe proposals separately from executed safety failures;
-- [ ] decide whether B1/B2/B3 have enough DEV evidence to advance to VALIDATION;
-- [ ] repeat eligible comparison on VALIDATION;
+- [ ] carry B1/B2/B3 forward as candidate boundaries and B0 as baseline;
+- [ ] generate a VALIDATION-only proposal plan for `asset_B204` and `asset_M102`;
+- [ ] keep `LOCKED_TEST` blocked by construction;
+- [ ] rerun B0/B1/B2/B3 boundary metrics on VALIDATION;
+- [ ] combine with private VALIDATION evaluator locally without exposing gold;
 - [ ] promote/reject B1/B2/B3 components with evidence.
 
 ## Methodological constraint
 
-No item in E2, E3 or the E4 smoke/model-proposal infrastructure is a demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment and cannot use LOCKED_TEST before final evaluation.
+No item in E2, E3 or E4 is a demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment and cannot use LOCKED_TEST before final evaluation.
