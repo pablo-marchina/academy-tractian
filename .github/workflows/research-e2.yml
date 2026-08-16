@@ -86,7 +86,7 @@ jobs:
       - name: Execute E6 LangGraph integration spike
         run: PYTHONPATH=. python scripts/research/e6_langgraph_integration_spike.py --manifest research/experiments/e6-langgraph-integration-spike-manifest.json --out /tmp/e6-langgraph-integration-summary.json
       - name: Execute E6 adaptive ToolSpec LangGraph runner
-        run: PYTHONPATH=. python scripts/research/e6_langgraph_toolspec_runner.py --manifest research/experiments/e6-real-toolspec-langgraph-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e6-real-toolspec-langgraph-summary.json
+        run: PYTHONPATH=. python scripts/research/e6_langgraph_toolspec_runner_v2.py --manifest research/experiments/e6-real-toolspec-langgraph-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e6-real-toolspec-langgraph-summary.json
       - name: Upload E4 DEV model-proposal metrics
         uses: actions/upload-artifact@v4
         with:
