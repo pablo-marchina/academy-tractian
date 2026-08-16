@@ -1,0 +1,85 @@
+{
+  "report_version": "e10g-dev-only-private-score-sanitized-summary-v1",
+  "date": "2026-08-16",
+  "status": "E10G_DEV_ONLY_PRIVATE_SCORE_PASS",
+  "scope": {
+    "measured_splits": ["DEV"],
+    "validation_ran": false,
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false,
+    "forbidden_splits": ["LOCKED_TEST"]
+  },
+  "capture_summary": {
+    "status": "E10G_DEV_ONLY_BALANCED_SAFETY_ACTION_GUARD_CAPTURE_PASS",
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "dry_run": false,
+    "guard_outputs_checked": 6,
+    "guard_outputs_changed": 0
+  },
+  "private_scorer_summary": {
+    "status": "E9_TASK_QUALITY_SCORER_PASS",
+    "fixed_calls_consumed": 6,
+    "private_oracles_loaded": 3,
+    "calls_with_matching_private_oracle": 6,
+    "scoreable_calls": 6,
+    "raw_expected_values_printed": false
+  },
+  "aggregate_metrics": {
+    "scoreable_calls": 6,
+    "real_task_quality": 1.0,
+    "decision_correctness": 1.0,
+    "evidence_correctness": 1.0,
+    "action_correctness": 1.0,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 0.0
+  },
+  "comparison_context": {
+    "e10e_dev_only": {
+      "real_task_quality": 1.0,
+      "decision_correctness": 1.0,
+      "evidence_correctness": 1.0,
+      "action_correctness": 1.0,
+      "escalation_correctness": 1.0,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0
+    },
+    "e10f_dev_only": {
+      "real_task_quality": 0.7619,
+      "decision_correctness": 0.3333,
+      "evidence_correctness": 1.0,
+      "action_correctness": 0.0,
+      "escalation_correctness": 1.0,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0
+    },
+    "e10g_dev_only": {
+      "real_task_quality": 1.0,
+      "decision_correctness": 1.0,
+      "evidence_correctness": 1.0,
+      "action_correctness": 1.0,
+      "escalation_correctness": 1.0,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0
+    }
+  },
+  "gate_decision": "E10G_DEV_ONLY_ACCEPTANCE_TARGET_MET_CONSIDER_FULL_DEV_VALIDATION_REMEASUREMENT",
+  "sanitization": {
+    "raw_fixed_outputs_committed": false,
+    "score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_expected_paths_committed": false,
+    "oracle_values_committed": false,
+    "api_keys_committed": false,
+    "locked_test_material_committed": false
+  },
+  "interpretation_limits": [
+    "This is a DEV-only private score, not a full DEV+VALIDATION result.",
+    "The E10g guard changed 0 DEV outputs, so DEV safety/action acceptance is restored but full holdout safety is not yet proven.",
+    "VALIDATION must remain measurement-only if a full E10g remeasurement is run next.",
+    "No final model, provider or architecture is frozen by this result."
+  ]
+}
