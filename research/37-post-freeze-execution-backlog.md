@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E5 Executed
+# Post-E0/E1 Execution Backlog — E6 Executed
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 NEXT**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 EXECUTED; LANGGRAPH INTEGRATION SPIKE NEXT**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -14,6 +14,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - `BENCHMARK-SPLIT-v1` frozen before runtime/model/prompt/architecture selection.
 - E4 B0-B3 guarded-boundary DEV+VALIDATION comparison complete.
 - E5 evidence acquisition/stopping comparison complete.
+- E6 runtime discriminating spike complete.
 
 ## E4 component decision
 
@@ -22,71 +23,79 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - **B2:** promote as a required resource/permission sublayer based on DEV scope-safety evidence.
 - **B3:** promote as the current guarded-boundary candidate for the next experimental stage.
 
-## E5 completion
-
-Completed work:
-
-- [x] preregister E5 evidence/stopping experiment;
-- [x] use B3 as current guarded-boundary candidate;
-- [x] keep B0 as baseline where useful;
-- [x] compare fixed/reference-like investigation, free tool loop and evidence-sufficiency/stopping policy;
-- [x] measure premature stopping, unnecessary calls, task success, escalation correctness and efficiency;
-- [x] keep LOCKED_TEST blocked;
-- [x] run the E5 evidence/stopping runner in CI;
-- [x] record a public aggregate summary without freezing runtime/model/MCP/UI.
-
-E5 result:
-
-| Strategy | Scenarios | Task success | Premature stops | Unnecessary calls | Total calls | Required evidence coverage | Agent-quality evidence? |
-|---|---:|---:|---:|---:|---:|---:|---|
-| `fixed_reference_like` | 11 | 11 | 0 | 0 | 36 | 1.000 | No |
-| `free_tool_loop` | 11 | 7 | 4 | 9 | 36 | 0.786 | Yes |
-| `evidence_sufficiency_policy` | 11 | 10 | 1 | 2 | 35 | 0.964 | Yes |
-
-Delta of `evidence_sufficiency_policy` vs `free_tool_loop`:
-
-- task success: +3;
-- premature stopping: -3;
-- unnecessary calls: -7;
-- total tool calls: -1.
-
-E5 decision:
+## E5 decision
 
 - `fixed_reference_like`: retain as infrastructure/reference anchor only;
 - `free_tool_loop`: retain as behavioral baseline, not preferred;
 - `evidence_sufficiency_policy`: promote as the current evidence-acquisition/stopping candidate.
 
+## E6 completion
+
+Completed work:
+
+- [x] preregister E6 runtime spike;
+- [x] compare LangGraph, Pydantic AI/Graph and OpenAI Agents SDK;
+- [x] hold ToolSpec, B3 boundary, evidence-sufficiency policy, split policy and evaluator assumptions constant;
+- [x] measure trace completeness, guard integration, pause/resume/HITL support, replay determinism, complexity, portability and overhead;
+- [x] keep LOCKED_TEST blocked;
+- [x] produce runtime ADR evidence;
+- [x] avoid freezing model/MCP/RAG/multi-agent/UI.
+
+E6 runtime scorecard:
+
+| Runtime | Weighted score | Decision |
+|---|---:|---|
+| LangGraph | 4.404 | Promote as current runtime candidate |
+| Pydantic AI/Graph | 4.328 | Retain as typed/schema-native fallback and comparator |
+| OpenAI Agents SDK | 4.188 | Retain as provider-native comparator |
+
+Decision:
+
+- **LangGraph:** promote as current runtime candidate for the next integration stage.
+- **Pydantic AI/Graph:** keep as fallback/comparator because of strong typed schema/eval fit.
+- **OpenAI Agents SDK:** keep as provider-native comparator and revisit if the model/provider later becomes OpenAI-centered.
+
 Artifacts:
 
-- `research/47-e5-evidence-stopping-preregistration.md`
-- `research/48-e5-evidence-stopping-results.md`
-- `research/experiments/e5-evidence-stopping-experiment-manifest.json`
-- `research/results/e5-evidence-stopping-summary-2026-08-16.json`
-- `scripts/research/e5_evidence_stopping_runner.py`
+- `research/49-e6-runtime-spike-preregistration.md`
+- `research/50-e6-runtime-spike-results-adr.md`
+- `research/experiments/e6-runtime-spike-manifest.json`
+- `research/results/e6-runtime-spike-summary-2026-08-16.json`
+- `scripts/research/e6_runtime_spike_runner.py`
 
-## Current candidate policy bundle
+## Current candidate policy/runtime bundle
 
 - B3 guarded boundary.
 - Evidence-sufficiency/stopping policy.
-- B0 and free tool loop retained as baselines where useful.
-- Fixed/reference-like strategy retained only as infrastructure/reference anchor.
+- LangGraph as current runtime candidate.
+- B0/free loop/fixed reference retained as baselines or infrastructure anchors.
 
-This is not an architecture/runtime/model freeze.
+Still not frozen:
 
-## E6 next active task
+- model/provider;
+- MCP topology;
+- RAG/vector DB;
+- multi-agent decomposition;
+- persistent memory;
+- observability backend;
+- UI/demo flow.
 
-Move to runtime discriminating spike only after holding the policy bundle constant.
+## Next active task
+
+Implementation-grade LangGraph integration spike.
 
 Required work:
 
-- [ ] preregister E6 runtime spike;
-- [ ] compare LangGraph, Pydantic AI/Graph and OpenAI Agents SDK;
-- [ ] hold ToolSpec, B3 boundary, evidence-sufficiency policy, split policy and evaluator assumptions constant;
-- [ ] measure trace completeness, guard integration, pause/resume/HITL support, replay determinism, complexity, portability and overhead;
+- [ ] implement minimal LangGraph graph around the existing ToolSpec;
+- [ ] keep B3 boundary external and deterministic;
+- [ ] keep evidence-sufficiency policy explicit;
+- [ ] emit TraceSchema-compatible events;
+- [ ] test checkpoint/replay/pause-resume behavior;
+- [ ] compare overhead against the current harness;
+- [ ] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
 - [ ] keep LOCKED_TEST blocked;
-- [ ] produce runtime ADR evidence;
 - [ ] do not freeze model/MCP/UI yet.
 
 ## Methodological constraint
 
-No item in E2, E3, E4 or E5 is a demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment and cannot use LOCKED_TEST before final evaluation.
+No item in E2, E3, E4, E5 or E6 is a demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment and cannot use LOCKED_TEST before final evaluation.
