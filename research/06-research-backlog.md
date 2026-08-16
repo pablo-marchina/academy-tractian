@@ -1,10 +1,10 @@
 # Research Backlog Before Architecture Freeze
 
-Status: **Wave 4 complete — project-specific experiment execution unlocked**
+Status: **Wave 5 — E0/E1 running in parallel; first executable normalization passes complete**
 
 Planning reference: [`../docs/PROJECT-PLAN.md`](../docs/PROJECT-PLAN.md)
 
-The updated TAPI requires both agent construction and evaluation. The kickoff supplied partner workflow guidance. The delivered project ZIP now provides the actual API implementation, contract, canonical cases and evaluation material.
+The updated TAPI requires both agent construction and evaluation. The kickoff supplied partner workflow guidance. The delivered project ZIP provides the actual API implementation, contract, canonical cases and evaluation material.
 
 ## Critical-path targets
 
@@ -37,16 +37,25 @@ If schedule slips, cut P2/optional complexity before compromising contract/gold/
 - [x] Record package inconsistencies rather than silently fixing them.
 - [ ] Resolve remaining instructor/partner constraints: hidden eval, model access, public artifact policy, final-demo conditions, confirmation policy.
 
-### R02 — API contract normalization
+### R02 — API contract normalization / E0
 
 - [x] Enumerate actual runtime operations/resources/actions.
 - [x] Detect duplicate `/assets/{assetId}` raw YAML key.
 - [x] Identify weak response/action schemas and executable-contract differences.
-- [ ] Implement duplicate-key-aware contract loader.
-- [ ] Produce immutable raw-contract manifest/hashes.
-- [ ] Generate project normalized OpenAPI contract with explicit transformation log.
-- [ ] Conformance-test normalized operations against FastAPI runtime `/openapi.json` and probes.
-- [ ] Freeze `NORMALIZED-CONTRACT-v1`.
+- [x] Implement duplicate-key-aware contract loader.
+- [x] Produce private normalized candidate without modifying raw partner artifact.
+- [x] Merge duplicate asset GET/PATCH mapping losslessly.
+- [x] Compare normalized route surface against FastAPI runtime: **18 operations / 17 route templates structurally match**.
+- [x] Implement and execute runtime semantic probes.
+- [x] Classify declared-vs-runtime differences: path/parameter naming, action body schemas, response codes and auth representation.
+- [x] Reconfirm weak action validation, non-persistence, cross-company backend behavior and deterministic seed semantics.
+- [ ] Freeze exact path/parameter naming transformation policy.
+- [ ] Emit final transformation manifest with no unresolved silent semantic changes.
+- [ ] Produce machine-readable `API-BEHAVIOR-MAP-v1` metadata consumed by ToolSpec generation.
+- [ ] Run final normalized-contract structural/schema validation in project environment.
+- [ ] Freeze `NORMALIZED-CONTRACT-v1` hash.
+
+Evidence: `31-e0-contract-normalization-execution.md` and `scripts/research/e0_contract_pipeline.py`.
 
 **Exit gate:** no tool/client generation from the raw duplicate-key contract.
 
@@ -62,17 +71,26 @@ If schedule slips, cut P2/optional complexity before compromising contract/gold/
 - [ ] Produce machine-readable resource/action metadata for Canonical ToolSpec.
 - [ ] Define guarded company/resource policy precisely from observable relationships.
 
-### R04 — Golden-set normalization
+### R04 — Golden-set normalization / E1
 
 - [x] Inventory 17 cases / 16 narrative scenarios.
 - [x] Confirm reference trajectory is not a script.
 - [x] Detect material differences between machine expected paths and narrative scenarios.
 - [x] Identify only 10 primary asset/story groups → leakage risk.
 - [x] Separate scenario labels (`pending`, `stale`) from API response-mode enum.
-- [ ] Human-review every narrative P1 success criterion/expected resolution.
-- [ ] Produce ScenarioSchema v1 oracles: decisions, evidence, actions, policy, conclusion, uncertainty/escalation.
+- [x] Implement source-faithful gold normalizer.
+- [x] Mechanically extract **16/16 scenarios and 17/17 tickets** with provenance and no missing narrative sections.
+- [x] Quantify machine-vs-narrative endpoint divergence: **10/16 scenarios**.
+- [x] Create source-derived `ScenarioSchema v1` draft.
+- [x] Complete cross-modality pilot review on **4/16 scenarios**.
+- [x] Refine action-oracle semantics after pilot review: execution expectation, accepted-event success, post-action read semantics and final-state equality applicability.
+- [ ] Review remaining **12/16** scenarios into structured oracles.
+- [ ] Explicitly resolve/log every machine-vs-narrative semantic discrepancy.
+- [ ] Freeze reviewed ScenarioSchema v1.
 - [ ] Produce change/provenance manifest for normalized gold.
 - [ ] Freeze group-aware dev/validation/locked-test split.
+
+Evidence: `32-e1-gold-normalization-execution.md`, `33-e1-cross-modality-pilot-review.md`, `research/schemas/scenario-v1-draft.schema.json`, and `scripts/research/e1_normalize_gold.py`.
 
 **Exit gate:** no model/prompt/runtime selection against unreviewed narrative gold or a random ticket split.
 
@@ -91,8 +109,8 @@ If schedule slips, cut P2/optional complexity before compromising contract/gold/
 
 - [x] Stable agent-facing contract supported by kickoff/package findings.
 - [x] Define that `x-user-id` and `seed` are runtime-bound, not model arguments.
-- [ ] Define strict request/response models from normalized contract + executable payloads.
-- [ ] Add action metadata: permission, target-resource scope, impact, event/non-persistent semantics.
+- [ ] Define strict request/response models from `NORMALIZED-CONTRACT-v1` + `API-BEHAVIOR-MAP-v1`.
+- [ ] Add action metadata: permission, target-resource scope, impact, accepted-event semantics.
 - [ ] Implement minimal benchmark-valid adapter B0.
 - [ ] Implement strict typed validator B1.
 - [ ] Implement deterministic policy/resource guard B2.
@@ -102,6 +120,7 @@ If schedule slips, cut P2/optional complexity before compromising contract/gold/
 
 - [x] ScenarioSchema v0 / TraceSchema v0 research contracts.
 - [x] Action oracle corrected from generic final-state equality to accepted-event/action correctness for supplied API.
+- [x] ScenarioSchema v1 draft now separates action execution expectation and post-action validation semantics.
 - [ ] Implement tool-choice evaluator.
 - [ ] Implement argument/schema/semantic evaluator.
 - [ ] Implement evidence evaluator.
@@ -174,7 +193,7 @@ Finalists remain:
 ### R13 — Split design
 
 - [x] Independent random ticket split prohibited due shared asset/story leakage.
-- [ ] Define final grouping by asset/storyline.
+- [ ] Define final grouping by asset/storyline after E1 oracle review.
 - [ ] Check modality/action/evidence coverage across candidate splits.
 - [ ] Freeze locked test before architecture/model/prompt optimization.
 - [ ] Hash/version split manifest.
@@ -240,4 +259,4 @@ Finalists remain:
 
 ## Immediate execution sequence
 
-**E0 contract normalization + E1 gold normalization in parallel → E2 ToolSpec/evaluator/trace harness → E3 split freeze → E4 B0–B3 → E5 evidence/stopping → E6/E7 runtime/MCP → E8 pilot/model benchmark → E9 conditional techniques → ADRs → `FROZEN-v1`.**
+**Finish E0 naming/manifest + finish E1 remaining 12-scenario review → freeze contract/scenario v1 candidates → E2 ToolSpec/evaluator/trace harness → E3 split freeze → E4 B0–B3 → E5 evidence/stopping → E6/E7 runtime/MCP → E8 pilot/model benchmark → E9 conditional techniques → ADRs → `FROZEN-v1`.**
