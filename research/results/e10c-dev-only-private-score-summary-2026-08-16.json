@@ -1,0 +1,115 @@
+{
+  "report_version": "e10c-dev-only-private-score-sanitized-summary-v1",
+  "date": "2026-08-16",
+  "status": "E10C_DEV_ONLY_NO_ESCALATION_IMPROVEMENT_E10D_NEXT",
+  "source_run_status": "E9_TASK_QUALITY_SCORER_PASS",
+  "scope": {
+    "tuning_split": "DEV",
+    "dev_groups": [
+      "asset_G501",
+      "asset_C710",
+      "asset_S420"
+    ],
+    "validation_used_for_tuning": false,
+    "validation_ran": false,
+    "locked_test_accessed": false,
+    "protected_splits": [
+      "VALIDATION",
+      "LOCKED_TEST"
+    ]
+  },
+  "inputs": {
+    "fixed_calls_consumed": 6,
+    "fixed_output_hashes_consumed": 3,
+    "parsed_model_outputs_available": 6,
+    "private_oracles_loaded": 3,
+    "calls_with_matching_private_oracle": 6,
+    "scoreable_calls": 6
+  },
+  "gold_leakage_controls": {
+    "model_prompt_receives_oracle": false,
+    "scorer_reads_oracle_after_outputs_fixed": true,
+    "outputs_hashed_before_scoring": true,
+    "evaluator_only_paths_blocked_from_model": true,
+    "locked_test_oracle_groups_rejected": true,
+    "raw_expected_values_printed": false
+  },
+  "baseline_dev_only_from_e9": {
+    "scoreable_calls": 6,
+    "real_task_quality": 0.4762,
+    "decision_correctness": 0.3333,
+    "evidence_correctness": 0.0,
+    "action_correctness": 0.0,
+    "escalation_correctness": 0.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "e10_dev_only_private_score": {
+    "scoreable_calls": 6,
+    "real_task_quality": 0.619,
+    "decision_correctness": 0.3333,
+    "evidence_correctness": 1.0,
+    "action_correctness": 0.0,
+    "escalation_correctness": 0.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "e10b_dev_only_private_score": {
+    "scoreable_calls": 6,
+    "real_task_quality": 0.8571,
+    "decision_correctness": 1.0,
+    "evidence_correctness": 1.0,
+    "action_correctness": 1.0,
+    "escalation_correctness": 0.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "e10c_dev_only_private_score": {
+    "scoreable_calls": 6,
+    "real_task_quality": 0.8571,
+    "decision_correctness": 1.0,
+    "evidence_correctness": 1.0,
+    "action_correctness": 1.0,
+    "escalation_correctness": 0.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "delta_vs_e10b_dev_only": {
+    "real_task_quality": 0.0,
+    "decision_correctness": 0.0,
+    "evidence_correctness": 0.0,
+    "action_correctness": 0.0,
+    "escalation_correctness": 0.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 0.0
+  },
+  "interpretation": {
+    "candidate_selected_for_full_validation": false,
+    "reason": "E10c preserved E10b decision/evidence/action gains and safety controls, but did not improve escalation correctness. The preregistered acceptance target remains unmet.",
+    "next_iteration": "E10d DEV-only escalation consistency guard based on visible output/rubric, not private oracle values."
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  }
+}
