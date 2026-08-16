@@ -1,9 +1,9 @@
 # Systematic Research Hub
 
-**Status: E0 + E1 FROZEN; E2 COMPLETE; E3 UNLOCKED**  
+**Status: E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 NEXT**  
 **Date:** 2026-08-16
 
-The project now has the updated TAPI, kickoff evidence, the actual TRACTIAN package, frozen contract/gold semantics and a validated framework-neutral experimental harness. Research has moved from generic architecture exploration to controlled, project-specific experimentation.
+The project now has the updated TAPI, kickoff evidence, the actual TRACTIAN package, frozen contract/gold semantics, a validated framework-neutral experimental harness and a frozen leakage-aware benchmark split. Research has moved from generic architecture exploration to controlled, project-specific experimentation.
 
 ## Frozen evidence/contracts
 
@@ -22,7 +22,7 @@ Frozen facts include 18 operations / 17 path templates, the duplicate `/assets/{
 
 Frozen benchmark structure: 16 narrative scenarios, 17 tickets and 10 asset/story groups. Machine trajectories are references, not scripts. Gold remains evaluator-only and is not copied into agent context.
 
-## E2 — Complete executable harness
+### E2 — Executable harness
 
 `research/e2/` contains framework-neutral contracts and validated experimental infrastructure:
 
@@ -52,13 +52,25 @@ Validation evidence:
 
 Completion report: `research/39-e2-integrated-completion-report.md`.
 
-E2 intentionally selected **no** agent runtime, model, MCP topology, RAG stack, multi-agent design, routing strategy, persistent-memory design or observability vendor.
+### E3 — Benchmark split
 
-## E3 — Benchmark split freeze
+Frozen split artifacts:
 
-E3 is the next gate. It must assign the frozen 10 asset/story groups to development, validation and locked test before any architecture/model/prompt optimization begins.
+- `research/40-e3-benchmark-split-freeze-v1.md`
+- `research/frozen/benchmark-split-v1.json`
+- `scripts/research/e3_validate_split.py`
 
-The split must be group-aware and coverage-aware, not ticket-random. It must preserve controlled variants inside their storyline group and explicitly document coverage compromises caused by the small number of independent groups.
+Assignment:
+
+- **DEV:** `asset_G501`, `asset_C710`, `asset_S420`, `asset_M208`, `asset_M101` — 5 groups / 8 scenarios.
+- **VALIDATION:** `asset_B204`, `asset_M102` — 2 groups / 3 scenarios.
+- **LOCKED_TEST:** `asset_V301`, `asset_M605`, `asset_M205` — 3 groups / 5 scenarios.
+
+The split is group-level, coverage-aware and locked before any runtime/model/prompt/architecture optimization. Locked-test groups may be used only for metadata counting, coverage inspection and leakage assertions until final evaluation.
+
+## Explicit non-decisions
+
+No agent runtime, model, MCP topology, RAG stack, vector DB, multi-agent design, routing strategy, persistent-memory design, observability vendor or presentation UI has been selected.
 
 ## Source hierarchy
 
@@ -78,7 +90,7 @@ Variants B0–B3 are the core attribution experiment; B4 confirmation remains a 
 
 ## Critical path
 
-`E0 freeze → E1 freeze → E2 complete → E3 leakage-aware split → B0–B3 → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
+`E0 freeze → E1 freeze → E2 complete → E3 split frozen → B0–B3 → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
 
 ## Important methodological rules
 
@@ -86,5 +98,6 @@ Variants B0–B3 are the core attribution experiment; B4 confirmation remains a 
 - Framework-neutral infrastructure may be implemented before architecture selection; architecture-changing choices require project-specific evidence and an ADR.
 - Test doubles and scripted reference paths may validate instrumentation/transport/evaluators, but they are never evidence that the agent solves the task.
 - The final demonstration is downstream of the experiments and must show measured behavior rather than hand-scripted success.
+- Locked-test groups are off-limits for architecture/model/prompt/runtime selection.
 
 If schedule pressure appears, cut optional complexity first. Do not weaken contract conformance, gold isolation, evaluator validity, split integrity or locked-test discipline.
