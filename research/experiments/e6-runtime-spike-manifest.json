@@ -1,0 +1,127 @@
+{
+  "schema_version": "e6-runtime-spike-manifest-v1",
+  "date": "2026-08-16",
+  "status": "PREREGISTERED",
+  "experiment_id": "E6_RUNTIME_DISCRIMINATING_SPIKE",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "tool_spec_constant": true,
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "ui_freeze": false
+  },
+  "score_scale": {
+    "min": 0,
+    "max": 5,
+    "direction": "higher_is_better",
+    "note": "Proxy ordinal scores for runtime ADR direction; not agent task-quality metrics."
+  },
+  "criteria_weights": {
+    "trace_completeness": 0.16,
+    "guard_integration": 0.18,
+    "replay_determinism": 0.20,
+    "pause_resume_hitl": 0.18,
+    "lower_complexity": 0.10,
+    "portability": 0.12,
+    "lower_overhead": 0.06
+  },
+  "candidates": [
+    {
+      "candidate_id": "langgraph",
+      "display_name": "LangGraph",
+      "scores": {
+        "trace_completeness": 4.2,
+        "guard_integration": 4.4,
+        "replay_determinism": 5.0,
+        "pause_resume_hitl": 5.0,
+        "lower_complexity": 3.2,
+        "portability": 4.2,
+        "lower_overhead": 3.6
+      },
+      "rationale": [
+        "Strong fit for checkpointed state, durable execution, time-travel/replay style debugging and long-lived HITL pauses.",
+        "Graph structure maps cleanly to explicit evidence acquisition and action-gating nodes.",
+        "Higher implementation ceremony than simpler agent loops, but the state/replay/HITL fit is the strongest for the current project constraints."
+      ],
+      "evidence_anchors": [
+        "official LangGraph persistence/checkpointing docs",
+        "official LangGraph interrupts/HITL docs",
+        "E2 TraceSchema/Replay needs",
+        "E4 B3 boundary needs",
+        "E5 evidence-sufficiency policy needs"
+      ]
+    },
+    {
+      "candidate_id": "pydantic_ai_graph",
+      "display_name": "Pydantic AI/Graph",
+      "scores": {
+        "trace_completeness": 4.6,
+        "guard_integration": 4.7,
+        "replay_determinism": 4.1,
+        "pause_resume_hitl": 4.0,
+        "lower_complexity": 4.2,
+        "portability": 4.5,
+        "lower_overhead": 4.1
+      },
+      "rationale": [
+        "Excellent fit with project-owned typed schemas, validation and Python-native evaluator style.",
+        "OpenTelemetry and Pydantic Evals alignment are strong for observability/evaluation work.",
+        "Durability/HITL relies more on integrations than a single built-in checkpointing model, so replay/pause-resume fit is slightly weaker than LangGraph for this benchmark."
+      ],
+      "evidence_anchors": [
+        "official Pydantic AI overview docs",
+        "official Pydantic AI durable execution integrations",
+        "official Pydantic Evals/observability docs",
+        "E2 Pydantic-based schemas"
+      ]
+    },
+    {
+      "candidate_id": "openai_agents_sdk",
+      "display_name": "OpenAI Agents SDK",
+      "scores": {
+        "trace_completeness": 4.7,
+        "guard_integration": 4.2,
+        "replay_determinism": 3.9,
+        "pause_resume_hitl": 4.5,
+        "lower_complexity": 4.3,
+        "portability": 3.4,
+        "lower_overhead": 4.2
+      },
+      "rationale": [
+        "Strong built-in tracing, guardrails, HITL and MCP support inside the OpenAI runtime ecosystem.",
+        "Good low-ceremony implementation path if the model/provider later becomes OpenAI-centered.",
+        "Lower provider portability at this stage because model/provider selection is intentionally still open."
+      ],
+      "evidence_anchors": [
+        "official OpenAI Agents SDK overview docs",
+        "official OpenAI Agents SDK tracing docs",
+        "official OpenAI Agents SDK HITL/MCP/guardrails docs",
+        "project non-decision on model/provider"
+      ]
+    }
+  ],
+  "decision_rules": {
+    "rank_by_weighted_score": true,
+    "tie_breakers": [
+      "better replay_determinism",
+      "better pause_resume_hitl",
+      "better guard_integration",
+      "lower model/provider lock-in"
+    ],
+    "allowed_decision": "select_current_runtime_candidate_only",
+    "forbidden_decisions": [
+      "freeze_model_provider",
+      "freeze_mcp_topology",
+      "freeze_rag_or_vector_db",
+      "freeze_multi_agent_decomposition",
+      "freeze_ui_or_demo_flow",
+      "touch_locked_test"
+    ]
+  }
+}
