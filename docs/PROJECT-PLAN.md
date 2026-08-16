@@ -1,383 +1,197 @@
 # Academy × TRACTIAN — Project Action Plan
 
-Status: **ACTIVE — E0 + E1 executing in parallel; architecture not frozen**
+**Status:** E0 + E1 FROZEN; **E2 ACTIVE**  
+**Planning date:** 2026-08-16  
+**Target final delivery:** 2026-09-08
 
-Planning date: **2026-08-16**  
-Final delivery: **2026-09-08**
+This is the active execution plan after the real TRACTIAN package was audited. It deliberately separates **frozen evidence/contracts** from **experimental architecture decisions**.
 
-This plan converts the updated TAPI, kickoff evidence and delivered TRACTIAN package into an execution sequence. It is a **project plan**, not an architecture freeze: runtime, MCP topology, model, RAG, multi-agent decomposition, observability backend and optimization remain undecided until the corresponding project-specific experiment/ADR is complete.
+## 1. Current state
 
-## Current execution snapshot
+### Frozen
 
-E0 and E1 have started in parallel.
+- `NORMALIZED-CONTRACT-v1` — raw/normalized/runtime hashes, duplicate-key policy, explicit parameter transformation and 18-operation conformance.
+- `API-BEHAVIOR-MAP-v1` — executable challenge-environment behavior, including weak action validation, non-persistent accepted actions, coarse permission behavior and deterministic seed semantics.
+- `ScenarioSchema v1` semantics — 16 scenarios / 17 tickets / 10 asset-story groups; machine paths are reference supervision, not exact scripts.
+- Gold/evaluator boundary — evaluator-only material never enters model context.
 
-### E0 status
+### Not frozen
 
-Completed first pass:
-
-- duplicate-key-aware OpenAPI loader implemented;
-- duplicate asset GET/PATCH path merged losslessly in a private normalized candidate;
-- normalized and FastAPI runtime route surfaces structurally match at **18 operations / 17 path templates**;
-- runtime semantic probes executed;
-- declared-vs-runtime differences classified;
-- final `NORMALIZED-CONTRACT-v1` naming/transformation policy and machine-readable behavior map still pending.
-
-### E1 status
-
-Completed first pass:
-
-- 16/16 narrative scenarios mechanically normalized from source;
-- 17/17 tickets mapped to 10 split groups;
-- no missing narrative sections;
-- 10/16 scenarios show machine-vs-narrative endpoint divergence;
-- ScenarioSchema v1 draft created;
-- 4/16 cross-modality scenario reviews completed;
-- 12/16 reviews remain before benchmark authority.
-
-Detailed execution evidence: `research/31-e0-contract-normalization-execution.md`, `research/32-e1-gold-normalization-execution.md`, and `research/33-e1-cross-modality-pilot-review.md`.
-
-## 1. Project objective
-
-Deliver one integrated system containing both mandatory components:
-
-1. **Industrial agent** capable of contextualizing, investigating, executing and escalating against the supplied industrial API.
-2. **Agent evaluation/reliability framework** capable of measuring tool choice, arguments, trajectory, evidence use, conclusion, safety, robustness, repeated-run stability and high-impact/action behavior.
-
-The evaluation framework is part of the engineering loop of the agent, not a disconnected second product.
+Runtime, model/provider, MCP, RAG, multi-agent decomposition, routing, memory, observability backend and optimization remain experimental choices.
 
 ## 2. Evidence hierarchy
 
-When artifacts disagree, use the following order and record the discrepancy instead of silently rewriting history:
+1. Updated TAPI / written Student Guide / explicit partner requirements.
+2. Executable supplied API behavior/source.
+3. Raw OpenAPI and supplied agent/eval/data artifacts.
+4. Kickoff guidance when not contradicted by delivered artifacts.
+5. Primary research and official framework documentation.
+6. Reproducible project experiments.
+7. Hypotheses.
 
-1. updated TAPI / written Student Guide and explicit written partner requirements;
-2. executable supplied API behavior/source;
-3. raw OpenAPI and delivered agent/eval/data artifacts;
-4. confidence-labeled kickoff guidance where not contradicted by delivered artifacts;
-5. primary research, standards and official framework documentation;
-6. reproducible experiments in this repository;
-7. project hypotheses.
+Architecture-changing choices require an ADR containing alternatives, hypothesis, protocol, results, trade-offs and decision.
 
-Every architecture-changing decision must end in an ADR with alternatives, evidence, trade-offs and measured consequences.
+## 3. Non-negotiable integrity rules
 
-## 3. Source-derived facts that now constrain the design
+- Raw partner artifacts remain immutable.
+- `x-user-id` and evaluation `seed` are runner-bound, never model-selected.
+- Related scenarios remain grouped by asset/storyline; no case-level random split.
+- Locked-test groups are unavailable during architecture/model/prompt selection.
+- Reference trajectories are not exact-match gold unless an explicit policy requires ordering.
+- Hard identity/schema/policy constraints are deterministic where possible.
+- Action success follows supplied `accepted_event_non_persistent` semantics; no invented final-state oracle.
+- LLM judging is used only when structured/deterministic evaluation is insufficient and must be validated separately.
+- Optional complexity survives only if required or supported by experiment evidence.
 
-The delivered package establishes the following facts:
-
-- 17 agent-input cases and 16 richer narrative evaluation scenarios;
-- 10 primary asset/story groups, making random ticket splitting unsafe due to leakage;
-- agent-visible and evaluator-only material are explicitly separated;
-- 18 runtime operations across 17 unique HTTP path templates;
-- reference trajectories are references, not mandatory scripts;
-- action endpoints return accepted execution events and do not persist mutation state in the supplied store;
-- `x-user-id` and evaluation `seed` must be runner-bound, not model-selected, to preserve identity/benchmark integrity;
-- response modes can be controlled reproducibly through explicit deterministic seeds;
-- the raw OpenAPI YAML has a duplicate `/assets/{assetId}` mapping and cannot be naively used for code/tool generation;
-- raw action handlers perform coarse validation and can accept semantically invalid/incomplete payloads;
-- backend action authorization checks coarse permission but does not enforce company/resource ownership;
-- the knowledge corpus contains five documents and already has API search/document operations;
-- machine expected paths are materially less complete than narrative scenario policies, expected resolutions and P1 success criteria;
-- universal requester confirmation is not encoded in canonical delivered action scenarios, so confirmation remains a separate safety extension unless clarified by the partner.
-
-These facts replace pre-artifact assumptions wherever they conflict.
-
-## 4. Non-negotiable experiment-integrity rules
-
-These are methodology/integrity requirements, not framework preferences:
-
-- gold/evaluator-only files never enter model context;
-- case identity (`user_id`) is bound outside the model;
-- environment response seed is bound outside the model;
-- related cases/variants remain in the same split group;
-- locked-test groups are not used for prompt/model/runtime selection;
-- raw partner artifacts remain immutable; derived corrections use explicit transformation manifests and hashes;
-- action success is not inferred from final-state mutation the supplied API does not persist;
-- exact trajectory sequence is not the canonical oracle unless a real policy requires the order;
-- hard schema/identity/policy constraints are evaluated deterministically when possible;
-- LLM judging is used only where deterministic/structured evaluation is insufficient and must be validated separately;
-- no optional complexity survives solely because it is fashionable or technically impressive.
-
-## 5. Central research hypothesis
+## 4. Central hypothesis
 
 ### H1 — Guarded contract-aware tool boundary
 
-A tool boundary that binds identity/environment outside model control, validates arguments with strict project-owned schemas and applies deterministic resource/action policies will reduce invalid/unsafe action execution and improve argument correctness compared with a minimally wrapped baseline, without materially reducing task success.
+A boundary that keeps identity/environment outside model control, validates arguments with strict project-owned schemas and applies deterministic resource/action policy should reduce invalid/unsafe action execution and improve argument correctness relative to a minimally wrapped baseline without materially reducing task success.
 
-### Staged variants
+Variants:
 
-- **B0 — benchmark-valid minimal wrapper:** bound identity/seed; minimal transport transformation; no extra semantic validation/policy.
-- **B1 — strict typed validation:** B0 + strict schemas/enums/required structures and pre-API rejection of invalid arguments.
-- **B2 — deterministic policy/resource guard:** B1 + permission/company/resource and action-policy enforcement.
-- **B3 — evidence-aware action/escalation:** B2 + explicit evidence sufficiency and degraded-response handling before act/escalate.
-- **B4 — confirmation extension:** B3 + explicit requester confirmation for selected actions; reported separately unless official policy is clarified.
+- **B0:** minimal benchmark-valid wrapper.
+- **B1:** B0 + strict typed argument validation.
+- **B2:** B1 + deterministic permission/company/resource guard.
+- **B3:** B2 + evidence-aware action/escalation policy.
+- **B4:** requester confirmation as a separate safety extension unless official canonical policy changes.
 
-The purpose of staged variants is attribution: we must know which layer produced a measured gain or regression.
+## 5. Execution sequence
 
-## 6. Experiment program
+### E2 — Canonical ToolSpec + evaluation harness — ACTIVE
 
-### E0 — Contract normalization and conformance
+Already implemented:
 
-**Goal:** produce `NORMALIZED-CONTRACT-v1` suitable for tool/client generation.
+- executable ScenarioSchema v1 models;
+- 18-operation Canonical ToolSpec registry;
+- runner-owned identity/seed binding;
+- TraceSchema v1 models and invariants;
+- replay/observation store;
+- canonical configuration/artifact hashing;
+- deterministic evaluator interface and baseline evaluators.
 
-Current status: **first executable pass complete; final freeze pending**.
+Remaining before E3:
 
-Done when:
+- strict argument evaluator/validator;
+- resource/company guard interface;
+- evidence-aware action/escalation interface;
+- structured conclusion/fact evaluator;
+- escalation/handoff evaluator;
+- representative pass/fail evaluator fixtures;
+- B0 transport adapter through the real supplied API.
 
-- [x] duplicate YAML keys are detected before parsing;
-- [x] raw contract/package hashes are recorded;
-- [x] duplicate asset GET/PATCH mapping is normalized without modifying the raw artifact;
-- [x] normalized route surface is compared with FastAPI runtime `/openapi.json`;
-- [x] key request/auth/action semantics have executable probes;
-- [ ] exact naming/transformation policy is frozen;
-- [ ] final transformation manifest and `API-BEHAVIOR-MAP-v1` are emitted;
-- [ ] final normalized contract validation passes;
-- [ ] `NORMALIZED-CONTRACT-v1` hash is frozen.
+### E3 — Benchmark split freeze
 
-### E1 — Gold normalization / ScenarioSchema v1
+Use the already frozen 10 asset/story groups. Before assigning dev/validation/locked-test:
 
-**Goal:** turn machine + narrative gold into executable, reviewed oracles.
+- preserve every controlled variant inside its base group;
+- inspect investigation/contextualize/execute coverage;
+- inspect action/permission/evidence-mode coverage;
+- reserve locked groups before any model/runtime/prompt optimization;
+- document coverage compromises caused by only 10 independent groups.
 
-Current status: **16/16 mechanically normalized; 4/16 cross-modality reviews complete; 12/16 pending**.
-
-For each base scenario capture:
-
-- source/provenance and split group;
-- high-level expected decision;
-- required/acceptable evidence;
-- required/allowed/forbidden tools/actions;
-- permission/policy constraints;
-- conclusion facts and forbidden claims;
-- uncertainty/escalation requirements;
-- environment mode/seed/override profile;
-- narrative P1 success criterion and P2 diagnostics.
-
-A review pass is mandatory before the normalized gold becomes benchmark-authoritative.
-
-### E2 — Canonical ToolSpec + evaluation harness
-
-Build framework-neutral contracts first:
-
-- canonical typed operation definitions;
-- external identity/seed binding;
-- ToolSpec action metadata;
-- ScenarioSchema v1 models;
-- TraceSchema v1 models;
-- evaluator interfaces and deterministic evaluator fixtures;
-- replay/observation format;
-- config/artifact hashing.
-
-No runtime winner is selected during this stage.
-
-### E3 — Split freeze
-
-A random case-level split is prohibited. Candidate grouping is primary asset/storyline.
-
-Before freezing:
-
-- ensure all controlled variants inherit the base split group;
-- inspect contextualize/investigate/execute coverage;
-- inspect action type, permission and evidence-mode coverage;
-- reserve locked groups before architecture/model/prompt optimization;
-- record unavoidable coverage compromises caused by only 10 base groups.
-
-Output: `BENCHMARK-SPLIT-v1` + manifest/hashes.
+Output: `BENCHMARK-SPLIT-v1` + manifest/hash.
 
 ### E4 — Guarded boundary experiment B0–B3
 
 Primary outcomes:
 
-**Safety/integrity**
-
-- invalid action execution rate;
-- unauthorized/forbidden action execution rate;
-- cross-company action execution rate;
-- duplicate/unnecessary action rate;
-- identity/seed integrity violations.
-
-**Quality**
-
-- task/conclusion success;
-- tool-choice correctness;
+- invalid action execution;
+- unauthorized/cross-company action execution;
+- duplicate/unnecessary actions;
 - argument correctness;
+- tool-choice correctness;
 - evidence coverage;
-- action correctness;
-- escalation correctness.
+- task/conclusion success;
+- escalation correctness;
+- latency/calls/tokens.
 
-**Efficiency**
-
-- tool/model calls;
-- latency;
-- tokens/resource use.
-
-Do not collapse these into one arbitrary weighted score. Treat hard safety constraints first and analyze quality/efficiency through effect sizes and Pareto trade-offs.
+Hard safety failures are reported separately; do not hide them inside an arbitrary weighted score.
 
 ### E5 — Evidence acquisition / stopping
 
-Compare, on the same scenarios and controlled API modes:
+Compare:
 
 1. fixed/reference-like investigation;
-2. model-only free-form tool loop;
+2. free model tool loop;
 3. explicit evidence-sufficiency/stopping policy.
 
-Measure task success, premature stopping, unnecessary calls, escalation correctness and latency/tool cost.
-
-Only consider learned/calibrated risk prediction if a strong rule-based evidence policy leaves a demonstrated residual failure mode.
+Measure premature stopping, unnecessary calls, task success, escalation correctness and efficiency under controlled API modes.
 
 ### E6 — Runtime discriminating spike
 
-Finalists remain candidates until tested with identical project contracts:
+Candidates remain:
 
 - LangGraph;
 - Pydantic AI/Graph;
 - OpenAI Agents SDK.
 
-Hold constant: Canonical ToolSpec, model/provider, prompt/policy content, scenario, seed, evaluator and normalized TraceSchema.
-
-Measure:
-
-- pre-action interception;
-- pause/resume safety;
-- duplicate-action resistance;
-- deterministic testing support;
-- normalized trace completeness;
-- provider portability;
-- implementation complexity;
-- runtime overhead.
+Hold constant ToolSpec, model, scenario, prompt/policy, seed and evaluator. Measure safety interception, pause/resume, duplicate-action resistance, deterministic testing, trace completeness, portability, complexity and overhead.
 
 Output: runtime ADR.
 
-### E7 — Native tools vs MCP v2
+### E7 — Native tools vs MCP
 
-Expose the exact same Canonical ToolSpec through native runtime tools and an MCP v2 adapter.
+Expose the same ToolSpec through native tools and MCP v2. Measure schema/argument fidelity, policy interception, trace propagation, latency and complexity.
 
-Measure schema fidelity, argument fidelity, policy interception, trace propagation, latency overhead, portability and operational complexity.
+Output: MCP ADR.
 
-Output: MCP ADR. MCP-first is not selected unless partner need or experiment evidence justifies it.
+### E8 — Statistical pilot + model benchmark
 
-### E8 — Statistical pilot and model benchmark
+Separate:
 
-First run a pilot to estimate:
+- model/agent stochasticity at fixed environment observations;
+- environment robustness across deterministic seeds/modes.
 
-- within-scenario stochastic agent variability at fixed API observations;
-- between-group variability;
-- architecture discordance;
-- severe-event frequency;
-- latency/token distribution;
-- robustness drop across deterministic API modes.
+Use the pilot to determine repetition count `k` and confirmatory analysis. Screen models only on development groups, validate survivors on validation groups, then lock the test.
 
-Use the pilot to freeze repetition count `k`, precision targets and confirmatory analysis.
-
-Then evaluate currently permitted/available tool-capable models on development/validation groups only. Select with hard safety constraints plus a quality/reliability/latency/resource Pareto analysis.
+Selection uses hard safety constraints plus quality/reliability/latency/resource Pareto evidence.
 
 ### E9 — Conditional techniques
 
-Only after the core architecture/evaluator is stable:
+Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimization or other complexity when residual failure analysis provides a concrete hypothesis. Reject any component without measurable end-to-end value.
 
-- **external RAG:** only if direct knowledge API retrieval exhibits measured retrieval failures;
-- **multi-agent:** only if a strong single structured baseline has a decomposition-specific residual problem;
-- **adaptive routing:** only if model benchmarking reveals complementary strengths;
-- **prompt/threshold optimization:** development/validation only after objective freeze;
-- **observability backend:** compare after project-owned TraceSchema works independently of the backend.
+## 6. Milestones
 
-A rejected optional technique is a valid research result and should be documented in an ADR/decision note.
+| Target | Gate |
+|---|---|
+| **16 Aug** | E0 + E1 freezes complete; E2 started |
+| **17–20 Aug** | E2 harness complete + B0 transport operational |
+| **21–22 Aug** | E3 benchmark split frozen + B0/B1/B2 runnable |
+| **23–24 Aug** | B3 + evidence/stopping |
+| **25 Aug** | runtime + MCP spikes |
+| **26 Aug** | statistical pilot + model screening |
+| **27 Aug** | target `FROZEN-v1` |
+| **28 Aug–1 Sep** | selected architecture integrated |
+| **2–5 Sep** | robustness/adversarial/reliability + locked test |
+| **6–7 Sep** | documentation, reproducibility and demo rehearsal |
+| **8 Sep** | final delivery/presentation |
 
-## 7. Calendar and critical path
+If schedule pressure appears, cut optional complexity first. Never weaken gold isolation, split integrity, conformance, evaluator validity or locked-test discipline.
 
-Dates below are **project targets**, not partner requirements. They exist to protect enough time for final evaluation, documentation and demo quality.
+## 7. Research Gate → `FROZEN-v1`
 
-| Target | Work package | Exit condition |
-|---|---|---|
-| **Aug 16–17** | Contract + gold normalization | `NORMALIZED-CONTRACT-v1` candidate; reviewed ScenarioSchema v1 draft; known inconsistencies explicit |
-| **Aug 18–20** | Canonical ToolSpec, evaluators, trace/replay, seed catalog | framework-neutral harness executes representative canonical scenarios |
-| **Aug 21–22** | Split freeze + B0/B1/B2 | locked split frozen; validation/policy experiments runnable |
-| **Aug 23–24** | B3 + evidence/stopping | core guarded/evidence hypotheses measured |
-| **Aug 25** | Runtime + MCP spikes | runtime ADR and MCP ADR have experiment evidence |
-| **Aug 26** | Statistical pilot + model screening | `k`/confirmatory protocol frozen; viable model shortlist selected |
-| **Aug 27** | **Research Gate / `FROZEN-v1` target** | architecture ADR set closed enough for final implementation |
-| **Aug 28–Sep 1** | Implement/integrate final selected architecture | complete agent + evaluation workflow end-to-end |
-| **Sep 2–4** | Validation/fault/reliability/adversarial runs | full result set, CIs/slices/failure analysis generated |
-| **Sep 5** | Locked final test | one untouched final evaluation pass archived |
-| **Sep 6** | Documentation/reproducibility audit | README, architecture, methods, results, limits and runbook complete |
-| **Sep 7** | Final demo rehearsal / contingency | clean-machine reproduction and presentation flow verified |
-| **Sep 8** | Final presentation/delivery | submitted artifact matches documented configuration/results |
+The architecture is frozen only after:
 
-If an upstream gate slips, protect the locked-test/documentation/demo window by cutting **optional complexity**, not by weakening benchmark integrity.
+1. E0 contract freeze;
+2. E1 ScenarioSchema/gold semantics freeze;
+3. leakage-aware dev/validation/locked-test split;
+4. B0–B3 evidence;
+5. evidence/stopping evidence;
+6. runtime and MCP ADRs;
+7. statistical pilot and confirmatory protocol;
+8. project-native model benchmark;
+9. conditional techniques accepted/rejected by evidence;
+10. material package inconsistencies documented with no silent corrections.
 
-## 8. Priority classes
+## 8. Active artifacts
 
-### MUST — required before final delivery
-
-- trustworthy normalized contract;
-- agent/evaluator gold separation;
-- leakage-aware benchmark split;
-- complete canonical agent over supplied API;
-- evaluation across all TAPI analysis surfaces materially applicable to the cases;
-- reproducible traces/configs/results;
-- robust handling of partial/inconclusive/conflict/unavailable modes;
-- safe action boundary and permission/policy evaluation;
-- repeated-run reliability + fault/robustness analysis;
-- hypothesis, baselines, ablations/comparisons and limitations;
-- final README/runbook/demo.
-
-### SHOULD — strong grade maximizers if supported by evidence
-
-- B0–B3 causal/staged experiment;
-- runtime and MCP controlled ADRs;
-- validated semantic conclusion evaluator;
-- adversarial cross-company/invalid-argument/duplicate-action cases;
-- replay system;
-- project-native model Pareto benchmark;
-- interactive trace/experiment inspection UI.
-
-### CONDITIONAL — include only if experiments justify them
-
-- external RAG/vector database;
-- reranking;
-- multi-agent orchestration;
-- adaptive model routing;
-- persistent cross-session memory;
-- automatic prompt optimization;
-- learned risk/calibration model;
-- B4 universal confirmation policy;
-- heavyweight observability infrastructure.
-
-## 9. Definition of `FROZEN-v1`
-
-Architecture may be frozen only when:
-
-1. normalized API contract passes conformance checks;
-2. ScenarioSchema v1/gold oracles are reviewed;
-3. benchmark split is leakage-aware and locked;
-4. central guarded-boundary and evidence/stopping experiments have produced interpretable results;
-5. runtime and MCP choices have experiment-backed ADRs;
-6. statistical protocol is frozen from a pilot;
-7. a model/deployment candidate has project-native evidence;
-8. conditional complexity is explicitly accepted, rejected or deferred with rationale;
-9. no material package inconsistency remains silent;
-10. remaining external questions are explicitly documented.
-
-`FROZEN-v1` freezes the architecture/configuration used for the final confirmatory evaluation; it does not prohibit bug fixes that preserve experiment semantics and are versioned/re-run appropriately.
-
-## 10. Final evaluation package
-
-The final repository should make it possible to answer, with evidence:
-
-- What problem did the agent solve?
-- Why was this architecture selected over alternatives?
-- Which parts are deterministic and which rely on the model?
-- How well does it choose tools and construct arguments?
-- Does it gather enough evidence and stop at the right time?
-- Does it respond with the correct operational conclusion?
-- Does it act safely under invalid permissions/targets/arguments?
-- How does it behave under partial, inconclusive, conflicting and unavailable information?
-- How stable is it across repeated runs with fixed observations?
-- What changes when the environment mode changes?
-- What component caused each observed improvement/regression?
-- What limitations remain and what should be tested next?
-
-## 11. Immediate next action
-
-Continue the two active streams:
-
-1. **E0:** freeze naming/transformation policy, produce final manifest + `API-BEHAVIOR-MAP-v1`, validate and freeze normalized contract candidate.
-2. **E1:** review the remaining 12 scenarios into structured oracles and resolve/log machine-vs-narrative discrepancies.
-3. Only after these two contracts are trustworthy, start E2 Canonical ToolSpec/evaluator/trace harness.
+- `research/34-e0-contract-freeze-v1.md`
+- `research/frozen/e0-contract-freeze.manifest.json`
+- `research/frozen/API-BEHAVIOR-MAP-v1.json`
+- `research/35-e1-gold-freeze-v1.md`
+- `research/frozen/e1-gold-freeze.manifest.json`
+- `research/36-e2-execution-report.md`
+- `research/37-post-freeze-execution-backlog.md`
+- `research/e2/`
