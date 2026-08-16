@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E8 Free-Anywhere Candidate Discovery
+# Post-E0/E1 Execution Backlog — E8 Groq Pass, Optional Comparators, E9 Next
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 FREE PILOT SMOKE; E8 FREE-ANYWHERE CANDIDATE DISCOVERY; E8 FREE-ANYWHERE CANDIDATE RUN NEXT**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E8 OPTIONAL FREE-PROVIDER COMPARATORS REGISTERED; E9 EVALUATOR-SIDE SCORER NEXT**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -21,6 +21,12 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - [x] E8 statistical pilot/model benchmark prep registered and validated.
 - [x] E8 free-only pilot execution smoke passed.
 - [x] E8 candidate scope corrected from local-only to free-anywhere.
+- [x] E8 real free candidate run manifest and runner added.
+- [x] E8 v2 scorer/retry runner added.
+- [x] Groq `llama-3.1-8b-instant` passed DEV + VALIDATION as the first real zero-cost remote model candidate.
+- [x] Optional free-provider comparator policy registered.
+- [x] OpenRouter free comparator support added via v3 runner.
+- [x] E9 evaluator-side task-quality scorer preregistered.
 
 ## Current candidate policy/runtime/surface bundle
 
@@ -32,13 +38,13 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - Native ToolSpec calls as internal default candidate.
 - MCP-compatible `tools/list` + `tools/call` adapter as external interoperability candidate.
 - Free-only budget policy: OpenAI/Anthropic paid references disabled.
-- Remote free APIs and hosted free systems are allowed; locality is not required.
-- B0/free loop/fixed reference retained as baselines or infrastructure anchors.
+- Leading free-provider candidate: Groq `llama-3.1-8b-instant`.
+- Optional free-provider comparators: OpenRouter free / `:free`, Gemini key-visible models, Hugging Face free credits, Ollama fallback.
 - Pydantic AI/Graph and OpenAI Agents SDK retained as comparators.
 
 Still not frozen:
 
-- model/provider;
+- final model/provider choice;
 - MCP topology;
 - RAG/vector DB;
 - multi-agent decomposition;
@@ -47,108 +53,71 @@ Still not frozen:
 - UI/demo flow;
 - final architecture.
 
-## E8 free pilot execution smoke
-
-Completed work:
-
-- [x] enforce fully free mode with project cost limit USD 0;
-- [x] keep OpenAI/Anthropic paid reference candidates disabled;
-- [x] detect available free candidate slots through environment only;
-- [x] execute no-model policy baseline as the always-free candidate;
-- [x] run DEV smoke before VALIDATION;
-- [x] use fixed observation packet hashes;
-- [x] execute repeated outputs for the stochastic-repeat harness;
-- [x] measure task-success proxy, action/escalation correctness proxy, evidence coverage proxy, RunTrace completeness, latency and cost;
-- [x] preserve native ToolSpec + optional MCP-compatible adapter;
-- [x] keep LOCKED_TEST blocked;
-- [x] avoid claiming external model-quality evidence from the no-model baseline.
+## E8 Groq real free model pass
 
 Result:
 
-| Metric | Result |
-|---|---:|
-| Status | `E8_FREE_PILOT_SMOKE_PASS` |
-| Free-only mode | true |
-| Project cost limit USD | 0 |
-| Paid models enabled | false |
-| External model calls in CI | false |
-| Executed candidate slot | `no_model_policy_baseline` |
-| DEV groups | `asset_G501`, `asset_C710`, `asset_S420` |
-| VALIDATION groups | `asset_B204`, `asset_M102` |
-| DEV smoke before VALIDATION | true |
-| DEV repeats per group | 3 |
-| VALIDATION repeats per group | 5 |
-| Task success proxy | 1.0 |
-| Action/escalation correctness proxy | 1.0 |
-| Evidence coverage proxy | 1.0 |
-| RunTrace completeness | true |
-| Cost USD | 0.0 |
-| LOCKED_TEST accessed | false |
-
-## E8 free-anywhere candidate discovery
-
-Completed work:
-
-- [x] correct the candidate scope: not local-only;
-- [x] allow any remote API, hosted service or local system that can be bounded to USD 0;
-- [x] add Groq free API candidate slot;
-- [x] add Gemini free API candidate slot;
-- [x] add OpenRouter free-router candidate slot;
-- [x] add Hugging Face free-inference-credit candidate slot;
-- [x] retain Ollama as optional local candidate;
-- [x] keep OpenAI/Anthropic paid reference candidates blocked;
-- [x] require explicit zero-cost confirmation for remote candidates;
-- [x] default CI performs discovery only and makes zero external model calls;
-- [x] keep LOCKED_TEST blocked;
-- [x] do not freeze final architecture.
-
-Result:
-
-| Metric | Result |
-|---|---:|
-| Status | `E8_FREE_ANYWHERE_CANDIDATE_DISCOVERY_PASS` |
-| Locality required | false |
-| Remote free APIs allowed | true |
-| Local systems allowed | true |
-| Project cost limit USD | 0 |
-| Paid models enabled | false |
-| Default CI external calls | false |
-| Free candidate slots | 6 |
-| Paid candidate slots blocked | 2 |
-| LOCKED_TEST accessed | false |
+| Metric | DEV | VALIDATION | Aggregate |
+|---|---:|---:|---:|
+| Status | pass | pass | `E8_FREE_ANYWHERE_MODEL_RUN_PASS` |
+| Provider | Groq | Groq | Groq |
+| Model | `llama-3.1-8b-instant` | `llama-3.1-8b-instant` | `llama-3.1-8b-instant` |
+| Total calls | 6 | 6 | 12 |
+| Successful calls | 6 | 6 | 12 |
+| Task-success proxy | 1.0 | 1.0 | 1.0 |
+| Schema-valid rate | 1.0 | 1.0 | 1.0 |
+| No LOCKED_TEST claim rate | 1.0 | 1.0 | 1.0 |
+| Trace completeness | true | true | true |
+| Avg latency ms | 8974.732 | 9766.9 | 9370.816 |
+| P95 latency ms | 30724.136 | 50841.424 | 50841.424 |
+| Cost USD | 0.0 | 0.0 | 0.0 |
 
 Artifacts:
 
-- `research/60-e8-statistical-pilot-model-benchmark-preregistration.md`
-- `research/61-e8-free-pilot-execution-results.md`
-- `research/62-e8-free-anywhere-candidate-discovery.md`
-- `research/experiments/e8-statistical-pilot-model-benchmark-manifest.json`
-- `research/experiments/e8-free-pilot-execution-manifest.json`
-- `research/experiments/e8-free-anywhere-candidate-discovery-manifest.json`
-- `research/results/e8-statistical-pilot-prep-summary-2026-08-16.json`
-- `research/results/e8-free-pilot-execution-summary-2026-08-16.json`
-- `research/results/e8-free-anywhere-candidate-discovery-summary-2026-08-16.json`
-- `scripts/research/e8_statistical_pilot_prep.py`
-- `scripts/research/e8_free_pilot_runner.py`
-- `scripts/research/e8_free_anywhere_candidate_discovery.py`
+- `research/65-e8-groq-free-anywhere-model-run-results.md`
+- `research/results/e8-groq-free-anywhere-model-run-summary-2026-08-16.json`
+- `scripts/research/e8_free_anywhere_model_runner_v2.py`
 
-## Next active task
+## E8 optional free-provider comparators
 
-Run E8 with any actually available free remote API, hosted free system or local model candidate, still with cost USD 0.
+Completed work:
+
+- [x] keep Groq as leading candidate;
+- [x] add OpenRouter as optional free comparator;
+- [x] require `openrouter/free` or a specific `:free` model for OpenRouter;
+- [x] block `openrouter/auto` and `openrouter/auto:free` for E8 zero-cost benchmarking;
+- [x] keep Gemini as optional only after `models.list` returns a key-visible `generateContent` model;
+- [x] keep Hugging Face low priority due free-credit/billing risk;
+- [x] keep Ollama as fallback only, not a locality requirement;
+- [x] ensure optional comparators do not block E9.
+
+Artifacts:
+
+- `research/66-e8-optional-free-provider-comparators.md`
+- `research/experiments/e8-optional-free-provider-comparators-manifest.json`
+- `scripts/research/e8_free_anywhere_model_runner_v3.py`
+
+## E9 active next task
+
+Build evaluator-side scorer that maps fixed model outputs to private DEV/VALIDATION oracles without leaking gold into model prompts.
 
 Required work:
 
-- [ ] confirm whether `GROQ_API_KEY` + `E8_ENABLE_GROQ=1` + `E8_CONFIRM_ZERO_COST=1` is available and free;
-- [ ] confirm whether `GEMINI_API_KEY` or `GOOGLE_API_KEY` + `E8_ENABLE_GEMINI=1` + `E8_CONFIRM_ZERO_COST=1` is available and free;
-- [ ] confirm whether `OPENROUTER_API_KEY` + `E8_ENABLE_OPENROUTER_FREE=1` + `E8_CONFIRM_ZERO_COST=1` is available with free models only;
-- [ ] confirm whether `HF_TOKEN` + `E8_ENABLE_HUGGINGFACE=1` + `E8_CONFIRM_ZERO_COST=1` is available inside monthly free credits;
-- [ ] optionally confirm whether local Ollama has tolerable latency with `OLLAMA_HOST` + `E8_ENABLE_OLLAMA=1`;
-- [ ] keep OpenAI/Anthropic disabled;
-- [ ] run DEV smoke before VALIDATION;
-- [ ] preserve fixed observation packets and repeated outputs;
-- [ ] measure task success/model quality, action/escalation correctness, evidence coverage, trace completeness, latency and cost;
+- [ ] consume fixed model outputs and output hashes;
+- [ ] read private DEV/VALIDATION oracles only on scorer side;
+- [ ] keep model prompts gold-free;
+- [ ] measure decision-class correctness;
+- [ ] measure evidence-plan correctness;
+- [ ] measure action/escalation correctness;
+- [ ] measure unsupported final-claim rate;
+- [ ] compare proxy success vs real task-quality score;
 - [ ] keep LOCKED_TEST blocked;
+- [ ] keep OpenAI/Anthropic disabled;
 - [ ] do not freeze final architecture yet.
+
+Artifact:
+
+- `research/67-e9-evaluator-side-task-quality-scorer-preregistration.md`
 
 ## Methodological constraint
 
