@@ -1,0 +1,64 @@
+{
+  "report_version": "e8-free-anywhere-candidate-discovery-summary-v1",
+  "date": "2026-08-16",
+  "status": "E8_FREE_ANYWHERE_CANDIDATE_DISCOVERY_PASS",
+  "free_anywhere_scope": true,
+  "locality_required": false,
+  "remote_free_apis_allowed": true,
+  "local_systems_allowed": true,
+  "project_cost_limit_usd": 0,
+  "paid_models_enabled": false,
+  "external_model_calls_made": false,
+  "default_ci_makes_external_model_calls": false,
+  "candidate_slots_defined": 8,
+  "free_candidate_slots": [
+    "no_model_policy_baseline",
+    "groq_free_api",
+    "gemini_free_api",
+    "openrouter_free_router",
+    "huggingface_free_inference",
+    "ollama_local_optional"
+  ],
+  "paid_candidate_slots_blocked": [
+    "openai_reference_optional",
+    "anthropic_reference_optional"
+  ],
+  "available_candidate_slots_in_default_ci": [
+    "no_model_policy_baseline"
+  ],
+  "available_remote_free_candidate_slots_in_default_ci": [],
+  "remote_candidate_opt_in_env": {
+    "groq_free_api": ["GROQ_API_KEY", "E8_ENABLE_GROQ=1", "E8_CONFIRM_ZERO_COST=1"],
+    "gemini_free_api": ["GEMINI_API_KEY or GOOGLE_API_KEY", "E8_ENABLE_GEMINI=1", "E8_CONFIRM_ZERO_COST=1"],
+    "openrouter_free_router": ["OPENROUTER_API_KEY", "E8_ENABLE_OPENROUTER_FREE=1", "E8_CONFIRM_ZERO_COST=1"],
+    "huggingface_free_inference": ["HF_TOKEN", "E8_ENABLE_HUGGINGFACE=1", "E8_CONFIRM_ZERO_COST=1"],
+    "ollama_local_optional": ["OLLAMA_HOST", "E8_ENABLE_OLLAMA=1"]
+  },
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "dev_smoke_before_validation": true
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "interpretation_limits": [
+    "This discovery guard broadens E8 beyond local candidates.",
+    "It does not prove external model quality because default CI makes no external model calls.",
+    "Groq, Gemini, OpenRouter or Hugging Face can be used only with explicit free/zero-cost opt-in.",
+    "OpenAI and Anthropic remain blocked by the completely-free project constraint."
+  ],
+  "next_gate": "Run E8 DEV smoke with any actually available free remote API or local system, then VALIDATION after DEV pass.",
+  "final_architecture_freeze": false
+}
