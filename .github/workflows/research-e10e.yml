@@ -1,0 +1,32 @@
+name: research-e10e
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/84-e10e-dev-only-premature-action-safety-guard.md'
+      - 'research/experiments/e10e-*.json'
+      - 'scripts/research/e10e_*.py'
+      - '.github/workflows/research-e10e.yml'
+  pull_request:
+    paths:
+      - 'research/84-e10e-dev-only-premature-action-safety-guard.md'
+      - 'research/experiments/e10e-*.json'
+      - 'scripts/research/e10e_*.py'
+      - '.github/workflows/research-e10e.yml'
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: E10e dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e10e_dev_only_premature_action_guard.py
+          --manifest research/experiments/e10e-dev-only-premature-action-safety-guard-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e10e-dev-only-premature-action-guard-dry-run.json
+          --dry-run
