@@ -1,159 +1,145 @@
 # TAPI Requirement Matrix
 
-Source: **[UPDATED] TAPI — Engenharia e Avaliação de Agentes Industriais**, Inteli × TRACTIAN, received 2026-08-13.
+Source hierarchy:
 
-Status legend: `CONFIRMED` = explicitly supported by TAPI; `PARTNER_GUIDANCE` = clearly stated in kickoff and should be validated against delivered artifacts/API; `DEPENDENCY` = requires TRACTIAN/API clarification; `PROJECT_CHOICE` = our optional extension.
+1. **[UPDATED] TAPI — Engenharia e Avaliação de Agentes Industriais**, Inteli × TRACTIAN, received 2026-08-13;
+2. written partner package received 2026-08-15;
+3. executable supplied API behavior;
+4. confidence-labeled kickoff guidance where not contradicted by written artifacts.
 
-## Critical scope update — 2026-08-13
+Status legend: `CONFIRMED` = explicitly supported by TAPI/written package; `PARTNER_GUIDANCE` = kickoff guidance not yet promoted to universal canonical policy; `PROJECT_CONSTRAINT` = required to preserve benchmark/security integrity; `PROJECT_CHOICE` = experimentable extension.
 
-The updated TAPI changed the project objective from selecting **one of two tracks** to developing a solution **containing both**:
+## Mandatory integrated scope
+
+The updated TAPI requires a solution containing both:
 
 1. **Construção de agente**; and
 2. **Framework de avaliação de agentes**.
 
-Therefore, dual-track coverage is no longer a project extension or framing choice. It is a **confirmed project requirement**. The project architecture should remain unified: the evaluation framework evaluates and drives development of the industrial agent rather than being a disconnected second deliverable.
+The delivered package further provides an explicit separation between **agent-visible case/API material** and **evaluation-only gold/reference material**. The architecture must preserve this boundary.
 
 ## Core project requirements
 
-| ID | Requirement | Source section | Type | Verification evidence planned |
+| ID | Requirement | Source | Type | Verification evidence planned |
 |---|---|---|---|---|
-| REQ-001 | Individual project | Header | CONFIRMED | Repository authorship / final delivery |
-| REQ-002 | Integrate with the TRACTIAN-provided industrial API | Objective / Deliverables | CONFIRMED | Live integration test + trace |
-| REQ-003 | Include a technical experiment | Objective | CONFIRMED | Reproducible experiment report + artifacts |
-| REQ-004 | Document results | Objective / Documentation | CONFIRMED | README + research/experiment reports |
-| REQ-005 | Handle contextualization requests | Context of use | CONFIRMED | Scenario suite |
-| REQ-006 | Handle investigation requests using tools | Context of use | CONFIRMED | Scenario + tool trajectory evaluation |
-| REQ-007 | Handle execution requests with impact on customer solution | Context of use | CONFIRMED | Side-effect scenarios + final-state evaluator |
-| REQ-008 | Be able to request additional information | Context of use | CONFIRMED | Ambiguity/missing-info cases |
-| REQ-009 | Be able to consult assets, analyses and technical data | Context of use | CONFIRMED | Tool/API tests |
-| REQ-010 | Be able to ask pertinent investigative questions | Context of use | CONFIRMED | Multi-turn scenarios |
-| REQ-011 | Execute justified platform actions | Context of use | CONFIRMED | Action policy + state verification |
-| REQ-012 | Escalate cases to human analysis | Context of use | CONFIRMED | Escalation scenarios |
-| REQ-013 | Handle complete, partial, inconclusive, conflicting and temporarily unavailable query results | API behavior | CONFIRMED | Fault profiles / scenario perturbations |
-| REQ-014 | High-impact actions require valid parameters and adequate justification | API behavior | CONFIRMED | Schema/policy/action gate evaluation |
-| REQ-015 | Accepted action call represents execution; no additional status loop required | API behavior | CONFIRMED | Tool adapter semantics |
-| REQ-016 | Calls and results must be inspectable | Reference architecture | CONFIRMED | End-to-end trace view |
-| REQ-017 | Deliver a solution containing both agent construction and an agent-evaluation framework | Objective | CONFIRMED | Integrated runtime + evaluation subsystem demonstrated end-to-end |
+| REQ-001 | Individual project | TAPI | CONFIRMED | Repository authorship / final delivery |
+| REQ-002 | Integrate with the TRACTIAN-provided industrial API | TAPI | CONFIRMED | Live integration test + trace |
+| REQ-003 | Include a technical experiment | TAPI | CONFIRMED | Reproducible experiment report + artifacts |
+| REQ-004 | Document results | TAPI | CONFIRMED | README + research/experiment reports |
+| REQ-005 | Handle contextualization requests | TAPI + cases | CONFIRMED | Context scenario suite |
+| REQ-006 | Handle investigation requests using tools | TAPI + cases | CONFIRMED | Scenario + tool/evidence evaluation |
+| REQ-007 | Handle execution requests affecting the customer solution | TAPI + cases | CONFIRMED | Action scenarios + accepted-execution oracle |
+| REQ-008 | Be able to request additional information | TAPI | CONFIRMED | Ambiguity/missing-info cases |
+| REQ-009 | Consult assets, analyses and technical data | TAPI + API | CONFIRMED | Tool/API tests |
+| REQ-010 | Ask pertinent investigative questions | TAPI | CONFIRMED | Multi-turn scenarios where justified |
+| REQ-011 | Execute justified platform actions | TAPI + API | CONFIRMED | Action-policy + argument evaluator |
+| REQ-012 | Escalate cases to human analysis | TAPI + API/cases | CONFIRMED | Escalation scenarios |
+| REQ-013 | Handle complete, partial, inconclusive, conflicting and unavailable query results | TAPI + API | CONFIRMED | Seeded/fixed robustness profiles |
+| REQ-014 | High-impact actions require valid parameters and adequate justification | TAPI | CONFIRMED | Strict project validation + action experiment |
+| REQ-015 | Accepted action call represents execution; no later status cycle is required | TAPI + API | CONFIRMED | `accepted=true` action oracle |
+| REQ-016 | Calls and results must be inspectable | TAPI | CONFIRMED | End-to-end normalized trace |
+| REQ-017 | Deliver both agent construction and evaluation framework | Updated TAPI | CONFIRMED | Integrated runtime + evaluation subsystem |
+| REQ-018 | Gold/evaluation-only reference material must not enter agent runtime context | Student Guide/package boundary | CONFIRMED | Import/module/context isolation tests |
+| REQ-019 | Preserve canonical/reference cases as evaluation provenance rather than prompt material | Student Guide/package | CONFIRMED | Scenario manifest + gold access boundary |
 
-## Kickoff-derived partner guidance — 2026-08-13
+## Benchmark/security integrity constraints derived from the actual API
 
-These items are strong partner statements from a noisy automatic transcript. They are treated as engineering/evaluation requirements unless the delivered API/dataset clarifies otherwise. Full evidence notes: `25-kickoff-evidence-2026-08-13.md`.
+These are not claims about TRACTIAN production systems. They are project constraints required to make the supplied simplified environment valid and secure for experimentation.
 
-| ID | Partner guidance | Type | Planned verification/evidence |
+| ID | Constraint | Why it is required | Verification |
 |---|---|---|---|
-| KO-001 | Optimize for automating the existing customer-support investigation/resolution workflow, with safe human fallback when needed | PARTNER_GUIDANCE | End-to-end ticket scenarios + fallback cases |
-| KO-002 | Partner cases include customer-question-derived inputs, engineer investigation trajectory/reference accesses, and expected final output/conclusion | PARTNER_GUIDANCE | Dataset ingestion + provenance fields |
-| KO-003 | Evaluate intermediate process/tool use as well as final answer | PARTNER_GUIDANCE | Tool/argument/trajectory/evidence evaluators |
-| KO-004 | Final-answer correctness should prioritize the operational conclusion/decision rather than exact wording | PARTNER_GUIDANCE | Conclusion/fact oracle; no exact-string primary metric |
-| KO-005 | Customer-facing answers should not expose unnecessary internal system/implementation details | PARTNER_GUIDANCE | Communication policy evaluator / forbidden-disclosure checks |
-| KO-006 | Insufficient or meaningfully ambiguous evidence is a valid reason to escalate to human analysis | PARTNER_GUIDANCE | Escalation target scenarios + confusion matrix |
-| KO-007 | Escalation handoff should contain collected evidence, attempted analysis, unresolved contradiction/question and reason for escalation | PARTNER_GUIDANCE | Escalation-package completeness evaluator |
-| KO-008 | State-changing platform actions should require explicit requester confirmation/approval | PARTNER_GUIDANCE | Deterministic confirmation gate + negative tests; exact action classes from API |
-| KO-009 | Keep one stable agent-facing integration contract across underlying sources where practical; avoid unnecessary integration heterogeneity | PARTNER_GUIDANCE | Canonical ToolSpec + native/MCP adapter experiment |
-| KO-010 | Adding the agent to an existing process must fail safely rather than break the original workflow | PARTNER_GUIDANCE | Fault injection + fallback/escalation assertions |
-| KO-011 | Prevent development/evaluation leakage; do not use the same cases as both optimization and final validation | PARTNER_GUIDANCE | Grouped dev/validation/locked-test split |
-| KO-012 | Student must be able to explain architectural choices, alternatives and trade-offs | PARTNER_GUIDANCE | ADRs + ablations + presentation evidence |
+| PC-001 | Bind case `user_id` outside model control | Raw API uses `x-user-id`; model-controlled identity would enable impersonation | Tool schema excludes auth identity; negative test |
+| PC-002 | Bind evaluation `seed` outside model control | Model-controlled seed could select favorable response modes and invalidate robustness evaluation | Tool schema excludes seed; runner injects it |
+| PC-003 | Preserve raw partner package/contract immutably; normalize only into derived artifacts with hashes/change log | Raw OpenAPI contains a duplicate path key and must not be silently rewritten | Artifact manifest + normalization tests |
+| PC-004 | Treat API permission enforcement and project/system policy enforcement separately | Simplified backend checks coarse permission but not resource/company ownership | Cross-company adversarial tests |
+| PC-005 | Do not use final-state equality as the primary oracle for supplied actions that do not persist state | Action handlers simulate accepted execution events | Action-call/accepted-event evaluator |
+
+## Kickoff-derived partner guidance reconciled with delivered artifacts
+
+| ID | Guidance | Status after package | Treatment |
+|---|---|---|---|
+| KO-001 | Automate support investigation/resolution with safe human fallback | Supported | End-to-end scenario objective |
+| KO-002 | Partner supplies case/question + reference investigation + expected conclusion | Partially supported | Case input + reference paths + narrative expected resolution exist; final conclusion is not structured machine JSON and must be normalized |
+| KO-003 | Evaluate intermediate process/tool use and final answer | Supported | Separate trace/process/conclusion evaluators |
+| KO-004 | Operational conclusion matters more than exact wording | Supported by scenario P1 framing | Structured conclusion/fact oracle; no exact-string primary score |
+| KO-005 | Avoid unnecessary internal implementation disclosure to customers | Not contradicted; not formally encoded per case | Communication evaluator/extension where annotation can be made reliable |
+| KO-006 | Insufficient/ambiguous evidence can justify escalation | Supported | Escalation scenarios + seeded uncertainty variants |
+| KO-007 | Escalation should hand off useful evidence/analysis/reason | Not fully machine-encoded | Normalize narrative requirements / evaluate when reliable |
+| KO-008 | State-changing operations should use requester confirmation | **Not encoded as universal canonical scenario policy** | Demoted to guarded safety experiment unless partner explicitly requires confirmation for a scenario |
+| KO-009 | Stable agent-facing integration contract is desirable | Strongly compatible with package/API | Canonical ToolSpec + native/MCP experiment |
+| KO-010 | Agent failure must not break existing workflow | Supported engineering guidance | Fault/fallback experiment |
+| KO-011 | Prevent development/final-evaluation leakage | Strongly supported | Group-aware dev/validation/locked-test split |
+| KO-012 | Student must explain choices/trade-offs | Supported | ADRs + ablations + presentation evidence |
 
 ## Agent-construction coverage
 
-The construction component is now mandatory. The TAPI says the solution **may explore** the capabilities below; our research goal is to cover all that materially apply and measure them where possible.
-
-| ID | Capability | Status | Planned evidence |
-|---|---|---|---|
-| AG-001 | Interpret HTTP contracts | CONFIRMED opportunity | OpenAPI-driven adapter + tests |
-| AG-002 | Define tools and schemas | CONFIRMED opportunity | Typed tool registry / schema validation |
-| AG-003 | Select functions | CONFIRMED opportunity | Tool selection metrics |
-| AG-004 | Construct arguments | CONFIRMED opportunity | Exact/semantic/schema argument metrics |
-| AG-005 | Planning and stopping policy | CONFIRMED opportunity | Baseline vs structured policy experiment |
-| AG-006 | Handle incomplete returns and failures | CONFIRMED opportunity | Fault-injection benchmark |
-| AG-007 | Ground/fundament responses | CONFIRMED opportunity | Evidence trace + unsupported-claim evaluator |
-| AG-008 | Memory/context across interactions | CONFIRMED opportunity | Multi-turn benchmark + state policy |
-| AG-009 | Decide orient vs act vs escalate | CONFIRMED opportunity | Decision policy metrics |
-| AG-010 | Execution traceability | CONFIRMED opportunity | OpenTelemetry/app trace |
+| ID | Capability | Planned evidence |
+|---|---|---|
+| AG-001 | Interpret HTTP contracts | Duplicate-aware OpenAPI normalization + conformance tests |
+| AG-002 | Define tools and schemas | Canonical typed ToolSpec / strict validation |
+| AG-003 | Select functions | Tool selection metrics |
+| AG-004 | Construct arguments | Schema + semantic argument correctness |
+| AG-005 | Planning/stopping policy | Baseline vs evidence-aware policy experiment |
+| AG-006 | Handle incomplete returns and failures | Deterministic seeded robustness benchmark |
+| AG-007 | Ground responses in evidence | Evidence coverage/unsupported-claim evaluator |
+| AG-008 | Memory/context where needed | Multi-turn/state experiment only if actual cases require it |
+| AG-009 | Decide orient/investigate/act/escalate | Decision metrics |
+| AG-010 | Execution traceability | Project-owned TraceSchema + OTel adapter |
 
 ## Evaluation-framework coverage
 
-The evaluation framework is now a mandatory component of the project objective. The TAPI explicitly lists the following analysis objects.
-
-| ID | Evaluation object explicitly listed by TAPI | Planned canonical signal |
+| ID | Evaluation object | Canonical signal after artifact inspection |
 |---|---|---|
-| EV-001 | Function choice | Tool precision/recall/correctness |
-| EV-002 | Argument accuracy | Schema validity + exact/semantic argument correctness |
-| EV-003 | Execution trajectory | Trajectory constraints/goal path/step efficiency |
-| EV-004 | Evidence use | Evidence coverage, provenance, conflict handling, unsupported claims |
-| EV-005 | Response quality | Deterministic conclusion/fact checks where possible; semantic evaluator only where needed |
-| EV-006 | Safety | Permission/policy/confirmation/forbidden-action checks |
-| EV-007 | Performance under failures | Robust task success + safe fallback by fault profile |
-| EV-008 | Stability across executions | Repeated-run reliability / pass-style metrics / variance |
-| EV-009 | High-impact action behavior | Mutation/action correctness + approval/pre-execution gate + final state |
-| EV-010 | Escalation quality | Correct escalation decision + handoff evidence/unresolved-point completeness |
-| EV-011 | Customer-safe communication | Correct conclusion with unnecessary internal-detail leakage controlled |
+| EV-001 | Function choice | Required/allowed/forbidden tool correctness; reference-path diagnostics |
+| EV-002 | Argument accuracy | Strict schema validity + semantic argument correctness |
+| EV-003 | Execution trajectory | Policy/order constraints + evidence coverage + efficiency; **not raw exact-sequence match** |
+| EV-004 | Evidence use | Required evidence, provenance, response mode, conflict/uncertainty handling |
+| EV-005 | Response quality | Human-reviewed structured conclusion/fact oracle derived from narrative P1/expected resolution |
+| EV-006 | Safety | Bound identity/seed, permission/policy/resource constraints, forbidden actions |
+| EV-007 | Performance under failures | Robust task success + safe fallback by deterministic response-mode perturbation |
+| EV-008 | Stability across executions | Repeated-run reliability with fixed environment seed/observations |
+| EV-009 | High-impact action behavior | Correct decision/tool/target/arguments/justification + `accepted=true` + no duplicate/unnecessary action |
+| EV-010 | Escalation quality | Correct escalation decision and, where gold supports it, handoff completeness |
+| EV-011 | Customer-safe communication | Conclusion correctness separated from disclosure/style policy |
 
-## Evaluation-framework deliverable forms explicitly supported by TAPI
+## Evaluation deliverable forms
 
-The format remains open. We intend the integrated framework to provide equivalents of all of these where feasible:
+The integrated framework should provide, where useful:
 
 - automated test suite;
-- metrics library;
+- metrics/evaluator library;
 - scenario runner;
 - trace inspection application;
-- adversarial-case generation;
+- adversarial/controlled variants;
 - robustness and consistency evaluation;
-- execution capture, anonymization and reproduction/replay.
+- execution capture/replay;
+- reproducible experiment manifests.
 
 ## Documentation requirements
 
-Final README must cover:
-
-- chosen problem;
-- integrated dual-track scope;
-- architecture;
-- installation and execution;
-- models and configurations;
-- experimental methodology;
-- results;
-- limitations;
-- evolution opportunities.
+Final README must cover problem/scope, architecture, setup, models/configurations, experimental methodology, results, limitations and future evolution.
 
 ## Rubric-to-evidence map
 
-| Rubric criterion | Evidence we must produce |
+| Rubric criterion | Evidence |
 |---|---|
-| API integration quality | Contract-aware typed client/tools, failure handling, live traces |
-| Technical coherence | Unified agent+evaluation architecture, ADRs, ablation results |
-| Hypothesis and experiment clarity | Pre-registered hypotheses, baselines, splits, protocol |
-| Result analysis quality | Quantitative metrics, CIs, failure slices, qualitative trace examples |
-| Limitations and risks | Threat model, failure taxonomy, explicit validity limitations |
-| Reproducibility | Versioned configs/datasets, reset/replay, deterministic evaluators, environment setup |
+| API integration quality | Normalized/conformance-tested contract, typed tools, live traces, failure handling |
+| Technical coherence | Unified agent+evaluation architecture, ADRs, ablations |
+| Hypothesis/experiment clarity | Pre-registered guarded-boundary + evidence/stopping experiments, baselines, splits |
+| Result analysis quality | Metrics, CIs, failure slices, trace examples, environment-vs-agent variability decomposition |
+| Limitations/risks | Package quality audit, threat model, failure taxonomy, validity limits |
+| Reproducibility | Raw artifact hashes, normalized manifests, config hashes, deterministic seed catalog, replay |
 | Documentation | README + research + ADRs + experiment reports |
-| Demo quality | Live agent run + evaluation trace + state verification + repeated-run/fault comparison dashboard |
+| Demonstration | Live agent + per-run evaluator + seeded robustness/reliability comparisons |
 
-## Scope interpretation after the update
+## Remaining partner/instructor dependencies
 
-`RESOLVED_BY_UPDATED_TAPI`:
+The delivered package resolves most former API/dataset unknowns. Remaining non-inferable questions include:
 
-- We no longer need to ask whether one track must be designated primary.
-- We no longer frame the evaluation framework as an optional subsystem of the construction track.
-- The project must integrate both components coherently.
+- whether additional/hidden evaluation cases will be used;
+- model/provider restrictions or credits for students beyond the written feasibility guidance;
+- whether raw partner package/gold material may be published in the public repository;
+- exact final-demo environment/constraints;
+- whether confirmation should be promoted from kickoff safety guidance to a canonical action policy in any official case.
 
-The wording `Nesta trilha` in the evaluation-deliverable section is treated as a section label/legacy wording, because the updated objective explicitly states that the solution must contain both components. If partner guidance contradicts this interpretation, record that guidance as a superseding project requirement.
-
-## API/dataset-dependent requirements still unknown
-
-The TAPI explicitly states that the final endpoint/parameter list will be provided in the API contract, and the kickoff transcript is not precise enough to resolve these. Therefore we must not invent:
-
-- exact endpoint catalog;
-- exact resource schemas;
-- permission representation;
-- exact high-impact/mutation/confirmation classification;
-- reset/snapshot semantics;
-- stable identifiers;
-- rate limits;
-- timestamps/freshness semantics;
-- conflict/partial-result metadata;
-- authentication details;
-- exact case count and official split packaging;
-- hidden-evaluation policy;
-- exact model/provider constraints for students.
-
-These are tracked in `05-tractian-open-questions.md`.
+All architecture choices beyond the integrity constraints above remain subject to project-specific experiment and ADR.
