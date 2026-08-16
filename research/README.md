@@ -3,7 +3,7 @@
 **Status: E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 ACTIVE**  
 **Date:** 2026-08-16
 
-The project now has the updated TAPI, kickoff evidence, the actual TRACTIAN package, frozen contract/gold semantics, a validated framework-neutral experimental harness, a frozen leakage-aware benchmark split and a preregistered B0-B3 guarded-boundary experiment. Research has moved from generic architecture exploration to controlled, project-specific experimentation.
+The project now has the updated TAPI, kickoff evidence, the actual TRACTIAN package, frozen contract/gold semantics, a validated framework-neutral experimental harness, a frozen leakage-aware benchmark split and the first DEV model-proposal boundary run.
 
 ## Frozen evidence/contracts
 
@@ -28,27 +28,14 @@ Frozen benchmark structure: 16 narrative scenarios, 17 tickets and 10 asset/stor
 
 - executable ScenarioSchema v1 models;
 - 18-operation Canonical ToolSpec registry;
-- explicit per-tool runner-bound seed support;
-- runner-owned identity boundary;
-- deterministic B0 HTTP transport;
+- runner-owned identity/seed binding;
+- B0 HTTP transport;
 - strict B1 argument validation;
 - deterministic B2 permission/resource guard;
 - evidence-aware B3 action gate;
-- integrated `HarnessRunner` with separate proposal/call/result/observation events;
-- TraceSchema v1 and deterministic trace invariants;
-- live capture, replay and volatile trace normalization;
-- configuration/artifact hashing;
-- integrated deterministic evaluator suite;
-- registry-vs-contract conformance tooling;
-- reproducible real-API transport/trace/replay probe;
-- GitHub Actions verification.
-
-Validation evidence:
-
-- **24 tests passed** on Python 3.13.15 in GitHub Actions;
-- independent registry check matched all **18/18** operations, methods, paths and canonical parameters;
-- **12** seed-capable reads confirmed from the supplied OpenAPI;
-- supplied CEN-01 transport path returned 5/5 HTTP 200 with final escalation `accepted=true`.
+- integrated `HarnessRunner`;
+- TraceSchema v1 and deterministic replay;
+- integrated deterministic evaluator suite.
 
 Completion report: `research/39-e2-integrated-completion-report.md`.
 
@@ -70,25 +57,34 @@ The split is group-level, coverage-aware and locked before any runtime/model/pro
 
 ### E4 — Guarded-boundary experiment
 
-Preregistered artifacts:
+Active artifacts:
 
 - `research/41-e4-guarded-boundary-experiment-preregistration.md`
 - `research/42-e4-execution-start-report.md`
+- `research/43-e4-first-dev-model-proposal-results.md`
 - `research/experiments/e4-b0-b3-experiment-manifest.json`
+- `research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json`
+- `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`
 - `scripts/research/e4_validate_experiment_manifest.py`
+- `scripts/research/e4_dev_runner.py`
+- `scripts/research/e4_model_proposal_adapter.py`
 
-E4 compares:
+First DEV model-proposal boundary result:
 
-- **B0:** minimal benchmark-valid wrapper;
-- **B1:** B0 + strict typed validation;
-- **B2:** B1 + deterministic permission/resource guard;
-- **B3:** B2 + evidence-aware action/escalation gate.
+| Variant | Proposals | Executed calls | Blocked calls | Permission/scope executions | Contained unsafe proposals | Uncontained safety failures |
+|---|---:|---:|---:|---:|---:|---:|
+| B0 | 27 | 27 | 0 | 1 | 0 | 1 |
+| B1 | 27 | 27 | 0 | 1 | 0 | 1 |
+| B2 | 27 | 26 | 1 | 0 | 1 | 0 |
+| B3 | 27 | 26 | 1 | 0 | 1 | 0 |
 
-E4 uses DEV for debugging and VALIDATION for selection. LOCKED_TEST remains unavailable. Hard safety metrics are reported separately, and scripted/reference proposal sources remain infrastructure-only.
+Interpretation: B2 contained one permission/resource-scope unsafe model proposal that B0/B1 would execute. B1 had no effect in this first plan because arguments were structurally valid. B3 did not add blocking beyond B2 because action proposals were placed after declared evidence requirements.
+
+This is boundary evidence only. Full task/conclusion success requires the private DEV evaluator and cannot expose evaluator-only gold in the public repository.
 
 ## Explicit non-decisions
 
-No agent runtime, model, MCP topology, RAG stack, vector DB, multi-agent design, routing strategy, persistent-memory design, observability vendor or presentation UI has been selected.
+No agent runtime, model provider selection, MCP topology, RAG stack, vector DB, multi-agent design, routing strategy, persistent-memory design, observability vendor or presentation UI has been selected.
 
 ## Source hierarchy
 
@@ -108,12 +104,13 @@ Variants B0–B3 are the core attribution experiment; B4 confirmation remains a 
 
 ## Critical path
 
-`E0 freeze → E1 freeze → E2 complete → E3 split frozen → E4 B0–B3 → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
+`E0 freeze → E1 freeze → E2 complete → E3 split frozen → B0–B3 boundary evidence → private DEV evaluator → VALIDATION → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
 
 ## Important methodological rules
 
 - Do not freeze a framework because implementation has started.
 - Framework-neutral infrastructure may be implemented before architecture selection; architecture-changing choices require project-specific evidence and an ADR.
+- Boundary metrics do not equal task/conclusion success.
 - Test doubles and scripted reference paths may validate instrumentation/transport/evaluators, but they are never evidence that the agent solves the task.
 - The final demonstration is downstream of the experiments and must show measured behavior rather than hand-scripted success.
 - Locked-test groups are off-limits for architecture/model/prompt/runtime selection.
