@@ -231,6 +231,7 @@ class ToolSpec(ExtraForbidModel):
     identity_required: bool = False
     identity_binding: Literal["runner"] = "runner"
     seed_binding: Literal["runner"] = "runner"
+    seed_supported: bool = False
     action_persistence: Literal["accepted_event_non_persistent", "unknown"] = "unknown"
 
 
