@@ -1,0 +1,46 @@
+{
+  "report_version": "e7-topology-decision-summary-v1",
+  "date": "2026-08-16",
+  "status": "E7_TOPOLOGY_DECISION_PREP_PASS",
+  "decision": {
+    "internal_default_candidate": "native_tools",
+    "external_interoperability_candidate": "mcp_compatible_adapter",
+    "mcp_required_for_final_delivery_at_this_gate": false,
+    "mcp_requirement_condition": "Require MCP only if future delivery, evaluator, partner, deployment or tooling constraints require an MCP server/client boundary.",
+    "final_architecture_freeze": false
+  },
+  "constants_preserved": {
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "adaptive_evidence_planning": true,
+    "transport_path": "HttpxTransport"
+  },
+  "evidence_basis": {
+    "e7_status": "E7_PASS",
+    "native_tool_coverage": 18,
+    "mcp_tool_coverage": 18,
+    "schema_equivalence": true,
+    "invocation_equivalence": true,
+    "guard_fidelity_equivalent": true,
+    "trace_completeness_equivalent": true,
+    "native_complexity_proxy": 1.0,
+    "mcp_complexity_proxy": 2.0,
+    "native_portability_proxy": 3.0,
+    "mcp_portability_proxy": 4.5
+  },
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "observability_freeze": false,
+    "ui_freeze": false
+  },
+  "next_gate": "E8 statistical pilot and model benchmark preparation"
+}
