@@ -1,17 +1,17 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT RECORDED; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d DEV-ONLY PASS; FULL DEV+VALIDATION REMEASUREMENT READY  
+**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d DEV-ONLY PASS; E10d FULL DEV+VALIDATION IMPROVED WITH SAFETY REGRESSION  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 17:15 BRT  
+**Progress checkpoint:** 2026-08-16 17:30 BRT  
 **Target final delivery:** 2026-09-08
 
-This is the active execution plan. It separates frozen evidence/contracts from experimental architecture decisions, preserves the USD 0 provider constraint, and treats private task-quality score as the acceptance signal instead of proxy/schema success.
+This is the active execution plan. It separates frozen evidence/contracts from experimental architecture decisions, preserves the USD 0 provider constraint, and treats private task-quality score and safety gates as the acceptance signal instead of proxy/schema success.
 
 ## Current gate
 
-E10d ran locally and passed the DEV-only private scorer target. It preserved decision, evidence and action correctness, fixed escalation correctness, kept premature actions and unsupported final claims at 0.0, and kept LOCKED_TEST blocked.
+E10d passed DEV-only and was remeasured on full DEV+VALIDATION. The full result improves over the E9 full baseline on real task quality, decision correctness, evidence correctness, action correctness and proxy disagreement. However, it fails the full promotion gate because premature action rate increased from 0.0 to 0.25.
 
-The full DEV+VALIDATION remeasurement runner is now ready. It has not yet produced a real full score. The next accepted evidence must come from a local full E10d capture scored by `scripts/research/e9_evaluator_side_scorer_v3.py` after outputs are fixed.
+Decision: do not promote E10d into integration gates yet. The next gate is E10e safety/premature-action protection. VALIDATION must remain measurement-only, not tuning.
 
 ## Frozen / complete
 
@@ -28,7 +28,7 @@ The full DEV+VALIDATION remeasurement runner is now ready. It has not yet produc
 - E10b DEV-only action/escalation loop improved decision/evidence/action but not escalation.
 - E10c DEV-only escalation loop preserved E10b gains but did not improve escalation.
 - E10d DEV-only visible-output escalation consistency guard passed private DEV-only scoring.
-- E10d full DEV+VALIDATION remeasurement manifest, runner, documentation and dry-run CI are ready.
+- E10d full DEV+VALIDATION remeasurement completed and recorded as improved but not promotable because of a safety regression.
 
 ## Current candidate bundle
 
@@ -45,58 +45,49 @@ The full DEV+VALIDATION remeasurement runner is now ready. It has not yet produc
 
 ## Score history
 
-| Metric | E9 full DEV+VALIDATION | E9 DEV-only baseline | E10 DEV-only | E10b DEV-only | E10c DEV-only | E10d DEV-only |
-|---|---:|---:|---:|---:|---:|---:|
-| Real task quality | 0.631 | 0.4762 | 0.619 | 0.8571 | 0.8571 | 1.0 |
-| Decision correctness | 0.6667 | 0.3333 | 0.3333 | 1.0 | 1.0 | 1.0 |
-| Evidence correctness | 0.0 | 0.0 | 1.0 | 1.0 | 1.0 | 1.0 |
-| Action correctness | 0.25 | 0.0 | 0.0 | 1.0 | 1.0 | 1.0 |
-| Escalation correctness | 0.5 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 |
-| Premature action rate | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| Unsupported final-claim rate | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| Proxy-vs-real disagreement rate | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 0.0 |
+| Metric | E9 full DEV+VALIDATION | E9 DEV-only baseline | E10 DEV-only | E10b DEV-only | E10c DEV-only | E10d DEV-only | E10d full DEV+VALIDATION |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Real task quality | 0.631 | 0.4762 | 0.619 | 0.8571 | 0.8571 | 1.0 | 0.8214 |
+| Decision correctness | 0.6667 | 0.3333 | 0.3333 | 1.0 | 1.0 | 1.0 | 0.75 |
+| Evidence correctness | 0.0 | 0.0 | 1.0 | 1.0 | 1.0 | 1.0 | 0.75 |
+| Action correctness | 0.25 | 0.0 | 0.0 | 1.0 | 1.0 | 1.0 | 0.75 |
+| Escalation correctness | 0.5 | 0.0 | 0.0 | 0.0 | 0.0 | 1.0 | 0.5 |
+| Premature action rate | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.25 |
+| Unsupported final-claim rate | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| Proxy-vs-real disagreement rate | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 0.0 | 0.5 |
 
-Interpretation: E8 proxy/schema success was over-optimistic. E10 fixed evidence grounding. E10b fixed decision/action calibration on DEV. E10c did not improve escalation. E10d fixed the remaining DEV-only escalation consistency gap.
+Interpretation: E10d generalizes partially. The full result is much stronger than the E9 full baseline in average quality, but the safety regression blocks promotion.
 
-## E10d DEV-only escalation consistency guard
+## E10d full remeasurement artifacts
 
-E10d is not prompt-only. It preserves E10c generation, then applies a deterministic visible-output guard before private scoring.
-
-The guard is allowed because it uses only the model's own visible parsed output and visible policy consistency. It does not use expected paths, private oracle rows, evaluator labels, reference trajectories, validation feedback or LOCKED_TEST.
-
-## Immediate next gate — full DEV+VALIDATION E10d remeasurement
-
-Now that E10d passed DEV-only, the next step is to run a fixed full DEV+VALIDATION capture for the E10d candidate and score it with E9 v3.
-
-### Full remeasurement artifacts ready
-
+- `research/results/e10d-full-dev-validation-private-score-summary-2026-08-16.json`
+- `research/83-e10d-full-dev-validation-private-score-results.md`
 - `research/experiments/e10d-full-dev-validation-remeasurement-manifest.json`
 - `scripts/research/e10d_full_dev_validation_capture.py`
 - `research/82-e10d-full-dev-validation-remeasurement.md`
 - `.github/workflows/research-e10d-full.yml`
 
-The full dry-run CI validates the capture shape without external model calls. The real full Groq capture must still be run locally before claiming any full DEV+VALIDATION quality gain.
+## Immediate next gate — E10e safety/premature-action guard
 
-### Full remeasurement rules
+E10e should target premature-action safety without tuning on VALIDATION. It should use general visible-output safety invariants, not validation-specific expected paths or validation-row debugging.
 
-- Do not tune on VALIDATION.
+### E10e design direction
+
+- Preserve the E10d improvements in evidence, action and escalation when a safe action is actually supported.
+- Add a visible-output safety veto when the model's own output says evidence is incomplete, conditional, uncertain, permission-blocked, or not safe to act.
+- Set `should_take_action_now=false` when the visible output is internally conditional or contradicts immediate action.
+- Keep `requires_human_escalation=true` when human handling is needed, but avoid equating human escalation with autonomous action.
+- Do not use expected paths, private oracle rows, evaluator labels, validation feedback or LOCKED_TEST.
+
+### E10e acceptance target before another full remeasurement
+
+- Preserve evidence correctness above the E9 DEV baseline.
+- Preserve action correctness above the E9 DEV baseline.
+- Preserve escalation correctness at least at the E9 full baseline.
+- Restore premature action rate to 0.0.
+- Keep unsupported final-claim rate at 0.0.
 - Keep LOCKED_TEST blocked.
-- Do not commit raw private oracles, raw fixed parsed outputs, score rows, output hashes or private expected paths.
-- Commit only sanitized aggregate results and a written interpretation.
-- Compare against the original E9 full DEV+VALIDATION baseline.
-- Do not freeze final model/provider/architecture unless full remeasurement supports it and later integration gates also pass.
-
-### Full remeasurement acceptance target
-
-The full DEV+VALIDATION E10d candidate should improve over the E9 full baseline without safety regressions:
-
-- real task quality greater than 0.631;
-- evidence correctness greater than 0.0;
-- action correctness not worse than 0.25;
-- escalation correctness not worse than 0.5;
-- premature action rate remains 0.0;
-- unsupported final-claim rate remains 0.0;
-- LOCKED_TEST remains inaccessible.
+- Do not commit raw private or fixed-output material.
 
 ## Methodological constraints
 
@@ -113,18 +104,12 @@ The full DEV+VALIDATION E10d candidate should improve over the E9 full baseline 
 - [x] E10 DEV-only evidence-first iteration run and scored.
 - [x] E10b DEV-only action/escalation iteration run and scored.
 - [x] E10c DEV-only escalation iteration run and scored.
-- [x] Record E10c as no escalation improvement.
-- [x] Build E10d DEV-only escalation consistency guard.
-- [x] Add E10d dry-run CI guard.
-- [x] Run E10d real DEV-only capture locally.
-- [x] Score E10d with E9 v3 private scorer.
-- [x] Compare E10d against E10b/E10c and the acceptance target.
-- [x] Record E10d as DEV-only acceptance target met.
-- [x] Build full DEV+VALIDATION E10d remeasurement runner.
-- [x] Add full E10d dry-run CI guard.
-- [ ] Run full DEV+VALIDATION E10d capture locally.
-- [ ] Score full DEV+VALIDATION E10d with E9 v3 private scorer.
-- [ ] Compare full E10d against E9 full baseline.
-- [ ] Decide whether to promote E10d candidate into integration gates.
+- [x] E10d DEV-only escalation guard run and scored.
+- [x] Full DEV+VALIDATION E10d capture run and scored.
+- [x] Record E10d full result as improved but blocked by safety regression.
+- [ ] Build E10e safety/premature-action guard without VALIDATION tuning.
+- [ ] Run E10e DEV-only capture locally.
+- [ ] Score E10e with E9 v3 private scorer.
+- [ ] Only after DEV-only safety acceptance, consider another full DEV+VALIDATION remeasurement.
 - [ ] Keep LOCKED_TEST blocked.
 - [ ] Keep final architecture unfrozen.
