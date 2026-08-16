@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 ACTIVE — first DEV boundary run executed**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 ACTIVE — private DEV proxy evaluator combined**  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 08:56 BRT  
+**Progress checkpoint:** 2026-08-16 09:07 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan after the real TRACTIAN package was audited. It deliberately separates **frozen evidence/contracts** from **experimental architecture decisions** and explicitly forbids demo-first development.
@@ -55,7 +55,9 @@ Completed so far:
 - model-proposal adapter implemented and validated;
 - first DEV model proposal plan generated with `proposal_source_class=model_agent`;
 - first DEV boundary run executed across B0/B1/B2/B3;
-- boundary metrics exported and recorded.
+- boundary metrics exported and recorded;
+- private DEV evaluator combiner implemented;
+- first private DEV proxy evaluator summary generated locally and recorded in redacted aggregate form.
 
 First DEV boundary result:
 
@@ -66,12 +68,23 @@ First DEV boundary result:
 | B2 | 27 | 26 | 1 | 0 | 1 | 0 |
 | B3 | 27 | 26 | 1 | 0 | 1 | 0 |
 
-Initial interpretation:
+Private DEV proxy evaluator result:
+
+| Variant | Scenarios | Proxy pass | Proxy partial | Proxy fail | Decision OK | Action OK | Safety OK | Avg evidence coverage | Avg conclusion marker coverage |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| B0 | 8 | 0 | 7 | 1 | 6 | 6 | 7 | 0.498 | 0.292 |
+| B1 | 8 | 0 | 7 | 1 | 6 | 6 | 7 | 0.498 | 0.292 |
+| B2 | 8 | 0 | 8 | 0 | 6 | 6 | 8 | 0.498 | 0.292 |
+| B3 | 8 | 0 | 8 | 0 | 6 | 6 | 8 | 0.498 | 0.292 |
+
+Current interpretation:
 
 - B2 already showed boundary value by containing one unsafe permission/resource-scope proposal that B0/B1 would execute.
 - B1 had no visible effect in the first DEV plan because generated arguments were structurally valid.
 - B3 did not add blocking beyond B2 because generated action proposals occurred after declared evidence requirements.
-- This is boundary evidence only; task/conclusion success still requires private DEV evaluator integration.
+- The private DEV evaluator could be combined without committing evaluator-only gold.
+- Full task/conclusion success is **not scoreable yet** because the first plan stores structured final tags, not natural-language final answers or handoff text.
+- The next DEV run must include scoreable final responses/handoff text and pressure cases that actually exercise B1 and B3.
 
 ### Not frozen
 
@@ -159,12 +172,15 @@ Completed outputs:
 - `research/41-e4-guarded-boundary-experiment-preregistration.md`;
 - `research/42-e4-execution-start-report.md`;
 - `research/43-e4-first-dev-model-proposal-results.md`;
+- `research/44-e4-private-dev-evaluator-integration.md`;
 - `research/experiments/e4-b0-b3-experiment-manifest.json`;
 - `research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json`;
 - `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`;
+- `research/results/e4-private-dev-evaluator-redacted-summary-2026-08-16.json`;
 - `scripts/research/e4_validate_experiment_manifest.py`;
 - `scripts/research/e4_dev_runner.py`;
-- `scripts/research/e4_model_proposal_adapter.py`.
+- `scripts/research/e4_model_proposal_adapter.py`;
+- `scripts/research/e4_private_dev_evaluator.py`.
 
 Primary outcomes remain:
 
@@ -180,7 +196,7 @@ Primary outcomes remain:
 
 Hard safety failures are reported separately; do not hide them inside an arbitrary weighted score.
 
-Next executable task: combine the first DEV boundary metrics with the private DEV evaluator so task/conclusion success can be measured without exposing evaluator-only gold.
+Next executable task: generate a scoreable DEV model-proposal run with natural-language final answers/handoff text, plus B1/B3 pressure cases, then rerun boundary + private DEV evaluator before considering VALIDATION.
 
 ### E5 — Evidence acquisition / stopping
 
@@ -229,8 +245,8 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen; E4 preregistered; DEV runner/adapter implemented; first DEV boundary run executed |
-| **17–20 Aug** | private DEV evaluator integration + B0/B1/B2/B3 DEV task/conclusion metrics |
+| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen; E4 preregistered; DEV runner/adapter implemented; first DEV boundary run executed; private DEV proxy evaluator combined |
+| **17–20 Aug** | scoreable DEV model proposal with final responses + B0/B1/B2/B3 DEV task/conclusion metrics |
 | **21–22 Aug** | VALIDATION comparison for promoted E4 components |
 | **23–24 Aug** | B3/evidence-stopping follow-up and error analysis |
 | **25 Aug** | runtime + MCP spikes |
@@ -271,9 +287,11 @@ The architecture is frozen only after:
 - `research/41-e4-guarded-boundary-experiment-preregistration.md`
 - `research/42-e4-execution-start-report.md`
 - `research/43-e4-first-dev-model-proposal-results.md`
+- `research/44-e4-private-dev-evaluator-integration.md`
 - `research/experiments/e4-b0-b3-experiment-manifest.json`
 - `research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json`
 - `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`
+- `research/results/e4-private-dev-evaluator-redacted-summary-2026-08-16.json`
 - `research/37-post-freeze-execution-backlog.md`
 - `research/e2/`
 - `research/e4/tests/`
@@ -283,4 +301,5 @@ The architecture is frozen only after:
 - `scripts/research/e4_validate_experiment_manifest.py`
 - `scripts/research/e4_dev_runner.py`
 - `scripts/research/e4_model_proposal_adapter.py`
+- `scripts/research/e4_private_dev_evaluator.py`
 - `.github/workflows/research-e2.yml`
