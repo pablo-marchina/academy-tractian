@@ -36,6 +36,7 @@ from research.e2.transport import build_b0_request
 
 
 def make_scenario(*, escalate: bool = False, required_action: str | None = None) -> Scenario:
+    action_target = "an_1" if required_action in {"reprocess_analysis", "request_specialist_analysis"} else "asset_a"
     return Scenario(
         scenario_id="CEN-01",
         title="fixture",
@@ -48,7 +49,7 @@ def make_scenario(*, escalate: bool = False, required_action: str | None = None)
         decision_oracle=DecisionOracle(required=[Decision.ESCALATE_HUMAN] if escalate else [], acceptable=[]),
         policy_oracle=PolicyOracle(required_permissions=[Permission.ACTION_HIGH]),
         evidence_oracle=EvidenceOracle(required_groups=[EvidenceGroup(group_id="g", requirements=[EvidenceRequirement(source="data_quality", predicate="gap", required_before_action=True)])]),
-        action_oracle=ActionOracle(execution_expectation="required", success_semantics="accepted_event", post_action_read_semantics="diagnostic_only", required_action=required_action, target_resource="asset_a") if required_action else None,
+        action_oracle=ActionOracle(execution_expectation="required", success_semantics="accepted_event", post_action_read_semantics="diagnostic_only", required_action=required_action, target_resource=action_target) if required_action else None,
         conclusion_oracle=ConclusionOracle(required_facts=["fact_a"], forbidden_claims=["claim_bad"], source_resolution_text="fixture"),
         trajectory_oracle=TrajectoryOracle(),
         evaluation=EvaluationSpec(p1_success_source="fixture"),
