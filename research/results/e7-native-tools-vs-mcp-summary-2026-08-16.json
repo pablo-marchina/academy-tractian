@@ -1,0 +1,131 @@
+{
+  "report_version": "e7-native-tools-vs-mcp-summary-v1",
+  "date": "2026-08-16",
+  "status": "E7_PASS",
+  "scope": {
+    "allowed_splits": [
+      "DEV",
+      "VALIDATION"
+    ],
+    "forbidden_splits": [
+      "LOCKED_TEST"
+    ],
+    "locked_test_accessed": false,
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "ui_freeze": false
+  },
+  "constants_preserved": {
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "execution_boundary": "HarnessRunner",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "adaptive_evidence_planning": true,
+    "transport_path": "HttpxTransport",
+    "live_transport_path_preserved": true
+  },
+  "surface_equivalence": {
+    "native_tool_coverage": 18,
+    "mcp_tool_coverage": 18,
+    "registry_size": 18,
+    "same_tool_names": true,
+    "schema_equivalence": true,
+    "mcp_tools_list_shape_valid": true
+  },
+  "native_tools": {
+    "surface": "native_tools",
+    "representative_scenarios": 4,
+    "splits": [
+      "DEV",
+      "VALIDATION"
+    ],
+    "request_count": 18,
+    "successful_request_count": 18,
+    "trace_complete": true,
+    "runtrace_compatible_output": true,
+    "b3_policy_event_count": 2,
+    "b3_allows_actions": true,
+    "evidence_sufficiency_event_count": 4,
+    "action_execution_proxy_ok": 2,
+    "action_execution_proxy_total": 2,
+    "tools_used": [
+      "get_analysis",
+      "get_asset",
+      "get_baseline",
+      "get_data_quality",
+      "get_spectrum",
+      "list_analyses",
+      "reprocess_analysis",
+      "request_specialist_analysis",
+      "search_knowledge"
+    ],
+    "latency_avg_ms": 1.9855,
+    "complexity_proxy": 1.0,
+    "portability_proxy": 3.0
+  },
+  "mcp_compatible": {
+    "surface": "mcp_compatible",
+    "representative_scenarios": 4,
+    "splits": [
+      "DEV",
+      "VALIDATION"
+    ],
+    "request_count": 18,
+    "successful_request_count": 18,
+    "trace_complete": true,
+    "runtrace_compatible_output": true,
+    "b3_policy_event_count": 2,
+    "b3_allows_actions": true,
+    "evidence_sufficiency_event_count": 4,
+    "action_execution_proxy_ok": 2,
+    "action_execution_proxy_total": 2,
+    "tools_used": [
+      "get_analysis",
+      "get_asset",
+      "get_baseline",
+      "get_data_quality",
+      "get_spectrum",
+      "list_analyses",
+      "reprocess_analysis",
+      "request_specialist_analysis",
+      "search_knowledge"
+    ],
+    "latency_avg_ms": 1.8158,
+    "complexity_proxy": 2.0,
+    "portability_proxy": 4.5
+  },
+  "comparison": {
+    "schema_equivalence": true,
+    "invocation_equivalence": true,
+    "guard_fidelity_equivalent": true,
+    "trace_completeness_equivalent": true,
+    "latency_overhead_ratio_mcp_vs_native": 0.915,
+    "native_lower_complexity": true,
+    "mcp_higher_portability": true
+  },
+  "comparators_retained": [
+    "pydantic_ai_graph",
+    "openai_agents_sdk"
+  ],
+  "decision": {
+    "native_tools": "keep as internal default candidate because it preserves fidelity with lower envelope complexity",
+    "mcp_compatible": "keep as external interoperability candidate because it preserves fidelity with higher portability",
+    "mcp_topology": "not frozen",
+    "architecture": "not frozen"
+  },
+  "notes": [
+    "Both surfaces are normalized into the same HarnessRunner and deterministic B3/evidence path.",
+    "The MCP-compatible surface tests tools/list and tools/call envelope compatibility, not a final server topology.",
+    "The live HttpxTransport path from E6 is preserved but not required in CI contract execution.",
+    "LOCKED_TEST was not accessed."
+  ],
+  "ci": {
+    "run_id": 31952679604,
+    "artifact_id": 9265091777,
+    "artifact_name": "e7-native-tools-vs-mcp-summary",
+    "artifact_digest": "sha256:92d1b23e8fc7957ab5c1dc8448a6babc070ab33ae4a989967fdf0c5c7f4b645c",
+    "job_status": "success"
+  }
+}
