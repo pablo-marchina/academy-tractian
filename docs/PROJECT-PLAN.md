@@ -1,19 +1,23 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E10h blocker analysis recorded; E11 independent action authorization ready  
+**Status:** E11 DEV-only independent action authorization pass; full DEV+VALIDATION E11 remeasurement next  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 19:44 BRT  
+**Progress checkpoint:** 2026-08-16 19:51 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
 
-E10g passed DEV-only safety/action scoring, then was remeasured on full DEV+VALIDATION. The full capture and private E9 v3 scoring are valid: 12 fixed calls, 12 parsed model outputs, 5 private oracles loaded, 12 matching oracle calls, and 12 scoreable calls.
+E10g passed DEV-only safety/action scoring, then was remeasured on full DEV+VALIDATION. The full capture and private E9 v3 scoring were valid: 12 fixed calls, 12 parsed model outputs, 5 private oracles loaded, 12 matching oracle calls, and 12 scoreable calls.
 
 Decision: do not promote E10g to integration gates. E10g full matches E10d/E10e full: it improves over the E9 full baseline in average task quality, evidence and action, but the full premature-action safety regression persists at `premature_action_rate = 0.25`. The required full safety gate is `premature_action_rate = 0.0`.
 
-E10h records a non-validation-tuned blocker analysis. The analysis concludes that the failed assumption is reliance on post-hoc visible-output self-consistency: when the model produces an internally coherent but overconfident action recommendation, the visible guard may trust the model's own action-safety assertions.
+E10h recorded a non-validation-tuned blocker analysis. The analysis concludes that the failed assumption is reliance on post-hoc visible-output self-consistency: when the model produces an internally coherent but overconfident action recommendation, the visible guard may trust the model's own action-safety assertions.
 
-E11 is now ready as a DEV-only independent action-authorization policy. It does not use VALIDATION for tuning, does not use private oracle values in the model/policy, keeps LOCKED_TEST blocked, and does not treat model `safe_to_act` as sufficient authorization.
+E11 is the next DEV-only candidate: an independent action-authorization policy. It does not use VALIDATION for tuning, does not use private oracle values in the model/policy, keeps LOCKED_TEST blocked, and does not treat model `safe_to_act` as sufficient authorization.
+
+E11 has now passed DEV-only private scoring: `real_task_quality = 1.0`, `decision_correctness = 1.0`, `evidence_correctness = 1.0`, `action_correctness = 1.0`, `escalation_correctness = 1.0`, `premature_action_rate = 0.0`, and `unsupported_final_claim_rate = 0.0`.
+
+Decision: E11 passes the DEV-only safety/action acceptance gate. The next gate should be a full DEV+VALIDATION E11 remeasurement, with VALIDATION used only for measurement, not tuning. LOCKED_TEST remains blocked and final architecture remains unfrozen.
 
 ## Full score history
 
@@ -32,15 +36,16 @@ E11 is now ready as a DEV-only independent action-authorization policy. It does 
 
 ## DEV score context
 
-| Metric | E10e DEV | E10f DEV | E10g DEV |
-|---|---:|---:|---:|
-| Real task quality | 1.0 | 0.7619 | 1.0 |
-| Decision correctness | 1.0 | 0.3333 | 1.0 |
-| Evidence correctness | 1.0 | 1.0 | 1.0 |
-| Action correctness | 1.0 | 0.0 | 1.0 |
-| Escalation correctness | 1.0 | 1.0 | 1.0 |
-| Premature action rate | 0.0 | 0.0 | 0.0 |
-| Unsupported final-claim rate | 0.0 | 0.0 | 0.0 |
+| Metric | E10e DEV | E10f DEV | E10g DEV | E11 DEV |
+|---|---:|---:|---:|---:|
+| Real task quality | 1.0 | 0.7619 | 1.0 | 1.0 |
+| Decision correctness | 1.0 | 0.3333 | 1.0 | 1.0 |
+| Evidence correctness | 1.0 | 1.0 | 1.0 | 1.0 |
+| Action correctness | 1.0 | 0.0 | 1.0 | 1.0 |
+| Escalation correctness | 1.0 | 1.0 | 1.0 | 1.0 |
+| Premature action rate | 0.0 | 0.0 | 0.0 | 0.0 |
+| Unsupported final-claim rate | 0.0 | 0.0 | 0.0 | 0.0 |
+| Proxy-vs-real disagreement rate | 0.0 | 1.0 | 0.0 | 0.0 |
 
 ## Relevant completed artifacts
 
@@ -49,13 +54,12 @@ E11 is now ready as a DEV-only independent action-authorization policy. It does 
 - `research/experiments/e10h-non-validation-tuned-safety-blocker-analysis-manifest.json`
 - `research/results/e10h-non-validation-tuned-safety-blocker-analysis-summary-2026-08-16.json`
 - `research/94-e10h-non-validation-tuned-safety-blocker-analysis.md`
-
-## E11 artifacts ready
-
 - `research/experiments/e11-dev-only-independent-action-authorization-manifest.json`
 - `scripts/research/e11_dev_only_independent_action_authorization.py`
 - `research/95-e11-dev-only-independent-action-authorization.md`
 - `.github/workflows/research-e11.yml`
+- `research/results/e11-dev-only-private-score-summary-2026-08-16.json`
+- `research/96-e11-dev-only-private-score-results.md`
 
 ## E11 design
 
@@ -82,9 +86,12 @@ Model `safe_to_act=true` is not sufficient authorization.
 - [x] Record that the next candidate should be independent action authorization.
 - [x] Prepare E11 independent action-authorization policy from DEV/public invariants only.
 - [x] Add E11 dry-run CI guard.
-- [ ] Run E11 DEV-only capture locally.
-- [ ] Score E11 DEV-only with E9 v3 private scorer.
-- [ ] Only after DEV-only acceptance, consider a new full DEV+VALIDATION measurement.
+- [x] Run E11 DEV-only capture locally.
+- [x] Score E11 DEV-only with E9 v3 private scorer.
+- [x] Record E11 as DEV-only safety/action acceptance target met.
+- [ ] Prepare full DEV+VALIDATION E11 remeasurement runner.
+- [ ] Run full DEV+VALIDATION E11 remeasurement locally.
+- [ ] Score full E11 with E9 v3 private scorer.
 - [ ] Keep final architecture unfrozen.
 
 ## E11 acceptance target before any new full remeasurement
@@ -98,6 +105,12 @@ Model `safe_to_act=true` is not sufficient authorization.
 - `real_task_quality >= 0.8571` on DEV.
 - LOCKED_TEST remains blocked.
 - No raw private or fixed-output material is committed.
+
+E11 met this DEV-only acceptance target.
+
+## Next gate — full DEV+VALIDATION E11 remeasurement
+
+The next full run must be measurement-only on VALIDATION. It must compare against the E9 full baseline and E10d/E10e/E10g full runs, and it must require `premature_action_rate = 0.0` before any integration promotion.
 
 ## Methodological constraints
 
