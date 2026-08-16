@@ -1,8 +1,30 @@
 # Research Backlog Before Architecture Freeze
 
-Status: **Wave 4 — partner artifacts received; experiment execution unlocked**
+Status: **Wave 4 complete — project-specific experiment execution unlocked**
 
-The updated TAPI requires both agent construction and evaluation. The kickoff supplied partner workflow guidance. The 2026-08-15 project ZIP now provides the actual API implementation, contract, canonical cases and evaluation material.
+Planning reference: [`../docs/PROJECT-PLAN.md`](../docs/PROJECT-PLAN.md)
+
+The updated TAPI requires both agent construction and evaluation. The kickoff supplied partner workflow guidance. The delivered project ZIP now provides the actual API implementation, contract, canonical cases and evaluation material.
+
+## Critical-path targets
+
+These dates are internal project targets, not partner requirements.
+
+| Target | Gate |
+|---|---|
+| Aug 16–17 | `NORMALIZED-CONTRACT-v1` candidate + ScenarioSchema v1 reviewed draft |
+| Aug 18–20 | Canonical ToolSpec/evaluator/trace/replay harness operational |
+| Aug 21–22 | leakage-aware benchmark split frozen + B0/B1/B2 runnable |
+| Aug 23–24 | B3 + evidence/stopping experiments completed |
+| Aug 25 | runtime + MCP discriminating spikes completed |
+| Aug 26 | statistical pilot/model screening; `k` and confirmatory protocol frozen |
+| Aug 27 | Research Gate target → `FROZEN-v1` |
+| Aug 28–Sep 1 | final selected architecture integrated end-to-end |
+| Sep 2–5 | final evaluation, adversarial/robustness/reliability, locked test |
+| Sep 6–7 | documentation/reproducibility/demo rehearsal |
+| Sep 8 | final delivery/presentation |
+
+If schedule slips, cut P2/optional complexity before compromising contract/gold/split/evaluator integrity.
 
 ## P0 — Artifact normalization and benchmark ground truth
 
@@ -26,6 +48,8 @@ The updated TAPI requires both agent construction and evaluation. The kickoff su
 - [ ] Conformance-test normalized operations against FastAPI runtime `/openapi.json` and probes.
 - [ ] Freeze `NORMALIZED-CONTRACT-v1`.
 
+**Exit gate:** no tool/client generation from the raw duplicate-key contract.
+
 ### R03 — Domain/action/policy map
 
 - [x] Inventory synthetic resources/counts/relationships.
@@ -43,12 +67,14 @@ The updated TAPI requires both agent construction and evaluation. The kickoff su
 - [x] Inventory 17 cases / 16 narrative scenarios.
 - [x] Confirm reference trajectory is not a script.
 - [x] Detect material differences between machine expected paths and narrative scenarios.
-- [x] Identify only 10 primary asset/story groups -> leakage risk.
+- [x] Identify only 10 primary asset/story groups → leakage risk.
 - [x] Separate scenario labels (`pending`, `stale`) from API response-mode enum.
 - [ ] Human-review every narrative P1 success criterion/expected resolution.
 - [ ] Produce ScenarioSchema v1 oracles: decisions, evidence, actions, policy, conclusion, uncertainty/escalation.
 - [ ] Produce change/provenance manifest for normalized gold.
 - [ ] Freeze group-aware dev/validation/locked-test split.
+
+**Exit gate:** no model/prompt/runtime selection against unreviewed narrative gold or a random ticket split.
 
 ### R05 — Seed/robustness catalog
 
@@ -66,7 +92,7 @@ The updated TAPI requires both agent construction and evaluation. The kickoff su
 - [x] Stable agent-facing contract supported by kickoff/package findings.
 - [x] Define that `x-user-id` and `seed` are runtime-bound, not model arguments.
 - [ ] Define strict request/response models from normalized contract + executable payloads.
-- [ ] Add action metadata: permission, target-resource scope, impact, idempotency/event semantics.
+- [ ] Add action metadata: permission, target-resource scope, impact, event/non-persistent semantics.
 - [ ] Implement minimal benchmark-valid adapter B0.
 - [ ] Implement strict typed validator B1.
 - [ ] Implement deterministic policy/resource guard B2.
@@ -84,7 +110,7 @@ The updated TAPI requires both agent construction and evaluation. The kickoff su
 - [ ] Implement action evaluator.
 - [ ] Implement escalation evaluator.
 - [ ] Implement safety/resource-policy evaluator.
-- [ ] Validate evaluator itself with handcrafted pass/fail fixtures.
+- [ ] Validate evaluator itself with handcrafted pass/fail fixtures before using it to rank agents.
 
 ### R08 — Trace / replay / provenance
 
@@ -119,7 +145,7 @@ Pre-registered variants:
 - [ ] Compare reference-like/fixed investigation, free model loop and explicit evidence-sufficiency policy.
 - [ ] Use fixed scenario overrides + deterministic seed perturbations.
 - [ ] Measure premature stop, unnecessary calls, task success and escalation correctness.
-- [ ] Only consider learned/calibrated risk after rule baseline.
+- [ ] Only consider learned/calibrated risk after a strong rule baseline leaves a measured residual problem.
 
 ### R11 — Runtime comparison
 
@@ -140,7 +166,7 @@ Finalists remain:
 ### R12 — MCP topology
 
 - [ ] Compare native tools vs MCP v2 adapter using same ToolSpec.
-- [ ] Measure schema/argument fidelity, trace propagation, latency and complexity.
+- [ ] Measure schema/argument fidelity, trace propagation, policy interception, latency and complexity.
 - [ ] Write MCP ADR.
 
 ## P1 — Benchmark/statistics/models
@@ -151,6 +177,7 @@ Finalists remain:
 - [ ] Define final grouping by asset/storyline.
 - [ ] Check modality/action/evidence coverage across candidate splits.
 - [ ] Freeze locked test before architecture/model/prompt optimization.
+- [ ] Hash/version split manifest.
 
 ### R14 — Statistical pilot
 
@@ -166,7 +193,7 @@ Finalists remain:
 - [ ] Confirm permitted/available student providers immediately before execution.
 - [ ] Screen candidates on development groups only.
 - [ ] Validate survivors on validation groups.
-- [ ] Select via safety constraints + quality/reliability/latency/resource Pareto evidence.
+- [ ] Select via hard safety constraints + quality/reliability/latency/resource Pareto evidence.
 - [ ] Do not touch locked test during selection.
 
 ## P2 — Conditional techniques
@@ -192,7 +219,7 @@ Finalists remain:
 
 ### R19 — Observability backend / UI
 
-- [ ] Compare Phoenix/Langfuse only after normalized TraceSchema v1 works without them.
+- [ ] Compare Phoenix/Langfuse only after normalized TraceSchema v1 works independently of them.
 - [ ] Select demo UI based on ability to prove agent + evaluator, not frontend novelty.
 
 ## Research Gate completion definition
@@ -203,12 +230,14 @@ Finalists remain:
 2. human-reviewed ScenarioSchema v1/gold oracles;
 3. leakage-aware frozen split;
 4. guarded-boundary experiment completed;
-5. runtime + MCP ADRs completed;
-6. model/statistical pilot completed sufficiently for selection/protocol freeze;
-7. conditional complexity accepted/rejected with evidence;
-8. no material artifact inconsistency silently unresolved;
-9. remaining partner/instructor dependencies explicitly documented.
+5. evidence/stopping experiment completed sufficiently to choose policy;
+6. runtime + MCP ADRs completed;
+7. statistical pilot completed and confirmatory protocol frozen;
+8. project-native model evidence sufficient for a deployment candidate;
+9. conditional complexity accepted/rejected with evidence;
+10. no material artifact inconsistency silently unresolved;
+11. remaining partner/instructor dependencies explicitly documented.
 
 ## Immediate execution sequence
 
-**Normalize contract → normalize gold into ScenarioSchema v1 → build ToolSpec/evaluator/trace harness → freeze split → B0–B3 guarded-boundary experiment → evidence/stopping experiment → runtime/MCP spike → statistical pilot/model screening → conditional techniques → ADRs → FROZEN-v1.**
+**E0 contract normalization + E1 gold normalization in parallel → E2 ToolSpec/evaluator/trace harness → E3 split freeze → E4 B0–B3 → E5 evidence/stopping → E6/E7 runtime/MCP → E8 pilot/model benchmark → E9 conditional techniques → ADRs → `FROZEN-v1`.**
