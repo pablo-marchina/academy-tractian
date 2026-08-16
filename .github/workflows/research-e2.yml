@@ -1,4 +1,4 @@
-name: research-e2-e3-e4-e5-e6-e7-native-mcp
+name: research-e2-e3-e4-e5-e6-e7-e8-prep
 
 on:
   push:
@@ -19,18 +19,23 @@ on:
       - 'research/53-e6-real-toolspec-langgraph-preregistration.md'
       - 'research/57-e7-native-tools-vs-mcp-preregistration.md'
       - 'research/58-e7-native-tools-vs-mcp-results.md'
+      - 'research/59-e7-topology-adr.md'
+      - 'research/60-e8-statistical-pilot-model-benchmark-preregistration.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
       - 'research/experiments/e6-*.json'
       - 'research/experiments/e7-*.json'
+      - 'research/experiments/e8-*.json'
       - 'research/results/e7-*.json'
+      - 'research/results/e8-*.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
       - 'scripts/research/e4_*.py'
       - 'scripts/research/e5_*.py'
       - 'scripts/research/e6_*.py'
       - 'scripts/research/e7_*.py'
+      - 'scripts/research/e8_*.py'
       - '.github/workflows/research-e2.yml'
   pull_request:
     paths:
@@ -49,22 +54,27 @@ on:
       - 'research/53-e6-real-toolspec-langgraph-preregistration.md'
       - 'research/57-e7-native-tools-vs-mcp-preregistration.md'
       - 'research/58-e7-native-tools-vs-mcp-results.md'
+      - 'research/59-e7-topology-adr.md'
+      - 'research/60-e8-statistical-pilot-model-benchmark-preregistration.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
       - 'research/experiments/e6-*.json'
       - 'research/experiments/e7-*.json'
+      - 'research/experiments/e8-*.json'
       - 'research/results/e7-*.json'
+      - 'research/results/e8-*.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
       - 'scripts/research/e4_*.py'
       - 'scripts/research/e5_*.py'
       - 'scripts/research/e6_*.py'
       - 'scripts/research/e7_*.py'
+      - 'scripts/research/e8_*.py'
       - '.github/workflows/research-e2.yml'
 
 jobs:
-  e2-e3-e4-e5-e6-e7-native-mcp-unit:
+  e2-e3-e4-e5-e6-e7-e8-prep-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +111,8 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e6_live_api_langgraph_runner.py --transport-mode contract --manifest research/experiments/e6-live-api-integration-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e6-live-api-integration-summary.json
       - name: Execute E7 native tools vs MCP runner
         run: PYTHONPATH=. python scripts/research/e7_native_vs_mcp_runner.py --manifest research/experiments/e7-native-tools-vs-mcp-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e7-native-tools-vs-mcp-summary.json
+      - name: Execute E8 statistical pilot prep validator
+        run: PYTHONPATH=. python scripts/research/e8_statistical_pilot_prep.py --manifest research/experiments/e8-statistical-pilot-model-benchmark-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e8-statistical-pilot-prep-summary.json
       - name: Upload E4 DEV model-proposal metrics
         uses: actions/upload-artifact@v4
         with:
@@ -146,3 +158,8 @@ jobs:
         with:
           name: e7-native-tools-vs-mcp-summary
           path: /tmp/e7-native-tools-vs-mcp-summary.json
+      - name: Upload E8 statistical pilot prep summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e8-statistical-pilot-prep-summary
+          path: /tmp/e8-statistical-pilot-prep-summary.json
