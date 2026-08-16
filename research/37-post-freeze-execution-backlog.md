@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E3 Frozen, E4 Next
+# Post-E0/E1 Execution Backlog — E4 Active
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 NEXT**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 ACTIVE**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -94,23 +94,36 @@ Artifacts:
 - `research/frozen/benchmark-split-v1.json`
 - `scripts/research/e3_validate_split.py`
 
-## E4 — next active gate
+## E4 — active gate
 
 Run the guarded-boundary experiment B0-B3 using DEV for development/debugging and VALIDATION for selection. Do not inspect or optimize against LOCKED_TEST.
 
-Required work:
+Preregistered:
 
-- [ ] define the B0-B3 experiment manifest;
+- [x] define the B0-B3 experiment manifest;
+- [x] explicitly exclude B4 from the main E4 experiment;
+- [x] encode DEV/VALIDATION-only policy;
+- [x] encode LOCKED_TEST forbidden uses;
+- [x] encode no-demo policy;
+- [x] encode hard-safety metrics separately from quality metrics;
+- [x] add manifest validation script;
+- [x] add CI step for E4 manifest validation.
+
+Next required work:
+
 - [ ] bind DEV/VALIDATION groups into the runner without exposing locked-test gold;
-- [ ] implement or connect the first non-demo model/tool proposal generator;
+- [ ] implement the first DEV-only E4 run harness;
+- [ ] require every run to declare `proposal_source_class`;
+- [ ] block LOCKED_TEST by construction in the run harness;
 - [ ] run B0 minimal wrapper on DEV;
-- [ ] run B1 strict typed validation;
-- [ ] run B2 permission/resource guard;
-- [ ] run B3 evidence-aware action/escalation;
+- [ ] run B1 strict typed validation on DEV;
+- [ ] run B2 permission/resource guard on DEV;
+- [ ] run B3 evidence-aware action/escalation on DEV;
 - [ ] report contained unsafe proposals separately from executed safety failures;
 - [ ] compute task/conclusion success, argument correctness, evidence coverage, action correctness and efficiency;
+- [ ] repeat eligible comparison on VALIDATION for component promotion/rejection;
 - [ ] promote/reject each boundary component by measured value.
 
 ## Methodological constraint
 
-No item in E2 or E3 is an agent demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment.
+No item in E2, E3 or E4 preregistration is an agent demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment.
