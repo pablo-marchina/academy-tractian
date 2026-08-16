@@ -1,11 +1,11 @@
 # E2 — Initial Execution Report
 
 **Date:** 2026-08-16  
-**Status:** ACTIVE
+**Status:** SUPERSEDED BY COMPLETION REPORT
 
-E2 starts only after the two prerequisite freezes: `NORMALIZED-CONTRACT-v1` and ScenarioSchema/gold semantics v1.
+E2 started only after the two prerequisite freezes: `NORMALIZED-CONTRACT-v1` and ScenarioSchema/gold semantics v1.
 
-## Implemented
+The initial implementation established:
 
 - executable ScenarioSchema v1 models with strict extra-field rejection;
 - 18-operation Canonical ToolSpec registry / 17 unique path templates / 5 actions;
@@ -18,14 +18,15 @@ E2 starts only after the two prerequisite freezes: `NORMALIZED-CONTRACT-v1` and 
 - strict action argument validation foundation;
 - deterministic permission/resource-scope guard foundation.
 
-## Local verification
+The initial local verification recorded **10 tests passed** in an isolated Python 3.13 environment. E2 was subsequently expanded and validated in CI.
 
-The E2 harness was executed in an isolated Python 3.13 environment with Pydantic 2.13.4: **10 tests passed**.
+Final E2 evidence is recorded in:
 
-The supplied TRACTIAN API's own 39-test suite could not be independently rerun in the current environment because `pyarrow` is unavailable. The partner package's documented green result remains source evidence rather than an independent local test result.
+- `research/38-e2-wave-2-execution-report.md`;
+- `research/39-e2-integrated-completion-report.md`.
+
+Current CI evidence: **24 tests passed** on Python 3.13.15.
 
 ## Explicit non-decisions
 
-E2 does **not** select LangGraph, Pydantic AI/Graph, OpenAI Agents SDK, MCP, a model/provider, RAG, vector DB, multi-agent decomposition, routing, persistent memory or an observability backend.
-
-Those remain later experimental decisions.
+E2 did **not** select LangGraph, Pydantic AI/Graph, OpenAI Agents SDK, MCP, a model/provider, RAG, vector DB, multi-agent decomposition, routing, persistent memory or an observability backend.
