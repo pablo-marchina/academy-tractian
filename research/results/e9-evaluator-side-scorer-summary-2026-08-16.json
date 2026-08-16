@@ -1,0 +1,57 @@
+{
+  "report_version": "e9-evaluator-side-task-quality-scorer-summary-v1",
+  "date": "2026-08-16",
+  "status": "E9_SCORER_CONTRACT_PASS_PRIVATE_ORACLE_OR_OUTPUTS_REQUIRED",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false
+  },
+  "inputs": {
+    "fixed_output_source": "research/results/e8-groq-free-anywhere-model-run-summary-2026-08-16.json",
+    "fixed_groq_summary_consumed_by_contract": true,
+    "private_oracle_file_committed": false,
+    "private_oracle_file_required_for_real_score": true,
+    "parsed_model_outputs_required_for_real_score": true
+  },
+  "gold_leakage_controls": {
+    "model_prompt_receives_oracle": false,
+    "scorer_reads_oracle_after_outputs_fixed": true,
+    "outputs_hashed_before_scoring": true,
+    "evaluator_only_paths_blocked_from_model": true,
+    "locked_test_forbidden_before_final": true
+  },
+  "aggregate_metrics": {
+    "real_task_quality": null,
+    "decision_correctness": null,
+    "evidence_correctness": null,
+    "action_correctness": null,
+    "escalation_correctness": null,
+    "premature_action_rate": null,
+    "unsupported_final_claim_rate": null,
+    "proxy_success_rate": null,
+    "proxy_vs_real_disagreement_rate": null
+  },
+  "why_real_score_is_not_claimed_yet": [
+    "The public repo stores a sanitized Groq E8 summary and must not commit private oracles.",
+    "Semantic task-quality scoring requires parsed fixed model outputs plus private DEV/VALIDATION oracle data loaded locally by the scorer after generation.",
+    "The implemented scorer is ready for that local/private pass and exits CI in contract mode without claiming real score."
+  ],
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "next_private_command": "python scripts/research/e9_evaluator_side_scorer.py --manifest research/experiments/e9-evaluator-side-task-quality-scorer-manifest.json --fixed-output-file <fixed-groq-output-with-parsed-model-outputs.json> --oracle-file <private-dev-validation-oracle.json> --out <e9-private-score-summary.json> --include-rows",
+  "final_architecture_freeze": false
+}
