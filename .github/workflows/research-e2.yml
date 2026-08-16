@@ -87,6 +87,8 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e6_langgraph_integration_spike.py --manifest research/experiments/e6-langgraph-integration-spike-manifest.json --out /tmp/e6-langgraph-integration-summary.json
       - name: Execute E6 adaptive ToolSpec LangGraph runner
         run: PYTHONPATH=. python scripts/research/e6_langgraph_toolspec_runner_v3.py --manifest research/experiments/e6-real-toolspec-langgraph-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e6-real-toolspec-langgraph-summary.json
+      - name: Execute E6 live API integration contract
+        run: PYTHONPATH=. python scripts/research/e6_live_api_langgraph_runner.py --transport-mode contract --manifest research/experiments/e6-live-api-integration-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e6-live-api-integration-summary.json
       - name: Upload E4 DEV model-proposal metrics
         uses: actions/upload-artifact@v4
         with:
@@ -122,3 +124,8 @@ jobs:
         with:
           name: e6-real-toolspec-langgraph-summary
           path: /tmp/e6-real-toolspec-langgraph-summary.json
+      - name: Upload E6 live API integration contract summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e6-live-api-integration-summary
+          path: /tmp/e6-live-api-integration-summary.json
