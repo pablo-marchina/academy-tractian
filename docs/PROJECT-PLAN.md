@@ -1,11 +1,11 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LANGGRAPH INTEGRATION EXECUTED**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 ADAPTIVE TOOLSPEC LANGGRAPH EXECUTED**  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 09:54 BRT  
+**Progress checkpoint:** 2026-08-16 10:12 BRT  
 **Target final delivery:** 2026-09-08
 
-This is the active execution plan after the real TRACTIAN package was audited. It deliberately separates frozen evidence/contracts from experimental architecture decisions and explicitly forbids demo-first development.
+This is the active execution plan after the real TRACTIAN package was audited. It separates frozen evidence/contracts from experimental architecture decisions and explicitly forbids demo-first development.
 
 ## 1. Current state
 
@@ -19,7 +19,8 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - E4 B0-B3 guarded-boundary DEV+VALIDATION comparison complete.
 - E5 evidence acquisition/stopping comparison executed.
 - E6 runtime discriminating spike executed.
-- E6 LangGraph minimal integration spike executed.
+- E6 minimal LangGraph integration spike executed.
+- E6 adaptive real ToolSpec/HarnessRunner LangGraph spike executed.
 
 ### Current candidate bundle
 
@@ -28,7 +29,7 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - **Runtime candidate:** LangGraph.
 - **Baselines/comparators retained:** B0, free tool loop, fixed/reference-like anchor, Pydantic AI/Graph, OpenAI Agents SDK.
 
-This is still not a model/provider, MCP, RAG/vector DB, multi-agent, observability, memory, prompt or UI freeze.
+This is still not a final model/provider, MCP topology, RAG/vector DB, multi-agent, observability, memory, prompt or UI freeze.
 
 ## 2. Decision evidence so far
 
@@ -55,7 +56,7 @@ This is still not a model/provider, MCP, RAG/vector DB, multi-agent, observabili
 | Pydantic AI/Graph | 4.328 | Retain as typed/schema-native fallback and comparator |
 | OpenAI Agents SDK | 4.188 | Retain as provider-native comparator |
 
-### E6 LangGraph integration spike
+### E6 minimal LangGraph integration spike
 
 | Metric | Result |
 |---|---:|
@@ -70,7 +71,29 @@ This is still not a model/provider, MCP, RAG/vector DB, multi-agent, observabili
 | Direct harness avg ms | 0.0076 |
 | LangGraph avg ms | 9.2244 |
 
-Decision: confirm LangGraph as the current runtime candidate for the next implementation spike. The overhead ratio is inflated by a near-zero direct Python baseline and must be remeasured end-to-end before architecture freeze.
+### E6 adaptive real ToolSpec/HarnessRunner spike
+
+| Metric | Result |
+|---|---:|
+| Adaptive mode | true |
+| ToolSpec registry wired | true |
+| ToolSpec registry size | 18 |
+| HarnessRunner used | true |
+| B3 external guard preserved | true |
+| Evidence-sufficiency policy explicit | true |
+| RunTrace-compatible output | true |
+| Representative scenarios | 4 |
+| Splits used | DEV + VALIDATION |
+| Adaptive path count | 3 |
+| Required evidence coverage | 1.000 |
+| Action execution proxy | 2/2 |
+| Deterministic replay equal | true |
+| Checkpoint pause/resume roundtrip | true |
+| Direct HarnessRunner avg ms | 1.3582 |
+| LangGraph avg ms | 20.3439 |
+| Overhead ratio | 14.979 |
+
+Decision: LangGraph advances to real DEV/VALIDATION integration implementation, with Pydantic AI/Graph and OpenAI Agents SDK retained as comparators. The adaptive spike is more realistic than the toy micro-spike because it uses the existing ToolSpec registry and HarnessRunner and chooses evidence tools from missing evidence requirements.
 
 ## 3. Non-negotiable integrity rules
 
@@ -79,7 +102,7 @@ Decision: confirm LangGraph as the current runtime candidate for the next implem
 - Related scenarios remain grouped by asset/storyline; no case-level random split.
 - Locked-test groups are unavailable during architecture/model/prompt/runtime selection until the final locked evaluation gate.
 - Reference trajectories are not exact-match gold unless an explicit policy requires ordering.
-- Hard identity/schema/policy constraints are deterministic where possible.
+- Hard identity/schema/policy constraints remain deterministic where possible.
 - Action success follows supplied `accepted_event_non_persistent` semantics; no invented final-state oracle.
 - Optional complexity survives only if required or supported by experiment evidence.
 - No demo-first development: test doubles and scripted paths validate infrastructure only.
@@ -123,28 +146,33 @@ Artifacts:
 - `research/50-e6-runtime-spike-results-adr.md`
 - `research/51-e6-langgraph-integration-spike-preregistration.md`
 - `research/52-e6-langgraph-integration-spike-results.md`
+- `research/53-e6-real-toolspec-langgraph-preregistration.md`
+- `research/54-e6-real-toolspec-langgraph-results.md`
 - `research/experiments/e6-runtime-spike-manifest.json`
 - `research/experiments/e6-langgraph-integration-spike-manifest.json`
+- `research/experiments/e6-real-toolspec-langgraph-manifest.json`
 - `research/results/e6-runtime-spike-summary-2026-08-16.json`
 - `research/results/e6-langgraph-integration-summary-2026-08-16.json`
+- `research/results/e6-real-toolspec-langgraph-summary-2026-08-16.json`
 - `scripts/research/e6_runtime_spike_runner.py`
 - `scripts/research/e6_langgraph_integration_spike.py`
+- `scripts/research/e6_langgraph_toolspec_runner.py`
+- `scripts/research/e6_langgraph_toolspec_runner_v3.py`
 
-### E6 implementation follow-up — NEXT
+### E6 real integration continuation — NEXT
 
-Implementation-grade real ToolSpec graph:
-
-- wire LangGraph nodes to the existing ToolSpec registry and HarnessRunner;
-- preserve B3 and evidence-sufficiency as deterministic graph/policy nodes;
-- emit full RunTrace-compatible events;
-- test checkpoint/replay/pause-resume over representative DEV/VALIDATION scenarios;
-- remeasure overhead end-to-end;
+- replace deterministic stub transport with live supplied API transport;
+- connect model proposal generation without leaking evaluator-only gold;
+- keep adaptive evidence planning;
+- keep B3 and evidence-sufficiency deterministic;
+- run representative DEV + VALIDATION scenarios end-to-end;
+- measure task success, trace completeness and live latency;
 - keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
 - keep LOCKED_TEST blocked.
 
 ### E7 — Native tools vs MCP
 
-Expose the same ToolSpec through native tools and MCP v2 after the real ToolSpec LangGraph spike.
+Expose the same ToolSpec through native tools and MCP v2 after the real integration continuation.
 
 ### E8 — Statistical pilot + model benchmark
 
@@ -158,8 +186,8 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 runtime + LangGraph integration spike |
-| **17–20 Aug** | real ToolSpec LangGraph spike + native/MCP discriminating setup |
+| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 runtime + minimal + adaptive ToolSpec LangGraph spikes |
+| **17–20 Aug** | live API LangGraph integration + native/MCP discriminating setup |
 | **21–22 Aug** | runtime/MCP ADRs + error analysis |
 | **23–24 Aug** | statistical pilot preparation |
 | **25 Aug** | statistical pilot/model screening |
