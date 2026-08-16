@@ -1,0 +1,27 @@
+name: research-e2
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/e2/**'
+      - 'scripts/research/e2_*.py'
+      - '.github/workflows/research-e2.yml'
+  pull_request:
+    paths:
+      - 'research/e2/**'
+      - 'scripts/research/e2_*.py'
+      - '.github/workflows/research-e2.yml'
+
+jobs:
+  e2-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install test dependencies
+        run: python -m pip install 'pydantic>=2.6,<3' 'pytest>=8'
+      - name: Run E2 suite
+        run: python -m pytest research/e2/tests -q
