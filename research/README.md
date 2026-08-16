@@ -1,9 +1,9 @@
 # Systematic Research Hub
 
-**Status: E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 NEXT**  
+**Status: E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 ACTIVE**  
 **Date:** 2026-08-16
 
-The project now has the updated TAPI, kickoff evidence, the actual TRACTIAN package, frozen contract/gold semantics, a validated framework-neutral experimental harness and a frozen leakage-aware benchmark split. Research has moved from generic architecture exploration to controlled, project-specific experimentation.
+The project now has the updated TAPI, kickoff evidence, the actual TRACTIAN package, frozen contract/gold semantics, a validated framework-neutral experimental harness, a frozen leakage-aware benchmark split and a preregistered B0-B3 guarded-boundary experiment. Research has moved from generic architecture exploration to controlled, project-specific experimentation.
 
 ## Frozen evidence/contracts
 
@@ -68,6 +68,24 @@ Assignment:
 
 The split is group-level, coverage-aware and locked before any runtime/model/prompt/architecture optimization. Locked-test groups may be used only for metadata counting, coverage inspection and leakage assertions until final evaluation.
 
+### E4 — Guarded-boundary experiment
+
+Preregistered artifacts:
+
+- `research/41-e4-guarded-boundary-experiment-preregistration.md`
+- `research/42-e4-execution-start-report.md`
+- `research/experiments/e4-b0-b3-experiment-manifest.json`
+- `scripts/research/e4_validate_experiment_manifest.py`
+
+E4 compares:
+
+- **B0:** minimal benchmark-valid wrapper;
+- **B1:** B0 + strict typed validation;
+- **B2:** B1 + deterministic permission/resource guard;
+- **B3:** B2 + evidence-aware action/escalation gate.
+
+E4 uses DEV for debugging and VALIDATION for selection. LOCKED_TEST remains unavailable. Hard safety metrics are reported separately, and scripted/reference proposal sources remain infrastructure-only.
+
 ## Explicit non-decisions
 
 No agent runtime, model, MCP topology, RAG stack, vector DB, multi-agent design, routing strategy, persistent-memory design, observability vendor or presentation UI has been selected.
@@ -90,7 +108,7 @@ Variants B0–B3 are the core attribution experiment; B4 confirmation remains a 
 
 ## Critical path
 
-`E0 freeze → E1 freeze → E2 complete → E3 split frozen → B0–B3 → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
+`E0 freeze → E1 freeze → E2 complete → E3 split frozen → E4 B0–B3 → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
 
 ## Important methodological rules
 
