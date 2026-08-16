@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 ACTIVE — private DEV proxy evaluator combined**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 ACTIVE — scoreable DEV run executed**  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 09:07 BRT  
+**Progress checkpoint:** 2026-08-16 09:15 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan after the real TRACTIAN package was audited. It deliberately separates **frozen evidence/contracts** from **experimental architecture decisions** and explicitly forbids demo-first development.
@@ -21,16 +21,13 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 
 - executable ScenarioSchema/ToolSpec/Trace contracts;
 - runner-owned identity/seed boundary;
-- explicit seed capability per canonical tool;
 - B0 HTTP transport + integrated trace/replay runner;
 - strict B1 argument validation;
 - deterministic B2 permission/resource guard;
 - deterministic B3 evidence-aware action gate;
 - integrated deterministic evaluator suite;
 - registry-vs-contract conformance tooling;
-- provenance/config hashing;
-- GitHub Actions verification: 24 tests passed on Python 3.13.15;
-- supplied CEN-01 transport path independently validated against the supplied API.
+- GitHub Actions retained.
 
 ### E3 frozen
 
@@ -49,42 +46,30 @@ Completed so far:
 - guarded-boundary B0-B3 experiment preregistered;
 - DEV + VALIDATION are the only allowed experiment splits;
 - LOCKED_TEST remains unavailable for selection/tuning;
-- hard safety metrics are separated from quality metrics;
-- scripted/reference paths and test doubles remain infrastructure-only, not agent-quality evidence;
 - DEV-only runner implemented and validated;
 - model-proposal adapter implemented and validated;
-- first DEV model proposal plan generated with `proposal_source_class=model_agent`;
-- first DEV boundary run executed across B0/B1/B2/B3;
-- boundary metrics exported and recorded;
-- private DEV evaluator combiner implemented;
-- first private DEV proxy evaluator summary generated locally and recorded in redacted aggregate form.
+- first DEV model proposal plan generated and run;
+- first DEV boundary run combined with private DEV proxy evaluator;
+- scoreable DEV proposal plan generated with final answer/handoff text;
+- scoreable DEV plan includes B1 pressure and B3 pressure cases;
+- scoreable DEV B0/B1/B2/B3 boundary run executed in CI;
+- scoreable private DEV redacted aggregate recorded.
 
-First DEV boundary result:
+Scoreable DEV result:
 
-| Variant | Proposals | Executed calls | Blocked calls | Permission/scope executions | Contained unsafe proposals | Uncontained safety failures |
+| Variant | Scoreable pass | Scoreable fail | Decision OK | Action OK | Safety OK | Uncontained safety failures |
 |---|---:|---:|---:|---:|---:|---:|
-| B0 | 27 | 27 | 0 | 1 | 0 | 1 |
-| B1 | 27 | 27 | 0 | 1 | 0 | 1 |
-| B2 | 27 | 26 | 1 | 0 | 1 | 0 |
-| B3 | 27 | 26 | 1 | 0 | 1 | 0 |
+| B0 | 6/8 | 2/8 | 8/8 | 6/8 | 6/8 | 2 |
+| B1 | 7/8 | 1/8 | 8/8 | 7/8 | 7/8 | 1 |
+| B2 | 7/8 | 1/8 | 8/8 | 7/8 | 7/8 | 1 |
+| B3 | 8/8 | 0/8 | 8/8 | 8/8 | 8/8 | 0 |
 
-Private DEV proxy evaluator result:
+Initial interpretation:
 
-| Variant | Scenarios | Proxy pass | Proxy partial | Proxy fail | Decision OK | Action OK | Safety OK | Avg evidence coverage | Avg conclusion marker coverage |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| B0 | 8 | 0 | 7 | 1 | 6 | 6 | 7 | 0.498 | 0.292 |
-| B1 | 8 | 0 | 7 | 1 | 6 | 6 | 7 | 0.498 | 0.292 |
-| B2 | 8 | 0 | 8 | 0 | 6 | 6 | 8 | 0.498 | 0.292 |
-| B3 | 8 | 0 | 8 | 0 | 6 | 6 | 8 | 0.498 | 0.292 |
-
-Current interpretation:
-
-- B2 already showed boundary value by containing one unsafe permission/resource-scope proposal that B0/B1 would execute.
-- B1 had no visible effect in the first DEV plan because generated arguments were structurally valid.
-- B3 did not add blocking beyond B2 because generated action proposals occurred after declared evidence requirements.
-- The private DEV evaluator could be combined without committing evaluator-only gold.
-- Full task/conclusion success is **not scoreable yet** because the first plan stores structured final tags, not natural-language final answers or handoff text.
-- The next DEV run must include scoreable final responses/handoff text and pressure cases that actually exercise B1 and B3.
+- B1 now shows value by containing the invalid short-justification action proposal that B0 would execute.
+- B3 now shows value by containing the premature action-before-evidence proposal that B0/B1/B2 would execute.
+- B2 showed scope-safety value in the earlier DEV boundary run, but has no new effect in this scoreable pressure run because the scoreable plan did not include cross-company/permission-denied actions.
+- B3 is the strongest DEV candidate so far, but this is not an architecture freeze.
 
 ### Not frozen
 
@@ -134,18 +119,6 @@ Variants:
 
 ### E2 — Canonical ToolSpec + evaluation harness — COMPLETE
 
-Exit evidence:
-
-- 18-operation registry mechanically aligned to the supplied OpenAPI after frozen transformations;
-- 12 runner-seeded read operations explicitly represented;
-- B0 live transport + replay integrated into `HarnessRunner`;
-- B1/B2/B3 deterministic boundaries executable;
-- proposal vs executed-call trace separation;
-- integrated evaluator suite executable;
-- representative pass/fail fixtures;
-- GitHub Actions: **24 passed**;
-- reproducible registry and supplied-API conformance scripts retained.
-
 Completion report: `research/39-e2-integrated-completion-report.md`.
 
 ### E3 — Benchmark split freeze — COMPLETE
@@ -155,13 +128,6 @@ Frozen assignment:
 - **DEV:** `asset_G501`, `asset_C710`, `asset_S420`, `asset_M208`, `asset_M101`.
 - **VALIDATION:** `asset_B204`, `asset_M102`.
 - **LOCKED_TEST:** `asset_V301`, `asset_M605`, `asset_M205`.
-
-Outputs:
-
-- `research/40-e3-benchmark-split-freeze-v1.md`;
-- `research/frozen/benchmark-split-v1.json`;
-- `scripts/research/e3_validate_split.py`;
-- CI validation in `.github/workflows/research-e2.yml`.
 
 No runtime/model/prompt/architecture decision may use locked-test groups.
 
@@ -173,81 +139,49 @@ Completed outputs:
 - `research/42-e4-execution-start-report.md`;
 - `research/43-e4-first-dev-model-proposal-results.md`;
 - `research/44-e4-private-dev-evaluator-integration.md`;
+- `research/45-e4-dev-scoreable-proposal-results.md`;
 - `research/experiments/e4-b0-b3-experiment-manifest.json`;
 - `research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json`;
+- `research/experiments/e4-dev-scoreable-proposal-plan-gpt-5-5-thinking-2026-08-16.json`;
 - `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`;
 - `research/results/e4-private-dev-evaluator-redacted-summary-2026-08-16.json`;
+- `research/results/e4-private-dev-scoreable-evaluator-redacted-summary-2026-08-16.json`;
 - `scripts/research/e4_validate_experiment_manifest.py`;
 - `scripts/research/e4_dev_runner.py`;
 - `scripts/research/e4_model_proposal_adapter.py`;
 - `scripts/research/e4_private_dev_evaluator.py`.
 
-Primary outcomes remain:
+Primary outcomes remain: invalid/unsafe action execution, argument correctness, tool-choice correctness, evidence coverage, task/conclusion success, escalation correctness and efficiency. Hard safety failures are reported separately.
 
-- invalid action execution;
-- unauthorized/cross-company action execution;
-- duplicate/unnecessary actions;
-- argument correctness;
-- tool-choice correctness;
-- evidence coverage;
-- task/conclusion success;
-- escalation correctness;
-- latency/calls/tokens.
-
-Hard safety failures are reported separately; do not hide them inside an arbitrary weighted score.
-
-Next executable task: generate a scoreable DEV model-proposal run with natural-language final answers/handoff text, plus B1/B3 pressure cases, then rerun boundary + private DEV evaluator before considering VALIDATION.
+Next executable task: prepare and run the VALIDATION comparison for promoted candidate boundaries while keeping LOCKED_TEST blocked.
 
 ### E5 — Evidence acquisition / stopping
 
-Compare:
-
-1. fixed/reference-like investigation;
-2. free model tool loop;
-3. explicit evidence-sufficiency/stopping policy.
-
-Measure premature stopping, unnecessary calls, task success, escalation correctness and efficiency under controlled API modes.
+Compare fixed/reference-like investigation, free model tool loop and explicit evidence-sufficiency/stopping policy.
 
 ### E6 — Runtime discriminating spike
 
-Candidates remain:
-
-- LangGraph;
-- Pydantic AI/Graph;
-- OpenAI Agents SDK.
-
-Hold constant ToolSpec, model, scenario, prompt/policy, seed and evaluator. Measure safety interception, pause/resume, duplicate-action resistance, deterministic testing, trace completeness, portability, complexity and overhead.
-
-Output: runtime ADR.
+Candidates remain: LangGraph; Pydantic AI/Graph; OpenAI Agents SDK.
 
 ### E7 — Native tools vs MCP
 
-Expose the same ToolSpec through native tools and MCP v2. Measure schema/argument fidelity, policy interception, trace propagation, latency and complexity.
-
-Output: MCP ADR.
+Expose the same ToolSpec through native tools and MCP v2.
 
 ### E8 — Statistical pilot + model benchmark
 
-Separate:
-
-- model/agent stochasticity at fixed environment observations;
-- environment robustness across deterministic seeds/modes.
-
-Use the pilot to determine repetition count `k` and confirmatory analysis. Screen models only on development groups, validate survivors on validation groups, then lock the test.
-
-Selection uses hard safety constraints plus quality/reliability/latency/resource Pareto evidence.
+Separate model/agent stochasticity at fixed observations from environment robustness across deterministic seeds/modes.
 
 ### E9 — Conditional techniques
 
-Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimization or other complexity when residual failure analysis provides a concrete hypothesis. Reject any component without measurable end-to-end value.
+Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimization or other complexity when residual failure analysis provides a concrete hypothesis.
 
 ## 6. Milestones
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen; E4 preregistered; DEV runner/adapter implemented; first DEV boundary run executed; private DEV proxy evaluator combined |
-| **17–20 Aug** | scoreable DEV model proposal with final responses + B0/B1/B2/B3 DEV task/conclusion metrics |
-| **21–22 Aug** | VALIDATION comparison for promoted E4 components |
+| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen; E4 preregistered; DEV runner/adapter implemented; first DEV boundary and scoreable runs executed |
+| **17–20 Aug** | VALIDATION-ready E4 package + validation comparison |
+| **21–22 Aug** | promote/reject B1/B2/B3 components |
 | **23–24 Aug** | B3/evidence-stopping follow-up and error analysis |
 | **25 Aug** | runtime + MCP spikes |
 | **26 Aug** | statistical pilot + model screening |
@@ -261,45 +195,8 @@ If schedule pressure appears, cut optional complexity first. Never weaken gold i
 
 ## 7. Research Gate → `FROZEN-v1`
 
-The architecture is frozen only after:
-
-1. E0 contract freeze;
-2. E1 ScenarioSchema/gold semantics freeze;
-3. leakage-aware dev/validation/locked-test split;
-4. B0–B3 boundary and task/conclusion evidence;
-5. evidence/stopping evidence;
-6. runtime and MCP ADRs;
-7. statistical pilot and confirmatory protocol;
-8. project-native model benchmark;
-9. conditional techniques accepted/rejected by evidence;
-10. material package inconsistencies documented with no silent corrections.
+The architecture is frozen only after E0/E1/E3 freezes, B0-B3 DEV+VALIDATION evidence, evidence/stopping evidence, runtime and MCP ADRs, statistical pilot/model benchmark, conditional technique decisions and package inconsistency documentation.
 
 ## 8. Active artifacts
 
-- `research/34-e0-contract-freeze-v1.md`
-- `research/frozen/e0-contract-freeze.manifest.json`
-- `research/frozen/API-BEHAVIOR-MAP-v1.json`
-- `research/35-e1-gold-freeze-v1.md`
-- `research/frozen/e1-gold-freeze.manifest.json`
-- `research/39-e2-integrated-completion-report.md`
-- `research/40-e3-benchmark-split-freeze-v1.md`
-- `research/frozen/benchmark-split-v1.json`
-- `research/41-e4-guarded-boundary-experiment-preregistration.md`
-- `research/42-e4-execution-start-report.md`
-- `research/43-e4-first-dev-model-proposal-results.md`
-- `research/44-e4-private-dev-evaluator-integration.md`
-- `research/experiments/e4-b0-b3-experiment-manifest.json`
-- `research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json`
-- `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`
-- `research/results/e4-private-dev-evaluator-redacted-summary-2026-08-16.json`
-- `research/37-post-freeze-execution-backlog.md`
-- `research/e2/`
-- `research/e4/tests/`
-- `scripts/research/e2_registry_conformance.py`
-- `scripts/research/e2_b0_real_api_probe.py`
-- `scripts/research/e3_validate_split.py`
-- `scripts/research/e4_validate_experiment_manifest.py`
-- `scripts/research/e4_dev_runner.py`
-- `scripts/research/e4_model_proposal_adapter.py`
-- `scripts/research/e4_private_dev_evaluator.py`
-- `.github/workflows/research-e2.yml`
+See `research/README.md` and `research/37-post-freeze-execution-backlog.md` for the current artifact index.
