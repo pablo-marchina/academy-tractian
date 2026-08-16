@@ -172,15 +172,31 @@ def list_expected(oracle: dict[str, Any], names: tuple[str, ...]) -> list[str]:
     return []
 
 
-def score_call(call: dict[str, Any], oracle: dict[str, Any]) -> dict[str, Any]:
+def missing_oracle_score(call: dict[str, Any], output: dict[str, Any] | None) -> dict[str, Any]:
+    return {
+        "scoreable": False,
+        "reason": "private_oracle_missing_for_group",
+        "group_id": call.get("group_id"),
+        "split": call.get("split"),
+        "output_hash": call.get("output_hash") or (stable_hash(output) if output is not None else None),
+        "proxy_success": bool(call.get("score", {}).get("task_success_proxy")),
+        "real_task_quality": None,
+    }
+
+
+def score_call(call: dict[str, Any], oracle: dict[str, Any] | None) -> dict[str, Any]:
     output = output_payload(call)
     if output is None:
         return {
             "scoreable": False,
             "reason": "parsed_model_output_missing",
+            "group_id": call.get("group_id"),
+            "split": call.get("split"),
             "proxy_success": bool(call.get("score", {}).get("task_success_proxy")),
             "real_task_quality": None,
         }
+    if not oracle:
+        return missing_oracle_score(call, output)
 
     text = normalize_text(output)
     decision = output.get("decision_class")
@@ -270,20 +286,21 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     output_hashes = sorted({str(call.get("output_hash")) for call in calls if call.get("output_hash")})
     parsed_outputs = [call for call in calls if output_payload(call) is not None]
     oracle_path = args.oracle_file
+    oracle_file_provided = oracle_path is not None and oracle_path.exists()
     oracles: dict[str, dict[str, Any]] = {}
     oracle_scope = {
         "locked_test_oracle_groups_detected": [],
         "known_allowed_oracle_groups": [],
         "outside_known_allowed_asset_groups": [],
     }
-    if oracle_path is not None and oracle_path.exists():
+    if oracle_file_provided:
         if "LOCKED_TEST" in str(oracle_path).upper():
             raise AssertionError("LOCKED_TEST oracle path is forbidden before final evaluation")
         oracles = collect_oracles(load_json(oracle_path))
         oracle_scope = assert_oracle_scope(oracles, split_manifest)
     scores: list[dict[str, Any]] = []
     for call in calls:
-        oracle = oracles.get(str(call.get("group_id")), {})
+        oracle = oracles.get(str(call.get("group_id")))
         scores.append(score_call(call, oracle))
     aggregate_metrics = aggregate(scores)
     real_score_available = bool(oracles) and bool(parsed_outputs) and aggregate_metrics["scoreable_calls"] > 0
@@ -300,11 +317,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         },
         "inputs": {
             "fixed_output_file": str(args.fixed_output_file) if args.fixed_output_file else None,
-            "private_oracle_file_provided": oracle_path is not None and oracle_path.exists(),
+            "private_oracle_file_argument": str(oracle_path) if oracle_path is not None else None,
+            "private_oracle_file_provided": oracle_file_provided,
             "fixed_calls_consumed": len(calls),
             "fixed_output_hashes_consumed": len(output_hashes),
             "parsed_model_outputs_available": len(parsed_outputs),
             "private_oracles_loaded": len(oracles),
+            "calls_with_matching_private_oracle": sum(1 for call in calls if str(call.get("group_id")) in oracles),
         },
         "gold_leakage_controls": {
             "model_prompt_receives_oracle": False,
@@ -319,6 +338,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "interpretation_limits": [
             "Real task-quality metrics require both fixed parsed model outputs and private DEV/VALIDATION oracles.",
             "Sanitized E8 summaries with only output hashes prove fixed-output integrity but are not sufficient for semantic scoring.",
+            "Parsed outputs without matching private oracles are fixed-output evidence, not real semantic task-quality evidence.",
             "LOCKED_TEST remains blocked until final evaluation.",
             "No model/provider or final architecture is frozen by E9.",
         ],
@@ -339,7 +359,15 @@ def main() -> int:
     parser.add_argument("--include-rows", action="store_true")
     args = parser.parse_args()
     summary = run(args)
-    print(json.dumps({"status": summary["status"], "fixed_calls_consumed": summary["inputs"]["fixed_calls_consumed"], "real_score_available": summary["aggregate_metrics"]["real_task_quality"] is not None}, indent=2))
+    print(json.dumps({
+        "status": summary["status"],
+        "fixed_calls_consumed": summary["inputs"]["fixed_calls_consumed"],
+        "parsed_model_outputs_available": summary["inputs"]["parsed_model_outputs_available"],
+        "private_oracle_file_provided": summary["inputs"]["private_oracle_file_provided"],
+        "private_oracles_loaded": summary["inputs"]["private_oracles_loaded"],
+        "scoreable_calls": summary["aggregate_metrics"]["scoreable_calls"],
+        "real_score_available": summary["status"] == "E9_TASK_QUALITY_SCORER_PASS",
+    }, indent=2))
     return 0
 
 
