@@ -41,17 +41,6 @@ E10c is ready for local DEV-only execution. It has not yet produced a real quali
 - Leading free-provider candidate: Groq `llama-3.1-8b-instant`.
 - Paid providers: OpenAI/Anthropic disabled under the USD 0 project constraint.
 
-## Still not frozen
-
-- final model/provider choice;
-- MCP topology;
-- RAG/vector DB;
-- multi-agent decomposition;
-- persistent memory;
-- observability backend;
-- UI/demo flow;
-- final architecture.
-
 ## Score history
 
 | Metric | E9 full DEV+VALIDATION | E9 DEV-only baseline | E10 DEV-only | E10b DEV-only |
@@ -63,8 +52,6 @@ E10c is ready for local DEV-only execution. It has not yet produced a real quali
 | Escalation correctness | 0.5 | 0.0 | 0.0 | 0.0 |
 | Premature action rate | 0.0 | 0.0 | 0.0 | 0.0 |
 | Unsupported final-claim rate | 0.0 | 0.0 | 0.0 | 0.0 |
-| Proxy success rate | 1.0 | 1.0 | 1.0 | 1.0 |
-| Proxy-vs-real disagreement rate | 1.0 | 1.0 | 1.0 | 1.0 |
 
 Interpretation: E8 proxy/schema success was over-optimistic. E10 fixed evidence grounding. E10b fixed decision/action calibration on DEV, but escalation correctness remains the blocker before full DEV+VALIDATION.
 
