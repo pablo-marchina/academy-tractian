@@ -1,0 +1,42 @@
+name: research-e9-evaluator-side-scorer
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/67-e9-evaluator-side-task-quality-scorer-preregistration.md'
+      - 'research/68-e9-evaluator-side-task-quality-scorer-results.md'
+      - 'research/experiments/e9-*.json'
+      - 'research/results/e9-*.json'
+      - 'research/results/e8-groq-free-anywhere-model-run-summary-2026-08-16.json'
+      - 'scripts/research/e9_*.py'
+      - '.github/workflows/research-e9.yml'
+  pull_request:
+    paths:
+      - 'research/67-e9-evaluator-side-task-quality-scorer-preregistration.md'
+      - 'research/68-e9-evaluator-side-task-quality-scorer-results.md'
+      - 'research/experiments/e9-*.json'
+      - 'research/results/e9-*.json'
+      - 'research/results/e8-groq-free-anywhere-model-run-summary-2026-08-16.json'
+      - 'scripts/research/e9_*.py'
+      - '.github/workflows/research-e9.yml'
+
+jobs:
+  e9-evaluator-side-scorer-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E9 evaluator-side scorer contract
+        run: >-
+          PYTHONPATH=. python scripts/research/e9_evaluator_side_scorer.py
+          --manifest research/experiments/e9-evaluator-side-task-quality-scorer-manifest.json
+          --fixed-output-file research/results/e8-groq-free-anywhere-model-run-summary-2026-08-16.json
+          --out /tmp/e9-evaluator-side-scorer-summary.json
+      - name: Upload E9 scorer summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e9-evaluator-side-scorer-summary
+          path: /tmp/e9-evaluator-side-scorer-summary.json
