@@ -1,0 +1,120 @@
+{
+  "schema_version": "benchmark-split-v1",
+  "status": "FROZEN",
+  "date": "2026-08-16",
+  "methodological_purpose": "Freeze leakage-aware DEV / VALIDATION / LOCKED_TEST groups before model, runtime, prompt, architecture, routing or optimizer selection.",
+  "unit_of_assignment": "asset_story_group",
+  "source_group_count": 10,
+  "scenario_count": 16,
+  "ticket_count": 17,
+  "rules": {
+    "no_storyline_split": true,
+    "locked_test_available_for_architecture_selection": false,
+    "locked_test_available_for_prompt_or_model_selection": false,
+    "machine_paths_are_reference_supervision_not_exact_scripts": true,
+    "gold_is_evaluator_only": true,
+    "test_double_is_not_agent_quality_evidence": true
+  },
+  "splits": {
+    "DEV": {
+      "purpose": "Build and debug the agent/evaluator and run early B0-B3 experiments without touching locked test groups.",
+      "groups": [
+        {
+          "group_id": "asset_G501",
+          "scenarios": ["CEN-01", "CEN-10"],
+          "tickets": ["TKT-INV-04", "TKT-EXE-16"],
+          "modalities": ["investigate", "execute"],
+          "coverage_tags": ["human_escalation", "missing_data", "baseline_learning_or_invalidated", "unavailable_rms", "uncertainty", "over_escalation_variant"]
+        },
+        {
+          "group_id": "asset_C710",
+          "scenarios": ["CEN-02", "CEN-14"],
+          "tickets": ["TKT-INV-05", "TKT-EXE-13"],
+          "modalities": ["investigate", "execute"],
+          "coverage_tags": ["model_delayed", "pending_analysis", "alarm_threshold", "action_low", "request_specialist", "remote_escalation_vs_human_escalation"]
+        },
+        {
+          "group_id": "asset_S420",
+          "scenarios": ["CEN-03", "CEN-16"],
+          "tickets": ["TKT-INV-06", "TKT-EXE-15"],
+          "modalities": ["investigate", "execute"],
+          "coverage_tags": ["false_positive", "baseline_invalidated", "specialist_conflict", "action_high", "request_retraining", "high_impact_action"]
+        },
+        {
+          "group_id": "asset_M208",
+          "scenarios": ["CEN-04"],
+          "tickets": ["TKT-INV-11b"],
+          "modalities": ["investigate"],
+          "coverage_tags": ["symptom_detection", "baseline_not_applicable", "learning_baseline", "knowledge_support", "partial_evidence_variant"]
+        },
+        {
+          "group_id": "asset_M101",
+          "scenarios": ["CEN-11"],
+          "tickets": ["TKT-CTX-01"],
+          "modalities": ["contextualize"],
+          "coverage_tags": ["procedure_retrieval", "source_fidelity", "knowledge_partial_variant", "baseline_invalidation_context"]
+        }
+      ]
+    },
+    "VALIDATION": {
+      "purpose": "Tune/select among candidate designs using groups not used for development, while preserving locked test untouched.",
+      "groups": [
+        {
+          "group_id": "asset_B204",
+          "scenarios": ["CEN-07", "CEN-12"],
+          "tickets": ["TKT-INV-09", "TKT-EXE-12", "TKT-CTX-02"],
+          "modalities": ["investigate", "execute", "contextualize"],
+          "coverage_tags": ["stale_analysis", "reprocess", "action_low", "400_negative_case", "glossary", "term_to_evidence", "BPFO"]
+        },
+        {
+          "group_id": "asset_M102",
+          "scenarios": ["CEN-09"],
+          "tickets": ["TKT-INV-11"],
+          "modalities": ["investigate", "execute"],
+          "coverage_tags": ["model_coverage", "can_learn_baseline_false", "coverage_partial", "action_high_candidate", "request_retraining_candidate"]
+        }
+      ]
+    },
+    "LOCKED_TEST": {
+      "purpose": "Final withheld evaluation only after architecture/model/prompt/runtime choices and validation-stage decisions are complete.",
+      "groups": [
+        {
+          "group_id": "asset_V301",
+          "scenarios": ["CEN-08", "CEN-13", "CEN-15"],
+          "tickets": ["TKT-INV-10", "TKT-CTX-03", "TKT-EXE-14"],
+          "modalities": ["investigate", "contextualize", "execute"],
+          "coverage_tags": ["data_quality_vs_confidence", "model_requirements", "baseline_alarm_threshold", "action_high", "patch_asset_config", "400_403_negative_cases", "high_impact_action"]
+        },
+        {
+          "group_id": "asset_M605",
+          "scenarios": ["CEN-05"],
+          "tickets": ["TKT-INV-07"],
+          "modalities": ["investigate"],
+          "coverage_tags": ["partial_spectrum", "bands_missing", "electrical_vs_mechanical", "honesty_under_uncertainty"]
+        },
+        {
+          "group_id": "asset_M205",
+          "scenarios": ["CEN-06"],
+          "tickets": ["TKT-INV-08"],
+          "modalities": ["investigate", "execute"],
+          "coverage_tags": ["conflicting_diagnoses", "automatic_vs_specialist", "evidence_weighting", "action_high_capable", "conflict_resolution"]
+        }
+      ]
+    }
+  },
+  "aggregate_counts": {
+    "DEV": {"groups": 5, "scenarios": 8},
+    "VALIDATION": {"groups": 2, "scenarios": 3},
+    "LOCKED_TEST": {"groups": 3, "scenarios": 5}
+  },
+  "known_compromises": [
+    "Only 10 independent asset/story groups exist, so no split can perfectly cover every modality/action/uncertainty family in all partitions.",
+    "VALIDATION has fewer groups than LOCKED_TEST to preserve a more meaningful final holdout while still supporting architecture selection.",
+    "High-impact actions appear in DEV, VALIDATION candidate form, and LOCKED_TEST, but exact action endpoints are intentionally not duplicated across all splits.",
+    "Contextualization appears in all three splits, but with different knowledge/problem types rather than identical retrieval patterns."
+  ],
+  "locked_test_policy": {
+    "allowed_before_final": ["counting groups", "public metadata coverage inspection", "leakage assertion"],
+    "forbidden_before_final": ["prompt tuning", "model selection", "runtime selection", "agent policy debugging", "architecture ablation", "threshold fitting", "optimizer feedback", "manual answer inspection beyond already frozen public metadata"]
+  }
+}
