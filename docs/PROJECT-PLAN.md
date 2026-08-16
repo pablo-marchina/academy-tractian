@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE — B3 boundary candidate promoted**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED — evidence-sufficiency policy promoted**  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 09:26 BRT  
+**Progress checkpoint:** 2026-08-16 09:36 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan after the real TRACTIAN package was audited. It deliberately separates **frozen evidence/contracts** from **experimental architecture decisions** and explicitly forbids demo-first development.
@@ -41,46 +41,33 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 
 ### E4 validation complete
 
-Completed:
+E4 promoted B3 as the current guarded-boundary candidate:
 
-- B0-B3 guarded-boundary experiment preregistered;
-- DEV-only runner implemented and validated;
-- model-proposal adapter implemented and validated;
-- private DEV proxy evaluator combiner implemented;
-- first DEV boundary run executed;
-- scoreable DEV run executed with B1/B3 pressure cases;
-- VALIDATION-only proposal adapter implemented;
-- VALIDATION scoreable proposal plan generated using only `asset_B204` and `asset_M102`;
-- VALIDATION B0/B1/B2/B3 boundary run executed in CI;
-- private VALIDATION redacted aggregate recorded;
-- component decision recorded.
+- **B0:** baseline only; rejected as deployment boundary due uncontained safety failures.
+- **B1:** required validation sublayer; not sufficient alone.
+- **B2:** required resource/permission sublayer.
+- **B3:** current guarded-boundary candidate.
 
-Scoreable DEV result:
+This is not a runtime/model/prompt/MCP/RAG/UI freeze.
 
-| Variant | Scoreable pass | Scoreable fail | Decision OK | Action OK | Safety OK | Uncontained safety failures |
-|---|---:|---:|---:|---:|---:|---:|
-| B0 | 6/8 | 2/8 | 8/8 | 6/8 | 6/8 | 2 |
-| B1 | 7/8 | 1/8 | 8/8 | 7/8 | 7/8 | 1 |
-| B2 | 7/8 | 1/8 | 8/8 | 7/8 | 7/8 | 1 |
-| B3 | 8/8 | 0/8 | 8/8 | 8/8 | 8/8 | 0 |
+### E5 executed
 
-Scoreable VALIDATION result:
+E5 compared evidence-acquisition/stopping strategies over DEV + VALIDATION only, with LOCKED_TEST blocked.
 
-| Variant | Scoreable pass | Scoreable fail | Decision OK | Action OK | Safety OK | Uncontained safety failures |
-|---|---:|---:|---:|---:|---:|---:|
-| B0 | 2/3 | 1/3 | 3/3 | 2/3 | 2/3 | 2 |
-| B1 | 2/3 | 1/3 | 3/3 | 2/3 | 2/3 | 1 |
-| B2 | 2/3 | 1/3 | 3/3 | 2/3 | 2/3 | 1 |
-| B3 | 3/3 | 0/3 | 3/3 | 3/3 | 3/3 | 0 |
+| Strategy | Scenarios | Task success | Premature stops | Unnecessary calls | Total calls | Required evidence coverage | Agent-quality evidence? |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `fixed_reference_like` | 11 | 11 | 0 | 0 | 36 | 1.000 | No |
+| `free_tool_loop` | 11 | 7 | 4 | 9 | 36 | 0.786 | Yes |
+| `evidence_sufficiency_policy` | 11 | 10 | 1 | 2 | 35 | 0.964 | Yes |
 
-Component decision:
+Delta of `evidence_sufficiency_policy` vs `free_tool_loop`:
 
-- **B0:** keep as baseline only; reject as deployment boundary because it permits uncontained safety failures.
-- **B1:** promote as required validation sublayer; reject as sufficient standalone boundary.
-- **B2:** promote as required resource/permission sublayer because DEV evidence showed scope-safety value; this VALIDATION run did not include new scope-denial pressure.
-- **B3:** promote as the current guarded-boundary candidate for the next experimental stage.
+- task success: +3;
+- premature stopping: -3;
+- unnecessary calls: -7;
+- total tool calls: -1.
 
-This is **not** a runtime/model/prompt/MCP/RAG/UI freeze.
+Decision: promote `evidence_sufficiency_policy` as the current evidence-acquisition/stopping candidate, keep `free_tool_loop` as behavioral baseline, and keep `fixed_reference_like` as infrastructure/reference anchor only.
 
 ### Not frozen
 
@@ -112,19 +99,16 @@ Architecture-changing choices require an ADR containing alternatives, hypothesis
 - **No demo-first development:** a test double may validate infrastructure, but it is never evidence that the agent solves the partner problem.
 - Final demonstration is downstream of experimental decisions and must show measured behavior, not hand-scripted success.
 
-## 4. Central hypothesis status
+## 4. Current candidate policy bundle
 
-### H1 — Guarded contract-aware tool boundary
+Current evidence supports:
 
-Current evidence supports the guarded B3 boundary bundle for the next experimental stage: B1 contains invalid action arguments, B2 supplies the resource/permission safety layer, and B3 adds evidence-before-action gating. B0 remains the baseline.
+- B3 guarded boundary: B1 validation + B2 resource/permission guard + B3 evidence-before-action gate.
+- Evidence-sufficiency/stopping policy: current candidate acquisition/stopping policy.
+- B0 and free tool loop: retained as baselines where useful.
+- Fixed/reference-like investigation: retained only as infrastructure/reference anchor.
 
-Variants:
-
-- **B0:** baseline only.
-- **B1:** required sublayer, not sufficient alone.
-- **B2:** required sublayer, especially for resource/permission containment.
-- **B3:** current guarded-boundary candidate.
-- **B4:** requester confirmation remains separate unless canonical policy changes.
+This bundle is still not an architecture/runtime/model freeze.
 
 ## 5. Execution sequence
 
@@ -144,36 +128,26 @@ No runtime/model/prompt/architecture decision may use locked-test groups.
 
 ### E4 — Guarded boundary experiment B0-B3 — VALIDATION COMPLETE
 
+Completed reports:
+
+- `research/45-e4-dev-scoreable-proposal-results.md`
+- `research/46-e4-validation-boundary-results.md`
+
+### E5 — Evidence acquisition / stopping — EXECUTED
+
 Completed outputs:
 
-- `research/41-e4-guarded-boundary-experiment-preregistration.md`;
-- `research/42-e4-execution-start-report.md`;
-- `research/43-e4-first-dev-model-proposal-results.md`;
-- `research/44-e4-private-dev-evaluator-integration.md`;
-- `research/45-e4-dev-scoreable-proposal-results.md`;
-- `research/46-e4-validation-boundary-results.md`;
-- `research/experiments/e4-b0-b3-experiment-manifest.json`;
-- `research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json`;
-- `research/experiments/e4-dev-scoreable-proposal-plan-gpt-5-5-thinking-2026-08-16.json`;
-- `research/experiments/e4-validation-scoreable-proposal-plan-gpt-5-5-thinking-2026-08-16.json`;
-- `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`;
-- `research/results/e4-private-dev-evaluator-redacted-summary-2026-08-16.json`;
-- `research/results/e4-private-dev-scoreable-evaluator-redacted-summary-2026-08-16.json`;
-- `research/results/e4-private-validation-scoreable-evaluator-redacted-summary-2026-08-16.json`;
-- `scripts/research/e4_validate_experiment_manifest.py`;
-- `scripts/research/e4_dev_runner.py`;
-- `scripts/research/e4_model_proposal_adapter.py`;
-- `scripts/research/e4_validation_proposal_adapter.py`;
-- `scripts/research/e4_private_dev_evaluator.py`;
-- `scripts/research/e4_private_validation_evaluator.py`.
+- `research/47-e5-evidence-stopping-preregistration.md`
+- `research/48-e5-evidence-stopping-results.md`
+- `research/experiments/e5-evidence-stopping-experiment-manifest.json`
+- `research/results/e5-evidence-stopping-summary-2026-08-16.json`
+- `scripts/research/e5_evidence_stopping_runner.py`
 
-### E5 — Evidence acquisition / stopping — NEXT
-
-Compare fixed/reference-like investigation, free model tool loop and explicit evidence-sufficiency/stopping policy while using B3 as the current guarded-boundary candidate and B0 as baseline where useful.
-
-### E6 — Runtime discriminating spike
+### E6 — Runtime discriminating spike — NEXT
 
 Candidates remain: LangGraph; Pydantic AI/Graph; OpenAI Agents SDK.
+
+The runtime spike must hold constant B3 boundary + evidence-sufficiency policy, ToolSpec, scenario inputs, split policy and evaluator assumptions. It must not use LOCKED_TEST or freeze architecture before ADR evidence.
 
 ### E7 — Native tools vs MCP
 
@@ -191,12 +165,12 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen; E4 DEV+VALIDATION boundary evidence recorded |
-| **17–20 Aug** | E5 evidence acquisition/stopping setup and execution |
-| **21–22 Aug** | runtime/MCP discriminating spikes if E5 is stable |
-| **23–24 Aug** | error analysis + statistical pilot preparation |
-| **25 Aug** | runtime + MCP ADRs |
-| **26 Aug** | statistical pilot + model screening |
+| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen; E4 DEV+VALIDATION boundary evidence; E5 executed |
+| **17–20 Aug** | runtime/MCP discriminating spikes under fixed B3 + evidence-sufficiency policy |
+| **21–22 Aug** | runtime/MCP ADRs + error analysis |
+| **23–24 Aug** | statistical pilot preparation |
+| **25 Aug** | statistical pilot/model screening |
+| **26 Aug** | architecture candidates narrowed |
 | **27 Aug** | target `FROZEN-v1` |
 | **28 Aug–1 Sep** | selected architecture integrated |
 | **2–5 Sep** | robustness/adversarial/reliability + locked test |
