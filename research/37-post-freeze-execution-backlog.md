@@ -1,6 +1,6 @@
 # Post-E0/E1 Execution Backlog — E4 Active
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 ACTIVE**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 DEV RUNNER SMOKE-GREEN**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -12,6 +12,8 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - 16 scenarios / 17 tickets / 10 leakage groups frozen as grouping constraints.
 - E2 integrated framework-neutral harness complete.
 - `BENCHMARK-SPLIT-v1` frozen before runtime/model/prompt/architecture selection.
+- E4 B0-B3 experiment preregistered.
+- E4 DEV-only smoke runner implemented and CI green.
 
 ## E2 completion
 
@@ -96,34 +98,41 @@ Artifacts:
 
 ## E4 — active gate
 
-Run the guarded-boundary experiment B0-B3 using DEV for development/debugging and VALIDATION for selection. Do not inspect or optimize against LOCKED_TEST.
-
-Preregistered:
+Completed:
 
 - [x] define the B0-B3 experiment manifest;
-- [x] explicitly exclude B4 from the main E4 experiment;
-- [x] encode DEV/VALIDATION-only policy;
-- [x] encode LOCKED_TEST forbidden uses;
-- [x] encode no-demo policy;
-- [x] encode hard-safety metrics separately from quality metrics;
-- [x] add manifest validation script;
-- [x] add CI step for E4 manifest validation.
+- [x] validate the manifest against `BENCHMARK-SPLIT-v1`;
+- [x] block LOCKED_TEST in manifest validation;
+- [x] implement the DEV-only E4 run harness;
+- [x] require explicit `proposal_source_class`;
+- [x] reject LOCKED_TEST by construction in the DEV runner;
+- [x] reject VALIDATION in the DEV-only debug runner;
+- [x] execute B0/B1/B2/B3 smoke path in DEV with scripted/reference proposal source;
+- [x] export per-variant metric JSON from the smoke runner;
+- [x] mark scripted/reference sources as `infrastructure_only` and `agent_quality_evidence=false`;
+- [x] run E2 + E4 tests and validators in CI.
+
+Artifacts:
+
+- `research/41-e4-guarded-boundary-experiment-preregistration.md`
+- `research/42-e4-execution-start-report.md`
+- `research/experiments/e4-b0-b3-experiment-manifest.json`
+- `scripts/research/e4_validate_experiment_manifest.py`
+- `scripts/research/e4_dev_runner.py`
+- `research/e4/tests/test_dev_runner.py`
 
 Next required work:
 
-- [ ] bind DEV/VALIDATION groups into the runner without exposing locked-test gold;
-- [ ] implement the first DEV-only E4 run harness;
-- [ ] require every run to declare `proposal_source_class`;
-- [ ] block LOCKED_TEST by construction in the run harness;
-- [ ] run B0 minimal wrapper on DEV;
-- [ ] run B1 strict typed validation on DEV;
-- [ ] run B2 permission/resource guard on DEV;
-- [ ] run B3 evidence-aware action/escalation on DEV;
+- [ ] implement the first non-demo DEV proposal source (`proposal_source_class=model_agent` or equivalent);
+- [ ] bind DEV scenarios into the non-demo runner without exposing locked-test gold;
+- [ ] run B0 minimal wrapper on DEV with non-demo proposals;
+- [ ] run B1 strict typed validation on DEV with same proposals;
+- [ ] run B2 permission/resource guard on DEV with same proposals;
+- [ ] run B3 evidence-aware action/escalation on DEV with same proposals;
 - [ ] report contained unsafe proposals separately from executed safety failures;
 - [ ] compute task/conclusion success, argument correctness, evidence coverage, action correctness and efficiency;
-- [ ] repeat eligible comparison on VALIDATION for component promotion/rejection;
-- [ ] promote/reject each boundary component by measured value.
+- [ ] promote/reject each boundary component by measured DEV then VALIDATION evidence.
 
 ## Methodological constraint
 
-No item in E2, E3 or E4 preregistration is an agent demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment.
+No item in E2, E3 or the current E4 smoke runner is an agent demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment with a non-demo proposal source.
