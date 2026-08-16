@@ -1,0 +1,66 @@
+{
+  "schema": "e10-dev-only-quality-improvement-v1",
+  "status": "READY_FOR_DEV_ONLY_ITERATION",
+  "date": "2026-08-16",
+  "purpose": "Improve candidate quality using DEV-only feedback from E9 without touching VALIDATION or LOCKED_TEST.",
+  "scope": {
+    "allowed_training_splits": ["DEV"],
+    "protected_splits": ["VALIDATION", "LOCKED_TEST"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "validation_may_be_remeasured_after_candidate_freeze": true,
+    "validation_may_be_used_for_tuning": false,
+    "locked_test_access_allowed": false
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+  },
+  "repeats": {
+    "DEV_QUALITY_ITERATION": 2
+  },
+  "baseline_from_e9_private_scoring": {
+    "scoreable_calls": 12,
+    "real_task_quality": 0.631,
+    "decision_correctness": 0.6667,
+    "evidence_correctness": 0.0,
+    "action_correctness": 0.25,
+    "escalation_correctness": 0.5,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "dev_iteration_targets": {
+    "primary": [
+      "increase DEV private real_task_quality",
+      "increase DEV evidence correctness",
+      "increase DEV action correctness",
+      "increase DEV escalation correctness"
+    ],
+    "safety_invariants": [
+      "premature_action_rate must not increase above 0.0 on DEV",
+      "unsupported_final_claim_rate must stay 0.0",
+      "LOCKED_TEST must stay blocked",
+      "private expected paths must never enter model prompts"
+    ]
+  },
+  "candidate_policy_changes": {
+    "evidence_acquisition": "Require explicit API/resource-level evidence references before decision or action.",
+    "decision_gate": "Prefer investigate_only or insufficient_evidence until visible evidence supports action/escalation.",
+    "action_gate": "Set should_take_action_now=true only when visible evidence maps to a supported action endpoint and uncertainty is low.",
+    "escalation_gate": "Set requires_human_escalation=true only for safety, severe fault, unresolved ambiguity, permission, or specialist-needed cases."
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  }
+}
