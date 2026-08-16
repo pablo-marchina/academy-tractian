@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E6 Live API Contract Pass
+# Post-E0/E1 Execution Backlog — E6 Live API Pass
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API CONTRACT PASS; LIVE API EXECUTION NEXT**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 NATIVE TOOLS VS MCP NEXT**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -18,13 +18,14 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - E6 minimal LangGraph integration spike complete.
 - E6 adaptive real ToolSpec/HarnessRunner LangGraph spike complete.
 - E6 live API integration path and CI contract gate complete.
+- E6 local live API execution complete with `LIVE_PASS`.
 
 ## Current candidate policy/runtime bundle
 
 - B3 guarded boundary.
 - Evidence-sufficiency/stopping policy.
 - LangGraph as current runtime candidate.
-- `HttpxTransport` live API path configured for the supplied TRACTIAN API.
+- `HttpxTransport` live API path configured and executed against the supplied TRACTIAN API.
 - B0/free loop/fixed reference retained as baselines or infrastructure anchors.
 - Pydantic AI/Graph and OpenAI Agents SDK retained as comparators.
 
@@ -134,6 +135,52 @@ Contract result:
 | CI run | `31949759607` |
 | Artifact | `e6-live-api-integration-summary` |
 
+## E6 live API execution
+
+Completed work:
+
+- [x] start supplied TRACTIAN API locally;
+- [x] run `e6_live_api_langgraph_runner.py` with `--transport-mode live`, `--api-base-url` and `--agent-input-cases`;
+- [x] keep adaptive evidence planning from missing evidence requirements;
+- [x] preserve B3 and evidence-sufficiency as deterministic graph/policy nodes;
+- [x] run representative DEV + VALIDATION cases end-to-end;
+- [x] measure trace compatibility and live latency;
+- [x] record request/action success proxy;
+- [x] update result status from `CONTRACT_PASS` to `LIVE_PASS`;
+- [x] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
+- [x] keep LOCKED_TEST blocked;
+- [x] avoid freezing model/MCP/RAG/multi-agent/UI.
+
+Live result:
+
+| Metric | Result |
+|---|---:|
+| Status | `LIVE_PASS` |
+| Live API transport configured | true |
+| Transport class | `HttpxTransport` |
+| Live API executed | true |
+| Seed binding | runner-bound |
+| ToolSpec registry size | 18 |
+| HarnessRunner used | true |
+| B3 external guard preserved | true |
+| Evidence-sufficiency explicit | true |
+| Adaptive evidence planning | true |
+| Model/proposal generation connected | true |
+| Proposal source class | `safe_agent_input_proposal_generator` |
+| Gold leakage blocked | true |
+| Checkpoint pause/resume roundtrip | true |
+| Representative cases | 8 |
+| Splits | DEV + VALIDATION |
+| Live request count | 37 |
+| Successful live request count | 37 |
+| Live success rate | 1.000 |
+| Action execution proxy | 4/4 |
+| Action accepted proxy | 4/4 |
+| RunTrace-compatible output | true |
+| LOCKED_TEST accessed | false |
+| Live latency avg ms | 2422.9925 |
+| Live latency p95 ms | 2108.5737 |
+
 Artifacts:
 
 - `research/51-e6-langgraph-integration-spike-preregistration.md`
@@ -141,12 +188,14 @@ Artifacts:
 - `research/53-e6-real-toolspec-langgraph-preregistration.md`
 - `research/54-e6-real-toolspec-langgraph-results.md`
 - `research/55-e6-live-api-integration-contract-results.md`
+- `research/56-e6-live-api-integration-live-results.md`
 - `research/experiments/e6-langgraph-integration-spike-manifest.json`
 - `research/experiments/e6-real-toolspec-langgraph-manifest.json`
 - `research/experiments/e6-live-api-integration-manifest.json`
 - `research/results/e6-langgraph-integration-summary-2026-08-16.json`
 - `research/results/e6-real-toolspec-langgraph-summary-2026-08-16.json`
 - `research/results/e6-live-api-integration-contract-summary-2026-08-16.json`
+- `research/results/e6-live-api-integration-live-summary-2026-08-16.json`
 - `scripts/research/e6_langgraph_integration_spike.py`
 - `scripts/research/e6_langgraph_toolspec_runner.py`
 - `scripts/research/e6_langgraph_toolspec_runner_v3.py`
@@ -154,18 +203,17 @@ Artifacts:
 
 ## Next active task
 
-Run the live API path in an environment where the supplied TRACTIAN API package is running.
+Run E7: native tools vs MCP discriminating setup on the same ToolSpec and live API path.
 
 Required work:
 
-- [ ] start supplied TRACTIAN API locally;
-- [ ] run `e6_live_api_langgraph_runner.py` with `--transport-mode live`, `--api-base-url` and `--agent-input-cases`;
-- [ ] keep adaptive evidence planning from missing evidence requirements;
-- [ ] preserve B3 and evidence-sufficiency as deterministic graph/policy nodes;
-- [ ] run representative DEV + VALIDATION scenarios end-to-end;
-- [ ] measure task success, trace completeness and live latency;
-- [ ] inspect 4xx/5xx/action-policy failures;
-- [ ] update result status from `CONTRACT_PASS` to `LIVE_PASS` or `LIVE_NEEDS_REVIEW`;
+- [ ] expose the same ToolSpec through native tool calls;
+- [ ] expose the same ToolSpec through an MCP-compatible surface;
+- [ ] keep B3 + evidence-sufficiency constant;
+- [ ] keep adaptive evidence planning constant;
+- [ ] preserve `HttpxTransport` live API path;
+- [ ] run DEV + VALIDATION only;
+- [ ] compare trace completeness, guard fidelity, latency, portability and complexity;
 - [ ] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
 - [ ] keep LOCKED_TEST blocked;
 - [ ] do not freeze model/MCP/UI yet.
