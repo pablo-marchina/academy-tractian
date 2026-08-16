@@ -1,4 +1,4 @@
-name: research-e2-e3-e4-e5-e6-adaptive-langgraph
+name: research-e2-e3-e4-e5-e6-e7-native-mcp
 
 on:
   push:
@@ -17,15 +17,20 @@ on:
       - 'research/49-e6-runtime-spike-preregistration.md'
       - 'research/51-e6-langgraph-integration-spike-preregistration.md'
       - 'research/53-e6-real-toolspec-langgraph-preregistration.md'
+      - 'research/57-e7-native-tools-vs-mcp-preregistration.md'
+      - 'research/58-e7-native-tools-vs-mcp-results.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
       - 'research/experiments/e6-*.json'
+      - 'research/experiments/e7-*.json'
+      - 'research/results/e7-*.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
       - 'scripts/research/e4_*.py'
       - 'scripts/research/e5_*.py'
       - 'scripts/research/e6_*.py'
+      - 'scripts/research/e7_*.py'
       - '.github/workflows/research-e2.yml'
   pull_request:
     paths:
@@ -42,19 +47,24 @@ on:
       - 'research/49-e6-runtime-spike-preregistration.md'
       - 'research/51-e6-langgraph-integration-spike-preregistration.md'
       - 'research/53-e6-real-toolspec-langgraph-preregistration.md'
+      - 'research/57-e7-native-tools-vs-mcp-preregistration.md'
+      - 'research/58-e7-native-tools-vs-mcp-results.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
       - 'research/experiments/e6-*.json'
+      - 'research/experiments/e7-*.json'
+      - 'research/results/e7-*.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
       - 'scripts/research/e4_*.py'
       - 'scripts/research/e5_*.py'
       - 'scripts/research/e6_*.py'
+      - 'scripts/research/e7_*.py'
       - '.github/workflows/research-e2.yml'
 
 jobs:
-  e2-e3-e4-e5-e6-adaptive-langgraph-unit:
+  e2-e3-e4-e5-e6-e7-native-mcp-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -89,6 +99,8 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e6_langgraph_toolspec_runner_v3.py --manifest research/experiments/e6-real-toolspec-langgraph-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e6-real-toolspec-langgraph-summary.json
       - name: Execute E6 live API integration contract
         run: PYTHONPATH=. python scripts/research/e6_live_api_langgraph_runner.py --transport-mode contract --manifest research/experiments/e6-live-api-integration-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e6-live-api-integration-summary.json
+      - name: Execute E7 native tools vs MCP runner
+        run: PYTHONPATH=. python scripts/research/e7_native_vs_mcp_runner.py --manifest research/experiments/e7-native-tools-vs-mcp-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e7-native-tools-vs-mcp-summary.json
       - name: Upload E4 DEV model-proposal metrics
         uses: actions/upload-artifact@v4
         with:
@@ -129,3 +141,8 @@ jobs:
         with:
           name: e6-live-api-integration-summary
           path: /tmp/e6-live-api-integration-summary.json
+      - name: Upload E7 native tools vs MCP summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e7-native-tools-vs-mcp-summary
+          path: /tmp/e7-native-tools-vs-mcp-summary.json
