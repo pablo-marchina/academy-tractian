@@ -7,9 +7,11 @@
 
 This is the active execution plan after the real TRACTIAN package was audited and after the first real free-provider and private scorer cycles. The plan separates frozen evidence/contracts from experimental architecture decisions, explicitly forbids demo-first development, preserves the USD 0 provider constraint, and treats private task-quality score as the acceptance signal instead of proxy/schema success.
 
-## 1. Current state
+## Current gate
 
-### Frozen / complete
+E10c is ready for local DEV-only execution. It has not yet produced a real quality score. The next accepted evidence must come from a local Groq capture scored by `scripts/research/e9_evaluator_side_scorer_v3.py` against private DEV expected paths after outputs are fixed.
+
+## Frozen / complete
 
 - `NORMALIZED-CONTRACT-v1` frozen.
 - `API-BEHAVIOR-MAP-v1` frozen.
@@ -26,7 +28,7 @@ This is the active execution plan after the real TRACTIAN package was audited an
 - E10b DEV-only action/escalation loop improved decision/evidence/action but not escalation.
 - E10c DEV-only escalation calibration manifest, capture wrapper, documentation and dry-run CI are ready.
 
-### Current candidate bundle
+## Current candidate bundle
 
 - Boundary: B3 guarded boundary.
 - Evidence/stopping: evidence-sufficiency policy.
@@ -39,7 +41,7 @@ This is the active execution plan after the real TRACTIAN package was audited an
 - Leading free-provider candidate: Groq `llama-3.1-8b-instant`.
 - Paid providers: OpenAI/Anthropic disabled under the USD 0 project constraint.
 
-### Still not frozen
+## Still not frozen
 
 - final model/provider choice;
 - MCP topology;
@@ -50,7 +52,7 @@ This is the active execution plan after the real TRACTIAN package was audited an
 - UI/demo flow;
 - final architecture.
 
-## 2. Score history
+## Score history
 
 | Metric | E9 full DEV+VALIDATION | E9 DEV-only baseline | E10 DEV-only | E10b DEV-only |
 |---|---:|---:|---:|---:|
@@ -66,7 +68,7 @@ This is the active execution plan after the real TRACTIAN package was audited an
 
 Interpretation: E8 proxy/schema success was over-optimistic. E10 fixed evidence grounding. E10b fixed decision/action calibration on DEV, but escalation correctness remains the blocker before full DEV+VALIDATION.
 
-## 3. E10c DEV-only escalation calibration
+## E10c DEV-only escalation calibration
 
 E10c is a narrower DEV-only loop. It preserves E10b's evidence/action rules and focuses on the remaining escalation gap.
 
@@ -101,15 +103,7 @@ Do not promote E10c to full DEV+VALIDATION unless a DEV-only private scorer run 
 - LOCKED_TEST remains inaccessible;
 - no raw private oracles or fixed parsed outputs are committed.
 
-## 4. Optional comparator policy
-
-OpenRouter is registered as the next optional free comparator through the free-only policy. It only permits `openrouter/free` or specific models ending in `:free` and blocks non-free model ids plus `openrouter/auto` / `openrouter/auto:free`.
-
-Gemini remains optional only after a key-visible `generateContent` model is listed. Hugging Face remains low priority because free-credit exhaustion must not become a paid run. Ollama remains fallback only.
-
-Optional comparators do not block E10c.
-
-## 5. Methodological constraints
+## Methodological constraints
 
 - The model must not see expected answers, private oracles, reference trajectories, scorer-only labels, `eval/expected-paths.json`, `docs/test-scenarios.md`, `data/cases.parquet`, or LOCKED_TEST material.
 - LOCKED_TEST remains blocked until final evaluation.
@@ -117,7 +111,7 @@ Optional comparators do not block E10c.
 - Optional provider comparators are useful but must not delay scorer-driven DEV improvements.
 - No final architecture freeze yet.
 
-## 6. Current action checklist
+## Current action checklist
 
 - [x] E8 real free remote model path established with Groq.
 - [x] E9 private scorer implemented and run against fixed Groq outputs.
