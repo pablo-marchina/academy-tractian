@@ -69,3 +69,15 @@ E10 kept the intended benchmark boundary:
 ## Next gate
 
 E10b should keep the evidence-first improvement but add an explicit action/escalation decision rubric on DEV only. The next candidate should not be promoted unless DEV-only action/escalation correctness improves without increasing premature action, unsupported final claims or leakage risk.
+
+## E10b minimum acceptance target before full remeasurement
+
+E10b should not be promoted to full DEV+VALIDATION unless a DEV-only private scorer run shows all of the following:
+
+- evidence correctness remains materially above the E9 DEV baseline;
+- action correctness improves above 0.0;
+- escalation correctness improves above 0.0;
+- premature action rate remains 0.0;
+- unsupported final-claim rate remains 0.0;
+- LOCKED_TEST remains inaccessible;
+- no raw private oracles or fixed parsed outputs are committed.
