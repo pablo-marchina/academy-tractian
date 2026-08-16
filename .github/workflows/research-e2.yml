@@ -56,4 +56,4 @@ jobs:
       - name: Validate E4 experiment manifest
         run: python scripts/research/e4_validate_experiment_manifest.py --manifest research/experiments/e4-b0-b3-experiment-manifest.json --split research/frozen/benchmark-split-v1.json
       - name: Execute E4 DEV runner smoke run
-        run: python scripts/research/e4_dev_runner.py --split-manifest research/frozen/benchmark-split-v1.json --split DEV --proposal-source-class scripted_reference --out /tmp/e4-dev-runner-smoke.json
+        run: PYTHONPATH=. python scripts/research/e4_dev_runner.py --split-manifest research/frozen/benchmark-split-v1.json --split DEV --proposal-source-class scripted_reference --out /tmp/e4-dev-runner-smoke.json
