@@ -4,112 +4,89 @@ Repository central do TAPI individual **Engenharia e Avaliação de Agentes Indu
 
 ## Status
 
-**Phase 1 — Post-Artifact Research & Experimental Architecture Selection**
+**E2 — Canonical ToolSpec + Evaluation Harness ACTIVE**
 
-O projeto já recebeu o TAPI atualizado, o kickoff e o pacote real da TRACTIAN (`inteli-tractian-project.zip`). A fase deixou de ser pesquisa genérica: agora as hipóteses são testadas contra a API, os casos e o gold fornecidos pelo parceiro.
+The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN package. Two prerequisite research gates are frozen:
 
-A arquitetura de produção ainda **não está congelada**. Runtime, MCP, modelo, RAG, multi-agent, observability backend, routing e optimization só serão escolhidos se requisitos ou experimentos do próprio projeto justificarem a escolha.
+- `NORMALIZED-CONTRACT-v1`;
+- ScenarioSchema/gold semantics v1.
 
-Plano de execução atual: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
-Hub de pesquisa e evidências: [`research/README.md`](research/README.md)  
-Research Gate: [Issue #1](https://github.com/pablo-marchina/academy-tractian/issues/1)
+The production architecture is still **not frozen**. Runtime, model, MCP, RAG, multi-agent, routing, memory and observability remain experimental decisions.
+
+Plan: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
+Research hub: [`research/README.md`](research/README.md)  
+Active E2 backlog: [`research/37-post-freeze-execution-backlog.md`](research/37-post-freeze-execution-backlog.md)
 
 ## Project goal
 
-O TAPI atualizado exige uma solução contendo **os dois componentes**:
+The updated TAPI requires both components:
 
-1. **Industrial Agent Engineering** — agente capaz de contextualizar, investigar, executar e escalar de forma confiável sobre a API industrial fornecida pela TRACTIAN.
-2. **Agent Evaluation & Reliability** — framework quantitativo para medir seleção de ferramentas, argumentos, trajetória, evidências, conclusão/resposta, segurança, robustez, estabilidade e comportamento em ações.
+1. **Industrial Agent Engineering** — contextualize, investigate, execute and escalate against the supplied industrial API.
+2. **Agent Evaluation & Reliability** — quantitatively measure tool choice, arguments, trajectory, evidence, conclusion/response, safety, robustness, stability and action behavior.
 
-A arquitetura é deliberadamente integrada: o framework de avaliação mede e orienta o desenvolvimento do próprio agente.
+The evaluation framework is part of the engineering loop, not a disconnected second product.
 
 ## Evidence-first rule
 
-> **“Best” means best supported by evidence for this problem — not newest, most popular or most complex.**
+> **Best means best supported by evidence for this problem — not newest, most popular or most complex.**
 
-Fluxo obrigatório para decisões relevantes:
+Decision flow:
 
-`requisito → pesquisa → alternativas → hipótese → experimento TRACTIAN → evidência → ADR → decisão`
+`requirement → research → alternatives → hypothesis → TRACTIAN experiment → evidence → ADR → decision`
 
-Não adicionamos complexidade sem requisito, hipótese ou critério de avaliação correspondente.
+## Frozen TRACTIAN facts
 
-## What the TRACTIAN package established
+- 17 agent-input cases and 16 narrative evaluation scenarios;
+- 10 primary asset/story groups, so random ticket splitting is unsafe;
+- evaluator-only gold separated from agent-visible input;
+- 18 operations across 17 path templates;
+- reference trajectories are not mandatory scripts;
+- actions are accepted events and do not persist mutation state in the supplied environment;
+- `x-user-id` and evaluation `seed` are runner-bound;
+- response modes are reproducible through deterministic seeds/overrides;
+- raw OpenAPI contains a duplicate `/assets/{assetId}` mapping;
+- raw action validation is permissive and backend company/resource isolation is coarse;
+- knowledge API exposes the supplied corpus directly.
 
-A auditoria da Wave 4 já substituiu várias hipóteses por fatos executáveis:
+Frozen artifacts:
 
-- 17 casos de entrada para o agente e 16 cenários narrativos de avaliação;
-- apenas 10 grupos principais de ativo/storyline, portanto split aleatório por ticket geraria leakage;
-- separação explícita entre material visível ao agente e gold exclusivo do evaluator;
-- 18 operações HTTP em 17 path templates;
-- trajetórias de engenheiro são referência, não scripts obrigatórios;
-- ações retornam eventos `accepted=true`, mas não persistem alterações no estado fornecido;
-- `x-user-id` e `seed` precisam ser vinculados pelo runner, fora do controle do modelo;
-- modos de resposta podem ser controlados de forma determinística por seed;
-- o OpenAPI bruto possui chave YAML duplicada para `/assets/{assetId}`, exigindo normalização antes de codegen/tools;
-- handlers de ação fazem validação semântica limitada e o backend não impõe isolamento company/resource além de permissões grosseiras;
-- o corpus de conhecimento tem 5 documentos e já possui endpoints de search/document retrieval;
-- `expected-paths.json` é menos completo que os cenários narrativos, então exact trajectory match não pode ser o gold principal.
+- `research/34-e0-contract-freeze-v1.md`
+- `research/frozen/e0-contract-freeze.manifest.json`
+- `research/frozen/API-BEHAVIOR-MAP-v1.json`
+- `research/35-e1-gold-freeze-v1.md`
+- `research/frozen/e1-gold-freeze.manifest.json`
 
-Detalhes e evidências estão em `research/26`–`30`.
+## E2 — framework-neutral foundation
+
+`research/e2/` now contains executable:
+
+- ScenarioSchema v1 models;
+- 18-operation Canonical ToolSpec registry;
+- runner-owned identity/seed binding;
+- TraceSchema v1;
+- deterministic replay;
+- configuration/artifact hashing;
+- structured evaluator interfaces.
+
+E2 does **not** choose LangGraph, Pydantic AI/Graph, OpenAI Agents SDK, MCP, RAG, multi-agent or a model provider.
 
 ## Central experiment
 
-A principal hipótese pós-artefato é testar se uma **guarded contract-aware tool boundary** melhora correção e segurança sem reduzir materialmente o task success.
+H1 tests whether a **guarded contract-aware tool boundary** improves argument correctness and safety without materially reducing task success.
 
-Variantes pré-registradas:
+- **B0:** minimal wrapper;
+- **B1:** + strict typed validation;
+- **B2:** + deterministic permission/company/resource guard;
+- **B3:** + evidence-aware action/escalation;
+- **B4:** confirmation as a separate safety extension unless canonical policy changes.
 
-- **B0:** wrapper mínimo válido para benchmark;
-- **B1:** B0 + validação tipada estrita;
-- **B2:** B1 + guardas determinísticos de permissão/company/resource;
-- **B3:** B2 + política explícita de evidência para agir/escalar;
-- **B4:** confirmação explícita como extensão de safety separada, enquanto não houver requisito oficial que a torne canônica.
+## Critical path
 
-Depois desse núcleo, runtime, MCP e modelos serão comparados mantendo ToolSpec, cenários e evaluators constantes.
+`E0 freeze → E1 freeze → E2 harness → E3 split → B0–B3 → evidence/stopping → runtime/MCP → pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
 
-## Research Gate
-
-`FROZEN-v1` só pode acontecer depois de:
-
-- contrato OpenAPI normalizado e testado contra o runtime;
-- ScenarioSchema v1/gold human-reviewed;
-- split dev/validation/locked-test congelado sem leakage conhecido;
-- experimento B0–B3 concluído;
-- experimento de evidence/stopping concluído;
-- ADRs de runtime e MCP apoiados por experimentos equivalentes;
-- pilot estatístico usado para definir `k` e protocolo confirmatório;
-- modelo selecionado com benchmark nativo do projeto;
-- técnicas opcionais aceitas/rejeitadas com evidência;
-- inconsistências materiais do pacote documentadas;
-- dependências externas restantes explicitamente registradas.
-
-## Repository map
-
-```text
-.
-├── README.md
-├── docs/
-│   ├── PROJECT-PLAN.md          # plano de ação e critical path
-│   └── adr/                     # architecture decision records
-└── research/
-    ├── README.md                # research/evidence hub
-    ├── 00-25...                 # Waves 1–3 + TAPI/kickoff
-    ├── 26-30...                 # Wave 4: pacote real/API/gold/experimentos
-    └── schemas/                 # ScenarioSchema/TraceSchema research contracts
-```
-
-## Current critical path
-
-`OpenAPI normalization → ScenarioSchema v1 → Canonical ToolSpec/evaluators/TraceSchema v1 → leakage-aware split → B0–B3 → evidence/stopping → runtime/MCP → pilot/model benchmark → ADRs → FROZEN-v1 → final implementation/evaluation/demo`
-
-O calendário detalhado até 08/09 está em [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md).
-
-## Important dates
-
-- TRACTIAN onboarding/kickoff: **2026-08-13**
-- TRACTIAN package received/audited: **2026-08-15**
-- Target `FROZEN-v1`: **2026-08-27** (project target, not partner requirement)
-- Final presentation and delivery: **2026-09-08**
+Target `FROZEN-v1`: **2026-08-27** (internal project target).  
+Final delivery/presentation: **2026-09-08**.
 
 ## Development rule
 
-Nenhum componente permanece apenas por aparência de sofisticação. Se RAG, multi-agent, routing, persistent memory, prompt optimization ou qualquer outra técnica não produzir benefício mensurável, reduzir risco ou satisfazer requisito explícito, ela deve ser rejeitada ou removível por ADR/ablation.
+No component remains merely because it looks sophisticated. RAG, reranking, multi-agent, routing, persistent memory, prompt optimization and similar techniques require a measurable hypothesis or explicit requirement and must be removable when evidence does not support them.
