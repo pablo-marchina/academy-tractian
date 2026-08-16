@@ -1,0 +1,27 @@
+{
+  "manifest_version": "contract-freeze-v1",
+  "raw_contract_sha256": "8b3fdc5da50a8fa2923928a2f5aebcfe5034c622dba222df84f56abcd0b4aabf",
+  "normalized_contract_sha256": "c15c44ac84f77a6efe0fe1a4ed1e35f02dcf24d72d66b04bb028b5cb67cb958c",
+  "runtime_openapi_sha256": "1110f1b3cf360489c18fbfe22bd65a5c0e10c24e260fec1dbd133d02c9344033",
+  "operation_count": 18,
+  "unique_path_template_count": 17,
+  "canonical_route_shape_match": true,
+  "duplicate_resolution": {
+    "path": "/assets/{assetId}",
+    "resolution": "MERGED_DISJOINT_MAPPING",
+    "methods": ["GET", "PATCH"]
+  },
+  "parameter_transformations": {
+    "companyId": "company_id",
+    "assetId": "asset_id",
+    "analysisId": "analysis_id",
+    "modelId": "model_id",
+    "docId": "doc_id",
+    "caseId": "case_id"
+  },
+  "runner_bound_fields": ["x-user-id", "seed"],
+  "action_count": 5,
+  "action_persistence": "accepted_event_non_persistent",
+  "status": "FROZEN",
+  "frozen_at": "2026-08-16"
+}
