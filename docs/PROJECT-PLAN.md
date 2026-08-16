@@ -1,11 +1,11 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 STATISTICAL PILOT PREP**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 FREE PILOT SMOKE**  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 12:21 BRT  
+**Progress checkpoint:** 2026-08-16 12:34 BRT  
 **Target final delivery:** 2026-09-08
 
-This is the active execution plan after the real TRACTIAN package was audited. It separates frozen evidence/contracts from experimental architecture decisions and explicitly forbids demo-first development.
+This is the active execution plan after the real TRACTIAN package was audited. It separates frozen evidence/contracts from experimental architecture decisions, explicitly forbids demo-first development and now records the zero-cost E8 pilot execution smoke.
 
 ## 1. Current state
 
@@ -18,25 +18,22 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - E2 framework-neutral ToolSpec/Trace/Replay/Evaluator harness complete.
 - E4 B0-B3 guarded-boundary DEV+VALIDATION comparison complete.
 - E5 evidence acquisition/stopping comparison executed.
-- E6 runtime discriminating spike executed.
-- E6 minimal LangGraph integration spike executed.
-- E6 adaptive real ToolSpec/HarnessRunner LangGraph spike executed.
-- E6 live API integration implementation path and CI contract gate complete.
-- E6 local live API execution passed against the supplied TRACTIAN API.
+- E6 LangGraph runtime path selected as current candidate and live API execution passed locally.
 - E7 native tools vs MCP-compatible surface comparison passed.
-- E7 topology ADR decision prep recorded.
+- E7 topology ADR recorded: native ToolSpec calls are the internal default candidate; MCP-compatible adapter remains the external interoperability candidate.
 - E8 statistical pilot/model benchmark prep registered and validated without model calls.
+- E8 free-only pilot execution smoke passed with zero paid calls.
 
 ### Current candidate bundle
 
 - **Boundary:** B3 guarded boundary.
 - **Evidence/stopping:** evidence-sufficiency policy.
+- **Evidence planning:** adaptive from missing evidence requirements.
 - **Runtime candidate:** LangGraph.
-- **Transport path:** `HttpxTransport` against the supplied TRACTIAN API, live execution passed locally.
+- **Transport path:** `HttpxTransport` against the supplied TRACTIAN API.
 - **Internal tool surface candidate:** native ToolSpec calls.
 - **External interoperability surface candidate:** MCP-compatible `tools/list` + `tools/call` adapter.
-- **MCP requirement decision at this gate:** MCP is not required for final delivery unless a future delivery/evaluator/partner/deployment/tooling constraint requires an MCP server/client boundary.
-- **E8 budget stance:** free-first; paid model candidates disabled by default and require explicit budget approval.
+- **Budget stance:** completely free; paid OpenAI/Anthropic reference candidates disabled.
 - **Baselines/comparators retained:** B0, free tool loop, fixed/reference-like anchor, Pydantic AI/Graph, OpenAI Agents SDK.
 
 This is still not a final model/provider, MCP topology, RAG/vector DB, multi-agent, observability, memory, prompt, UI or final architecture freeze.
@@ -45,18 +42,14 @@ This is still not a final model/provider, MCP topology, RAG/vector DB, multi-age
 
 ### E4 boundary decision
 
-- **B0:** baseline only; rejected as deployment boundary due uncontained safety failures.
-- **B1:** required validation sublayer; not sufficient alone.
-- **B2:** required resource/permission sublayer.
-- **B3:** current guarded-boundary candidate.
+- B3 remains the current guarded-boundary candidate after the B0-B3 comparison.
+- B0 remains a baseline only; B1/B2 remain validation/resource sublayers.
 
 ### E5 evidence/stopping decision
 
-| Strategy | Scenarios | Task success | Premature stops | Unnecessary calls | Evidence coverage | Decision |
-|---|---:|---:|---:|---:|---:|---|
-| `fixed_reference_like` | 11 | 11 | 0 | 0 | 1.000 | Infrastructure/reference anchor only |
-| `free_tool_loop` | 11 | 7 | 4 | 9 | 0.786 | Behavioral baseline, not preferred |
-| `evidence_sufficiency_policy` | 11 | 10 | 1 | 2 | 0.964 | Current stopping candidate |
+- `evidence_sufficiency_policy` remains the current acquisition/stopping candidate.
+- Fixed/reference-like remains an infrastructure/reference anchor.
+- Free tool loop remains a behavioral baseline, not the preferred stopping policy.
 
 ### E6 runtime/live decision
 
@@ -71,30 +64,7 @@ This is still not a final model/provider, MCP topology, RAG/vector DB, multi-age
 | RunTrace-compatible output | true |
 | LOCKED_TEST accessed | false |
 
-Decision: promote LangGraph + adaptive evidence planning + B3 + HarnessRunner + `HttpxTransport` as the current live integration candidate. This is still not a final architecture freeze.
-
-### E7 native tools vs MCP-compatible surface
-
-| Metric | Native tools | MCP-compatible |
-|---|---:|---:|
-| Tool coverage | 18 | 18 |
-| Representative scenarios | 4 | 4 |
-| Splits | DEV + VALIDATION | DEV + VALIDATION |
-| Request count | 18 | 18 |
-| Successful request count | 18 | 18 |
-| Trace complete | true | true |
-| RunTrace-compatible output | true | true |
-| B3 policy events | 2 | 2 |
-| B3 allows actions | true | true |
-| Evidence-sufficiency events | 4 | 4 |
-| Action execution proxy | 2/2 | 2/2 |
-| Avg latency ms | 1.9855 | 1.8158 |
-| Complexity proxy | 1.0 | 2.0 |
-| Portability proxy | 3.0 | 4.5 |
-
-Comparison result: schema equivalence, invocation equivalence, guard-fidelity equivalence and trace-completeness equivalence all passed. Native remains the lower-complexity internal candidate. MCP-compatible remains the external interoperability candidate. MCP topology is not frozen.
-
-### E7 topology ADR decision prep
+### E7 topology decision
 
 | Decision item | Result |
 |---|---|
@@ -102,126 +72,67 @@ Comparison result: schema equivalence, invocation equivalence, guard-fidelity eq
 | External interoperability candidate | MCP-compatible adapter |
 | MCP required for final delivery at this gate | false |
 | MCP requirement condition | require only if future delivery/evaluator/partner/deployment/tooling constraint requires MCP |
-| B3 preserved | true |
-| Evidence-sufficiency preserved | true |
-| Adaptive evidence planning preserved | true |
-| `HttpxTransport` preserved | true |
 | Final architecture frozen | false |
 
-### E8 statistical pilot/model benchmark prep
+### E8 free-only pilot execution smoke
 
-| Prep item | Result |
-|---|---|
-| Status | `E8_PREP_PASS` |
-| Candidate slots defined | 6 |
-| Default budget mode | `free_first` |
-| Paid models enabled by default | false |
-| CI makes model calls | false |
-| Representative groups | 5 |
-| Splits | DEV + VALIDATION |
+| Metric | Result |
+|---|---:|
+| Status | `E8_FREE_PILOT_SMOKE_PASS` |
+| Free-only mode | true |
+| Project cost limit USD | 0 |
+| Paid models enabled | false |
+| External model calls made in CI | false |
+| Executed candidate slot | `no_model_policy_baseline` |
+| DEV smoke before VALIDATION | true |
+| Fixed observation packets used | true |
+| Stochastic repeat harness executed | true |
+| DEV groups | `asset_G501`, `asset_C710`, `asset_S420` |
+| VALIDATION groups | `asset_B204`, `asset_M102` |
+| Task success proxy | 1.0 |
+| Action/escalation correctness proxy | 1.0 |
+| Evidence coverage proxy | 1.0 |
+| RunTrace completeness | true |
+| Cost USD | 0.0 |
 | LOCKED_TEST accessed | false |
-| Design axis A | model stochasticity at fixed observations |
-| Design axis B | deterministic environment robustness |
-| Primary metrics defined | true |
-| Leakage controls defined | true |
-| Final architecture frozen | false |
 
-Candidate slots prepared:
-
-- `no_model_policy_baseline`
-- `groq_openai_compatible_free_first`
-- `google_gemini_free_or_low_cost`
-- `openai_reference_optional`
-- `anthropic_reference_optional`
-- `local_ollama_optional`
+Interpretation: E8 now has a zero-cost pilot execution smoke. This validates the free-only benchmark harness, not external model quality. Free Groq/Gemini/local Ollama can be added only through explicit local opt-in environment variables.
 
 ## 3. Non-negotiable integrity rules
 
 - Raw partner artifacts remain immutable.
 - `x-user-id` and evaluation `seed` are runner-bound, never model-selected.
 - Related scenarios remain grouped by asset/storyline; no case-level random split.
-- Locked-test groups are unavailable during architecture/model/prompt/runtime selection until the final locked evaluation gate.
-- Reference trajectories are not exact-match gold unless an explicit policy requires ordering.
+- LOCKED_TEST remains unavailable until the final locked evaluation gate.
+- No evaluator-only gold, reference final answers or scorer-only oracles may enter model prompts.
 - Hard identity/schema/policy constraints remain deterministic where possible.
-- Action success follows supplied `accepted_event_non_persistent` semantics; no invented final-state oracle.
 - Optional complexity survives only if required or supported by experiment evidence.
-- No demo-first development: test doubles and scripted paths validate instrumentation, contracts, splits and evaluator behavior only.
-- Paid models require explicit budget approval before execution.
+- No paid model execution without explicit approval; current project constraint is fully free.
 
 ## 4. Execution sequence
 
-### E2 — COMPLETE
+### Completed gates
 
-Completion report: `research/39-e2-integrated-completion-report.md`.
+- E0/E1 freeze.
+- E2 harness.
+- E3 benchmark split.
+- E4 boundary comparison.
+- E5 evidence/stopping comparison.
+- E6 runtime/live API integration.
+- E7 native/MCP-compatible surface and topology ADR.
+- E8 prep and free-only pilot smoke.
 
-### E3 — COMPLETE
+### E8 free/local candidate run — NEXT
 
-Frozen split:
-
-- **DEV:** `asset_G501`, `asset_C710`, `asset_S420`, `asset_M208`, `asset_M101`.
-- **VALIDATION:** `asset_B204`, `asset_M102`.
-- **LOCKED_TEST:** `asset_V301`, `asset_M605`, `asset_M205`.
-
-### E4 — VALIDATION COMPLETE
-
-Reports:
-
-- `research/45-e4-dev-scoreable-proposal-results.md`
-- `research/46-e4-validation-boundary-results.md`
-
-### E5 — EXECUTED
-
-Reports:
-
-- `research/47-e5-evidence-stopping-preregistration.md`
-- `research/48-e5-evidence-stopping-results.md`
-
-### E6 — LIVE PASS
-
-Reports:
-
-- `research/49-e6-runtime-spike-preregistration.md`
-- `research/50-e6-runtime-spike-results-adr.md`
-- `research/51-e6-langgraph-integration-spike-preregistration.md`
-- `research/52-e6-langgraph-integration-spike-results.md`
-- `research/53-e6-real-toolspec-langgraph-preregistration.md`
-- `research/54-e6-real-toolspec-langgraph-results.md`
-- `research/55-e6-live-api-integration-contract-results.md`
-- `research/56-e6-live-api-integration-live-results.md`
-
-### E7 — NATIVE TOOLS VS MCP PASS + TOPOLOGY ADR RECORDED
-
-Artifacts:
-
-- `research/57-e7-native-tools-vs-mcp-preregistration.md`
-- `research/58-e7-native-tools-vs-mcp-results.md`
-- `research/59-e7-topology-adr.md`
-- `research/experiments/e7-native-tools-vs-mcp-manifest.json`
-- `research/results/e7-native-tools-vs-mcp-summary-2026-08-16.json`
-- `research/results/e7-topology-decision-summary-2026-08-16.json`
-- `scripts/research/e7_native_vs_mcp_runner.py`
-
-### E8 — STATISTICAL PILOT + MODEL BENCHMARK PREP
-
-Artifacts:
-
-- `research/60-e8-statistical-pilot-model-benchmark-preregistration.md`
-- `research/experiments/e8-statistical-pilot-model-benchmark-manifest.json`
-- `research/results/e8-statistical-pilot-prep-summary-2026-08-16.json`
-- `scripts/research/e8_statistical_pilot_prep.py`
-
-### E8 pilot execution — NEXT
-
-- resolve which free/low-cost candidate slots are actually available locally;
-- confirm whether paid reference runs are allowed or disabled;
-- run DEV smoke only first;
-- keep observation packets and model stochasticity separated;
-- preserve B3 + evidence-sufficiency + adaptive evidence planning;
-- preserve LangGraph + native internal ToolSpec calls + optional MCP-compatible adapter;
-- preserve `HttpxTransport` live API path;
-- run DEV + VALIDATION only after smoke pass;
+- confirm local availability of Groq free-tier, Gemini free-tier or local Ollama without paid providers;
+- keep OpenAI/Anthropic disabled;
+- run the same E8 free pilot runner locally with explicit opt-in for any available free/local candidate;
+- keep DEV smoke before VALIDATION;
+- preserve fixed observation packets and repeated outputs;
+- measure task-success proxy or scored model output, action/escalation correctness, evidence coverage, trace completeness, latency and cost;
+- keep native ToolSpec + optional MCP-compatible adapter;
 - keep LOCKED_TEST blocked;
-- do not freeze final architecture yet.
+- do not freeze model/provider or architecture.
 
 ### E9 — Conditional techniques
 
@@ -231,10 +142,10 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 live pass; E7 native/MCP pass + topology ADR prep; E8 prep |
-| **17–20 Aug** | E8 DEV smoke + statistical pilot execution |
-| **21–22 Aug** | runtime/MCP ADRs + error analysis |
-| **23–24 Aug** | statistical pilot preparation |
+| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 live pass; E7 topology ADR; E8 prep + free-only pilot smoke |
+| **17–20 Aug** | free/local model candidate availability + E8 DEV smoke with enabled free candidates |
+| **21–22 Aug** | runtime/MCP/model ADRs + error analysis |
+| **23–24 Aug** | statistical pilot continuation |
 | **25 Aug** | statistical pilot/model screening |
 | **26 Aug** | architecture candidates narrowed |
 | **27 Aug** | target `FROZEN-v1` |
