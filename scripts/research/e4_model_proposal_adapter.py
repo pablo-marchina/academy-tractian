@@ -17,8 +17,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-# Allow `python scripts/research/e4_model_proposal_adapter.py ...` from repo root
-# without requiring package installation.
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -43,6 +41,7 @@ from research.e2.models import (
     Scenario,
     ScenarioInput,
     ToolKind,
+    TrajectoryOracle,
 )
 from research.e2.policy import ResourcePolicy
 from research.e2.provenance import build_config_hash
@@ -64,10 +63,7 @@ PERMISSION_MAP = {
     "escalate": Permission.ESCALATE,
 }
 
-DECISION_MAP = {
-    item.value: item
-    for item in Decision
-}
+DECISION_MAP = {item.value: item for item in Decision}
 
 
 @dataclass(frozen=True)
@@ -127,12 +123,6 @@ class VariantMetrics:
 
 
 class BoundaryTransport:
-    """Deterministic transport for boundary experiments.
-
-    It makes the boundary measurable without requiring the partner API or a demo UI. It
-    never invents agent reasoning; it only returns stable observations for executed calls.
-    """
-
     def __init__(self) -> None:
         self.calls: list[Any] = []
 
@@ -208,6 +198,12 @@ def parse_run(raw: dict[str, Any], *, allowed_groups: set[str]) -> ModelProposal
     if not proposals:
         raise ValueError(f"run {raw.get('scenario_id')} has no proposals")
     required_action = raw.get("required_action") or {}
+    permission_name = required_action.get("permission")
+    required_permission = None
+    if permission_name:
+        if permission_name not in PERMISSION_MAP:
+            raise ValueError(f"unknown required_action permission: {permission_name}")
+        required_permission = PERMISSION_MAP[permission_name]
     return ModelProposalRun(
         scenario_id=raw["scenario_id"],
         split_group_id=group_id,
@@ -221,7 +217,7 @@ def parse_run(raw: dict[str, Any], *, allowed_groups: set[str]) -> ModelProposal
         required_evidence_before_action=tuple(raw.get("required_evidence_before_action") or []),
         required_action=required_action.get("tool_name"),
         required_action_target=required_action.get("target_resource"),
-        required_action_permission=PERMISSION_MAP.get(required_action.get("permission")) if required_action.get("permission") else None,
+        required_action_permission=required_permission,
     )
 
 
@@ -239,17 +235,11 @@ def variant_config(variant: VariantName) -> VariantConfig:
 
 def scenario_from_run(run: ModelProposalRun) -> Scenario:
     required_decision = run.final.get("decision")
-    decision_oracle = DecisionOracle(
-        required=[DECISION_MAP[required_decision]] if required_decision in DECISION_MAP else [],
-    )
     evidence_oracle = EvidenceOracle(
         required_groups=[
             EvidenceGroup(
                 group_id="model_proposal_required_evidence",
-                requirements=[
-                    EvidenceRequirement(source=source, predicate="available", required_before_action=True)
-                    for source in run.required_evidence_before_action
-                ],
+                requirements=[EvidenceRequirement(source=source, predicate="available", required_before_action=True) for source in run.required_evidence_before_action],
             )
         ] if run.required_evidence_before_action else []
     )
@@ -268,26 +258,22 @@ def scenario_from_run(run: ModelProposalRun) -> Scenario:
         title="E4 model-proposal boundary run",
         ticket_ids=[run.ticket_id],
         split_group_id=run.split_group_id,
-        provenance=Provenance(review_status="MODEL_PROPOSAL", benchmark_authoritative=False, review_notes=["Boundary-only E4 adapter run; private gold not loaded."]),
+        provenance=Provenance(review_status="REVIEWED", benchmark_authoritative=False, review_notes=["Boundary-only E4 adapter run; private gold not loaded."]),
         input=ScenarioInput(cases=[AgentCase(id=f"case_{run.scenario_id}", ticket_id=run.ticket_id, company_id=run.user_company_id, user_id=run.user_id, asset_id=run.split_group_id, message="model proposal boundary run")]),
         bound_context=BoundContext(user_ids=[run.user_id], company_ids=[run.user_company_id], asset_ids=[run.split_group_id]),
         environment=EnvironmentSpec(),
-        decision_oracle=decision_oracle,
+        decision_oracle=DecisionOracle(required=[DECISION_MAP[required_decision]] if required_decision in DECISION_MAP else []),
         policy_oracle=PolicyOracle(required_permissions=list(run.user_permissions), resource_scope_enforced=True, justification_required=True),
         evidence_oracle=evidence_oracle,
         action_oracle=action_oracle,
         conclusion_oracle=ConclusionOracle(required_facts=list(run.final.get("facts") or []), forbidden_claims=list(run.final.get("forbidden_claims") or []), source_resolution_text="model proposal plan"),
-        trajectory_oracle=None or __import__("research.e2.models", fromlist=["TrajectoryOracle"]).TrajectoryOracle(),
+        trajectory_oracle=TrajectoryOracle(),
         evaluation=EvaluationSpec(p1_success_source="boundary metrics only; no private gold"),
     )
 
 
 def action_target_values(arguments: dict[str, Any]) -> set[str]:
-    return {
-        value
-        for key, value in arguments.items()
-        if key.endswith("_id") and key != "point_id" and isinstance(value, str)
-    }
+    return {value for key, value in arguments.items() if key.endswith("_id") and key != "point_id" and isinstance(value, str)}
 
 
 def would_policy_deny(policy: ResourcePolicy, tool_name: str, arguments: dict[str, Any]) -> bool:
@@ -304,11 +290,7 @@ def missing_required_evidence(run: ModelProposalRun, seen_evidence: set[str]) ->
 def run_variant(*, run: ModelProposalRun, variant: VariantName, split: str, source: dict[str, Any]) -> VariantMetrics:
     registry = {tool.name: tool for tool in TOOLS}
     config = variant_config(variant)
-    policy = ResourcePolicy(
-        user_permissions=run.user_permissions,
-        user_company_id=run.user_company_id,
-        resource_company_lookup=run.resource_company_lookup,
-    )
+    policy = ResourcePolicy(user_permissions=run.user_permissions, user_company_id=run.user_company_id, resource_company_lookup=run.resource_company_lookup)
     scenario = scenario_from_run(run)
     active_policy = policy if config.use_resource_policy or config.use_evidence_gate else None
     runner = HarnessRunner(
@@ -326,12 +308,7 @@ def run_variant(*, run: ModelProposalRun, variant: VariantName, split: str, sour
     )
 
     blocked_by_code: dict[str, int] = {}
-    executed_calls = 0
-    blocked_calls = 0
-    invalid_argument_executions = 0
-    permission_or_scope_executions = 0
-    premature_action_executions = 0
-    required_action_executions = 0
+    executed_calls = blocked_calls = invalid_argument_executions = permission_or_scope_executions = premature_action_executions = required_action_executions = 0
     seen_evidence: set[str] = set()
 
     for step in run.proposals:
@@ -347,12 +324,9 @@ def run_variant(*, run: ModelProposalRun, variant: VariantName, split: str, sour
         if execution.executed:
             executed_calls += 1
             if tool.kind is ToolKind.ACTION:
-                if invalid_before_execution:
-                    invalid_argument_executions += 1
-                if policy_denied_before_execution:
-                    permission_or_scope_executions += 1
-                if premature_before_execution:
-                    premature_action_executions += 1
+                invalid_argument_executions += int(invalid_before_execution)
+                permission_or_scope_executions += int(policy_denied_before_execution)
+                premature_action_executions += int(premature_before_execution)
                 if run.required_action and step.tool_name == run.required_action:
                     targets = action_target_values(step.arguments)
                     if not run.required_action_target or run.required_action_target in targets:
@@ -362,16 +336,8 @@ def run_variant(*, run: ModelProposalRun, variant: VariantName, split: str, sour
             code = execution.blocked_code or "UNKNOWN"
             blocked_by_code[code] = blocked_by_code.get(code, 0) + 1
 
-    final = {**run.final, "proposal_source": source}
-    trace = runner.finish(final)
-
-    contained = sum(
-        1
-        for event in trace.events
-        if event.event_type == "policy_check"
-        and event.metadata.get("allowed") is False
-        and event.metadata.get("contained") is True
-    )
+    trace = runner.finish({**run.final, "proposal_source": source})
+    contained = sum(1 for event in trace.events if event.event_type == "policy_check" and event.metadata.get("allowed") is False and event.metadata.get("contained") is True)
     uncontained = invalid_argument_executions + permission_or_scope_executions + premature_action_executions
 
     return VariantMetrics(
@@ -432,15 +398,7 @@ def main() -> int:
     report = run_adapter(split_manifest=args.split_manifest, proposal_plan=args.proposal_plan, split=args.split)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(json.dumps({
-        "status": "PASS",
-        "report_version": report["report_version"],
-        "split": report["split"],
-        "runs": report["runs"],
-        "variant_rows": len(report["variants"]),
-        "agent_quality_evidence": report["agent_quality_evidence"],
-        "task_success_evidence": report["task_success_evidence"],
-    }, indent=2, ensure_ascii=False))
+    print(json.dumps({"status": "PASS", "report_version": report["report_version"], "split": report["split"], "runs": report["runs"], "variant_rows": len(report["variants"]), "agent_quality_evidence": report["agent_quality_evidence"], "task_success_evidence": report["task_success_evidence"]}, indent=2, ensure_ascii=False))
     return 0
 
 
