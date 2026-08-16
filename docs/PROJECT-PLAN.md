@@ -13,13 +13,11 @@ E10c is ready for local DEV-only execution. It has not yet produced a real quali
 
 ## Frozen / complete
 
-- `NORMALIZED-CONTRACT-v1` frozen.
-- `API-BEHAVIOR-MAP-v1` frozen.
-- `ScenarioSchema v1` and gold/evaluator boundary frozen.
-- `BENCHMARK-SPLIT-v1` frozen before runtime/model/prompt/architecture selection.
+- E0/E1 contract and gold/evaluator boundary frozen.
 - E2 framework-neutral ToolSpec/Trace/Replay/Evaluator harness complete.
-- E4 B0-B3 guarded-boundary DEV+VALIDATION comparison complete.
-- E5 evidence acquisition/stopping comparison executed.
+- E3 benchmark split frozen before architecture/model/prompt/runtime selection.
+- E4 B3 guarded boundary promoted.
+- E5 evidence-sufficiency/stopping policy promoted.
 - E6 LangGraph + ToolSpec + HarnessRunner + HttpxTransport live path passed.
 - E7 topology ADR recorded: native ToolSpec calls internally, MCP-compatible adapter externally.
 - E8 Groq `llama-3.1-8b-instant` passed DEV + VALIDATION as a real zero-cost remote model candidate under proxy/schema gates.
