@@ -107,3 +107,7 @@ def test_integrated_b3_blocks_action_before_transport_then_allows_after_evidence
     assert bundle.by_name()["action"].passed
     assert bundle.by_name()["arguments"].passed
     assert bundle.by_name()["conclusion"].passed
+    assert bundle.by_name()["policy"].passed
+    policy_metrics = {metric.name: metric for metric in bundle.by_name()["policy"].metrics}
+    assert policy_metrics["contained_policy_proposal_count"].value == 1.0
+    assert policy_metrics["uncontained_policy_violation_count"].value == 0.0
