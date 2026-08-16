@@ -1,24 +1,24 @@
 # Wave 3 — ScenarioSchema v0
 
-Status: **FRAMEWORK-NEUTRAL RESEARCH CONTRACT / DOMAIN FIELDS PENDING API**
+Status: **SUPERSEDED AS DOMAIN-GENERIC RESEARCH CONTRACT / v1 NORMALIZATION NOW UNLOCKED BY WAVE 4**
+
+This file records the pre-artifact scenario contract that intentionally avoided inventing TRACTIAN semantics. It remains useful as design history, but the delivered package now provides the real API/case/eval structure and requires ScenarioSchema v1 normalization.
 
 ## Goal
 
 Define the minimum scenario representation needed to build, evaluate, replay and perturb industrial-agent tasks without encoding one arbitrary trajectory as the only correct solution.
 
-The schema is intentionally domain-generic until the TRACTIAN OpenAPI contract arrives.
+## Design principles preserved after artifact delivery
 
-## Design principles
-
-1. **Goal state and policy are distinct from reference trajectory.** A correct agent may reach the same valid final state through a different sequence of read-only calls.
-2. **Reference actions are optional.** They are only strict oracles when the scenario explicitly declares trajectory/action constraints.
+1. **Goal/conclusion and policy are distinct from reference trajectory.** The delivered scenario docs explicitly confirm that trajectory is a reference, not a script.
+2. **Reference actions are diagnostic unless policy/success criterion makes them required.**
 3. **State, evidence, communication and policy have separate oracles.**
-4. **Controlled pairs are first-class.** Example: same base task, only permission or evidence completeness changes.
+4. **Controlled pairs are first-class.**
 5. **Leakage prevention is encoded.** Related variants share a `split_group_id`.
-6. **Faults are declarative.** The runner can inject them independently of the task goal.
+6. **Faults/environment modes are declarative.**
 7. **No hidden chain-of-thought is required or stored.** Evaluation uses observable decisions, calls, results and state.
 
-## Canonical shape
+## Original canonical shape
 
 ```yaml
 schema_version: scenario-v0
@@ -111,74 +111,66 @@ metadata:
 
 ### `policy_oracle`
 
-Represents behavior that must or must not happen even when the final state looks correct. This catches cases such as an unauthorized mutation followed by a compensating action.
+Represents behavior that must or must not happen even when the final conclusion looks correct. This is still essential for unauthorized/cross-company/invalid actions.
 
 ### `evidence_oracle`
 
-Represents facts/evidence required before a decision or claim. After the API arrives, entries should reference stable evidence IDs/predicates rather than prose when possible.
+Represents facts/evidence required before a decision or claim. Wave 4 now allows these to reference actual resources and scenario policies.
 
 ### `state_oracle`
 
-Supported conceptual modes:
-
-- `none`: no state mutation is part of the goal;
-- `exact`: exact projected state equality;
-- `predicate`: required predicates over final state;
-- `reference`: compare to a stored expected-state artifact after normalization.
-
-The final evaluator should compare a **projected** state where volatile/non-semantic fields (timestamps, generated IDs where irrelevant) are explicitly excluded, never silently ignored.
+The pre-API schema allowed exact/predicate/reference final state. Wave 4 found that the supplied action endpoints **do not persist state mutations**, so ScenarioSchema v1 must not require final-state equality for those actions. Instead it should use an action/event oracle (`accepted=true`, correct target/args/policy/no duplicate) while retaining state oracles only where observable state semantics genuinely support them.
 
 ### `communication_oracle`
 
-Used for claims/disclosures that cannot be inferred solely from final database state. Deterministic assertions should be preferred; semantic/LLM judging is a last resort and must be separately validated.
+Still needed because the partner target is semantic/operational conclusion, not exact wording.
 
 ### `trajectory_oracle`
 
-Default is `unconstrained`: a reference trajectory is diagnostic, not automatically the only correct path.
-
-Use strict requirements only for actual policies such as:
-
-- must check permission before mutation;
-- must not call a forbidden endpoint;
-- must obtain required evidence before action;
-- must not repeat a non-idempotent mutation.
-
-This follows the lesson from current tau2/tau3 evaluation tooling: a reference action trajectory can be used to derive/understand a target state, while equivalent state-achieving trajectories should not be penalized unless action-level reward/policy explicitly requires it.
+Default remains `unconstrained/reference`: the delivered narrative scenarios explicitly say the trajectory is a reference, not a script.
 
 ## Controlled-pair design
 
-For causal/adversarial comparisons, pairs should differ in the smallest meaningful feature:
+Still valid, now grounded by the actual API:
 
 - authorized vs unauthorized;
+- same-company vs cross-company target;
+- valid vs invalid action arguments;
 - complete vs partial evidence;
-- fresh vs stale evidence;
-- consistent vs conflicting evidence;
-- mutation allowed vs mutation forbidden;
-- sufficient context vs missing required parameter;
-- healthy endpoint vs timeout/unavailable endpoint.
+- fresh vs stale analysis state;
+- consistent vs conflict response;
+- sufficient vs inconclusive evidence;
+- healthy vs unavailable response mode.
 
-All variants of one base task MUST share `split_group_id`, so development/test splitting cannot leak nearly identical tasks.
+All variants of one base task must share `split_group_id`.
 
-## Versioning
+## Wave 4 changes required for ScenarioSchema v1
 
-- schema changes: `scenario-v0`, later `scenario-v1` after API-derived validation;
-- scenario content changes require a change log;
-- benchmark manifest records scenario-file hashes;
-- API contract hash is mandatory once Swagger is available;
-- a locked test scenario cannot be edited after final evaluation begins without invalidating/re-versioning the test set.
+Actual artifacts reveal additional distinctions:
 
-## Transition to v1 after onboarding
+- `agent-input` and eval gold must be physically/logically separated;
+- case user/company/asset IDs are runtime-bound context;
+- API `seed` is evaluator/environment configuration, never model input;
+- eval JSON `mode` is overloaded (`pending`/`stale` vs API response modes) and must be split into separate fields;
+- only 10 primary asset/story groups support 17 cases, so `split_group_id` should default to asset/storyline grouping rather than ticket ID;
+- machine expected paths are incomplete relative to narrative scenario policies/P1 success criteria;
+- final conclusions must be normalized from narrative text into human-reviewed structured facts/decisions;
+- action oracle must model accepted execution event rather than persistent final state;
+- confirmation is not a universal canonical action requirement in delivered scenarios and should remain a separate safety extension unless clarified.
 
-`scenario-v1` will be frozen only after we can map:
+## Transition to v1
 
-- real entity identifiers/schema paths;
-- actual permissions/tenant semantics;
-- state-query/reset capabilities;
-- actual evidence quality/confidence/freshness fields;
-- real mutation/high-impact action taxonomy;
-- API fault representation.
+`scenario-v1` should be frozen only after human review of all 16 narrative scenarios / 17 cases into:
 
-## Primary source informing the design
+- bound actor/company/asset context;
+- scenario condition vs API response-mode profile;
+- required/allowed/forbidden decisions;
+- evidence requirements and acceptable alternatives;
+- action endpoint/target/permission/argument/justification requirements;
+- structured conclusion facts;
+- escalation/uncertainty requirements;
+- reference trajectory diagnostics;
+- asset/storyline split group;
+- source hashes and normalization provenance.
 
-- tau2/tau3 evaluation documentation: https://github.com/sierra-research/tau2-bench
-- Original τ-bench paper: https://arxiv.org/abs/2406.12045
+See `28-gold-map-v0-wave-4.md` and `30-post-artifact-experiment-program-wave-4.md`.
