@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d DEV-ONLY PASS; E10d FULL DEV+VALIDATION IMPROVED WITH SAFETY REGRESSION  
+**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d DEV-ONLY PASS; E10d FULL DEV+VALIDATION IMPROVED WITH SAFETY REGRESSION; E10e SAFETY GUARD READY  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 17:30 BRT  
+**Progress checkpoint:** 2026-08-16 17:40 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan. It separates frozen evidence/contracts from experimental architecture decisions, preserves the USD 0 provider constraint, and treats private task-quality score and safety gates as the acceptance signal instead of proxy/schema success.
@@ -11,7 +11,7 @@ This is the active execution plan. It separates frozen evidence/contracts from e
 
 E10d passed DEV-only and was remeasured on full DEV+VALIDATION. The full result improves over the E9 full baseline on real task quality, decision correctness, evidence correctness, action correctness and proxy disagreement. However, it fails the full promotion gate because premature action rate increased from 0.0 to 0.25.
 
-Decision: do not promote E10d into integration gates yet. The next gate is E10e safety/premature-action protection. VALIDATION must remain measurement-only, not tuning.
+Decision: do not promote E10d into integration gates. E10e is now ready as a DEV-only safety/premature-action guard. VALIDATION remains protected from tuning and LOCKED_TEST remains blocked.
 
 ## Frozen / complete
 
@@ -29,6 +29,7 @@ Decision: do not promote E10d into integration gates yet. The next gate is E10e 
 - E10c DEV-only escalation loop preserved E10b gains but did not improve escalation.
 - E10d DEV-only visible-output escalation consistency guard passed private DEV-only scoring.
 - E10d full DEV+VALIDATION remeasurement completed and recorded as improved but not promotable because of a safety regression.
+- E10e DEV-only premature-action safety guard manifest, runner, documentation and dry-run CI are ready.
 
 ## Current candidate bundle
 
@@ -58,34 +59,34 @@ Decision: do not promote E10d into integration gates yet. The next gate is E10e 
 
 Interpretation: E10d generalizes partially. The full result is much stronger than the E9 full baseline in average quality, but the safety regression blocks promotion.
 
-## E10d full remeasurement artifacts
+## E10e DEV-only premature-action safety guard
 
-- `research/results/e10d-full-dev-validation-private-score-summary-2026-08-16.json`
-- `research/83-e10d-full-dev-validation-private-score-results.md`
-- `research/experiments/e10d-full-dev-validation-remeasurement-manifest.json`
-- `scripts/research/e10d_full_dev_validation_capture.py`
-- `research/82-e10d-full-dev-validation-remeasurement.md`
-- `.github/workflows/research-e10d-full.yml`
+E10e keeps the E10d visible-output escalation guard and adds a second deterministic visible-output safety guard.
 
-## Immediate next gate — E10e safety/premature-action guard
+### E10e artifacts ready
 
-E10e should target premature-action safety without tuning on VALIDATION. It should use general visible-output safety invariants, not validation-specific expected paths or validation-row debugging.
+- `research/experiments/e10e-dev-only-premature-action-safety-guard-manifest.json`
+- `scripts/research/e10e_dev_only_premature_action_guard.py`
+- `research/84-e10e-dev-only-premature-action-safety-guard.md`
+- `.github/workflows/research-e10e.yml`
+
+The dry-run CI validates the DEV-only capture shape without external model calls. The real Groq capture must still be run locally before claiming any E10e quality or safety improvement.
 
 ### E10e design direction
 
 - Preserve the E10d improvements in evidence, action and escalation when a safe action is actually supported.
-- Add a visible-output safety veto when the model's own output says evidence is incomplete, conditional, uncertain, permission-blocked, or not safe to act.
-- Set `should_take_action_now=false` when the visible output is internally conditional or contradicts immediate action.
-- Keep `requires_human_escalation=true` when human handling is needed, but avoid equating human escalation with autonomous action.
+- Add a visible-output safety veto when the model's own output says evidence is incomplete, conditional, uncertain, permission-blocked, missing or not safe to act.
+- Set `should_take_action_now=false` when the visible output is internally conditional or contradicts immediate state-changing action.
+- Preserve `requires_human_escalation=true` when human review is still needed.
 - Do not use expected paths, private oracle rows, evaluator labels, validation feedback or LOCKED_TEST.
 
 ### E10e acceptance target before another full remeasurement
 
-- Preserve evidence correctness above the E9 DEV baseline.
-- Preserve action correctness above the E9 DEV baseline.
-- Preserve escalation correctness at least at the E9 full baseline.
 - Restore premature action rate to 0.0.
 - Keep unsupported final-claim rate at 0.0.
+- Preserve evidence correctness above the E9 DEV baseline.
+- Preserve action correctness above the E9 DEV baseline.
+- Preserve escalation correctness at least comparable to the E9 full baseline.
 - Keep LOCKED_TEST blocked.
 - Do not commit raw private or fixed-output material.
 
@@ -107,7 +108,8 @@ E10e should target premature-action safety without tuning on VALIDATION. It shou
 - [x] E10d DEV-only escalation guard run and scored.
 - [x] Full DEV+VALIDATION E10d capture run and scored.
 - [x] Record E10d full result as improved but blocked by safety regression.
-- [ ] Build E10e safety/premature-action guard without VALIDATION tuning.
+- [x] Build E10e safety/premature-action guard without VALIDATION tuning.
+- [x] Add E10e dry-run CI guard.
 - [ ] Run E10e DEV-only capture locally.
 - [ ] Score E10e with E9 v3 private scorer.
 - [ ] Only after DEV-only safety acceptance, consider another full DEV+VALIDATION remeasurement.
