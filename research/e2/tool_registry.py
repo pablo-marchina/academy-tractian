@@ -8,7 +8,7 @@ def read(name: str, op: str, path: str, params: list[ToolParameter], *, scope: s
     return ToolSpec(name=name, operation_id=op, method="GET", path_template=path, kind=ToolKind.READ, parameters=params, target_scope=scope, identity_required=identity, seed_supported=seed_supported)  # type: ignore[arg-type]
 
 def action(name: str, op: str, method: str, path: str, params: list[ToolParameter], permission: Permission, impact: ActionImpact) -> ToolSpec:
-    return ToolSpec(name=name, operation_id=op, method=method, path_template=path, kind=ToolKind.ACTION, impact=impact, parameters=params, required_permissions=[permission], justification_required=True, minimum_justification_length=20, identity_required=True, action_persistence="accepted_event_non_persistent", seed_supported=False)  # type: ignore[arg-type]
+    return ToolSpec(name=name, operation_id=op, method=method, path_template=path, kind=ToolKind.ACTION, impact=impact, parameters=params, required_permissions=[permission], target_scope="resource", justification_required=True, minimum_justification_length=20, identity_required=True, action_persistence="accepted_event_non_persistent", seed_supported=False)  # type: ignore[arg-type]
 
 TOOLS: tuple[ToolSpec, ...] = (
     read("get_company", "getCompany", "/companies/{companyId}", [p("company_id", "path", True)], scope="company_resource"),
@@ -45,4 +45,5 @@ def validate_registry() -> None:
     assert len(actions) == 5
     assert all(t.justification_required and t.minimum_justification_length == 20 for t in actions)
     assert all(t.identity_binding == "runner" for t in actions)
+    assert all(t.target_scope == "resource" for t in actions)
     assert sum(t.seed_supported for t in TOOLS) == 12
