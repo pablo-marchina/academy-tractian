@@ -1,8 +1,10 @@
 # Systematic Research Hub
 
-Status: **ACTIVE — Wave 4 / Research Gate not passed**
+Status: **ACTIVE — Wave 4 complete / post-artifact experiment execution starting**
 
-The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN project package. Production architecture is still **not frozen**: partner artifacts have replaced many hypotheses with executable facts, but runtime/model/MCP/policy/evidence strategy decisions must now be resolved through project-specific experiments.
+The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN project package. Production architecture is still **not frozen**: partner artifacts have replaced many hypotheses with executable facts, but runtime/model/MCP/policy/evidence decisions must now be resolved through project-specific experiments.
+
+Execution plan: [`../docs/PROJECT-PLAN.md`](../docs/PROJECT-PLAN.md)
 
 ## Source hierarchy
 
@@ -12,6 +14,7 @@ The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN p
 4. Confidence-labeled kickoff guidance where not contradicted by artifacts.
 5. Primary research/specifications/official framework docs.
 6. Reproducible experiments in this repository.
+7. Project hypotheses.
 
 Raw package hash and derived findings are recorded in `26-tractian-artifact-ingestion-wave-4.md`. The raw package/eval gold is not copied into the public branch until publication policy is confirmed.
 
@@ -69,18 +72,18 @@ The kickoff described requester confirmation for mutations, but canonical delive
 | Requirements/scope | Strongly resolved; a few instructor/model/publication questions remain |
 | API/domain | Actual runtime/source mapped (`API-MAP-v0`) |
 | Package/gold | Inventory and divergence audit complete (`GOLD-MAP-v0`) |
-| Contract | Critical duplicate-key/typing issues identified; normalization implementation pending |
-| Canonical ToolSpec | Exact constraints now known; implementation/experiment pending |
-| Evaluation | v0 contracts exist; v1 normalization from actual scenarios pending |
-| Safety/policy | Real raw-API weaknesses now support controlled guarded-boundary experiment |
+| Contract | Critical duplicate-key/typing issues identified; normalization implementation is next |
+| Canonical ToolSpec | Exact integrity constraints now known; implementation/experiment pending |
+| Evaluation | v0 contracts exist; v1 normalization from actual scenarios is next |
+| Safety/policy | Real raw-API weaknesses support controlled guarded-boundary experiment |
 | Evidence/stopping | Actual response modes/overrides known; experiment ready to implement |
-| Reliability | Can now cleanly separate fixed-environment agent reliability from seed-based API robustness |
-| Runtime | LangGraph / Pydantic AI/Graph / OpenAI Agents SDK still candidates; project spike pending |
+| Reliability | Can separate fixed-environment agent reliability from seed-based API robustness |
+| Runtime | LangGraph / Pydantic AI/Graph / OpenAI Agents SDK remain candidates; spike pending |
 | MCP | Same ToolSpec native-vs-MCP experiment pending |
 | Models | Project benchmark method ready; provider availability still to confirm at execution time |
 | RAG | Direct knowledge API baseline strongly favored; external RAG conditional |
 | Multi-agent/routing/optimization | Still conditional; no evidence yet to add them |
-| Statistics | Pilot now unlocked; exact `k` still not guessed |
+| Statistics | Pilot unlocked; exact `k` still not guessed |
 
 ## Central experiment program
 
@@ -96,7 +99,7 @@ Staged variants:
 - B3 + explicit evidence-aware action/escalation policy;
 - B4 confirmation extension, separately reported unless official policy changes.
 
-After this, runtime/MCP/model choices are evaluated while holding the canonical tools/scenarios/evaluator constant.
+After this, runtime/MCP/model choices are evaluated while holding canonical tools/scenarios/evaluator constant.
 
 ## Experiment decomposition enabled by actual seed semantics
 
@@ -113,6 +116,23 @@ Vary deterministic explicit seeds to induce targeted complete/partial/inconclusi
 Hold environment seed/observations fixed and repeat stochastic agent/model runs.
 
 This prevents API variability and model variability from being mixed into one uninterpretable score.
+
+## Current critical path
+
+The order is now intentionally strict:
+
+1. **E0 — normalize/conformance-test OpenAPI** → `NORMALIZED-CONTRACT-v1`.
+2. **E1 — human-review machine+narrative gold** → ScenarioSchema v1.
+3. **E2 — implement Canonical ToolSpec + evaluator + TraceSchema v1 + replay/provenance**.
+4. **E3 — freeze asset/story-aware dev/validation/locked-test split**.
+5. **E4 — execute B0–B3 guarded-boundary experiment**.
+6. **E5 — execute fixed/free/evidence-aware stopping experiment**.
+7. **E6/E7 — identical runtime and native-vs-MCP spikes**.
+8. **E8 — statistical pilot + project-native model benchmark**.
+9. **E9 — test optional complexity only where residual failures justify it**.
+10. Close ADR set → **`FROZEN-v1` target: 2026-08-27**.
+
+The detailed calendar, exit conditions and MUST/SHOULD/CONDITIONAL priorities are in [`../docs/PROJECT-PLAN.md`](../docs/PROJECT-PLAN.md).
 
 ## Files
 
@@ -133,13 +153,16 @@ This prevents API variability and model variability from being mixed into one un
 - `29-contract-and-package-quality-audit-wave-4.md` — contract/data/documentation inconsistencies and normalization policy.
 - `30-post-artifact-experiment-program-wave-4.md` — pre-registered implementation/experiment sequence.
 
-### Schemas / decisions
+### Schemas / plans / decisions
 
 - `schemas/scenario-v0.schema.json`
 - `schemas/trace-v0.schema.json`
 - `sources.md`
+- `../docs/PROJECT-PLAN.md`
 - `../docs/adr/000-template.md`
 
-## Immediate sequence
+## Research Gate principle
 
-**Normalize/conformance-test OpenAPI → human-review gold into ScenarioSchema v1 → implement canonical ToolSpec/evaluator/TraceSchema v1 → freeze leakage-aware split → run B0–B3 guarded-boundary experiment → evidence/stopping experiment → runtime/MCP spike → statistical pilot/model benchmark → conditional techniques only if justified → ADRs → `FROZEN-v1`.**
+Do not freeze a framework simply because implementation has started. Infrastructure can be implemented framework-neutrally, but every architecture-changing choice remains a hypothesis until its designated project experiment/ADR is complete.
+
+If schedule pressure appears, cut optional complexity first. Do **not** weaken gold isolation, split integrity, conformance, evaluator validity or locked-test discipline.
