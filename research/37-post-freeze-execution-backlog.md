@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E7 Native Tools vs MCP Pass
+# Post-E0/E1 Execution Backlog — E7 Topology ADR Recorded
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 NATIVE TOOLS VS MCP PASS; E7 ADR / TOPOLOGY DECISION PREP NEXT**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 NATIVE TOOLS VS MCP PASS; E7 TOPOLOGY ADR RECORDED; E8 STATISTICAL PILOT PREP NEXT**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -20,6 +20,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - E6 live API integration path and CI contract gate complete.
 - E6 local live API execution complete with `LIVE_PASS`.
 - E7 native tools vs MCP-compatible surface comparison complete with `E7_PASS`.
+- E7 topology ADR decision prep recorded.
 
 ## Current candidate policy/runtime/surface bundle
 
@@ -29,6 +30,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - `HttpxTransport` live API path configured and executed against the supplied TRACTIAN API.
 - Native ToolSpec calls as internal default candidate.
 - MCP-compatible `tools/list` + `tools/call` adapter as external interoperability candidate.
+- MCP not required for final delivery at this gate unless a future delivery/evaluator/partner/deployment/tooling constraint requires an MCP server/client boundary.
 - B0/free loop/fixed reference retained as baselines or infrastructure anchors.
 - Pydantic AI/Graph and OpenAI Agents SDK retained as comparators.
 
@@ -40,7 +42,8 @@ Still not frozen:
 - multi-agent decomposition;
 - persistent memory;
 - observability backend;
-- UI/demo flow.
+- UI/demo flow;
+- final architecture.
 
 ## E7 native tools vs MCP-compatible surface
 
@@ -96,25 +99,53 @@ Comparison result:
 | CI run | `31952679604` |
 | Artifact | `e7-native-tools-vs-mcp-summary` |
 
+## E7 topology ADR decision prep
+
+Completed work:
+
+- [x] keep native tools as internal default candidate;
+- [x] keep MCP-compatible as external interoperability candidate;
+- [x] decide MCP is not required for final delivery at this gate;
+- [x] document condition under which MCP becomes required later;
+- [x] preserve B3 + evidence-sufficiency + adaptive evidence planning;
+- [x] preserve `HttpxTransport` live API path;
+- [x] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
+- [x] keep LOCKED_TEST blocked;
+- [x] avoid freezing final architecture.
+
+Decision result:
+
+| Decision item | Result |
+|---|---|
+| Internal default candidate | native ToolSpec calls |
+| External interoperability candidate | MCP-compatible adapter |
+| MCP required for final delivery at this gate | false |
+| MCP requirement condition | require only if future delivery/evaluator/partner/deployment/tooling constraint requires MCP |
+| Final architecture frozen | false |
+
 Artifacts:
 
 - `research/57-e7-native-tools-vs-mcp-preregistration.md`
 - `research/58-e7-native-tools-vs-mcp-results.md`
+- `research/59-e7-topology-adr.md`
 - `research/experiments/e7-native-tools-vs-mcp-manifest.json`
 - `research/results/e7-native-tools-vs-mcp-summary-2026-08-16.json`
+- `research/results/e7-topology-decision-summary-2026-08-16.json`
 - `scripts/research/e7_native_vs_mcp_runner.py`
 
 ## Next active task
 
-Prepare the E7 ADR/topology decision without freezing the final architecture yet.
+Prepare E8 statistical pilot and model benchmark without leaking gold or touching LOCKED_TEST.
 
 Required work:
 
-- [ ] keep native tools as internal default candidate;
-- [ ] keep MCP-compatible as external interoperability candidate;
-- [ ] decide whether MCP is required for final delivery or only an optional adapter;
+- [ ] define model/provider candidates and budgets;
+- [ ] preserve native ToolSpec internal default and MCP-compatible optional adapter;
 - [ ] preserve B3 + evidence-sufficiency + adaptive evidence planning;
-- [ ] preserve `HttpxTransport` live API path;
+- [ ] preserve LangGraph + `HttpxTransport` live API path;
+- [ ] separate model stochasticity from deterministic environment modes;
+- [ ] run DEV + VALIDATION only;
+- [ ] define task-success, escalation/action correctness, trace quality and cost/latency metrics;
 - [ ] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
 - [ ] keep LOCKED_TEST blocked;
 - [ ] do not freeze final architecture yet.
