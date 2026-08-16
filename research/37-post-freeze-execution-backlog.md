@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E7 Topology ADR Recorded
+# Post-E0/E1 Execution Backlog — E8 Statistical Pilot Prep
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 NATIVE TOOLS VS MCP PASS; E7 TOPOLOGY ADR RECORDED; E8 STATISTICAL PILOT PREP NEXT**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 STATISTICAL PILOT PREP; E8 PILOT EXECUTION NEXT**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -21,6 +21,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - E6 local live API execution complete with `LIVE_PASS`.
 - E7 native tools vs MCP-compatible surface comparison complete with `E7_PASS`.
 - E7 topology ADR decision prep recorded.
+- E8 statistical pilot/model benchmark prep registered and validated with `E8_PREP_PASS`.
 
 ## Current candidate policy/runtime/surface bundle
 
@@ -31,6 +32,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - Native ToolSpec calls as internal default candidate.
 - MCP-compatible `tools/list` + `tools/call` adapter as external interoperability candidate.
 - MCP not required for final delivery at this gate unless a future delivery/evaluator/partner/deployment/tooling constraint requires an MCP server/client boundary.
+- Free-first model benchmark policy; paid model candidates disabled by default.
 - B0/free loop/fixed reference retained as baselines or infrastructure anchors.
 - Pydantic AI/Graph and OpenAI Agents SDK retained as comparators.
 
@@ -44,60 +46,6 @@ Still not frozen:
 - observability backend;
 - UI/demo flow;
 - final architecture.
-
-## E7 native tools vs MCP-compatible surface
-
-Completed work:
-
-- [x] preregister E7 native tools vs MCP-compatible comparison;
-- [x] expose the same ToolSpec through native tool calls;
-- [x] expose the same ToolSpec through MCP-compatible `tools/list` and `tools/call` envelopes;
-- [x] normalize both surfaces back into `HarnessRunner`;
-- [x] preserve B3 + evidence-sufficiency;
-- [x] preserve adaptive evidence planning;
-- [x] preserve `HttpxTransport` live API path;
-- [x] run DEV + VALIDATION only;
-- [x] compare trace completeness, guard fidelity, latency, portability and complexity;
-- [x] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
-- [x] keep LOCKED_TEST blocked;
-- [x] avoid freezing model/MCP/RAG/multi-agent/UI.
-
-E7 result:
-
-| Metric | Native tools | MCP-compatible |
-|---|---:|---:|
-| Tool coverage | 18 | 18 |
-| Representative scenarios | 4 | 4 |
-| Splits | DEV + VALIDATION | DEV + VALIDATION |
-| Request count | 18 | 18 |
-| Successful request count | 18 | 18 |
-| Trace complete | true | true |
-| RunTrace-compatible output | true | true |
-| B3 policy events | 2 | 2 |
-| B3 allows actions | true | true |
-| Evidence-sufficiency events | 4 | 4 |
-| Action execution proxy | 2/2 | 2/2 |
-| Avg latency ms | 1.9855 | 1.8158 |
-| Complexity proxy | 1.0 | 2.0 |
-| Portability proxy | 3.0 | 4.5 |
-
-Comparison result:
-
-| Check | Result |
-|---|---:|
-| Status | `E7_PASS` |
-| Native tool coverage | 18/18 |
-| MCP-compatible tool coverage | 18/18 |
-| Schema equivalence | true |
-| Invocation equivalence | true |
-| Guard fidelity equivalent | true |
-| Trace completeness equivalent | true |
-| MCP/native latency ratio | 0.915 |
-| Native lower complexity | true |
-| MCP higher portability | true |
-| LOCKED_TEST accessed | false |
-| CI run | `31952679604` |
-| Artifact | `e7-native-tools-vs-mcp-summary` |
 
 ## E7 topology ADR decision prep
 
@@ -123,33 +71,79 @@ Decision result:
 | MCP requirement condition | require only if future delivery/evaluator/partner/deployment/tooling constraint requires MCP |
 | Final architecture frozen | false |
 
+## E8 statistical pilot/model benchmark prep
+
+Completed work:
+
+- [x] preregister statistical pilot/model benchmark prep;
+- [x] define model/provider candidate slots without freezing concrete model IDs;
+- [x] enforce free-first budget policy;
+- [x] require explicit approval before paid reference model runs;
+- [x] preserve native ToolSpec internal default and MCP-compatible optional adapter;
+- [x] preserve B3 + evidence-sufficiency + adaptive evidence planning;
+- [x] preserve LangGraph + `HttpxTransport` live API path;
+- [x] separate model stochasticity from deterministic environment modes;
+- [x] define DEV + VALIDATION only pilot scope;
+- [x] define task-success, escalation/action correctness, trace quality, cost and latency metrics;
+- [x] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
+- [x] keep LOCKED_TEST blocked;
+- [x] add CI prep validator that makes no model calls;
+- [x] avoid freezing final architecture.
+
+Candidate slots:
+
+| Slot | Purpose | Default |
+|---|---|---:|
+| `no_model_policy_baseline` | deterministic safety/proposal baseline | enabled |
+| `groq_openai_compatible_free_first` | free/low-cost OpenAI-compatible model candidate | disabled until key/config |
+| `google_gemini_free_or_low_cost` | alternative free/low-cost candidate | disabled until key/config |
+| `openai_reference_optional` | high-quality paid reference candidate | disabled until explicit budget approval |
+| `anthropic_reference_optional` | cross-provider paid reference candidate | disabled until explicit budget approval |
+| `local_ollama_optional` | local no-token-cost comparator | disabled until latency feasible |
+
+Prep result:
+
+| Check | Result |
+|---|---:|
+| Status | `E8_PREP_PASS` |
+| Candidate slots defined | 6 |
+| Default budget mode | `free_first` |
+| Paid models enabled by default | false |
+| CI model calls | false |
+| Representative groups | 5 |
+| Splits | DEV + VALIDATION |
+| LOCKED_TEST accessed | false |
+| Design axes | model stochasticity + environment robustness |
+| Primary metrics defined | true |
+| Leakage controls defined | true |
+| Final architecture frozen | false |
+
 Artifacts:
 
-- `research/57-e7-native-tools-vs-mcp-preregistration.md`
-- `research/58-e7-native-tools-vs-mcp-results.md`
-- `research/59-e7-topology-adr.md`
-- `research/experiments/e7-native-tools-vs-mcp-manifest.json`
-- `research/results/e7-native-tools-vs-mcp-summary-2026-08-16.json`
-- `research/results/e7-topology-decision-summary-2026-08-16.json`
-- `scripts/research/e7_native_vs_mcp_runner.py`
+- `research/60-e8-statistical-pilot-model-benchmark-preregistration.md`
+- `research/experiments/e8-statistical-pilot-model-benchmark-manifest.json`
+- `research/results/e8-statistical-pilot-prep-summary-2026-08-16.json`
+- `scripts/research/e8_statistical_pilot_prep.py`
 
 ## Next active task
 
-Prepare E8 statistical pilot and model benchmark without leaking gold or touching LOCKED_TEST.
+Execute E8 DEV smoke and then the statistical pilot only after local candidate availability/budget is confirmed.
 
 Required work:
 
-- [ ] define model/provider candidates and budgets;
-- [ ] preserve native ToolSpec internal default and MCP-compatible optional adapter;
+- [ ] decide which free/low-cost candidates are actually available in the local environment;
+- [ ] keep paid OpenAI/Anthropic reference candidates disabled unless explicit budget approval is given;
+- [ ] run DEV smoke before VALIDATION;
+- [ ] capture or replay fixed observation packets separately from model stochasticity;
+- [ ] run repeated model calls only for enabled candidates;
+- [ ] run deterministic environment robustness checks separately;
+- [ ] score task success, action/escalation correctness, evidence coverage, trace completeness, latency and cost;
+- [ ] keep native ToolSpec internal default and MCP-compatible optional adapter;
 - [ ] preserve B3 + evidence-sufficiency + adaptive evidence planning;
 - [ ] preserve LangGraph + `HttpxTransport` live API path;
-- [ ] separate model stochasticity from deterministic environment modes;
-- [ ] run DEV + VALIDATION only;
-- [ ] define task-success, escalation/action correctness, trace quality and cost/latency metrics;
-- [ ] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
 - [ ] keep LOCKED_TEST blocked;
 - [ ] do not freeze final architecture yet.
 
 ## Methodological constraint
 
-No item in E2, E3, E4, E5, E6 or E7 is a demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment and cannot use LOCKED_TEST before final evaluation.
+No item in E2, E3, E4, E5, E6, E7 or E8 prep is a demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment and cannot use LOCKED_TEST before final evaluation.
