@@ -27,7 +27,7 @@ base = v2.base
 
 OPENROUTER_PROVIDER = "openrouter"
 DEFAULT_OPENROUTER_MODEL = "openrouter/free"
-BLOCKED_OPENROUTER_MODELS = {"openrouter/auto", "openrouter/auto:free"}
+BLOCKED_OPENROUTER_MODELS = {"openrouter/auto", "openrouter/auto:free", "auto", "auto:free"}
 
 base.ALLOWED_PROVIDERS.add(OPENROUTER_PROVIDER)
 
