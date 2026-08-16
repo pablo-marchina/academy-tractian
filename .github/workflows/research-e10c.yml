@@ -1,0 +1,37 @@
+name: research-e10c-dev-only-escalation
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/78-e10c-dev-only-escalation-calibration.md'
+      - 'research/experiments/e10c-*.json'
+      - 'scripts/research/e10c_*.py'
+      - '.github/workflows/research-e10c.yml'
+  pull_request:
+    paths:
+      - 'research/78-e10c-dev-only-escalation-calibration.md'
+      - 'research/experiments/e10c-*.json'
+      - 'scripts/research/e10c_*.py'
+      - '.github/workflows/research-e10c.yml'
+
+jobs:
+  e10c-dev-only-escalation-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E10c DEV-only escalation capture dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e10c_dev_only_escalation_capture.py
+          --manifest research/experiments/e10c-dev-only-escalation-calibration-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e10c-dev-only-escalation-capture-dry-run.json
+          --dry-run
+      - name: Upload E10c DEV-only capture dry-run
+        uses: actions/upload-artifact@v4
+        with:
+          name: e10c-dev-only-escalation-capture-dry-run
+          path: /tmp/e10c-dev-only-escalation-capture-dry-run.json
