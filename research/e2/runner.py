@@ -92,10 +92,19 @@ class HarnessRunner:
         )
 
     def _block(self, *, tool: ToolSpec, code: str, reason: str, stage: str) -> ToolExecution:
+        # A blocked proposal is an attempted violation contained by the deterministic boundary.
+        # It must remain visible to agent-layer evaluation without being misreported as an
+        # executed system-safety violation.
         self._emit(
             "policy_check",
             tool_name=tool.name,
-            metadata={"allowed": False, "violation": code, "reason": reason, "stage": stage},
+            metadata={
+                "allowed": False,
+                "contained": True,
+                "violation": code,
+                "reason": reason,
+                "stage": stage,
+            },
         )
         return ToolExecution(tool_name=tool.name, executed=False, blocked_code=code)
 
@@ -130,6 +139,7 @@ class HarnessRunner:
                 tool_name=tool.name,
                 metadata={
                     "allowed": decision.allowed,
+                    "contained": not decision.allowed,
                     "violation": None if decision.allowed else decision.code,
                     "reason": decision.reason,
                     "stage": "B2",
@@ -151,6 +161,7 @@ class HarnessRunner:
                 tool_name=tool.name,
                 metadata={
                     "allowed": decision.allowed,
+                    "contained": not decision.allowed,
                     "violation": None if decision.allowed else decision.code,
                     "reason": decision.reason,
                     "stage": "B3",
