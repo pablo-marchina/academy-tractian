@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d DEV-ONLY PASS; E10d FULL DEV+VALIDATION IMPROVED WITH SAFETY REGRESSION; E10e DEV-ONLY SAFETY PASS; E10e FULL DEV+VALIDATION SAFETY REGRESSION PERSISTS  
+**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT; E10b STRONG DEV-ONLY IMPROVEMENT WITH ESCALATION GAP; E10c NO ESCALATION IMPROVEMENT; E10d DEV-ONLY PASS; E10d FULL DEV+VALIDATION IMPROVED WITH SAFETY REGRESSION; E10e DEV-ONLY SAFETY PASS; E10e FULL DEV+VALIDATION SAFETY REGRESSION PERSISTS; E10f STRICTER SAFETY GUARD READY  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 18:15 BRT  
+**Progress checkpoint:** 2026-08-16 18:30 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan. It separates frozen evidence/contracts from experimental architecture decisions, preserves the USD 0 provider constraint, and treats private task-quality score and safety gates as the acceptance signal instead of proxy/schema success.
@@ -13,7 +13,7 @@ E10e passed DEV-only private scoring, then was remeasured on full DEV+VALIDATION
 
 Decision: do not promote E10e into integration gates. The safety gate is stricter than the aggregate quality score. A candidate cannot advance while full premature action rate is above 0.0.
 
-The next gate is E10f, a stricter general visible-output safety guard. E10f must not use VALIDATION for tuning, must not use private oracle values in the model or guard, and must keep LOCKED_TEST blocked.
+E10f is now ready as a DEV-only stricter general visible-output safety guard. It must not use VALIDATION for tuning, must not use private oracle values in the model or guard, and must keep LOCKED_TEST blocked.
 
 ## Frozen / complete
 
@@ -33,6 +33,7 @@ The next gate is E10f, a stricter general visible-output safety guard. E10f must
 - E10d full DEV+VALIDATION remeasurement completed and recorded as improved but not promotable because of a safety regression.
 - E10e DEV-only premature-action safety guard completed and passed private DEV-only scoring.
 - E10e full DEV+VALIDATION remeasurement completed and recorded as unchanged versus E10d full, with the safety regression still present.
+- E10f DEV-only stricter visible-output safety guard manifest, runner, documentation and dry-run CI are ready.
 
 ## Current candidate bundle
 
@@ -62,30 +63,24 @@ The next gate is E10f, a stricter general visible-output safety guard. E10f must
 
 Interpretation: E10e did not regress relative to E10d full, but also did not fix the full safety issue. The E10e full guard checked 12 outputs and changed 0 outputs, so the unsafe full cases were not caught by the current visible-output safety conditions.
 
-## E10e artifacts
+## E10f DEV-only stricter visible-output safety guard
 
-- `research/experiments/e10e-dev-only-premature-action-safety-guard-manifest.json`
-- `scripts/research/e10e_dev_only_premature_action_guard.py`
-- `research/84-e10e-dev-only-premature-action-safety-guard.md`
-- `.github/workflows/research-e10e.yml`
-- `research/results/e10e-dev-only-private-score-summary-2026-08-16.json`
-- `research/85-e10e-dev-only-private-score-results.md`
-- `research/experiments/e10e-full-dev-validation-remeasurement-manifest.json`
-- `scripts/research/e10e_full_dev_validation_capture.py`
-- `research/86-e10e-full-dev-validation-remeasurement.md`
-- `.github/workflows/research-e10e-full.yml`
-- `research/results/e10e-full-dev-validation-private-score-summary-2026-08-16.json`
-- `research/87-e10e-full-dev-validation-private-score-results.md`
+E10f reuses the E10e guard and adds a stricter deterministic visible-output safety guard for high-autonomy state-changing maintenance actions.
 
-## Immediate next gate — E10f stricter safety guard
+### E10f artifacts ready
 
-E10f should target full safety generalization without using VALIDATION for tuning. It should be preregistered as a general policy-level visible-output guard, then tested on DEV before any new full remeasurement.
+- `research/experiments/e10f-dev-only-stricter-visible-safety-guard-manifest.json`
+- `scripts/research/e10f_dev_only_stricter_visible_safety_guard.py`
+- `research/88-e10f-dev-only-stricter-visible-safety-guard.md`
+- `.github/workflows/research-e10f.yml`
 
-### E10f design direction
+### E10f design
 
 - Preserve evidence/action/escalation gains when action is visibly and strongly supported.
-- Block state-changing action when the visible evidence plan is marginal or the proposed action is not explicitly supported by enough concrete evidence resources.
-- Distinguish human escalation from autonomous action.
+- Block state-changing action when no supported endpoint is visible.
+- Block high-autonomy state-changing action when the visible evidence plan is marginal.
+- Block action when the endpoint is not explicitly supported by the visible proposed next step/rubric.
+- Distinguish human handoff endpoints from autonomous maintenance changes.
 - Prefer investigate/escalate over action when visible safety support is weak.
 - Do not use expected paths, private oracle rows, evaluator labels, validation feedback or LOCKED_TEST.
 
@@ -93,9 +88,10 @@ E10f should target full safety generalization without using VALIDATION for tunin
 
 - Restore premature action rate to 0.0 on DEV.
 - Keep unsupported final-claim rate at 0.0.
-- Preserve evidence correctness above the E9 DEV baseline.
-- Preserve action correctness above the E9 DEV baseline where safe.
-- Preserve or improve escalation correctness.
+- Preserve evidence correctness at 1.0 on DEV.
+- Preserve action correctness at 1.0 on DEV.
+- Preserve escalation correctness at 1.0 on DEV.
+- Keep real task quality at or above 0.8571 on DEV.
 - Keep LOCKED_TEST blocked.
 - Do not commit raw private or fixed-output material.
 
@@ -126,7 +122,8 @@ E10f should target full safety generalization without using VALIDATION for tunin
 - [x] Run full DEV+VALIDATION E10e capture locally.
 - [x] Score full DEV+VALIDATION E10e with E9 v3 private scorer.
 - [x] Record full E10e as not promotable because premature action remains 0.25.
-- [ ] Build E10f stricter safety guard without VALIDATION tuning.
+- [x] Build E10f stricter safety guard without VALIDATION tuning.
+- [x] Add E10f dry-run CI guard.
 - [ ] Run E10f DEV-only capture locally.
 - [ ] Score E10f with E9 v3 private scorer.
 - [ ] Only after DEV-only safety acceptance, consider another full DEV+VALIDATION remeasurement.
