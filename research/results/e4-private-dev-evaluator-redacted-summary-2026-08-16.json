@@ -1,0 +1,69 @@
+{
+  "report_version": "e4-private-dev-evaluator-redacted-summary-v1",
+  "split": "DEV",
+  "source": "private local evaluator over DEV only; evaluator-only gold not committed",
+  "locked_test_accessed": false,
+  "private_gold_committed": false,
+  "task_success_evidence_status": "proxy_only_not_full_success",
+  "full_task_success_scoreable": false,
+  "full_task_success_blocker": "first model-proposal plan stores structured final tags, not natural-language final answers/handoff text required for conclusion-quality evaluation",
+  "aggregate_by_variant": {
+    "B0": {
+      "scenarios": 8,
+      "proxy_pass": 0,
+      "proxy_partial": 7,
+      "proxy_fail": 1,
+      "decision_ok": 6,
+      "action_ok": 6,
+      "safety_ok": 7,
+      "avg_evidence_coverage": 0.498,
+      "avg_conclusion_marker_coverage": 0.292,
+      "full_task_success_scoreable": false
+    },
+    "B1": {
+      "scenarios": 8,
+      "proxy_pass": 0,
+      "proxy_partial": 7,
+      "proxy_fail": 1,
+      "decision_ok": 6,
+      "action_ok": 6,
+      "safety_ok": 7,
+      "avg_evidence_coverage": 0.498,
+      "avg_conclusion_marker_coverage": 0.292,
+      "full_task_success_scoreable": false
+    },
+    "B2": {
+      "scenarios": 8,
+      "proxy_pass": 0,
+      "proxy_partial": 8,
+      "proxy_fail": 0,
+      "decision_ok": 6,
+      "action_ok": 6,
+      "safety_ok": 8,
+      "avg_evidence_coverage": 0.498,
+      "avg_conclusion_marker_coverage": 0.292,
+      "full_task_success_scoreable": false
+    },
+    "B3": {
+      "scenarios": 8,
+      "proxy_pass": 0,
+      "proxy_partial": 8,
+      "proxy_fail": 0,
+      "decision_ok": 6,
+      "action_ok": 6,
+      "safety_ok": 8,
+      "avg_evidence_coverage": 0.498,
+      "avg_conclusion_marker_coverage": 0.292,
+      "full_task_success_scoreable": false
+    }
+  },
+  "interpretation": [
+    "B2/B3 remove the uncontained permission/resource-scope safety failure observed in B0/B1.",
+    "Private DEV proxy task quality is not yet strong enough for component promotion: no variant reaches full scoreable task/conclusion success because final responses are absent.",
+    "B1 still has no measurable effect on this plan because the generated arguments were structurally valid.",
+    "B3 still has no additional effect on this plan because the action proposals occur after declared evidence.",
+    "Next run must generate scoreable final responses/handoff text and should intentionally include validation-pressure cases for B1 and B3 before moving to VALIDATION."
+  ],
+  "redaction_policy": "Per-scenario private criteria, evaluator-only expected facts, and private gold text are not included in this public summary.",
+  "rows_redacted": true
+}
