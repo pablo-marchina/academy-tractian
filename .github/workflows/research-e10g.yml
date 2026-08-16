@@ -1,0 +1,44 @@
+name: research-e10g
+
+on:
+  push:
+    paths:
+      - 'scripts/research/e10g_dev_only_balanced_safety_action_guard.py'
+      - 'research/experiments/e10g-dev-only-balanced-safety-action-guard-manifest.json'
+      - '.github/workflows/research-e10g.yml'
+  pull_request:
+    paths:
+      - 'scripts/research/e10g_dev_only_balanced_safety_action_guard.py'
+      - 'research/experiments/e10g-dev-only-balanced-safety-action-guard-manifest.json'
+      - '.github/workflows/research-e10g.yml'
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: E10g dry-run
+        env:
+          E8_CONFIRM_ZERO_COST: '1'
+          E8_ENABLE_GROQ: '0'
+        run: |
+          python scripts/research/e10g_dev_only_balanced_safety_action_guard.py \
+            --manifest research/experiments/e10g-dev-only-balanced-safety-action-guard-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --dry-run \
+            --out /tmp/e10g-dev-only-balanced-safety-action-guard-dry-run.json
+          python - <<'PY'
+          import json
+          p = '/tmp/e10g-dev-only-balanced-safety-action-guard-dry-run.json'
+          data = json.load(open(p, encoding='utf-8'))
+          assert data['status'] == 'E10G_DEV_ONLY_BALANCED_SAFETY_ACTION_GUARD_CAPTURE_PASS'
+          assert data['scope']['validation_ran'] is False
+          assert data['scope']['locked_test_accessed'] is False
+          assert data['visible_balanced_safety_action_guard']['uses_private_oracle'] is False
+          assert data['visible_balanced_safety_action_guard']['uses_validation_feedback'] is False
+          assert data['visible_balanced_safety_action_guard']['uses_locked_test'] is False
+          print('E10g dry-run guard summary OK')
+          PY
