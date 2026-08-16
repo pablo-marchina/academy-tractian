@@ -58,7 +58,12 @@ Artifacts:
 - [x] run `scripts/research/e4_model_proposal_adapter.py` on that proposal plan;
 - [x] export B0/B1/B2/B3 boundary metrics for model proposals;
 - [x] upload full boundary metrics as CI artifact;
-- [x] record aggregate boundary metrics in `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`.
+- [x] record aggregate boundary metrics in `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`;
+- [x] implement `scripts/research/e4_private_dev_evaluator.py` as a private-gold combiner;
+- [x] combine the first DEV boundary metrics with private DEV expectations locally;
+- [x] preserve evaluator-only gold outside the public repository;
+- [x] record only redacted aggregate private proxy metrics in `research/results/e4-private-dev-evaluator-redacted-summary-2026-08-16.json`;
+- [x] document the result in `research/44-e4-private-dev-evaluator-integration.md`.
 
 First DEV model-proposal boundary result:
 
@@ -69,16 +74,28 @@ First DEV model-proposal boundary result:
 | B2 | 27 | 26 | 1 | 0 | 1 | 0 |
 | B3 | 27 | 26 | 1 | 0 | 1 | 0 |
 
-Interpretation: B2 contained one unsafe permission/resource-scope proposal that B0/B1 would execute. B1 had no effect in this first plan because arguments were structurally valid. B3 did not add blocking beyond B2 because the generated action proposals were placed after declared evidence.
+Private DEV proxy evaluator result:
+
+| Variant | Scenarios | Proxy pass | Proxy partial | Proxy fail | Decision OK | Action OK | Safety OK | Avg evidence coverage | Avg conclusion marker coverage |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| B0 | 8 | 0 | 7 | 1 | 6 | 6 | 7 | 0.498 | 0.292 |
+| B1 | 8 | 0 | 7 | 1 | 6 | 6 | 7 | 0.498 | 0.292 |
+| B2 | 8 | 0 | 8 | 0 | 6 | 6 | 8 | 0.498 | 0.292 |
+| B3 | 8 | 0 | 8 | 0 | 6 | 6 | 8 | 0.498 | 0.292 |
+
+Interpretation: B2 contained one unsafe permission/resource-scope proposal that B0/B1 would execute. B1 had no effect in this first plan because arguments were structurally valid. B3 did not add blocking beyond B2 because the generated action proposals were placed after declared evidence. The private evaluator pipeline is integrated, but full task/conclusion success is not scoreable yet because the first proposal plan lacks natural-language final responses/handoff text.
 
 ## E4 next active task
 
-Combine DEV boundary metrics with the private DEV evaluator without exposing evaluator-only gold.
+Generate and evaluate a scoreable DEV proposal run.
 
 Required work:
 
-- [ ] load private DEV normalized-gold locally only;
-- [ ] evaluate task/conclusion success for the first DEV proposal traces;
+- [ ] generate DEV-only model proposals that include tool calls **and** natural-language final response/handoff text;
+- [ ] include B1 pressure cases for malformed/invalid action arguments;
+- [ ] include B3 pressure cases for premature action before evidence;
+- [ ] rerun `scripts/research/e4_model_proposal_adapter.py`;
+- [ ] rerun the private DEV evaluator combiner locally;
 - [ ] preserve boundary metrics separately from task/conclusion success;
 - [ ] report contained unsafe proposals separately from executed safety failures;
 - [ ] decide whether B1/B2/B3 have enough DEV evidence to advance to VALIDATION;
