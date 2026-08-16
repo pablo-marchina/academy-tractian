@@ -25,7 +25,7 @@ jobs:
           python-version: '3.13'
       - name: Execute E10 DEV-only Groq quality capture dry-run
         run: >-
-          PYTHONPATH=. python scripts/research/e10_dev_only_groq_quality_capture.py
+          PYTHONPATH=. python scripts/research/e10_dev_only_groq_quality_capture_v2.py
           --manifest research/experiments/e10-dev-only-quality-improvement-manifest.json
           --split-manifest research/frozen/benchmark-split-v1.json
           --out /tmp/e10-dev-only-groq-quality-capture-dry-run.json
