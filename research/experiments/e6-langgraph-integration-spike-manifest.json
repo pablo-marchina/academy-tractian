@@ -1,0 +1,61 @@
+{
+  "schema_version": "e6-langgraph-integration-spike-v1",
+  "date": "2026-08-16",
+  "status": "PREREGISTERED",
+  "runtime_candidate": "langgraph",
+  "allowed_splits": ["DEV", "VALIDATION"],
+  "forbidden_splits": ["LOCKED_TEST"],
+  "locked_test_access_allowed": false,
+  "constants": {
+    "tool_spec_constant": true,
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "identity_seed_runner_bound": true,
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "ui_freeze": false
+  },
+  "minimal_graph_nodes": [
+    "acquire_evidence",
+    "evidence_sufficiency_gate",
+    "b3_guard",
+    "execute_tool",
+    "finalize"
+  ],
+  "metrics": [
+    "langgraph_imported",
+    "graph_compiled",
+    "graph_invoked",
+    "trace_schema_compatible_events",
+    "b3_external_guard_preserved",
+    "evidence_sufficiency_policy_explicit",
+    "deterministic_replay_equal",
+    "checkpoint_pause_resume_roundtrip",
+    "direct_harness_avg_ms",
+    "langgraph_avg_ms",
+    "overhead_ratio"
+  ],
+  "comparators_retained": [
+    "pydantic_ai_graph",
+    "openai_agents_sdk"
+  ],
+  "success_thresholds": {
+    "graph_compiled": true,
+    "graph_invoked": true,
+    "deterministic_replay_equal": true,
+    "b3_external_guard_preserved": true,
+    "evidence_sufficiency_policy_explicit": true,
+    "max_overhead_ratio_warning": 8.0
+  },
+  "non_objectives": [
+    "model_provider_selection",
+    "mcp_topology_selection",
+    "rag_selection",
+    "multi_agent_architecture_selection",
+    "observability_backend_selection",
+    "ui_demo_selection",
+    "locked_test_inspection"
+  ]
+}
