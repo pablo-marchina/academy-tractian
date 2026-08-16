@@ -7,25 +7,6 @@ from urllib.parse import quote
 from .binding import bind_request, validate_model_arguments
 from .models import BoundRequest, ExecutionBinding, ToolKind, ToolSpec
 
-# Frozen E0 behavior: the supplied API accepts seed on stochastic GETs; /users/me
-# and all action endpoints do not use it. This is a contract fact, not an agent policy.
-SEED_SUPPORTED_READS = frozenset(
-    {
-        "get_company",
-        "list_assets_by_company",
-        "get_asset",
-        "list_analyses",
-        "get_analysis",
-        "get_baseline",
-        "get_rms",
-        "get_spectrum",
-        "get_data_quality",
-        "get_model",
-        "search_knowledge",
-        "get_knowledge_doc",
-    }
-)
-
 
 @dataclass(frozen=True)
 class TransportResponse:
@@ -86,7 +67,7 @@ def build_b0_request(
             seed=None,
         ),
     )
-    if tool.kind is ToolKind.READ and tool.name in SEED_SUPPORTED_READS and binding.seed is not None:
+    if tool.kind is ToolKind.READ and tool.seed_supported and binding.seed is not None:
         bound = bound.model_copy(update={"query": {**bound.query, "seed": binding.seed}})
     return bound
 
