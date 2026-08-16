@@ -19,6 +19,7 @@ E2 was completed as experimental infrastructure, not as an agent demo and not as
 - deterministic live capture and replay;
 - TraceSchema v1 invariants and volatile-value normalization;
 - deterministic evaluator suite covering trajectory, decision, arguments, evidence, policy, action, conclusion, escalation/handoff and identity/seed safety;
+- separate metrics for **contained unsafe proposals** and **uncontained/executed policy violations**;
 - configuration/artifact provenance hashing;
 - registry-vs-contract conformance checker;
 - reproducible real-API CEN-01 transport/trace/replay probe script;
@@ -30,14 +31,15 @@ E2 was completed as experimental infrastructure, not as an agent demo and not as
 
 The first CI execution was intentionally retained as evidence: it failed 3 tests and exposed a real metadata defect — action ToolSpecs were not marked resource-scoped — plus a fixture whose action target did not match the endpoint resource. The implementation/fixture were corrected rather than suppressing the tests.
 
-The subsequent GitHub Actions run on Python 3.13.15 completed successfully:
+Subsequent GitHub Actions runs on Python 3.13.15 completed successfully:
 
 - **24 tests passed**;
 - runtime: approximately **0.26 s**;
 - deterministic runner/replay tests passed;
 - B1/B2/B3 guard tests passed;
 - evaluator tests passed;
-- registry-conformance unit semantics passed.
+- registry-conformance unit semantics passed;
+- a blocked B3 proposal is recorded as `contained=true` and does not masquerade as an executed system-safety failure.
 
 ### Contract conformance against supplied artifact
 
@@ -58,7 +60,7 @@ python scripts/research/e2_registry_conformance.py --partner-root /path/to/intel
 
 ### Supplied API probe
 
-The supplied FastAPI handlers were exercised with the supplied synthetic seed source for the CEN-01 reference transport path. The five steps returned HTTP 200 and the final escalation action returned `accepted=true`. Capture produced one replay observation per request. The repository probe now routes this same infrastructure check through `HarnessRunner`:
+The supplied FastAPI handlers were exercised with the supplied synthetic seed source for the CEN-01 reference transport path. The five steps returned HTTP 200 and the final escalation action returned `accepted=true`. Capture produced one replay observation per request. The repository probe routes this infrastructure check through `HarnessRunner`:
 
 ```bash
 python scripts/research/e2_b0_real_api_probe.py --partner-root /path/to/inteli-tractian-project
