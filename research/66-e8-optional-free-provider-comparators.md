@@ -19,7 +19,7 @@ Optional comparators are allowed, but they must not delay E9. Their purpose is p
    - Use only `openrouter/free` or a specific model ending in `:free`.
    - Block `openrouter/auto` and `openrouter/auto:free` because they are not strict enough for reproducible zero-cost benchmarking.
    - Required env: `OPENROUTER_API_KEY`, `E8_ENABLE_OPENROUTER_FREE=1`, `E8_CONFIRM_ZERO_COST=1`.
-   - Documentation basis: OpenRouter documents `openrouter/free`, free `:free` model variants and warns that `openrouter/auto:free` or `auto` can still result in charges; this repo therefore requires the strict free router or a specific `:free` model.
+   - Documentation basis: OpenRouter documents `openrouter/free`, free `:free` model variants and warns that `openrouter/auto` can still result in charges; this repo therefore requires the strict free router or a specific `:free` model.
 
 2. **Gemini key-visible model comparator**
    - Retry only after listing models visible to the key.
