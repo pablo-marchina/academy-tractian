@@ -1,0 +1,110 @@
+{
+  "report_version": "e8-free-pilot-execution-summary-v1",
+  "date": "2026-08-16",
+  "status": "E8_FREE_PILOT_SMOKE_PASS",
+  "free_only": true,
+  "project_cost_limit_usd": 0,
+  "paid_models_enabled": false,
+  "external_model_calls_made": false,
+  "candidate_availability": [
+    {
+      "slot_id": "no_model_policy_baseline",
+      "available": true,
+      "cost_usd": 0.0,
+      "reason": "built-in deterministic no-model policy baseline",
+      "makes_external_model_calls": false
+    },
+    {
+      "slot_id": "groq_openai_compatible_free_first",
+      "available": false,
+      "cost_usd": 0.0,
+      "reason": "requires GROQ_API_KEY and E8_ENABLE_GROQ=1 in the local environment",
+      "makes_external_model_calls": false
+    },
+    {
+      "slot_id": "google_gemini_free_or_low_cost",
+      "available": false,
+      "cost_usd": 0.0,
+      "reason": "requires GEMINI_API_KEY or GOOGLE_API_KEY and E8_ENABLE_GEMINI=1 in the local environment",
+      "makes_external_model_calls": false
+    },
+    {
+      "slot_id": "local_ollama_optional",
+      "available": false,
+      "cost_usd": 0.0,
+      "reason": "requires OLLAMA_HOST and E8_ENABLE_OLLAMA=1 in the local environment",
+      "makes_external_model_calls": false
+    },
+    {
+      "slot_id": "openai_reference_optional",
+      "available": false,
+      "cost_usd": null,
+      "reason": "disabled by free-only budget policy",
+      "makes_external_model_calls": false
+    },
+    {
+      "slot_id": "anthropic_reference_optional",
+      "available": false,
+      "cost_usd": null,
+      "reason": "disabled by free-only budget policy",
+      "makes_external_model_calls": false
+    }
+  ],
+  "available_free_candidate_slots": ["no_model_policy_baseline"],
+  "executed_candidate_slots": ["no_model_policy_baseline"],
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "dev_smoke_ran_before_validation": true
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "execution_boundary": "HarnessRunner",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "identity_binding": "runner",
+    "seed_binding": "runner",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "observability_freeze": false,
+    "ui_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "fixed_observation_packets_used": true,
+  "stochastic_repeats_executed": true,
+  "dev_smoke": {
+    "stage": "DEV_SMOKE",
+    "groups": ["asset_G501", "asset_C710", "asset_S420"],
+    "repeats_per_group": 3,
+    "passed": true
+  },
+  "validation": {
+    "stage": "VALIDATION_AFTER_DEV_PASS",
+    "groups": ["asset_B204", "asset_M102"],
+    "repeats_per_group": 5,
+    "passed": true
+  },
+  "aggregate_metrics": {
+    "task_success_proxy": 1.0,
+    "action_escalation_correctness_proxy": 1.0,
+    "evidence_coverage_proxy": 1.0,
+    "runtrace_completeness": true,
+    "cost_usd": 0.0
+  },
+  "interpretation_limits": [
+    "This is a free-only pilot execution smoke and instrumentation result.",
+    "The default CI path executes the no-model policy baseline only and does not prove external model quality.",
+    "Groq, Gemini or local Ollama can be added locally only through explicit free/local opt-in environment variables.",
+    "OpenAI and Anthropic reference candidates remain disabled by the zero-cost policy."
+  ],
+  "final_architecture_freeze": false,
+  "next_gate": "E8 free/local candidate availability run on the user's machine, then DEV smoke with any enabled free candidate"
+}
