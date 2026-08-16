@@ -4,6 +4,10 @@ on:
   push:
     branches: [research/systematic-foundation]
     paths:
+      - 'README.md'
+      - 'docs/PROJECT-PLAN.md'
+      - 'research/README.md'
+      - 'research/37-post-freeze-execution-backlog.md'
       - 'research/e2/**'
       - 'research/40-e3-benchmark-split-freeze-v1.md'
       - 'research/41-e4-guarded-boundary-experiment-preregistration.md'
@@ -16,6 +20,10 @@ on:
       - '.github/workflows/research-e2.yml'
   pull_request:
     paths:
+      - 'README.md'
+      - 'docs/PROJECT-PLAN.md'
+      - 'research/README.md'
+      - 'research/37-post-freeze-execution-backlog.md'
       - 'research/e2/**'
       - 'research/40-e3-benchmark-split-freeze-v1.md'
       - 'research/41-e4-guarded-boundary-experiment-preregistration.md'
