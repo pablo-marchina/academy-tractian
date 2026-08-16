@@ -1,4 +1,4 @@
-name: research-e2-e3-e4-e5-e6-e7-e8-prep
+name: research-e2-e3-e4-e5-e6-e7-e8-free-pilot
 
 on:
   push:
@@ -21,6 +21,7 @@ on:
       - 'research/58-e7-native-tools-vs-mcp-results.md'
       - 'research/59-e7-topology-adr.md'
       - 'research/60-e8-statistical-pilot-model-benchmark-preregistration.md'
+      - 'research/61-e8-free-pilot-execution-results.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
@@ -56,6 +57,7 @@ on:
       - 'research/58-e7-native-tools-vs-mcp-results.md'
       - 'research/59-e7-topology-adr.md'
       - 'research/60-e8-statistical-pilot-model-benchmark-preregistration.md'
+      - 'research/61-e8-free-pilot-execution-results.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
@@ -74,7 +76,7 @@ on:
       - '.github/workflows/research-e2.yml'
 
 jobs:
-  e2-e3-e4-e5-e6-e7-e8-prep-unit:
+  e2-e3-e4-e5-e6-e7-e8-free-pilot-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -113,6 +115,8 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e7_native_vs_mcp_runner.py --manifest research/experiments/e7-native-tools-vs-mcp-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e7-native-tools-vs-mcp-summary.json
       - name: Execute E8 statistical pilot prep validator
         run: PYTHONPATH=. python scripts/research/e8_statistical_pilot_prep.py --manifest research/experiments/e8-statistical-pilot-model-benchmark-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e8-statistical-pilot-prep-summary.json
+      - name: Execute E8 free pilot execution smoke
+        run: PYTHONPATH=. python scripts/research/e8_free_pilot_runner.py --manifest research/experiments/e8-free-pilot-execution-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e8-free-pilot-execution-summary.json
       - name: Upload E4 DEV model-proposal metrics
         uses: actions/upload-artifact@v4
         with:
@@ -163,3 +167,8 @@ jobs:
         with:
           name: e8-statistical-pilot-prep-summary
           path: /tmp/e8-statistical-pilot-prep-summary.json
+      - name: Upload E8 free pilot execution summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e8-free-pilot-execution-summary
+          path: /tmp/e8-free-pilot-execution-summary.json
