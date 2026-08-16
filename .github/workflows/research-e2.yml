@@ -14,7 +14,7 @@ on:
       - 'research/41-e4-guarded-boundary-experiment-preregistration.md'
       - 'research/42-e4-execution-start-report.md'
       - 'research/frozen/benchmark-split-v1.json'
-      - 'research/experiments/e4-b0-b3-experiment-manifest.json'
+      - 'research/experiments/e4-*.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
       - 'scripts/research/e4_*.py'
@@ -31,7 +31,7 @@ on:
       - 'research/41-e4-guarded-boundary-experiment-preregistration.md'
       - 'research/42-e4-execution-start-report.md'
       - 'research/frozen/benchmark-split-v1.json'
-      - 'research/experiments/e4-b0-b3-experiment-manifest.json'
+      - 'research/experiments/e4-*.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
       - 'scripts/research/e4_*.py'
@@ -57,3 +57,10 @@ jobs:
         run: python scripts/research/e4_validate_experiment_manifest.py --manifest research/experiments/e4-b0-b3-experiment-manifest.json --split research/frozen/benchmark-split-v1.json
       - name: Execute E4 DEV runner smoke run
         run: PYTHONPATH=. python scripts/research/e4_dev_runner.py --split-manifest research/frozen/benchmark-split-v1.json --split DEV --proposal-source-class scripted_reference --out /tmp/e4-dev-runner-smoke.json
+      - name: Execute E4 DEV model-proposal adapter
+        run: PYTHONPATH=. python scripts/research/e4_model_proposal_adapter.py --split-manifest research/frozen/benchmark-split-v1.json --proposal-plan research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json --split DEV --out /tmp/e4-dev-model-proposal-boundary.json
+      - name: Upload E4 DEV model-proposal metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: e4-dev-model-proposal-boundary
+          path: /tmp/e4-dev-model-proposal-boundary.json
