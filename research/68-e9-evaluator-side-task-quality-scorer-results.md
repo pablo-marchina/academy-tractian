@@ -24,6 +24,27 @@ The scorer supports two modes:
    - scores model outputs after output hashes are fixed;
    - reports real task-quality metrics and proxy-vs-real disagreement.
 
+## Why `fixed_calls_consumed = 0` is expected with the public summary
+
+The sanitized Groq E8 result stored in the repository does not include the full `calls[*].parsed_output` rows. It intentionally preserves aggregate evidence without committing parsed model outputs or private scoring material. Therefore, when E9 is run against only that public summary, the correct status is:
+
+```text
+E9_SCORER_CONTRACT_PASS_PRIVATE_ORACLE_OR_OUTPUTS_REQUIRED
+```
+
+and `fixed_calls_consumed` may be zero. This is not an E9 failure. It means the scorer needs a local/private fixed-output capture file.
+
+## Added bridge for real E9 scoring
+
+E9 now includes a local/private capture bridge:
+
+```text
+scripts/research/e8_capture_fixed_groq_outputs.py
+research/69-e9-fixed-groq-output-capture-instructions.md
+```
+
+This bridge reruns the leading free Groq candidate, stores fixed parsed model outputs under `parsed_output`, hashes them, and produces the local file that E9 can score against private DEV/VALIDATION oracles. The generated capture file must not be committed.
+
 ## Boundary rule
 
 The model must never see:
@@ -69,12 +90,23 @@ This is intentional. It avoids the common benchmark error of either leaking gold
 
 ## Private/local command
 
-After producing a fixed Groq output file that includes parsed model outputs, run:
+First produce the fixed parsed Groq output file:
+
+```powershell
+python scripts/research/e8_capture_fixed_groq_outputs.py `
+  --manifest research/experiments/e8-free-anywhere-real-candidate-run-manifest.json `
+  --split-manifest research/frozen/benchmark-split-v1.json `
+  --agent-input-cases "$TRACTIAN_PACKAGE\agent-input\cases.json" `
+  --timeout-seconds 90 `
+  --out "$env:TEMP\e8-fixed-groq-parsed-outputs-for-e9.json"
+```
+
+Then run E9 with the private oracle file:
 
 ```powershell
 python scripts/research/e9_evaluator_side_scorer.py `
   --manifest research/experiments/e9-evaluator-side-task-quality-scorer-manifest.json `
-  --fixed-output-file "<fixed-groq-output-with-parsed-model-outputs.json>" `
+  --fixed-output-file "$env:TEMP\e8-fixed-groq-parsed-outputs-for-e9.json" `
   --oracle-file "<private-dev-validation-oracle.json>" `
   --out "$env:TEMP\e9-private-task-quality-summary.json" `
   --include-rows
@@ -98,4 +130,4 @@ The private oracle file must contain only DEV/VALIDATION material. Any LOCKED_TE
 
 ## Next step
 
-Run the scorer locally against fixed parsed Groq outputs and private DEV/VALIDATION oracles, then record only a sanitized aggregate summary in the repo. Do not commit private oracle files or raw secrets.
+Run the fixed-output capture locally, then run the scorer locally against fixed parsed Groq outputs and private DEV/VALIDATION oracles. Record only a sanitized aggregate summary in the repo. Do not commit private oracle files, parsed local run files, or raw secrets.
