@@ -1,0 +1,167 @@
+{
+  "schema_version": "e8-statistical-pilot-model-benchmark-prep-v1",
+  "id": "E8-statistical-pilot-model-benchmark-prep",
+  "date": "2026-08-16",
+  "status": "PREREGISTERED",
+  "purpose": "Prepare a leakage-safe statistical pilot and model benchmark that separates model stochasticity at fixed observations from deterministic environment robustness.",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false
+  },
+  "constants": {
+    "runtime_candidate": "LangGraph",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "execution_boundary": "HarnessRunner",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "identity_binding": "runner",
+    "seed_binding": "runner",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "observability_freeze": false,
+    "ui_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "candidate_slots": [
+    {
+      "id": "no_model_policy_baseline",
+      "role": "deterministic safety/proposal baseline",
+      "cost_policy": "free",
+      "enabled_by_default": true,
+      "requires_api_key": false,
+      "final_model_freeze": false
+    },
+    {
+      "id": "groq_openai_compatible_free_first",
+      "role": "low-cost or free OpenAI-compatible candidate",
+      "cost_policy": "free_or_low_cost_first",
+      "enabled_by_default": false,
+      "requires_api_key": true,
+      "model_id_resolution": "runtime_env_or_current_provider_catalog",
+      "final_model_freeze": false
+    },
+    {
+      "id": "google_gemini_free_or_low_cost",
+      "role": "alternative free or low-cost candidate",
+      "cost_policy": "free_or_low_cost_first",
+      "enabled_by_default": false,
+      "requires_api_key": true,
+      "model_id_resolution": "runtime_env_or_current_provider_catalog",
+      "final_model_freeze": false
+    },
+    {
+      "id": "openai_reference_optional",
+      "role": "high-quality reference candidate",
+      "cost_policy": "paid_only_with_explicit_budget_approval",
+      "enabled_by_default": false,
+      "requires_api_key": true,
+      "model_id_resolution": "runtime_env_or_current_provider_catalog",
+      "final_model_freeze": false
+    },
+    {
+      "id": "anthropic_reference_optional",
+      "role": "cross-provider high-quality reference candidate",
+      "cost_policy": "paid_only_with_explicit_budget_approval",
+      "enabled_by_default": false,
+      "requires_api_key": true,
+      "model_id_resolution": "runtime_env_or_current_provider_catalog",
+      "final_model_freeze": false
+    },
+    {
+      "id": "local_ollama_optional",
+      "role": "local/no-token-cost comparator",
+      "cost_policy": "local_compute_only",
+      "enabled_by_default": false,
+      "requires_api_key": false,
+      "model_id_resolution": "runtime_env_or_local_catalog",
+      "final_model_freeze": false
+    }
+  ],
+  "budget_policy": {
+    "default_mode": "free_first",
+    "paid_models_enabled_by_default": false,
+    "paid_model_run_requires_explicit_budget_approval": true,
+    "secrets_committed": false,
+    "ci_makes_model_calls": false
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"],
+    "VALIDATION": ["asset_B204", "asset_M102"]
+  },
+  "design_axes": [
+    {
+      "id": "model_stochasticity_fixed_observations",
+      "controlled_variable": "tool_observation_packet",
+      "varied_variable": "model_provider_repeat",
+      "dev_repeats_per_candidate_case": 3,
+      "validation_repeats_per_candidate_case": 5
+    },
+    {
+      "id": "environment_robustness_deterministic_modes",
+      "controlled_variable": "model_or_proposal_candidate",
+      "varied_variable": "runner_bound_environment_mode_or_seed",
+      "environment_modes": ["complete", "partial", "inconclusive", "conflict", "unavailable"]
+    }
+  ],
+  "metrics": {
+    "primary": [
+      "task_success",
+      "action_escalation_correctness",
+      "premature_action_rate",
+      "premature_stop_rate",
+      "unsupported_final_claim_rate",
+      "evidence_coverage",
+      "b3_guard_fidelity",
+      "evidence_sufficiency_compliance",
+      "runtrace_completeness",
+      "locked_test_access_flag"
+    ],
+    "secondary": [
+      "request_count",
+      "unnecessary_calls",
+      "http_4xx_5xx_rate",
+      "policy_block_count_and_type",
+      "latency_avg_ms",
+      "latency_p95_ms",
+      "token_cost_estimate",
+      "output_variance_across_repeats",
+      "cross_provider_disagreement_patterns"
+    ]
+  },
+  "leakage_controls": {
+    "allowed_model_inputs": [
+      "agent_visible_case_inputs",
+      "ToolSpec_or_surface_schema",
+      "live_or_replayed_tool_observations_from_DEV_VALIDATION",
+      "non_gold_system_instructions"
+    ],
+    "forbidden_model_inputs": [
+      "eval/expected-paths.json",
+      "eval/test-scenarios.md",
+      "docs/test-scenarios.md",
+      "data/cases.parquet",
+      "LOCKED_TEST_groups",
+      "scorer_only_oracles",
+      "final_expected_answers"
+    ]
+  },
+  "success_criteria": [
+    "candidate_slots_defined_without_model_freeze",
+    "budget_policy_explicit",
+    "DEV_VALIDATION_only",
+    "LOCKED_TEST_blocked",
+    "two_axis_design_defined",
+    "metrics_defined",
+    "leakage_controls_explicit",
+    "E6_E7_constants_preserved",
+    "ci_prep_runner_validates_without_model_calls",
+    "final_architecture_not_frozen"
+  ]
+}
