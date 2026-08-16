@@ -1,15 +1,15 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E10g DEV-only safety-action pass; full DEV+VALIDATION E10g remeasurement next  
+**Status:** E10g DEV-only safety-action pass; full DEV+VALIDATION E10g remeasurement ready  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 19:10 BRT  
+**Progress checkpoint:** 2026-08-16 19:20 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
 
 E10g was run on DEV only after E10f kept safety clean but overblocked action. The E10g scorer run is valid and restores the DEV safety/action balance: `real_task_quality = 1.0`, `decision_correctness = 1.0`, `evidence_correctness = 1.0`, `action_correctness = 1.0`, `escalation_correctness = 1.0`, `premature_action_rate = 0.0`, and `unsupported_final_claim_rate = 0.0`.
 
-Decision: E10g passes the DEV-only acceptance target. The next gate should be a full DEV+VALIDATION E10g remeasurement, with VALIDATION used only for measurement, not tuning. LOCKED_TEST remains blocked and final architecture remains unfrozen.
+Decision: E10g passes the DEV-only acceptance target. The full DEV+VALIDATION E10g remeasurement runner is now ready. VALIDATION must be used only for measurement, not tuning. LOCKED_TEST remains blocked and final architecture remains unfrozen.
 
 Important caveat: E10g changed 0 DEV outputs, which is acceptable because DEV already scored perfectly. It does not prove the prior full DEV+VALIDATION premature-action issue is solved. The next full run must explicitly test that.
 
@@ -37,9 +37,18 @@ Important caveat: E10g changed 0 DEV outputs, which is acceptable because DEV al
 - `research/90-e10g-dev-only-balanced-safety-action-guard.md`
 - `.github/workflows/research-e10g.yml`
 
-## Next gate — full DEV+VALIDATION E10g remeasurement
+## Full DEV+VALIDATION E10g remeasurement ready
 
-The next run should measure E10g on DEV + VALIDATION only after outputs are fixed and before any integration promotion.
+Artifacts ready:
+
+- `research/experiments/e10g-full-dev-validation-remeasurement-manifest.json`
+- `scripts/research/e10g_full_dev_validation_capture.py`
+- `research/92-e10g-full-dev-validation-remeasurement.md`
+- `.github/workflows/research-e10g-full.yml`
+
+The full dry-run CI validates the capture shape without external model calls.
+
+The next real local run should measure E10g on DEV + VALIDATION only after outputs are fixed and before any integration promotion.
 
 Rules:
 
@@ -71,7 +80,8 @@ Full acceptance target:
 - [x] Run E10g DEV-only capture locally.
 - [x] Score E10g with E9 v3 private scorer.
 - [x] Record E10g as DEV-only safety/action acceptance target met.
-- [ ] Prepare full DEV+VALIDATION E10g remeasurement runner.
+- [x] Prepare full DEV+VALIDATION E10g remeasurement runner.
+- [x] Add full E10g dry-run CI guard.
 - [ ] Run full DEV+VALIDATION E10g remeasurement locally.
 - [ ] Score full E10g with E9 v3 private scorer.
 - [ ] Keep LOCKED_TEST blocked.
