@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E10g full DEV+VALIDATION safety regression persists; integration blocked  
+**Status:** E10h non-validation-tuned safety blocker analysis recorded; E11 independent action authorization next  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 19:28 BRT  
+**Progress checkpoint:** 2026-08-16 19:31 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
@@ -11,7 +11,9 @@ E10g passed DEV-only safety/action scoring, then was remeasured on full DEV+VALI
 
 Decision: do not promote E10g to integration gates. E10g full matches E10d/E10e full: it improves over the E9 full baseline in average task quality, evidence and action, but the full premature-action safety regression persists at `premature_action_rate = 0.25`. The required full safety gate is `premature_action_rate = 0.0`.
 
-The E10g full guard checked 12 outputs and changed 0 outputs. This means the balanced visible-output guard did not catch the prior full holdout safety failure. Do not tune on VALIDATION rows. LOCKED_TEST remains blocked and final architecture remains unfrozen.
+E10h records a non-validation-tuned blocker analysis. The analysis concludes that the failed assumption is reliance on post-hoc visible-output self-consistency: when the model produces an internally coherent but overconfident action recommendation, the visible guard may trust the model's own action-safety assertions.
+
+The next design step should not be another VALIDATION-tuned guard. It should be E11: an independent action-authorization policy derived from DEV/public invariants only.
 
 ## Full score history
 
@@ -42,45 +44,30 @@ The E10g full guard checked 12 outputs and changed 0 outputs. This means the bal
 
 ## Relevant completed artifacts
 
-- `research/results/e10f-dev-only-private-score-summary-2026-08-16.json`
-- `research/89-e10f-dev-only-private-score-results.md`
-- `research/results/e10g-dev-only-private-score-summary-2026-08-16.json`
-- `research/91-e10g-dev-only-private-score-results.md`
-- `research/experiments/e10g-dev-only-balanced-safety-action-guard-manifest.json`
-- `scripts/research/e10g_dev_only_balanced_safety_action_guard.py`
-- `research/90-e10g-dev-only-balanced-safety-action-guard.md`
-- `.github/workflows/research-e10g.yml`
-- `research/experiments/e10g-full-dev-validation-remeasurement-manifest.json`
-- `scripts/research/e10g_full_dev_validation_capture.py`
-- `research/92-e10g-full-dev-validation-remeasurement.md`
-- `.github/workflows/research-e10g-full.yml`
 - `research/results/e10g-full-dev-validation-private-score-summary-2026-08-16.json`
 - `research/93-e10g-full-dev-validation-private-score-results.md`
+- `research/experiments/e10h-non-validation-tuned-safety-blocker-analysis-manifest.json`
+- `research/results/e10h-non-validation-tuned-safety-blocker-analysis-summary-2026-08-16.json`
+- `research/94-e10h-non-validation-tuned-safety-blocker-analysis.md`
 
-## Gate decision
+## E10h blocker analysis conclusion
 
-E10g is not promotable to integration.
+E10h is not a new guard and not a tuning step. It uses only sanitized aggregate results and general public/project safety invariants.
 
-Full E10g passes the quality floor but fails the safety gate. Because E10d, E10e and E10g full runs all preserve the same `premature_action_rate = 0.25`, the next step should not be another validation-tuned guard. It should be a non-validation-tuned integration-readiness blocker analysis or a general safety design revision based on DEV/public invariants only.
+The observed failure is class-level: visible-output guards are checking the model's own stated action safety, endpoint, evidence and escalation fields. If those fields are internally coherent but overconfident, the guard has no independent authorization layer strong enough to reject the action.
+
+Next design direction: independent action authorization. A future candidate should decide whether action is allowed before trusting `safe_to_act` or other model self-attestation.
 
 ## Current action checklist
 
-- [x] Record full E10e as not promotable because premature action remains 0.25.
-- [x] Build E10f stricter safety guard without VALIDATION tuning.
-- [x] Run and score E10f DEV-only.
-- [x] Record E10f as safe but overblocking action.
-- [x] Build E10g balanced safety-action guard without VALIDATION tuning.
-- [x] Add E10g dry-run CI guard.
-- [x] Run E10g DEV-only capture locally.
-- [x] Score E10g with E9 v3 private scorer.
-- [x] Record E10g as DEV-only safety/action acceptance target met.
-- [x] Prepare full DEV+VALIDATION E10g remeasurement runner.
-- [x] Add full E10g dry-run CI guard.
-- [x] Run full DEV+VALIDATION E10g remeasurement locally.
-- [x] Score full E10g with E9 v3 private scorer.
 - [x] Record full E10g as not promotable because premature action remains 0.25.
-- [ ] Decide next non-validation-tuned blocker analysis or general safety design revision.
-- [ ] Keep LOCKED_TEST blocked.
+- [x] Keep VALIDATION protected from tuning.
+- [x] Keep LOCKED_TEST blocked.
+- [x] Record E10h non-validation-tuned blocker analysis.
+- [x] Identify the general safety-design failure mode without tuning on VALIDATION.
+- [x] Record that the next candidate should be independent action authorization.
+- [ ] Prepare E11 independent action-authorization policy from DEV/public invariants only.
+- [ ] Run E11 DEV-only before any new full DEV+VALIDATION measurement.
 - [ ] Keep final architecture unfrozen.
 
 ## Methodological constraints
