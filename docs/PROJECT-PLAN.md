@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 STATISTICAL PILOT PREP**  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 12:11 BRT  
+**Progress checkpoint:** 2026-08-16 12:21 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan after the real TRACTIAN package was audited. It separates frozen evidence/contracts from experimental architecture decisions and explicitly forbids demo-first development.
@@ -25,6 +25,7 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - E6 local live API execution passed against the supplied TRACTIAN API.
 - E7 native tools vs MCP-compatible surface comparison passed.
 - E7 topology ADR decision prep recorded.
+- E8 statistical pilot/model benchmark prep registered and validated without model calls.
 
 ### Current candidate bundle
 
@@ -35,6 +36,7 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 - **Internal tool surface candidate:** native ToolSpec calls.
 - **External interoperability surface candidate:** MCP-compatible `tools/list` + `tools/call` adapter.
 - **MCP requirement decision at this gate:** MCP is not required for final delivery unless a future delivery/evaluator/partner/deployment/tooling constraint requires an MCP server/client boundary.
+- **E8 budget stance:** free-first; paid model candidates disabled by default and require explicit budget approval.
 - **Baselines/comparators retained:** B0, free tool loop, fixed/reference-like anchor, Pydantic AI/Graph, OpenAI Agents SDK.
 
 This is still not a final model/provider, MCP topology, RAG/vector DB, multi-agent, observability, memory, prompt, UI or final architecture freeze.
@@ -106,6 +108,33 @@ Comparison result: schema equivalence, invocation equivalence, guard-fidelity eq
 | `HttpxTransport` preserved | true |
 | Final architecture frozen | false |
 
+### E8 statistical pilot/model benchmark prep
+
+| Prep item | Result |
+|---|---|
+| Status | `E8_PREP_PASS` |
+| Candidate slots defined | 6 |
+| Default budget mode | `free_first` |
+| Paid models enabled by default | false |
+| CI makes model calls | false |
+| Representative groups | 5 |
+| Splits | DEV + VALIDATION |
+| LOCKED_TEST accessed | false |
+| Design axis A | model stochasticity at fixed observations |
+| Design axis B | deterministic environment robustness |
+| Primary metrics defined | true |
+| Leakage controls defined | true |
+| Final architecture frozen | false |
+
+Candidate slots prepared:
+
+- `no_model_policy_baseline`
+- `groq_openai_compatible_free_first`
+- `google_gemini_free_or_low_cost`
+- `openai_reference_optional`
+- `anthropic_reference_optional`
+- `local_ollama_optional`
+
 ## 3. Non-negotiable integrity rules
 
 - Raw partner artifacts remain immutable.
@@ -117,6 +146,7 @@ Comparison result: schema equivalence, invocation equivalence, guard-fidelity eq
 - Action success follows supplied `accepted_event_non_persistent` semantics; no invented final-state oracle.
 - Optional complexity survives only if required or supported by experiment evidence.
 - No demo-first development: test doubles and scripted paths validate instrumentation, contracts, splits and evaluator behavior only.
+- Paid models require explicit budget approval before execution.
 
 ## 4. Execution sequence
 
@@ -171,15 +201,25 @@ Artifacts:
 - `research/results/e7-topology-decision-summary-2026-08-16.json`
 - `scripts/research/e7_native_vs_mcp_runner.py`
 
-### E8 — Statistical pilot + model benchmark prep — NEXT
+### E8 — STATISTICAL PILOT + MODEL BENCHMARK PREP
 
-- define model/provider benchmark candidates without leaking gold;
+Artifacts:
+
+- `research/60-e8-statistical-pilot-model-benchmark-preregistration.md`
+- `research/experiments/e8-statistical-pilot-model-benchmark-manifest.json`
+- `research/results/e8-statistical-pilot-prep-summary-2026-08-16.json`
+- `scripts/research/e8_statistical_pilot_prep.py`
+
+### E8 pilot execution — NEXT
+
+- resolve which free/low-cost candidate slots are actually available locally;
+- confirm whether paid reference runs are allowed or disabled;
+- run DEV smoke only first;
+- keep observation packets and model stochasticity separated;
 - preserve B3 + evidence-sufficiency + adaptive evidence planning;
 - preserve LangGraph + native internal ToolSpec calls + optional MCP-compatible adapter;
 - preserve `HttpxTransport` live API path;
-- separate model stochasticity from deterministic environment modes;
-- run DEV + VALIDATION only;
-- keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
+- run DEV + VALIDATION only after smoke pass;
 - keep LOCKED_TEST blocked;
 - do not freeze final architecture yet.
 
@@ -191,8 +231,8 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 live pass; E7 native/MCP pass + topology ADR prep |
-| **17–20 Aug** | statistical pilot/model benchmark prep |
+| **16 Aug** | E0/E1/E2/E3 complete; E4 DEV+VALIDATION; E5; E6 live pass; E7 native/MCP pass + topology ADR prep; E8 prep |
+| **17–20 Aug** | E8 DEV smoke + statistical pilot execution |
 | **21–22 Aug** | runtime/MCP ADRs + error analysis |
 | **23–24 Aug** | statistical pilot preparation |
 | **25 Aug** | statistical pilot/model screening |
