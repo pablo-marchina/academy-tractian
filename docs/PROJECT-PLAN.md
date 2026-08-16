@@ -5,7 +5,7 @@
 **Progress checkpoint:** 2026-08-16 16:28 BRT  
 **Target final delivery:** 2026-09-08
 
-This is the active execution plan after the real TRACTIAN package was audited and after the first real free-provider and private scorer cycles. The plan separates frozen evidence/contracts from experimental architecture decisions, explicitly forbids demo-first development, preserves the USD 0 provider constraint, and treats private task-quality score as the acceptance signal instead of proxy/schema success.
+This is the active execution plan. It separates frozen evidence/contracts from experimental architecture decisions, preserves the USD 0 provider constraint, and treats private task-quality score as the acceptance signal instead of proxy/schema success.
 
 ## Current gate
 
