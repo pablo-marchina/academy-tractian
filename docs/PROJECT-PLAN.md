@@ -1,7 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 ACTIVE**  
+**Status:** E0 + E1 FROZEN; **E2 COMPLETE; E3 FROZEN; E4 ACTIVE — first DEV boundary run executed**  
 **Planning date:** 2026-08-16  
+**Progress checkpoint:** 2026-08-16 08:56 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan after the real TRACTIAN package was audited. It deliberately separates **frozen evidence/contracts** from **experimental architecture decisions** and explicitly forbids demo-first development.
@@ -43,11 +44,34 @@ This is the active execution plan after the real TRACTIAN package was audited. I
 
 ### E4 active
 
+Completed so far:
+
 - guarded-boundary B0-B3 experiment preregistered;
 - DEV + VALIDATION are the only allowed experiment splits;
 - LOCKED_TEST remains unavailable for selection/tuning;
 - hard safety metrics are separated from quality metrics;
-- scripted/reference paths and test doubles remain infrastructure-only, not agent-quality evidence.
+- scripted/reference paths and test doubles remain infrastructure-only, not agent-quality evidence;
+- DEV-only runner implemented and validated;
+- model-proposal adapter implemented and validated;
+- first DEV model proposal plan generated with `proposal_source_class=model_agent`;
+- first DEV boundary run executed across B0/B1/B2/B3;
+- boundary metrics exported and recorded.
+
+First DEV boundary result:
+
+| Variant | Proposals | Executed calls | Blocked calls | Permission/scope executions | Contained unsafe proposals | Uncontained safety failures |
+|---|---:|---:|---:|---:|---:|---:|
+| B0 | 27 | 27 | 0 | 1 | 0 | 1 |
+| B1 | 27 | 27 | 0 | 1 | 0 | 1 |
+| B2 | 27 | 26 | 1 | 0 | 1 | 0 |
+| B3 | 27 | 26 | 1 | 0 | 1 | 0 |
+
+Initial interpretation:
+
+- B2 already showed boundary value by containing one unsafe permission/resource-scope proposal that B0/B1 would execute.
+- B1 had no visible effect in the first DEV plan because generated arguments were structurally valid.
+- B3 did not add blocking beyond B2 because generated action proposals occurred after declared evidence requirements.
+- This is boundary evidence only; task/conclusion success still requires private DEV evaluator integration.
 
 ### Not frozen
 
@@ -130,14 +154,19 @@ No runtime/model/prompt/architecture decision may use locked-test groups.
 
 ### E4 — Guarded boundary experiment B0–B3 — ACTIVE
 
-Preregistered outputs:
+Completed outputs:
 
 - `research/41-e4-guarded-boundary-experiment-preregistration.md`;
 - `research/42-e4-execution-start-report.md`;
+- `research/43-e4-first-dev-model-proposal-results.md`;
 - `research/experiments/e4-b0-b3-experiment-manifest.json`;
-- `scripts/research/e4_validate_experiment_manifest.py`.
+- `research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json`;
+- `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`;
+- `scripts/research/e4_validate_experiment_manifest.py`;
+- `scripts/research/e4_dev_runner.py`;
+- `scripts/research/e4_model_proposal_adapter.py`.
 
-Primary outcomes:
+Primary outcomes remain:
 
 - invalid action execution;
 - unauthorized/cross-company action execution;
@@ -151,7 +180,7 @@ Primary outcomes:
 
 Hard safety failures are reported separately; do not hide them inside an arbitrary weighted score.
 
-Next executable task: DEV-only E4 runner for B0-B3, with explicit proposal-source labeling and LOCKED_TEST rejection by construction.
+Next executable task: combine the first DEV boundary metrics with the private DEV evaluator so task/conclusion success can be measured without exposing evaluator-only gold.
 
 ### E5 — Evidence acquisition / stopping
 
@@ -200,10 +229,10 @@ Only test RAG/reranking, multi-agent, routing, persistent memory, prompt optimiz
 
 | Target | Gate |
 |---|---|
-| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen; E4 preregistered |
-| **17–20 Aug** | B0/B1/B2 experiment setup |
-| **21–22 Aug** | B0/B1/B2 experiment execution |
-| **23–24 Aug** | B3 + evidence/stopping |
+| **16 Aug** | E0 + E1 frozen; E2 complete; E3 split frozen; E4 preregistered; DEV runner/adapter implemented; first DEV boundary run executed |
+| **17–20 Aug** | private DEV evaluator integration + B0/B1/B2/B3 DEV task/conclusion metrics |
+| **21–22 Aug** | VALIDATION comparison for promoted E4 components |
+| **23–24 Aug** | B3/evidence-stopping follow-up and error analysis |
 | **25 Aug** | runtime + MCP spikes |
 | **26 Aug** | statistical pilot + model screening |
 | **27 Aug** | target `FROZEN-v1` |
@@ -221,7 +250,7 @@ The architecture is frozen only after:
 1. E0 contract freeze;
 2. E1 ScenarioSchema/gold semantics freeze;
 3. leakage-aware dev/validation/locked-test split;
-4. B0–B3 evidence;
+4. B0–B3 boundary and task/conclusion evidence;
 5. evidence/stopping evidence;
 6. runtime and MCP ADRs;
 7. statistical pilot and confirmatory protocol;
@@ -241,11 +270,17 @@ The architecture is frozen only after:
 - `research/frozen/benchmark-split-v1.json`
 - `research/41-e4-guarded-boundary-experiment-preregistration.md`
 - `research/42-e4-execution-start-report.md`
+- `research/43-e4-first-dev-model-proposal-results.md`
 - `research/experiments/e4-b0-b3-experiment-manifest.json`
+- `research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json`
+- `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`
 - `research/37-post-freeze-execution-backlog.md`
 - `research/e2/`
+- `research/e4/tests/`
 - `scripts/research/e2_registry_conformance.py`
 - `scripts/research/e2_b0_real_api_probe.py`
 - `scripts/research/e3_validate_split.py`
 - `scripts/research/e4_validate_experiment_manifest.py`
+- `scripts/research/e4_dev_runner.py`
+- `scripts/research/e4_model_proposal_adapter.py`
 - `.github/workflows/research-e2.yml`
