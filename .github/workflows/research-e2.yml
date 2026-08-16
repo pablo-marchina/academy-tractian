@@ -1,4 +1,4 @@
-name: research-e2-e3-e4-e5-e6
+name: research-e2-e3-e4-e5-e6-langgraph
 
 on:
   push:
@@ -15,6 +15,7 @@ on:
       - 'research/42-e4-execution-start-report.md'
       - 'research/47-e5-evidence-stopping-preregistration.md'
       - 'research/49-e6-runtime-spike-preregistration.md'
+      - 'research/51-e6-langgraph-integration-spike-preregistration.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
@@ -38,6 +39,7 @@ on:
       - 'research/42-e4-execution-start-report.md'
       - 'research/47-e5-evidence-stopping-preregistration.md'
       - 'research/49-e6-runtime-spike-preregistration.md'
+      - 'research/51-e6-langgraph-integration-spike-preregistration.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'research/experiments/e4-*.json'
       - 'research/experiments/e5-*.json'
@@ -50,7 +52,7 @@ on:
       - '.github/workflows/research-e2.yml'
 
 jobs:
-  e2-e3-e4-e5-e6-unit:
+  e2-e3-e4-e5-e6-langgraph-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +60,7 @@ jobs:
         with:
           python-version: '3.13'
       - name: Install test dependencies
-        run: python -m pip install 'pydantic>=2.6,<3' 'pytest>=8'
+        run: python -m pip install 'pydantic>=2.6,<3' 'pytest>=8' 'langgraph>=1.0,<2'
       - name: Run E2 suite
         run: python -m pytest research/e2/tests -q
       - name: Run E4 DEV runner tests
@@ -79,6 +81,8 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e5_evidence_stopping_runner.py --manifest research/experiments/e5-evidence-stopping-experiment-manifest.json --split-manifest research/frozen/benchmark-split-v1.json --out /tmp/e5-evidence-stopping-summary.json
       - name: Execute E6 runtime spike runner
         run: PYTHONPATH=. python scripts/research/e6_runtime_spike_runner.py --manifest research/experiments/e6-runtime-spike-manifest.json --out /tmp/e6-runtime-spike-summary.json
+      - name: Execute E6 LangGraph integration spike
+        run: PYTHONPATH=. python scripts/research/e6_langgraph_integration_spike.py --manifest research/experiments/e6-langgraph-integration-spike-manifest.json --out /tmp/e6-langgraph-integration-summary.json
       - name: Upload E4 DEV model-proposal metrics
         uses: actions/upload-artifact@v4
         with:
@@ -104,3 +108,8 @@ jobs:
         with:
           name: e6-runtime-spike-summary
           path: /tmp/e6-runtime-spike-summary.json
+      - name: Upload E6 LangGraph integration summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e6-langgraph-integration-summary
+          path: /tmp/e6-langgraph-integration-summary.json
