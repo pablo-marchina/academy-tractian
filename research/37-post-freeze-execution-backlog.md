@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E6 LangGraph Integration Executed
+# Post-E0/E1 Execution Backlog — E6 Adaptive ToolSpec LangGraph Executed
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LANGGRAPH INTEGRATION EXECUTED; REAL TOOLSPEC GRAPH NEXT**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 ADAPTIVE TOOLSPEC LANGGRAPH EXECUTED; LIVE API INTEGRATION NEXT**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -16,6 +16,7 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - E5 evidence acquisition/stopping comparison complete.
 - E6 runtime discriminating spike complete.
 - E6 minimal LangGraph integration spike complete.
+- E6 adaptive real ToolSpec/HarnessRunner LangGraph spike complete.
 
 ## Current candidate policy/runtime bundle
 
@@ -43,23 +44,7 @@ Still not frozen:
 | Pydantic AI/Graph | 4.328 | Retain as typed/schema-native fallback and comparator |
 | OpenAI Agents SDK | 4.188 | Retain as provider-native comparator |
 
-## E6 LangGraph integration completion
-
-Completed work:
-
-- [x] preregister minimal LangGraph integration spike;
-- [x] implement minimal graph around the current policy bundle;
-- [x] keep B3 boundary external and deterministic;
-- [x] keep evidence-sufficiency policy explicit;
-- [x] emit TraceSchema-compatible events;
-- [x] test deterministic replay;
-- [x] test checkpoint/static interrupt pause-resume before tool execution;
-- [x] compare overhead against a direct harness-style baseline;
-- [x] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
-- [x] keep LOCKED_TEST blocked;
-- [x] avoid freezing model/MCP/RAG/multi-agent/UI.
-
-Integration result:
+## E6 minimal LangGraph integration completion
 
 | Metric | Result |
 |---|---:|
@@ -75,28 +60,69 @@ Integration result:
 | LangGraph avg ms | 9.2244 |
 | Micro-benchmark overhead ratio | 1213.737 |
 
-Interpretation: the minimal integration confirms LangGraph as the current runtime candidate, but the overhead result must be remeasured end-to-end because the direct baseline is near-zero Python dispatch.
+## E6 adaptive ToolSpec/HarnessRunner completion
+
+Completed work:
+
+- [x] preregister adaptive real ToolSpec LangGraph spike;
+- [x] wire LangGraph nodes to the existing ToolSpec registry;
+- [x] call the existing HarnessRunner instead of spike-local toy execution;
+- [x] preserve B3 and evidence-sufficiency as deterministic graph/policy nodes;
+- [x] emit RunTrace-compatible events;
+- [x] test checkpoint/replay/pause-resume over representative DEV/VALIDATION scenarios;
+- [x] remeasure overhead end-to-end;
+- [x] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
+- [x] keep LOCKED_TEST blocked;
+- [x] avoid freezing model/MCP/RAG/multi-agent/UI.
+
+Adaptive ToolSpec result:
+
+| Metric | Result |
+|---|---:|
+| Adaptive mode | true |
+| ToolSpec registry wired | true |
+| ToolSpec registry size | 18 |
+| HarnessRunner used | true |
+| B3 external guard preserved | true |
+| Evidence-sufficiency policy explicit | true |
+| RunTrace-compatible output | true |
+| Representative scenarios | 4 |
+| Splits used | DEV + VALIDATION |
+| Adaptive path count | 3 |
+| Required evidence coverage | 1.000 |
+| Action execution proxy | 2/2 |
+| Deterministic replay equal | true |
+| Checkpoint pause/resume roundtrip | true |
+| Direct HarnessRunner avg ms | 1.3582 |
+| LangGraph avg ms | 20.3439 |
+| Overhead ratio | 14.979 |
 
 Artifacts:
 
 - `research/51-e6-langgraph-integration-spike-preregistration.md`
 - `research/52-e6-langgraph-integration-spike-results.md`
+- `research/53-e6-real-toolspec-langgraph-preregistration.md`
+- `research/54-e6-real-toolspec-langgraph-results.md`
 - `research/experiments/e6-langgraph-integration-spike-manifest.json`
+- `research/experiments/e6-real-toolspec-langgraph-manifest.json`
 - `research/results/e6-langgraph-integration-summary-2026-08-16.json`
+- `research/results/e6-real-toolspec-langgraph-summary-2026-08-16.json`
 - `scripts/research/e6_langgraph_integration_spike.py`
+- `scripts/research/e6_langgraph_toolspec_runner.py`
+- `scripts/research/e6_langgraph_toolspec_runner_v3.py`
 
 ## Next active task
 
-Move from toy/minimal integration to real ToolSpec/HarnessRunner graph integration.
+Move from deterministic stub transport to live supplied API integration while keeping adaptive evidence planning.
 
 Required work:
 
-- [ ] wire LangGraph nodes to the existing ToolSpec registry;
-- [ ] call the existing HarnessRunner instead of spike-local toy execution;
+- [ ] replace deterministic stub transport with live supplied API transport;
+- [ ] connect model proposal generation without leaking evaluator-only gold;
+- [ ] keep adaptive evidence planning from missing evidence requirements;
 - [ ] preserve B3 and evidence-sufficiency as deterministic graph/policy nodes;
-- [ ] emit full RunTrace-compatible events;
-- [ ] test checkpoint/replay/pause-resume over representative DEV/VALIDATION scenarios;
-- [ ] remeasure overhead end-to-end;
+- [ ] run representative DEV + VALIDATION scenarios end-to-end;
+- [ ] measure task success, trace completeness and live latency;
 - [ ] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
 - [ ] keep LOCKED_TEST blocked;
 - [ ] do not freeze model/MCP/UI yet.
