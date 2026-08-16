@@ -170,7 +170,17 @@
     "action_oracle": {
       "type": ["object", "null"],
       "additionalProperties": false,
+      "required": [
+        "execution_expectation",
+        "success_semantics",
+        "post_action_read_semantics",
+        "final_state_equality_required"
+      ],
       "properties": {
+        "execution_expectation": { "enum": ["required", "forbidden", "optional"] },
+        "success_semantics": { "enum": ["accepted_event", "blocked_by_policy", "no_action_expected"] },
+        "post_action_read_semantics": { "enum": ["diagnostic_only", "required_observation", "not_applicable"] },
+        "final_state_equality_required": { "type": "boolean" },
         "required_action": { "type": ["string", "null"] },
         "target_resource": { "type": ["string", "null"] },
         "required_permission": { "type": ["string", "null"], "enum": ["action_low", "action_high", "escalate", null] },
