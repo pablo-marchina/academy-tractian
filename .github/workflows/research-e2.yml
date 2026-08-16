@@ -5,6 +5,7 @@ on:
     branches: [research/systematic-foundation]
     paths:
       - 'research/e2/**'
+      - 'research/40-e3-benchmark-split-freeze-v1.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
@@ -12,6 +13,7 @@ on:
   pull_request:
     paths:
       - 'research/e2/**'
+      - 'research/40-e3-benchmark-split-freeze-v1.md'
       - 'research/frozen/benchmark-split-v1.json'
       - 'scripts/research/e2_*.py'
       - 'scripts/research/e3_validate_split.py'
