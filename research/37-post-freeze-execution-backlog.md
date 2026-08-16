@@ -1,6 +1,6 @@
-# Post-E0/E1 Execution Backlog — E6 Adaptive ToolSpec LangGraph Executed
+# Post-E0/E1 Execution Backlog — E6 Live API Contract Pass
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 ADAPTIVE TOOLSPEC LANGGRAPH EXECUTED; LIVE API INTEGRATION NEXT**
+Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API CONTRACT PASS; LIVE API EXECUTION NEXT**
 
 This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
 
@@ -17,12 +17,14 @@ This file supersedes the pre-freeze task statuses in `research/06-research-backl
 - E6 runtime discriminating spike complete.
 - E6 minimal LangGraph integration spike complete.
 - E6 adaptive real ToolSpec/HarnessRunner LangGraph spike complete.
+- E6 live API integration path and CI contract gate complete.
 
 ## Current candidate policy/runtime bundle
 
 - B3 guarded boundary.
 - Evidence-sufficiency/stopping policy.
 - LangGraph as current runtime candidate.
+- `HttpxTransport` live API path configured for the supplied TRACTIAN API.
 - B0/free loop/fixed reference retained as baselines or infrastructure anchors.
 - Pydantic AI/Graph and OpenAI Agents SDK retained as comparators.
 
@@ -97,32 +99,73 @@ Adaptive ToolSpec result:
 | LangGraph avg ms | 20.3439 |
 | Overhead ratio | 14.979 |
 
+## E6 live API integration contract gate
+
+Completed work:
+
+- [x] replace deterministic stub transport path with a live `HttpxTransport` path;
+- [x] configure `HarnessRunner` to execute tool proposals against the live supplied API surface;
+- [x] connect model/proposal generation boundary without evaluator-only gold;
+- [x] preserve adaptive evidence planning;
+- [x] preserve B3 and evidence-sufficiency as deterministic policy nodes;
+- [x] enforce DEV + VALIDATION only;
+- [x] keep LOCKED_TEST blocked;
+- [x] retain Pydantic AI/Graph and OpenAI Agents SDK as comparators;
+- [x] add CI contract gate;
+- [x] avoid claiming live task-success evidence before a real API endpoint run.
+
+Contract result:
+
+| Metric | Result |
+|---|---:|
+| Status | `CONTRACT_PASS_LIVE_ENDPOINT_REQUIRED` |
+| Live API transport configured | true |
+| Transport class | `HttpxTransport` |
+| Live API executed | false |
+| Live API missing reason | no `--api-base-url` in CI/contract mode |
+| ToolSpec registry size | 18 |
+| HarnessRunner path configured | true |
+| B3 preserved | true |
+| Evidence-sufficiency explicit | true |
+| Adaptive evidence planning | true |
+| Model/proposal generation connected | true |
+| Gold leakage blocked | true |
+| LOCKED_TEST accessed | false |
+| CI run | `31949759607` |
+| Artifact | `e6-live-api-integration-summary` |
+
 Artifacts:
 
 - `research/51-e6-langgraph-integration-spike-preregistration.md`
 - `research/52-e6-langgraph-integration-spike-results.md`
 - `research/53-e6-real-toolspec-langgraph-preregistration.md`
 - `research/54-e6-real-toolspec-langgraph-results.md`
+- `research/55-e6-live-api-integration-contract-results.md`
 - `research/experiments/e6-langgraph-integration-spike-manifest.json`
 - `research/experiments/e6-real-toolspec-langgraph-manifest.json`
+- `research/experiments/e6-live-api-integration-manifest.json`
 - `research/results/e6-langgraph-integration-summary-2026-08-16.json`
 - `research/results/e6-real-toolspec-langgraph-summary-2026-08-16.json`
+- `research/results/e6-live-api-integration-contract-summary-2026-08-16.json`
 - `scripts/research/e6_langgraph_integration_spike.py`
 - `scripts/research/e6_langgraph_toolspec_runner.py`
 - `scripts/research/e6_langgraph_toolspec_runner_v3.py`
+- `scripts/research/e6_live_api_langgraph_runner.py`
 
 ## Next active task
 
-Move from deterministic stub transport to live supplied API integration while keeping adaptive evidence planning.
+Run the live API path in an environment where the supplied TRACTIAN API package is running.
 
 Required work:
 
-- [ ] replace deterministic stub transport with live supplied API transport;
-- [ ] connect model proposal generation without leaking evaluator-only gold;
+- [ ] start supplied TRACTIAN API locally;
+- [ ] run `e6_live_api_langgraph_runner.py` with `--transport-mode live`, `--api-base-url` and `--agent-input-cases`;
 - [ ] keep adaptive evidence planning from missing evidence requirements;
 - [ ] preserve B3 and evidence-sufficiency as deterministic graph/policy nodes;
 - [ ] run representative DEV + VALIDATION scenarios end-to-end;
 - [ ] measure task success, trace completeness and live latency;
+- [ ] inspect 4xx/5xx/action-policy failures;
+- [ ] update result status from `CONTRACT_PASS` to `LIVE_PASS` or `LIVE_NEEDS_REVIEW`;
 - [ ] keep Pydantic AI/Graph and OpenAI Agents SDK as comparators;
 - [ ] keep LOCKED_TEST blocked;
 - [ ] do not freeze model/MCP/UI yet.
