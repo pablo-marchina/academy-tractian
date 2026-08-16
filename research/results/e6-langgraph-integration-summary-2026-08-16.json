@@ -1,0 +1,47 @@
+{
+  "report_version": "e6-langgraph-integration-summary-v1",
+  "date": "2026-08-16",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "tool_spec_constant": true,
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "ui_freeze": false
+  },
+  "ci_run_id": 31948300145,
+  "ci_artifact_id": 9263920951,
+  "ci_job_status": "success",
+  "locked_test_accessed": false,
+  "langgraph_imported": true,
+  "graph_compiled": true,
+  "graph_invoked": true,
+  "trace_schema_compatible_events": true,
+  "trace_event_count": 6,
+  "b3_external_guard_preserved": true,
+  "evidence_sufficiency_policy_explicit": true,
+  "deterministic_replay_equal": true,
+  "checkpoint_pause_resume_roundtrip": true,
+  "pause_resume_diagnostic": "static_interrupt_before_execute_tool_roundtrip",
+  "direct_harness_avg_ms": 0.0076,
+  "langgraph_avg_ms": 9.2244,
+  "overhead_ratio": 1213.737,
+  "overhead_interpretation": "The ratio is inflated by a near-zero direct Python baseline; absolute LangGraph latency remains single-digit milliseconds in this micro-spike, but overhead must be remeasured in an end-to-end run before architecture freeze.",
+  "comparators_retained": ["pydantic_ai_graph", "openai_agents_sdk"],
+  "decision": {
+    "langgraph": "confirm as current runtime candidate for implementation spike",
+    "pydantic_ai_graph": "retain as fallback/comparator",
+    "openai_agents_sdk": "retain as provider-native comparator"
+  },
+  "notes": [
+    "This is a minimal runtime integration spike, not full agent-quality evidence.",
+    "B3 and evidence-sufficiency are represented as deterministic graph/policy nodes outside model control.",
+    "LOCKED_TEST was not accessed.",
+    "Model/provider, MCP topology, RAG/vector DB, multi-agent design, observability backend and UI remain unfrozen."
+  ]
+}
