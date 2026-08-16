@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT RECORDED; E10b NEXT  
+**Status:** E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E9 PRIVATE TASK-QUALITY SCORED; E10 DEV-ONLY PARTIAL IMPROVEMENT RECORDED; E10b DEV-ONLY ACTION/ESCALATION LOOP READY  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 15:48 BRT  
+**Progress checkpoint:** 2026-08-16 16:02 BRT  
 **Target final delivery:** 2026-09-08
 
 This is the active execution plan after the real TRACTIAN package was audited and after the first real free-provider and private scorer cycles. The plan separates frozen evidence/contracts from experimental architecture decisions, explicitly forbids demo-first development, preserves the USD 0 provider constraint, and treats private task-quality score as the acceptance signal instead of proxy/schema success.
@@ -25,6 +25,7 @@ This is the active execution plan after the real TRACTIAN package was audited an
 - E9 evaluator-side private scorer implemented and run locally with fixed Groq outputs plus private DEV/VALIDATION expected paths.
 - E9 private task-quality result recorded as sanitized aggregate only.
 - E10 DEV-only quality-improvement loop implemented, dry-run CI passed, and first real DEV-only scorer result recorded.
+- E10b DEV-only action/escalation calibration manifest, capture runner, documentation and dry-run CI are ready.
 
 ### Current candidate bundle
 
@@ -120,6 +121,15 @@ Decision: E10 is a partial improvement, not a promotable candidate. Evidence gro
 
 E10b must keep the E10 evidence-first gains while adding an explicit DEV-only action/escalation decision rubric.
 
+### E10b artifacts now ready
+
+- `research/experiments/e10b-dev-only-action-escalation-calibration-manifest.json`
+- `scripts/research/e10b_dev_only_action_escalation_capture.py`
+- `research/76-e10b-dev-only-action-escalation-calibration.md`
+- `.github/workflows/research-e10b.yml`
+
+The E10b CI dry-run validates the DEV-only capture shape without external model calls. The real Groq capture must still be run locally before claiming any quality gain.
+
 ### E10b goals
 
 - Preserve evidence correctness materially above the E9 DEV baseline.
@@ -133,10 +143,10 @@ E10b must keep the E10 evidence-first gains while adding an explicit DEV-only ac
 
 ### E10b design direction
 
-- Separate `needs_more_evidence`, `safe_to_act`, and `needs_human_escalation` as explicit internal decision checks before filling final JSON.
+- Separate `needs_more_evidence`, `safe_to_act`, `action_endpoint`, and `needs_human_escalation` as explicit decision checks before filling final JSON.
 - Require a concrete action endpoint only when the visible packet supports that endpoint and there is no blocking missing evidence.
-- Require escalation when visible evidence indicates safety/severity/specialist-needed uncertainty, but avoid claiming escalation for generic uncertainty alone.
-- Keep `should_take_action_now=false` when evidence is still incomplete, unless the visible packet clearly supports an action endpoint.
+- Require escalation when visible evidence indicates safety/severity/specialist-needed uncertainty, missing permission or material risk, but avoid claiming escalation for generic uncertainty alone.
+- Avoid leaving every action/escalation false when the visible packet already supports a concrete next endpoint.
 - Add post-output self-checks for action/escalation consistency, without using private oracle text.
 
 ### E10b acceptance target before full remeasurement
@@ -173,7 +183,8 @@ Optional comparators do not block E10b.
 - [x] E9 private scorer implemented and run against fixed Groq outputs.
 - [x] E10 DEV-only evidence-first iteration run and scored.
 - [x] E10 result recorded as partial improvement only.
-- [ ] Build E10b DEV-only action/escalation calibration runner.
+- [x] Build E10b DEV-only action/escalation calibration runner.
+- [x] Add E10b dry-run CI guard.
 - [ ] Run E10b real DEV-only Groq capture locally.
 - [ ] Score E10b with E9 v3 private scorer.
 - [ ] Compare E10b against E9 DEV baseline and E10 DEV result.
