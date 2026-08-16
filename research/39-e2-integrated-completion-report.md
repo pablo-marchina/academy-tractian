@@ -31,7 +31,7 @@ E2 was completed as experimental infrastructure, not as an agent demo and not as
 
 The first CI execution was intentionally retained as evidence: it failed 3 tests and exposed a real metadata defect — action ToolSpecs were not marked resource-scoped — plus a fixture whose action target did not match the endpoint resource. The implementation/fixture were corrected rather than suppressing the tests.
 
-Subsequent GitHub Actions runs on Python 3.13.15 completed successfully:
+The latest integrated GitHub Actions run on Python 3.13.15 completed successfully:
 
 - **24 tests passed**;
 - runtime: approximately **0.26 s**;
