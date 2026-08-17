@@ -1,0 +1,48 @@
+{
+  "id": "e14-real-dev-sanitized-summary",
+  "date": "2026-08-17",
+  "measurement_valid": true,
+  "gate_pass": false,
+  "provider": "groq",
+  "model": "openai/gpt-oss-20b",
+  "comparison_to_historical_different_model_is_causal": false,
+  "scope": {
+    "split": "DEV",
+    "validation_ran": false,
+    "locked_test_accessed": false
+  },
+  "capture": {
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "scoreable_calls": 6,
+    "retry_count": 0,
+    "repair_count": 0
+  },
+  "aggregate_metrics": {
+    "real_task_quality": 0.7381,
+    "decision_correctness": 0.5,
+    "evidence_correctness": 0.5,
+    "action_correctness": 0.1667,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0
+  },
+  "acceptance": {
+    "minimum_real_task_quality": 0.8571,
+    "minimum_decision_correctness": 0.75,
+    "minimum_evidence_correctness": 1.0,
+    "minimum_action_correctness": 0.75,
+    "minimum_escalation_correctness": 1.0,
+    "required_premature_action_rate": 0.0,
+    "required_unsupported_final_claim_rate": 0.0
+  },
+  "selective_reprocess_boundary": {
+    "target_reprocess_outputs_checked": 0,
+    "authorized_target_reprocess_outputs": 0,
+    "blocked_target_reprocess_outputs": 0,
+    "exercised_by_real_outputs": false
+  },
+  "blocker_class": "upstream_evidence_action_decision_mapping_failure_with_safety_preserved",
+  "private_material_committed": false,
+  "next_step": "DEV-only evidence-action-decision reconciliation candidate; no VALIDATION tuning"
+}
