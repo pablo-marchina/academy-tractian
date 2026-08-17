@@ -40,6 +40,57 @@ PUBLIC_ACTION_ENDPOINTS = {
     "none",
 }
 
+# These values are deterministic implementation reason codes, not model text or
+# evaluator labels. Anything outside this public allowlist is collapsed to
+# "other_public_reason" instead of being printed verbatim.
+PUBLIC_BOUNDARY_REASON_CODES = {
+    # E10d
+    "rubric_needs_human_escalation_true",
+    "decision_class_escalation_candidate",
+    "specialist_or_case_escalate_endpoint",
+    "visible_human_escalation_marker",
+    "state_changing_action_requires_visible_human_loop_guard",
+    # E10e
+    "visible_rubric_needs_more_evidence",
+    "visible_rubric_not_safe_to_act",
+    "no_supported_action_endpoint_visible",
+    "unsupported_action_endpoint_visible",
+    "visible_text_mentions_insufficient_evidence_for_state_change",
+    "too_few_concrete_evidence_resources_for_state_change",
+    "decision_class_conflicts_with_state_changing_action",
+    # E10g
+    "balanced_guard_visible_rubric_needs_more_evidence",
+    "balanced_guard_visible_rubric_not_safe_to_act",
+    "balanced_guard_no_action_endpoint_visible",
+    "balanced_guard_unsupported_action_endpoint",
+    "balanced_guard_handoff_without_minimum_visible_evidence",
+    "balanced_guard_decision_not_action_for_state_change",
+    "balanced_guard_marginal_evidence_for_state_change",
+    "balanced_guard_no_visible_action_support_for_state_change",
+    "balanced_guard_uncertainty_without_strong_visible_support",
+    "balanced_guard_state_change_without_human_escalation",
+    # E11
+    "no_parsed_output",
+    "no_immediate_action_requested",
+    "no_supported_endpoint_visible",
+    "unsupported_endpoint",
+    "missing_endpoint_required_evidence_family",
+    "required_identifier_not_visible",
+    "insufficient_independent_evidence_for_handoff",
+    "authorized_human_handoff_review_path",
+    "insufficient_independent_evidence_for_state_change",
+    "state_change_without_independent_human_review_path",
+    "authorized_state_change_with_independent_evidence_and_human_review",
+}
+
+BOUNDARY_SECTIONS = {
+    "visible_escalation_consistency_guard": "e10d_escalation_consistency_guard",
+    "visible_premature_action_safety_guard": "e10e_premature_action_guard",
+    "visible_balanced_safety_action_guard": "e10g_balanced_action_guard",
+    "independent_action_authorization_policy": "e11_independent_action_authorization",
+    "selective_reprocess_authorization_boundary": "e14_selective_reprocess_boundary",
+}
+
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -60,15 +111,16 @@ def number_summary(values: list[int]) -> dict[str, int | float | None]:
     }
 
 
+def safe_reason(value: Any) -> str:
+    reason = str(value or "none").strip()
+    if reason in PUBLIC_BOUNDARY_REASON_CODES or reason == "none":
+        return reason
+    return "other_public_reason"
+
+
 def public_boundary_summary(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    mapping = {
-        "visible_premature_action_safety_guard": "e10e_premature_action_guard",
-        "visible_balanced_safety_action_guard": "e10g_balanced_action_guard",
-        "independent_action_authorization_policy": "e11_independent_action_authorization",
-        "selective_reprocess_authorization_boundary": "e14_selective_reprocess_boundary",
-    }
     result: dict[str, dict[str, Any]] = {}
-    for source, label in mapping.items():
+    for source, label in BOUNDARY_SECTIONS.items():
         section = payload.get(source)
         if not isinstance(section, dict):
             continue
@@ -87,6 +139,25 @@ def public_boundary_summary(payload: dict[str, Any]) -> dict[str, dict[str, Any]
     return result
 
 
+def summary_level_reason_counts(payload: dict[str, Any]) -> dict[str, dict[str, int]]:
+    result: dict[str, dict[str, int]] = {}
+    for source, label in BOUNDARY_SECTIONS.items():
+        section = payload.get(source)
+        if not isinstance(section, dict):
+            continue
+        rows = section.get("rows")
+        if not isinstance(rows, list):
+            continue
+        counts: Counter[str] = Counter()
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            counts[safe_reason(row.get("reason"))] += 1
+        if counts:
+            result[label] = dict(sorted(counts.items()))
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--capture", type=Path, required=True)
@@ -102,6 +173,7 @@ def main() -> int:
     endpoint_counts: Counter[str] = Counter()
     trace_counts: Counter[str] = Counter()
     embedded_applied_counts: Counter[str] = Counter()
+    embedded_reason_counts: dict[str, Counter[str]] = {}
     evidence_resource_call_coverage: Counter[str] = Counter()
     evidence_plan_lengths: list[int] = []
     concrete_evidence_marker_counts: list[int] = []
@@ -152,11 +224,15 @@ def main() -> int:
                 action_endpoint_unrecognized += 1
 
         for key, value in output.items():
-            if not isinstance(value, dict) or value.get("applied") is not True:
+            if not isinstance(value, dict):
                 continue
             lowered = str(key).lower()
-            if "guard" in lowered or "authorization" in lowered or "boundary" in lowered:
+            if not ("guard" in lowered or "authorization" in lowered or "boundary" in lowered):
+                continue
+            if value.get("applied") is True:
                 embedded_applied_counts[str(key)] += 1
+            reason_counter = embedded_reason_counts.setdefault(str(key), Counter())
+            reason_counter[safe_reason(value.get("reason"))] += 1
 
     result = {
         "status": "E14_SANITIZED_SEMANTIC_BOUNDARY_DIAGNOSTIC",
@@ -178,7 +254,12 @@ def main() -> int:
             "calls_covering_each_public_resource": dict(sorted(evidence_resource_call_coverage.items())),
         },
         "summary_level_boundary_effects": public_boundary_summary(payload),
+        "summary_level_boundary_reason_counts": summary_level_reason_counts(payload),
         "embedded_boundary_applied_counts": dict(sorted(embedded_applied_counts.items())),
+        "embedded_boundary_reason_counts": {
+            key: dict(sorted(counter.items()))
+            for key, counter in sorted(embedded_reason_counts.items())
+        },
         "selected_trace_event_counts": {
             key: value
             for key, value in sorted(trace_counts.items())
@@ -191,6 +272,7 @@ def main() -> int:
         "prints_private_paths": False,
         "prints_oracle_data": False,
         "prints_evaluator_labels": False,
+        "prints_unallowlisted_reason_text": False,
     }
     print(json.dumps(result, indent=2))
     return 0
