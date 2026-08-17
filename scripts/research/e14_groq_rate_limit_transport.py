@@ -5,8 +5,9 @@ This module changes transport behavior only. It does not change prompts, model
 instructions, DEV groups, scorer logic, private-oracle isolation, E14 policy, or
 acceptance thresholds.
 
-It honors Groq's documented `retry-after` header for 429 responses and falls
-back to bounded exponential backoff for transient 5xx/network failures.
+It honors Groq's documented `retry-after` / token-reset headers for 429 responses,
+classifies provider failures without persisting raw error text, and falls back to
+bounded exponential backoff for transient 5xx/network failures.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from typing import Any
 
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "openai/gpt-oss-20b"
-DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.0"
+DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.1"
 
 
 class E14ProviderRequestError(RuntimeError):
@@ -32,9 +33,34 @@ class E14ProviderRequestError(RuntimeError):
         self.status_code = status_code
 
 
-def classify_failure(status_code: int | None, message: str) -> str:
-    lowered = message.lower()
+def error_fields(body: str) -> tuple[str, str, str]:
+    """Return only provider error code/type/message for in-memory classification."""
+    try:
+        payload = json.loads(body)
+    except Exception:
+        return "", "", body
+    error = payload.get("error") if isinstance(payload, dict) else None
+    if not isinstance(error, dict):
+        return "", "", body
+    code = str(error.get("code") or "")
+    error_type = str(error.get("type") or "")
+    message = str(error.get("message") or "")
+    return code, error_type, message
+
+
+def classify_failure(status_code: int | None, body: str) -> str:
+    code, error_type, message = error_fields(body)
+    lowered = f"{code} {error_type} {message}".lower()
+
     if status_code == 429:
+        if "tokens per day" in lowered or "tpd" in lowered:
+            return "rate_limit_tpd"
+        if "tokens per minute" in lowered or "tpm" in lowered:
+            return "rate_limit_tpm"
+        if "requests per minute" in lowered or "rpm" in lowered:
+            return "rate_limit_rpm"
+        if "requests per day" in lowered or "rpd" in lowered:
+            return "rate_limit_rpd"
         return "rate_limit"
     if status_code in {500, 502, 503, 504}:
         return "provider_server_failure"
@@ -42,6 +68,8 @@ def classify_failure(status_code: int | None, message: str) -> str:
         return "authentication_or_authorization_failure"
     if status_code == 404:
         return "model_or_endpoint_unavailable"
+    if status_code in {400, 422} and code == "json_validate_failed":
+        return "json_generation_validation_failure"
     if status_code in {400, 413, 422}:
         return "non_retryable_request_failure"
     if any(fragment in lowered for fragment in (
@@ -78,22 +106,25 @@ def parse_reset_duration(value: str | None) -> float | None:
     return max(0.0, minutes * 60.0 + seconds)
 
 
-def retry_wait_seconds(exc: urllib.error.HTTPError, attempt: int, base_sleep: float, max_sleep: float) -> float:
+def documented_retry_wait(exc: urllib.error.HTTPError) -> float | None:
     retry_after = parse_seconds(exc.headers.get("retry-after"))
     token_reset = parse_reset_duration(exc.headers.get("x-ratelimit-reset-tokens"))
-    documented_waits = [x for x in (retry_after, token_reset) if x is not None]
-    if documented_waits:
-        wait = max(documented_waits) + 0.75
-    else:
-        wait = base_sleep * (2 ** (attempt - 1))
-    jitter = random.uniform(0.0, 0.5)
-    return min(max_sleep, wait + jitter)
+    waits = [x for x in (retry_after, token_reset) if x is not None]
+    if not waits:
+        return None
+    return max(waits) + 0.75 + random.uniform(0.0, 0.5)
 
 
-def post_json(url: str, headers: dict[str, str], payload: dict[str, Any], timeout: int) -> dict[str, Any]:
+def post_json(
+    url: str,
+    headers: dict[str, str],
+    payload: dict[str, Any],
+    timeout: int,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     attempts = int(os.getenv("E8_PROVIDER_MAX_ATTEMPTS", "5"))
     base_sleep = float(os.getenv("E8_PROVIDER_RETRY_BASE_SECONDS", "5"))
     max_sleep = float(os.getenv("E14_PROVIDER_MAX_RETRY_SLEEP_SECONDS", "75"))
+    max_documented_wait = float(os.getenv("E14_PROVIDER_MAX_DOCUMENTED_RETRY_SECONDS", "180"))
     if attempts < 1:
         raise AssertionError("E8_PROVIDER_MAX_ATTEMPTS must be >= 1")
 
@@ -107,13 +138,21 @@ def post_json(url: str, headers: dict[str, str], payload: dict[str, Any], timeou
 
     last_category = "unknown_provider_failure"
     last_status: int | None = None
+    provider_attempts = 0
+    rate_limit_events = 0
+    wait_seconds_total = 0.0
 
     for attempt in range(1, attempts + 1):
+        provider_attempts += 1
         req = urllib.request.Request(url, data=data, headers=request_headers, method="POST")
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 body = resp.read().decode("utf-8")
-                return json.loads(body)
+                return json.loads(body), {
+                    "provider_attempts": provider_attempts,
+                    "rate_limit_events": rate_limit_events,
+                    "provider_retry_wait_seconds_total": round(wait_seconds_total, 3),
+                }
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
             last_status = int(exc.code)
@@ -121,7 +160,21 @@ def post_json(url: str, headers: dict[str, str], payload: dict[str, Any], timeou
             retryable = last_status in {408, 409, 425, 429, 500, 502, 503, 504}
             if attempt >= attempts or not retryable:
                 break
-            time.sleep(retry_wait_seconds(exc, attempt, base_sleep, max_sleep))
+
+            if last_status == 429:
+                rate_limit_events += 1
+                documented_wait = documented_retry_wait(exc)
+                if documented_wait is not None:
+                    if documented_wait > max_documented_wait:
+                        raise E14ProviderRequestError("rate_limit_long_window", last_status)
+                    wait = documented_wait
+                else:
+                    wait = min(max_sleep, base_sleep * (2 ** (attempt - 1)) + random.uniform(0.0, 0.5))
+            else:
+                wait = min(max_sleep, base_sleep * (2 ** (attempt - 1)) + random.uniform(0.0, 0.5))
+
+            wait_seconds_total += wait
+            time.sleep(wait)
         except Exception as exc:  # noqa: BLE001 - classified without leaking raw provider text
             last_status = None
             last_category = classify_failure(None, str(exc))
@@ -129,6 +182,7 @@ def post_json(url: str, headers: dict[str, str], payload: dict[str, Any], timeou
             if attempt >= attempts or not retryable:
                 break
             wait = min(max_sleep, base_sleep * (2 ** (attempt - 1)) + random.uniform(0.0, 0.5))
+            wait_seconds_total += wait
             time.sleep(wait)
 
     raise E14ProviderRequestError(last_category, last_status)
@@ -146,7 +200,7 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
         "max_completion_tokens": int(os.getenv("E8_MAX_OUTPUT_TOKENS", "800")),
         "response_format": {"type": "json_object"},
     }
-    response = post_json(
+    response, transport_meta = post_json(
         API_URL,
         {"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"},
         payload,
@@ -157,4 +211,5 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
         "model": model,
         "usage": response.get("usage", {}),
         "transport": "e14_rate_limit_aware",
+        **transport_meta,
     }
