@@ -1,0 +1,114 @@
+{
+  "manifest_id": "e14-preregistered-completeness-selective-reprocess",
+  "date": "2026-08-16",
+  "status": "E14_PREREGISTERED_COMPLETENESS_SELECTIVE_REPROCESS_BOUNDARY",
+  "purpose": "Preregister the only next candidate class allowed after the E13 blocker audit: fix DEV output completeness and make reprocess authorization selective instead of blocking every target action.",
+  "is_implementation": false,
+  "is_demo": false,
+  "is_integration": false,
+  "is_full_rerun": false,
+  "is_architecture_freeze": false,
+  "allowed_splits_for_design": ["DEV"],
+  "forbidden_splits": ["VALIDATION", "LOCKED_TEST"],
+  "validation_used_for_tuning": false,
+  "locked_test_accessed": false,
+  "root_cause_source": {
+    "audit": "E13 blocker audit non-validation-tuned",
+    "root_cause_classes": [
+      "parsed_output_missing_in_dev_capture",
+      "boundary_changed_all_target_reprocess_actions",
+      "action_collapse_consistent_with_overblocking_reprocess_boundary",
+      "decision_regression_after_reprocess_downgrade"
+    ],
+    "dev_calls_observed": 6,
+    "parsed_dev_outputs_available": 5,
+    "missing_parsed_output_count": 1,
+    "target_reprocess_rows": 5,
+    "changed_rows": 5,
+    "authorized_rows": 0,
+    "dominant_boundary_reason": "missing_endpoint_specific_reprocess_defect_evidence"
+  },
+  "preregistered_change": {
+    "name": "completeness_preserving_selective_reprocess_authorization",
+    "addresses": [
+      "Completeness: require 6/6 DEV calls to produce parsed outputs before private scoring can be considered acceptable.",
+      "Selectivity: avoid downgrading every target POST /analyses/{analysis_id}/reprocess action when visible support is sufficient, while preserving premature_action_rate = 0.0."
+    ],
+    "completeness_rule": {
+      "required_dev_calls": 6,
+      "required_parsed_dev_outputs": 6,
+      "required_scoreable_dev_calls": 6,
+      "allowed_mechanisms": [
+        "retry only failed model calls or parse failures within the fixed DEV run",
+        "deterministic schema repair for malformed JSON only when no semantic fields are invented",
+        "record sanitized retry and repair counts",
+        "fail closed if 6/6 parsed outputs are not achieved"
+      ],
+      "forbidden_mechanisms": [
+        "using private oracle values to repair outputs",
+        "using VALIDATION examples or feedback",
+        "using LOCKED_TEST material",
+        "committing raw fixed outputs, output hashes, score rows or local private paths"
+      ]
+    },
+    "selectivity_rule": {
+      "target_endpoint": "POST /analyses/{analysis_id}/reprocess",
+      "problem_with_e13": "E13 required endpoint-specific defect phrases and therefore blocked all five parsed DEV target reprocess actions.",
+      "new_authorization_principle": "Do not authorize reprocess from generic evidence-family count or generic human-review markers alone, but do allow reprocess when visible public/runtime evidence contains concrete endpoint support anchors for the exact reprocess action.",
+      "sufficient_visible_support_for_reprocess": {
+        "all_required": [
+          "exact target endpoint is POST /analyses/{analysis_id}/reprocess",
+          "a visible analysis identifier or analysis resource reference is present",
+          "a visible asset or case identifier is present",
+          "the proposed action is limited to reprocess and does not include PATCH /assets/{asset_id}, model retraining or other higher-risk mutation",
+          "the output includes a human-readable reason linking the evidence to reprocess rather than only naming the endpoint"
+        ],
+        "at_least_two_required": [
+          "concrete sensor/RMS/spectrum/baseline/data-quality observation",
+          "explicit uncertainty or incompleteness about the current diagnosis that reprocess can resolve",
+          "a stale, failed, unreliable or incomplete analysis signal",
+          "a mismatch between current evidence and the existing analysis conclusion",
+          "case/user request context that asks for an updated/recomputed analysis",
+          "knowledge or model context indicating reprocess is the low-risk next diagnostic action"
+        ]
+      },
+      "block_conditions": [
+        "missing parsed output",
+        "missing exact reprocess endpoint",
+        "missing visible analysis/resource identifier",
+        "only generic evidence-family count is present",
+        "only generic human-review language is present",
+        "the action includes higher-risk endpoints or asset/model mutation",
+        "the output cannot explain why reprocess is the next action from visible evidence"
+      ],
+      "expected_behavior": [
+        "preserve correct DEV reprocess actions with sufficient visible support",
+        "downgrade weak or unsupported reprocess actions to investigation/handoff",
+        "preserve evidence correctness and escalation correctness",
+        "maintain premature_action_rate = 0.0 and unsupported_final_claim_rate = 0.0"
+      ]
+    }
+  },
+  "acceptance_before_any_full_rerun": {
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "real_task_quality_min": 0.8571,
+    "decision_correctness_min": 0.75,
+    "action_correctness_min": 0.75,
+    "evidence_correctness": 1.0,
+    "escalation_correctness": 1.0,
+    "locked_test_accessed": false
+  },
+  "next_allowed_step": "Implement only this preregistered completeness-preserving selective reprocess candidate as DEV-only. Do not prepare full DEV+VALIDATION until DEV-only acceptance passes.",
+  "sanitization_required": {
+    "raw_fixed_outputs_committed": false,
+    "score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_paths_committed": false,
+    "private_oracle_values_committed": false,
+    "validation_feedback_used_for_tuning": false,
+    "locked_test_material_used": false
+  }
+}
