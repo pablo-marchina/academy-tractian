@@ -1,6 +1,6 @@
 # Systematic Research Hub
 
-**Status: E0–E3 frozen/complete; E4–E14 measured; E14 real DEV gate failed; E14b real DEV measured and rejected; semantic/boundary diagnosis pending before E14c**  
+**Status: E0–E3 frozen/complete; E4–E14 measured; E14 real DEV gate failed; E14b real DEV candidate rejected; boundary root-cause diagnostic in progress**  
 **Date:** 2026-08-17
 
 The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, measured guarded-boundary/runtime/MCP/model experiments, and a hard safety/action gate that is still blocking downstream product integration.
@@ -9,22 +9,12 @@ Production architecture is **not frozen**. No demo/UI/integration phase is autho
 
 ## Current gate — E14 / E14b
 
-The first complete recovered E14 real DEV measurement on Groq `openai/gpt-oss-20b` was valid:
-
-| Capture validity metric | Result |
-|---|---:|
-| Fixed DEV calls | 6 |
-| Parsed outputs | 6 |
-| Scoreable outputs | 6 |
-| Retries | 0 |
-| Syntax repairs | 0 |
-| VALIDATION ran | false |
-| LOCKED_TEST accessed | false |
-
-Private E9 v3 scoring produced:
+The first complete recovered E14 real DEV measurement on Groq `openai/gpt-oss-20b` is valid and failed the unchanged quality gate:
 
 | Metric | E14 real DEV | Required | Gate |
 |---|---:|---:|---|
+| Parsed outputs | 6 | 6 | PASS |
+| Scoreable outputs | 6 | 6 | PASS |
 | Real task quality | 0.7381 | >= 0.8571 | **FAIL** |
 | Decision correctness | 0.5000 | >= 0.7500 | **FAIL** |
 | Evidence correctness | 0.5000 | 1.0000 | **FAIL** |
@@ -33,57 +23,50 @@ Private E9 v3 scoring produced:
 | Premature action rate | 0.0000 | 0.0000 | PASS |
 | Unsupported final-claim rate | 0.0000 | 0.0000 | PASS |
 
-The real E14 run produced zero target reprocess outputs, so the E14 selective-reprocess boundary was not exercised by those model outputs.
+E14b then changed only prompt policy on the same recovered GPT-OSS model/settings and was measured on the same DEV-only gate. It also completed 6/6 and was rejected:
 
-E14b then tested one prompt-policy-only intervention on the same recovered provider/model/settings. Its real DEV capture was also complete and valid:
+| Metric | E14b real DEV | Required | Gate |
+|---|---:|---:|---|
+| Parsed outputs | 6 | 6 | PASS |
+| Scoreable outputs | 6 | 6 | PASS |
+| Real task quality | 0.6429 | >= 0.8571 | **FAIL** |
+| Decision correctness | 0.5000 | >= 0.7500 | **FAIL** |
+| Evidence correctness | 0.3333 | 1.0000 | **FAIL** |
+| Action correctness | 0.0000 | >= 0.7500 | **FAIL** |
+| Escalation correctness | 0.6667 | 1.0000 | **FAIL** |
+| Premature action rate | 0.0000 | 0.0000 | PASS |
+| Unsupported final-claim rate | 0.0000 | 0.0000 | PASS |
 
-| Capture validity metric | E14b result |
-|---|---:|
-| Fixed DEV calls | 6 |
-| Parsed outputs | 6 |
-| Scoreable outputs | 6 |
-| Completeness pass | true |
-| Retries | 2 |
-| Syntax repairs | 0 |
-| VALIDATION ran | false |
-| LOCKED_TEST accessed | false |
+E14b is therefore **rejected**. VALIDATION remains blocked and LOCKED_TEST remains untouched.
 
-Private E9 v3 scoring for E14b produced:
+### E14b semantic/boundary diagnostic
 
-| Metric | E14 | E14b | Required | E14b gate |
-|---|---:|---:|---:|---|
-| Real task quality | 0.7381 | 0.6429 | >= 0.8571 | **FAIL** |
-| Decision correctness | 0.5000 | 0.5000 | >= 0.7500 | **FAIL** |
-| Evidence correctness | 0.5000 | 0.3333 | 1.0000 | **FAIL** |
-| Action correctness | 0.1667 | 0.0000 | >= 0.7500 | **FAIL** |
-| Escalation correctness | 1.0000 | 0.6667 | 1.0000 | **FAIL** |
-| Premature action rate | 0.0000 | 0.0000 | 0.0000 | PASS |
-| Unsupported final-claim rate | 0.0000 | 0.0000 | 0.0000 | PASS |
+A sanitized no-provider-call diagnostic over the already-fixed E14b capture established:
 
-Because E14 and E14b used the same recovered provider/model/settings and same DEV gate, the E14b candidate is rejected: the broad evidence/endpoint/reconciliation prompt degraded every positive-quality metric except decision correctness, which stayed unchanged, while preserving the two explicit safety rates.
+- 6/6 outputs parsed;
+- final outputs contained zero immediate actions;
+- the model-facing pipeline had three outputs changed by the E10e premature-action guard;
+- E10g changed zero outputs;
+- E11 changed zero outputs;
+- E14 selective reprocess changed zero outputs and saw zero target reprocess actions;
+- one output was changed by the E10d escalation-consistency guard;
+- three final action-endpoint values were public-template-unrecognized and three were `none`.
 
-The next step is **not another model run**. Before E14c is preregistered, the already-fixed E14b capture must be inspected using the sanitized semantic/boundary diagnostic to determine whether action/evidence collapse originated in the GPT-OSS output itself or in deterministic post-model guards/authorization layers.
+Because E10e only applies when `should_take_action_now=true`, its three changed outputs prove that three model-produced immediate-action proposals existed before E10e and all were downgraded before E10g/E11/E14 could evaluate the original action state.
 
-```text
-existing private E14b fixed capture
-→ sanitized aggregate semantic/boundary diagnostic
-→ identify model-side vs post-model-policy-side blocker
-→ preregister at most one E14c change class
-→ structural dry-run
-→ only then another real DEV measurement
-```
+The current code also exact-matches action endpoints against public template strings. Therefore a public valid concrete path such as `POST /analyses/<id>/reprocess` would not equal `POST /analyses/{analysis_id}/reprocess`, potentially causing both E10e unsupported-endpoint blocking and E14 failure to recognize a reprocess target. This is a public-contract hypothesis, not a private-oracle inference.
 
-Sanitized records and current diagnostics:
+`scripts/research/e14_semantic_boundary_diagnostic.py` now reports only allowlisted aggregate boundary reason counts and safe unrecognized-endpoint shape classes so this hypothesis can be resolved without new model calls, private rows, IDs, hashes, or oracle access.
+
+Sanitized records:
 
 - `111-e14-real-dev-measurement-result.md`
 - `results/e14-real-dev-sanitized-summary.json`
-- `112-e14b-dev-only-evidence-action-decision-reconciliation.md`
-- `experiments/e14b-dev-only-evidence-action-decision-reconciliation-manifest.json`
 - `113-e14b-real-dev-measurement-result.md`
 - `results/e14b-real-dev-sanitized-summary.json`
 - `../scripts/research/e14_semantic_boundary_diagnostic.py`
 
-E14b is rejected. E14c is **not yet preregistered**.
+No E14c candidate is preregistered until this local fixed-capture diagnostic distinguishes legitimate E10e blocking from brittle endpoint canonicalization or another public boundary reason.
 
 Required DEV acceptance remains unchanged:
 
@@ -162,7 +145,7 @@ DEV-only iterations improved evidence/action/escalation behavior, but full DEV+V
 
 Relevant records: `74`–`98`.
 
-### E12–E14b — root cause, provider recovery, completeness and rejected upstream reconciliation
+### E12–E14b — root cause, provider recovery, completeness and upstream reconciliation
 
 E12 identified the dominant class as:
 
@@ -172,11 +155,9 @@ policy_executed_but_over_permissive_or_wrong_authorization_class
 
 E13 then overcorrected and blocked every parsed reprocess target. E14 added complete capture and selective reprocess authorization. During real E14 measurement, the originally configured Groq model was externally shut down; the replacement `openai/gpt-oss-20b` required a documented compatibility recovery for completion budget before a valid 6/6 measurement was possible.
 
-The complete E14 measurement failed the DEV quality gate while preserving safety/escalation and produced no reprocess-target outputs. E14b moved the DEV intervention upstream with a broad evidence→endpoint→decision reconciliation prompt, but the complete real E14b measurement degraded task quality, evidence, action and escalation. E14b is therefore rejected.
+The complete recovered E14 measurement failed the DEV quality gate. E14b moved the intervention upstream to evidence→endpoint→decision prompt reconciliation but regressed quality and is rejected. The active work is now a fixed-capture public-boundary diagnostic; no further model/prompt/boundary candidate will be selected until that diagnostic resolves whether E10e's three downgrades were legitimate safety blocks or endpoint-canonicalization failures.
 
-No E14c semantic change is authorized until sanitized instrumentation determines whether the current collapse is model-side or caused by post-model guards/authorization boundaries.
-
-Relevant records: `99`–`113`.
+Relevant records: `99`–`113` plus the sanitized semantic-boundary diagnostic.
 
 ## Explicit non-decisions
 
@@ -213,18 +194,16 @@ The following remain intentionally unfrozen:
 - LOCKED_TEST remains off-limits until final evaluation.
 - Do not commit raw fixed outputs, private oracle rows, output hashes, private local paths or evaluator-only labels.
 - Provider-forced model substitutions must be documented; historical cross-model deltas must not be interpreted causally.
-- After a failed semantic candidate, diagnose model output versus deterministic post-model policy effects before introducing another prompt or boundary change.
 
 ## Critical path
 
 ```text
-sanitized semantic/boundary diagnosis of existing E14b capture
-→ determine model-side vs post-model-policy-side blocker
-→ preregister one E14c DEV-only change, if justified
-→ structural dry-run
-→ complete real E14c DEV capture
-→ private E9 v3 DEV scoring
-→ if and only if every unchanged E14 threshold passes: measurement-only DEV+VALIDATION rerun
+fixed E14b capture
+→ sanitized boundary-reason + endpoint-shape diagnostic (no provider call)
+→ preregister exactly one E14c public-boundary correction only if diagnostic identifies it
+→ complete E14c DEV capture
+→ E9 v3 private DEV scoring
+→ if and only if every unchanged E14 gate threshold passes: measurement-only DEV+VALIDATION rerun
 → safety/action gate decision
 → architecture decisions backed by accumulated experiments/ADRs
 → integration/demo implementation
