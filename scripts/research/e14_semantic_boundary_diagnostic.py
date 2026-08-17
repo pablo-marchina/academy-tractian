@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""Sanitized semantic/boundary diagnostic for real E14/E14b DEV captures.
+
+Reads an already-existing private fixed-output capture and prints only aggregate
+counts derived from model-visible/final fields and public boundary metadata.
+It never prints parsed outputs, group-level rows, hashes, prompts, private paths,
+provider raw errors, oracle data, expected paths, or evaluator labels.
+
+Purpose: distinguish model decision/action collapse from deterministic post-model
+boundary downgrades before creating another DEV-only candidate.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+PUBLIC_EVIDENCE_MARKERS = (
+    "get /users/me",
+    "get /assets/{asset_id}",
+    "get /assets/{asset_id}/analyses",
+    "get /analyses/{analysis_id}",
+    "get /assets/{asset_id}/baseline",
+    "get /assets/{asset_id}/data-quality",
+    "get /assets/{asset_id}/rms",
+    "get /assets/{asset_id}/spectrum",
+    "get /knowledge/search",
+    "get /knowledge/{doc_id}",
+)
+
+PUBLIC_ACTION_ENDPOINTS = {
+    "post /analyses/{analysis_id}/reprocess",
+    "post /analyses/{analysis_id}/request-specialist",
+    "post /models/{model_id}/request-retraining",
+    "patch /assets/{asset_id}",
+    "post /cases/{case_id}/escalate",
+    "none",
+}
+
+
+def load_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def normalize(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def number_summary(values: list[int]) -> dict[str, int | float | None]:
+    if not values:
+        return {"count": 0, "min": None, "max": None, "avg": None}
+    return {
+        "count": len(values),
+        "min": min(values),
+        "max": max(values),
+        "avg": round(sum(values) / len(values), 3),
+    }
+
+
+def public_boundary_summary(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    mapping = {
+        "visible_premature_action_safety_guard": "e10e_premature_action_guard",
+        "visible_balanced_safety_action_guard": "e10g_balanced_action_guard",
+        "independent_action_authorization_policy": "e11_independent_action_authorization",
+        "selective_reprocess_authorization_boundary": "e14_selective_reprocess_boundary",
+    }
+    result: dict[str, dict[str, Any]] = {}
+    for source, label in mapping.items():
+        section = payload.get(source)
+        if not isinstance(section, dict):
+            continue
+        result[label] = {
+            "total_outputs_checked": int(section.get("total_outputs_checked") or 0),
+            "outputs_changed": int(section.get("outputs_changed") or 0),
+        }
+        if source == "selective_reprocess_authorization_boundary":
+            result[label].update(
+                {
+                    "target_reprocess_outputs_checked": int(section.get("target_reprocess_outputs_checked") or 0),
+                    "authorized_target_reprocess_outputs": int(section.get("authorized_target_reprocess_outputs") or 0),
+                    "blocked_target_reprocess_outputs": int(section.get("blocked_target_reprocess_outputs") or 0),
+                }
+            )
+    return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--capture", type=Path, required=True)
+    args = parser.parse_args()
+
+    payload = load_json(args.capture)
+    if not isinstance(payload, dict):
+        raise AssertionError("capture must be a JSON object")
+    stage = payload.get("dev_action_escalation_calibration")
+    calls = stage.get("calls", []) if isinstance(stage, dict) else []
+
+    decision_counts: Counter[str] = Counter()
+    endpoint_counts: Counter[str] = Counter()
+    trace_counts: Counter[str] = Counter()
+    embedded_applied_counts: Counter[str] = Counter()
+    evidence_resource_call_coverage: Counter[str] = Counter()
+    evidence_plan_lengths: list[int] = []
+    concrete_evidence_marker_counts: list[int] = []
+    parsed_calls = 0
+    action_now_true = 0
+    human_escalation_true = 0
+    safe_to_act_true = 0
+    needs_more_evidence_true = 0
+    action_endpoint_public = 0
+    action_endpoint_unrecognized = 0
+
+    for call in calls:
+        if not isinstance(call, dict):
+            continue
+        for event in call.get("trace_events") or []:
+            if isinstance(event, str):
+                trace_counts[event] += 1
+
+        output = call.get("parsed_output")
+        if not isinstance(output, dict):
+            continue
+        parsed_calls += 1
+        decision_counts[normalize(output.get("decision_class")) or "missing"] += 1
+        action_now_true += int(output.get("should_take_action_now") is True)
+        human_escalation_true += int(output.get("requires_human_escalation") is True)
+
+        evidence_plan = output.get("evidence_plan")
+        plan_items = evidence_plan if isinstance(evidence_plan, list) else []
+        evidence_plan_lengths.append(len(plan_items))
+        plan_text = "\n".join(str(x) for x in plan_items).lower()
+        marker_hits = 0
+        for marker in PUBLIC_EVIDENCE_MARKERS:
+            if marker in plan_text:
+                evidence_resource_call_coverage[marker] += 1
+                marker_hits += 1
+        concrete_evidence_marker_counts.append(marker_hits)
+
+        rubric = output.get("action_escalation_rubric")
+        if isinstance(rubric, dict):
+            safe_to_act_true += int(rubric.get("safe_to_act") is True)
+            needs_more_evidence_true += int(rubric.get("needs_more_evidence") is True)
+            endpoint = normalize(rubric.get("action_endpoint")) or "none"
+            if endpoint in PUBLIC_ACTION_ENDPOINTS:
+                endpoint_counts[endpoint] += 1
+                action_endpoint_public += 1
+            else:
+                endpoint_counts["unrecognized_or_missing"] += 1
+                action_endpoint_unrecognized += 1
+
+        for key, value in output.items():
+            if not isinstance(value, dict) or value.get("applied") is not True:
+                continue
+            lowered = str(key).lower()
+            if "guard" in lowered or "authorization" in lowered or "boundary" in lowered:
+                embedded_applied_counts[str(key)] += 1
+
+    result = {
+        "status": "E14_SANITIZED_SEMANTIC_BOUNDARY_DIAGNOSTIC",
+        "total_calls": len(calls),
+        "parsed_calls": parsed_calls,
+        "final_output_distribution": {
+            "decision_class_counts": dict(sorted(decision_counts.items())),
+            "should_take_action_now_true": action_now_true,
+            "requires_human_escalation_true": human_escalation_true,
+            "safe_to_act_true": safe_to_act_true,
+            "needs_more_evidence_true": needs_more_evidence_true,
+            "public_action_endpoint_counts": dict(sorted(endpoint_counts.items())),
+            "public_action_endpoint_values_counted": action_endpoint_public,
+            "unrecognized_action_endpoint_values": action_endpoint_unrecognized,
+        },
+        "evidence_plan_aggregates": {
+            "plan_length": number_summary(evidence_plan_lengths),
+            "concrete_public_resource_marker_count": number_summary(concrete_evidence_marker_counts),
+            "calls_covering_each_public_resource": dict(sorted(evidence_resource_call_coverage.items())),
+        },
+        "summary_level_boundary_effects": public_boundary_summary(payload),
+        "embedded_boundary_applied_counts": dict(sorted(embedded_applied_counts.items())),
+        "selected_trace_event_counts": {
+            key: value
+            for key, value in sorted(trace_counts.items())
+            if any(token in key for token in ("guard", "authorization", "selective_reprocess", "model_called", "output_parsed"))
+        },
+        "prints_private_outputs": False,
+        "prints_group_level_rows": False,
+        "prints_hashes": False,
+        "prints_prompts": False,
+        "prints_private_paths": False,
+        "prints_oracle_data": False,
+        "prints_evaluator_labels": False,
+    }
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
