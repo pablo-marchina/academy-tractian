@@ -57,19 +57,35 @@ E10g:
 
 E10g therefore did not block these three outputs because of an unsupported endpoint, `safe_to_act=false`, a state-change decision conflict, or an autonomous-maintenance rule. All three were blocked by the handoff-specific minimum-public-evidence-marker heuristic.
 
-The same diagnostic showed that the final evidence plans had only 0–3 distinct recognized public resource markers per call (average 1.0), even though evaluator-side aggregate evidence correctness for the complete E14c fixed-output set was 1.0. This does not justify weakening the guard by itself: evaluator evidence scoring and the E10g public-resource-marker heuristic measure different constructs and private evaluator expectations must not be imported into public policy.
+A narrower sanitized fixed-capture diagnostic then measured the E10g-blocked handoffs only:
 
-Before E14d is preregistered, a narrower zero-provider-call diagnostic must determine whether the three E10g-blocked handoffs carried zero or one recognized public evidence markers. That distinction decides whether a one-marker handoff rule could be justified from public visible evidence or whether the blocked outputs lacked any recognized public support at all.
+```text
+blocked handoffs:                  3
+recognized public markers = 0:    2
+recognized public markers = 1:    1
+plan length min / max / avg:       2 / 7 / 4.667
+```
 
-Sanitized helper:
+This result does **not** justify lowering the E10g handoff threshold from 2 to 1: two blocked handoffs have zero markers under the historical counter. However, the historical counter itself performs literal substring matching against public template forms such as `GET /assets/{asset_id}`. It does not canonicalize concrete public read paths such as `GET /assets/<concrete-id>` to the same public resource family. That is the same representation class already proven to affect action endpoints in E14c.
+
+Therefore E14d is still not preregistered. A final zero-provider-call shape diagnostic now distinguishes, within those three blocked handoffs, between:
+
+- already-recognized template-form evidence families;
+- concrete public GET paths equivalent to one of the **same ten existing E10e evidence families** but historically not counted;
+- genuinely unrecognized/generic evidence with no equivalent accepted public family.
+
+The diagnostic keeps the existing threshold at 2 and adds no new evidence families. It is diagnostic-only and does not use private evaluator information.
+
+Sanitized helpers:
 
 - `../scripts/research/e14c_e10g_handoff_evidence_diagnostic.py`
+- `../scripts/research/e14c_e10g_handoff_evidence_shape_diagnostic.py`
 
 ## Interpretation
 
 E14c is a meaningful improvement relative to the recovered E14 baseline on the same GPT-OSS settings: it restores evaluator evidence correctness to 1.0 and keeps escalation correctness, premature-action safety and unsupported-claim safety at their required values while real task quality rises close to the gate. This does **not** authorize VALIDATION because decision and action correctness remain below threshold.
 
-No E14d candidate is preregistered from aggregate score deltas or private-evaluator implications alone. The next step remains local analysis of the already-fixed E14c capture.
+No E14d candidate is preregistered from aggregate score deltas or private-evaluator implications alone. The next step remains local public-contract analysis of the already-fixed E14c capture.
 
 ## Methodological boundary
 
