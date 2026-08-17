@@ -1,13 +1,13 @@
 # Systematic Research Hub
 
-**Status: E0–E3 frozen/complete; E4–E14 measured; E14 real DEV gate failed; E14b real DEV candidate rejected; boundary root-cause diagnostic in progress**  
+**Status: E0–E3 frozen/complete; E4–E14 measured; E14 real DEV gate failed; E14b rejected; E14c preregistered and structural dry-run passed**  
 **Date:** 2026-08-17
 
 The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, measured guarded-boundary/runtime/MCP/model experiments, and a hard safety/action gate that is still blocking downstream product integration.
 
 Production architecture is **not frozen**. No demo/UI/integration phase is authorized while the E14 gate remains failed.
 
-## Current gate — E14 / E14b
+## Current gate — E14 / E14b / E14c
 
 The first complete recovered E14 real DEV measurement on Groq `openai/gpt-oss-20b` is valid and failed the unchanged quality gate:
 
@@ -45,28 +45,49 @@ A sanitized no-provider-call diagnostic over the already-fixed E14b capture esta
 
 - 6/6 outputs parsed;
 - final outputs contained zero immediate actions;
-- the model-facing pipeline had three outputs changed by the E10e premature-action guard;
+- E10e changed 3 outputs: 2 because of `unsupported_action_endpoint_visible`, 1 because of `visible_rubric_not_safe_to_act`;
 - E10g changed zero outputs;
 - E11 changed zero outputs;
 - E14 selective reprocess changed zero outputs and saw zero target reprocess actions;
 - one output was changed by the E10d escalation-consistency guard;
-- three final action-endpoint values were public-template-unrecognized and three were `none`.
+- all three non-`none` action endpoints had the public shape `POST /cases/<concrete-id>/escalate`.
 
 Because E10e only applies when `should_take_action_now=true`, its three changed outputs prove that three model-produced immediate-action proposals existed before E10e and all were downgraded before E10g/E11/E14 could evaluate the original action state.
 
-The current code also exact-matches action endpoints against public template strings. Therefore a public valid concrete path such as `POST /analyses/<id>/reprocess` would not equal `POST /analyses/{analysis_id}/reprocess`, potentially causing both E10e unsupported-endpoint blocking and E14 failure to recognize a reprocess target. This is a public-contract hypothesis, not a private-oracle inference.
+The frozen public ToolSpec registry declares case escalation as `POST /cases/{caseId}/escalate`, while historical guards compare against snake-case template forms such as `post /cases/{case_id}/escalate`. Exact-template equality therefore rejects a valid concrete path even though it represents the same public action operation.
 
-`scripts/research/e14_semantic_boundary_diagnostic.py` now reports only allowlisted aggregate boundary reason counts and safe unrecognized-endpoint shape classes so this hypothesis can be resolved without new model calls, private rows, IDs, hashes, or oracle access.
+### E14c candidate
 
-Sanitized records:
+E14c is preregistered as a **single deterministic public-contract endpoint-comparison normalization change relative to recovered E14**. It does not inherit the rejected E14b prompt-policy change.
+
+E14c:
+
+- derives the five action endpoint shapes from the literal frozen `action(...)` declarations in `research/e2/tool_registry.py`;
+- canonicalizes only a temporary policy-comparison view;
+- does **not** rewrite the stored model endpoint or other model output;
+- applies that comparison view before E10d, E10e, E10g, E11 and E13/E14 endpoint decisions;
+- rejects wrong methods, query/fragment additions, extra text and unknown shapes;
+- preserves the explicit `safe_to_act=false` blocking condition;
+- changes no model, prompt, reasoning effort, completion budget, scorer, threshold or split.
+
+Structural GitHub Actions run `32033397539` passed on commit `8f1705eaf332eb3f1eedcb51e15b0f5794c6f97f` with 6/6 parsed/scoreable dry outputs, completeness pass, zero retries/repairs, VALIDATION false, and the inherited selective-reprocess fixture remaining selective at 3 authorized / 3 blocked. The structural self-check separately verifies that a concrete case-escalation endpoint is recognized while the same endpoint with `safe_to_act=false` remains blocked.
+
+E14c artifacts:
+
+- `114-e14c-dev-only-public-endpoint-canonicalization.md`
+- `115-e14c-structural-dry-run-result.md`
+- `experiments/e14c-dev-only-public-endpoint-canonicalization-manifest.json`
+- `../scripts/research/e14c_public_action_endpoint_normalization.py`
+- `../scripts/research/e14c_dev_only_public_endpoint_canonicalization.py`
+- `../.github/workflows/research-e14c.yml`
+
+Sanitized prior records:
 
 - `111-e14-real-dev-measurement-result.md`
 - `results/e14-real-dev-sanitized-summary.json`
 - `113-e14b-real-dev-measurement-result.md`
 - `results/e14b-real-dev-sanitized-summary.json`
 - `../scripts/research/e14_semantic_boundary_diagnostic.py`
-
-No E14c candidate is preregistered until this local fixed-capture diagnostic distinguishes legitimate E10e blocking from brittle endpoint canonicalization or another public boundary reason.
 
 Required DEV acceptance remains unchanged:
 
@@ -145,7 +166,7 @@ DEV-only iterations improved evidence/action/escalation behavior, but full DEV+V
 
 Relevant records: `74`–`98`.
 
-### E12–E14b — root cause, provider recovery, completeness and upstream reconciliation
+### E12–E14c — root cause, provider recovery, completeness and boundary representation
 
 E12 identified the dominant class as:
 
@@ -155,9 +176,9 @@ policy_executed_but_over_permissive_or_wrong_authorization_class
 
 E13 then overcorrected and blocked every parsed reprocess target. E14 added complete capture and selective reprocess authorization. During real E14 measurement, the originally configured Groq model was externally shut down; the replacement `openai/gpt-oss-20b` required a documented compatibility recovery for completion budget before a valid 6/6 measurement was possible.
 
-The complete recovered E14 measurement failed the DEV quality gate. E14b moved the intervention upstream to evidence→endpoint→decision prompt reconciliation but regressed quality and is rejected. The active work is now a fixed-capture public-boundary diagnostic; no further model/prompt/boundary candidate will be selected until that diagnostic resolves whether E10e's three downgrades were legitimate safety blocks or endpoint-canonicalization failures.
+The complete recovered E14 measurement failed the DEV quality gate. E14b moved the intervention upstream to evidence→endpoint→decision prompt reconciliation but regressed quality and was rejected. The fixed-capture diagnostic then isolated a brittle public endpoint representation mismatch in E10e. E14c is the corresponding single-change deterministic correction, structurally validated but not yet real-model measured.
 
-Relevant records: `99`–`113` plus the sanitized semantic-boundary diagnostic.
+Relevant records: `99`–`115` plus the sanitized semantic-boundary diagnostic.
 
 ## Explicit non-decisions
 
@@ -198,10 +219,7 @@ The following remain intentionally unfrozen:
 ## Critical path
 
 ```text
-fixed E14b capture
-→ sanitized boundary-reason + endpoint-shape diagnostic (no provider call)
-→ preregister exactly one E14c public-boundary correction only if diagnostic identifies it
-→ complete E14c DEV capture
+E14c complete real zero-cost DEV capture
 → E9 v3 private DEV scoring
 → if and only if every unchanged E14 gate threshold passes: measurement-only DEV+VALIDATION rerun
 → safety/action gate decision
