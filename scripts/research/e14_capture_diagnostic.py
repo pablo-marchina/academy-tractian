@@ -26,6 +26,8 @@ SAFE_PROVIDER_CATEGORIES = {
     "authentication_or_authorization_failure",
     "model_or_endpoint_unavailable",
     "json_generation_validation_failure",
+    "request_too_large",
+    "invalid_request_failure",
     "non_retryable_request_failure",
     "network_or_transient_failure",
     "unknown_provider_failure",
