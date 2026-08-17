@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import ast
 import re
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -21,13 +20,8 @@ _PLACEHOLDER_RE = re.compile(r"\{[^{}]+\}")
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _TOOL_REGISTRY_SOURCE = _REPO_ROOT / "research" / "e2" / "tool_registry.py"
 
-
-@dataclass(frozen=True)
-class PublicActionEndpointSpec:
-    canonical_endpoint: str
-    method: str
-    canonical_path: str
-    concrete_pattern: re.Pattern[str]
+# Each tuple is: canonical_endpoint, method, canonical_path, concrete_pattern.
+PublicActionEndpointSpec = tuple[str, str, str, re.Pattern[str]]
 
 
 def _literal_string(node: ast.AST) -> str:
@@ -111,21 +105,14 @@ def _build_specs() -> tuple[PublicActionEndpointSpec, ...]:
             rf"^\s*{re.escape(method)}\s+{_concrete_path_pattern(path_template)}\s*$",
             flags=re.IGNORECASE,
         )
-        specs.append(
-            PublicActionEndpointSpec(
-                canonical_endpoint=canonical_endpoint,
-                method=method,
-                canonical_path=canonical_path,
-                concrete_pattern=concrete_pattern,
-            )
-        )
-    if len({spec.canonical_endpoint for spec in specs}) != 5:
+        specs.append((canonical_endpoint, method, canonical_path, concrete_pattern))
+    if len({spec[0] for spec in specs}) != 5:
         raise AssertionError("public action endpoint canonical forms must be unique")
     return tuple(specs)
 
 
 PUBLIC_ACTION_ENDPOINT_SPECS = _build_specs()
-PUBLIC_ACTION_ENDPOINTS = frozenset(spec.canonical_endpoint for spec in PUBLIC_ACTION_ENDPOINT_SPECS)
+PUBLIC_ACTION_ENDPOINTS = frozenset(spec[0] for spec in PUBLIC_ACTION_ENDPOINT_SPECS)
 
 
 def canonicalize_public_action_endpoint(value: Any) -> str:
@@ -144,9 +131,9 @@ def canonicalize_public_action_endpoint(value: Any) -> str:
         return normalized
     if normalized in PUBLIC_ACTION_ENDPOINTS:
         return normalized
-    for spec in PUBLIC_ACTION_ENDPOINT_SPECS:
-        if spec.concrete_pattern.fullmatch(raw):
-            return spec.canonical_endpoint
+    for canonical_endpoint, _method, _canonical_path_value, concrete_pattern in PUBLIC_ACTION_ENDPOINT_SPECS:
+        if concrete_pattern.fullmatch(raw):
+            return canonical_endpoint
     return normalized
 
 
@@ -159,8 +146,8 @@ def endpoint_shape(value: Any) -> str:
         return "none_or_empty"
     if normalized in PUBLIC_ACTION_ENDPOINTS:
         return "already_canonical_public_action_endpoint"
-    for spec in PUBLIC_ACTION_ENDPOINT_SPECS:
-        if spec.concrete_pattern.fullmatch(raw):
+    for _canonical_endpoint, _method, _canonical_path_value, concrete_pattern in PUBLIC_ACTION_ENDPOINT_SPECS:
+        if concrete_pattern.fullmatch(raw):
             return "concrete_public_action_endpoint"
     return "unrecognized_endpoint_shape"
 
