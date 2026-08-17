@@ -1,13 +1,13 @@
 # Systematic Research Hub
 
-**Status: E0–E3 frozen/complete; E4–E14 measured; E14 real DEV gate failed; E14b rejected; E14c preregistered and structural dry-run passed**  
+**Status: E0–E3 frozen/complete; E4–E14 measured; E14 real DEV gate failed; E14b rejected; E14c real DEV failed; E14d preregistered and structural dry-run passed**  
 **Date:** 2026-08-17
 
 The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, measured guarded-boundary/runtime/MCP/model experiments, and a hard safety/action gate that is still blocking downstream product integration.
 
 Production architecture is **not frozen**. No demo/UI/integration phase is authorized while the E14 gate remains failed.
 
-## Current gate — E14 / E14b / E14c
+## Current gate — E14 / E14b / E14c / E14d
 
 The first complete recovered E14 real DEV measurement on Groq `openai/gpt-oss-20b` is valid and failed the unchanged quality gate:
 
@@ -37,49 +37,88 @@ E14b then changed only prompt policy on the same recovered GPT-OSS model/setting
 | Premature action rate | 0.0000 | 0.0000 | PASS |
 | Unsupported final-claim rate | 0.0000 | 0.0000 | PASS |
 
-E14b is therefore **rejected**. VALIDATION remains blocked and LOCKED_TEST remains untouched.
+E14b is therefore **rejected**.
 
-### E14b semantic/boundary diagnostic
+E14c then changed only deterministic public action-endpoint comparison semantics relative to recovered E14. The complete real DEV measurement again produced 6/6 scoreable outputs:
 
-A sanitized no-provider-call diagnostic over the already-fixed E14b capture established:
+| Metric | E14c real DEV | Required | Gate |
+|---|---:|---:|---|
+| Parsed outputs | 6 | 6 | PASS |
+| Scoreable outputs | 6 | 6 | PASS |
+| Real task quality | 0.8333 | >= 0.8571 | **FAIL** |
+| Decision correctness | 0.6667 | >= 0.7500 | **FAIL** |
+| Evidence correctness | 1.0000 | 1.0000 | PASS |
+| Action correctness | 0.1667 | >= 0.7500 | **FAIL** |
+| Escalation correctness | 1.0000 | 1.0000 | PASS |
+| Premature action rate | 0.0000 | 0.0000 | PASS |
+| Unsupported final-claim rate | 0.0000 | 0.0000 | PASS |
 
-- 6/6 outputs parsed;
-- final outputs contained zero immediate actions;
-- E10e changed 3 outputs: 2 because of `unsupported_action_endpoint_visible`, 1 because of `visible_rubric_not_safe_to_act`;
-- E10g changed zero outputs;
-- E11 changed zero outputs;
-- E14 selective reprocess changed zero outputs and saw zero target reprocess actions;
-- one output was changed by the E10d escalation-consistency guard;
-- all three non-`none` action endpoints had the public shape `POST /cases/<concrete-id>/escalate`.
+E14c therefore remains a valid but failed DEV candidate. VALIDATION remains blocked and LOCKED_TEST remains untouched.
 
-Because E10e only applies when `should_take_action_now=true`, its three changed outputs prove that three model-produced immediate-action proposals existed before E10e and all were downgraded before E10g/E11/E14 could evaluate the original action state.
+### E14c boundary diagnosis
 
-The frozen public ToolSpec registry declares case escalation as `POST /cases/{caseId}/escalate`, while historical guards compare against snake-case template forms such as `post /cases/{case_id}/escalate`. Exact-template equality therefore rejects a valid concrete path even though it represents the same public action operation.
+E14c successfully recognized the public action endpoint representation mismatch: four concrete public action endpoints plus one already-canonical endpoint all resolved to the supported comparison form `POST /cases/{case_id}/escalate` where applicable.
 
-### E14c candidate
+The real fixed-capture boundary diagnostic then showed:
 
-E14c is preregistered as a **single deterministic public-contract endpoint-comparison normalization change relative to recovered E14**. It does not inherit the rejected E14b prompt-policy change.
+```text
+E10d outputs changed: 0
+E10e outputs changed: 2
+E10g outputs changed: 3
+E11 outputs changed: 0
+E14 reprocess targets: 0
+```
 
-E14c:
+All three E10g changes had exactly one reason:
 
-- derives the five action endpoint shapes from the literal frozen `action(...)` declarations in `research/e2/tool_registry.py`;
-- canonicalizes only a temporary policy-comparison view;
-- does **not** rewrite the stored model endpoint or other model output;
-- applies that comparison view before E10d, E10e, E10g, E11 and E13/E14 endpoint decisions;
-- rejects wrong methods, query/fragment additions, extra text and unknown shapes;
-- preserves the explicit `safe_to_act=false` blocking condition;
-- changes no model, prompt, reasoning effort, completion budget, scorer, threshold or split.
+```text
+balanced_guard_handoff_without_minimum_visible_evidence
+```
 
-Structural GitHub Actions run `32033397539` passed on commit `8f1705eaf332eb3f1eedcb51e15b0f5794c6f97f` with 6/6 parsed/scoreable dry outputs, completeness pass, zero retries/repairs, VALIDATION false, and the inherited selective-reprocess fixture remaining selective at 3 authorized / 3 blocked. The structural self-check separately verifies that a concrete case-escalation endpoint is recognized while the same endpoint with `safe_to_act=false` remains blocked.
+A first sanitized evidence diagnostic showed the historical literal-template counter saw the three blocked handoffs as 0 / 0 / 1 distinct accepted public evidence families. That result did not justify lowering the existing E10g threshold of two.
 
-E14c artifacts:
+A second shape diagnostic then compared only the same ten public GET evidence families already accepted by E10e/E10g while recognizing concrete frozen public routes as equivalent to their canonical route templates. The same three blocked handoffs became:
 
-- `114-e14c-dev-only-public-endpoint-canonicalization.md`
-- `115-e14c-structural-dry-run-result.md`
-- `experiments/e14c-dev-only-public-endpoint-canonicalization-manifest.json`
-- `../scripts/research/e14c_public_action_endpoint_normalization.py`
-- `../scripts/research/e14c_dev_only_public_endpoint_canonicalization.py`
-- `../.github/workflows/research-e14c.yml`
+```text
+2 / 5 / 8 distinct existing public evidence families
+```
+
+All three meet the unchanged E10g handoff threshold after representation normalization; none remains below threshold. This isolates a second deterministic representation mismatch rather than a threshold deficiency.
+
+### E14d candidate
+
+E14d is preregistered as a **single deterministic public evidence-resource comparison canonicalization change relative to E14c**.
+
+E14d:
+
+- preserves E14c public action-endpoint canonicalization;
+- preserves exactly the existing ten E10e public GET evidence families;
+- derives concrete-route equivalence from the frozen public ToolSpec source;
+- counts canonical-template or equivalent concrete-path representation as the same distinct evidence family;
+- does **not** rewrite stored model `evidence_plan` text;
+- keeps the E10g human-handoff threshold at 2 distinct public evidence families;
+- keeps the E10e autonomous state-change threshold at 3 distinct public evidence families;
+- rejects wrong methods, unrelated routes and longer unknown route suffixes;
+- changes no model, prompt, reasoning effort, completion budget, scorer, acceptance threshold or split.
+
+Structural GitHub Actions run `32050822095` passed on commit `257630dae9206dfa1832d871b31ccdd16e60fd91` with 6/6 parsed/scoreable dry outputs, completeness pass, zero retries/repairs, VALIDATION false, ten accepted evidence families unchanged, and the inherited selective-reprocess fixture remaining selective at 3 authorized / 3 blocked.
+
+The E14d-specific self-check separately proves threshold preservation:
+
+- handoff with 2 equivalent concrete public GET families: allowed by the evidence minimum;
+- handoff with 1 or 0 families: still blocked;
+- state change with 3 equivalent concrete public GET families: satisfies the evidence minimum;
+- state change with only 2: still blocked;
+- wrong method / unknown longer route: contributes zero family.
+
+E14d artifacts:
+
+- `117-e14d-dev-only-public-evidence-resource-canonicalization.md`
+- `118-e14d-structural-dry-run-result.md`
+- `experiments/e14d-dev-only-public-evidence-resource-canonicalization-manifest.json`
+- `../scripts/research/e14d_public_evidence_resource_normalization.py`
+- `../scripts/research/e14d_dev_only_public_evidence_resource_canonicalization.py`
+- `../.github/workflows/research-e14d.yml`
 
 Sanitized prior records:
 
@@ -87,7 +126,11 @@ Sanitized prior records:
 - `results/e14-real-dev-sanitized-summary.json`
 - `113-e14b-real-dev-measurement-result.md`
 - `results/e14b-real-dev-sanitized-summary.json`
+- `116-e14c-real-dev-measurement-result.md`
+- `results/e14c-real-dev-sanitized-summary.json`
 - `../scripts/research/e14_semantic_boundary_diagnostic.py`
+- `../scripts/research/e14c_e10g_handoff_evidence_diagnostic.py`
+- `../scripts/research/e14c_e10g_handoff_evidence_shape_diagnostic.py`
 
 Required DEV acceptance remains unchanged:
 
@@ -166,7 +209,7 @@ DEV-only iterations improved evidence/action/escalation behavior, but full DEV+V
 
 Relevant records: `74`–`98`.
 
-### E12–E14c — root cause, provider recovery, completeness and boundary representation
+### E12–E14d — root cause, provider recovery, completeness and public representation
 
 E12 identified the dominant class as:
 
@@ -176,9 +219,9 @@ policy_executed_but_over_permissive_or_wrong_authorization_class
 
 E13 then overcorrected and blocked every parsed reprocess target. E14 added complete capture and selective reprocess authorization. During real E14 measurement, the originally configured Groq model was externally shut down; the replacement `openai/gpt-oss-20b` required a documented compatibility recovery for completion budget before a valid 6/6 measurement was possible.
 
-The complete recovered E14 measurement failed the DEV quality gate. E14b moved the intervention upstream to evidence→endpoint→decision prompt reconciliation but regressed quality and was rejected. The fixed-capture diagnostic then isolated a brittle public endpoint representation mismatch in E10e. E14c is the corresponding single-change deterministic correction, structurally validated but not yet real-model measured.
+Recovered E14 failed DEV quality. E14b prompt reconciliation regressed and was rejected. E14c then fixed concrete-vs-template action endpoint comparison and substantially improved quality while preserving safety, but the fixed-capture diagnosis exposed an analogous concrete-vs-template mismatch in the evidence-family counter used by E10e/E10g. E14d is the corresponding single-change deterministic evidence comparison correction. Its structural dry-run passed; real DEV measurement is the next authorized step.
 
-Relevant records: `99`–`115` plus the sanitized semantic-boundary diagnostic.
+Relevant records: `99`–`118` plus the sanitized boundary/evidence diagnostics.
 
 ## Explicit non-decisions
 
@@ -219,7 +262,7 @@ The following remain intentionally unfrozen:
 ## Critical path
 
 ```text
-E14c complete real zero-cost DEV capture
+E14d complete real zero-cost DEV capture
 → E9 v3 private DEV scoring
 → if and only if every unchanged E14 gate threshold passes: measurement-only DEV+VALIDATION rerun
 → safety/action gate decision
