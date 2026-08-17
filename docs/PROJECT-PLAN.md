@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E13 blocker audit non-validation-tuned ready  
+**Status:** E13 blocker audit completed; DEV blockers identified  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 22:43 BRT  
+**Progress checkpoint:** 2026-08-16 22:45 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
@@ -16,6 +16,8 @@ E12 passed as a hard-gate root-cause audit. It confirmed that the E11 independen
 E13 implemented only the preregistered root-cause-specific change as a DEV-only candidate. It targets autonomous `POST /analyses/{analysis_id}/reprocess` authorization and does not authorize reprocess from generic evidence-family counts or generic human-review markers.
 
 E13 DEV-only was scored with E9 v3 after outputs were fixed. The scorer passed, but E13 failed DEV-only acceptance: 6 fixed calls were consumed, 5 parsed outputs were available, and only 5 calls were scoreable. Safety remained clean on scoreable calls, but action collapsed and average quality fell below the preregistered floor.
+
+E13 blocker audit has now completed. It identified four DEV blocker classes: `parsed_output_missing_in_dev_capture`, `boundary_changed_all_target_reprocess_actions`, `action_collapse_consistent_with_overblocking_reprocess_boundary`, and `decision_regression_after_reprocess_downgrade`.
 
 Project rule: no integration, no demo and no downstream phase while the current gate or any dependency used by it remains incomplete.
 
@@ -50,21 +52,43 @@ Project rule: no integration, no demo and no downstream phase while the current 
 | Proxy success rate | 1.0 | 1.0 |
 | Proxy-vs-real disagreement rate | 0.0 | 1.0 |
 
-## E13 blocker audit ready
+## E13 blocker audit result
 
-The next allowed movement is an audit only. It is not a new candidate, not a guard, not integration, not demo, not a full rerun and not architecture freeze.
+| Finding | Result |
+|---|---:|
+| DEV calls observed | 6 |
+| Expected DEV calls | 6 |
+| Parsed DEV outputs available | 5 |
+| Missing parsed output count | 1 |
+| Boundary rows available | 5 |
+| Target reprocess rows | 5 |
+| Authorized rows | 0 |
+| Blocked rows | 5 |
+| Changed rows | 5 |
+| Unchanged rows | 0 |
+| Validation calls read | 0 |
+| LOCKED_TEST accessed | false |
 
-The E13 blocker audit is non-validation-tuned and DEV-only. It focuses on:
+Missing parsed output:
 
-- whether the E13 boundary ran on the DEV capture;
-- how many DEV outputs were parsed;
-- which sanitized DEV call identifiers lacked parsed output;
-- how many parsed outputs had boundary metadata;
-- how many target `POST /analyses/{analysis_id}/reprocess` rows were detected;
-- how many rows were changed by the boundary;
-- whether the boundary downgraded every target reprocess action;
-- which public/sanitized boundary reasons dominated;
-- whether the action collapse is consistent with overblocking.
+| Group | Split | Repeat index |
+|---|---|---:|
+| `asset_S420` | DEV | 0 |
+
+Dominant boundary reason:
+
+| Reason | Count |
+|---|---:|
+| `missing_endpoint_specific_reprocess_defect_evidence` | 5 |
+
+Root-cause classes:
+
+```text
+parsed_output_missing_in_dev_capture
+boundary_changed_all_target_reprocess_actions
+action_collapse_consistent_with_overblocking_reprocess_boundary
+decision_regression_after_reprocess_downgrade
+```
 
 ## Relevant completed artifacts
 
@@ -78,6 +102,8 @@ The E13 blocker audit is non-validation-tuned and DEV-only. It focuses on:
 - `scripts/research/e13_blocker_audit_non_validation_tuned.py`
 - `research/104-e13-blocker-audit-non-validation-tuned.md`
 - `.github/workflows/research-e13-blocker-audit.yml`
+- `research/results/e13-blocker-audit-non-validation-tuned-summary-2026-08-16.json`
+- `research/105-e13-blocker-audit-non-validation-tuned-results.md`
 
 ## Gate decision
 
@@ -85,7 +111,13 @@ E13 is not promotable to a full DEV+VALIDATION remeasurement.
 
 The reprocess-specific boundary moved in the intended safety direction, but overcorrected: action correctness collapsed to 0.0, decision correctness dropped to 0.4, one parsed output was missing, and real task quality fell below the preregistered DEV floor.
 
-No full DEV+VALIDATION rerun is allowed. No integration. No demo. No final architecture freeze. No new candidate is allowed until the E13 blocker audit identifies the DEV blocker class and a later change is preregistered without VALIDATION tuning.
+No full DEV+VALIDATION rerun is allowed. No integration. No demo. No final architecture freeze. No new candidate is allowed merely because the audit completed.
+
+A later candidate may only be preregistered after this audit is reviewed, and it must address both DEV blockers without VALIDATION tuning:
+
+- preserve complete parsed DEV outputs;
+- avoid overblocking every correct DEV target reprocess action;
+- retain `premature_action_rate = 0.0` and `unsupported_final_claim_rate = 0.0`.
 
 ## Current action checklist
 
@@ -105,9 +137,9 @@ No full DEV+VALIDATION rerun is allowed. No integration. No demo. No final archi
 - [x] Run and score E13 DEV-only.
 - [x] Record E13 DEV-only as failed acceptance.
 - [x] Prepare E13 blocker audit non-tuned by VALIDATION.
-- [x] Add E13 blocker audit dry-run CI guard.
-- [ ] Run E13 blocker audit locally against non-committed E13 capture.
-- [ ] Record sanitized E13 blocker audit result.
+- [x] Run E13 blocker audit locally against non-committed E13 capture.
+- [x] Record sanitized E13 blocker audit result.
+- [ ] Decide whether to preregister a later change addressing both E13 DEV blockers.
 - [ ] Keep final architecture unfrozen.
 
 ## E13 blocker audit constraints
@@ -115,7 +147,7 @@ No full DEV+VALIDATION rerun is allowed. No integration. No demo. No final archi
 - No integration.
 - No demo.
 - No full rerun.
-- No next candidate merely because the audit is ready.
+- No next candidate merely because the audit is complete.
 - No use of VALIDATION for tuning.
 - No use of private expected paths, private oracle values, raw scorer rows, output hashes, validation feedback, evaluator labels, reference trajectories, `eval/expected-paths.json`, `docs/test-scenarios.md`, `data/cases.parquet`, or LOCKED_TEST.
 
