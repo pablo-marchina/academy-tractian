@@ -1,0 +1,34 @@
+{
+  "id": "e14-provider-deprecation-recovery",
+  "date": "2026-08-17",
+  "status": "E14_PROVIDER_DEPRECATION_RECOVERY_PREREGISTERED",
+  "event_class": "external_provider_model_shutdown",
+  "affected_model": "llama-3.1-8b-instant",
+  "shutdown_date": "2026-08-16",
+  "provider": "groq",
+  "replacement_model": "openai/gpt-oss-20b",
+  "replacement_basis": "Groq official deprecation guidance for llama-3.1-8b-instant",
+  "is_policy_tuning": false,
+  "uses_validation_feedback": false,
+  "validation_ran": false,
+  "locked_test_accessed": false,
+  "changes_e14_selective_reprocess_policy": false,
+  "changes_e14_acceptance_thresholds": false,
+  "changes_dev_groups_or_repeats": false,
+  "measurement_scope": {
+    "splits": ["DEV"],
+    "groups": ["asset_G501", "asset_C710", "asset_S420"],
+    "repeats_per_group": 2,
+    "expected_total_calls": 6
+  },
+  "recovery_protocol": [
+    "run safe Groq model-availability preflight with no inference",
+    "set E8_GROQ_MODEL=openai/gpt-oss-20b",
+    "run the unchanged E14 DEV-only candidate",
+    "score only after fixed E14 outputs exist using E9 v3 and the private DEV oracle",
+    "apply the already preregistered E14 absolute acceptance thresholds unchanged"
+  ],
+  "historical_comparison_rule": "Do not interpret delta versus historical E13 measured on llama-3.1-8b-instant as a causal E14 policy effect. If a causal E13-versus-E14 delta is needed, remeasure both DEV-only candidates on the same replacement model without VALIDATION tuning.",
+  "gate_rule": "The E14 DEV-only gate may still be evaluated on the replacement model because provider/model were not frozen, but the model substitution must be disclosed and the original failed attempt must be classified as provider-invalidated rather than policy failure.",
+  "raw_private_or_fixed_output_material_committed": false
+}
