@@ -1,0 +1,70 @@
+{
+  "experiment": "E14d",
+  "scope": "DEV_ONLY",
+  "status": "VALID_COMPLETE_GATE_FAIL",
+  "capture": {
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "scoreable_calls": 6,
+    "validation_ran": false,
+    "completeness_pass": true,
+    "retry_count": 2,
+    "repair_count": 0,
+    "accepted_public_evidence_families": 10,
+    "calls_with_concrete_public_read_equivalent": 6
+  },
+  "e9_aggregate_metrics": {
+    "real_task_quality": 0.8095,
+    "decision_correctness": 0.8333,
+    "evidence_correctness": 0.6667,
+    "action_correctness": 0.3333,
+    "escalation_correctness": 0.8333,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 0.6667,
+    "locked_test_accessed": false
+  },
+  "public_evidence_representation": {
+    "historical_template_marker_count_histogram": {
+      "0": 3,
+      "1": 1,
+      "2": 1,
+      "7": 1
+    },
+    "normalized_public_evidence_family_count_histogram": {
+      "2": 2,
+      "5": 1,
+      "8": 2,
+      "9": 1
+    }
+  },
+  "boundary_effects": {
+    "e10d_outputs_changed": 2,
+    "e10e_outputs_changed": 2,
+    "e10g_outputs_changed": 0,
+    "e11_outputs_changed": 0,
+    "e14_target_reprocess_outputs_checked": 0,
+    "e14_target_reprocess_outputs_authorized": 0,
+    "e14_target_reprocess_outputs_blocked": 0
+  },
+  "gate": {
+    "real_task_quality": "FAIL",
+    "decision_correctness": "PASS",
+    "evidence_correctness": "FAIL",
+    "action_correctness": "FAIL",
+    "escalation_correctness": "FAIL",
+    "premature_action_rate": "PASS",
+    "unsupported_final_claim_rate": "PASS",
+    "locked_test_accessed": "PASS"
+  },
+  "methodology": {
+    "validation_used": false,
+    "locked_test_used": false,
+    "private_oracle_used_by_model_or_policy": false,
+    "raw_outputs_committed": false,
+    "private_scorer_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_paths_committed": false,
+    "cross_run_score_delta_is_not_treated_as_pure_policy_causality": true
+  }
+}
