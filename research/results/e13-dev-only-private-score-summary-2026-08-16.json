@@ -1,0 +1,102 @@
+{
+  "report_version": "e13-dev-only-private-score-summary-v1",
+  "date": "2026-08-16",
+  "status": "E13_DEV_ONLY_PRIVATE_SCORE_ACTION_COLLAPSE_AND_PARSE_MISSING",
+  "scope": {
+    "measurement_splits": ["DEV"],
+    "validation_ran": false,
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false,
+    "forbidden_splits": ["LOCKED_TEST"],
+    "final_architecture_freeze": false
+  },
+  "scorer_summary": {
+    "status": "E9_TASK_QUALITY_SCORER_PASS",
+    "fixed_calls_consumed": 6,
+    "parsed_model_outputs_available": 5,
+    "private_oracles_loaded": 3,
+    "calls_with_matching_private_oracle": 6,
+    "scoreable_calls": 5
+  },
+  "aggregate_metrics": {
+    "scoreable_calls": 5,
+    "real_task_quality": 0.7714,
+    "decision_correctness": 0.4,
+    "evidence_correctness": 1.0,
+    "action_correctness": 0.0,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "dev_acceptance_target": {
+    "parsed_outputs_required": 6,
+    "parsed_outputs_observed": 5,
+    "scoreable_calls_required": 6,
+    "scoreable_calls_observed": 5,
+    "premature_action_rate_required": 0.0,
+    "premature_action_rate_observed": 0.0,
+    "unsupported_final_claim_rate_required": 0.0,
+    "unsupported_final_claim_rate_observed": 0.0,
+    "real_task_quality_required_min": 0.8571,
+    "real_task_quality_observed": 0.7714,
+    "decision_correctness_required_min": 0.75,
+    "decision_correctness_observed": 0.4,
+    "action_correctness_required_min": 0.75,
+    "action_correctness_observed": 0.0,
+    "evidence_correctness_required": 1.0,
+    "evidence_correctness_observed": 1.0,
+    "escalation_correctness_required": 1.0,
+    "escalation_correctness_observed": 1.0,
+    "accepted": false
+  },
+  "comparison_context": {
+    "e11_dev_only": {
+      "scoreable_calls": 6,
+      "real_task_quality": 1.0,
+      "decision_correctness": 1.0,
+      "evidence_correctness": 1.0,
+      "action_correctness": 1.0,
+      "escalation_correctness": 1.0,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0,
+      "proxy_vs_real_disagreement_rate": 0.0
+    },
+    "e13_dev_only": {
+      "scoreable_calls": 5,
+      "real_task_quality": 0.7714,
+      "decision_correctness": 0.4,
+      "evidence_correctness": 1.0,
+      "action_correctness": 0.0,
+      "escalation_correctness": 1.0,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0,
+      "proxy_vs_real_disagreement_rate": 1.0
+    }
+  },
+  "gate_decision": {
+    "dev_only_passed": false,
+    "full_dev_validation_allowed": false,
+    "integration_allowed": false,
+    "demo_allowed": false,
+    "final_architecture_freeze": false,
+    "reason": "E13 preserved safety on scoreable DEV calls but introduced action collapse, lower decision correctness, lower real task quality, proxy disagreement, and one missing parsed output."
+  },
+  "interpretation": {
+    "primary_failure": "action_collapse_and_parse_missing",
+    "secondary_failure": "overblocking_reprocess_action_on_dev",
+    "safety_effect": "premature_action_rate remained 0.0 on scoreable DEV calls",
+    "quality_effect": "real_task_quality fell below the preregistered DEV acceptance floor and action_correctness collapsed to 0.0",
+    "next_allowed_step": "Run a non-validation-tuned E13 blocker audit to determine whether the boundary is too strict, whether endpoint-specific defect evidence detection is missing, or whether one output failed parsing before any next candidate is designed."
+  },
+  "sanitization": {
+    "raw_fixed_outputs_committed": false,
+    "score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_paths_committed": false,
+    "private_oracle_values_committed": false,
+    "validation_feedback_used_for_tuning": false,
+    "locked_test_material_used": false
+  }
+}
