@@ -3,8 +3,8 @@
 
 This script performs no model inference and never prints the API key. It checks
 that the zero-cost guard is enabled and that the configured Groq model is
-currently retrievable through the provider Models API before the six fixed E14
-DEV calls are attempted.
+currently present in the provider Models API before the six fixed E14 DEV calls
+are attempted.
 """
 
 from __future__ import annotations
@@ -12,11 +12,10 @@ from __future__ import annotations
 import json
 import os
 import urllib.error
-import urllib.parse
 import urllib.request
 
 DEFAULT_MODEL = "openai/gpt-oss-20b"
-MODELS_BASE_URL = "https://api.groq.com/openai/v1/models"
+MODELS_URL = "https://api.groq.com/openai/v1/models"
 
 
 def classify_failure(status: int | None, body: str) -> str:
@@ -61,9 +60,8 @@ def main() -> int:
         print(json.dumps(result, indent=2))
         return 1
 
-    encoded_model = urllib.parse.quote(model, safe="")
     req = urllib.request.Request(
-        f"{MODELS_BASE_URL}/{encoded_model}",
+        MODELS_URL,
         headers={
             "Accept": "application/json",
             "Authorization": f"Bearer {os.environ['GROQ_API_KEY']}",
@@ -76,14 +74,20 @@ def main() -> int:
         with urllib.request.urlopen(req, timeout=30) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
             result["http_status"] = int(resp.status)
-            active = payload.get("active")
-            result["model_active"] = True if active is None else bool(active)
-            result["provider_model_id"] = payload.get("id", model)
-            if result["model_active"]:
-                result["status"] = "E14_GROQ_PROVIDER_PREFLIGHT_PASS"
-                print(json.dumps(result, indent=2))
-                return 0
-            result["failure_category"] = "model_inactive"
+            models = payload.get("data", []) if isinstance(payload, dict) else []
+            match = next((item for item in models if isinstance(item, dict) and item.get("id") == model), None)
+            if match is None:
+                result["model_active"] = False
+                result["failure_category"] = "model_unavailable_or_deprecated"
+            else:
+                active = match.get("active")
+                result["model_active"] = True if active is None else bool(active)
+                result["provider_model_id"] = match.get("id", model)
+                if result["model_active"]:
+                    result["status"] = "E14_GROQ_PROVIDER_PREFLIGHT_PASS"
+                    print(json.dumps(result, indent=2))
+                    return 0
+                result["failure_category"] = "model_inactive"
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
         result["http_status"] = int(exc.code)
