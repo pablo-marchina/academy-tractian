@@ -1,0 +1,37 @@
+name: research-e14c-dev-only-public-endpoint-canonicalization
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/114-e14c-dev-only-public-endpoint-canonicalization.md'
+      - 'research/experiments/e14c-*.json'
+      - 'scripts/research/e14c_*.py'
+      - '.github/workflows/research-e14c.yml'
+  pull_request:
+    paths:
+      - 'research/114-e14c-dev-only-public-endpoint-canonicalization.md'
+      - 'research/experiments/e14c-*.json'
+      - 'scripts/research/e14c_*.py'
+      - '.github/workflows/research-e14c.yml'
+
+jobs:
+  e14c-dev-only-public-endpoint-canonicalization-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E14c DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14c_dev_only_public_endpoint_canonicalization.py
+          --manifest research/experiments/e14c-dev-only-public-endpoint-canonicalization-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14c-dev-only-public-endpoint-canonicalization-dry-run.json
+          --dry-run
+      - name: Upload E14c dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14c-dev-only-public-endpoint-canonicalization-dry-run
+          path: /tmp/e14c-dev-only-public-endpoint-canonicalization-dry-run.json
