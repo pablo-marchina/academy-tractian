@@ -57,7 +57,33 @@ E14 selective reprocess targets:   0
 
 The specific E14d root-cause hypothesis about E10g was supported: after equivalent concrete public GET routes were counted as their frozen public families, E10g no longer downgraded any output for insufficient handoff evidence.
 
-However, E14d still fails the overall gate. The next blocker must not be inferred from score deltas alone. The already-fixed E14d capture must be inspected with the sanitized semantic-boundary diagnostic to identify the two E10d and two E10e reason classes before any E14e candidate is defined.
+However, E14d still fails the overall gate. The next blocker must not be inferred from score deltas alone.
+
+## Fixed-capture remaining-boundary diagnosis
+
+A zero-provider-call sanitized diagnostic over the already-fixed E14d capture isolated the remaining changes:
+
+```text
+E10d:
+  state_changing_action_requires_visible_human_loop_guard  1
+  visible_human_escalation_marker                         1
+
+E10e:
+  too_few_concrete_evidence_resources_for_state_change    1
+  visible_rubric_needs_more_evidence                      1
+```
+
+The `visible_rubric_needs_more_evidence` case remains an explicit model-visible safety block and is not a candidate for relaxation.
+
+The single E10e `too_few_concrete_evidence_resources_for_state_change` case was a canonical `POST /analyses/{analysis_id}/reprocess` proposal with exactly two normalized public evidence families. A counterfactual evaluation through the already-preregistered E14 selective reprocess boundary did **not** authorize it: the E14 policy returned `missing_human_readable_evidence_to_reprocess_reason` with zero recognized reprocess support anchors. Therefore there is no evidence of an E10e→E14 precedence bug in this capture, and neither the generic state-change threshold nor guard ordering should be relaxed from this result.
+
+The remaining E10d `visible_human_escalation_marker` call had no recognized public action endpoint and contained the historical marker strings `escalation`, `risk`, `safety`, and `severity`. Because the historical E10d rule uses literal substring presence across the visible output, this still does not establish whether the escalation signal was a positive current handoff instruction, a negated/conditional mention, or merely risk context.
+
+A narrower zero-provider-call helper was added to distinguish those cases without printing model text:
+
+- `../scripts/research/e14d_e10d_escalation_marker_polarity_diagnostic.py`
+
+No E14e candidate is preregistered until that field/polarity diagnosis is complete.
 
 ## Causal interpretation boundary
 
