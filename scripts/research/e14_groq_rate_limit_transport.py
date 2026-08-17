@@ -8,6 +8,11 @@ acceptance thresholds.
 It honors Groq's documented `retry-after` / token-reset headers for 429 responses,
 classifies provider failures without persisting raw error text, and falls back to
 bounded exponential backoff for transient 5xx/network failures.
+
+For the GPT-OSS replacement-model recovery, reasoning effort is explicitly frozen
+at `medium` (the provider default) and E14 gets its own completion-token budget so
+we can remove the prior 800-token harness bottleneck without changing reasoning
+behavior or decision semantics.
 """
 
 from __future__ import annotations
@@ -23,7 +28,9 @@ from typing import Any
 
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "openai/gpt-oss-20b"
-DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.1"
+DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.2"
+DEFAULT_REASONING_EFFORT = "medium"
+DEFAULT_E14_MAX_COMPLETION_TOKENS = 1600
 
 
 class E14ProviderRequestError(RuntimeError):
@@ -45,6 +52,9 @@ def error_fields(body: str) -> tuple[str, str, str]:
     code = str(error.get("code") or "")
     error_type = str(error.get("type") or "")
     message = str(error.get("message") or "")
+    failed_generation = error.get("failed_generation")
+    if failed_generation is not None:
+        message = f"{message} failed_generation"
     return code, error_type, message
 
 
@@ -68,10 +78,18 @@ def classify_failure(status_code: int | None, body: str) -> str:
         return "authentication_or_authorization_failure"
     if status_code == 404:
         return "model_or_endpoint_unavailable"
-    if status_code in {400, 422} and code == "json_validate_failed":
+    if status_code in {400, 422} and (
+        code == "json_validate_failed"
+        or "failed_generation" in lowered
+        or "valid json" in lowered
+        or "json validation" in lowered
+        or "generated json" in lowered
+    ):
         return "json_generation_validation_failure"
-    if status_code in {400, 413, 422}:
-        return "non_retryable_request_failure"
+    if status_code == 413:
+        return "request_too_large"
+    if status_code in {400, 422}:
+        return "invalid_request_failure"
     if any(fragment in lowered for fragment in (
         "timed out",
         "timeout",
@@ -190,6 +208,18 @@ def post_json(
 
 def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[str, Any]]:
     model = os.getenv("E8_GROQ_MODEL", DEFAULT_MODEL)
+    reasoning_effort = os.getenv("E14_REASONING_EFFORT", DEFAULT_REASONING_EFFORT).strip().lower()
+    if reasoning_effort not in {"low", "medium", "high"}:
+        raise AssertionError("E14_REASONING_EFFORT must be one of: low, medium, high")
+    max_completion_tokens = int(
+        os.getenv(
+            "E14_MAX_COMPLETION_TOKENS",
+            str(DEFAULT_E14_MAX_COMPLETION_TOKENS),
+        )
+    )
+    if max_completion_tokens < 1:
+        raise AssertionError("E14_MAX_COMPLETION_TOKENS must be >= 1")
+
     payload = {
         "model": model,
         "messages": [
@@ -197,7 +227,8 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
             {"role": "user", "content": prompt},
         ],
         "temperature": float(os.getenv("E8_MODEL_TEMPERATURE", "0")),
-        "max_completion_tokens": int(os.getenv("E8_MAX_OUTPUT_TOKENS", "800")),
+        "reasoning_effort": reasoning_effort,
+        "max_completion_tokens": max_completion_tokens,
         "response_format": {"type": "json_object"},
     }
     response, transport_meta = post_json(
@@ -211,5 +242,7 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
         "model": model,
         "usage": response.get("usage", {}),
         "transport": "e14_rate_limit_aware",
+        "reasoning_effort": reasoning_effort,
+        "max_completion_tokens": max_completion_tokens,
         **transport_meta,
     }
