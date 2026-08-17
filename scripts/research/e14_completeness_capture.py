@@ -19,6 +19,22 @@ e11 = e13.e11
 base = e13.base
 e10b = e11.e10g.e10e.e10d.e10c.e10b
 capture = e10b.capture
+
+TRANSPORT_PATH = Path(__file__).with_name("e14_groq_rate_limit_transport.py")
+TRANSPORT_SPEC = importlib.util.spec_from_file_location("e14_groq_transport", TRANSPORT_PATH)
+if TRANSPORT_SPEC is None or TRANSPORT_SPEC.loader is None:
+    raise RuntimeError("failed to load e14_groq_rate_limit_transport.py")
+transport = importlib.util.module_from_spec(TRANSPORT_SPEC)
+TRANSPORT_SPEC.loader.exec_module(transport)
+
+
+def _e14_rate_limit_aware_call_groq(prompt: str, timeout: int) -> tuple[str, dict[str, Any]]:
+    return transport.call_groq(prompt, timeout, capture.base)
+
+
+# E14-only transport override. e10b.call_model still owns the strict system prompt
+# and temporarily mutates capture.base.SYSTEM_PROMPT before invoking this function.
+capture.call_groq = _e14_rate_limit_aware_call_groq
 DEFAULT_MAX_RETRIES = 2
 
 
@@ -84,6 +100,7 @@ def execute_stage(*, groups: list[str], repeats: int, case_by_asset: dict[str, d
             repair_count = 0
             repair_method: str | None = None
             failures: list[str] = []
+            provider_failure_categories: list[str] = []
 
             for attempt in range(max_retries + 1):
                 if attempt > 0:
@@ -95,9 +112,14 @@ def execute_stage(*, groups: list[str], repeats: int, case_by_asset: dict[str, d
                     raw_output, provider_meta = e10b.call_model(prompt, timeout, dry_run, packet, repeat_index)
                     trace_events.append("dry_run_output_generated" if dry_run else "model_called")
                     error = None
-                except Exception:
+                except Exception as exc:
                     error = "E14_MODEL_CALL_FAILED"
                     failures.append("model_call_failed")
+                    category = getattr(exc, "category", None)
+                    if isinstance(category, str) and category:
+                        provider_failure_categories.append(category)
+                    else:
+                        provider_failure_categories.append("unclassified_provider_failure")
                     trace_events.append("model_call_failed")
                     if attempt < max_retries:
                         continue
@@ -142,6 +164,7 @@ def execute_stage(*, groups: list[str], repeats: int, case_by_asset: dict[str, d
                     "repair_count": repair_count,
                     "repair_method": repair_method,
                     "sanitized_attempt_failures": failures,
+                    "sanitized_provider_failure_categories": provider_failure_categories,
                     "semantic_fields_invented_by_repair": False
                 }
             })
