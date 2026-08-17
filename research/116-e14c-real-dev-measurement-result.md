@@ -42,15 +42,34 @@ E11 independent authorization:     0 outputs changed
 E14 selective reprocess targets:   0
 ```
 
-The action collapse therefore remains post-model but has moved downstream: E10g is now the dominant boundary changing outputs after E14c canonicalization.
+The subsequent fixed-capture semantic diagnostic isolated the reason codes:
 
-For a canonical case-escalation endpoint, E10g treats the action as a human handoff rather than an autonomous maintenance mutation. After its general rubric checks, the handoff-specific condition requires at least two visible evidence markers. The exact aggregate reason codes for the three E10g changes must be read from the already-fixed E14c capture before any next candidate is preregistered.
+```text
+E10e:
+  no_supported_action_endpoint_visible   1
+  visible_rubric_needs_more_evidence     1
+  none                                    4
+
+E10g:
+  balanced_guard_handoff_without_minimum_visible_evidence   3
+  none                                                     3
+```
+
+E10g therefore did not block these three outputs because of an unsupported endpoint, `safe_to_act=false`, a state-change decision conflict, or an autonomous-maintenance rule. All three were blocked by the handoff-specific minimum-public-evidence-marker heuristic.
+
+The same diagnostic showed that the final evidence plans had only 0–3 distinct recognized public resource markers per call (average 1.0), even though evaluator-side aggregate evidence correctness for the complete E14c fixed-output set was 1.0. This does not justify weakening the guard by itself: evaluator evidence scoring and the E10g public-resource-marker heuristic measure different constructs and private evaluator expectations must not be imported into public policy.
+
+Before E14d is preregistered, a narrower zero-provider-call diagnostic must determine whether the three E10g-blocked handoffs carried zero or one recognized public evidence markers. That distinction decides whether a one-marker handoff rule could be justified from public visible evidence or whether the blocked outputs lacked any recognized public support at all.
+
+Sanitized helper:
+
+- `../scripts/research/e14c_e10g_handoff_evidence_diagnostic.py`
 
 ## Interpretation
 
 E14c is a meaningful improvement relative to the recovered E14 baseline on the same GPT-OSS settings: it restores evaluator evidence correctness to 1.0 and keeps escalation correctness, premature-action safety and unsupported-claim safety at their required values while real task quality rises close to the gate. This does **not** authorize VALIDATION because decision and action correctness remain below threshold.
 
-No E14d candidate is preregistered from aggregate score deltas alone. The next step is a zero-provider-call sanitized boundary-reason diagnostic over the already-fixed E14c capture to determine whether E10g's three downgrades are legitimate visible-safety blocks or a mismatch between its public evidence-marker heuristic and the supported human-handoff semantics.
+No E14d candidate is preregistered from aggregate score deltas or private-evaluator implications alone. The next step remains local analysis of the already-fixed E14c capture.
 
 ## Methodological boundary
 
