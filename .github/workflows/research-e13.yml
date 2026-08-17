@@ -1,0 +1,33 @@
+name: research-e13
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+    paths:
+      - 'research/experiments/e13-dev-only-reprocess-authorization-boundary-manifest.json'
+      - 'scripts/research/e13_dev_only_reprocess_authorization_boundary.py'
+      - 'research/102-e13-dev-only-reprocess-authorization-boundary.md'
+      - '.github/workflows/research-e13.yml'
+  pull_request:
+    paths:
+      - 'research/experiments/e13-dev-only-reprocess-authorization-boundary-manifest.json'
+      - 'scripts/research/e13_dev_only_reprocess_authorization_boundary.py'
+      - 'research/102-e13-dev-only-reprocess-authorization-boundary.md'
+      - '.github/workflows/research-e13.yml'
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: E13 DEV-only dry-run
+        run: |
+          python scripts/research/e13_dev_only_reprocess_authorization_boundary.py \
+            --manifest research/experiments/e13-dev-only-reprocess-authorization-boundary-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --dry-run \
+            --out /tmp/e13-dev-only-reprocess-boundary-dry-run.json
