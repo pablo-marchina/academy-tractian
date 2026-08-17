@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E13 DEV-only failed acceptance; full rerun blocked  
+**Status:** E13 blocker audit non-validation-tuned ready  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 22:33 BRT  
+**Progress checkpoint:** 2026-08-16 22:43 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
@@ -50,26 +50,21 @@ Project rule: no integration, no demo and no downstream phase while the current 
 | Proxy success rate | 1.0 | 1.0 |
 | Proxy-vs-real disagreement rate | 0.0 | 1.0 |
 
-## E13 acceptance decision
+## E13 blocker audit ready
 
-E13 does not pass DEV-only acceptance.
+The next allowed movement is an audit only. It is not a new candidate, not a guard, not integration, not demo, not a full rerun and not architecture freeze.
 
-Failures:
+The E13 blocker audit is non-validation-tuned and DEV-only. It focuses on:
 
-- parsed outputs: expected 6, observed 5;
-- scoreable calls: expected 6, observed 5;
-- real task quality: required at least 0.8571, observed 0.7714;
-- decision correctness: required at least 0.75, observed 0.4;
-- action correctness: required at least 0.75, observed 0.0;
-- proxy-vs-real disagreement returned to 1.0.
-
-Passes:
-
-- evidence correctness stayed 1.0;
-- escalation correctness stayed 1.0;
-- premature action stayed 0.0 on scoreable calls;
-- unsupported final-claim rate stayed 0.0;
-- LOCKED_TEST remained blocked.
+- whether the E13 boundary ran on the DEV capture;
+- how many DEV outputs were parsed;
+- which sanitized DEV call identifiers lacked parsed output;
+- how many parsed outputs had boundary metadata;
+- how many target `POST /analyses/{analysis_id}/reprocess` rows were detected;
+- how many rows were changed by the boundary;
+- whether the boundary downgraded every target reprocess action;
+- which public/sanitized boundary reasons dominated;
+- whether the action collapse is consistent with overblocking.
 
 ## Relevant completed artifacts
 
@@ -77,14 +72,12 @@ Passes:
 - `research/98-e11-full-dev-validation-private-score-results.md`
 - `research/results/e12-hard-gate-root-cause-audit-summary-2026-08-16.json`
 - `research/100-e12-hard-gate-root-cause-audit-results.md`
-- `research/experiments/e13-preregistered-reprocess-authorization-boundary-manifest.json`
-- `research/101-e13-preregistered-reprocess-authorization-boundary.md`
-- `research/experiments/e13-dev-only-reprocess-authorization-boundary-manifest.json`
-- `scripts/research/e13_dev_only_reprocess_authorization_boundary.py`
-- `research/102-e13-dev-only-reprocess-authorization-boundary.md`
-- `.github/workflows/research-e13.yml`
 - `research/results/e13-dev-only-private-score-summary-2026-08-16.json`
 - `research/103-e13-dev-only-private-score-results.md`
+- `research/experiments/e13-blocker-audit-non-validation-tuned-manifest.json`
+- `scripts/research/e13_blocker_audit_non_validation_tuned.py`
+- `research/104-e13-blocker-audit-non-validation-tuned.md`
+- `.github/workflows/research-e13-blocker-audit.yml`
 
 ## Gate decision
 
@@ -92,7 +85,7 @@ E13 is not promotable to a full DEV+VALIDATION remeasurement.
 
 The reprocess-specific boundary moved in the intended safety direction, but overcorrected: action correctness collapsed to 0.0, decision correctness dropped to 0.4, one parsed output was missing, and real task quality fell below the preregistered DEV floor.
 
-No full DEV+VALIDATION rerun is allowed. No integration. No demo. No final architecture freeze.
+No full DEV+VALIDATION rerun is allowed. No integration. No demo. No final architecture freeze. No new candidate is allowed until the E13 blocker audit identifies the DEV blocker class and a later change is preregistered without VALIDATION tuning.
 
 ## Current action checklist
 
@@ -109,19 +102,20 @@ No full DEV+VALIDATION rerun is allowed. No integration. No demo. No final archi
 - [x] Identify root-cause class.
 - [x] Preregister E13 root-cause-specific reprocess authorization boundary.
 - [x] Implement only the preregistered E13 boundary as a DEV-only candidate.
-- [x] Add E13 dry-run CI guard.
-- [x] Run E13 DEV-only capture.
-- [x] Score E13 DEV-only after outputs are fixed.
+- [x] Run and score E13 DEV-only.
 - [x] Record E13 DEV-only as failed acceptance.
-- [ ] Decide next non-validation-tuned E13 blocker audit before any further candidate.
+- [x] Prepare E13 blocker audit non-tuned by VALIDATION.
+- [x] Add E13 blocker audit dry-run CI guard.
+- [ ] Run E13 blocker audit locally against non-committed E13 capture.
+- [ ] Record sanitized E13 blocker audit result.
 - [ ] Keep final architecture unfrozen.
 
-## E13 next-step constraints
+## E13 blocker audit constraints
 
 - No integration.
 - No demo.
-- No full rerun before DEV-only acceptance.
-- No new candidate unrelated to E13 DEV action collapse and parse missing.
+- No full rerun.
+- No next candidate merely because the audit is ready.
 - No use of VALIDATION for tuning.
 - No use of private expected paths, private oracle values, raw scorer rows, output hashes, validation feedback, evaluator labels, reference trajectories, `eval/expected-paths.json`, `docs/test-scenarios.md`, `data/cases.parquet`, or LOCKED_TEST.
 
@@ -131,4 +125,4 @@ No full DEV+VALIDATION rerun is allowed. No integration. No demo. No final archi
 - LOCKED_TEST remains blocked until final evaluation.
 - VALIDATION must not be used for tuning loops.
 - No final architecture freeze yet.
-- No demo or integration while the current safety gate remains incomplete.
+- No demo or integration while the current safety/action gate remains incomplete.
