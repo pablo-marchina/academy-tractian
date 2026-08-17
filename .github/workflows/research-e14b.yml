@@ -1,0 +1,41 @@
+name: research-e14b-dev-only-evidence-action-decision-reconciliation
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/111-e14-real-dev-measurement-result.md'
+      - 'research/112-e14b-dev-only-evidence-action-decision-reconciliation.md'
+      - 'research/results/e14-real-dev-sanitized-summary.json'
+      - 'research/experiments/e14b-*.json'
+      - 'scripts/research/e14b_*.py'
+      - '.github/workflows/research-e14b.yml'
+  pull_request:
+    paths:
+      - 'research/111-e14-real-dev-measurement-result.md'
+      - 'research/112-e14b-dev-only-evidence-action-decision-reconciliation.md'
+      - 'research/results/e14-real-dev-sanitized-summary.json'
+      - 'research/experiments/e14b-*.json'
+      - 'scripts/research/e14b_*.py'
+      - '.github/workflows/research-e14b.yml'
+
+jobs:
+  e14b-dev-only-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E14b DEV-only evidence/action/decision reconciliation dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14b_dev_only_evidence_action_decision_reconciliation.py
+          --manifest research/experiments/e14b-dev-only-evidence-action-decision-reconciliation-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14b-dev-only-dry-run.json
+          --dry-run
+      - name: Upload E14b dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14b-dev-only-evidence-action-decision-reconciliation-dry-run
+          path: /tmp/e14b-dev-only-dry-run.json
