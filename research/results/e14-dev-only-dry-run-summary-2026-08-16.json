@@ -1,0 +1,42 @@
+{
+  "report_id": "e14-dev-only-dry-run-summary-2026-08-16",
+  "date": "2026-08-16",
+  "status": "E14_DEV_ONLY_STRUCTURAL_DRY_RUN_PASS",
+  "scope": "DEV-only structural dry-run",
+  "commit": "b89bd6f04bd1f2f9c7f48599832837dffbd153b1",
+  "github_actions_run_id": 31986947329,
+  "external_model_calls_made": false,
+  "validation_ran": false,
+  "validation_used_for_tuning": false,
+  "locked_test_accessed": false,
+  "final_architecture_freeze": false,
+  "metrics": {
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "scoreable_calls": 6,
+    "completeness_pass": true,
+    "retry_count": 0,
+    "repair_count": 0,
+    "target_reprocess_outputs_checked": 6,
+    "authorized_target_reprocess_outputs": 3,
+    "blocked_target_reprocess_outputs": 3
+  },
+  "structural_checks": {
+    "syntax_only_json_repair_self_check": true,
+    "strong_visible_support_authorizes_reprocess": true,
+    "weak_generic_support_blocks_reprocess": true,
+    "semantic_fields_invented_by_repair": false,
+    "fail_closed_completeness_gate_enabled": true
+  },
+  "interpretation": "The E14 implementation passes structural CI and exercises both sides of the selective reprocess boundary. This dry-run is not real model-quality evidence and does not satisfy the E14 DEV private-scoring acceptance gate.",
+  "next_allowed_step": "Run the real zero-cost E14 DEV-only capture with the existing Groq opt-in, keep the fixed-output file private, and score the six DEV outputs with E9 v3 against the private DEV oracle. Do not run VALIDATION unless all E14 DEV acceptance thresholds pass.",
+  "sanitization": {
+    "raw_fixed_outputs_committed": false,
+    "raw_score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_oracle_values_committed": false,
+    "private_paths_committed": false,
+    "validation_feedback_committed": false,
+    "locked_test_material_committed": false
+  }
+}
