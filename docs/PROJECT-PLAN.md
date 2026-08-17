@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E12 hard-gate root-cause audit passed; over-permissive/wrong authorization class identified  
+**Status:** E13 reprocess-specific authorization boundary preregistered; implementation not started  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 22:04 BRT  
+**Progress checkpoint:** 2026-08-16 22:10 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
@@ -15,7 +15,9 @@ The full scorer run was valid: 12 fixed calls, 12 parsed model outputs, 5 privat
 
 Project rule: no integration, no demo and no downstream phase while the current gate or any dependency used by it remains incomplete.
 
-E12 has now passed as a hard-gate root-cause audit. It confirms that the E11 independent action-authorization policy did run on full DEV+VALIDATION, checked all 12 outputs, covered both DEV and VALIDATION, and changed 0 outputs. Root-cause class: `policy_executed_but_over_permissive_or_wrong_authorization_class`.
+E12 passed as a hard-gate root-cause audit. It confirmed that the E11 independent action-authorization policy did run on full DEV+VALIDATION, checked all 12 outputs, covered both DEV and VALIDATION, and changed 0 outputs. Root-cause class: `policy_executed_but_over_permissive_or_wrong_authorization_class`.
+
+E13 is now preregistered only. It is not an implementation, not a full rerun, not integration and not demo. It directly targets the E12 root cause by adding a stricter boundary for autonomous `POST /analyses/{analysis_id}/reprocess` authorization.
 
 ## Full score history
 
@@ -31,30 +33,6 @@ E12 has now passed as a hard-gate root-cause audit. It confirms that the E11 ind
 | Unsupported final-claim rate | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 | Proxy success rate | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
 | Proxy-vs-real disagreement rate | 1.0 | 0.5 | 0.5 | 0.5 | 0.5 |
-
-## E12 audit findings
-
-| Finding | Result |
-|---|---:|
-| Top-level policy present | true |
-| Top-level policy enabled | true |
-| Total outputs checked | 12 |
-| Total outputs changed | 0 |
-| DEV outputs checked | 6 |
-| VALIDATION outputs checked | 6 |
-| DEV outputs authorized | 6 |
-| VALIDATION outputs authorized | 6 |
-| DEV outputs changed | 0 |
-| VALIDATION outputs changed | 0 |
-| Validation used for tuning | false |
-| LOCKED_TEST accessed | false |
-
-## E12 split score context
-
-| Split | Calls | Real quality | Decision | Evidence | Action | Escalation | Premature action | Unsupported claim |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| DEV | 6 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 0.0 | 0.0 |
-| VALIDATION | 6 | 0.6429 | 0.5 | 0.5 | 0.5 | 0.0 | 0.5 | 0.0 |
 
 ## Root-cause class
 
@@ -78,6 +56,30 @@ autonomous_state_change via POST /analyses/{analysis_id}/reprocess
 
 All audited outputs had 7 detected evidence families, which means the current evidence-family count threshold is too weak to discriminate the failing full behavior.
 
+## E13 preregistered change
+
+E13 preregisters one root-cause-specific change:
+
+```text
+reprocess_specific_authorization_boundary
+```
+
+Target endpoint:
+
+```text
+POST /analyses/{analysis_id}/reprocess
+```
+
+Target failure mode:
+
+```text
+over_permissive_authorization_of_autonomous_reprocess_actions
+```
+
+Preregistered rule: do not authorize autonomous reprocess from generic evidence-family counts or generic human-review markers. Authorize `POST /analyses/{analysis_id}/reprocess` only when endpoint-specific visible evidence shows that the existing analysis itself is invalid, failed, stale, incomplete, blocked by data-quality failure, or otherwise unsafe to rely on without recomputation.
+
+If endpoint-specific reprocess-defect evidence is missing, the policy must downgrade to investigation or human handoff without executing reprocess.
+
 ## Relevant completed artifacts
 
 - `research/results/e11-full-dev-validation-private-score-summary-2026-08-16.json`
@@ -88,14 +90,16 @@ All audited outputs had 7 detected evidence families, which means the current ev
 - `.github/workflows/research-e12.yml`
 - `research/results/e12-hard-gate-root-cause-audit-summary-2026-08-16.json`
 - `research/100-e12-hard-gate-root-cause-audit-results.md`
+- `research/experiments/e13-preregistered-reprocess-authorization-boundary-manifest.json`
+- `research/101-e13-preregistered-reprocess-authorization-boundary.md`
 
 ## Gate decision
 
 E11 remains not promotable to integration.
 
-E12 is complete as an audit gate, but it does not itself authorize a new candidate. A new candidate may only be preregistered after this root-cause class is addressed directly without VALIDATION tuning.
+E13 is only a preregistration. It does not authorize integration, demo, a full rerun or final architecture freeze.
 
-No integration. No demo. No UI/final architecture progression. No full rerun. No new candidate without preregistration grounded in the E12 root-cause class.
+The only next implementation allowed is one that directly implements the preregistered reprocess-specific authorization boundary, then runs DEV-only before any full DEV+VALIDATION measurement.
 
 ## Current action checklist
 
@@ -108,12 +112,22 @@ No integration. No demo. No UI/final architecture progression. No full rerun. No
 - [x] Prepare, run and score E11 full DEV+VALIDATION.
 - [x] Record full E11 as not promotable because premature action remains 0.25.
 - [x] Preregister E12 hard-gate root-cause audit.
-- [x] Add E12 audit script.
-- [x] Add E12 dry-run CI guard.
-- [x] Run E12 audit locally against non-committed E11 full capture.
-- [x] Record sanitized E12 audit result.
-- [ ] Decide whether to preregister a root-cause-specific change.
+- [x] Run E12 audit locally and record sanitized result.
+- [x] Identify root-cause class.
+- [x] Preregister E13 root-cause-specific reprocess authorization boundary.
+- [ ] Implement only the preregistered E13 boundary as a DEV-only candidate.
+- [ ] Run E13 DEV-only capture.
+- [ ] Score E13 DEV-only after outputs are fixed.
 - [ ] Keep final architecture unfrozen.
+
+## E13 next-step constraints
+
+- No integration.
+- No demo.
+- No full rerun before DEV-only acceptance.
+- No new candidate unrelated to over-permissive reprocess authorization.
+- No use of VALIDATION for tuning.
+- No use of private expected paths, private oracle values, raw scorer rows, output hashes, validation feedback, evaluator labels, reference trajectories, `eval/expected-paths.json`, `docs/test-scenarios.md`, `data/cases.parquet`, or LOCKED_TEST.
 
 ## Methodological constraints
 
