@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E11 full DEV+VALIDATION safety regression persists; integration blocked  
+**Status:** E11 full safety regression persists; E12 hard-gate root-cause audit ready  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 21:49 BRT  
+**Progress checkpoint:** 2026-08-16 21:58 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
@@ -12,6 +12,8 @@ E11 passed DEV-only private scoring after the E10h blocker analysis introduced i
 Decision: do not promote E11 to integration gates. E11 full matches E10d/E10e/E10g full: it improves over the E9 full baseline in average task quality, evidence and action, but the full premature-action safety regression persists at `premature_action_rate = 0.25`. The required full safety gate is `premature_action_rate = 0.0`.
 
 The full scorer run is valid: 12 fixed calls, 12 parsed model outputs, 5 private oracles loaded, 12 matching oracle calls and 12 scoreable calls. VALIDATION was measurement-only, not tuning. LOCKED_TEST remains blocked and final architecture remains unfrozen.
+
+Project rule: no integration, no demo and no downstream phase while the current gate or any dependency used by it remains incomplete.
 
 ## Full score history
 
@@ -37,29 +39,29 @@ The full scorer run is valid: 12 fixed calls, 12 parsed model outputs, 5 private
 
 ## Relevant completed artifacts
 
-- `research/results/e10g-full-dev-validation-private-score-summary-2026-08-16.json`
-- `research/93-e10g-full-dev-validation-private-score-results.md`
-- `research/experiments/e10h-non-validation-tuned-safety-blocker-analysis-manifest.json`
-- `research/results/e10h-non-validation-tuned-safety-blocker-analysis-summary-2026-08-16.json`
-- `research/94-e10h-non-validation-tuned-safety-blocker-analysis.md`
-- `research/experiments/e11-dev-only-independent-action-authorization-manifest.json`
-- `scripts/research/e11_dev_only_independent_action_authorization.py`
-- `research/95-e11-dev-only-independent-action-authorization.md`
-- `.github/workflows/research-e11.yml`
-- `research/results/e11-dev-only-private-score-summary-2026-08-16.json`
-- `research/96-e11-dev-only-private-score-results.md`
-- `research/experiments/e11-full-dev-validation-remeasurement-manifest.json`
-- `scripts/research/e11_full_dev_validation_capture.py`
-- `research/97-e11-full-dev-validation-remeasurement.md`
-- `.github/workflows/research-e11-full.yml`
 - `research/results/e11-full-dev-validation-private-score-summary-2026-08-16.json`
 - `research/98-e11-full-dev-validation-private-score-results.md`
+
+## E12 hard-gate root-cause audit ready
+
+E12 is not a demo, not integration, not a new product and not a new guard. It audits E11 full capture instrumentation before any next design step.
+
+Artifacts ready:
+
+- `research/experiments/e12-hard-gate-root-cause-audit-manifest.json`
+- `scripts/research/e12_hard_gate_root_cause_audit.py`
+- `research/99-e12-hard-gate-root-cause-audit.md`
+- `.github/workflows/research-e12.yml`
+
+E12 audits whether the independent action-authorization policy actually ran on full DEV+VALIDATION, how many outputs it checked, how many it changed, whether it covered both DEV and VALIDATION, and whether the failure class is policy non-application, partial coverage, over-permissive authorization or wrong action-class/endpoint classification.
+
+E12 may use local non-committed E11 full fixed-capture metadata plus sanitized aggregate score summaries. It must not use private expected paths, raw scorer rows, output hashes, evaluator labels, reference trajectories, validation feedback, `eval/expected-paths.json`, `docs/test-scenarios.md`, `data/cases.parquet` or LOCKED_TEST.
 
 ## Gate decision
 
 E11 is not promotable to integration.
 
-Full E11 passes the average-quality floor but fails the safety gate. Because E10d, E10e, E10g and E11 full runs all preserve the same `premature_action_rate = 0.25`, the next step should not be a VALIDATION-tuned patch. It should be a non-validation-tuned authorization instrumentation audit or design diagnosis using only DEV/public invariants and sanitized aggregate evidence.
+No next candidate is allowed until E12 identifies the root-cause class. No full rerun is allowed until a later change is preregistered from that root-cause class without VALIDATION tuning.
 
 ## Current action checklist
 
@@ -67,19 +69,15 @@ Full E11 passes the average-quality floor but fails the safety gate. Because E10
 - [x] Keep VALIDATION protected from tuning.
 - [x] Keep LOCKED_TEST blocked.
 - [x] Record E10h non-validation-tuned blocker analysis.
-- [x] Identify the general safety-design failure mode without tuning on VALIDATION.
-- [x] Record that the next candidate should be independent action authorization.
 - [x] Prepare E11 independent action-authorization policy from DEV/public invariants only.
-- [x] Add E11 dry-run CI guard.
-- [x] Run E11 DEV-only capture locally.
-- [x] Score E11 DEV-only with E9 v3 private scorer.
-- [x] Record E11 as DEV-only safety/action acceptance target met.
-- [x] Prepare full DEV+VALIDATION E11 remeasurement runner.
-- [x] Add full E11 dry-run CI guard.
-- [x] Run full DEV+VALIDATION E11 remeasurement locally.
-- [x] Score full E11 with E9 v3 private scorer.
+- [x] Run and score E11 DEV-only.
+- [x] Prepare, run and score E11 full DEV+VALIDATION.
 - [x] Record full E11 as not promotable because premature action remains 0.25.
-- [ ] Decide next non-validation-tuned authorization instrumentation audit or design diagnosis.
+- [x] Preregister E12 hard-gate root-cause audit.
+- [x] Add E12 audit script.
+- [x] Add E12 dry-run CI guard.
+- [ ] Run E12 audit locally against non-committed E11 full capture.
+- [ ] Record sanitized E12 audit result.
 - [ ] Keep final architecture unfrozen.
 
 ## Methodological constraints
@@ -88,3 +86,4 @@ Full E11 passes the average-quality floor but fails the safety gate. Because E10
 - LOCKED_TEST remains blocked until final evaluation.
 - VALIDATION must not be used for tuning loops.
 - No final architecture freeze yet.
+- No demo or integration while the current safety gate remains incomplete.
