@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -91,6 +92,22 @@ BOUNDARY_SECTIONS = {
     "selective_reprocess_authorization_boundary": "e14_selective_reprocess_boundary",
 }
 
+CONCRETE_ENDPOINT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("concrete_analysis_reprocess_path", re.compile(r"^post\s+/analyses/[^/\s]+/reprocess/?$")),
+    ("concrete_analysis_request_specialist_path", re.compile(r"^post\s+/analyses/[^/\s]+/request-specialist/?$")),
+    ("concrete_model_request_retraining_path", re.compile(r"^post\s+/models/[^/\s]+/request-retraining/?$")),
+    ("concrete_asset_patch_path", re.compile(r"^patch\s+/assets/[^/\s]+/?$")),
+    ("concrete_case_escalate_path", re.compile(r"^post\s+/cases/[^/\s]+/escalate/?$")),
+)
+
+ENDPOINT_LIKE_MARKERS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("analysis_reprocess_like", ("/analyses/", "reprocess")),
+    ("analysis_request_specialist_like", ("/analyses/", "request-specialist")),
+    ("model_request_retraining_like", ("/models/", "request-retraining")),
+    ("asset_patch_like", ("patch", "/assets/")),
+    ("case_escalate_like", ("/cases/", "escalate")),
+)
+
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -116,6 +133,20 @@ def safe_reason(value: Any) -> str:
     if reason in PUBLIC_BOUNDARY_REASON_CODES or reason == "none":
         return reason
     return "other_public_reason"
+
+
+def classify_unrecognized_endpoint_shape(value: Any) -> str:
+    """Classify endpoint shape without printing concrete identifiers or raw text."""
+    endpoint = normalize(value)
+    for label, pattern in CONCRETE_ENDPOINT_PATTERNS:
+        if pattern.fullmatch(endpoint):
+            return label
+    matched_like = [label for label, markers in ENDPOINT_LIKE_MARKERS if all(marker in endpoint for marker in markers)]
+    if len(matched_like) > 1:
+        return "multiple_supported_endpoint_shapes_in_one_value"
+    if len(matched_like) == 1:
+        return f"{matched_like[0]}_with_extra_or_noncanonical_text"
+    return "other_unrecognized_shape"
 
 
 def public_boundary_summary(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -171,6 +202,7 @@ def main() -> int:
 
     decision_counts: Counter[str] = Counter()
     endpoint_counts: Counter[str] = Counter()
+    unrecognized_endpoint_shape_counts: Counter[str] = Counter()
     trace_counts: Counter[str] = Counter()
     embedded_applied_counts: Counter[str] = Counter()
     embedded_reason_counts: dict[str, Counter[str]] = {}
@@ -221,6 +253,7 @@ def main() -> int:
                 action_endpoint_public += 1
             else:
                 endpoint_counts["unrecognized_or_missing"] += 1
+                unrecognized_endpoint_shape_counts[classify_unrecognized_endpoint_shape(endpoint)] += 1
                 action_endpoint_unrecognized += 1
 
         for key, value in output.items():
@@ -247,6 +280,7 @@ def main() -> int:
             "public_action_endpoint_counts": dict(sorted(endpoint_counts.items())),
             "public_action_endpoint_values_counted": action_endpoint_public,
             "unrecognized_action_endpoint_values": action_endpoint_unrecognized,
+            "unrecognized_endpoint_shape_counts": dict(sorted(unrecognized_endpoint_shape_counts.items())),
         },
         "evidence_plan_aggregates": {
             "plan_length": number_summary(evidence_plan_lengths),
@@ -273,6 +307,7 @@ def main() -> int:
         "prints_oracle_data": False,
         "prints_evaluator_labels": False,
         "prints_unallowlisted_reason_text": False,
+        "prints_concrete_endpoint_identifiers": False,
     }
     print(json.dumps(result, indent=2))
     return 0
