@@ -1,6 +1,6 @@
 # Systematic Research Hub
 
-**Status: E0–E3 frozen/complete; E4–E14 measured; E14 real DEV gate failed; E14b DEV-only candidate implemented and structural dry-run passed**  
+**Status: E0–E3 frozen/complete; E4–E14 measured; E14 real DEV gate failed; E14b real DEV measured and rejected; semantic/boundary diagnosis pending before E14c**  
 **Date:** 2026-08-17
 
 The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, measured guarded-boundary/runtime/MCP/model experiments, and a hard safety/action gate that is still blocking downstream product integration.
@@ -9,7 +9,7 @@ Production architecture is **not frozen**. No demo/UI/integration phase is autho
 
 ## Current gate — E14 / E14b
 
-The first complete recovered E14 real DEV measurement on Groq `openai/gpt-oss-20b` is now valid:
+The first complete recovered E14 real DEV measurement on Groq `openai/gpt-oss-20b` was valid:
 
 | Capture validity metric | Result |
 |---|---:|
@@ -21,7 +21,7 @@ The first complete recovered E14 real DEV measurement on Groq `openai/gpt-oss-20
 | VALIDATION ran | false |
 | LOCKED_TEST accessed | false |
 
-Private E9 v3 scoring then produced the following sanitized aggregate result:
+Private E9 v3 scoring produced:
 
 | Metric | E14 real DEV | Required | Gate |
 |---|---:|---:|---|
@@ -33,49 +33,59 @@ Private E9 v3 scoring then produced the following sanitized aggregate result:
 | Premature action rate | 0.0000 | 0.0000 | PASS |
 | Unsupported final-claim rate | 0.0000 | 0.0000 | PASS |
 
-The real run produced zero target reprocess outputs, so the E14 selective-reprocess boundary was not exercised by the model outputs. The active blocker is therefore upstream: evidence coverage, endpoint/action selection, and decision reconciliation.
+The real E14 run produced zero target reprocess outputs, so the E14 selective-reprocess boundary was not exercised by those model outputs.
 
-Sanitized record:
+E14b then tested one prompt-policy-only intervention on the same recovered provider/model/settings. Its real DEV capture was also complete and valid:
+
+| Capture validity metric | E14b result |
+|---|---:|
+| Fixed DEV calls | 6 |
+| Parsed outputs | 6 |
+| Scoreable outputs | 6 |
+| Completeness pass | true |
+| Retries | 2 |
+| Syntax repairs | 0 |
+| VALIDATION ran | false |
+| LOCKED_TEST accessed | false |
+
+Private E9 v3 scoring for E14b produced:
+
+| Metric | E14 | E14b | Required | E14b gate |
+|---|---:|---:|---:|---|
+| Real task quality | 0.7381 | 0.6429 | >= 0.8571 | **FAIL** |
+| Decision correctness | 0.5000 | 0.5000 | >= 0.7500 | **FAIL** |
+| Evidence correctness | 0.5000 | 0.3333 | 1.0000 | **FAIL** |
+| Action correctness | 0.1667 | 0.0000 | >= 0.7500 | **FAIL** |
+| Escalation correctness | 1.0000 | 0.6667 | 1.0000 | **FAIL** |
+| Premature action rate | 0.0000 | 0.0000 | 0.0000 | PASS |
+| Unsupported final-claim rate | 0.0000 | 0.0000 | 0.0000 | PASS |
+
+Because E14 and E14b used the same recovered provider/model/settings and same DEV gate, the E14b candidate is rejected: the broad evidence/endpoint/reconciliation prompt degraded every positive-quality metric except decision correctness, which stayed unchanged, while preserving the two explicit safety rates.
+
+The next step is **not another model run**. Before E14c is preregistered, the already-fixed E14b capture must be inspected using the sanitized semantic/boundary diagnostic to determine whether action/evidence collapse originated in the GPT-OSS output itself or in deterministic post-model guards/authorization layers.
+
+```text
+existing private E14b fixed capture
+→ sanitized aggregate semantic/boundary diagnostic
+→ identify model-side vs post-model-policy-side blocker
+→ preregister at most one E14c change class
+→ structural dry-run
+→ only then another real DEV measurement
+```
+
+Sanitized records and current diagnostics:
 
 - `111-e14-real-dev-measurement-result.md`
 - `results/e14-real-dev-sanitized-summary.json`
-
-E14b is the next candidate **inside the same E14 hard gate**. It changes prompt policy only for the provider-forced GPT-OSS replacement model:
-
-```text
-visible packet
-→ concrete evidence plan
-→ supported-endpoint consideration
-→ decision/action/escalation reconciliation
-→ existing E14 selective-reprocess boundary
-→ fixed output
-→ private E9 v3 scorer
-```
-
-E14b preserves:
-
-- Groq `openai/gpt-oss-20b`;
-- temperature `0`;
-- reasoning effort `medium`;
-- max completion tokens `1600`;
-- JSON Object Mode;
-- E14 completeness behavior;
-- E14 selective reprocess boundary;
-- DEV groups/repeats;
-- E9 v3 scorer;
-- every acceptance threshold;
-- no VALIDATION tuning and no LOCKED_TEST.
-
-E14b artifacts:
-
 - `112-e14b-dev-only-evidence-action-decision-reconciliation.md`
 - `experiments/e14b-dev-only-evidence-action-decision-reconciliation-manifest.json`
-- `../scripts/research/e14b_dev_only_evidence_action_decision_reconciliation.py`
-- `../.github/workflows/research-e14b.yml`
+- `113-e14b-real-dev-measurement-result.md`
+- `results/e14b-real-dev-sanitized-summary.json`
+- `../scripts/research/e14_semantic_boundary_diagnostic.py`
 
-Structural E14b dry-run has passed in GitHub Actions. This is instrumentation/policy-shape evidence only; real model quality remains unmeasured until the next complete DEV capture and private E9 v3 score.
+E14b is rejected. E14c is **not yet preregistered**.
 
-Required E14b DEV acceptance remains unchanged:
+Required DEV acceptance remains unchanged:
 
 | Target | Required |
 |---|---:|
@@ -152,7 +162,7 @@ DEV-only iterations improved evidence/action/escalation behavior, but full DEV+V
 
 Relevant records: `74`–`98`.
 
-### E12–E14b — root cause, provider recovery, completeness and upstream reconciliation
+### E12–E14b — root cause, provider recovery, completeness and rejected upstream reconciliation
 
 E12 identified the dominant class as:
 
@@ -162,9 +172,11 @@ policy_executed_but_over_permissive_or_wrong_authorization_class
 
 E13 then overcorrected and blocked every parsed reprocess target. E14 added complete capture and selective reprocess authorization. During real E14 measurement, the originally configured Groq model was externally shut down; the replacement `openai/gpt-oss-20b` required a documented compatibility recovery for completion budget before a valid 6/6 measurement was possible.
 
-That complete E14 measurement failed the DEV quality gate while preserving safety/escalation and produced no reprocess-target outputs. E14b therefore moves the active DEV intervention upstream to evidence→endpoint→decision reconciliation without changing the post-output boundary or scorer.
+The complete E14 measurement failed the DEV quality gate while preserving safety/escalation and produced no reprocess-target outputs. E14b moved the DEV intervention upstream with a broad evidence→endpoint→decision reconciliation prompt, but the complete real E14b measurement degraded task quality, evidence, action and escalation. E14b is therefore rejected.
 
-Relevant records: `99`–`112`.
+No E14c semantic change is authorized until sanitized instrumentation determines whether the current collapse is model-side or caused by post-model guards/authorization boundaries.
+
+Relevant records: `99`–`113`.
 
 ## Explicit non-decisions
 
@@ -201,13 +213,18 @@ The following remain intentionally unfrozen:
 - LOCKED_TEST remains off-limits until final evaluation.
 - Do not commit raw fixed outputs, private oracle rows, output hashes, private local paths or evaluator-only labels.
 - Provider-forced model substitutions must be documented; historical cross-model deltas must not be interpreted causally.
+- After a failed semantic candidate, diagnose model output versus deterministic post-model policy effects before introducing another prompt or boundary change.
 
 ## Critical path
 
 ```text
-E14b real zero-cost DEV capture
-→ E9 v3 private DEV scoring
-→ if and only if every unchanged E14 gate threshold passes: measurement-only DEV+VALIDATION rerun
+sanitized semantic/boundary diagnosis of existing E14b capture
+→ determine model-side vs post-model-policy-side blocker
+→ preregister one E14c DEV-only change, if justified
+→ structural dry-run
+→ complete real E14c DEV capture
+→ private E9 v3 DEV scoring
+→ if and only if every unchanged E14 threshold passes: measurement-only DEV+VALIDATION rerun
 → safety/action gate decision
 → architecture decisions backed by accumulated experiments/ADRs
 → integration/demo implementation
