@@ -1,0 +1,39 @@
+name: research-e14-dev-only-completeness-selective-reprocess
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/106-e14-preregistered-completeness-selective-reprocess.md'
+      - 'research/107-e14-dev-only-completeness-selective-reprocess.md'
+      - 'research/experiments/e14-*.json'
+      - 'scripts/research/e14_*.py'
+      - '.github/workflows/research-e14.yml'
+  pull_request:
+    paths:
+      - 'research/106-e14-preregistered-completeness-selective-reprocess.md'
+      - 'research/107-e14-dev-only-completeness-selective-reprocess.md'
+      - 'research/experiments/e14-*.json'
+      - 'scripts/research/e14_*.py'
+      - '.github/workflows/research-e14.yml'
+
+jobs:
+  e14-dev-only-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E14 DEV-only completeness/selectivity dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14_dev_only_completeness_selective_reprocess.py
+          --manifest research/experiments/e14-dev-only-completeness-selective-reprocess-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14-dev-only-dry-run.json
+          --dry-run
+      - name: Upload E14 dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14-dev-only-completeness-selective-reprocess-dry-run
+          path: /tmp/e14-dev-only-dry-run.json
