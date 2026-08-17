@@ -15,6 +15,17 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+SAFE_PROVIDER_CATEGORIES = {
+    "rate_limit",
+    "provider_server_failure",
+    "authentication_or_authorization_failure",
+    "model_or_endpoint_unavailable",
+    "non_retryable_request_failure",
+    "network_or_transient_failure",
+    "unknown_provider_failure",
+    "unclassified_provider_failure",
+}
+
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -30,6 +41,7 @@ def main() -> int:
     calls = stage.get("calls", []) if isinstance(stage, dict) else []
 
     attempt_failures: Counter[str] = Counter()
+    provider_categories: Counter[str] = Counter()
     calls_with_model_failure = 0
     calls_with_parse_failure = 0
     calls_with_parsed_output = 0
@@ -50,6 +62,12 @@ def main() -> int:
                 calls_with_model_failure += 1
             if "output_parse_failed" in safe_failures:
                 calls_with_parse_failure += 1
+        categories = comp.get("sanitized_provider_failure_categories") or []
+        if isinstance(categories, list):
+            provider_categories.update(
+                str(x) if str(x) in SAFE_PROVIDER_CATEGORIES else "unclassified_provider_failure"
+                for x in categories
+            )
         retry_count += int(comp.get("retry_count") or 0)
         repair_count += int(comp.get("repair_count") or 0)
         if isinstance(call.get("parsed_output"), dict):
@@ -72,6 +90,7 @@ def main() -> int:
             "model_call_failed": attempt_failures.get("model_call_failed", 0),
             "output_parse_failed": attempt_failures.get("output_parse_failed", 0),
         },
+        "provider_failure_category_counts": dict(sorted(provider_categories.items())),
         "calls_with_any_model_call_failure": calls_with_model_failure,
         "calls_with_any_parse_failure": calls_with_parse_failure,
         "provider_models_observed_on_successful_calls": sorted(models),
