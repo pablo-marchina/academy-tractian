@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E13 reprocess-specific authorization boundary preregistered; implementation not started  
+**Status:** E13 DEV-only reprocess authorization boundary ready  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 22:10 BRT  
+**Progress checkpoint:** 2026-08-16 22:16 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
@@ -17,7 +17,7 @@ Project rule: no integration, no demo and no downstream phase while the current 
 
 E12 passed as a hard-gate root-cause audit. It confirmed that the E11 independent action-authorization policy did run on full DEV+VALIDATION, checked all 12 outputs, covered both DEV and VALIDATION, and changed 0 outputs. Root-cause class: `policy_executed_but_over_permissive_or_wrong_authorization_class`.
 
-E13 is now preregistered only. It is not an implementation, not a full rerun, not integration and not demo. It directly targets the E12 root cause by adding a stricter boundary for autonomous `POST /analyses/{analysis_id}/reprocess` authorization.
+E13 has now implemented only the preregistered root-cause-specific change as a DEV-only candidate. It targets autonomous `POST /analyses/{analysis_id}/reprocess` authorization and does not authorize reprocess from generic evidence-family counts or generic human-review markers.
 
 ## Full score history
 
@@ -56,9 +56,9 @@ autonomous_state_change via POST /analyses/{analysis_id}/reprocess
 
 All audited outputs had 7 detected evidence families, which means the current evidence-family count threshold is too weak to discriminate the failing full behavior.
 
-## E13 preregistered change
+## E13 implemented boundary
 
-E13 preregisters one root-cause-specific change:
+E13 implements one root-cause-specific change:
 
 ```text
 reprocess_specific_authorization_boundary
@@ -76,9 +76,11 @@ Target failure mode:
 over_permissive_authorization_of_autonomous_reprocess_actions
 ```
 
-Preregistered rule: do not authorize autonomous reprocess from generic evidence-family counts or generic human-review markers. Authorize `POST /analyses/{analysis_id}/reprocess` only when endpoint-specific visible evidence shows that the existing analysis itself is invalid, failed, stale, incomplete, blocked by data-quality failure, or otherwise unsafe to rely on without recomputation.
+Rule implemented: do not authorize autonomous reprocess from generic evidence-family counts or generic human-review markers. Authorize `POST /analyses/{analysis_id}/reprocess` only when endpoint-specific visible evidence shows that the existing analysis itself is invalid, failed, stale, incomplete, blocked by data-quality failure, or otherwise unsafe to rely on without recomputation.
 
-If endpoint-specific reprocess-defect evidence is missing, the policy must downgrade to investigation or human handoff without executing reprocess.
+If endpoint-specific reprocess-defect evidence is missing, E13 downgrades immediate reprocess to investigation or human handoff without executing reprocess.
+
+The E13 dry-run CI passed without external model calls.
 
 ## Relevant completed artifacts
 
@@ -92,14 +94,18 @@ If endpoint-specific reprocess-defect evidence is missing, the policy must downg
 - `research/100-e12-hard-gate-root-cause-audit-results.md`
 - `research/experiments/e13-preregistered-reprocess-authorization-boundary-manifest.json`
 - `research/101-e13-preregistered-reprocess-authorization-boundary.md`
+- `research/experiments/e13-dev-only-reprocess-authorization-boundary-manifest.json`
+- `scripts/research/e13_dev_only_reprocess_authorization_boundary.py`
+- `research/102-e13-dev-only-reprocess-authorization-boundary.md`
+- `.github/workflows/research-e13.yml`
 
 ## Gate decision
 
 E11 remains not promotable to integration.
 
-E13 is only a preregistration. It does not authorize integration, demo, a full rerun or final architecture freeze.
+E13 is ready for DEV-only local capture and private scoring. It does not authorize integration, demo, a full rerun or final architecture freeze.
 
-The only next implementation allowed is one that directly implements the preregistered reprocess-specific authorization boundary, then runs DEV-only before any full DEV+VALIDATION measurement.
+No full DEV+VALIDATION rerun is allowed unless E13 passes DEV-only first.
 
 ## Current action checklist
 
@@ -115,7 +121,8 @@ The only next implementation allowed is one that directly implements the preregi
 - [x] Run E12 audit locally and record sanitized result.
 - [x] Identify root-cause class.
 - [x] Preregister E13 root-cause-specific reprocess authorization boundary.
-- [ ] Implement only the preregistered E13 boundary as a DEV-only candidate.
+- [x] Implement only the preregistered E13 boundary as a DEV-only candidate.
+- [x] Add E13 dry-run CI guard.
 - [ ] Run E13 DEV-only capture.
 - [ ] Score E13 DEV-only after outputs are fixed.
 - [ ] Keep final architecture unfrozen.
