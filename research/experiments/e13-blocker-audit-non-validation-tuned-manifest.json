@@ -1,0 +1,67 @@
+{
+  "experiment_id": "E13_BLOCKER_AUDIT_NON_VALIDATION_TUNED",
+  "status": "PREREGISTERED_AUDIT_READY",
+  "date": "2026-08-16",
+  "purpose": "Audit E13 DEV-only failure without tuning on VALIDATION, focusing on action collapse and missing parsed output.",
+  "is_demo": false,
+  "is_integration": false,
+  "is_new_product": false,
+  "is_new_guard": false,
+  "is_next_candidate": false,
+  "scope": {
+    "allowed_splits": ["DEV"],
+    "forbidden_splits": ["VALIDATION", "LOCKED_TEST"],
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false,
+    "final_architecture_freeze": false
+  },
+  "source_failure_context": {
+    "e13_status": "E13_DEV_ONLY_PRIVATE_SCORE_ACTION_COLLAPSE_AND_PARSE_MISSING",
+    "fixed_calls_consumed": 6,
+    "parsed_model_outputs_available": 5,
+    "scoreable_calls": 5,
+    "real_task_quality": 0.7714,
+    "decision_correctness": 0.4,
+    "evidence_correctness": 1.0,
+    "action_correctness": 0.0,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "audit_questions": [
+    "Did the E13 reprocess-specific boundary run on the DEV capture?",
+    "How many parsed outputs did it check?",
+    "How many outputs did it change?",
+    "Did it downgrade all autonomous reprocess actions, causing action collapse?",
+    "Which public/sanitized reason categories caused downgrades?",
+    "Which group/repeat lacked a parsed output without exposing raw output or hashes?"
+  ],
+  "allowed_inputs": [
+    "local non-committed E13 DEV-only fixed capture metadata",
+    "sanitized E13 aggregate score summary",
+    "DEV/public invariants already documented in repo"
+  ],
+  "forbidden_inputs": [
+    "VALIDATION tuning",
+    "private expected paths",
+    "private oracle values",
+    "raw scorer rows",
+    "output hashes in committed artifacts",
+    "raw fixed parsed outputs in committed artifacts",
+    "validation feedback",
+    "evaluator labels",
+    "reference trajectories",
+    "eval/expected-paths.json in model/policy/audit output",
+    "docs/test-scenarios.md",
+    "data/cases.parquet",
+    "LOCKED_TEST"
+  ],
+  "gate_decision": {
+    "integration_allowed": false,
+    "demo_allowed": false,
+    "full_rerun_allowed": false,
+    "next_candidate_allowed": false,
+    "next_candidate_condition": "Only after this audit identifies a DEV-only blocker class and a later change is preregistered without VALIDATION tuning."
+  }
+}
