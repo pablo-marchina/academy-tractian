@@ -1,0 +1,102 @@
+{
+  "id": "e14c-dev-only-public-endpoint-canonicalization",
+  "date": "2026-08-17",
+  "status": "PREREGISTERED_DEV_ONLY_CANDIDATE",
+  "parent_gate": "E14",
+  "phase_gate_mode": "hard_phase_gate",
+  "is_demo": false,
+  "is_integration": false,
+  "is_full_rerun": false,
+  "final_architecture_freeze": false,
+  "purpose": "Fix a deterministic public-contract representation mismatch that causes concrete valid action paths to be rejected by post-model guards that compare only against template-form endpoints.",
+  "root_cause_source": {
+    "record": "E14b sanitized semantic-boundary diagnostic, 2026-08-17",
+    "sanitized_blocker_class": "public_action_endpoint_concrete_path_rejected_by_template_equality_guard",
+    "observed_aggregate_facts": {
+      "total_calls": 6,
+      "e10e_outputs_changed": 3,
+      "e10e_unsupported_action_endpoint_visible": 2,
+      "e10e_visible_rubric_not_safe_to_act": 1,
+      "unrecognized_endpoint_values": 3,
+      "unrecognized_endpoint_shape_concrete_case_escalate_path": 3,
+      "e10g_outputs_changed": 0,
+      "e11_outputs_changed": 0,
+      "e14_outputs_changed": 0,
+      "target_reprocess_outputs_checked": 0
+    },
+    "interpretation": "Two E10e downgrades are attributable to endpoint representation mismatch. The third downgrade is an explicit safe_to_act=false safety block and must remain blocked. Later guards saw already-downgraded outputs and therefore cannot be used to infer their behavior on the original immediate-action proposals."
+  },
+  "candidate_change": {
+    "name": "public_tool_contract_endpoint_comparison_canonicalization",
+    "change_class": "deterministic_public_contract_normalization_only",
+    "implementation_scope": "DEV-only",
+    "requirements": [
+      "derive all supported action endpoint shapes from research.e2.tool_registry.TOOLS rather than a new hand-maintained endpoint list",
+      "map an exact concrete public action path to the equivalent canonical template only in the temporary guard-comparison view",
+      "preserve the model-emitted endpoint string in the stored fixed output",
+      "reject query strings, fragments, extra text, wrong HTTP methods, and unrecognized endpoint shapes",
+      "apply the canonical comparison view before E10d, E10e, E10g, E11, and E13/E14 endpoint decisions",
+      "preserve explicit safe_to_act=false as a blocking condition",
+      "make no model-facing prompt change"
+    ]
+  },
+  "comparison_anchor": {
+    "candidate": "recovered E14 DEV",
+    "provider": "groq",
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "max_completion_tokens": 1600,
+    "response_format": "json_object",
+    "note": "E14b is rejected and is diagnostic evidence only; E14c does not inherit the E14b prompt-policy change."
+  },
+  "constants_preserved": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "max_completion_tokens": 1600,
+    "response_format": "json_object",
+    "prompt_policy": "recovered_E14_baseline",
+    "dev_groups": ["asset_G501", "asset_C710", "asset_S420"],
+    "repeats_per_group": 2,
+    "expected_total_calls": 6,
+    "e10d_escalation_consistency_guard": true,
+    "e10e_premature_action_guard": true,
+    "e10g_balanced_action_guard": true,
+    "e11_independent_action_authorization": true,
+    "e14_selective_reprocess_boundary": true,
+    "e9_v3_private_scorer": true,
+    "acceptance_thresholds_unchanged": true
+  },
+  "forbidden_inputs_or_changes": {
+    "validation_split": true,
+    "locked_test_split": true,
+    "validation_feedback": true,
+    "private_oracle_in_model_or_policy": true,
+    "private_expected_paths_in_model_or_policy": true,
+    "raw_scorer_rows_in_model_or_policy": true,
+    "output_hashes_in_model_prompt": true,
+    "evaluator_labels_in_model_or_policy": true,
+    "model_change": true,
+    "prompt_change": true,
+    "reasoning_effort_change": true,
+    "completion_budget_change": true,
+    "threshold_change": true,
+    "stored_model_endpoint_rewrite": true,
+    "relax_safe_to_act_false_guard": true
+  },
+  "acceptance_before_full_remeasurement": {
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "minimum_real_task_quality": 0.8571,
+    "minimum_decision_correctness": 0.75,
+    "minimum_action_correctness": 0.75,
+    "minimum_evidence_correctness": 1.0,
+    "minimum_escalation_correctness": 1.0,
+    "locked_test_accessed": false
+  },
+  "full_remeasurement_condition": "Only a complete E14c DEV run that passes every unchanged private-scoring threshold may authorize a measurement-only DEV+VALIDATION rerun. VALIDATION remains forbidden for tuning."
+}
