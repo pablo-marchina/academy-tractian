@@ -1,32 +1,90 @@
 # Systematic Research Hub
 
-**Status: E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 ACTIVE**  
+**Status: E0–E3 frozen/complete; E4–E13 measured; E14 implemented and structural dry-run passed; real E14 DEV quality gate pending**  
 **Date:** 2026-08-16
 
-The project now has the updated TAPI, kickoff evidence, the actual TRACTIAN package, frozen contract/gold semantics, a validated framework-neutral experimental harness, a frozen leakage-aware benchmark split and the first DEV model-proposal boundary run.
+The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, measured guarded-boundary/runtime/MCP/model experiments, and a hard safety/action gate that is still blocking downstream product integration.
+
+Production architecture is **not frozen**. No demo/UI/integration phase is authorized while the E14 real DEV gate remains incomplete.
+
+## Current gate — E14
+
+E13 failed DEV-only for two independent reasons:
+
+- one of six fixed DEV calls did not produce a parsed output after a model-call failure;
+- the E13 reprocess-specific boundary blocked all five parsed target reprocess actions, collapsing action correctness while preserving safety.
+
+E14 preregistered and implemented exactly one candidate class:
+
+```text
+completeness_preserving_selective_reprocess_authorization
+```
+
+Implementation artifacts:
+
+- `106-e14-preregistered-completeness-selective-reprocess.md`
+- `107-e14-dev-only-completeness-selective-reprocess.md`
+- `108-e14-dev-only-structural-dry-run-results.md`
+- `experiments/e14-preregistered-completeness-selective-reprocess-manifest.json`
+- `experiments/e14-dev-only-completeness-selective-reprocess-manifest.json`
+- `../scripts/research/e14_completeness_capture.py`
+- `../scripts/research/e14_selective_reprocess.py`
+- `../scripts/research/e14_dev_only_completeness_selective_reprocess.py`
+- `../.github/workflows/research-e14.yml`
+
+Structural CI result:
+
+| Metric | Result |
+|---|---:|
+| Fixed DEV calls | 6 |
+| Parsed outputs | 6 |
+| Scoreable outputs | 6 |
+| Completeness pass | true |
+| Target reprocess outputs | 6 |
+| Authorized targets | 3 |
+| Blocked targets | 3 |
+| VALIDATION ran | false |
+| LOCKED_TEST accessed | false |
+
+This is structural dry-run evidence only. Real E14 DEV model outputs still require private E9 v3 scoring before any full DEV+VALIDATION remeasurement.
+
+Required real DEV acceptance:
+
+| Target | Required |
+|---|---:|
+| Parsed outputs | 6 |
+| Scoreable calls | 6 |
+| Premature action rate | 0.0 |
+| Unsupported final-claim rate | 0.0 |
+| Real task quality | >= 0.8571 |
+| Decision correctness | >= 0.75 |
+| Action correctness | >= 0.75 |
+| Evidence correctness | 1.0 |
+| Escalation correctness | 1.0 |
+| LOCKED_TEST accessed | false |
 
 ## Frozen evidence/contracts
 
-### E0 — Contract
+### E0 — Contract frozen
 
-- `research/34-e0-contract-freeze-v1.md`
-- `research/frozen/e0-contract-freeze.manifest.json`
-- `research/frozen/API-BEHAVIOR-MAP-v1.json`
+- `34-e0-contract-freeze-v1.md`
+- `frozen/e0-contract-freeze.manifest.json`
+- `frozen/API-BEHAVIOR-MAP-v1.json`
 
-Frozen facts include 18 operations / 17 path templates, the duplicate `/assets/{assetId}` GET+PATCH mapping, explicit `camelCase → snake_case` canonical argument transformation, runner-bound identity/seed and accepted-event/non-persistent action semantics.
+Frozen facts include 18 operations / 17 path templates, duplicate `/assets/{assetId}` GET+PATCH handling, explicit canonical argument transformation, runner-bound identity/seed, and accepted-event/non-persistent action semantics.
 
-### E1 — Gold / ScenarioSchema
+### E1 — Gold / ScenarioSchema frozen
 
-- `research/35-e1-gold-freeze-v1.md`
-- `research/frozen/e1-gold-freeze.manifest.json`
+- `35-e1-gold-freeze-v1.md`
+- `frozen/e1-gold-freeze.manifest.json`
 
-Frozen benchmark structure: 16 narrative scenarios, 17 tickets and 10 asset/story groups. Machine trajectories are references, not scripts. Gold remains evaluator-only and is not copied into agent context.
+Frozen benchmark structure: 16 narrative scenarios, 17 tickets and 10 asset/story groups. Machine trajectories are references, not scripts. Gold remains evaluator-only and is never copied into agent context.
 
-### E2 — Executable harness
+### E2 — Executable harness complete
 
-`research/e2/` contains framework-neutral contracts and validated experimental infrastructure:
+`e2/` contains the framework-neutral experimental infrastructure:
 
-- executable ScenarioSchema v1 models;
+- executable ScenarioSchema models;
 - 18-operation Canonical ToolSpec registry;
 - runner-owned identity/seed binding;
 - B0 HTTP transport;
@@ -34,57 +92,64 @@ Frozen benchmark structure: 16 narrative scenarios, 17 tickets and 10 asset/stor
 - deterministic B2 permission/resource guard;
 - evidence-aware B3 action gate;
 - integrated `HarnessRunner`;
-- TraceSchema v1 and deterministic replay;
-- integrated deterministic evaluator suite.
+- TraceSchema and deterministic replay;
+- deterministic evaluator suite.
 
-Completion report: `research/39-e2-integrated-completion-report.md`.
+Completion report: `39-e2-integrated-completion-report.md`.
 
-### E3 — Benchmark split
-
-Frozen split artifacts:
-
-- `research/40-e3-benchmark-split-freeze-v1.md`
-- `research/frozen/benchmark-split-v1.json`
-- `scripts/research/e3_validate_split.py`
-
-Assignment:
+### E3 — Benchmark split frozen
 
 - **DEV:** `asset_G501`, `asset_C710`, `asset_S420`, `asset_M208`, `asset_M101` — 5 groups / 8 scenarios.
 - **VALIDATION:** `asset_B204`, `asset_M102` — 2 groups / 3 scenarios.
 - **LOCKED_TEST:** `asset_V301`, `asset_M605`, `asset_M205` — 3 groups / 5 scenarios.
 
-The split is group-level, coverage-aware and locked before any runtime/model/prompt/architecture optimization. Locked-test groups may be used only for metadata counting, coverage inspection and leakage assertions until final evaluation.
+The split is group-level and leakage-aware. LOCKED_TEST remains forbidden for architecture/model/prompt/runtime selection.
 
-### E4 — Guarded-boundary experiment
+## Experiment progression
 
-Active artifacts:
+### E4–E7 — boundary, runtime and MCP
 
-- `research/41-e4-guarded-boundary-experiment-preregistration.md`
-- `research/42-e4-execution-start-report.md`
-- `research/43-e4-first-dev-model-proposal-results.md`
-- `research/experiments/e4-b0-b3-experiment-manifest.json`
-- `research/experiments/e4-dev-model-proposal-plan-gpt-5-5-thinking-2026-08-16.json`
-- `research/results/e4-dev-model-proposal-boundary-summary-2026-08-16.json`
-- `scripts/research/e4_validate_experiment_manifest.py`
-- `scripts/research/e4_dev_runner.py`
-- `scripts/research/e4_model_proposal_adapter.py`
+The guarded-boundary experiment established that deterministic policy/resource guards can contain unsafe proposals that minimally wrapped variants execute. Subsequent runtime/MCP spikes were used as project-specific evidence rather than architecture commitments.
 
-First DEV model-proposal boundary result:
+Relevant records begin at `41-e4-guarded-boundary-experiment-preregistration.md` and continue through `59-e7-topology-adr.md`.
 
-| Variant | Proposals | Executed calls | Blocked calls | Permission/scope executions | Contained unsafe proposals | Uncontained safety failures |
-|---|---:|---:|---:|---:|---:|---:|
-| B0 | 27 | 27 | 0 | 1 | 0 | 1 |
-| B1 | 27 | 27 | 0 | 1 | 0 | 1 |
-| B2 | 27 | 26 | 1 | 0 | 1 | 0 |
-| B3 | 27 | 26 | 1 | 0 | 1 | 0 |
+### E8–E9 — model candidate and evaluator-side quality
 
-Interpretation: B2 contained one permission/resource-scope unsafe model proposal that B0/B1 would execute. B1 had no effect in this first plan because arguments were structurally valid. B3 did not add blocking beyond B2 because action proposals were placed after declared evidence requirements.
+E8 established a zero-cost real model path and fixed-output capture. E9 added evaluator-side semantic scoring while preserving strict separation between agent-visible inputs and private gold.
 
-This is boundary evidence only. Full task/conclusion success requires the private DEV evaluator and cannot expose evaluator-only gold in the public repository.
+Relevant records: `60`–`73`.
+
+### E10–E11 — DEV calibration and full safety remeasurement
+
+DEV-only iterations improved evidence/action/escalation behavior, but full DEV+VALIDATION remeasurements exposed a persistent premature-action regression. E11 introduced independent action authorization and passed DEV-only, yet the full safety gate still failed because the authorization remained over-permissive for reprocess.
+
+Relevant records: `74`–`98`.
+
+### E12–E14 — root cause and selective reprocess gate
+
+E12 identified the dominant class as:
+
+```text
+policy_executed_but_over_permissive_or_wrong_authorization_class
+```
+
+E13 then overcorrected and blocked every parsed reprocess target. Its blocker audit led to the E14 completeness + selectivity candidate now implemented and structurally verified.
+
+Relevant records: `99`–`108`.
 
 ## Explicit non-decisions
 
-No agent runtime, model provider selection, MCP topology, RAG stack, vector DB, multi-agent design, routing strategy, persistent-memory design, observability vendor or presentation UI has been selected.
+The following remain intentionally unfrozen:
+
+- final model/provider choice;
+- final agent runtime/framework;
+- final MCP topology;
+- RAG/vector DB;
+- multi-agent decomposition/routing;
+- persistent memory;
+- observability backend/vendor;
+- UI/demo flow;
+- final production architecture.
 
 ## Source hierarchy
 
@@ -96,23 +161,27 @@ No agent runtime, model provider selection, MCP topology, RAG stack, vector DB, 
 6. Reproducible project experiments.
 7. Hypotheses.
 
-## Central hypothesis
+## Methodological rules
 
-> **Does a guarded, contract-aware tool boundary materially improve argument correctness and safety over a minimally wrapped baseline while preserving task success and acceptable efficiency?**
-
-Variants B0–B3 are the core attribution experiment; B4 confirmation remains a separate safety extension unless partner policy changes.
+- Do not freeze architecture because implementation has started.
+- Framework-neutral infrastructure may precede architecture selection; architecture-changing choices require project-specific evidence and an ADR.
+- Boundary/proxy metrics do not equal real task success.
+- Scripted/dry-run outputs validate instrumentation and policy shape only; they are not model-quality evidence.
+- Private evaluator/gold must never enter model prompts or public policy logic.
+- VALIDATION is measurement-only after a DEV candidate passes; it is not a tuning split.
+- LOCKED_TEST remains off-limits until final evaluation.
+- Do not commit raw fixed outputs, private oracle rows, output hashes, private local paths or evaluator-only labels.
 
 ## Critical path
 
-`E0 freeze → E1 freeze → E2 complete → E3 split frozen → B0–B3 boundary evidence → private DEV evaluator → VALIDATION → evidence/stopping → runtime/MCP → statistical pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
+```text
+E14 real zero-cost DEV capture
+→ E9 v3 private DEV scoring
+→ if and only if all E14 DEV thresholds pass: measurement-only DEV+VALIDATION rerun
+→ safety/action gate decision
+→ architecture decisions backed by accumulated experiments/ADRs
+→ integration/demo implementation
+→ final locked evaluation
+```
 
-## Important methodological rules
-
-- Do not freeze a framework because implementation has started.
-- Framework-neutral infrastructure may be implemented before architecture selection; architecture-changing choices require project-specific evidence and an ADR.
-- Boundary metrics do not equal task/conclusion success.
-- Test doubles and scripted reference paths may validate instrumentation/transport/evaluators, but they are never evidence that the agent solves the task.
-- The final demonstration is downstream of the experiments and must show measured behavior rather than hand-scripted success.
-- Locked-test groups are off-limits for architecture/model/prompt/runtime selection.
-
-If schedule pressure appears, cut optional complexity first. Do not weaken contract conformance, gold isolation, evaluator validity, split integrity or locked-test discipline.
+If schedule pressure appears, cut optional complexity first. Do not weaken contract conformance, gold isolation, evaluator validity, split integrity, completeness gates or locked-test discipline.
