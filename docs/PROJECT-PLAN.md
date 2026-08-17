@@ -1,8 +1,8 @@
 # Academy × TRACTIAN — Project Action Plan
 
-**Status:** E13 blocker audit completed; DEV blockers identified  
+**Status:** E14 completeness-preserving selective reprocess boundary preregistered  
 **Planning date:** 2026-08-16  
-**Progress checkpoint:** 2026-08-16 22:45 BRT  
+**Progress checkpoint:** 2026-08-16 22:50 BRT  
 **Target final delivery:** 2026-09-08
 
 ## Current gate
@@ -17,7 +17,9 @@ E13 implemented only the preregistered root-cause-specific change as a DEV-only 
 
 E13 DEV-only was scored with E9 v3 after outputs were fixed. The scorer passed, but E13 failed DEV-only acceptance: 6 fixed calls were consumed, 5 parsed outputs were available, and only 5 calls were scoreable. Safety remained clean on scoreable calls, but action collapsed and average quality fell below the preregistered floor.
 
-E13 blocker audit has now completed. It identified four DEV blocker classes: `parsed_output_missing_in_dev_capture`, `boundary_changed_all_target_reprocess_actions`, `action_collapse_consistent_with_overblocking_reprocess_boundary`, and `decision_regression_after_reprocess_downgrade`.
+E13 blocker audit completed. It identified four DEV blocker classes: `parsed_output_missing_in_dev_capture`, `boundary_changed_all_target_reprocess_actions`, `action_collapse_consistent_with_overblocking_reprocess_boundary`, and `decision_regression_after_reprocess_downgrade`.
+
+E14 is now preregistered only. It is not implementation, demo, integration, full rerun or architecture freeze. It addresses both E13 DEV blockers: complete parsed DEV outputs and selective reprocess authorization that preserves correct action while retaining the zero-premature/zero-unsupported safety floor.
 
 Project rule: no integration, no demo and no downstream phase while the current gate or any dependency used by it remains incomplete.
 
@@ -90,6 +92,21 @@ action_collapse_consistent_with_overblocking_reprocess_boundary
 decision_regression_after_reprocess_downgrade
 ```
 
+## E14 preregistered change
+
+```text
+completeness_preserving_selective_reprocess_authorization
+```
+
+E14 must address both DEV blockers:
+
+1. **Completeness:** guarantee 6/6 parsed DEV outputs and 6/6 scoreable DEV calls before DEV acceptance.
+2. **Selectivity:** avoid overblocking every target `POST /analyses/{analysis_id}/reprocess` action; preserve reprocess when visible support is sufficient, while maintaining `premature_action_rate = 0.0` and `unsupported_final_claim_rate = 0.0`.
+
+Completeness may use retry of failed model calls or parse failures and deterministic JSON/schema repair only when no semantic field is invented. It must fail closed if 6/6 parsed outputs are not achieved.
+
+Selectivity must not authorize reprocess from generic evidence-family count or generic human-review markers alone. It may authorize exact `POST /analyses/{analysis_id}/reprocess` only when visible public/runtime evidence includes concrete endpoint support anchors: visible analysis/resource identifier, asset or case identifier, action limited to reprocess, human-readable evidence-to-action reason, and at least two concrete support anchors such as sensor/RMS/spectrum/baseline/data-quality observation, diagnosis incompleteness, stale/failed/unreliable analysis signal, mismatch with current evidence, request for updated analysis, or knowledge/model context showing reprocess is the low-risk diagnostic action.
+
 ## Relevant completed artifacts
 
 - `research/results/e11-full-dev-validation-private-score-summary-2026-08-16.json`
@@ -98,26 +115,18 @@ decision_regression_after_reprocess_downgrade
 - `research/100-e12-hard-gate-root-cause-audit-results.md`
 - `research/results/e13-dev-only-private-score-summary-2026-08-16.json`
 - `research/103-e13-dev-only-private-score-results.md`
-- `research/experiments/e13-blocker-audit-non-validation-tuned-manifest.json`
-- `scripts/research/e13_blocker_audit_non_validation_tuned.py`
-- `research/104-e13-blocker-audit-non-validation-tuned.md`
-- `.github/workflows/research-e13-blocker-audit.yml`
 - `research/results/e13-blocker-audit-non-validation-tuned-summary-2026-08-16.json`
 - `research/105-e13-blocker-audit-non-validation-tuned-results.md`
+- `research/experiments/e14-preregistered-completeness-selective-reprocess-manifest.json`
+- `research/106-e14-preregistered-completeness-selective-reprocess.md`
 
 ## Gate decision
 
 E13 is not promotable to a full DEV+VALIDATION remeasurement.
 
-The reprocess-specific boundary moved in the intended safety direction, but overcorrected: action correctness collapsed to 0.0, decision correctness dropped to 0.4, one parsed output was missing, and real task quality fell below the preregistered DEV floor.
+E14 is preregistration only. It does not authorize implementation beyond the described candidate class, integration, demo, a full rerun, a new product, or final architecture freeze.
 
-No full DEV+VALIDATION rerun is allowed. No integration. No demo. No final architecture freeze. No new candidate is allowed merely because the audit completed.
-
-A later candidate may only be preregistered after this audit is reviewed, and it must address both DEV blockers without VALIDATION tuning:
-
-- preserve complete parsed DEV outputs;
-- avoid overblocking every correct DEV target reprocess action;
-- retain `premature_action_rate = 0.0` and `unsupported_final_claim_rate = 0.0`.
+A later E14 implementation must pass DEV-only before any full DEV+VALIDATION measurement is prepared.
 
 ## Current action checklist
 
@@ -139,15 +148,16 @@ A later candidate may only be preregistered after this audit is reviewed, and it
 - [x] Prepare E13 blocker audit non-tuned by VALIDATION.
 - [x] Run E13 blocker audit locally against non-committed E13 capture.
 - [x] Record sanitized E13 blocker audit result.
-- [ ] Decide whether to preregister a later change addressing both E13 DEV blockers.
+- [x] Preregister E14 completeness-preserving selective reprocess candidate.
+- [ ] Implement only the preregistered E14 candidate as DEV-only.
 - [ ] Keep final architecture unfrozen.
 
-## E13 blocker audit constraints
+## E14 constraints
 
 - No integration.
 - No demo.
-- No full rerun.
-- No next candidate merely because the audit is complete.
+- No full rerun before DEV-only acceptance.
+- No implementation outside the preregistered candidate class.
 - No use of VALIDATION for tuning.
 - No use of private expected paths, private oracle values, raw scorer rows, output hashes, validation feedback, evaluator labels, reference trajectories, `eval/expected-paths.json`, `docs/test-scenarios.md`, `data/cases.parquet`, or LOCKED_TEST.
 
