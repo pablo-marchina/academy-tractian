@@ -23,21 +23,6 @@ E14 is now preregistered only. It is not implementation, demo, integration, full
 
 Project rule: no integration, no demo and no downstream phase while the current gate or any dependency used by it remains incomplete.
 
-## Full score history
-
-| Metric | E9 full | E10d full | E10e full | E10g full | E11 full |
-|---|---:|---:|---:|---:|---:|
-| Scoreable calls | 12 | 12 | 12 | 12 | 12 |
-| Real task quality | 0.631 | 0.8214 | 0.8214 | 0.8214 | 0.8214 |
-| Decision correctness | 0.6667 | 0.75 | 0.75 | 0.75 | 0.75 |
-| Evidence correctness | 0.0 | 0.75 | 0.75 | 0.75 | 0.75 |
-| Action correctness | 0.25 | 0.75 | 0.75 | 0.75 | 0.75 |
-| Escalation correctness | 0.5 | 0.5 | 0.5 | 0.5 | 0.5 |
-| Premature action rate | 0.0 | 0.25 | 0.25 | 0.25 | 0.25 |
-| Unsupported final-claim rate | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| Proxy success rate | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
-| Proxy-vs-real disagreement rate | 1.0 | 0.5 | 0.5 | 0.5 | 0.5 |
-
 ## E13 DEV-only score
 
 | Metric | E11 DEV-only | E13 DEV-only |
@@ -59,29 +44,14 @@ Project rule: no integration, no demo and no downstream phase while the current 
 | Finding | Result |
 |---|---:|
 | DEV calls observed | 6 |
-| Expected DEV calls | 6 |
 | Parsed DEV outputs available | 5 |
 | Missing parsed output count | 1 |
-| Boundary rows available | 5 |
 | Target reprocess rows | 5 |
 | Authorized rows | 0 |
 | Blocked rows | 5 |
 | Changed rows | 5 |
-| Unchanged rows | 0 |
 | Validation calls read | 0 |
 | LOCKED_TEST accessed | false |
-
-Missing parsed output:
-
-| Group | Split | Repeat index |
-|---|---|---:|
-| `asset_S420` | DEV | 0 |
-
-Dominant boundary reason:
-
-| Reason | Count |
-|---|---:|
-| `missing_endpoint_specific_reprocess_defect_evidence` | 5 |
 
 Root-cause classes:
 
@@ -109,12 +79,6 @@ Selectivity must not authorize reprocess from generic evidence-family count or g
 
 ## Relevant completed artifacts
 
-- `research/results/e11-full-dev-validation-private-score-summary-2026-08-16.json`
-- `research/98-e11-full-dev-validation-private-score-results.md`
-- `research/results/e12-hard-gate-root-cause-audit-summary-2026-08-16.json`
-- `research/100-e12-hard-gate-root-cause-audit-results.md`
-- `research/results/e13-dev-only-private-score-summary-2026-08-16.json`
-- `research/103-e13-dev-only-private-score-results.md`
 - `research/results/e13-blocker-audit-non-validation-tuned-summary-2026-08-16.json`
 - `research/105-e13-blocker-audit-non-validation-tuned-results.md`
 - `research/experiments/e14-preregistered-completeness-selective-reprocess-manifest.json`
