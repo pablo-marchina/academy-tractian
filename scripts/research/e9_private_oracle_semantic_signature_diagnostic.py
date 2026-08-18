@@ -2,9 +2,12 @@
 """Aggregate-only semantic-shape diagnostic for private expected paths.
 
 The script may read private expected-path text locally, but it never prints any
-oracle text, ids, asset names, hashes, paths, per-row labels, endpoint names, or
+oracle text, ids, asset names, hashes, paths, endpoint names, per-row labels, or
 per-row results. It reports only aggregate structural signatures needed to
 choose an evaluator implementation strategy before seeing a candidate result.
+
+The public tool contract is parsed statically from research/e2/tool_registry.py
+so this diagnostic has no runtime dependency on pydantic or the application.
 """
 
 from __future__ import annotations
@@ -14,8 +17,6 @@ import json
 import re
 from pathlib import Path
 from typing import Any
-
-from research.e2.tool_registry import TOOLS
 
 NEGATION_MARKERS = (
     " no ", " not ", " don't ", " do not ", " without ", " avoid ", " never ",
@@ -27,6 +28,9 @@ CONDITIONAL_MARKERS = (
 )
 METHOD_RE = re.compile(r"\b(GET|POST|PATCH|PUT|DELETE)\b", re.IGNORECASE)
 PATH_LIKE_RE = re.compile(r"/(?:[A-Za-z0-9_{}-]+/?){1,8}")
+READ_DECL_RE = re.compile(r'read\(\s*"[^"]+"\s*,\s*"[^"]+"\s*,\s*"([^"]+)"')
+ACTION_DECL_RE = re.compile(r'action\(\s*"[^"]+"\s*,\s*"[^"]+"\s*,\s*"([A-Z]+)"\s*,\s*"([^"]+)"')
+TOOL_REGISTRY_PATH = Path("research/e2/tool_registry.py")
 
 
 def _load_json(path: Path) -> Any:
@@ -41,19 +45,20 @@ def _rows(payload: Any) -> list[dict[str, Any]]:
 
 def _template_regex(template: str) -> re.Pattern[str]:
     escaped = re.escape(template.lower())
-    # Replace escaped {placeholder} segments with one concrete path segment.
     escaped = re.sub(r"\\\{[^{}]+\\\}", r"[a-z0-9_.:-]+", escaped)
     return re.compile(escaped, re.IGNORECASE)
 
 
-TOOL_PATTERNS = [
-    (
-        str(tool.method).upper(),
-        _template_regex(str(tool.path_template)),
-        str(getattr(tool.kind, "value", tool.kind)).lower(),
-    )
-    for tool in TOOLS
-]
+def _public_tool_patterns() -> list[tuple[str, re.Pattern[str], str]]:
+    source = TOOL_REGISTRY_PATH.read_text(encoding="utf-8")
+    patterns: list[tuple[str, re.Pattern[str], str]] = []
+    for match in READ_DECL_RE.finditer(source):
+        patterns.append(("GET", _template_regex(match.group(1)), "read"))
+    for match in ACTION_DECL_RE.finditer(source):
+        patterns.append((match.group(1).upper(), _template_regex(match.group(2)), "action"))
+    if len(patterns) != 18:
+        raise AssertionError(f"expected 18 public tools, parsed {len(patterns)}")
+    return patterns
 
 
 def _contains_marker(text: str, markers: tuple[str, ...]) -> bool:
@@ -61,30 +66,27 @@ def _contains_marker(text: str, markers: tuple[str, ...]) -> bool:
     return any(marker in padded for marker in markers)
 
 
-def _tool_signature(text: str) -> tuple[bool, bool, bool, bool]:
+def _tool_signature(text: str, patterns: list[tuple[str, re.Pattern[str], str]]) -> tuple[bool, bool, bool, bool]:
     lowered = text.lower()
     method_tokens = {match.group(1).upper() for match in METHOD_RE.finditer(text)}
     any_path = bool(PATH_LIKE_RE.search(text))
     any_tool_path = False
     method_and_tool_path = False
-    matched_read = False
-    matched_action = False
-    for method, path_re, kind in TOOL_PATTERNS:
+    matched_any_tool = False
+    for method, path_re, _kind in patterns:
         if not path_re.search(lowered):
             continue
         any_tool_path = True
+        matched_any_tool = True
         if method in method_tokens:
             method_and_tool_path = True
-        if "read" in kind:
-            matched_read = True
-        if "action" in kind:
-            matched_action = True
-    return any_path, any_tool_path, method_and_tool_path, matched_read or matched_action
+    return any_path, any_tool_path, method_and_tool_path, matched_any_tool
 
 
 def run(path: Path) -> dict[str, Any]:
     payload = _load_json(path)
     rows = _rows(payload)
+    patterns = _public_tool_patterns()
 
     total_steps = 0
     steps_with_method = 0
@@ -113,7 +115,7 @@ def run(path: Path) -> dict[str, Any]:
             note = str(item.get("note") or "")
             if METHOD_RE.search(step):
                 steps_with_method += 1
-            path_like, tool_path, method_tool, any_tool = _tool_signature(step)
+            path_like, tool_path, method_tool, any_tool = _tool_signature(step, patterns)
             if path_like:
                 steps_with_path_like += 1
             if tool_path:
@@ -153,6 +155,7 @@ def run(path: Path) -> dict[str, Any]:
         "status": "E9_PRIVATE_ORACLE_SEMANTIC_SIGNATURE_DIAGNOSTIC",
         "expected_path_rows_found": len(rows),
         "expected_path_steps_found": total_steps,
+        "public_tool_registry_entries_parsed": len(patterns),
         "steps_with_http_method_token": steps_with_method,
         "steps_with_path_like_token": steps_with_path_like,
         "steps_with_recognizable_public_tool_path": steps_with_public_tool_path,
