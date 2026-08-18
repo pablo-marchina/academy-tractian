@@ -1,6 +1,6 @@
 # Systematic Research Hub
 
-**Status: E0–E3 frozen/complete; E4–E14 measured; E14/E14b/E14c/E14d/E14e real DEV gates failed; E14f preregistered, implemented, and structural dry-run passed**  
+**Status: E0–E3 frozen/complete; E4–E14 measured; E14/E14b/E14c/E14d/E14e/E14f real DEV gates failed; E14g model-only candidate preregistered and structural dry-run passed**  
 **Date:** 2026-08-17
 
 The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, measured guarded-boundary/runtime/MCP/model experiments, and a hard safety/action gate that is still blocking downstream product integration.
@@ -9,22 +9,22 @@ Production architecture is **not frozen**. No demo/UI/integration phase is autho
 
 ## Current real DEV gate sequence
 
-| Metric | E14 | E14b | E14c | E14d | E14e | Required |
-|---|---:|---:|---:|---:|---:|---:|
-| Parsed / scoreable | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 |
-| Real task quality | 0.7381 | 0.6429 | 0.8333 | 0.8095 | 0.7619 | >= 0.8571 |
-| Decision correctness | 0.5000 | 0.5000 | 0.6667 | 0.8333 | 0.6667 | >= 0.7500 |
-| Evidence correctness | 0.5000 | 0.3333 | 1.0000 | 0.6667 | 0.5000 | 1.0000 |
-| Action correctness | 0.1667 | 0.0000 | 0.1667 | 0.3333 | 0.3333 | >= 0.7500 |
-| Escalation correctness | 1.0000 | 0.6667 | 1.0000 | 0.8333 | 0.8333 | 1.0000 |
-| Premature action rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
-| Unsupported final-claim rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+| Metric | E14 | E14b | E14c | E14d | E14e | E14f | Required |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Parsed / scoreable | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 |
+| Real task quality | 0.7381 | 0.6429 | 0.8333 | 0.8095 | 0.7619 | 0.6429 | >= 0.8571 |
+| Decision correctness | 0.5000 | 0.5000 | 0.6667 | 0.8333 | 0.6667 | 0.5000 | >= 0.7500 |
+| Evidence correctness | 0.5000 | 0.3333 | 1.0000 | 0.6667 | 0.5000 | 0.1667 | 1.0000 |
+| Action correctness | 0.1667 | 0.0000 | 0.1667 | 0.3333 | 0.3333 | 0.3333 | >= 0.7500 |
+| Escalation correctness | 1.0000 | 0.6667 | 1.0000 | 0.8333 | 0.8333 | 0.5000 | 1.0000 |
+| Premature action rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+| Unsupported final-claim rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
 
-E14b is rejected. E14c, E14d and E14e are valid but failed DEV candidates. Cross-generation score deltas are not interpreted as paired causal effects.
+E14b is rejected. E14c–E14f are valid but failed DEV candidates. Cross-generation score deltas are not interpreted as paired causal effects.
 
 VALIDATION remains blocked. LOCKED_TEST remains untouched.
 
-## Structural findings retained
+## Deterministic boundary findings retained
 
 ### E14c — public action endpoint representation
 
@@ -36,39 +36,56 @@ E14d fixed the analogous concrete-vs-template mismatch for the same ten historic
 
 ### E14d / E14e boundary closure
 
-The E10e `too_few_concrete_evidence_resources_for_state_change` reprocess proposal was not a precedence bug. In both the E14d and E14e fixed captures, the specialized E14 counterfactual rejected the same class because it lacked a human-readable visible evidence-to-reprocess reason and had zero of the required two selective support-anchor classes. Therefore E10e threshold/order and E14 selective-reprocess semantics remain unchanged.
+The E10e `too_few_concrete_evidence_resources_for_state_change` reprocess proposal was not a precedence bug. In both E14d and E14e fixed captures, the specialized E14 counterfactual rejected the same class because it lacked a human-readable visible evidence-to-reprocess reason and had zero of the required two selective support-anchor classes. E10e threshold/order and E14 selective-reprocess semantics remain unchanged.
 
-E14e replaced only the historical broad E10d marker-substring fallback with an explicit positive current-handoff phrase fallback. In the real E14e run, E10d changed two outputs only for strong preserved reasons:
-
-```text
-explicit_current_handoff_phrase:                         1
-state_changing_action_requires_visible_human_loop_guard: 1
-```
-
-E10g and E11 changed zero outputs. The remaining E10e changes were one explicit `visible_rubric_needs_more_evidence` contradiction and one weak reprocess that E14 would also reject. This closes the current deterministic post-model boundary hypotheses. Further threshold relaxation is not supported by public evidence.
+E14e replaced only the historical broad E10d marker-substring fallback with an explicit positive current-handoff phrase fallback. In real E14e, E10d changed outputs only for strong preserved reasons. E10g and E11 changed zero outputs. Current public evidence does not support further downstream guard or threshold relaxation.
 
 ## E14f — conditional public semantic repair
 
-E14f is preregistered as a single upstream intervention relative to E14e:
-
-```text
-conditional_public_semantic_consistency_repair_before_guards_only
-```
-
-The unchanged initial E14e model call runs first. Only a parseable draft containing a preregistered public contradiction receives one second call to the same GPT-OSS model. The repair receives only the original visible prompt, the model's own draft, and deterministic public consistency codes. It receives no scorer/oracle/VALIDATION/LOCKED_TEST information.
-
-Repair triggers are limited to immediate-action contradictions already represented by the existing public policies: model-declared need for more evidence or unsafe-to-act, unsupported endpoint, decision/action conflict, autonomous state change below the unchanged public evidence minimum, or reprocess lacking the unchanged human-readable reason / two public support anchors.
-
-The repair prompt is deliberately narrow: it forbids invented evidence, forbids adding irrelevant reads just to satisfy counts, treats planned GETs as plans rather than observations, preserves non-conflicting fields where possible, and does not enumerate all endpoints or the full evidence surface. This avoids repeating rejected E14b's broad always-on prompt expansion.
+E14f moved upstream: a parseable draft received at most one second call only when deterministic public consistency checks found a preregistered contradiction. The repair received the original visible prompt, the model's own draft, and public consistency codes only; no scorer/oracle/VALIDATION/LOCKED_TEST information.
 
 ### E14f structural result
 
-GitHub Actions run `32090619168` passed after a fixture-only correction. The first dry-run failure was caused by the weak synthetic fixture itself containing the causal word `because`, which the unchanged E14 policy correctly recognized as a human-readable reason; no E14f policy changed.
+GitHub Actions run `32090619168` passed after a fixture-only correction. The successful dry-run was 6/6, with zero residual public violations after its synthetic repair calls.
 
-Successful structural output:
+### E14f real DEV result
+
+Real E14f was complete and safe but failed the absolute task-quality gate:
 
 ```text
-status:                                   E14F_DEV_ONLY_PUBLIC_SEMANTIC_REPAIR_CAPTURE_PASS
+real_task_quality:      0.6429
+decision_correctness:   0.5000
+evidence_correctness:   0.1667
+action_correctness:     0.3333
+escalation_correctness: 0.5000
+premature_action_rate:  0.0000
+unsupported_claim_rate: 0.0000
+```
+
+The semantic repair triggered once for `immediate_action_while_needs_more_evidence`, produced one parseable repaired response and left zero registered public consistency violations. After repair, E10e/E10g/E11 changed zero outputs and E14 saw zero target reprocess outputs. This supports closing the current downstream-boundary hypothesis set: internal/public consistency alone is not sufficient for benchmark task correctness.
+
+Do not attribute the aggregate E14e→E14f score delta causally to the repair because the model was regenerated.
+
+## E14g — GPT-OSS 120B model-selection candidate
+
+E14g is preregistered as a **single model-only intervention** on top of E14f:
+
+```text
+openai/gpt-oss-20b
+→ openai/gpt-oss-120b
+```
+
+Everything else stays frozen: provider, initial prompt, conditional repair policy, temperature 0, reasoning `medium`, completion budget 1600, JSON Object Mode, E14c/E14d/E14e/E10e/E10g/E11/E14 policies, scorer, split and acceptance thresholds.
+
+E14g is a model-selection experiment, not a paired causal estimate against E14f. Absolute gate performance is the decision criterion.
+
+### E14g structural result
+
+GitHub Actions run `32091361228`, job `95573999025`, passed:
+
+```text
+status:                                   E14G_DEV_ONLY_GPT_OSS_120B_MODEL_SELECTION_CAPTURE_PASS
+model:                                    openai/gpt-oss-120b
 total_calls:                              6
 parsed_model_outputs_available:           6
 scoreable_calls:                          6
@@ -80,22 +97,9 @@ syntax_repair_count:                      0
 semantic_repair_triggered_calls:          3
 semantic_repair_calls:                    3
 semantic_repair_residual_violation_calls: 0
-target_reprocess_outputs_checked:         3
-authorized_target_reprocess_outputs:      3
-blocked_target_reprocess_outputs:         0
 ```
 
-This is structural evidence only, not quality evidence. The next authorized step is one complete real E14f DEV-only capture followed by unchanged private E9 v3 scoring.
-
-E14f artifacts:
-
-- `123-e14e-fixed-capture-boundary-closure.md`
-- `124-e14f-dev-only-public-semantic-repair.md`
-- `125-e14f-structural-dry-run-result.md`
-- `experiments/e14f-dev-only-public-semantic-repair-manifest.json`
-- `../scripts/research/e14f_public_semantic_consistency.py`
-- `../scripts/research/e14f_dev_only_public_semantic_repair.py`
-- `../.github/workflows/research-e14f.yml`
+This is structural evidence only. Before the real run, the no-inference Groq model-list preflight must confirm `openai/gpt-oss-120b` is active and the operator must confirm the intended zero-cost Free Plan boundary.
 
 ## Required DEV acceptance
 
@@ -148,11 +152,15 @@ The split is group-level and leakage-aware. VALIDATION is not a tuning split. LO
 - `122-e14e-real-dev-measurement-result.md`
 - `123-e14e-fixed-capture-boundary-closure.md`
 - `125-e14f-structural-dry-run-result.md`
+- `126-e14f-real-dev-measurement-result.md`
+- `127-e14g-dev-only-gpt-oss-120b-model-selection.md`
+- `128-e14g-structural-dry-run-result.md`
 - `results/e14-real-dev-sanitized-summary.json`
 - `results/e14b-real-dev-sanitized-summary.json`
 - `results/e14c-real-dev-sanitized-summary.json`
 - `results/e14d-real-dev-sanitized-summary.json`
 - `results/e14e-real-dev-sanitized-summary.json`
+- `results/e14f-real-dev-sanitized-summary.json`
 
 ## Explicit non-decisions
 
@@ -182,7 +190,8 @@ The following remain intentionally unfrozen:
 ## Critical path
 
 ```text
-E14f complete real zero-cost DEV capture
+E14g no-inference Groq model preflight
+→ one complete real zero-cost E14g DEV capture
 → unchanged E9 v3 private DEV scoring
 → if and only if every unchanged threshold passes: measurement-only DEV+VALIDATION
 → final safety/action gate decision
