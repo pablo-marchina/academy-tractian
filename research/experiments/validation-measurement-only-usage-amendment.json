@@ -1,0 +1,34 @@
+{
+  "amendment_id": "VALIDATION-MEASUREMENT-ONLY-2026-08-18",
+  "status": "REGISTERED_BEFORE_ANY_VALIDATION_RUN",
+  "date": "2026-08-18",
+  "purpose": "Resolve wording drift between the original frozen split metadata and the later research protocol by making VALIDATION measurement-only after all DEV gates pass.",
+  "split_assignment_changed": false,
+  "benchmark_split_v1_remains_frozen": true,
+  "superseded_usage_wording": {
+    "original_validation_purpose_contains_tune_select_language": true,
+    "groups_or_scenarios_changed": false
+  },
+  "effective_validation_policy": {
+    "validation_is_measurement_only": true,
+    "prompt_tuning_on_validation": false,
+    "model_selection_using_validation_feedback": false,
+    "policy_threshold_tuning_on_validation": false,
+    "guard_tuning_on_validation": false,
+    "evaluator_tuning_on_validation": false,
+    "architecture_ablation_using_validation_feedback": false,
+    "candidate_must_be_frozen_before_validation": true,
+    "full_dev_coverage_gate_required_first": true,
+    "evaluator_validity_gate_required_first": true,
+    "locked_test_remains_final_only": true
+  },
+  "if_validation_fails": {
+    "do_not_tune_on_validation_failure_details": true,
+    "return_to_dev_requires_new_dev_only_hypothesis_from_public_or_dev_permitted_evidence": true,
+    "validation_candidate_reuse_without_new_preregistration": false
+  },
+  "privacy": {
+    "private_validation_oracle_model_visible": false,
+    "locked_test_oracle_visible": false
+  }
+}
