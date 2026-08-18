@@ -19,5 +19,8 @@ jobs:
           python -m py_compile scripts/research/e9_evaluator_side_scorer_v4.py
           python -m py_compile scripts/research/e9_private_oracle_group_ambiguity_diagnostic.py
           python -m py_compile scripts/research/e14m_r1_sanitized_operational_diagnostic.py
+          python -m py_compile scripts/research/e14m_r1_sanitized_operational_diagnostic_selfcheck.py
       - name: Run oracle-free evaluator v4 synthetic validity checks
         run: PYTHONPATH=. python scripts/research/e9_v4_synthetic_selfcheck.py
+      - name: Run E14m-R1 sanitized diagnostic metadata self-check
+        run: PYTHONPATH=. python scripts/research/e14m_r1_sanitized_operational_diagnostic_selfcheck.py
