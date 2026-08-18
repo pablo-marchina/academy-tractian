@@ -1,0 +1,37 @@
+name: research-e14f-dev-only-public-semantic-repair
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/124-e14f-dev-only-public-semantic-repair.md'
+      - 'research/experiments/e14f-*.json'
+      - 'scripts/research/e14f_*.py'
+      - '.github/workflows/research-e14f.yml'
+  pull_request:
+    paths:
+      - 'research/124-e14f-dev-only-public-semantic-repair.md'
+      - 'research/experiments/e14f-*.json'
+      - 'scripts/research/e14f_*.py'
+      - '.github/workflows/research-e14f.yml'
+
+jobs:
+  e14f-dev-only-public-semantic-repair-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E14f DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14f_dev_only_public_semantic_repair.py
+          --manifest research/experiments/e14f-dev-only-public-semantic-repair-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14f-dev-only-public-semantic-repair-dry-run.json
+          --dry-run
+      - name: Upload E14f dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14f-dev-only-public-semantic-repair-dry-run
+          path: /tmp/e14f-dev-only-public-semantic-repair-dry-run.json
