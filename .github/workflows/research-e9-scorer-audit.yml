@@ -1,0 +1,18 @@
+name: research-e9-scorer-audit
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e9-scorer-contract-audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Run oracle-free synthetic scorer audit
+        run: PYTHONPATH=. python scripts/research/e9_scorer_contract_synthetic_audit.py
+      - name: Compile private-oracle shape diagnostic
+        run: python -m py_compile scripts/research/e9_private_oracle_shape_diagnostic.py
