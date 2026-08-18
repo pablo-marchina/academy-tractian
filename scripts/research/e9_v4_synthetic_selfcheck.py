@@ -43,25 +43,47 @@ def call(group: str, payload: dict) -> dict:
 def run() -> dict:
     split = {
         "splits": {
-            "DEV": {"groups": [{"group_id": "asset_X"}, {"group_id": "asset_Y"}, {"group_id": "asset_Z"}]},
+            "DEV": {"groups": [
+                {"group_id": "asset_X"}, {"group_id": "asset_Y"}, {"group_id": "asset_Z"},
+                {"group_id": "asset_W"}, {"group_id": "asset_V"},
+            ]},
             "VALIDATION": {"groups": []},
             "LOCKED_TEST": {"groups": [{"group_id": "asset_L"}]},
         }
     }
+    cases = [
+        {"case_id": "case-x-1", "ticket_id": "ticket-x-1", "asset_id": "asset_X"},
+        # Must be ignored by the runner replay because only the first case per asset is visible.
+        {"case_id": "case-x-2", "ticket_id": "ticket-x-2", "asset_id": "asset_X"},
+        {"case_id": "case-y-1", "ticket_id": "ticket-y-1", "asset_id": "asset_Y"},
+        {"case_id": "case-z-1", "ticket_id": "ticket-z-1", "asset_id": "asset_Z"},
+        {"case_id": "case-w-1", "ticket_id": "ticket-w-1", "asset_id": "asset_W"},
+        {"case_id": "case-v-1", "ticket_id": "ticket-v-1", "asset_id": "asset_V"},
+    ]
     oracle = [
         {
-            "id": "asset_X-row",
-            "ticket_id": "synthetic",
+            "id": "asset_X-row-1",
+            "ticket_id": "ticket-x-1",
             "mode": "execute",
             "root_question": "Should we take action or escalate to a human specialist? This wording must not define the label.",
             "expected_path": [
                 {"step": "GET /assets/asset_X", "note": "read"},
+                {"step": "GET /assets/asset_X/baseline", "note": "second read"},
                 {"step": "POST /analyses/analysis_X/reprocess", "note": "action"},
             ],
         },
         {
+            "id": "asset_X-row-2",
+            "ticket_id": "ticket-x-2",
+            "mode": "investigate",
+            "root_question": "Alternative ticket on same asset must not be unioned.",
+            "expected_path": [
+                {"step": "GET /assets/asset_X/spectrum", "note": "different ticket read"},
+            ],
+        },
+        {
             "id": "asset_Y-row",
-            "ticket_id": "synthetic",
+            "ticket_id": "ticket-y-1",
             "mode": "investigate",
             "root_question": "Execute action specialist human escalation?",
             "expected_path": [
@@ -70,7 +92,7 @@ def run() -> dict:
         },
         {
             "id": "asset_Z-row",
-            "ticket_id": "synthetic",
+            "ticket_id": "ticket-z-1",
             "mode": "execute",
             "root_question": "Generic question",
             "expected_path": [
@@ -78,6 +100,22 @@ def run() -> dict:
                 {"step": "POST /analyses/analysis_Z/request-specialist", "note": "explicit specialist endpoint"},
             ],
         },
+        # Duplicate exact group+ticket must make W unscoreable.
+        {
+            "id": "asset_W-row-a",
+            "ticket_id": "ticket-w-1",
+            "mode": "investigate",
+            "root_question": "duplicate a",
+            "expected_path": [{"step": "GET /assets/asset_W", "note": "read"}],
+        },
+        {
+            "id": "asset_W-row-b",
+            "ticket_id": "ticket-w-1",
+            "mode": "investigate",
+            "root_question": "duplicate b",
+            "expected_path": [{"step": "GET /assets/asset_W/baseline", "note": "read"}],
+        },
+        # V intentionally has no matching oracle row.
     ]
 
     fixed = {
@@ -86,7 +124,8 @@ def run() -> dict:
             "calls": [
                 call("asset_X", output(
                     decision="action_candidate",
-                    evidence=["GET /assets/asset_X"],
+                    # Both reads in one evidence string must be extracted.
+                    evidence=["GET /assets/asset_X then GET /assets/asset_X/baseline before action"],
                     act=True,
                     escalate=False,
                     endpoint="POST /analyses/analysis_X/reprocess",
@@ -109,8 +148,29 @@ def run() -> dict:
         },
     }
 
-    groups = {"asset_X", "asset_Y", "asset_Z"}
-    adapted = v4.adapt_expected_paths(oracle, groups, split)
+    groups = {"asset_X", "asset_Y", "asset_Z", "asset_W", "asset_V"}
+    selected = v4.runner_selected_ticket_by_group(cases, groups)
+    if selected.get("asset_X") != "ticket-x-1":
+        raise AssertionError("runner replay must select first case per asset")
+
+    adapted = v4.adapt_expected_paths(oracle, groups, split, selected)
+    if adapted["asset_X"].get("private_row_count") != 1:
+        raise AssertionError("same-asset alternative ticket must not be unioned")
+    if "GET /assets/{assetId}/spectrum" in adapted["asset_X"].get("expected_read_signatures", set()):
+        raise AssertionError("non-selected ticket evidence leaked into selected-ticket supervision")
+    if adapted["asset_W"].get("alignment_status") != v4.ALIGNMENT_MULTIPLE:
+        raise AssertionError("multiple exact group+ticket rows must be detected")
+    if adapted["asset_V"].get("alignment_status") != v4.ALIGNMENT_NO_MATCH:
+        raise AssertionError("missing exact group+ticket row must be detected")
+    if v4.score_call(call("asset_W", output(
+        decision="investigate_only", evidence=["GET /assets/asset_W"], act=False, escalate=False, endpoint="none"
+    )), adapted["asset_W"]).get("scoreable") is not False:
+        raise AssertionError("multiple-match supervision must be unscoreable")
+    if v4.score_call(call("asset_V", output(
+        decision="investigate_only", evidence=[], act=False, escalate=False, endpoint="none"
+    )), adapted["asset_V"]).get("scoreable") is not False:
+        raise AssertionError("zero-match supervision must be unscoreable")
+
     rows = [v4.score_call(c, adapted.get(c["group_id"])) for c in fixed["stage"]["calls"]]
     if not all(row.get("scoreable") for row in rows):
         raise AssertionError("synthetic valid rows must be scoreable")
@@ -121,7 +181,7 @@ def run() -> dict:
     if not all(row.get("escalation_correct") for row in rows):
         raise AssertionError("synthetic escalation semantics failed")
     if not all(row.get("evidence_correct") for row in rows):
-        raise AssertionError("synthetic evidence-plan isolation semantics failed")
+        raise AssertionError("synthetic evidence-plan isolation/multi-read extraction failed")
 
     # Whole-output text may not replace missing evidence_plan evidence.
     missing_evidence = output(
@@ -159,28 +219,41 @@ def run() -> dict:
         split_path = root / "split.json"
         fixed_path = root / "fixed.json"
         oracle_path = root / "oracle.json"
+        cases_path = root / "cases.json"
         out_path = root / "out.json"
         split_path.write_text(json.dumps(split), encoding="utf-8")
         fixed_path.write_text(json.dumps(fixed), encoding="utf-8")
         oracle_path.write_text(json.dumps(oracle), encoding="utf-8")
+        cases_path.write_text(json.dumps(cases), encoding="utf-8")
         args = type("Args", (), {
             "split_manifest": split_path,
             "fixed_output_file": fixed_path,
             "oracle_file": oracle_path,
+            "agent_input_cases": cases_path,
             "out": out_path,
         })()
         summary = v4.run(args)
         if summary["aggregate_metrics"]["scoreable_calls"] != 3:
             raise AssertionError("v4 synthetic end-to-end scoreable count failed")
+        if summary["inputs"]["private_ticket_aligned_oracles_loaded"] != 3:
+            raise AssertionError("v4 end-to-end unique ticket alignment count failed")
+        if summary["validity"]["visible_case_ticket_alignment_gate_resolved_for_fixed_groups"] is not True:
+            raise AssertionError("fixed groups with unique matches must resolve alignment gate")
+        if summary["validity"]["group_union_used_for_supervision"] is not False:
+            raise AssertionError("v4 must never fall back to group-union supervision")
         if summary["validity"]["validation_gate_authorized"] is not False:
-            raise AssertionError("v4 must remain measurement-only before granularity gate")
+            raise AssertionError("v4 must remain measurement-only before full DEV gate")
         if "rows" in summary or "calls" in summary:
             raise AssertionError("v4 summary must not persist private per-call rows")
 
     return {
         "status": "E9_V4_SYNTHETIC_VALIDITY_SELF_CHECK_PASS",
+        "visible_ticket_alignment_pass": True,
+        "group_union_blocked": True,
+        "zero_or_multiple_alignment_unscoreable": True,
         "root_question_confound_blocked": True,
         "evidence_plan_isolation_pass": True,
+        "multi_read_single_evidence_item_extraction_pass": True,
         "deterministic_action_signature_pass": True,
         "deterministic_explicit_escalation_signature_pass": True,
         "unsupported_action_detection_pass": True,
