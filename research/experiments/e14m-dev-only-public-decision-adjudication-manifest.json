@@ -1,9 +1,16 @@
 {
   "experiment_id": "E14m",
   "title": "DEV-only conditional public decision adjudication for conservative-policy collapse",
-  "status": "PREREGISTERED_BEFORE_IMPLEMENTATION",
+  "status": "PREREGISTERED_BEFORE_IMPLEMENTATION_WITH_PRE_RUN_OPERATIONAL_AMENDMENT",
   "date": "2026-08-18",
   "parent_experiment": "E14l",
+  "preregistration_note": {
+    "core_semantic_intervention_preregistered_before_implementation": true,
+    "operational_fallback_amendment_added_after_semantics_module_but_before_runner_implementation": true,
+    "provider_calls_made_before_amendment": false,
+    "private_scorer_or_oracle_used_before_amendment": false,
+    "amendment_changes_semantic_goal": false
+  },
   "scope": {
     "allowed_splits": ["DEV"],
     "validation_ran": false,
@@ -67,6 +74,13 @@
         "LOCKED_TEST material"
       ],
       "goal": "Reconsider a fully conservative default only when the model's own draft matches the preregistered collapse shape. Retain investigate_only when a concrete visible evidence gap truly blocks both supported action and supported human handoff; otherwise select one supported action or escalation path justified by visible facts. Do not force action or escalation."
+    },
+    "operational_fallback": {
+      "if_second_adjudication_call_raises": "preserve_first_parseable_draft",
+      "if_second_adjudication_output_unparseable": "preserve_first_parseable_draft",
+      "third_semantic_call_allowed": false,
+      "fallback_is_counted_in_sanitized_metadata": true,
+      "rationale": "The intervention must not convert an already parseable parent draft into an operational completeness failure solely because the optional adjudication call fails. Preserving the first draft adds no semantic rescue beyond the parent E14l output."
     }
   },
   "frozen_configuration": {
