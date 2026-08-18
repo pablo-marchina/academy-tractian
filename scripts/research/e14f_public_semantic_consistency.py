@@ -187,7 +187,7 @@ def run_self_checks() -> None:
 
     weak = copy.deepcopy(base)
     weak["evidence_plan"] = ["GET /assets/asset-selfcheck", "GET /analyses/analysis-selfcheck"]
-    weak["proposed_next_step"] = "Reprocess because the endpoint is available."
+    weak["proposed_next_step"] = "Reprocess the current analysis."
     weak["action_escalation_rubric"]["calibration_reason"] = "Generic reprocess request."
     codes = set(public_semantic_violations(weak))
     required = {
