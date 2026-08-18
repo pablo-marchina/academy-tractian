@@ -43,7 +43,10 @@ def main() -> int:
             "ticket_id": "ticket-2",
             "mode": "execute",
             "root_question": "synthetic",
-            "expected_path": [{"step": "POST /analyses/a/reprocess", "note": "synthetic"}],
+            "expected_path": [
+                {"step": "GET /assets/asset_A1", "note": "synthetic same-asset evidence"},
+                {"step": "POST /analyses/a/reprocess", "note": "synthetic action"}
+            ],
         },
         {
             "id": "row-3",
