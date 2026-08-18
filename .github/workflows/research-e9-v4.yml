@@ -1,0 +1,21 @@
+name: research-e9-v4
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  evaluator-v4-structural-validity:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Compile evaluator v4 and diagnostics
+        run: |
+          python -m py_compile scripts/research/e9_evaluator_side_scorer_v4.py
+          python -m py_compile scripts/research/e9_private_oracle_group_ambiguity_diagnostic.py
+          python -m py_compile scripts/research/e14m_r1_sanitized_operational_diagnostic.py
+      - name: Run oracle-free evaluator v4 synthetic validity checks
+        run: PYTHONPATH=. python scripts/research/e9_v4_synthetic_selfcheck.py
