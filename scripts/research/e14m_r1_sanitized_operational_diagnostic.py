@@ -74,7 +74,12 @@ def run(path: Path) -> dict[str, Any]:
     if not status.startswith(EXPECTED_STATUS_PREFIX):
         raise AssertionError("capture is not an E14m-R1 replacement capture")
 
-    replacement = summary.get("e14m_r1_replacement")
+    # The R1 runner writes this metadata under the explicit operational name.
+    # Keep the old short alias as a read-only fallback so diagnostics remain
+    # tolerant of any local artifact produced while the helper was being built.
+    replacement = summary.get("e14m_r1_operational_replacement")
+    if not isinstance(replacement, dict):
+        replacement = summary.get("e14m_r1_replacement")
     replacement = replacement if isinstance(replacement, dict) else {}
     amendment_id = summary.get("replacement_amendment_id") or replacement.get("amendment_id")
     capture_index = summary.get("replacement_capture_index") or replacement.get("replacement_capture_index")
