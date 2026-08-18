@@ -1,0 +1,91 @@
+{
+  "experiment_id": "E14f",
+  "title": "DEV-only conditional public semantic consistency repair",
+  "status": "PREREGISTERED_DEV_ONLY_CANDIDATE",
+  "date": "2026-08-17",
+  "parent_candidate": "E14e",
+  "scope": {
+    "splits": ["DEV"],
+    "validation_ran": false,
+    "validation_tuning_forbidden": true,
+    "locked_test_forbidden": true
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+  },
+  "repeats": {
+    "DEV_ACTION_ESCALATION_CALIBRATION": 2
+  },
+  "candidate_change": {
+    "change_class": "conditional_public_semantic_consistency_repair_before_guards_only",
+    "single_intervention": true,
+    "initial_model_call_unchanged": true,
+    "repair_call_model_same_as_initial": true,
+    "repair_call_provider_same_as_initial": true,
+    "repair_call_temperature_same_as_initial": true,
+    "repair_call_reasoning_effort_same_as_initial": true,
+    "repair_call_completion_budget_same_as_initial": true,
+    "repair_call_json_mode_same_as_initial": true,
+    "repair_trigger_requires_parseable_draft": true,
+    "max_semantic_repair_calls_per_draft": 1,
+    "repair_trigger_sources": [
+      "draft_immediate_action_conflicts_with_needs_more_evidence",
+      "draft_immediate_action_conflicts_with_safe_to_act_false",
+      "draft_immediate_action_lacks_supported_public_endpoint",
+      "draft_immediate_action_conflicts_with_investigate_or_insufficient_decision_class",
+      "draft_autonomous_state_change_below_existing_e10e_public_evidence_minimum",
+      "draft_reprocess_lacks_human_readable_visible_reason",
+      "draft_reprocess_has_fewer_than_existing_e14_two_public_support_anchors"
+    ],
+    "repair_instruction_policy": {
+      "use_only_original_visible_packet": true,
+      "use_only_model_own_draft": true,
+      "use_only_public_consistency_reason_codes": true,
+      "planned_gets_are_not_observed_facts": true,
+      "do_not_add_irrelevant_reads_to_satisfy_counts": true,
+      "do_not_invent_measurements_status_severity_permissions_identifiers_or_knowledge_results": true,
+      "preserve_nonconflicting_fields_where_possible": true,
+      "downgrade_immediate_action_when_visible_support_is_absent": true,
+      "no_all_endpoint_enumeration_pass": true,
+      "no_broad_evidence_surface_enumeration_pass": true
+    }
+  },
+  "preserved": {
+    "e14c_public_action_endpoint_canonicalization": true,
+    "e14d_public_evidence_resource_canonicalization": true,
+    "e14e_explicit_current_handoff_semantics": true,
+    "e10e_policy_and_thresholds": true,
+    "e10g_policy_and_thresholds": true,
+    "e11_independent_action_authorization": true,
+    "e14_selective_reprocess_boundary": true,
+    "prompt_for_initial_call": true,
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "max_completion_tokens": 1600,
+    "scorer": "E9 v3 unchanged",
+    "acceptance_gate": true
+  },
+  "forbidden_inputs": {
+    "private_expected_paths_to_model_or_repair": true,
+    "private_scorer_rows_to_model_or_repair": true,
+    "evaluator_labels_to_model_or_repair": true,
+    "validation_feedback_to_model_or_repair": true,
+    "locked_test_to_model_or_repair": true,
+    "group_specific_expected_behavior_hardcoding": true
+  },
+  "acceptance_gate": {
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "real_task_quality_min": 0.8571,
+    "decision_correctness_min": 0.75,
+    "action_correctness_min": 0.75,
+    "evidence_correctness": 1.0,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "locked_test_accessed": false
+  },
+  "promotion_rule": "Only a complete real DEV E14f measurement that satisfies every unchanged gate threshold may proceed to measurement-only DEV+VALIDATION.",
+  "causal_interpretation": "Separate model generations are not paired causal estimates. Structural claims are limited to repair trigger/application behavior and public consistency checks."
+}
