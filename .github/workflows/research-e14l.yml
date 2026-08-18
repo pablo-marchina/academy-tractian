@@ -22,8 +22,9 @@ jobs:
       E14_REASONING_FORMAT: hidden
       E14_RESPONSE_FORMAT_MODE: json_schema_strict
       E14_MAX_COMPLETION_TOKENS: "4096"
-      E8_BETWEEN_CALL_DELAY_SECONDS: "25"
-      E14F_REPAIR_DELAY_SECONDS: "25"
+      # Structural dry-run skips pacing sleeps. Real E14l is still asserted at 25s by the runner.
+      E8_BETWEEN_CALL_DELAY_SECONDS: "0"
+      E14F_REPAIR_DELAY_SECONDS: "0"
       E14_MAX_RETRIES: "2"
     steps:
       - uses: actions/checkout@v4
