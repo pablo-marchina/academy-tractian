@@ -12,6 +12,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Install public-registry dependency
+        run: python -m pip install 'pydantic>=2,<3'
       - name: Compile evaluator v4 and diagnostics
         run: |
           python -m py_compile scripts/research/e9_evaluator_side_scorer_v4.py
