@@ -103,10 +103,34 @@ def assert_frozen_configuration(*, dry_run: bool) -> None:
         raise AssertionError("E14k real measurement requires E8_CONFIRM_ZERO_COST=1")
 
 
+def _run_parent_without_structural_sleep(args: argparse.Namespace) -> dict[str, Any]:
+    """Skip pacing sleeps only for a no-provider structural dry-run.
+
+    The frozen real-run values are asserted before this helper is called. The
+    temporary zero values never apply to a real provider call and are restored
+    immediately after the dry-run parent stack returns.
+    """
+    if not args.dry_run:
+        return e14f.run(args)
+
+    names = ("E8_BETWEEN_CALL_DELAY_SECONDS", "E14F_REPAIR_DELAY_SECONDS")
+    saved = {name: os.environ.get(name) for name in names}
+    try:
+        os.environ["E8_BETWEEN_CALL_DELAY_SECONDS"] = "0"
+        os.environ["E14F_REPAIR_DELAY_SECONDS"] = "0"
+        return e14f.run(args)
+    finally:
+        for name, value in saved.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+
+
 def run(args: argparse.Namespace) -> dict[str, Any]:
     assert_frozen_configuration(dry_run=args.dry_run)
     schema.run_self_checks()
-    summary = e14f.run(args)
+    summary = _run_parent_without_structural_sleep(args)
     parent_status = summary.get("status")
     capture_pass = parent_status == "E14F_DEV_ONLY_PUBLIC_SEMANTIC_REPAIR_CAPTURE_PASS"
 
@@ -152,6 +176,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "locked_test_used": False,
         "private_oracle_used_by_model_or_schema": False,
         "budget_rescue_allowed_inside_candidate": False,
+        "structural_dry_run_sleep_skipped": bool(args.dry_run),
     }
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
