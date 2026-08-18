@@ -1,0 +1,76 @@
+{
+  "experiment_id": "E14i",
+  "title": "DEV-only GPT-OSS 120B high-reasoning JSON-mode provider compatibility correction",
+  "status": "PREREGISTERED_DEV_ONLY_CANDIDATE",
+  "date": "2026-08-18",
+  "parent_candidate": "E14h",
+  "scope": {
+    "splits": ["DEV"],
+    "validation_ran": false,
+    "validation_tuning_forbidden": true,
+    "locked_test_forbidden": true
+  },
+  "candidate_change": {
+    "change_class": "reasoning_format_only_for_json_mode_provider_compatibility",
+    "single_intervention": true,
+    "parent_reasoning_format": "unset_provider_default",
+    "candidate_reasoning_format": "hidden",
+    "reasoning_format_changed": true,
+    "justification": "Groq reasoning documentation requires reasoning_format parsed or hidden when JSON mode is used; E14h omitted it and all 18 provider attempts failed as json_generation_validation_failure before usage was returned"
+  },
+  "preserved": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "reasoning_effort": "high",
+    "max_completion_tokens": 1600,
+    "temperature": 0,
+    "response_format": "json_object",
+    "initial_prompt": true,
+    "e14f_semantic_repair": true,
+    "e14c_public_action_endpoint_canonicalization": true,
+    "e14d_public_evidence_resource_canonicalization": true,
+    "e14e_explicit_current_handoff_semantics": true,
+    "e10e_policy_and_thresholds": true,
+    "e10g_policy_and_thresholds": true,
+    "e11_independent_action_authorization": true,
+    "e14_selective_reprocess_boundary": true,
+    "scorer": "E9 v3 unchanged",
+    "acceptance_gate": true
+  },
+  "provider_compatibility_precondition": {
+    "required_before_real_benchmark_capture": true,
+    "uses_private_task_packet": false,
+    "uses_oracle": false,
+    "uses_validation": false,
+    "uses_locked_test": false,
+    "required_status": "E14I_GROQ_HIGH_JSON_HIDDEN_COMPATIBILITY_PREFLIGHT_PASS",
+    "purpose": "verify one small non-benchmark JSON Object Mode inference succeeds with 120B + high + reasoning_format hidden + 1600 before consuming the six-call DEV measurement"
+  },
+  "forbidden_changes_inside_candidate": {
+    "increase_completion_budget": true,
+    "change_model": true,
+    "change_reasoning_effort": true,
+    "change_temperature": true,
+    "switch_to_json_schema": true,
+    "change_prompt": true,
+    "change_repair_policy": true,
+    "change_post_model_guards": true,
+    "change_scorer": true,
+    "use_validation_feedback": true,
+    "use_locked_test": true
+  },
+  "acceptance_gate": {
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "real_task_quality_min": 0.8571,
+    "decision_correctness_min": 0.75,
+    "action_correctness_min": 0.75,
+    "evidence_correctness": 1.0,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "locked_test_accessed": false
+  },
+  "promotion_rule": "Only after compatibility preflight PASS may one real E14i DEV capture run. Only a complete 6/6 real capture may be scored once by unchanged E9 v3. Only a full DEV gate pass may proceed to measurement-only DEV+VALIDATION.",
+  "causal_interpretation": "E14i tests a documented provider-configuration compatibility correction. Separate generations remain non-paired for task-quality causal claims."
+}
