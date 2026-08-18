@@ -1,0 +1,42 @@
+name: research-e14g-dev-only-gpt-oss-120b-model-selection
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/127-e14g-dev-only-gpt-oss-120b-model-selection.md'
+      - 'research/experiments/e14g-*.json'
+      - 'scripts/research/e14g_*.py'
+      - '.github/workflows/research-e14g.yml'
+  pull_request:
+    paths:
+      - 'research/127-e14g-dev-only-gpt-oss-120b-model-selection.md'
+      - 'research/experiments/e14g-*.json'
+      - 'scripts/research/e14g_*.py'
+      - '.github/workflows/research-e14g.yml'
+
+jobs:
+  e14g-dev-only-gpt-oss-120b-model-selection-dry-run:
+    runs-on: ubuntu-latest
+    env:
+      E8_GROQ_MODEL: openai/gpt-oss-120b
+      E8_MODEL_TEMPERATURE: '0'
+      E14_REASONING_EFFORT: medium
+      E14_MAX_COMPLETION_TOKENS: '1600'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E14g DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14g_dev_only_gpt_oss_120b_model_selection.py
+          --manifest research/experiments/e14g-dev-only-gpt-oss-120b-model-selection-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14g-dev-only-gpt-oss-120b-model-selection-dry-run.json
+          --dry-run
+      - name: Upload E14g dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14g-dev-only-gpt-oss-120b-model-selection-dry-run
+          path: /tmp/e14g-dev-only-gpt-oss-120b-model-selection-dry-run.json
