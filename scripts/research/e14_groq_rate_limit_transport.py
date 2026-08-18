@@ -10,13 +10,15 @@ classifies provider failures without persisting raw error text, and falls back t
 bounded exponential backoff for transient 5xx/network failures.
 
 GPT-OSS reasoning effort and the E14 completion-token budget are explicit env
-configuration. `E14_REASONING_FORMAT` is optional so historical candidates remain
-unchanged when it is unset; E14i sets it explicitly to `hidden` for Groq JSON-mode
-compatibility.
+configuration. `E14_REASONING_FORMAT` remains optional for historical candidate
+reproduction. `E14_RESPONSE_FORMAT_MODE` defaults to historical `json_object`;
+E14j alone sets it to `json_schema_strict`, which loads the public existing E10b
+output contract from `e14j_strict_output_schema.py`.
 """
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import random
@@ -24,13 +26,16 @@ import re
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "openai/gpt-oss-20b"
-DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.3"
+DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.4"
 DEFAULT_REASONING_EFFORT = "medium"
 DEFAULT_E14_MAX_COMPLETION_TOKENS = 1600
+DEFAULT_RESPONSE_FORMAT_MODE = "json_object"
+STRICT_SCHEMA_PATH = Path(__file__).with_name("e14j_strict_output_schema.py")
 
 
 class E14ProviderRequestError(RuntimeError):
@@ -206,6 +211,28 @@ def post_json(
     raise E14ProviderRequestError(last_category, last_status)
 
 
+def _load_strict_response_format() -> dict[str, Any]:
+    spec = importlib.util.spec_from_file_location("e14j_strict_output_schema_for_transport", STRICT_SCHEMA_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("failed to load E14j strict output schema")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.run_self_checks()
+    value = module.strict_response_format()
+    if not isinstance(value, dict):
+        raise AssertionError("E14j strict response format must be an object")
+    return value
+
+
+def _response_format_from_env() -> tuple[str, dict[str, Any]]:
+    mode = os.getenv("E14_RESPONSE_FORMAT_MODE", DEFAULT_RESPONSE_FORMAT_MODE).strip().lower()
+    if mode == "json_object":
+        return mode, {"type": "json_object"}
+    if mode == "json_schema_strict":
+        return mode, _load_strict_response_format()
+    raise AssertionError("E14_RESPONSE_FORMAT_MODE must be json_object or json_schema_strict")
+
+
 def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[str, Any]]:
     model = os.getenv("E8_GROQ_MODEL", DEFAULT_MODEL)
     reasoning_effort = os.getenv("E14_REASONING_EFFORT", DEFAULT_REASONING_EFFORT).strip().lower()
@@ -225,6 +252,7 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
     if max_completion_tokens < 1:
         raise AssertionError("E14_MAX_COMPLETION_TOKENS must be >= 1")
 
+    response_format_mode, response_format = _response_format_from_env()
     payload: dict[str, Any] = {
         "model": model,
         "messages": [
@@ -234,7 +262,7 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
         "temperature": float(os.getenv("E8_MODEL_TEMPERATURE", "0")),
         "reasoning_effort": reasoning_effort,
         "max_completion_tokens": max_completion_tokens,
-        "response_format": {"type": "json_object"},
+        "response_format": response_format,
     }
     if reasoning_format:
         payload["reasoning_format"] = reasoning_format
@@ -252,6 +280,7 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
         "transport": "e14_rate_limit_aware",
         "reasoning_effort": reasoning_effort,
         "max_completion_tokens": max_completion_tokens,
+        "response_format_mode": response_format_mode,
         **transport_meta,
     }
     if reasoning_format:
