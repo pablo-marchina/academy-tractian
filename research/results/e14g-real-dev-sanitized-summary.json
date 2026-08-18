@@ -1,0 +1,73 @@
+{
+  "experiment_id": "E14g",
+  "status": "FAIL_UNCHANGED_E14_HARD_GATE",
+  "scope": {
+    "split": "DEV",
+    "validation_ran": false,
+    "locked_test_accessed": false
+  },
+  "configuration": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "max_completion_tokens": 1600,
+    "response_format": "json_object"
+  },
+  "preflight": {
+    "status": "E14G_GROQ_MODEL_PREFLIGHT_PASS",
+    "model_active": true,
+    "http_status": 200,
+    "zero_cost_operator_confirmed": true,
+    "inference_call_made": false,
+    "api_key_printed": false
+  },
+  "capture": {
+    "status": "E14G_DEV_ONLY_GPT_OSS_120B_MODEL_SELECTION_CAPTURE_PASS",
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "scoreable_calls": 6,
+    "retry_count": 0,
+    "repair_count": 0
+  },
+  "aggregate_metrics": {
+    "real_task_quality": 0.6667,
+    "decision_correctness": 0.5,
+    "evidence_correctness": 0.8333,
+    "action_correctness": 0.1667,
+    "escalation_correctness": 0.1667,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 0.8333
+  },
+  "semantic_repair": {
+    "triggered_calls": 0,
+    "repair_calls": 0,
+    "parseable_repair_responses": 0,
+    "calls_with_residual_public_violations": 0
+  },
+  "downstream_boundary_effects": {
+    "e10d_outputs_changed": 0,
+    "e10e_outputs_changed": 0,
+    "e10g_outputs_changed": 0,
+    "e11_outputs_changed": 0,
+    "e14_reprocess_checked": 0,
+    "e14_reprocess_authorized": 0,
+    "e14_reprocess_blocked": 0
+  },
+  "normalized_public_evidence_family_count_histogram": {
+    "6": 1,
+    "7": 1,
+    "8": 4
+  },
+  "calls_with_concrete_public_read_equivalent": 6,
+  "acceptance_gate_pass": false,
+  "privacy": {
+    "raw_fixed_outputs_committed": false,
+    "private_scorer_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_paths_committed": false,
+    "oracle_data_committed": false,
+    "evaluator_labels_committed": false
+  }
+}
