@@ -1,0 +1,41 @@
+name: research-e14i-dev-only-gpt-oss-120b-high-reasoning-hidden-format
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/research/e14i_dev_only_gpt_oss_120b_high_reasoning_hidden_format.py'
+      - 'scripts/research/e14i_groq_high_json_hidden_compatibility_preflight.py'
+      - 'scripts/research/e14_groq_rate_limit_transport.py'
+      - 'research/experiments/e14i-dev-only-gpt-oss-120b-high-reasoning-hidden-format-manifest.json'
+      - '.github/workflows/research-e14i.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e14i-dev-only-high-hidden-format-dry-run:
+    runs-on: ubuntu-24.04
+    env:
+      E8_GROQ_MODEL: openai/gpt-oss-120b
+      E8_MODEL_TEMPERATURE: '0'
+      E14_REASONING_EFFORT: high
+      E14_REASONING_FORMAT: hidden
+      E14_MAX_COMPLETION_TOKENS: '1600'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E14i DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14i_dev_only_gpt_oss_120b_high_reasoning_hidden_format.py
+          --manifest research/experiments/e14i-dev-only-gpt-oss-120b-high-reasoning-hidden-format-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14i-dev-only-high-hidden-format-dry-run.json
+          --dry-run
+      - name: Upload E14i dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14i-dev-only-high-hidden-format-dry-run
+          path: /tmp/e14i-dev-only-high-hidden-format-dry-run.json
