@@ -1,0 +1,75 @@
+{
+  "experiment_id": "E14g",
+  "title": "DEV-only GPT-OSS 120B model-selection candidate",
+  "status": "PREREGISTERED_DEV_ONLY_CANDIDATE",
+  "date": "2026-08-17",
+  "parent_candidate": "E14f",
+  "scope": {
+    "splits": ["DEV"],
+    "validation_ran": false,
+    "validation_tuning_forbidden": true,
+    "locked_test_forbidden": true
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+  },
+  "repeats": {
+    "DEV_ACTION_ESCALATION_CALIBRATION": 2
+  },
+  "candidate_change": {
+    "change_class": "model_selection_only",
+    "single_intervention": true,
+    "from_model": "openai/gpt-oss-20b",
+    "to_model": "openai/gpt-oss-120b",
+    "provider_unchanged": "groq",
+    "free_plan_eligibility_must_be_confirmed_before_real_measurement": true,
+    "prompt_changed": false,
+    "conditional_semantic_repair_changed": false,
+    "reasoning_effort_changed": false,
+    "temperature_changed": false,
+    "completion_budget_changed": false,
+    "json_mode_changed": false,
+    "scorer_changed": false,
+    "thresholds_changed": false
+  },
+  "preserved": {
+    "e14f_conditional_public_semantic_consistency_repair": true,
+    "e14c_public_action_endpoint_canonicalization": true,
+    "e14d_public_evidence_resource_canonicalization": true,
+    "e14e_explicit_current_handoff_semantics": true,
+    "e10e_policy_and_thresholds": true,
+    "e10g_policy_and_thresholds": true,
+    "e11_independent_action_authorization": true,
+    "e14_selective_reprocess_boundary": true,
+    "initial_prompt": true,
+    "repair_prompt_policy": true,
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "max_completion_tokens": 1600,
+    "response_format": "json_object",
+    "scorer": "E9 v3 unchanged",
+    "acceptance_gate": true
+  },
+  "forbidden_inputs": {
+    "private_expected_paths_to_model_or_repair": true,
+    "private_scorer_rows_to_model_or_repair": true,
+    "evaluator_labels_to_model_or_repair": true,
+    "validation_feedback_to_model_or_repair": true,
+    "locked_test_to_model_or_repair": true,
+    "group_specific_expected_behavior_hardcoding": true
+  },
+  "acceptance_gate": {
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "real_task_quality_min": 0.8571,
+    "decision_correctness_min": 0.75,
+    "action_correctness_min": 0.75,
+    "evidence_correctness": 1.0,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "locked_test_accessed": false
+  },
+  "promotion_rule": "Only a complete real DEV E14g measurement that satisfies every unchanged gate threshold may proceed to measurement-only DEV+VALIDATION.",
+  "causal_interpretation": "E14g is a model-selection experiment, not a paired causal estimate against E14f. Absolute gate performance is the decision criterion; separate generations are not paired observations."
+}
