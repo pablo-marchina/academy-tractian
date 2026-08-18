@@ -12,8 +12,12 @@ bounded exponential backoff for transient 5xx/network failures.
 GPT-OSS reasoning effort and the E14 completion-token budget are explicit env
 configuration. `E14_REASONING_FORMAT` remains optional for historical candidate
 reproduction. `E14_RESPONSE_FORMAT_MODE` defaults to historical `json_object`;
-E14j alone sets it to `json_schema_strict`, which loads the public existing E10b
+E14j/E14k set it to `json_schema_strict`, which loads the public existing E10b
 output contract from `e14j_strict_output_schema.py`.
+
+The sanitized failure classifier intentionally distinguishes an explicit JSON /
+schema validation signal from a generic provider `failed_generation` payload.
+The latter is not, by itself, evidence of JSON-schema non-adherence.
 """
 
 from __future__ import annotations
@@ -31,7 +35,7 @@ from typing import Any
 
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "openai/gpt-oss-20b"
-DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.4"
+DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.5"
 DEFAULT_REASONING_EFFORT = "medium"
 DEFAULT_E14_MAX_COMPLETION_TOKENS = 1600
 DEFAULT_RESPONSE_FORMAT_MODE = "json_object"
@@ -45,36 +49,52 @@ class E14ProviderRequestError(RuntimeError):
         self.status_code = status_code
 
 
-def error_fields(body: str) -> tuple[str, str, str]:
-    """Return only provider error code/type/message for in-memory classification."""
+def _flatten_text(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        return " ".join(_flatten_text(v) for v in value.values())
+    if isinstance(value, list):
+        return " ".join(_flatten_text(v) for v in value)
+    return ""
+
+
+def error_fields(body: str) -> tuple[str, str, str, bool, str]:
+    """Return provider fields for in-memory classification only.
+
+    Raw values are never persisted by this transport. `failed_generation_text`
+    exists only long enough to map the provider response to a coarse category.
+    """
     try:
         payload = json.loads(body)
     except Exception:
-        return "", "", body
+        return "", "", body, False, ""
     error = payload.get("error") if isinstance(payload, dict) else None
     if not isinstance(error, dict):
-        return "", "", body
+        return "", "", body, False, ""
     code = str(error.get("code") or "")
     error_type = str(error.get("type") or "")
     message = str(error.get("message") or "")
     failed_generation = error.get("failed_generation")
-    if failed_generation is not None:
-        message = f"{message} failed_generation"
-    return code, error_type, message
+    has_failed_generation = failed_generation is not None
+    failed_generation_text = _flatten_text(failed_generation) if has_failed_generation else ""
+    return code, error_type, message, has_failed_generation, failed_generation_text
 
 
 def classify_failure(status_code: int | None, body: str) -> str:
-    code, error_type, message = error_fields(body)
+    code, error_type, message, has_failed_generation, failed_generation_text = error_fields(body)
     lowered = f"{code} {error_type} {message}".lower()
+    generation_lowered = failed_generation_text.lower()
+    combined = f"{lowered} {generation_lowered}"
 
     if status_code == 429:
-        if "tokens per day" in lowered or "tpd" in lowered:
+        if "tokens per day" in combined or "tpd" in combined:
             return "rate_limit_tpd"
-        if "tokens per minute" in lowered or "tpm" in lowered:
+        if "tokens per minute" in combined or "tpm" in combined:
             return "rate_limit_tpm"
-        if "requests per minute" in lowered or "rpm" in lowered:
+        if "requests per minute" in combined or "rpm" in combined:
             return "rate_limit_rpm"
-        if "requests per day" in lowered or "rpd" in lowered:
+        if "requests per day" in combined or "rpd" in combined:
             return "rate_limit_rpd"
         return "rate_limit"
     if status_code in {500, 502, 503, 504}:
@@ -83,19 +103,39 @@ def classify_failure(status_code: int | None, body: str) -> str:
         return "authentication_or_authorization_failure"
     if status_code == 404:
         return "model_or_endpoint_unavailable"
-    if status_code in {400, 422} and (
-        code == "json_validate_failed"
-        or "failed_generation" in lowered
-        or "valid json" in lowered
-        or "json validation" in lowered
-        or "generated json" in lowered
-    ):
-        return "json_generation_validation_failure"
     if status_code == 413:
         return "request_too_large"
+
     if status_code in {400, 422}:
+        explicit_json_signals = (
+            code == "json_validate_failed"
+            or "json validation" in combined
+            or "schema validation" in combined
+            or "does not match" in combined and "schema" in combined
+            or "invalid json" in combined
+            or "valid json" in combined
+            or "generated json" in combined
+        )
+        if explicit_json_signals:
+            return "json_generation_validation_failure"
+
+        completion_signals = (
+            "max_completion_tokens" in combined
+            or "max tokens" in combined
+            or "maximum tokens" in combined
+            or "token limit" in combined
+            or "length limit" in combined
+            or "finish_reason" in combined and "length" in combined
+            or "incomplete" in combined and "token" in combined
+        )
+        if completion_signals:
+            return "completion_or_length_generation_failure"
+
+        if has_failed_generation:
+            return "generation_failure_other"
         return "invalid_request_failure"
-    if any(fragment in lowered for fragment in (
+
+    if any(fragment in combined for fragment in (
         "timed out",
         "timeout",
         "connection reset",
