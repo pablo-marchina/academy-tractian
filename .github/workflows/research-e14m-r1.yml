@@ -1,0 +1,43 @@
+name: research-e14m-r1-operational-replacement
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/research/e14m_r1_operational_replacement.py'
+      - 'scripts/research/e14m_dev_only_public_decision_adjudication.py'
+      - 'scripts/research/e14m_public_decision_adjudication.py'
+      - 'research/experiments/e14m-operational-replacement-r1-amendment.json'
+      - 'research/experiments/e14m-dev-only-public-decision-adjudication-manifest.json'
+      - '.github/workflows/research-e14m-r1.yml'
+  workflow_dispatch:
+
+jobs:
+  e14m-r1-structural-dry-run:
+    runs-on: ubuntu-24.04
+    env:
+      E8_GROQ_MODEL: openai/gpt-oss-120b
+      E8_MODEL_TEMPERATURE: '0'
+      E14_REASONING_EFFORT: medium
+      E14_REASONING_FORMAT: hidden
+      E14_RESPONSE_FORMAT_MODE: json_schema_strict
+      E14_MAX_COMPLETION_TOKENS: '4096'
+      E8_BETWEEN_CALL_DELAY_SECONDS: '0'
+      E14M_ADJUDICATION_DELAY_SECONDS: '0'
+      E14F_REPAIR_DELAY_SECONDS: '0'
+      E14_MAX_RETRIES: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate E14m-R1 wrapper and frozen candidate
+        run: |
+          PYTHONPATH=. python scripts/research/e14m_r1_operational_replacement.py \
+            --manifest research/experiments/e14m-dev-only-public-decision-adjudication-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --out /tmp/e14m-r1-structural-dry-run.json \
+            --dry-run
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e14m-r1-structural-dry-run
+          path: /tmp/e14m-r1-structural-dry-run.json
