@@ -1,6 +1,6 @@
 # Systematic Research Hub
 
-**Status: E0–E3 frozen/complete; E4–E14 measured; E14/E14b/E14c/E14d/E14e/E14f/E14g real DEV gates failed; E14h failed operationally; E14i provider-compatibility candidate preregistered/implemented and structural dry-run passed**  
+**Status: E0–E3 frozen/complete; E4–E14 measured; E14/E14b/E14c/E14d/E14e/E14f/E14g/E14k real DEV gates failed; E14h/E14i/E14j failed operationally; E14l preregistered/implemented and structural dry-run passed**  
 **Date:** 2026-08-18
 
 The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, measured guarded-boundary/runtime/MCP/model experiments, and a hard safety/action gate that is still blocking downstream product integration.
@@ -9,18 +9,18 @@ Production architecture is **not frozen**. No demo/UI/integration phase is autho
 
 ## Current valid real DEV quality measurements
 
-| Metric | E14 | E14b | E14c | E14d | E14e | E14f | E14g | Required |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Parsed / scoreable | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 |
-| Real task quality | 0.7381 | 0.6429 | 0.8333 | 0.8095 | 0.7619 | 0.6429 | 0.6667 | >= 0.8571 |
-| Decision correctness | 0.5000 | 0.5000 | 0.6667 | 0.8333 | 0.6667 | 0.5000 | 0.5000 | >= 0.7500 |
-| Evidence correctness | 0.5000 | 0.3333 | 1.0000 | 0.6667 | 0.5000 | 0.1667 | 0.8333 | 1.0000 |
-| Action correctness | 0.1667 | 0.0000 | 0.1667 | 0.3333 | 0.3333 | 0.3333 | 0.1667 | >= 0.7500 |
-| Escalation correctness | 1.0000 | 0.6667 | 1.0000 | 0.8333 | 0.8333 | 0.5000 | 0.1667 | 1.0000 |
-| Premature action rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
-| Unsupported final-claim rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+| Metric | E14 | E14b | E14c | E14d | E14e | E14f | E14g | E14k | Required |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Parsed / scoreable | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 |
+| Real task quality | 0.7381 | 0.6429 | 0.8333 | 0.8095 | 0.7619 | 0.6429 | 0.6667 | 0.6429 | >= 0.8571 |
+| Decision correctness | 0.5000 | 0.5000 | 0.6667 | 0.8333 | 0.6667 | 0.5000 | 0.5000 | 0.3333 | >= 0.7500 |
+| Evidence correctness | 0.5000 | 0.3333 | 1.0000 | 0.6667 | 0.5000 | 0.1667 | 0.8333 | 0.8333 | 1.0000 |
+| Action correctness | 0.1667 | 0.0000 | 0.1667 | 0.3333 | 0.3333 | 0.3333 | 0.1667 | 0.1667 | >= 0.7500 |
+| Escalation correctness | 1.0000 | 0.6667 | 1.0000 | 0.8333 | 0.8333 | 0.5000 | 0.1667 | 0.1667 | 1.0000 |
+| Premature action rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+| Unsupported final-claim rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
 
-E14h is intentionally excluded from this quality table because it produced zero parsed outputs and therefore no valid quality measurement. Cross-generation score deltas are not interpreted as deterministic paired causal effects.
+E14h/E14i/E14j are intentionally excluded because they produced zero parsed real outputs and therefore no valid task-quality measurement. Cross-generation score deltas are descriptive only; they are not deterministic paired causal effects.
 
 VALIDATION remains blocked. LOCKED_TEST remains untouched.
 
@@ -32,11 +32,11 @@ E14c fixed deterministic concrete-vs-template public action-endpoint comparison 
 
 ### E14d — public evidence-resource representation
 
-E14d fixed the analogous concrete-vs-template mismatch for the same ten historical public GET evidence families used by E10e/E10g. Thresholds remained unchanged.
+E14d fixed the analogous concrete-vs-template mismatch for the same historical public GET evidence families used by E10e/E10g. Thresholds remained unchanged.
 
 ### E14d / E14e boundary closure
 
-The E10e `too_few_concrete_evidence_resources_for_state_change` reprocess proposal was not a precedence bug. In both E14d and E14e fixed captures, the specialized E14 counterfactual rejected the same class because it lacked a human-readable evidence-to-reprocess reason and had zero required selective support-anchor classes. E10e threshold/order and E14 selective-reprocess semantics remain unchanged.
+The E10e `too_few_concrete_evidence_resources_for_state_change` reprocess proposal was not a precedence bug. The specialized E14 counterfactual rejected the same class because it lacked a human-readable evidence-to-reprocess reason and the required selective support anchors. E10e threshold/order and E14 selective-reprocess semantics remain unchanged.
 
 E14e replaced only the historical broad E10d marker-substring fallback with explicit-current-handoff semantics. Current public evidence does not support further downstream guard or threshold relaxation.
 
@@ -44,78 +44,82 @@ E14e replaced only the historical broad E10d marker-substring fallback with expl
 
 E14f moved upstream: a parseable draft received at most one second call only when deterministic public consistency checks found a preregistered contradiction. The repair received the original visible prompt, the model's own draft, and public consistency codes only; no scorer/oracle/VALIDATION/LOCKED_TEST information.
 
-Real E14f was complete and safe but failed the absolute task-quality gate. Its one repair removed the targeted public contradiction, yet task quality remained low. Internal/public consistency alone is therefore insufficient for benchmark correctness.
+Real E14f was complete and safe but failed the absolute task-quality gate. Internal/public consistency alone is therefore insufficient for benchmark correctness.
 
 ## E14g — GPT-OSS 120B model selection
 
 E14g changed only the model from `openai/gpt-oss-20b` to `openai/gpt-oss-120b`, preserving E14f, temperature 0, reasoning `medium`, completion budget 1600, JSON Object Mode, deterministic policies, scorer and gate.
 
-Real E14g was 6/6 complete with zero semantic-repair or downstream guard changes but failed the gate. All six outputs contained concrete public-read equivalents and normalized evidence-family counts were 6, 7 or 8; bigger model capacity at unchanged medium reasoning was not sufficient.
+Real E14g was 6/6 complete with zero semantic-repair or downstream guard changes but failed the gate. All six outputs contained concrete public-read equivalents and normalized evidence-family counts were 6, 7 or 8.
 
-## E14h — high reasoning operational failure
+## E14h / E14i / E14j — operational failures at high reasoning + 1600
 
-E14h changed only:
+E14h changed only reasoning effort `medium -> high`. E14i preserved that candidate while recording `E14_REASONING_FORMAT=hidden`. E14j preserved high reasoning and 1600 tokens while switching to strict JSON Schema Structured Outputs.
 
-```text
-E14_REASONING_EFFORT=medium
-→ E14_REASONING_EFFORT=high
-```
+All three real captures produced 0/6 parsed outputs. Their null scorer metrics are not quality scores. Historical provider telemetry also over-classified generic `failed_generation` payloads as JSON validation failures; that telemetry was refined without changing request semantics.
 
-while preserving GPT-OSS 120B, JSON Object Mode, temperature 0 and the 1600 completion-token budget.
+## E14k — 4096 completion-budget recovery
 
-The real E14h attempt did **not** produce a valid quality measurement:
+E14k changed only:
 
 ```text
-total_calls: 6
-parsed_calls: 0
-schema_valid_calls: 0
-attempts_per_call: 3
-provider_attempt_failures: 18
-provider_failure_category: json_generation_validation_failure (18/18)
-provider_usage_observed_calls: 0
-completion_budget_exhaustion_supported: false
+max_completion_tokens: 1600
+→ max_completion_tokens: 4096
 ```
 
-E9 subsequently saw `scoreable_calls=0`; its null metrics are not quality scores. The fixed-capture diagnostic concluded `provider_failure_present_budget_exhaustion_not_isolated`, so no token-budget increase is justified from E14h.
+while keeping 120B, `reasoning_effort=high`, strict JSON Schema, temperature 0, prompts, repair, policies, scorer, and gate frozen.
 
-Current Groq reasoning documentation states that when JSON mode is used with reasoning models, `reasoning_format` must be `parsed` or `hidden`. The E14h transport omitted this field, creating a specific provider-compatibility hypothesis.
-
-## E14i — hidden reasoning format compatibility correction
-
-E14i is preregistered as exactly one provider-configuration change relative to E14h:
+The real E14k capture restored operational completeness:
 
 ```text
-E14_REASONING_FORMAT: unset/provider-default
-→ E14_REASONING_FORMAT: hidden
+parsed / scoreable:       6 / 6
+retry_count:               0
+real_task_quality:         0.6429
+decision_correctness:      0.3333
+evidence_correctness:      0.8333
+action_correctness:        0.1667
+escalation_correctness:    0.1667
+premature_action_rate:     0.0000
+unsupported_claim_rate:    0.0000
 ```
 
-Everything else remains frozen:
+All six calls had concrete public-read equivalents, evidence-family counts ranged from 5 to 8, and E14f/E10d/E10e/E10g/E11 made zero changes. E14k therefore resolved the operational blocker but still failed the absolute quality gate. The remaining problem class is upstream semantic decision/action/escalation selection, not another deterministic guard relaxation.
+
+## E14l — medium reasoning inside the operational strict-4096 stack
+
+E14l is preregistered as exactly one change relative to E14k:
+
+```text
+reasoning_effort: high
+→ reasoning_effort: medium
+```
+
+Frozen unchanged:
 
 - Groq provider;
 - `openai/gpt-oss-120b`;
-- `reasoning_effort=high`;
-- `max_completion_tokens=1600`;
+- `E14_REASONING_FORMAT=hidden` environment value (no GPT-OSS effect claimed);
+- strict JSON Schema Structured Outputs;
+- exact existing public E10b output schema;
+- `max_completion_tokens=4096`;
 - temperature 0;
-- JSON Object Mode;
-- initial prompt and E14f conditional repair;
-- E14c/E14d/E14e/E10e/E10g/E11/E14 policies and thresholds;
+- real pacing 25 seconds;
+- E14f repair and E14c/E14d/E14e/E10e/E10g/E11/E14 policies;
 - E9 v3 scorer;
 - DEV split and hard gate.
 
-`hidden` was chosen because only final JSON is consumed; it satisfies the provider JSON-mode requirement without exposing reasoning in the capture or changing the final schema.
+### E14l structural result
 
-The transport change is retrocompatible: `reasoning_format` is added to the Groq payload only when `E14_REASONING_FORMAT` is explicitly set, so historical candidates with the variable unset preserve their previous payload shape.
-
-### E14i structural result
-
-GitHub Actions run `32123377075`, job `95668510359`, passed:
+GitHub Actions run `32133232144`, job `95698738513`, passed:
 
 ```text
-status:                                   E14I_DEV_ONLY_GPT_OSS_120B_HIGH_REASONING_HIDDEN_FORMAT_CAPTURE_PASS
+status:                                   E14L_DEV_ONLY_120B_MEDIUM_REASONING_STRICT_4096_CAPTURE_PASS
 model:                                    openai/gpt-oss-120b
-reasoning_effort:                         high
-reasoning_format:                         hidden
-max_completion_tokens:                    1600
+parent_reasoning_effort:                  high
+reasoning_effort:                         medium
+response_format:                          json_schema
+strict:                                   true
+max_completion_tokens:                    4096
 total_calls:                              6
 parsed_model_outputs_available:           6
 scoreable_calls:                          6
@@ -124,24 +128,9 @@ dry_run:                                  true
 completeness_pass:                        true
 retry_count:                              0
 repair_count:                             0
-semantic_repair_triggered_calls:          3
-semantic_repair_calls:                    3
-semantic_repair_residual_violation_calls: 0
 ```
 
-This is structural evidence only.
-
-### Mandatory provider compatibility precondition
-
-Before any real benchmark capture, run exactly one synthetic non-benchmark inference using `120B + high + reasoning_format=hidden + json_object + 1600`. It uses no TRACTIAN task packet, oracle, scorer rows, VALIDATION or LOCKED_TEST material.
-
-Required status:
-
-```text
-E14I_GROQ_HIGH_JSON_HIDDEN_COMPATIBILITY_PREFLIGHT_PASS
-```
-
-Only a passing compatibility preflight authorizes one real E14i DEV capture.
+Artifact ID: `9322971501`. This is structural evidence only.
 
 ## Required DEV acceptance
 
@@ -170,13 +159,15 @@ Gold remains evaluator-only and is never copied into agent context. VALIDATION i
 ## Recent sanitized records
 
 - `129-e14g-real-dev-measurement-result.md`
-- `130-e14h-dev-only-gpt-oss-120b-high-reasoning.md`
-- `131-e14h-structural-dry-run-result.md`
 - `132-e14h-real-dev-operational-failure.md`
-- `133-e14i-dev-only-gpt-oss-120b-high-reasoning-hidden-format.md`
-- `134-e14i-structural-dry-run-result.md`
+- `136-e14k-dev-only-high-reasoning-4096-completion-budget.md`
+- `137-e14k-structural-dry-run-result.md`
+- `138-e14k-real-dev-measurement-result.md`
+- `139-e14l-dev-only-120b-medium-reasoning-strict-4096.md`
+- `140-e14l-structural-dry-run-result.md`
 - `results/e14g-real-dev-sanitized-summary.json`
 - `results/e14h-real-dev-sanitized-operational-summary.json`
+- `results/e14k-real-dev-sanitized-summary.json`
 
 ## Explicit non-decisions
 
@@ -196,8 +187,7 @@ The following remain intentionally unfrozen: final model/provider choice, final 
 ## Critical path
 
 ```text
-E14i one-call non-benchmark Groq compatibility preflight
-→ only if PASS: one complete real zero-cost E14i DEV capture
+one real zero-cost E14l DEV capture
 → only if capture is 6/6: unchanged E9 v3 private DEV scoring exactly once
 → only if every unchanged threshold passes: measurement-only DEV+VALIDATION
 → final safety/action gate decision
