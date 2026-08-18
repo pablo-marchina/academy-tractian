@@ -1,7 +1,7 @@
 {
   "amendment_id": "EVALUATOR-V4-VISIBLE-CASE-TICKET-ALIGNMENT",
   "date": "2026-08-18",
-  "status": "PREREGISTERED_BEFORE_PRIVATE_ALIGNMENT_DIAGNOSTIC_RESULT",
+  "status": "ACTIVATED_AFTER_PREREGISTERED_ALIGNMENT_GATE_PASS",
   "purpose": "Prevent group-level oracle unions from supervising a model output generated from a different ticket/case than the one actually selected by the public runner.",
   "public_runner_fact": {
     "source": "scripts/research/e8_free_anywhere_model_runner.py",
@@ -33,6 +33,7 @@
     "expected_action_signatures": "normalized action signatures from the same single aligned expected_path row",
     "expected_escalation_signatures": "explicit specialist/case escalation action signatures from the same aligned row",
     "evidence_plan_only": true,
+    "all_public_read_signatures_per_evidence_plan_item": true,
     "general_free_text_groundedness": "unmeasured unless a separately validated metric is added"
   },
   "activation_gate": {
@@ -42,12 +43,33 @@
     "all_groups_to_be_scored_must_match_exactly_one_private_oracle_row_by_group_plus_ticket": true,
     "if_gate_fails": "KEEP_V4_MEASUREMENT_ONLY_AND_REGISTER_A_SEPARATE_CANDIDATE_INDEPENDENT_ALIGNMENT_PROTOCOL"
   },
+  "observed_activation_result_aggregate_only": {
+    "runner_selected_visible_cases": 10,
+    "selected_visible_cases_without_ticket_id": 0,
+    "exact_single_oracle_row_matches": 10,
+    "exact_single_oracle_row_fraction": 1.0,
+    "groups_where_group_union_contains_rows_beyond_selected_ticket": 4,
+    "DEV_exact_matches": "5/5",
+    "VALIDATION_exact_matches": "2/2",
+    "LOCKED_TEST_exact_matches": "3/3",
+    "candidate_specific_output_used": false
+  },
+  "implementation": {
+    "scorer": "scripts/research/e9_evaluator_side_scorer_v4.py",
+    "requires_agent_input_cases": true,
+    "group_union_used_for_supervision": false,
+    "zero_or_multiple_match_is_unscoreable": true,
+    "multi_tool_evidence_string_extracts_all_public_read_signatures": true,
+    "structural_ci_run": 32196309942,
+    "structural_ci_conclusion": "success"
+  },
   "scope": {
     "changes_model_candidate": false,
     "changes_historical_e9_v3": false,
-    "v4_remains_measurement_only_until_alignment_gate_passes": true,
+    "v4_is_ready_for_measurement_only_DEV_use": true,
+    "v4_authorizes_validation": false,
     "validation_feedback_used": false,
-    "locked_test_feedback_used": false,
+    "locked_test_feedback_used_for_candidate_tuning": false,
     "locked_test_accessed_by_candidate": false
   },
   "privacy": {
