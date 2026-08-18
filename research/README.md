@@ -1,13 +1,13 @@
 # Systematic Research Hub
 
-**Status: E0–E3 frozen/complete; E4–E14 measured; E14/E14b/E14c/E14d/E14e/E14f/E14g real DEV gates failed; E14h high-reasoning candidate preregistered and structural dry-run passed**  
-**Date:** 2026-08-17
+**Status: E0–E3 frozen/complete; E4–E14 measured; E14/E14b/E14c/E14d/E14e/E14f/E14g real DEV gates failed; E14h failed operationally; E14i provider-compatibility candidate preregistered/implemented and structural dry-run passed**  
+**Date:** 2026-08-18
 
 The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, measured guarded-boundary/runtime/MCP/model experiments, and a hard safety/action gate that is still blocking downstream product integration.
 
 Production architecture is **not frozen**. No demo/UI/integration phase is authorized while the DEV gate remains failed.
 
-## Current real DEV gate sequence
+## Current valid real DEV quality measurements
 
 | Metric | E14 | E14b | E14c | E14d | E14e | E14f | E14g | Required |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -20,85 +20,101 @@ Production architecture is **not frozen**. No demo/UI/integration phase is autho
 | Premature action rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
 | Unsupported final-claim rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
 
-E14b is rejected. E14c–E14g are valid but failed DEV candidates. Cross-generation score deltas are not interpreted as deterministic paired causal effects.
+E14h is intentionally excluded from this quality table because it produced zero parsed outputs and therefore no valid quality measurement. Cross-generation score deltas are not interpreted as deterministic paired causal effects.
 
 VALIDATION remains blocked. LOCKED_TEST remains untouched.
 
-## Deterministic boundary findings retained
+## Retained deterministic findings
 
 ### E14c — public action endpoint representation
 
-E14c fixed deterministic concrete-vs-template public action-endpoint comparison without rewriting model output. Concrete public action paths are canonicalized only for policy comparison.
+E14c fixed deterministic concrete-vs-template public action-endpoint comparison without rewriting model output.
 
 ### E14d — public evidence-resource representation
 
-E14d fixed the analogous concrete-vs-template mismatch for the same ten historical public GET evidence families used by E10e/E10g. Thresholds remained unchanged. In the real E14d capture, E10g made zero changes under the corrected comparison view.
+E14d fixed the analogous concrete-vs-template mismatch for the same ten historical public GET evidence families used by E10e/E10g. Thresholds remained unchanged.
 
 ### E14d / E14e boundary closure
 
-The E10e `too_few_concrete_evidence_resources_for_state_change` reprocess proposal was not a precedence bug. In both E14d and E14e fixed captures, the specialized E14 counterfactual rejected the same class because it lacked a human-readable visible evidence-to-reprocess reason and had zero of the required two selective support-anchor classes. E10e threshold/order and E14 selective-reprocess semantics remain unchanged.
+The E10e `too_few_concrete_evidence_resources_for_state_change` reprocess proposal was not a precedence bug. In both E14d and E14e fixed captures, the specialized E14 counterfactual rejected the same class because it lacked a human-readable evidence-to-reprocess reason and had zero required selective support-anchor classes. E10e threshold/order and E14 selective-reprocess semantics remain unchanged.
 
-E14e replaced only the historical broad E10d marker-substring fallback with an explicit positive current-handoff phrase fallback. In real E14e, E10d changed outputs only for strong preserved reasons. E10g and E11 changed zero outputs. Current public evidence does not support further downstream guard or threshold relaxation.
+E14e replaced only the historical broad E10d marker-substring fallback with explicit-current-handoff semantics. Current public evidence does not support further downstream guard or threshold relaxation.
 
 ## E14f — conditional public semantic repair
 
 E14f moved upstream: a parseable draft received at most one second call only when deterministic public consistency checks found a preregistered contradiction. The repair received the original visible prompt, the model's own draft, and public consistency codes only; no scorer/oracle/VALIDATION/LOCKED_TEST information.
 
-### E14f real DEV result
-
-Real E14f was complete and safe but failed the absolute task-quality gate:
-
-```text
-real_task_quality:      0.6429
-decision_correctness:   0.5000
-evidence_correctness:   0.1667
-action_correctness:     0.3333
-escalation_correctness: 0.5000
-premature_action_rate:  0.0000
-unsupported_claim_rate: 0.0000
-```
-
-The semantic repair triggered once for `immediate_action_while_needs_more_evidence`, produced one parseable repaired response and left zero registered public consistency violations. After repair, E10e/E10g/E11 changed zero outputs and E14 saw zero target reprocess outputs. This supports closing the current downstream-boundary hypothesis set: internal/public consistency alone is not sufficient for benchmark task correctness.
+Real E14f was complete and safe but failed the absolute task-quality gate. Its one repair removed the targeted public contradiction, yet task quality remained low. Internal/public consistency alone is therefore insufficient for benchmark correctness.
 
 ## E14g — GPT-OSS 120B model selection
 
-E14g changed only the model from `openai/gpt-oss-20b` to `openai/gpt-oss-120b` while preserving E14f, temperature 0, reasoning `medium`, completion budget 1600, JSON Object Mode, all deterministic policies, scorer and gate.
+E14g changed only the model from `openai/gpt-oss-20b` to `openai/gpt-oss-120b`, preserving E14f, temperature 0, reasoning `medium`, completion budget 1600, JSON Object Mode, deterministic policies, scorer and gate.
 
-The no-inference provider preflight passed immediately before the real measurement. Real E14g was 6/6 complete with zero retries and zero semantic-repair or downstream guard changes, but still failed:
+Real E14g was 6/6 complete with zero semantic-repair or downstream guard changes but failed the gate. All six outputs contained concrete public-read equivalents and normalized evidence-family counts were 6, 7 or 8; bigger model capacity at unchanged medium reasoning was not sufficient.
 
-```text
-real_task_quality:      0.6667
-decision_correctness:   0.5000
-evidence_correctness:   0.8333
-action_correctness:     0.1667
-escalation_correctness: 0.1667
-premature_action_rate:  0.0000
-unsupported_claim_rate: 0.0000
-```
+## E14h — high reasoning operational failure
 
-E14d normalization recognized concrete public-read equivalents on all six calls; normalized evidence-family counts were 6, 7 or 8. The larger model therefore produced comparatively strong evidence coverage, but evidence coverage did not translate into correct action/escalation decisions. Bigger model capacity at unchanged medium reasoning is not sufficient to pass the absolute DEV gate.
-
-## E14h — GPT-OSS 120B high-reasoning candidate
-
-E14h is preregistered as a **single reasoning-configuration intervention** on top of the E14g model choice:
+E14h changed only:
 
 ```text
 E14_REASONING_EFFORT=medium
 → E14_REASONING_EFFORT=high
 ```
 
-Everything else remains frozen: provider, `openai/gpt-oss-120b`, initial and conditional-repair prompts, temperature 0, completion budget 1600, JSON Object Mode, E14c/E14d/E14e/E10e/E10g/E11/E14 policies, scorer, DEV split and gate.
+while preserving GPT-OSS 120B, JSON Object Mode, temperature 0 and the 1600 completion-token budget.
 
-The completion budget intentionally remains 1600 even though high reasoning may consume more reasoning tokens. Increasing reasoning effort and token budget together would confound the experiment. A real completeness failure at 1600 therefore counts as an E14h operational failure and must not be rescued inside the same candidate.
-
-### E14h structural result
-
-GitHub Actions run `32093924908`, job `95581468767`, passed:
+The real E14h attempt did **not** produce a valid quality measurement:
 
 ```text
-status:                                   E14H_DEV_ONLY_GPT_OSS_120B_HIGH_REASONING_CAPTURE_PASS
+total_calls: 6
+parsed_calls: 0
+schema_valid_calls: 0
+attempts_per_call: 3
+provider_attempt_failures: 18
+provider_failure_category: json_generation_validation_failure (18/18)
+provider_usage_observed_calls: 0
+completion_budget_exhaustion_supported: false
+```
+
+E9 subsequently saw `scoreable_calls=0`; its null metrics are not quality scores. The fixed-capture diagnostic concluded `provider_failure_present_budget_exhaustion_not_isolated`, so no token-budget increase is justified from E14h.
+
+Current Groq reasoning documentation states that when JSON mode is used with reasoning models, `reasoning_format` must be `parsed` or `hidden`. The E14h transport omitted this field, creating a specific provider-compatibility hypothesis.
+
+## E14i — hidden reasoning format compatibility correction
+
+E14i is preregistered as exactly one provider-configuration change relative to E14h:
+
+```text
+E14_REASONING_FORMAT: unset/provider-default
+→ E14_REASONING_FORMAT: hidden
+```
+
+Everything else remains frozen:
+
+- Groq provider;
+- `openai/gpt-oss-120b`;
+- `reasoning_effort=high`;
+- `max_completion_tokens=1600`;
+- temperature 0;
+- JSON Object Mode;
+- initial prompt and E14f conditional repair;
+- E14c/E14d/E14e/E10e/E10g/E11/E14 policies and thresholds;
+- E9 v3 scorer;
+- DEV split and hard gate.
+
+`hidden` was chosen because only final JSON is consumed; it satisfies the provider JSON-mode requirement without exposing reasoning in the capture or changing the final schema.
+
+The transport change is retrocompatible: `reasoning_format` is added to the Groq payload only when `E14_REASONING_FORMAT` is explicitly set, so historical candidates with the variable unset preserve their previous payload shape.
+
+### E14i structural result
+
+GitHub Actions run `32123377075`, job `95668510359`, passed:
+
+```text
+status:                                   E14I_DEV_ONLY_GPT_OSS_120B_HIGH_REASONING_HIDDEN_FORMAT_CAPTURE_PASS
 model:                                    openai/gpt-oss-120b
 reasoning_effort:                         high
+reasoning_format:                         hidden
 max_completion_tokens:                    1600
 total_calls:                              6
 parsed_model_outputs_available:           6
@@ -107,13 +123,25 @@ validation_ran:                           false
 dry_run:                                  true
 completeness_pass:                        true
 retry_count:                              0
-syntax_repair_count:                      0
+repair_count:                             0
 semantic_repair_triggered_calls:          3
 semantic_repair_calls:                    3
 semantic_repair_residual_violation_calls: 0
 ```
 
-This is structural evidence only. The next authorized step is one real zero-cost E14h DEV-only measurement followed, only if capture completeness is 6/6, by one unchanged E9 v3 private DEV score.
+This is structural evidence only.
+
+### Mandatory provider compatibility precondition
+
+Before any real benchmark capture, run exactly one synthetic non-benchmark inference using `120B + high + reasoning_format=hidden + json_object + 1600`. It uses no TRACTIAN task packet, oracle, scorer rows, VALIDATION or LOCKED_TEST material.
+
+Required status:
+
+```text
+E14I_GROQ_HIGH_JSON_HIDDEN_COMPATIBILITY_PREFLIGHT_PASS
+```
+
+Only a passing compatibility preflight authorizes one real E14i DEV capture.
 
 ## Required DEV acceptance
 
@@ -132,67 +160,27 @@ This is structural evidence only. The next authorized step is one real zero-cost
 
 ## Frozen evidence/contracts
 
-### E0 — Contract frozen
+- E0 contract: `34-e0-contract-freeze-v1.md`, `frozen/e0-contract-freeze.manifest.json`, `frozen/API-BEHAVIOR-MAP-v1.json`
+- E1 gold: `35-e1-gold-freeze-v1.md`, `frozen/e1-gold-freeze.manifest.json`
+- E2 executable harness: `e2/`
+- E3 group-level leakage-aware split: DEV 5 groups / 8 scenarios; VALIDATION 2 / 3; LOCKED_TEST 3 / 5
 
-- `34-e0-contract-freeze-v1.md`
-- `frozen/e0-contract-freeze.manifest.json`
-- `frozen/API-BEHAVIOR-MAP-v1.json`
-
-### E1 — Gold / ScenarioSchema frozen
-
-- `35-e1-gold-freeze-v1.md`
-- `frozen/e1-gold-freeze.manifest.json`
-
-Gold remains evaluator-only and is never copied into agent context.
-
-### E2 — Executable harness complete
-
-`e2/` contains the framework-neutral experimental infrastructure, canonical ToolSpec registry, strict boundary guards, trace/replay, and deterministic evaluator suite.
-
-### E3 — Benchmark split frozen
-
-- **DEV:** 5 groups / 8 scenarios.
-- **VALIDATION:** 2 groups / 3 scenarios.
-- **LOCKED_TEST:** 3 groups / 5 scenarios.
-
-The split is group-level and leakage-aware. VALIDATION is not a tuning split. LOCKED_TEST remains forbidden until final evaluation.
+Gold remains evaluator-only and is never copied into agent context. VALIDATION is not a tuning split.
 
 ## Recent sanitized records
 
-- `111-e14-real-dev-measurement-result.md`
-- `113-e14b-real-dev-measurement-result.md`
-- `116-e14c-real-dev-measurement-result.md`
-- `119-e14d-real-dev-measurement-result.md`
-- `122-e14e-real-dev-measurement-result.md`
-- `123-e14e-fixed-capture-boundary-closure.md`
-- `125-e14f-structural-dry-run-result.md`
-- `126-e14f-real-dev-measurement-result.md`
-- `127-e14g-dev-only-gpt-oss-120b-model-selection.md`
-- `128-e14g-structural-dry-run-result.md`
 - `129-e14g-real-dev-measurement-result.md`
 - `130-e14h-dev-only-gpt-oss-120b-high-reasoning.md`
 - `131-e14h-structural-dry-run-result.md`
-- `results/e14-real-dev-sanitized-summary.json`
-- `results/e14b-real-dev-sanitized-summary.json`
-- `results/e14c-real-dev-sanitized-summary.json`
-- `results/e14d-real-dev-sanitized-summary.json`
-- `results/e14e-real-dev-sanitized-summary.json`
-- `results/e14f-real-dev-sanitized-summary.json`
+- `132-e14h-real-dev-operational-failure.md`
+- `133-e14i-dev-only-gpt-oss-120b-high-reasoning-hidden-format.md`
+- `134-e14i-structural-dry-run-result.md`
 - `results/e14g-real-dev-sanitized-summary.json`
+- `results/e14h-real-dev-sanitized-operational-summary.json`
 
 ## Explicit non-decisions
 
-The following remain intentionally unfrozen:
-
-- final model/provider choice;
-- final agent runtime/framework;
-- final MCP topology;
-- RAG/vector DB;
-- multi-agent decomposition/routing;
-- persistent memory;
-- observability backend/vendor;
-- UI/demo flow;
-- final production architecture.
+The following remain intentionally unfrozen: final model/provider choice, final agent runtime/framework, MCP topology, RAG/vector DB, multi-agent decomposition/routing, persistent memory, observability backend/vendor, UI/demo flow, and final production architecture.
 
 ## Methodological rules
 
@@ -208,9 +196,10 @@ The following remain intentionally unfrozen:
 ## Critical path
 
 ```text
-one complete real zero-cost E14h DEV capture
-→ if capture is 6/6: unchanged E9 v3 private DEV scoring exactly once
-→ if and only if every unchanged threshold passes: measurement-only DEV+VALIDATION
+E14i one-call non-benchmark Groq compatibility preflight
+→ only if PASS: one complete real zero-cost E14i DEV capture
+→ only if capture is 6/6: unchanged E9 v3 private DEV scoring exactly once
+→ only if every unchanged threshold passes: measurement-only DEV+VALIDATION
 → final safety/action gate decision
 → architecture decisions backed by accumulated experiments/ADRs
 → integration/demo implementation
