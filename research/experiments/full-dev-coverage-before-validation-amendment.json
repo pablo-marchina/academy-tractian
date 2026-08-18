@@ -1,0 +1,57 @@
+{
+  "amendment_id": "FULL-DEV-COVERAGE-BEFORE-VALIDATION-2026-08-18",
+  "status": "REGISTERED_BEFORE_E14M_R1_REAL_REPLACEMENT_RESULT",
+  "date": "2026-08-18",
+  "trigger": {
+    "source": "public benchmark split coverage audit only",
+    "private_oracle_used": false,
+    "model_outputs_used": false,
+    "validation_feedback_used": false,
+    "locked_test_answer_material_used": false,
+    "frozen_dev_group_count": 5,
+    "historical_representative_group_count": 3,
+    "historical_group_coverage_fraction": 0.6,
+    "historical_scenario_coverage_fraction": 0.75,
+    "historical_ticket_coverage_fraction": 0.75,
+    "omitted_modality": "contextualize"
+  },
+  "historical_e14m_r1_rule": {
+    "do_not_change_representative_groups": true,
+    "representative_groups_remain": ["asset_G501", "asset_C710", "asset_S420"],
+    "replacement_rule_unchanged": true,
+    "if_r1_complete_run_frozen_e9_v3_exactly_once": true,
+    "representative_r1_pass_is_full_dev_claim": false
+  },
+  "new_pre_validation_gate": {
+    "full_dev_measurement_required": true,
+    "required_dev_groups": ["asset_G501", "asset_C710", "asset_S420", "asset_M208", "asset_M101"],
+    "all_frozen_dev_groups_required": true,
+    "contextualize_must_be_covered": true,
+    "candidate_must_be_frozen_before_full_dev_generation": true,
+    "full_dev_measurement_must_be_preregistered_before_real_generation": true,
+    "no_validation_before_full_dev_measurement_pass": true,
+    "evaluator_validity_gate_also_required": true,
+    "validation_feedback_for_candidate_tuning": false,
+    "locked_test_allowed": false
+  },
+  "ordering": [
+    "complete E14m-R1 or stop E14m according to the preregistered replacement rule",
+    "record frozen historical E9 v3 score if R1 is complete",
+    "resolve evaluator-validity review and freeze the evaluator used for pre-validation decisions",
+    "preregister full-DEV measurement for all five DEV groups under the selected frozen candidate",
+    "run full-DEV measurement without candidate tuning between groups",
+    "only if full-DEV and evaluator-validity gates pass may VALIDATION run measurement-only"
+  ],
+  "unchanged_split_assignment": {
+    "benchmark_split_v1_remains_frozen": true,
+    "groups_moved_between_splits": false,
+    "scenarios_moved_between_splits": false,
+    "tickets_moved_between_splits": false
+  },
+  "privacy": {
+    "commit_raw_outputs": false,
+    "commit_private_scorer_rows": false,
+    "commit_expected_paths": false,
+    "private_oracle_in_model_prompt": false
+  }
+}
