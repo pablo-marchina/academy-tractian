@@ -1,0 +1,62 @@
+{
+  "amendment_id": "EVALUATOR-V4-VISIBLE-CASE-TICKET-ALIGNMENT",
+  "date": "2026-08-18",
+  "status": "PREREGISTERED_BEFORE_PRIVATE_ALIGNMENT_DIAGNOSTIC_RESULT",
+  "purpose": "Prevent group-level oracle unions from supervising a model output generated from a different ticket/case than the one actually selected by the public runner.",
+  "public_runner_fact": {
+    "source": "scripts/research/e8_free_anywhere_model_runner.py",
+    "selection_rule": "load_agent_visible_cases keeps the first discovered case record per asset_id",
+    "observation_packet_uses_selected_case": true
+  },
+  "prior_aggregate_findings": {
+    "group_level_supervision_has_multiple_rows": true,
+    "group_level_supervision_has_multiple_action_targets": false,
+    "consequence": "action-target union is not ambiguous in the observed aggregate, but evidence/read union may still mix distinct ticket trajectories"
+  },
+  "frozen_alignment_rule": {
+    "agent_input_cases_source": "the same agent-input/cases.json supplied to the candidate runner",
+    "replay_runner_case_selection_exactly": true,
+    "selected_case_identifier_for_oracle_alignment": "ticket_id",
+    "group_identifier": "asset_id/group_id",
+    "required_oracle_match_count_per_scored_call": 1,
+    "if_exactly_one_group_and_ticket_match": "use only that expected_path row as semantic supervision",
+    "if_zero_matches": "mark call unscoreable; do not fall back to group-level union",
+    "if_multiple_matches": "mark call unscoreable; do not choose among rows using candidate output",
+    "group_level_union_fallback_allowed": false,
+    "root_question_may_resolve_alignment": false,
+    "mode_may_resolve_alignment": false,
+    "candidate_output_may_resolve_alignment": false,
+    "private_scorer_error_feedback_may_resolve_alignment": false
+  },
+  "metric_semantics_after_activation": {
+    "expected_read_signatures": "normalized METHOD+public-tool signatures from the single aligned expected_path.step sequence",
+    "expected_action_signatures": "normalized action signatures from the same single aligned expected_path row",
+    "expected_escalation_signatures": "explicit specialist/case escalation action signatures from the same aligned row",
+    "evidence_plan_only": true,
+    "general_free_text_groundedness": "unmeasured unless a separately validated metric is added"
+  },
+  "activation_gate": {
+    "required_diagnostic": "E9_PRIVATE_ORACLE_VISIBLE_CASE_ALIGNMENT_DIAGNOSTIC",
+    "all_groups_to_be_scored_must_have_selected_visible_case": true,
+    "all_selected_visible_cases_must_have_ticket_id": true,
+    "all_groups_to_be_scored_must_match_exactly_one_private_oracle_row_by_group_plus_ticket": true,
+    "if_gate_fails": "KEEP_V4_MEASUREMENT_ONLY_AND_REGISTER_A_SEPARATE_CANDIDATE_INDEPENDENT_ALIGNMENT_PROTOCOL"
+  },
+  "scope": {
+    "changes_model_candidate": false,
+    "changes_historical_e9_v3": false,
+    "v4_remains_measurement_only_until_alignment_gate_passes": true,
+    "validation_feedback_used": false,
+    "locked_test_feedback_used": false,
+    "locked_test_accessed_by_candidate": false
+  },
+  "privacy": {
+    "print_oracle_text": false,
+    "print_expected_paths": false,
+    "print_ticket_ids": false,
+    "print_group_ids": false,
+    "print_endpoint_names": false,
+    "print_per_row_results": false,
+    "commit_private_alignment_rows": false
+  }
+}
