@@ -1,0 +1,43 @@
+name: research-e14h-dev-only-gpt-oss-120b-high-reasoning
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/130-e14h-dev-only-gpt-oss-120b-high-reasoning.md'
+      - 'research/experiments/e14h-*.json'
+      - 'scripts/research/e14h_*.py'
+      - '.github/workflows/research-e14h.yml'
+  pull_request:
+    paths:
+      - 'research/130-e14h-dev-only-gpt-oss-120b-high-reasoning.md'
+      - 'research/experiments/e14h-*.json'
+      - 'scripts/research/e14h_*.py'
+      - '.github/workflows/research-e14h.yml'
+
+env:
+  E8_GROQ_MODEL: openai/gpt-oss-120b
+  E8_MODEL_TEMPERATURE: '0'
+  E14_REASONING_EFFORT: high
+  E14_MAX_COMPLETION_TOKENS: '1600'
+
+jobs:
+  e14h-dev-only-gpt-oss-120b-high-reasoning-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E14h DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14h_dev_only_gpt_oss_120b_high_reasoning.py
+          --manifest research/experiments/e14h-dev-only-gpt-oss-120b-high-reasoning-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14h-dev-only-gpt-oss-120b-high-reasoning-dry-run.json
+          --dry-run
+      - name: Upload E14h dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14h-dev-only-gpt-oss-120b-high-reasoning-dry-run
+          path: /tmp/e14h-dev-only-gpt-oss-120b-high-reasoning-dry-run.json
