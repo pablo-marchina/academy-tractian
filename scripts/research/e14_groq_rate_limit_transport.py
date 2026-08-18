@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rate-limit-aware Groq transport used only by recovered E14 DEV capture.
+"""Rate-limit-aware Groq transport used by the E14 DEV research sequence.
 
 This module changes transport behavior only. It does not change prompts, model
 instructions, DEV groups, scorer logic, private-oracle isolation, E14 policy, or
@@ -9,10 +9,10 @@ It honors Groq's documented `retry-after` / token-reset headers for 429 response
 classifies provider failures without persisting raw error text, and falls back to
 bounded exponential backoff for transient 5xx/network failures.
 
-For the GPT-OSS replacement-model recovery, reasoning effort is explicitly frozen
-at `medium` (the provider default) and E14 gets its own completion-token budget so
-we can remove the prior 800-token harness bottleneck without changing reasoning
-behavior or decision semantics.
+GPT-OSS reasoning effort and the E14 completion-token budget are explicit env
+configuration. `E14_REASONING_FORMAT` is optional so historical candidates remain
+unchanged when it is unset; E14i sets it explicitly to `hidden` for Groq JSON-mode
+compatibility.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from typing import Any
 
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "openai/gpt-oss-20b"
-DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.2"
+DEFAULT_USER_AGENT = "academy-tractian-e14-rate-limit-aware/1.3"
 DEFAULT_REASONING_EFFORT = "medium"
 DEFAULT_E14_MAX_COMPLETION_TOKENS = 1600
 
@@ -211,6 +211,11 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
     reasoning_effort = os.getenv("E14_REASONING_EFFORT", DEFAULT_REASONING_EFFORT).strip().lower()
     if reasoning_effort not in {"low", "medium", "high"}:
         raise AssertionError("E14_REASONING_EFFORT must be one of: low, medium, high")
+
+    reasoning_format = os.getenv("E14_REASONING_FORMAT", "").strip().lower()
+    if reasoning_format and reasoning_format not in {"raw", "parsed", "hidden"}:
+        raise AssertionError("E14_REASONING_FORMAT must be one of: raw, parsed, hidden, or unset")
+
     max_completion_tokens = int(
         os.getenv(
             "E14_MAX_COMPLETION_TOKENS",
@@ -220,7 +225,7 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
     if max_completion_tokens < 1:
         raise AssertionError("E14_MAX_COMPLETION_TOKENS must be >= 1")
 
-    payload = {
+    payload: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": base_module.SYSTEM_PROMPT},
@@ -231,6 +236,9 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
         "max_completion_tokens": max_completion_tokens,
         "response_format": {"type": "json_object"},
     }
+    if reasoning_format:
+        payload["reasoning_format"] = reasoning_format
+
     response, transport_meta = post_json(
         API_URL,
         {"Authorization": f"Bearer {os.environ['GROQ_API_KEY']}"},
@@ -238,7 +246,7 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
         timeout,
     )
     content = response["choices"][0]["message"]["content"]
-    return content, {
+    meta: dict[str, Any] = {
         "model": model,
         "usage": response.get("usage", {}),
         "transport": "e14_rate_limit_aware",
@@ -246,3 +254,6 @@ def call_groq(prompt: str, timeout: int, base_module: Any) -> tuple[str, dict[st
         "max_completion_tokens": max_completion_tokens,
         **transport_meta,
     }
+    if reasoning_format:
+        meta["reasoning_format"] = reasoning_format
+    return content, meta
