@@ -1,6 +1,6 @@
 # Systematic Research Hub
 
-**Status: E0–E3 frozen/complete; E4–E14 measured; E14/E14b/E14c/E14d/E14e real DEV gates failed; no E14f candidate preregistered**  
+**Status: E0–E3 frozen/complete; E4–E14 measured; E14/E14b/E14c/E14d/E14e real DEV gates failed; E14f preregistered, implemented, and structural dry-run passed**  
 **Date:** 2026-08-17
 
 The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, measured guarded-boundary/runtime/MCP/model experiments, and a hard safety/action gate that is still blocking downstream product integration.
@@ -34,35 +34,68 @@ E14c fixed deterministic concrete-vs-template public action-endpoint comparison 
 
 E14d fixed the analogous concrete-vs-template mismatch for the same ten historical public GET evidence families used by E10e/E10g. Thresholds remained unchanged. In the real E14d capture, E10g made zero changes under the corrected comparison view.
 
-### E14d remaining-boundary diagnosis
+### E14d / E14e boundary closure
 
-The one E10e `too_few_concrete_evidence_resources_for_state_change` reprocess proposal was not a precedence bug: even if restored to its pre-E10e immediate-action state, the specialized E14 reprocess policy rejected it for `missing_human_readable_evidence_to_reprocess_reason` with zero support anchors. Therefore E10e threshold/order remains unchanged.
+The E10e `too_few_concrete_evidence_resources_for_state_change` reprocess proposal was not a precedence bug. In both the E14d and E14e fixed captures, the specialized E14 counterfactual rejected the same class because it lacked a human-readable visible evidence-to-reprocess reason and had zero of the required two selective support-anchor classes. Therefore E10e threshold/order and E14 selective-reprocess semantics remain unchanged.
 
-A separate E10d diagnostic found one historical `visible_human_escalation_marker` change where every stronger handoff condition was false and no explicit positive/negative/conditional handoff phrase existed; only bare escalation/risk context remained.
-
-### E14e — explicit current-handoff semantics
-
-E14e replaced only the historical broad E10d marker-substring fallback with an explicit positive current-handoff phrase fallback. It preserved all stronger E10d branches, E14c endpoint canonicalization, E14d evidence canonicalization, E10e/E10g/E11/E14 policies and all thresholds.
-
-Structural GitHub Actions run `32061728940` passed. The complete real E14e DEV capture then produced:
+E14e replaced only the historical broad E10d marker-substring fallback with an explicit positive current-handoff phrase fallback. In the real E14e run, E10d changed two outputs only for strong preserved reasons:
 
 ```text
-E10d outputs changed: 2
-  explicit_current_handoff_phrase:                         1
-  state_changing_action_requires_visible_human_loop_guard: 1
-E10e outputs changed: 2
-E10g outputs changed: 0
-E11 outputs changed: 0
-E14 reprocess targets: 0
+explicit_current_handoff_phrase:                         1
+state_changing_action_requires_visible_human_loop_guard: 1
 ```
 
-The refined E10d policy therefore exercised only intended strong reasons in the real run. E14e still failed the overall quality gate, so no further E10d relaxation is supported by current public evidence.
+E10g and E11 changed zero outputs. The remaining E10e changes were one explicit `visible_rubric_needs_more_evidence` contradiction and one weak reprocess that E14 would also reject. This closes the current deterministic post-model boundary hypotheses. Further threshold relaxation is not supported by public evidence.
 
-## Current blocker
+## E14f — conditional public semantic repair
 
-The next step is **fixed-capture diagnosis of the two E10e changes in E14e**. No new provider call, no private rescoring, no VALIDATION and no E14f preregistration should occur until those public reason classes are known.
+E14f is preregistered as a single upstream intervention relative to E14e:
 
-If both E10e changes are explicit visible safety contradictions or otherwise structurally justified, the remaining failure should be treated as upstream model semantic behavior rather than another deterministic boundary-representation defect.
+```text
+conditional_public_semantic_consistency_repair_before_guards_only
+```
+
+The unchanged initial E14e model call runs first. Only a parseable draft containing a preregistered public contradiction receives one second call to the same GPT-OSS model. The repair receives only the original visible prompt, the model's own draft, and deterministic public consistency codes. It receives no scorer/oracle/VALIDATION/LOCKED_TEST information.
+
+Repair triggers are limited to immediate-action contradictions already represented by the existing public policies: model-declared need for more evidence or unsafe-to-act, unsupported endpoint, decision/action conflict, autonomous state change below the unchanged public evidence minimum, or reprocess lacking the unchanged human-readable reason / two public support anchors.
+
+The repair prompt is deliberately narrow: it forbids invented evidence, forbids adding irrelevant reads just to satisfy counts, treats planned GETs as plans rather than observations, preserves non-conflicting fields where possible, and does not enumerate all endpoints or the full evidence surface. This avoids repeating rejected E14b's broad always-on prompt expansion.
+
+### E14f structural result
+
+GitHub Actions run `32090619168` passed after a fixture-only correction. The first dry-run failure was caused by the weak synthetic fixture itself containing the causal word `because`, which the unchanged E14 policy correctly recognized as a human-readable reason; no E14f policy changed.
+
+Successful structural output:
+
+```text
+status:                                   E14F_DEV_ONLY_PUBLIC_SEMANTIC_REPAIR_CAPTURE_PASS
+total_calls:                              6
+parsed_model_outputs_available:           6
+scoreable_calls:                          6
+validation_ran:                           false
+dry_run:                                  true
+completeness_pass:                        true
+retry_count:                              0
+syntax_repair_count:                      0
+semantic_repair_triggered_calls:          3
+semantic_repair_calls:                    3
+semantic_repair_residual_violation_calls: 0
+target_reprocess_outputs_checked:         3
+authorized_target_reprocess_outputs:      3
+blocked_target_reprocess_outputs:         0
+```
+
+This is structural evidence only, not quality evidence. The next authorized step is one complete real E14f DEV-only capture followed by unchanged private E9 v3 scoring.
+
+E14f artifacts:
+
+- `123-e14e-fixed-capture-boundary-closure.md`
+- `124-e14f-dev-only-public-semantic-repair.md`
+- `125-e14f-structural-dry-run-result.md`
+- `experiments/e14f-dev-only-public-semantic-repair-manifest.json`
+- `../scripts/research/e14f_public_semantic_consistency.py`
+- `../scripts/research/e14f_dev_only_public_semantic_repair.py`
+- `../.github/workflows/research-e14f.yml`
 
 ## Required DEV acceptance
 
@@ -113,6 +146,8 @@ The split is group-level and leakage-aware. VALIDATION is not a tuning split. LO
 - `116-e14c-real-dev-measurement-result.md`
 - `119-e14d-real-dev-measurement-result.md`
 - `122-e14e-real-dev-measurement-result.md`
+- `123-e14e-fixed-capture-boundary-closure.md`
+- `125-e14f-structural-dry-run-result.md`
 - `results/e14-real-dev-sanitized-summary.json`
 - `results/e14b-real-dev-sanitized-summary.json`
 - `results/e14c-real-dev-sanitized-summary.json`
@@ -147,10 +182,9 @@ The following remain intentionally unfrozen:
 ## Critical path
 
 ```text
-E14e fixed-capture E10e reason diagnosis
-→ decide whether any public structural policy defect remains
-→ if no structural defect remains: stop boundary relaxation and address upstream model semantic behavior with a separately preregistered intervention, if justified
-→ only after a DEV candidate passes every unchanged threshold: measurement-only DEV+VALIDATION
+E14f complete real zero-cost DEV capture
+→ unchanged E9 v3 private DEV scoring
+→ if and only if every unchanged threshold passes: measurement-only DEV+VALIDATION
 → final safety/action gate decision
 → architecture decisions backed by accumulated experiments/ADRs
 → integration/demo implementation
