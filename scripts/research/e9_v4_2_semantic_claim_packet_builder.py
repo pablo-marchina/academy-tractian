@@ -27,6 +27,7 @@ if SPEC is None or SPEC.loader is None:
     raise RuntimeError("failed to load groundedness surface diagnostic")
 ground = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(ground)
+v41 = ground.v41
 v4 = ground.v4
 
 SOURCE_FIELDS = (
@@ -115,6 +116,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     claim_units_total = 0
     calls_with_zero_claim_units = 0
 
+    tool_signatures = [str(spec["signature"]) for spec in v41.PUBLIC_TOOL_SPECS]
+
     for call_index, call in enumerate(calls):
         output = v4.output_payload(call)
         if not isinstance(output, dict):
@@ -137,7 +140,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "split": str(call.get("split") or "DEV"),
             "visible_case": visible_case,
             "public_contract": {
-                "tool_signatures": [str(spec["signature"]) for spec in getattr(__import__("scripts.research.e9_evaluator_side_scorer_v4_1", fromlist=["PUBLIC_TOOL_SPECS"]), "PUBLIC_TOOL_SPECS")],
+                "tool_signatures": tool_signatures,
                 "claim_support_labels": ["SUPPORTED", "CONTRADICTED", "NOT_SUPPORTED", "NOT_APPLICABLE"],
                 "claim_types": [
                     "factual_assertion",
