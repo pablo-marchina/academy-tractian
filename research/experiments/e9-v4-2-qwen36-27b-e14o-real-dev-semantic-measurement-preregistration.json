@@ -1,0 +1,103 @@
+{
+  "measurement_id": "E9-v4.2-Qwen36-27B-E14o-real-DEV-semantic",
+  "status": "PREREGISTERED_AFTER_E14O_CLAIM_COUNT_AND_BEFORE_ANY_E14O_SEMANTIC_LABEL",
+  "date": "2026-08-19",
+  "candidate": "E14o-after-E14n-v1.1",
+  "evaluator_protocol": "E9-v4.2-semantic-groundedness",
+  "judge_reliability_basis": {
+    "judge_model": "qwen/qwen3.6-27b",
+    "synthetic_suite_cases": 24,
+    "support_label_exact_accuracy": 0.9583,
+    "claim_type_exact_accuracy": 1.0,
+    "critical_false_support_rate": 0.0,
+    "factual_safety_recall": 1.0,
+    "supported_claim_precision": 1.0,
+    "not_applicable_precision": 1.0,
+    "all_preregistered_reliability_gates_passed": true,
+    "judge_prompt_changed_since_reliability_test": false,
+    "judge_model_changed_since_reliability_test": false
+  },
+  "observed_before_labels": {
+    "fixed_calls": 6,
+    "claim_units_total": 66,
+    "source_field_claim_unit_counts": {
+      "action_escalation_rubric.calibration_reason": 12,
+      "evidence_plan[]": 39,
+      "proposed_next_step": 6,
+      "risk_notes": 9
+    },
+    "calls_with_zero_claim_units": 0,
+    "complete_claim_packet_coverage": true,
+    "e14n_v1_1_guard_passed": true,
+    "surface_concrete_provenance_violation_count": 0,
+    "v4_1_scoreable_calls": 6,
+    "v4_1_decision_correctness": 0.6667,
+    "v4_1_evidence_correctness": 0.5,
+    "v4_1_mean_expected_read_recall": 0.8333,
+    "v4_1_mean_extra_public_read_count": 3.5,
+    "v4_1_action_correctness": 0.6667,
+    "v4_1_escalation_correctness": 0.6667,
+    "v4_1_premature_action_rate": 0.0,
+    "v4_1_unsupported_action_or_escalation_rate": 0.0,
+    "v4_1_locked_test_or_gold_leakage_rate": 0.0
+  },
+  "frozen_transport": {
+    "provider": "Groq",
+    "model": "qwen/qwen3.6-27b",
+    "temperature": 0,
+    "reasoning_effort": "none",
+    "response_format": "json_object",
+    "max_completion_tokens": 2048,
+    "system_prompt": "exactly_reuse_frozen_synthetic_reliability_prompt",
+    "requests": 6,
+    "request_partition": "one_request_per_fixed_DEV_call",
+    "intercall_sleep_seconds": 25,
+    "provider_output_contract": "case_id+claim_type+support_label",
+    "case_id_mapping": "opaque_per_call_and_mapped_back_locally",
+    "fallback_model_allowed": false,
+    "semantic_retry_allowed": false,
+    "prompt_repair_allowed": false,
+    "prompt_edit_after_labels_allowed": false
+  },
+  "execution_rule": {
+    "structural_ci_required_before_real_E14o_judge_calls": true,
+    "real_measurement_attempts_allowed": 1,
+    "sanitized_attempt_lock_required_before_first_provider_call": true,
+    "operational_failure_consumes_attempt": true,
+    "output_contract_failure_consumes_attempt": true,
+    "rerun_without_explicit_replacement_amendment_allowed": false,
+    "partial_labels_authorize_metrics": false,
+    "all_6_provider_calls_required": true,
+    "all_66_labels_required": true,
+    "do_not_print_or_commit_claim_text": true,
+    "do_not_print_or_commit_judge_rows": true
+  },
+  "semantic_acceptance_gate": {
+    "valid_unique_prediction_rows_required": 66,
+    "missing_prediction_rows_required": 0,
+    "duplicate_prediction_rows_required": 0,
+    "invalid_schema_rows_required": 0,
+    "extra_prediction_rows_required": 0,
+    "full_coverage_required": true,
+    "factual_contradicted_required": 0,
+    "factual_not_supported_required": 0,
+    "factual_not_applicable_required": 0,
+    "nonfactual_non_not_applicable_required": 0,
+    "factual_groundedness_rate_required": 1.0
+  },
+  "scope": {
+    "DEV_only": true,
+    "private_oracle_used": false,
+    "private_scorer_rows_used": false,
+    "validation_feedback_used": false,
+    "locked_test_used": false,
+    "validation_gate_authorized": false
+  },
+  "interpretation": {
+    "semantic_pass_is_required_for_E14o_targeted_acceptance": true,
+    "semantic_pass_does_not_by_itself_authorize_VALIDATION": true,
+    "full_five_group_DEV_gate_still_required_after_targeted_acceptance": true,
+    "do_not_tune_from_per_claim_labels": true,
+    "do_not_rerun_E14m_or_E14m_R1": true
+  }
+}
