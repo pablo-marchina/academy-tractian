@@ -51,28 +51,36 @@ def _placeholder_for(token: str) -> str:
     return "{id}"
 
 
-def _sanitize_text(text: str, visible_blob: str) -> tuple[str, int]:
-    replacements = 0
+def _sanitize_text(text: str, visible_blob: str) -> tuple[str, int, int]:
+    """Return sanitized text, distinct unsupported mentions, replacement occurrences.
+
+    The groundedness audit counts distinct identifier tokens per text item. Keep
+    that exact counting contract for the paired before/after assertion while
+    separately recording raw replacement occurrences for diagnostics.
+    """
+    unsupported_tokens: set[str] = set()
+    replacement_occurrences = 0
 
     def replace(match: re.Match[str]) -> str:
-        nonlocal replacements
+        nonlocal replacement_occurrences
         token = match.group(0)
-        if token.lower() in visible_blob:
+        lowered = token.lower()
+        if lowered in visible_blob:
             return token
-        replacements += 1
+        unsupported_tokens.add(lowered)
+        replacement_occurrences += 1
         return _placeholder_for(token)
 
-    # Namespaced IDs first. UUIDs are then handled independently; the patterns
-    # do not overlap for the public benchmark identifier forms.
     result = ground.NAMESPACED_ID_RE.sub(replace, text)
     result = ground.UUID_RE.sub(replace, result)
-    return result, replacements
+    return result, len(unsupported_tokens), replacement_occurrences
 
 
 def sanitize_output(output: dict[str, Any], visible_case: dict[str, Any]) -> tuple[dict[str, Any], dict[str, int]]:
     result = copy.deepcopy(output)
     visible_blob = ground._case_visible_blob(visible_case)
-    replacements = 0
+    canonicalized_mentions = 0
+    replacement_occurrences = 0
     changed_fields = 0
 
     plan = result.get("evidence_plan")
@@ -80,8 +88,9 @@ def sanitize_output(output: dict[str, Any], visible_case: dict[str, Any]) -> tup
         new_plan: list[Any] = []
         for item in plan:
             if isinstance(item, str):
-                new_item, count = _sanitize_text(item, visible_blob)
-                replacements += count
+                new_item, mention_count, occurrence_count = _sanitize_text(item, visible_blob)
+                canonicalized_mentions += mention_count
+                replacement_occurrences += occurrence_count
                 changed_fields += int(new_item != item)
                 new_plan.append(new_item)
             else:
@@ -91,8 +100,9 @@ def sanitize_output(output: dict[str, Any], visible_case: dict[str, Any]) -> tup
     for key in ("proposed_next_step", "risk_notes"):
         value = result.get(key)
         if isinstance(value, str):
-            new_value, count = _sanitize_text(value, visible_blob)
-            replacements += count
+            new_value, mention_count, occurrence_count = _sanitize_text(value, visible_blob)
+            canonicalized_mentions += mention_count
+            replacement_occurrences += occurrence_count
             changed_fields += int(new_value != value)
             result[key] = new_value
 
@@ -101,13 +111,15 @@ def sanitize_output(output: dict[str, Any], visible_case: dict[str, Any]) -> tup
         for key in ("calibration_reason", "action_endpoint"):
             value = rubric.get(key)
             if isinstance(value, str):
-                new_value, count = _sanitize_text(value, visible_blob)
-                replacements += count
+                new_value, mention_count, occurrence_count = _sanitize_text(value, visible_blob)
+                canonicalized_mentions += mention_count
+                replacement_occurrences += occurrence_count
                 changed_fields += int(new_value != value)
                 rubric[key] = new_value
 
     return result, {
-        "unsupported_identifier_replacements": replacements,
+        "unsupported_identifier_replacements": canonicalized_mentions,
+        "unsupported_identifier_replacement_occurrences": replacement_occurrences,
         "changed_text_fields": changed_fields,
     }
 
@@ -142,6 +154,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     assessed = 0
     calls_changed = 0
     replacements = 0
+    replacement_occurrences = 0
     changed_fields = 0
     decision_semantic_changes = 0
     before_unsupported_ids = 0
@@ -169,12 +182,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         before_calls_with_violation += int(before["has_concrete_provenance_violation"] is True)
         after_calls_with_violation += int(after["has_concrete_provenance_violation"] is True)
         replacements += int(stats["unsupported_identifier_replacements"])
+        replacement_occurrences += int(stats["unsupported_identifier_replacement_occurrences"])
         changed_fields += int(stats["changed_text_fields"])
         calls_changed += int(stats["unsupported_identifier_replacements"] > 0)
         decision_semantic_changes += int(_decision_signature(output) != _decision_signature(sanitized))
 
-        # collect_calls returns references into transformed, so replacing this
-        # field mutates only the local transformed copy.
         call["parsed_output"] = sanitized
 
     complete = (
@@ -208,6 +220,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "changed_text_fields": changed_fields,
         "unsupported_identifier_mentions_before": before_unsupported_ids,
         "unsupported_identifier_replacements": replacements,
+        "unsupported_identifier_replacement_occurrences": replacement_occurrences,
         "unsupported_identifier_mentions_after": after_unsupported_ids,
         "calls_with_any_concrete_provenance_violation_before": before_calls_with_violation,
         "calls_with_any_concrete_provenance_violation_after": after_calls_with_violation,
