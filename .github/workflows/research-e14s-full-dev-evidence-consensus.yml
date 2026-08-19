@@ -1,0 +1,62 @@
+name: research-e14s-full-dev-evidence-consensus
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/e14s-full-dev-public-evidence-candidate-pool-consensus-preregistration.json'
+      - 'scripts/research/e14s_full_dev_public_evidence_candidate_pool_consensus_guard.py'
+      - 'scripts/research/e14s_full_dev_public_evidence_candidate_pool_consensus_guard_selfcheck.py'
+      - '.github/workflows/research-e14s-full-dev-evidence-consensus.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/experiments/e14s-full-dev-public-evidence-candidate-pool-consensus-preregistration.json'
+      - 'scripts/research/e14s_full_dev_public_evidence_candidate_pool_consensus_guard.py'
+      - 'scripts/research/e14s_full_dev_public_evidence_candidate_pool_consensus_guard_selfcheck.py'
+      - '.github/workflows/research-e14s-full-dev-evidence-consensus.yml'
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public registry dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Compile
+        run: |
+          python -m py_compile scripts/research/e14s_full_dev_public_evidence_candidate_pool_consensus_guard.py
+          python -m py_compile scripts/research/e14s_full_dev_public_evidence_candidate_pool_consensus_guard_selfcheck.py
+      - name: Run public synthetic self-check
+        env:
+          PYTHONPATH: .
+        run: python scripts/research/e14s_full_dev_public_evidence_candidate_pool_consensus_guard_selfcheck.py
+      - name: Verify preregistration constants and forbidden selectors
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('research/experiments/e14s-full-dev-public-evidence-candidate-pool-consensus-preregistration.json')
+          x=json.loads(p.read_text())
+          assert x['status']=='PREREGISTERED_AFTER_E14R_AGGREGATE_FAILURE_AND_BEFORE_E14S_TRANSFORM'
+          assert x['public_selection_policy']['selection_cap_per_call']==6
+          g=x['E14s_target_gate']
+          assert g['fixed_calls_required']==10
+          assert g['scoreable_calls_required']==10
+          assert g['evidence_correctness_min']==0.5
+          assert g['mean_expected_read_recall_min']==0.8333
+          assert g['mean_extra_public_read_count_max']==3.5
+          assert g['decision_correctness_required_unchanged']==0.8
+          assert g['action_correctness_required_unchanged']==0.8
+          assert g['escalation_correctness_required_unchanged']==0.8
+          assert g['premature_action_rate_required']==0.0
+          assert g['unsupported_action_or_escalation_rate_required']==0.0
+          src=Path('scripts/research/e14s_full_dev_public_evidence_candidate_pool_consensus_guard.py').read_text()
+          assert 'coverage_tags' not in src
+          assert 'ticket_id' not in src
+          assert 'expected-paths' not in src
+          assert 'private_scorer_rows_used": False' in src
+          PY
