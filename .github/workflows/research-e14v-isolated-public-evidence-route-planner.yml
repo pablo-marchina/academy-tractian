@@ -1,0 +1,84 @@
+name: research-e14v-isolated-public-evidence-route-planner
+
+on:
+  push:
+    paths:
+      - 'research/experiments/e14v-full-dev-public-evidence-decomposition-prompt-preregistration.json'
+      - 'research/experiments/e14v-full-dev-isolated-public-evidence-route-planner-preregistration.json'
+      - 'research/fixtures/e14v-public-evidence-route-planner-synthetic-v1.json'
+      - 'scripts/research/e14v_isolated_public_evidence_route_planner.py'
+      - 'scripts/research/e14v_isolated_public_evidence_route_planner_selfcheck.py'
+      - '.github/workflows/research-e14v-isolated-public-evidence-route-planner.yml'
+  pull_request:
+    paths:
+      - 'research/experiments/e14v-full-dev-isolated-public-evidence-route-planner-preregistration.json'
+      - 'research/fixtures/e14v-public-evidence-route-planner-synthetic-v1.json'
+      - 'scripts/research/e14v_isolated_public_evidence_route_planner.py'
+      - 'scripts/research/e14v_isolated_public_evidence_route_planner_selfcheck.py'
+      - '.github/workflows/research-e14v-isolated-public-evidence-route-planner.yml'
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile E14v
+        run: |
+          python -m py_compile \
+            scripts/research/e14v_isolated_public_evidence_route_planner.py \
+            scripts/research/e14v_isolated_public_evidence_route_planner_selfcheck.py
+
+      - name: Run offline self-check
+        run: python scripts/research/e14v_isolated_public_evidence_route_planner_selfcheck.py
+
+      - name: Run zero-provider synthetic dry-run
+        run: |
+          python scripts/research/e14v_isolated_public_evidence_route_planner.py \
+            --mode synthetic \
+            --out /tmp/e14v-synthetic-dry.json \
+            --dry-run
+
+      - name: Verify preregistered boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          p = Path('research/experiments/e14v-full-dev-isolated-public-evidence-route-planner-preregistration.json')
+          m = json.loads(p.read_text())
+          assert m['experiment_id'] == 'E14v-full-DEV-isolated-public-evidence-route-planner'
+          assert m['status'] == 'PREREGISTERED_SYNTHETIC_QUALIFICATION_REQUIRED'
+          assert m['intervention_class'] == 'isolated_public_evidence_route_planner_only'
+          assert m['single_intervention'] is True
+          assert m['scope']['synthetic_public_qualification_required_before_real_dev'] is True
+          assert m['scope']['measurement_splits'] == ['DEV']
+          assert set(m['scope']['forbidden_splits']) == {'VALIDATION', 'LOCKED_TEST'}
+          assert m['planner']['model'] == 'openai/gpt-oss-120b'
+          assert m['planner']['temperature'] == 0
+          assert m['planner']['reasoning_effort'] == 'medium'
+          assert m['planner']['response_contract']['max_distinct_reads'] == 7
+          assert m['synthetic_qualification']['required_cases'] == 14
+          assert m['real_dev_attempt_policy']['real_planner_runner_invocations_allowed'] == 1
+          assert m['transform_contract']['only_parent_field_replaced_before_q_stack'] == 'evidence_plan'
+          assert m['transform_contract']['E14q_reapplied_unchanged'] is True
+          assert m['transform_contract']['E14q2_reapplied_unchanged'] is True
+          print('E14V_PREREGISTRATION_BOUNDARY_PASS')
+          PY
+
+      - name: Reject private selectors in planner source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('scripts/research/e14v_isolated_public_evidence_route_planner.py').read_text()
+          forbidden = [
+              'expected-paths.json',
+              'oracle-file',
+              'coverage_tags',
+              'ticket_id',
+              'LOCKED_TEST_CASE',
+          ]
+          for needle in forbidden:
+              assert needle not in text, f'forbidden selector found: {needle}'
+          print('E14V_FORBIDDEN_SELECTOR_SCAN_PASS')
+          PY
