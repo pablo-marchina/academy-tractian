@@ -84,15 +84,20 @@ def main() -> int:
     assert passed["claim_units_expected"] == 66
     assert passed["valid_unique_prediction_rows"] == 66
     assert passed["full_coverage"] is True
+    assert passed["factual_claims_total"] == 0
+    assert passed["factual_groundedness_rate"] == 1.0
+    assert passed["factual_groundedness_rate_definition"] == "1.0_when_zero_factual_assertions_else_supported_over_total"
     assert failed["semantic_groundedness_gate_pass"] is False
     assert failed["status"] == agg.FAIL_STATUS
     assert failed["factual_not_supported"] == 1
+    assert failed["factual_groundedness_rate"] == 0.0
     assert failed["gate_results"]["zero_not_supported_factual_claims"] is False
     assert failed["validation_gate_authorized"] is False
 
     print(json.dumps({
         "status": "E9_V4_2_E14O_REAL_DEV_SEMANTIC_AGGREGATE_SELFCHECK_PASS",
         "full_66_row_pass_fixture_passed": True,
+        "zero_factual_assertions_rate_defined_as_one": True,
         "single_not_supported_factual_claim_blocks_gate": True,
         "validation_gate_authorized": False,
         "provider_calls_made": 0,
