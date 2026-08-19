@@ -1,0 +1,91 @@
+name: research-e14p-full-dev-five-group
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/e14p-full-dev-five-group-prevalidation-gate-preregistration.json'
+      - 'research/experiments/e14p-full-dev-five-group-execution-manifest.json'
+      - 'scripts/research/e14o_full_dev_five_group_capture.py'
+      - 'scripts/research/e14p_full_dev_public_epistemic_serialization_guard.py'
+      - '.github/workflows/research-e14p-full-dev.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/experiments/e14p-full-dev-five-group-prevalidation-gate-preregistration.json'
+      - 'research/experiments/e14p-full-dev-five-group-execution-manifest.json'
+      - 'scripts/research/e14o_full_dev_five_group_capture.py'
+      - 'scripts/research/e14p_full_dev_public_epistemic_serialization_guard.py'
+      - '.github/workflows/research-e14p-full-dev.yml'
+
+jobs:
+  structural-full-dev:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public-registry dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Compile full-DEV wrappers
+        run: |
+          python -m py_compile scripts/research/e14o_full_dev_five_group_capture.py
+          python -m py_compile scripts/research/e14p_full_dev_public_epistemic_serialization_guard.py
+      - name: Run 10-call full-DEV generation dry-run
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/research/e14o_full_dev_five_group_capture.py \
+            --manifest research/experiments/e14p-full-dev-five-group-execution-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --dry-run \
+            --out "$RUNNER_TEMP/e14o-full-dev-dry.json" | tee "$RUNNER_TEMP/e14o-full-dev-summary.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path(os.environ['RUNNER_TEMP']) / 'e14o-full-dev-summary.json'
+          s = json.loads(p.read_text())
+          assert s['status'] == 'E14O_FULL_DEV_FIVE_GROUP_CAPTURE_PASS'
+          assert s['required_dev_groups'] == 5
+          assert s['observed_dev_groups'] == 5
+          assert s['repeats_per_group'] == 2
+          assert s['total_calls'] == 10
+          assert s['parsed_model_outputs_available'] == 10
+          assert s['scoreable_calls'] == 10
+          assert s['completeness_pass'] is True
+          assert s['each_group_exactly_two_calls'] is True
+          assert s['validation_ran'] is False
+          assert s['locked_test_used'] is False
+          assert s['dry_run'] is True
+          PY
+      - name: Apply full-DEV E14p serializer to dry-run capture
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/research/e14p_full_dev_public_epistemic_serialization_guard.py \
+            --manifest research/experiments/e14p-full-dev-five-group-execution-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --fixed-output-file "$RUNNER_TEMP/e14o-full-dev-dry.json" \
+            --out "$RUNNER_TEMP/e14p-full-dev-dry.json" | tee "$RUNNER_TEMP/e14p-full-dev-summary.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path(os.environ['RUNNER_TEMP']) / 'e14p-full-dev-summary.json'
+          s = json.loads(p.read_text())
+          assert s['status'] == 'E14P_FULL_DEV_PUBLIC_EPISTEMIC_SERIALIZATION_GUARD_PASS'
+          assert s['provider_calls_made'] == 0
+          assert s['fixed_calls_consumed'] == 10
+          assert s['parsed_outputs'] == 10
+          assert s['required_dev_groups'] == 5
+          assert s['observed_dev_groups'] == 5
+          assert s['each_group_exactly_two_calls'] is True
+          assert s['complete_fixed_transform'] is True
+          assert s['decision_action_escalation_semantic_changes'] == 0
+          assert s['action_endpoint_changes'] == 0
+          assert s['trace_quality_self_check_changes'] == 0
+          assert s['evidence_public_signature_loss'] == 0
+          assert s['evidence_public_signature_gain'] == 0
+          assert s['evidence_public_signature_order_changes'] == 0
+          assert s['serializer_function_reused_from_targeted_E14p_without_edits'] is True
+          PY
