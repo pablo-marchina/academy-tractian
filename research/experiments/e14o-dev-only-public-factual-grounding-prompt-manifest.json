@@ -1,7 +1,7 @@
 {
   "experiment_id": "E14o",
   "title": "DEV-only public factual-grounding prompt discipline",
-  "status": "PREREGISTERED_BEFORE_IMPLEMENTATION_AND_BEFORE_ANY_E14O_REAL_GENERATION",
+  "status": "ACTIVE_AFTER_PREREGISTRATION_AND_STRUCTURAL_CI_PASS_BEFORE_ANY_E14O_REAL_GENERATION",
   "date": "2026-08-19",
   "parent_generation_candidate": "E14l",
   "preserved_post_generation_safeguard": "E14n",
@@ -87,6 +87,8 @@
   },
   "execution_rule": {
     "structural_ci_required_before_real_capture": true,
+    "structural_ci_run": 32258272447,
+    "structural_ci_passed": true,
     "real_capture_runs_allowed": 1,
     "require_zero_cost_operator_confirmation": true,
     "require_six_of_six_parsed_before_any_quality_measurement": true,
