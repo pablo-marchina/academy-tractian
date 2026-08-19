@@ -1,7 +1,7 @@
 {
   "experiment_id": "E14p",
   "title": "Provider-free public epistemic serialization guard over fixed E14o output",
-  "status": "PREREGISTERED_BEFORE_ANY_E14P_TRANSFORM_OR_SEMANTIC_LABEL",
+  "status": "ACTIVE_AFTER_PREREGISTRATION_AND_STRUCTURAL_CI_PASS_BEFORE_ANY_E14P_REAL_TRANSFORM",
   "date": "2026-08-19",
   "parent_candidate": "E14o-after-E14n-v1.1",
   "design_basis": {
@@ -56,6 +56,8 @@
     "locked_test_allowed": false
   },
   "paired_validity_requirements": {
+    "structural_ci_run": 32264286810,
+    "structural_ci_passed": true,
     "fixed_calls_required": 6,
     "parsed_calls_required": 6,
     "decision_action_escalation_semantic_changes_required": 0,
