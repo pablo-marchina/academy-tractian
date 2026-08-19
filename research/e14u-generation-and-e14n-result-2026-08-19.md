@@ -1,4 +1,4 @@
-# E14u full-DEV generation + E14n v1.1 checkpoint — 2026-08-19
+# E14u full-DEV generation + deterministic postprocessing checkpoint — 2026-08-19
 
 ## Scope
 
@@ -60,8 +60,43 @@ locked_test_used                            false
 validation_gate_authorized                  false
 ```
 
+## E14p full-DEV epistemic serializer
+
+The frozen E14p serializer was then applied with the full-DEV 10-call cardinality wrapper. It rewrote only the intended epistemic text fields while preserving all public evidence signatures and operational state.
+
+```text
+status                                      E14P_FULL_DEV_PUBLIC_EPISTEMIC_SERIALIZATION_GUARD_PASS
+parent_capture_status                       E14N_PUBLIC_IDENTIFIER_PROVENANCE_GUARD_TRANSFORM_PASS
+provider_calls_made                         0
+fixed_calls_consumed                        10
+parsed_outputs                              10
+required_dev_groups                         5
+observed_dev_groups                         5
+repeats_per_group                           2
+each_group_exactly_two_calls                true
+complete_fixed_transform                    true
+calls_changed                               10
+changed_text_fields                         40
+decision_action_escalation_semantic_changes 0
+action_endpoint_changes                     0
+trace_quality_self_check_changes             0
+evidence_public_signature_loss              0
+evidence_public_signature_gain              0
+evidence_public_signature_order_changes     0
+serializer_reused_without_edits             true
+task_world_facts_added_by_serializer        false
+private_oracle_used                         false
+private_scorer_rows_used                    false
+semantic_judge_rows_used                    false
+validation_feedback_used                    false
+locked_test_used                            false
+validation_gate_authorized                  false
+```
+
 ## Interpretation
 
-E14u has cleared the operational generation gate and the unchanged E14n v1.1 identifier-provenance guard. No deterministic quality claim is made yet. The fixed candidate must still pass the unchanged E14p serializer, E14q, E14q2, public surface audit, and frozen E9 v4.1 before any new semantic-judge measurement can be authorized.
+E14u has cleared the operational generation gate, the unchanged E14n v1.1 identifier-provenance guard, and the unchanged full-DEV E14p serializer. The E14p transform preserved the ordered public evidence signatures exactly, so it does not alter the evidence-selection hypothesis under test.
+
+No deterministic quality claim is made yet. The fixed candidate must still pass E14q, E14q2, the public surface audit, and frozen E9 v4.1 before any new semantic-judge measurement can be authorized.
 
 No raw outputs, identifiers, hashes, private expected paths, scorer rows, semantic labels, private file paths, VALIDATION feedback, or LOCKED_TEST content are committed here.
