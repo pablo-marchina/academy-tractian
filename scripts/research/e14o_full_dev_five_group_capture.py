@@ -135,6 +135,7 @@ def make_full_dev_apply_to_summary(original: Callable[[dict[str, Any], dict[str,
             if upstream_status == "E11_DEV_ONLY_INDEPENDENT_ACTION_AUTHORIZATION_CAPTURE_PASS" and complete
             else "E14_DEV_ONLY_COMPLETENESS_SELECTIVE_REPROCESS_CAPTURE_NEEDS_REVIEW"
         )
+        result["full_dev_upstream_e11_status"] = upstream_status
         result.setdefault("aggregate_metrics", {})["parsed_model_outputs_available"] = len(parsed_calls)
         result["aggregate_metrics"]["scoreable_calls"] = sum(1 for item in schema_valid if item)
 
@@ -165,7 +166,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     if args.dev_repeats is not None and args.dev_repeats != EXPECTED_REPEATS:
         raise AssertionError(f"full-DEV repeats are frozen at {EXPECTED_REPEATS}")
 
-    # Validate all no-inference frozen settings before consuming the one real attempt.
     e14l.assert_frozen_configuration(dry_run=args.dry_run)
     e14l.schema.run_self_checks()
     effective_prompt = e14o.effective_system_prompt()
@@ -203,9 +203,19 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     )
 
     parent_status = summary.get("status")
+    status_chain = {
+        "e11": summary.get("full_dev_upstream_e11_status"),
+        "e14": summary.get("parent_e14_capture_status"),
+        "e14c": summary.get("parent_e14c_capture_status"),
+        "e14d": summary.get("parent_e14d_capture_status"),
+        "e14e": summary.get("parent_e14e_capture_status"),
+        "e14f": summary.get("parent_e14f_capture_status"),
+        "e14l": parent_status,
+    }
     summary["report_version"] = "e14o-full-dev-five-group-capture-v1"
     summary["status"] = PASS_STATUS if full_pass else FAIL_STATUS
     summary["parent_e14l_status"] = parent_status
+    summary["full_dev_status_chain"] = status_chain
     summary["full_dev_generation"] = {
         "candidate": "E14p-after-E14o-generation-before-E14n-v1.1-and-E14p-serialization",
         "coverage_change_only": True,
@@ -266,6 +276,7 @@ def main() -> int:
         "real_generation_attempt_consumed": full.get("real_generation_attempt_consumed"),
         "rerun_allowed": full.get("rerun_allowed"),
         "private_oracle_used_by_model": full.get("private_oracle_used_by_model"),
+        "status_chain": summary.get("full_dev_status_chain"),
     }, indent=2))
     return 0 if summary.get("status") == PASS_STATUS else 1
 
