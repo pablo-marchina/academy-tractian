@@ -41,7 +41,9 @@ jobs:
           from pathlib import Path
           p=Path('research/experiments/e14s-full-dev-public-evidence-candidate-pool-consensus-preregistration.json')
           x=json.loads(p.read_text())
-          assert x['status']=='PREREGISTERED_AFTER_E14R_AGGREGATE_FAILURE_AND_BEFORE_E14S_TRANSFORM'
+          assert x['status']=='ACTIVE_AFTER_STRUCTURAL_CI_PASS_BEFORE_E14S_TRANSFORM'
+          assert x['structural_ci']['run_id']==32284907820
+          assert x['structural_ci']['conclusion']=='success'
           assert x['public_selection_policy']['selection_cap_per_call']==6
           g=x['E14s_target_gate']
           assert g['fixed_calls_required']==10
