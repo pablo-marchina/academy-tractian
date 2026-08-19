@@ -61,9 +61,11 @@
     "expected_claim_units": 69,
     "zero_tolerance_contradicted_factual_claims": true,
     "zero_tolerance_not_supported_factual_claims": true,
+    "zero_tolerance_factual_not_applicable_pairs": true,
+    "zero_tolerance_nonfactual_non_not_applicable_pairs": true,
     "not_applicable_claims_excluded_from_factual_denominator": true,
     "procedural_or_conditional_claims_must_not_be_silently_converted_to_factual_support": true,
-    "pass_definition": "all 69 claims receive valid labels and there are zero factual_assertion rows labeled CONTRADICTED or NOT_SUPPORTED",
+    "pass_definition": "all 69 claims receive valid labels; every factual_assertion is SUPPORTED; every non-factual claim type is NOT_APPLICABLE; therefore there are zero factual CONTRADICTED, factual NOT_SUPPORTED, factual NOT_APPLICABLE, or non-factual non-NOT_APPLICABLE rows",
     "real_dev_semantic_groundedness_pass_does_not_authorize_validation_by_itself": true
   },
   "post_result_rules": {
