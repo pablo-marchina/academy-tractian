@@ -1,0 +1,81 @@
+{
+  "measurement_id": "E9-V4.2-QWEN36-27B-E14P-FULL-DEV-SEMANTIC",
+  "status": "PREREGISTERED_AFTER_FULL_DEV_PACKET_SHAPE_AND_BEFORE_ANY_FULL_DEV_SEMANTIC_LABEL",
+  "date": "2026-08-19",
+  "candidate": "E14p-full-DEV-5-group-after-E14o-E14n-v1.1",
+  "context": {
+    "full_dev_v4_1_gate_already_passed": false,
+    "full_dev_v4_1_failure_blocks_validation_regardless_of_semantic_result": true,
+    "semantic_measurement_purpose": "complete preregistered candidate characterization only",
+    "semantic_pass_can_rescue_candidate": false,
+    "validation_gate_authorized_initially": false
+  },
+  "frozen_packet_shape": {
+    "split": "DEV",
+    "fixed_calls": 10,
+    "claim_units_total": 206,
+    "calls_with_zero_claim_units": 0,
+    "source_field_claim_unit_counts": {
+      "action_escalation_rubric.calibration_reason": 40,
+      "evidence_plan[]": 126,
+      "proposed_next_step": 11,
+      "risk_notes": 29
+    },
+    "shape_observed_before_any_full_dev_semantic_label": true
+  },
+  "judge": {
+    "provider": "Groq",
+    "model": "qwen/qwen3.6-27b",
+    "same_reliability_qualified_judge_as_targeted_E14p": true,
+    "system_prompt_reused_without_edits": true,
+    "temperature": 0,
+    "reasoning_effort": "none",
+    "response_format": "json_object",
+    "max_completion_tokens": 2048,
+    "provider_request_partition": "one request per fixed DEV call",
+    "expected_provider_requests": 10,
+    "intercall_sleep_seconds": 25,
+    "judge_or_prompt_tuning_allowed": false
+  },
+  "transport": {
+    "automatic_retry": false,
+    "fallback": false,
+    "prompt_repair": false,
+    "semantic_retry": false,
+    "real_measurement_attempts_allowed": 1,
+    "sanitized_attempt_lock_before_first_provider_call": true,
+    "operational_failure_consumes_attempt": true,
+    "output_contract_failure_consumes_attempt": true,
+    "replacement_requires_explicit_preregistered_amendment": true
+  },
+  "semantic_gate": {
+    "full_coverage_required": true,
+    "factual_contradicted_required": 0,
+    "factual_not_supported_required": 0,
+    "factual_not_applicable_required": 0,
+    "nonfactual_non_not_applicable_required": 0,
+    "factual_groundedness_rate_required": 1.0,
+    "zero_factual_assertions_rate_definition": "1.0_vacuously",
+    "semantic_fail_is_valid_measurement_not_operational_failure": true
+  },
+  "privacy": {
+    "raw_claim_packet_committed": false,
+    "judge_rows_committed": false,
+    "claim_text_committed": false,
+    "visible_case_values_committed": false,
+    "identifiers_committed": false,
+    "group_ids_committed": false,
+    "hashes_committed": false,
+    "private_paths_committed": false,
+    "private_oracle_used": false,
+    "private_scorer_rows_used": false,
+    "validation_feedback_used": false,
+    "locked_test_used": false
+  },
+  "interpretation": {
+    "if_semantic_pass": "Record semantic full-DEV pass, but candidate remains rejected because the already-frozen E9 v4.1 full-DEV acceptance gate failed.",
+    "if_semantic_fail": "Record semantic full-DEV fail; candidate remains rejected.",
+    "validation_transition_after_this_measurement": false,
+    "next_candidate_design_may_use_only_aggregate_DEV_results_not_per-row_private_or_semantic_labels": true
+  }
+}
