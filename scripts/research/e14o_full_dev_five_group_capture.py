@@ -5,7 +5,7 @@ This runner reuses the exact accepted E14o generation stack and changes only
 coverage/cardinality plumbing required by the preregistered full-DEV gate:
 five frozen DEV groups x two repeats = ten fixed calls. It does not run
 VALIDATION or LOCKED_TEST and does not change model, prompt, reasoning, schema,
-completion budget, or any historical quality-policy semantics.
+completion budget, retry/repair behavior, or historical quality-policy semantics.
 
 The generated real capture contains raw model outputs and must remain local.
 """
@@ -87,7 +87,7 @@ def consume_real_attempt(out: Path) -> Path:
                 "contains_private_oracle": False,
                 "contains_private_scorer_rows": False,
                 "validation_used": False,
-                "locked_test_used": False
+                "locked_test_used": False,
             },
             indent=2,
         ),
@@ -96,8 +96,62 @@ def consume_real_attempt(out: Path) -> Path:
     return lock
 
 
+def make_full_dev_execute_stage(original: Callable[..., dict[str, Any]]):
+    """Generalize only E14 completeness cardinality from six to ten calls.
+
+    The frozen E14 execute_stage still performs every model call, retry, parse,
+    syntax-only repair, score and trace check. We only recompute its structural
+    completeness/pass booleans for the preregistered five-groups x two-repeats
+    coverage. No call content or model/policy result is changed here.
+    """
+
+    def execute_stage(*, groups: list[str], repeats: int, case_by_asset: dict[str, dict[str, Any]], timeout: int, dry_run: bool) -> dict[str, Any]:
+        result = original(
+            groups=groups,
+            repeats=repeats,
+            case_by_asset=case_by_asset,
+            timeout=timeout,
+            dry_run=dry_run,
+        )
+        calls = result.get("calls", []) if isinstance(result, dict) else []
+        successful = [c for c in calls if c.get("error") is None]
+        parsed_calls = [c for c in calls if isinstance(c.get("parsed_output"), dict)]
+        schema_valid = [bool(c.get("score", {}).get("schema_valid")) for c in calls]
+        no_locked = [bool(c.get("score", {}).get("no_locked_test_claim")) for c in calls]
+        trace_complete = [bool(c.get("trace_complete")) for c in calls]
+        group_counts = Counter(str(c.get("group_id") or "") for c in calls)
+        expected_group_counts = {group: EXPECTED_REPEATS for group in EXPECTED_GROUPS}
+
+        complete = (
+            groups == EXPECTED_GROUPS
+            and repeats == EXPECTED_REPEATS
+            and len(calls) == EXPECTED_CALLS
+            and len(parsed_calls) == EXPECTED_CALLS
+            and dict(group_counts) == expected_group_counts
+        )
+        passed = (
+            complete
+            and len(successful) == EXPECTED_CALLS
+            and len(schema_valid) == EXPECTED_CALLS
+            and all(schema_valid)
+            and all(no_locked)
+            and all(trace_complete)
+        )
+        result["completeness_pass"] = complete
+        result["passed"] = passed
+        result["successful_calls"] = len(successful)
+        result["parsed_outputs"] = len(parsed_calls)
+        result["scoreable_calls"] = sum(1 for item in schema_valid if item)
+        result["full_dev_cardinality_generalization_only"] = True
+        result["full_dev_group_cardinality_resolved"] = dict(group_counts) == expected_group_counts
+        result["historical_retry_parse_repair_score_trace_logic_reused"] = True
+        return result
+
+    return execute_stage
+
+
 def make_full_dev_apply_to_summary(original: Callable[[dict[str, Any], dict[str, Any]], dict[str, Any]]):
-    """Generalize only E14's historical six-call completeness cardinality to ten."""
+    """Generalize only E14's summary-level six-call completeness cardinality."""
 
     def apply(summary: dict[str, Any], manifest: dict[str, Any]) -> dict[str, Any]:
         upstream_status = summary.get("status")
@@ -175,15 +229,18 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         lock = consume_real_attempt(args.out)
 
     saved_manifest = e11.E10G_MANIFEST
+    saved_execute_stage = e14_core.comp.execute_stage
     saved_apply = e14_core.apply_to_summary
     saved_prompt = e14o.e10b.STRICT_E10B_SYSTEM_PROMPT
     e11.E10G_MANIFEST = args.manifest
+    e14_core.comp.execute_stage = make_full_dev_execute_stage(saved_execute_stage)
     e14_core.apply_to_summary = make_full_dev_apply_to_summary(saved_apply)
     e14o.e10b.STRICT_E10B_SYSTEM_PROMPT = effective_prompt
     try:
         summary = e14l.run(args)
     finally:
         e11.E10G_MANIFEST = saved_manifest
+        e14_core.comp.execute_stage = saved_execute_stage
         e14_core.apply_to_summary = saved_apply
         e14o.e10b.STRICT_E10B_SYSTEM_PROMPT = saved_prompt
 
@@ -230,6 +287,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "reasoning_changed": False,
         "schema_changed": False,
         "completion_budget_changed": False,
+        "retry_parse_repair_score_trace_behavior_changed": False,
         "historical_quality_policy_changed": False,
         "validation_ran": False,
         "locked_test_used": False,
