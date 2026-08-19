@@ -167,11 +167,28 @@ def main() -> int:
         assert failed["factual_not_supported"] == 1
         assert failed["validation_gate_authorized"] is False
 
+        attempt_out = root / "real-labels.json"
+        lock = runner.consume_real_measurement_attempt(attempt_out)
+        assert lock.exists()
+        lock_payload = json.loads(lock.read_text(encoding="utf-8"))
+        assert lock_payload["rerun_allowed"] is False
+        assert lock_payload["raw_claim_text_stored"] is False
+        assert lock_payload["visible_case_values_stored"] is False
+        assert lock_payload["hashes_stored"] is False
+        assert lock_payload["paths_stored"] is False
+        try:
+            runner.consume_real_measurement_attempt(attempt_out)
+        except SystemExit:
+            pass
+        else:
+            raise AssertionError("attempt lock must block a second real measurement attempt")
+
     print(json.dumps({
         "status": "E9_V4_2_REAL_DEV_SEMANTIC_MEASUREMENT_SELFCHECK_PASS",
         "synthetic_claim_units": runner.EXPECTED_CLAIMS,
         "system_prompt_reuse_verified": True,
         "provider_case_id_contract_verified": True,
+        "single_attempt_lock_verified": True,
         "provider_call_made": False,
         "private_oracle_used": False,
         "private_scorer_rows_used": False,
