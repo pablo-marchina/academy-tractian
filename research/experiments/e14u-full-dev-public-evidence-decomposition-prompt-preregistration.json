@@ -1,23 +1,47 @@
 {
   "experiment_id": "E14u-full-DEV-public-evidence-decomposition-prompt",
-  "status": "ACTIVE_AFTER_STRUCTURAL_CI_PASS_BEFORE_REAL_GENERATION",
+  "status": "REAL_GENERATION_AND_E14N_PASS_POSTPROCESSING_IN_PROGRESS",
   "date": "2026-08-19",
   "intervention_class": "public_evidence_decomposition_system_prompt_only",
   "single_intervention": true,
-  "structural_ci": {
-    "run_id": 32300192016,
-    "conclusion": "success",
-    "compile_pass": true,
-    "public_structural_selfcheck_pass": true,
-    "preregistration_and_prompt_boundary_check_pass": true,
-    "provider_calls_made": 0
-  },
   "scope": {
     "measurement_splits": ["DEV"],
     "forbidden_splits": ["VALIDATION", "LOCKED_TEST"],
     "dev_groups": ["asset_G501", "asset_C710", "asset_S420", "asset_M208", "asset_M101"],
     "repeats_per_group": 2,
     "expected_fixed_calls": 10
+  },
+  "structural_ci": {
+    "run_id": 32300192016,
+    "conclusion": "success"
+  },
+  "real_generation_checkpoint": {
+    "status": "E14U_FULL_DEV_PUBLIC_EVIDENCE_DECOMPOSITION_PROMPT_CAPTURE_PASS",
+    "fixed_calls": 10,
+    "parsed_outputs": 10,
+    "scoreable_calls": 10,
+    "complete": true,
+    "real_attempt_consumed": true,
+    "rerun_allowed": false,
+    "validation_ran": false,
+    "locked_test_used": false,
+    "private_oracle_used_by_model": false,
+    "validation_feedback_used": false
+  },
+  "e14n_v1_1_checkpoint": {
+    "status": "E14N_PUBLIC_IDENTIFIER_PROVENANCE_GUARD_TRANSFORM_PASS",
+    "fixed_calls": 10,
+    "parsed_outputs": 10,
+    "unsupported_identifier_mentions_before": 1,
+    "unsupported_identifier_mentions_after": 0,
+    "decision_action_escalation_semantic_changes": 0,
+    "brace_placeholders_preserved_byte_for_byte": true,
+    "matching_only_outside_brace_placeholders": true,
+    "provider_calls": 0,
+    "private_oracle_used": false,
+    "private_scorer_rows_used": false,
+    "validation_feedback_used": false,
+    "locked_test_used": false
   },
   "motivation_from_aggregate_only": {
     "E14q2_evidence_correctness": 0.2,
