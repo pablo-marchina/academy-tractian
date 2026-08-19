@@ -38,6 +38,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         base.runner = saved_runner
         base.EXPECTED_RESULT_VERSION = saved_result_version
 
+    # E14o explicitly encourages unsupported factual content to be rewritten as
+    # uncertainty/procedure. If the judge finds zero factual assertions, there
+    # is no factual assertion that can be ungrounded; define the factual rate as
+    # vacuously 1.0 so the reported rate matches the already-frozen zero-violation
+    # semantic gate. This rule is frozen before any E14o semantic label.
+    if int(summary.get("factual_claims_total") or 0) == 0:
+        summary["factual_groundedness_rate"] = 1.0
+        summary["factual_groundedness_rate_definition"] = "1.0_when_zero_factual_assertions_else_supported_over_total"
+    else:
+        summary["factual_groundedness_rate_definition"] = "supported_factual_assertions_over_total_factual_assertions"
+
     summary["report_version"] = REPORT_VERSION
     summary["status"] = PASS_STATUS if summary.get("semantic_groundedness_gate_pass") is True else FAIL_STATUS
     summary["candidate"] = "E14o-after-E14n-v1.1"
