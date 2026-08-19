@@ -11,6 +11,11 @@ The frozen synthetic prompt requires `case_id` in provider output. Therefore eac
 real claim receives an opaque local case_id inside its provider request and is
 mapped back to (call_index, claim_index) only after strict response validation.
 
+A sanitized local attempt lock is created after packet validation and before the
+first provider call. Once created, the same measurement output path cannot be run
+again without an explicit replacement amendment. Operational failure therefore
+cannot silently become a retry-until-success procedure.
+
 No private expected paths, private scorer rows, VALIDATION, or LOCKED_TEST are read.
 Console output is aggregate/operational only and never prints claim text, visible
 case values, identifiers, group IDs, hashes, raw provider responses, or judge rows.
@@ -55,6 +60,7 @@ EXPECTED_SOURCE_COUNTS = {
 EXPECTED_TOOL_SIGNATURES = 18
 INTERCALL_SLEEP_SECONDS = 25
 MAX_COMPLETION_TOKENS = 2048
+ATTEMPT_LOCK_SUFFIX = ".attempt-lock.json"
 
 
 def _load(path: Path) -> Any:
@@ -159,7 +165,7 @@ def build_request_payload(call: dict[str, Any]) -> tuple[dict[str, Any], dict[st
     user_payload = {
         "task": "Classify every supplied case according to the frozen semantic-groundedness rubric.",
         "shared_visible_case": call["visible_case"],
-        "shared_public_contract": call["public_contract"],
+        "shared_public_contract": {"tool_signatures": call["public_contract"]["tool_signatures"]},
         "shared_context_rule": "The shared_visible_case and shared_public_contract apply to every case below.",
         "cases": provider_cases,
         "required_output_example": {
@@ -218,6 +224,36 @@ def validate_judge_payload(payload: Any, case_to_claim: dict[str, int]) -> list[
     return clean
 
 
+def attempt_lock_path(out: Path) -> Path:
+    return out.with_name(out.name + ATTEMPT_LOCK_SUFFIX)
+
+
+def consume_real_measurement_attempt(out: Path) -> Path:
+    lock = attempt_lock_path(out)
+    if out.exists():
+        raise SystemExit("real DEV judge-result output already exists; rerun is forbidden")
+    if lock.exists():
+        raise SystemExit("real DEV semantic measurement attempt already consumed; rerun requires an explicit amendment")
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    lock.write_text(json.dumps({
+        "report_version": "e9-v4.2-real-dev-semantic-attempt-lock-v1",
+        "status": "REAL_DEV_SEMANTIC_MEASUREMENT_ATTEMPT_CONSUMED",
+        "judge_model": MODEL,
+        "expected_provider_calls": EXPECTED_CALLS,
+        "expected_claim_units": EXPECTED_CLAIMS,
+        "rerun_allowed": False,
+        "private_oracle_used": False,
+        "private_scorer_rows_used": False,
+        "validation_feedback_used": False,
+        "locked_test_used": False,
+        "raw_claim_text_stored": False,
+        "visible_case_values_stored": False,
+        "hashes_stored": False,
+        "paths_stored": False
+    }, indent=2), encoding="utf-8")
+    return lock
+
+
 def _failure_summary(status: str, completed_calls: int, http_status: int | None, category: str) -> dict[str, Any]:
     return {
         "report_version": "e9-v4.2-qwen36-27b-real-dev-semantic-judge-v1",
@@ -228,6 +264,8 @@ def _failure_summary(status: str, completed_calls: int, http_status: int | None,
         "completed_provider_calls_before_failure": completed_calls,
         "http_status": http_status,
         "failure_category": category,
+        "real_measurement_attempt_consumed": True,
+        "rerun_allowed": False,
         "local_judge_result_file_written": False,
         "semantic_metrics_authorized": False,
         "real_dev_packet_read": True,
@@ -256,6 +294,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 
     packet = _load(args.claim_packet)
     calls = validate_packet(packet)
+    consume_real_measurement_attempt(args.out)
 
     all_results: list[dict[str, Any]] = []
     completed_calls = 0
@@ -351,6 +390,8 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         "system_prompt_reused_without_edits": SYSTEM_PROMPT == synth.SYSTEM_PROMPT,
         "provider_output_contract_reused_case_id": True,
         "provider_case_id_mapped_back_locally": True,
+        "real_measurement_attempt_consumed": True,
+        "rerun_allowed": False,
         "semantic_metrics_authorized": True,
         "real_dev_packet_read": True,
         "validation_gate_authorized": False,
