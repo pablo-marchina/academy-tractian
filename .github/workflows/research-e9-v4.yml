@@ -27,12 +27,16 @@ jobs:
           python -m py_compile scripts/research/e14m_r1_sanitized_operational_diagnostic.py
           python -m py_compile scripts/research/e14m_r1_sanitized_operational_diagnostic_selfcheck.py
           python -m py_compile scripts/research/e14l_historical_capture_locator.py
+          python -m py_compile scripts/research/e14n_public_identifier_provenance_guard.py
+          python -m py_compile scripts/research/e14n_public_identifier_provenance_guard_selfcheck.py
       - name: Run oracle-free evaluator v4 synthetic validity checks
         run: PYTHONPATH=. python scripts/research/e9_v4_synthetic_selfcheck.py
       - name: Run oracle-free evaluator v4.1 structural regression checks
         run: PYTHONPATH=. python scripts/research/e9_v4_1_synthetic_selfcheck.py
       - name: Run public groundedness surface synthetic checks
         run: PYTHONPATH=. python scripts/research/e9_v4_1_groundedness_surface_selfcheck.py
+      - name: Run E14n public identifier provenance guard synthetic checks
+        run: PYTHONPATH=. python scripts/research/e14n_public_identifier_provenance_guard_selfcheck.py
       - name: Run visible-case oracle alignment synthetic self-check
         run: PYTHONPATH=. python scripts/research/e9_visible_case_alignment_synthetic_selfcheck.py
       - name: Run E14m-R1 sanitized diagnostic metadata self-check
