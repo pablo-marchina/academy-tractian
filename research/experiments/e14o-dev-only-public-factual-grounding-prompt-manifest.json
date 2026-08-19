@@ -1,10 +1,10 @@
 {
   "experiment_id": "E14o",
   "title": "DEV-only public factual-grounding prompt discipline",
-  "status": "ACTIVE_AFTER_PREREGISTRATION_AND_STRUCTURAL_CI_PASS_BEFORE_ANY_E14O_REAL_GENERATION",
+  "status": "REAL_CAPTURE_COMPLETE_POSTPROCESS_REMEASUREMENT_PENDING_E14N_V1_1",
   "date": "2026-08-19",
   "parent_generation_candidate": "E14l",
-  "preserved_post_generation_safeguard": "E14n",
+  "preserved_post_generation_safeguard": "E14n-v1.1-placeholder-preservation",
   "representative_groups": {
     "DEV": ["G501", "C710", "S420"]
   },
@@ -78,24 +78,42 @@
     "e14f_conditional_semantic_repair_preserved": true,
     "e10e_e10g_e11_e14_policies_preserved": true
   },
+  "real_capture": {
+    "status": "E14O_DEV_ONLY_PUBLIC_FACTUAL_GROUNDING_PROMPT_CAPTURE_PASS",
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "scoreable_calls": 6,
+    "completeness_pass": true,
+    "retry_count": 0,
+    "repair_count": 0,
+    "real_capture_attempt_consumed": true,
+    "rerun_allowed": false,
+    "validation_ran": false
+  },
   "preserved_e14n_postprocess": {
     "required_before_quality_measurement": true,
-    "identifier_provenance_guard_changed": false,
+    "required_guard_version": "v1.1-placeholder-preservation",
+    "placeholder_preservation_amendment": "E14n-v1.1-placeholder-preservation",
+    "placeholder_preservation_ci_run": 32260343772,
+    "identifier_provenance_semantics_changed": false,
     "decision_action_escalation_changes_allowed": 0,
     "private_oracle_used": false,
-    "provider_calls_made": 0
+    "provider_calls_made": 0,
+    "e14n_v1_e14o_postprocess_and_downstream_measurements_valid_for_selection": false
   },
   "execution_rule": {
     "structural_ci_required_before_real_capture": true,
     "structural_ci_run": 32258272447,
     "structural_ci_passed": true,
     "real_capture_runs_allowed": 1,
+    "real_capture_runs_consumed": 1,
     "require_zero_cost_operator_confirmation": true,
     "require_six_of_six_parsed_before_any_quality_measurement": true,
     "do_not_score_incomplete_capture": true,
-    "apply_existing_e14n_guard_after_complete_capture": true,
-    "v4_1_private_aggregate_measurement_allowed_once_on_guarded_fixed_output": true,
-    "v4_1_surface_audit_allowed_once_on_guarded_fixed_output": true,
+    "apply_e14n_v1_1_guard_after_complete_capture": true,
+    "rerun_generation_after_guard_bugfix_allowed": false,
+    "v4_1_private_aggregate_measurement_allowed_once_on_v1_1_guarded_fixed_output": true,
+    "v4_1_surface_audit_allowed_once_on_v1_1_guarded_fixed_output": true,
     "v4_2_claim_packet_must_be_built_before_real_semantic_judge_measurement": true,
     "v4_2_real_semantic_measurement_transport_must_be_preregistered_after_claim_count_is_known_and_before_labels": true,
     "validation_if_targeted_gate_fails": false
