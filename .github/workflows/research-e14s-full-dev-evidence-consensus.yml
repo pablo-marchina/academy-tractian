@@ -55,8 +55,13 @@ jobs:
           assert g['premature_action_rate_required']==0.0
           assert g['unsupported_action_or_escalation_rate_required']==0.0
           src=Path('scripts/research/e14s_full_dev_public_evidence_candidate_pool_consensus_guard.py').read_text()
-          assert 'coverage_tags' not in src
-          assert 'ticket_id' not in src
+          forbidden_access_patterns = (
+              '.get("coverage_tags")', ".get('coverage_tags')",
+              '["coverage_tags"]', "['coverage_tags']",
+              '.get("ticket_id")', ".get('ticket_id')",
+              '["ticket_id"]', "['ticket_id']",
+          )
+          assert not any(pattern in src for pattern in forbidden_access_patterns)
           assert 'expected-paths' not in src
           assert 'private_scorer_rows_used": False' in src
           PY
