@@ -24,6 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install public registry dependency
+        run: python -m pip install 'pydantic>=2,<3'
+
       - name: Compile E14v
         run: |
           python -m py_compile \
