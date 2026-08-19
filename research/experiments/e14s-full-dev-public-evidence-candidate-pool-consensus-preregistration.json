@@ -1,0 +1,100 @@
+{
+  "experiment_id": "E14s-full-DEV-public-evidence-candidate-pool-consensus",
+  "status": "PREREGISTERED_AFTER_E14R_AGGREGATE_FAILURE_AND_BEFORE_E14S_TRANSFORM",
+  "date": "2026-08-19",
+  "parent_fixed_candidate": "E14q2-over-E14p-full-DEV-5-group",
+  "intervention_class": "deterministic_public_evidence_candidate_pool_consensus_selection_only",
+  "motivation_from_aggregate_only": {
+    "E14q2_public_read_signatures_total": 63,
+    "E14q2_evidence_correctness": 0.2,
+    "E14q2_mean_expected_read_recall": 0.7667,
+    "E14q2_mean_extra_public_read_count": 3.5,
+    "E14r_public_read_signatures_total": 34,
+    "E14r_evidence_correctness": 0.0,
+    "E14r_mean_expected_read_recall": 0.4,
+    "E14r_mean_extra_public_read_count": 2.0,
+    "E14r_added_read_signatures_total": 13,
+    "E14r_removed_read_signatures_total": 42,
+    "no_per_row_private_labels_inspected": true,
+    "no_group_or_ticket_failure_inferred": true
+  },
+  "allowed_inputs": [
+    "same 10 fixed E14q2 parsed outputs",
+    "E14q2 evidence_plan as a public model-proposed candidate route ordering",
+    "exact runner-selected agent-visible case JSON",
+    "public tool registry",
+    "public output contract",
+    "E14r deterministic public route-selection function as a second candidate source",
+    "frozen split membership only to assert DEV scope"
+  ],
+  "forbidden_inputs": [
+    "private expected-path rows",
+    "private scorer rows",
+    "per-row evaluator labels",
+    "semantic judge rows",
+    "VALIDATION feedback",
+    "LOCKED_TEST content",
+    "group-specific or ticket-specific evidence rules",
+    "split coverage_tags as route-selection features",
+    "post-transform rule changes from E14s private row results"
+  ],
+  "public_selection_policy": {
+    "candidate_pool": "union of canonical public read signatures proposed by the fixed E14q2 evidence_plan and the independently deterministic E14r public selector",
+    "selection_cap_per_call": 6,
+    "cap_rationale": "aggregate-only compromise between E14q2 mean 6.3 public reads per call at the 3.5 extra-read ceiling and E14r mean 3.4 public reads per call with insufficient recall",
+    "priority_tiers": [
+      "active public action authorization and target-dependency reads",
+      "consensus reads appearing in both the fixed E14q2 evidence_plan and E14r deterministic selection",
+      "remaining E14r deterministic reads in its frozen public route order",
+      "remaining original E14q2 model-proposed reads in first-occurrence order"
+    ],
+    "deduplicate_routes": true,
+    "exactly_one_canonical_GET_signature_per_output_item": true,
+    "no_action_signatures_in_evidence_plan": true,
+    "no_new_route_outside_candidate_pool": true,
+    "group_id_or_ticket_id_used_as_semantic_feature": false,
+    "split_coverage_tags_used": false
+  },
+  "paired_invariants": {
+    "provider_calls": 0,
+    "same_10_fixed_calls": true,
+    "same_5_DEV_groups": true,
+    "only_evidence_plan_may_change": true,
+    "decision_class_byte_for_byte": true,
+    "should_take_action_now_byte_for_byte": true,
+    "requires_human_escalation_byte_for_byte": true,
+    "action_escalation_rubric_byte_for_byte": true,
+    "proposed_next_step_byte_for_byte": true,
+    "risk_notes_byte_for_byte": true,
+    "trace_quality_self_check_byte_for_byte": true,
+    "identifier_guard_not_changed": true,
+    "epistemic_serializer_not_changed": true
+  },
+  "measurement_plan": {
+    "apply_E14s_once_to_same_fixed_E14q2_outputs": true,
+    "run_public_surface_audit": true,
+    "run_frozen_E9_v4_1_once": true,
+    "rebuild_E9_v4_2_claim_packet_after_E14s": true,
+    "do_not_call_semantic_judge_until_new_packet_shape_is_preregistered": true,
+    "do_not_use_E14s_private_rows_for_rule_changes": true
+  },
+  "E14s_target_gate": {
+    "fixed_calls_required": 10,
+    "scoreable_calls_required": 10,
+    "evidence_correctness_min": 0.5,
+    "mean_expected_read_recall_min": 0.8333,
+    "mean_extra_public_read_count_max": 3.5,
+    "decision_correctness_required_unchanged": 0.8,
+    "action_correctness_required_unchanged": 0.8,
+    "escalation_correctness_required_unchanged": 0.8,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "locked_test_or_gold_leakage_rate_required": 0.0
+  },
+  "interpretation_limits": {
+    "E14s_pass_can_authorize_VALIDATION": false,
+    "semantic_groundedness_must_be_remeasured_after_evidence_plan_change": true,
+    "no_causal_claim_about_model_reasoning": true,
+    "if_E14s_fails": "record aggregate-only failure and do not inspect or tune from private rows"
+  }
+}
