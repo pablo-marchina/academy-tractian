@@ -1,0 +1,103 @@
+{
+  "experiment_id": "E14t-full-DEV-bounded-public-evidence-restoration",
+  "status": "PREREGISTERED_AFTER_E14S_AGGREGATE_FAILURE_AND_BEFORE_E14T_TRANSFORM",
+  "date": "2026-08-19",
+  "parent_fixed_candidate": "E14q2-over-E14p-full-DEV-5-group",
+  "intervention_class": "deterministic_bounded_public_evidence_restoration_only",
+  "motivation_from_aggregate_only": {
+    "E14q2_public_reads_total": 63,
+    "E14q2_evidence_correctness": 0.2,
+    "E14q2_mean_expected_read_recall": 0.7667,
+    "E14q2_mean_extra_public_read_count": 3.5,
+    "E14s_public_reads_total": 59,
+    "E14s_evidence_correctness": 0.2,
+    "E14s_mean_expected_read_recall": 0.775,
+    "E14s_mean_extra_public_read_count": 3.1,
+    "aggregate_extra_read_budget_remaining": 0.4,
+    "maximum_additional_reads_total": 4,
+    "no_per_row_private_labels_inspected": true,
+    "no_group_or_ticket_failure_inferred": true
+  },
+  "allowed_inputs": [
+    "same 10 fixed E14q2 parsed outputs",
+    "exact E14s frozen public candidate-pool selection function",
+    "E14q2 evidence_plan as public model-proposed route ordering",
+    "exact runner-selected agent-visible case JSON",
+    "public tool registry",
+    "public output contract",
+    "frozen split membership only to assert DEV scope"
+  ],
+  "forbidden_inputs": [
+    "private expected-path rows",
+    "private scorer rows",
+    "per-row evaluator labels",
+    "semantic judge rows",
+    "VALIDATION feedback",
+    "LOCKED_TEST content",
+    "group-specific or ticket-specific restoration rules",
+    "split coverage_tags as restoration features",
+    "post-transform rule changes from E14t private row results"
+  ],
+  "restoration_policy": {
+    "base_selection": "recompute exact frozen E14s selected read signatures from the same E14q2 output and visible case",
+    "maximum_additional_reads_total": 4,
+    "maximum_additional_reads_per_call": 1,
+    "maximum_final_reads_per_call": 7,
+    "maximum_final_reads_total": 63,
+    "eligible_restoration_candidates": "only original E14q2 public read signatures omitted by the frozen E14s selection",
+    "per_call_candidate_choice": "first omitted original E14q2 public read in original first-occurrence order",
+    "call_priority": [
+      "descending original E14q2 public-read candidate count",
+      "descending E14s public candidate-pool count",
+      "stable fixed-call order as tie-break only"
+    ],
+    "call_priority_uses_group_or_ticket_semantics": false,
+    "additions_distributed_across_distinct_calls": true,
+    "no_route_outside_original_public_candidate_pool": true,
+    "no_action_signatures_in_evidence_plan": true,
+    "deduplicate_routes": true,
+    "reason_for_four_read_budget": "E14s is at mean extra-read count 3.1; adding at most four reads over ten fixed calls can increase that aggregate by at most 0.4, so the preregistered 3.5 ceiling cannot be exceeded solely by the bounded restoration additions"
+  },
+  "paired_invariants": {
+    "provider_calls": 0,
+    "same_10_fixed_calls": true,
+    "same_5_DEV_groups": true,
+    "only_evidence_plan_may_change": true,
+    "decision_class_byte_for_byte": true,
+    "should_take_action_now_byte_for_byte": true,
+    "requires_human_escalation_byte_for_byte": true,
+    "action_escalation_rubric_byte_for_byte": true,
+    "proposed_next_step_byte_for_byte": true,
+    "risk_notes_byte_for_byte": true,
+    "trace_quality_self_check_byte_for_byte": true,
+    "identifier_guard_not_changed": true,
+    "epistemic_serializer_not_changed": true
+  },
+  "measurement_plan": {
+    "apply_E14t_once_to_same_fixed_E14q2_outputs": true,
+    "run_public_surface_audit": true,
+    "run_frozen_E9_v4_1_once": true,
+    "rebuild_E9_v4_2_claim_packet_after_E14t": true,
+    "do_not_call_semantic_judge_until_new_packet_shape_is_preregistered": true,
+    "do_not_use_E14t_private_rows_for_rule_changes": true
+  },
+  "E14t_target_gate": {
+    "fixed_calls_required": 10,
+    "scoreable_calls_required": 10,
+    "evidence_correctness_min": 0.5,
+    "mean_expected_read_recall_min": 0.8333,
+    "mean_extra_public_read_count_max": 3.5,
+    "decision_correctness_required_unchanged": 0.8,
+    "action_correctness_required_unchanged": 0.8,
+    "escalation_correctness_required_unchanged": 0.8,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "locked_test_or_gold_leakage_rate_required": 0.0
+  },
+  "interpretation_limits": {
+    "E14t_pass_can_authorize_VALIDATION": false,
+    "semantic_groundedness_must_be_remeasured_after_evidence_plan_change": true,
+    "no_causal_claim_about_model_reasoning": true,
+    "if_E14t_fails": "record aggregate-only failure and do not inspect or tune from private rows"
+  }
+}
