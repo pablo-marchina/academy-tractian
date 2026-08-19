@@ -1,0 +1,61 @@
+name: research-e14r-full-dev-evidence-route-selection
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/e14r-full-dev-public-visible-case-evidence-route-selection-preregistration.json'
+      - 'scripts/research/e14r_full_dev_public_visible_case_evidence_route_selection_guard.py'
+      - 'scripts/research/e14r_full_dev_public_visible_case_evidence_route_selection_selfcheck.py'
+      - '.github/workflows/research-e14r-full-dev-evidence-route-selection.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/experiments/e14r-full-dev-public-visible-case-evidence-route-selection-preregistration.json'
+      - 'scripts/research/e14r_full_dev_public_visible_case_evidence_route_selection_guard.py'
+      - 'scripts/research/e14r_full_dev_public_visible_case_evidence_route_selection_selfcheck.py'
+      - '.github/workflows/research-e14r-full-dev-evidence-route-selection.yml'
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public registry dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Compile
+        run: |
+          python -m py_compile scripts/research/e14r_full_dev_public_visible_case_evidence_route_selection_guard.py
+          python -m py_compile scripts/research/e14r_full_dev_public_visible_case_evidence_route_selection_selfcheck.py
+      - name: Run public synthetic self-check
+        env:
+          PYTHONPATH: .
+        run: python scripts/research/e14r_full_dev_public_visible_case_evidence_route_selection_selfcheck.py
+      - name: Verify preregistration constants
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('research/experiments/e14r-full-dev-public-visible-case-evidence-route-selection-preregistration.json')
+          x=json.loads(p.read_text())
+          assert x['status']=='PREREGISTERED_AFTER_E14Q2_PASS_AND_BEFORE_E14R_TRANSFORM'
+          assert x['intervention_class']=='deterministic_public_visible_case_evidence_route_selection_only'
+          assert x['public_route_selection_policy']['group_id_or_ticket_id_used_as_semantic_feature'] is False
+          assert x['public_route_selection_policy']['split_coverage_tags_used'] is False
+          assert x['public_route_selection_policy']['max_selected_reads_per_call']==8
+          g=x['E14r_target_gate']
+          assert g['fixed_calls_required']==10
+          assert g['scoreable_calls_required']==10
+          assert g['evidence_correctness_min']==0.5
+          assert g['mean_expected_read_recall_min']==0.8333
+          assert g['mean_extra_public_read_count_max']==3.5
+          assert g['decision_correctness_required_unchanged']==0.8
+          assert g['action_correctness_required_unchanged']==0.8
+          assert g['escalation_correctness_required_unchanged']==0.8
+          assert g['premature_action_rate_required']==0.0
+          assert g['unsupported_action_or_escalation_rate_required']==0.0
+          assert g['locked_test_or_gold_leakage_rate_required']==0.0
+          PY
