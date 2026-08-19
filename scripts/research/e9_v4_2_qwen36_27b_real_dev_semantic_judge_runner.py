@@ -7,6 +7,10 @@ prompt and judge settings from the synthetic reliability runner, makes one
 request per fixed DEV call, performs no semantic retry/fallback/prompt repair,
 and writes local prediction rows only if all calls complete successfully.
 
+The frozen synthetic prompt requires `case_id` in provider output. Therefore each
+real claim receives an opaque local case_id inside its provider request and is
+mapped back to (call_index, claim_index) only after strict response validation.
+
 No private expected paths, private scorer rows, VALIDATION, or LOCKED_TEST are read.
 Console output is aggregate/operational only and never prints claim text, visible
 case values, identifiers, group IDs, hashes, raw provider responses, or judge rows.
@@ -133,28 +137,42 @@ def validate_packet(packet: Any) -> list[dict[str, Any]]:
     return calls
 
 
-def build_request_payload(call: dict[str, Any]) -> dict[str, Any]:
+def _provider_case_id(claim_index: int) -> str:
+    return f"R{claim_index:04d}"
+
+
+def build_request_payload(call: dict[str, Any]) -> tuple[dict[str, Any], dict[str, int]]:
     units = call["claim_units"]
-    provider_claims = [
-        {"claim_index": int(unit["claim_index"]), "claim": str(unit["claim_text"])}
-        for unit in units
-    ]
+    case_to_claim: dict[str, int] = {}
+    provider_cases: list[dict[str, Any]] = []
+    for unit in units:
+        claim_index = int(unit["claim_index"])
+        case_id = _provider_case_id(claim_index)
+        if case_id in case_to_claim:
+            raise AssertionError("opaque provider case_id collision")
+        case_to_claim[case_id] = claim_index
+        provider_cases.append({
+            "case_id": case_id,
+            "claim": str(unit["claim_text"]),
+        })
+
     user_payload = {
-        "task": "Classify every supplied claim according to the frozen semantic-groundedness rubric.",
-        "visible_case": call["visible_case"],
-        "public_contract": call["public_contract"],
-        "claims": provider_claims,
+        "task": "Classify every supplied case according to the frozen semantic-groundedness rubric.",
+        "shared_visible_case": call["visible_case"],
+        "shared_public_contract": call["public_contract"],
+        "shared_context_rule": "The shared_visible_case and shared_public_contract apply to every case below.",
+        "cases": provider_cases,
         "required_output_example": {
             "results": [
                 {
-                    "claim_index": 0,
+                    "case_id": "R0000",
                     "claim_type": "factual_assertion",
                     "support_label": "SUPPORTED",
                 }
             ]
         },
     }
-    return {
+    request_payload = {
         "model": MODEL,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -166,31 +184,32 @@ def build_request_payload(call: dict[str, Any]) -> dict[str, Any]:
         "response_format": {"type": "json_object"},
         "stream": False,
     }
+    return request_payload, case_to_claim
 
 
-def validate_judge_payload(payload: Any, expected_claim_indices: list[int]) -> list[dict[str, Any]]:
+def validate_judge_payload(payload: Any, case_to_claim: dict[str, int]) -> list[dict[str, Any]]:
     if not isinstance(payload, dict) or set(payload.keys()) != {"results"}:
         raise AssertionError("judge output must contain exactly one top-level results key")
     rows = payload.get("results")
-    if not isinstance(rows, list) or len(rows) != len(expected_claim_indices):
+    if not isinstance(rows, list) or len(rows) != len(case_to_claim):
         raise AssertionError("judge result count does not match call claim count")
 
-    expected_set = set(expected_claim_indices)
-    seen: set[int] = set()
+    expected_set = set(case_to_claim)
+    seen: set[str] = set()
     clean: list[dict[str, Any]] = []
     for row in rows:
-        if not isinstance(row, dict) or set(row.keys()) != {"claim_index", "claim_type", "support_label"}:
-            raise AssertionError("each result must contain exactly claim_index, claim_type, support_label")
-        claim_index = row.get("claim_index")
+        if not isinstance(row, dict) or set(row.keys()) != {"case_id", "claim_type", "support_label"}:
+            raise AssertionError("each result must contain exactly case_id, claim_type, support_label")
+        case_id = str(row.get("case_id") or "")
         claim_type = str(row.get("claim_type") or "")
         support_label = str(row.get("support_label") or "")
-        if not isinstance(claim_index, int) or claim_index not in expected_set or claim_index in seen:
-            raise AssertionError("judge result claim_index is missing, duplicate, or outside the call")
+        if case_id not in expected_set or case_id in seen:
+            raise AssertionError("judge result case_id is missing, duplicate, or outside the call")
         if claim_type not in VALID_TYPES or support_label not in VALID_SUPPORT:
             raise AssertionError("judge result contains invalid claim_type or support_label")
-        seen.add(claim_index)
+        seen.add(case_id)
         clean.append({
-            "claim_index": claim_index,
+            "claim_index": case_to_claim[case_id],
             "claim_type": claim_type,
             "support_label": support_label,
         })
@@ -244,8 +263,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 
     for position, call in enumerate(calls):
         call_index = int(call["call_index"])
-        expected_claim_indices = [int(unit["claim_index"]) for unit in call["claim_units"]]
-        request_payload = build_request_payload(call)
+        request_payload, case_to_claim = build_request_payload(call)
         request = urllib.request.Request(
             API_URL,
             data=json.dumps(request_payload, ensure_ascii=False).encode("utf-8"),
@@ -277,7 +295,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             if not isinstance(message, dict) or not isinstance(message.get("content"), str):
                 raise AssertionError("provider response missing message content")
             judged_payload = json.loads(message["content"])
-            clean_rows = validate_judge_payload(judged_payload, expected_claim_indices)
+            clean_rows = validate_judge_payload(judged_payload, case_to_claim)
         except (AssertionError, json.JSONDecodeError, TypeError, KeyError):
             return _failure_summary("E9_V4_2_QWEN_REAL_DEV_OUTPUT_CONTRACT_FAILURE", completed_calls, http_status, "invalid_or_incomplete_output_shape"), 1
 
@@ -304,6 +322,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             "reasoning_effort": "none",
             "response_format": "json_object",
             "system_prompt_reused_from_synthetic_runner": True,
+            "provider_case_id_mapped_back_locally": True,
         },
         "scope": {
             "split": "DEV",
@@ -330,6 +349,8 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         "reasoning_effort": "none",
         "temperature": 0,
         "system_prompt_reused_without_edits": SYSTEM_PROMPT == synth.SYSTEM_PROMPT,
+        "provider_output_contract_reused_case_id": True,
+        "provider_case_id_mapped_back_locally": True,
         "semantic_metrics_authorized": True,
         "real_dev_packet_read": True,
         "validation_gate_authorized": False,
