@@ -29,7 +29,7 @@ def main() -> int:
         ],
         "should_take_action_now": False,
         "requires_human_escalation": False,
-        "proposed_next_step": "Use POST /analyses/{analysis_id}/reprocess only if later evidence supports it.",
+        "proposed_next_step": "Use POST /cases/{case_id}/escalate only if later evidence supports it.",
         "risk_notes": "Do not infer a current fault from missing evidence.",
         "trace_quality_self_check": {
             "uses_only_visible_packet": True,
@@ -46,9 +46,10 @@ def main() -> int:
     }
 
     before = parent.ground.audit_output(output, visible_case)
-    sanitized, stats = parent.sanitize_output(output, visible_case)
-    # Parent v1 is expected to exhibit the latent placeholder bug in this fixture.
-    assert int(stats["unsupported_identifier_replacements"]) > int(before["unsupported_id_mentions"])
+    _, stats_v1 = parent.sanitize_output(output, visible_case)
+    # Parent v1 must exhibit the latent bug here: {case_id} is a public placeholder
+    # but the synthetic visible case intentionally has no case_id key/value.
+    assert int(stats_v1["unsupported_identifier_replacements"]) > int(before["unsupported_id_mentions"])
 
     original = parent._sanitize_text
     parent._sanitize_text = v11._sanitize_text_v1_1
@@ -67,7 +68,7 @@ def main() -> int:
     # Existing brace placeholders must remain literal; supported visible IDs remain literal.
     assert "{analysis_id}" in sanitized_v11["evidence_plan"][0]
     assert "{asset_id}" in sanitized_v11["evidence_plan"][1]
-    assert "{analysis_id}" in sanitized_v11["proposed_next_step"]
+    assert "{case_id}" in sanitized_v11["proposed_next_step"]
     assert "asset-visible" in sanitized_v11["evidence_plan"][1]
     assert "asset-visible" in sanitized_v11["action_escalation_rubric"]["calibration_reason"]
     assert "analysis-hidden" not in sanitized_v11["evidence_plan"][0]
