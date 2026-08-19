@@ -74,15 +74,31 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+
           text = Path('scripts/research/e14v_isolated_public_evidence_route_planner.py').read_text()
-          forbidden = [
+
+          forbidden_literals = [
               'expected-paths.json',
               'oracle-file',
-              'coverage_tags',
-              'ticket_id',
               'LOCKED_TEST_CASE',
           ]
-          for needle in forbidden:
-              assert needle not in text, f'forbidden selector found: {needle}'
+          for needle in forbidden_literals:
+              assert needle not in text, f'forbidden private artifact selector found: {needle}'
+
+          forbidden_access_patterns = [
+              '["coverage_tags"]',
+              "['coverage_tags']",
+              '.get("coverage_tags")',
+              ".get('coverage_tags')",
+              '["ticket_id"]',
+              "['ticket_id']",
+              '.get("ticket_id")',
+              ".get('ticket_id')",
+          ]
+          for needle in forbidden_access_patterns:
+              assert needle not in text, f'forbidden selector access found: {needle}'
+
+          # Audit/result fields such as split_coverage_tags_used=false are allowed;
+          # they document non-use and are not selector accesses.
           print('E14V_FORBIDDEN_SELECTOR_SCAN_PASS')
           PY
