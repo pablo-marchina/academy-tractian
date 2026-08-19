@@ -1,6 +1,6 @@
 {
   "experiment_id": "E14u-full-DEV-public-evidence-decomposition-prompt",
-  "status": "REAL_GENERATION_AND_E14N_PASS_POSTPROCESSING_IN_PROGRESS",
+  "status": "REJECTED_DETERMINISTIC_FULL_DEV_GATE_FAIL",
   "date": "2026-08-19",
   "intervention_class": "public_evidence_decomposition_system_prompt_only",
   "single_intervention": true,
@@ -28,20 +28,55 @@
     "private_oracle_used_by_model": false,
     "validation_feedback_used": false
   },
-  "e14n_v1_1_checkpoint": {
-    "status": "E14N_PUBLIC_IDENTIFIER_PROVENANCE_GUARD_TRANSFORM_PASS",
+  "deterministic_postprocessing_checkpoint": {
+    "e14n_status": "E14N_PUBLIC_IDENTIFIER_PROVENANCE_GUARD_TRANSFORM_PASS",
+    "e14p_status": "E14P_FULL_DEV_PUBLIC_EPISTEMIC_SERIALIZATION_GUARD_PASS",
+    "e14q_status": "E14Q_FULL_DEV_PUBLIC_ACTION_AUTHORIZATION_CONSISTENCY_GUARD_PASS",
+    "e14q2_status": "E14Q2_FULL_DEV_PUBLIC_ROUTE_ROLE_PURPOSE_CONSISTENCY_GUARD_PASS",
+    "evidence_plan_preserved_after_generation": true,
+    "v4_2_free_text_preserved_by_q_and_q2": true,
+    "provider_calls_after_generation": 0
+  },
+  "surface_audit_final": {
     "fixed_calls": 10,
-    "parsed_outputs": 10,
-    "unsupported_identifier_mentions_before": 1,
-    "unsupported_identifier_mentions_after": 0,
-    "decision_action_escalation_semantic_changes": 0,
-    "brace_placeholders_preserved_byte_for_byte": true,
-    "matching_only_outside_brace_placeholders": true,
-    "provider_calls": 0,
-    "private_oracle_used": false,
-    "private_scorer_rows_used": false,
-    "validation_feedback_used": false,
-    "locked_test_used": false
+    "assessed_calls": 10,
+    "complete_surface_coverage": true,
+    "unsupported_id_mentions": 0,
+    "unrecognized_method_path_mentions": 0,
+    "unsupported_unit_numeric_mentions": 0,
+    "false_trace_self_check_flags": 0,
+    "concrete_provenance_violation_count": 0,
+    "general_semantic_groundedness_established": false
+  },
+  "e9_v4_1_final_aggregate": {
+    "fixed_calls": 10,
+    "scoreable_calls": 10,
+    "reference_quality": 0.7857,
+    "decision_correctness": 0.8,
+    "evidence_correctness": 0.1,
+    "mean_expected_read_recall": 0.7417,
+    "mean_extra_public_read_count": 4.0,
+    "action_correctness": 0.8,
+    "escalation_correctness": 0.8,
+    "premature_action_rate": 0.0,
+    "unsupported_action_or_escalation_rate": 0.0,
+    "locked_test_or_gold_leakage_rate": 0.0,
+    "alignment_resolved": true,
+    "normalization_resolved": true,
+    "complete_fixed_measurement": true,
+    "validation_gate_authorized": false
+  },
+  "v4_2_packet_characterization": {
+    "claim_units_total": 214,
+    "source_field_claim_unit_counts": {
+      "action_escalation_rubric.calibration_reason": 40,
+      "evidence_plan[]": 134,
+      "proposed_next_step": 12,
+      "risk_notes": 28
+    },
+    "complete_claim_packet_coverage": true,
+    "judge_called": false,
+    "semantic_measurement_authorized": false
   },
   "motivation_from_aggregate_only": {
     "E14q2_evidence_correctness": 0.2,
@@ -53,17 +88,11 @@
     "E14t_evidence_correctness": 0.3,
     "E14t_mean_expected_read_recall": 0.8,
     "E14t_mean_extra_public_read_count": 3.4,
-    "E14t_public_reads_total": 63,
-    "pure_addition_upper_bound_reason": "E9 v4.1 defines evidence_correct per call as recall==1.0. E14t has 3/10 complete calls and only 0.1 mean extra-read headroom. One globally added read can complete at most one additional call, so pure bounded addition cannot reach the required 5/10 complete calls while guaranteeing the extra-read ceiling.",
+    "E14u_evidence_correctness": 0.1,
+    "E14u_mean_expected_read_recall": 0.7417,
+    "E14u_mean_extra_public_read_count": 4.0,
     "no_per_row_private_labels_inspected": true,
     "no_group_or_ticket_failure_inferred": true
-  },
-  "public_contract_findings_before_preregistration": {
-    "existing_E10b_evidence_policy_is_broad": true,
-    "existing_E10b_evidence_resource_hint_list_omits_GET_models_modelId": true,
-    "public_tool_registry_contains_GET_models_modelId": true,
-    "existing_action_policy_contains_model_retraining": true,
-    "interpretation": "The next intervention should improve evidence decomposition from public task semantics rather than continue scorer-driven post-hoc route expansion."
   },
   "frozen_generation_configuration": {
     "provider_path": "Groq zero-cost path already used by the frozen generation stack",
@@ -80,72 +109,12 @@
     "retry_policy_changed": false,
     "semantic_repair_policy_changed": false
   },
-  "prompt_change": {
-    "marker": "E14U_PUBLIC_EVIDENCE_DECOMPOSITION_DISCIPLINE",
-    "base_prompt": "exact E14o effective system prompt",
-    "change_class": "append_public_evidence_decomposition_suffix_only",
-    "rules": [
-      "Before final JSON, privately decompose the visible task into concrete unknowns and choose the smallest complete set of public GET routes needed to resolve them.",
-      "Each evidence_plan item must contain exactly one canonical public GET METHOD+path signature.",
-      "Do not add a route merely because it exists or as a generic checklist item.",
-      "Use GET /users/me only when current-user authorization is materially required for a contemplated state-changing action.",
-      "Use GET /assets/{assetId}, GET /assets/{assetId}/analyses and GET /analyses/{analysisId} only when asset/analysis state is needed by the visible task, preserving the public resource dependency chain.",
-      "Use GET /assets/{assetId}/baseline only when baseline/threshold/reference-state evidence is material.",
-      "Use GET /assets/{assetId}/data-quality only when completeness/reliability/quality of input data is material.",
-      "Use GET /assets/{assetId}/rms only when amplitude/time-domain/trend evidence is material.",
-      "Use GET /assets/{assetId}/spectrum only when frequency-domain/harmonic/fault-signature evidence is material.",
-      "Use GET /models/{modelId} whenever model state, drift, model performance, coverage or retraining is materially implicated.",
-      "Use GET /knowledge/search followed by GET /knowledge/{docId} only when procedural/domain/source-grounding knowledge is materially required.",
-      "If a state-changing endpoint is selected, include the public target-state read and authorization read required by the existing frozen action policy before action.",
-      "Prefer 4-6 distinct reads when that is complete; allow a seventh only for a distinct public dependency; never emit more than 7 distinct public reads.",
-      "Do not change the existing decision/action/escalation calibration rules; this suffix changes evidence decomposition guidance only.",
-      "Never use private expected paths, evaluator labels, VALIDATION feedback or LOCKED_TEST material."
-    ]
-  },
-  "allowed_inputs": [
-    "runner-selected visible DEV case packet",
-    "public tool/API contract",
-    "public output contract",
-    "existing frozen E14o prompt",
-    "aggregate-only E14q2/E14r/E14s/E14t measurements"
-  ],
-  "forbidden_inputs": [
-    "private expected-path rows",
-    "private scorer rows",
-    "per-row evaluator labels",
-    "semantic judge rows",
-    "VALIDATION feedback",
-    "LOCKED_TEST content",
-    "group-specific evidence rules",
-    "ticket-specific evidence rules",
-    "split coverage_tags as evidence features"
-  ],
   "real_attempt_policy": {
     "real_generation_runner_invocations_allowed": 1,
-    "attempt_lock_before_first_provider_call": true,
+    "attempt_consumed": true,
     "rerun_after_attempt_consumption": false,
-    "provider_or_model_substitution_without_amendment": false,
-    "incomplete_capture_requires_new_explicit_amendment": true
+    "provider_or_model_substitution_without_amendment": false
   },
-  "fixed_post_generation_stack": [
-    "E14n v1.1 public identifier provenance guard unchanged",
-    "E14p public epistemic serializer unchanged",
-    "E14q public action authorization consistency guard unchanged",
-    "E14q2 public route-role-purpose consistency guard unchanged"
-  ],
-  "measurement_order": [
-    "one E14u full-DEV generation capture",
-    "E14n v1.1",
-    "E14p serializer",
-    "E14q",
-    "E14q2",
-    "public groundedness surface audit",
-    "frozen E9 v4.1 once",
-    "build v4.2 semantic claim packet",
-    "only if deterministic full-DEV gate passes: preregister exact packet shape before semantic labels",
-    "one reliability-qualified independent semantic measurement",
-    "only if deterministic and semantic full-DEV gates pass: VALIDATION measurement-only"
-  ],
   "full_dev_target_gate": {
     "fixed_calls_required": 10,
     "scoreable_calls_required": 10,
@@ -159,10 +128,21 @@
     "unsupported_action_or_escalation_rate_required": 0.0,
     "locked_test_or_gold_leakage_rate_required": 0.0
   },
+  "final_gate_outcome": {
+    "deterministic_full_dev_pass": false,
+    "failed_metrics": [
+      "evidence_correctness",
+      "mean_expected_read_recall",
+      "mean_extra_public_read_count"
+    ],
+    "semantic_judge_skipped_by_design": true,
+    "validation_remains_blocked": true,
+    "locked_test_remains_untouched": true
+  },
   "interpretation_limits": {
     "no_causal_claim_about_model_reasoning_beyond_prompt_intervention": true,
     "semantic_pass_cannot_rescue_deterministic_fail": true,
     "validation_remains_blocked_until_full_dev_deterministic_and_semantic_pass": true,
-    "if_E14u_fails": "record aggregate-only result and do not inspect or tune from private rows"
+    "next_candidate_must_not_use_private_rows": true
   }
 }
