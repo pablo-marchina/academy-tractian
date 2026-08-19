@@ -25,6 +25,8 @@ jobs:
           python -m py_compile scripts/research/e9_v4_2_semantic_claim_packet_builder_selfcheck.py
           python -m py_compile scripts/research/e9_v4_2_semantic_judge_reliability_validator.py
           python -m py_compile scripts/research/e9_v4_2_semantic_judge_reliability_validator_selfcheck.py
+          python -m py_compile scripts/research/e9_v4_2_qwen36_27b_synthetic_judge_runner.py
+          python -m py_compile scripts/research/e9_v4_2_qwen36_27b_synthetic_judge_runner_selfcheck.py
           python -m py_compile scripts/research/e9_private_oracle_group_ambiguity_diagnostic.py
           python -m py_compile scripts/research/e9_private_oracle_visible_case_alignment_diagnostic.py
           python -m py_compile scripts/research/e9_visible_case_alignment_synthetic_selfcheck.py
@@ -45,6 +47,8 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e9_v4_2_semantic_claim_packet_builder_selfcheck.py
       - name: Run E9 v4.2 semantic judge reliability validator synthetic checks
         run: PYTHONPATH=. python scripts/research/e9_v4_2_semantic_judge_reliability_validator_selfcheck.py
+      - name: Run E9 v4.2 frozen Qwen synthetic judge runner structural checks
+        run: PYTHONPATH=. python scripts/research/e9_v4_2_qwen36_27b_synthetic_judge_runner_selfcheck.py
       - name: Run visible-case oracle alignment synthetic self-check
         run: PYTHONPATH=. python scripts/research/e9_visible_case_alignment_synthetic_selfcheck.py
       - name: Run E14m-R1 sanitized diagnostic metadata self-check
