@@ -1,124 +1,347 @@
-# Post-E0/E1 Execution Backlog — E8 Groq Pass, Optional Comparators, E9 Next
+# Post-Freeze Execution Backlog — Active Research Gate
 
-Status: **E0 + E1 FROZEN; E2 COMPLETE; E3 FROZEN; E4 VALIDATION COMPLETE; E5 EXECUTED; E6 LIVE API PASS; E7 TOPOLOGY ADR RECORDED; E8 GROQ FREE MODEL PASS; E8 OPTIONAL FREE-PROVIDER COMPARATORS REGISTERED; E9 EVALUATOR-SIDE SCORER NEXT**
+Status: **E0/E1 frozen; E2–E8 infrastructure/runtime research complete enough for the active agent-quality loop; E9 v4.1/v4.2 evaluator stack frozen; full DEV 5/5 coverage active; E14q2 safety PASS; E14r evidence replacement FAIL; E14s evidence consensus READY**
 
-This file supersedes the pre-freeze task statuses in `research/06-research-backlog.md` for active execution. The older file is retained as historical planning evidence.
+Checkpoint: **2026-08-19 16:34 BRT**
 
-## Completed gates
+This file is the active execution backlog. Older research files remain historical evidence and must not be interpreted as the current gate when they conflict with this checkpoint.
 
-- [x] `NORMALIZED-CONTRACT-v1` frozen.
-- [x] `API-BEHAVIOR-MAP-v1` frozen.
-- [x] ScenarioSchema v1 and gold/evaluator boundary frozen.
-- [x] E2 integrated framework-neutral harness complete.
-- [x] `BENCHMARK-SPLIT-v1` frozen before runtime/model/prompt/architecture selection.
-- [x] E4 B0-B3 guarded-boundary DEV+VALIDATION comparison complete.
-- [x] E5 evidence acquisition/stopping comparison complete.
-- [x] E6 runtime discriminating spike complete.
-- [x] E6 adaptive real ToolSpec/HarnessRunner LangGraph spike complete.
-- [x] E6 local live API execution complete with `LIVE_PASS`.
-- [x] E7 native tools vs MCP-compatible surface comparison complete with `E7_PASS`.
-- [x] E7 topology ADR recorded.
-- [x] E8 statistical pilot/model benchmark prep registered and validated.
-- [x] E8 free-only pilot execution smoke passed.
-- [x] E8 candidate scope corrected from local-only to free-anywhere.
-- [x] E8 real free candidate run manifest and runner added.
-- [x] E8 v2 scorer/retry runner added.
-- [x] Groq `llama-3.1-8b-instant` passed DEV + VALIDATION as the first real zero-cost remote model candidate.
-- [x] Optional free-provider comparator policy registered.
-- [x] OpenRouter free comparator support added via v3 runner.
-- [x] E9 evaluator-side task-quality scorer preregistered.
+## Non-negotiable experiment boundaries
 
-## Current candidate policy/runtime/surface bundle
+- [x] DEV is the only development/tuning split.
+- [x] VALIDATION is measurement-only.
+- [x] LOCKED_TEST is final-only.
+- [x] Private expected paths remain evaluator-side only.
+- [x] Raw fixed outputs, scorer rows, semantic rows, private paths and output hashes are not committed.
+- [x] Real semantic-judge labels are not candidate-tuning data.
+- [x] Attempt locks / no-rerun rules remain binding.
+- [x] Final architecture remains unfrozen.
 
-- B3 guarded boundary.
-- Evidence-sufficiency/stopping policy.
-- Adaptive evidence planning from missing evidence requirements.
-- LangGraph as current runtime candidate.
-- `HttpxTransport` live API path configured and executed against the supplied TRACTIAN API.
-- Native ToolSpec calls as internal default candidate.
-- MCP-compatible `tools/list` + `tools/call` adapter as external interoperability candidate.
-- Free-only budget policy: OpenAI/Anthropic paid references disabled.
-- Leading free-provider candidate: Groq `llama-3.1-8b-instant`.
-- Optional free-provider comparators: OpenRouter free / `:free`, Gemini key-visible models, Hugging Face free credits, Ollama fallback.
-- Pydantic AI/Graph and OpenAI Agents SDK retained as comparators.
+## Stable evaluated stack components
 
-Still not frozen:
+The current candidate lineage uses:
 
-- final model/provider choice;
-- MCP topology;
-- RAG/vector DB;
-- multi-agent decomposition;
-- persistent memory;
-- observability backend;
-- UI/demo flow;
-- final architecture.
+- model candidate: `openai/gpt-oss-120b`;
+- reasoning: medium;
+- strict JSON output;
+- fixed full-DEV coverage: 5 groups, 10 calls, 2 repeats/group;
+- E14n v1.1 public identifier-provenance guard;
+- E14p deterministic epistemic serializer;
+- E14q + E14q2 deterministic action/escalation authorization consistency;
+- E9 v4.1 deterministic quality/safety evaluator;
+- E9 v4.2 semantic-groundedness protocol;
+- independent judge: `qwen/qwen3.6-27b`, already qualified on the frozen public synthetic suite.
 
-## E8 Groq real free model pass
+The next evidence intervention may replace only `evidence_plan`; all other accepted fields must remain fixed.
 
-Result:
+## Evaluator status
 
-| Metric | DEV | VALIDATION | Aggregate |
-|---|---:|---:|---:|
-| Status | pass | pass | `E8_FREE_ANYWHERE_MODEL_RUN_PASS` |
-| Provider | Groq | Groq | Groq |
-| Model | `llama-3.1-8b-instant` | `llama-3.1-8b-instant` | `llama-3.1-8b-instant` |
-| Total calls | 6 | 6 | 12 |
-| Successful calls | 6 | 6 | 12 |
-| Task-success proxy | 1.0 | 1.0 | 1.0 |
-| Schema-valid rate | 1.0 | 1.0 | 1.0 |
-| No LOCKED_TEST claim rate | 1.0 | 1.0 | 1.0 |
-| Trace completeness | true | true | true |
-| Avg latency ms | 8974.732 | 9766.9 | 9370.816 |
-| P95 latency ms | 30724.136 | 50841.424 | 50841.424 |
-| Cost USD | 0.0 | 0.0 | 0.0 |
+### E9 v4.1 — frozen measurement-only
 
-Artifacts:
+Current semantics:
 
-- `research/65-e8-groq-free-anywhere-model-run-results.md`
-- `research/results/e8-groq-free-anywhere-model-run-summary-2026-08-16.json`
-- `scripts/research/e8_free_anywhere_model_runner_v2.py`
+- exact runner-selected visible-ticket alignment;
+- no group-union fallback;
+- exact canonical METHOD+path normalization;
+- evidence credit from `evidence_plan` only;
+- action/decision/escalation scored separately;
+- leakage scan over string values only;
+- PASS requires every fixed call to be parsed, aligned, normalized and scoreable.
 
-## E8 optional free-provider comparators
+### E9 v4.2 — frozen semantic protocol
 
-Completed work:
+Current semantics:
 
-- [x] keep Groq as leading candidate;
-- [x] add OpenRouter as optional free comparator;
-- [x] require `openrouter/free` or a specific `:free` model for OpenRouter;
-- [x] block `openrouter/auto` and `openrouter/auto:free` for E8 zero-cost benchmarking;
-- [x] keep Gemini as optional only after `models.list` returns a key-visible `generateContent` model;
-- [x] keep Hugging Face low priority due free-credit/billing risk;
-- [x] keep Ollama as fallback only, not a locality requirement;
-- [x] ensure optional comparators do not block E9.
+- claim sources: `evidence_plan[]`, `proposed_next_step`, `risk_notes`, `calibration_reason`;
+- every factual assertion must be supported by the visible packet or public static contract;
+- non-factual procedural/uncertainty/metadata claims must be `NOT_APPLICABLE`;
+- the candidate model is not its own semantic judge;
+- semantic PASS cannot rescue deterministic quality/safety FAIL.
 
-Artifacts:
+Independent judge reliability is already PASS and remains frozen.
 
-- `research/66-e8-optional-free-provider-comparators.md`
-- `research/experiments/e8-optional-free-provider-comparators-manifest.json`
-- `scripts/research/e8_free_anywhere_model_runner_v3.py`
+## Full-DEV coverage status
 
-## E9 active next task
+- [x] 5 / 5 DEV groups covered.
+- [x] 8 / 8 DEV scenarios represented.
+- [x] contextualize modality included.
+- [x] 10 / 10 fixed calls captured.
+- [x] 2 repeats per group.
+- [x] VALIDATION not used during this full-DEV development loop.
+- [x] LOCKED_TEST not accessed.
 
-Build evaluator-side scorer that maps fixed model outputs to private DEV/VALIDATION oracles without leaking gold into model prompts.
+Coverage is no longer the blocker.
 
-Required work:
+## Candidate history relevant to the active gate
 
-- [ ] consume fixed model outputs and output hashes;
-- [ ] read private DEV/VALIDATION oracles only on scorer side;
-- [ ] keep model prompts gold-free;
-- [ ] measure decision-class correctness;
-- [ ] measure evidence-plan correctness;
-- [ ] measure action/escalation correctness;
-- [ ] measure unsupported final-claim rate;
-- [ ] compare proxy success vs real task-quality score;
-- [ ] keep LOCKED_TEST blocked;
-- [ ] keep OpenAI/Anthropic disabled;
-- [ ] do not freeze final architecture yet.
+### E14o — rejected
 
-Artifact:
+Prompt-only public factual-grounding discipline failed the semantic target on representative DEV:
 
-- `research/67-e9-evaluator-side-task-quality-scorer-preregistration.md`
+```text
+factual assertions:        4
+supported:                 2
+not supported:             2
+factual groundedness:    0.5
+semantic gate:          FAIL
+```
 
-## Methodological constraint
+### E14p — semantic layer PASS, full candidate rejected
 
-No item in E2, E3, E4, E5, E6, E7 or E8 is a demo. Test doubles, scripted paths and fixtures validate instrumentation, contracts, splits and evaluator behavior only. Architecture and agent-quality claims require controlled experiments against the supplied TRACTIAN environment and cannot use LOCKED_TEST before final evaluation.
+Representative semantic measurement:
+
+```text
+126 / 126 claims
+0 factual assertions
+semantic groundedness 1.0
+PASS
+```
+
+Full-DEV semantic measurement:
+
+```text
+206 / 206 claims
+0 factual assertions
+semantic groundedness 1.0
+PASS
+```
+
+But full-DEV v4.1 rejected the candidate because:
+
+```text
+evidence_correctness                    0.2000
+mean_expected_read_recall               0.7667
+premature_action_rate                   0.1000
+unsupported_action_or_escalation_rate   0.1000
+```
+
+E14p remains useful as a deterministic serialization layer, not as evidence that model reasoning improved.
+
+### E14q — partial safety pass
+
+```text
+decision_correctness                    0.7000
+action_correctness                      0.8000
+escalation_correctness                  0.7000
+premature_action_rate                   0.0000
+unsupported_action_or_escalation_rate   0.1000
+```
+
+### E14q2 — current accepted safety/action base
+
+```text
+reference_quality                       0.8000
+decision_correctness                    0.8000
+evidence_correctness                    0.2000
+mean_expected_read_recall               0.7667
+mean_extra_public_read_count            3.5000
+action_correctness                      0.8000
+escalation_correctness                  0.8000
+premature_action_rate                   0.0000
+unsupported_action_or_escalation_rate   0.0000
+leakage                                 0.0000
+```
+
+- [x] safety/action target PASS.
+- [x] evidence unchanged by design.
+- [x] semantic packet/judge not rerun because v4.2 claim-source fields were unchanged.
+
+E14q2 is the fixed parent for the active evidence-selection experiments.
+
+### E14r — rejected evidence replacement
+
+E14r replaced the broad evidence plan with public visible-case cue routing.
+
+Aggregate transform:
+
+```text
+reads before   63
+reads after    34
+added          13
+removed        42
+```
+
+Aggregate v4.1:
+
+```text
+evidence_correctness          0.0000
+mean_expected_read_recall     0.4000
+mean_extra_public_read_count  2.0000
+```
+
+Decision/action/escalation stayed `0.8 / 0.8 / 0.8`; safety stayed `0 / 0`.
+
+- [x] E14r rejected from aggregate-only result.
+- [x] no private row inspection.
+- [x] no group/ticket failure inference.
+- [x] 114-claim packet built for characterization only.
+- [x] semantic judge not run on E14r.
+
+Interpretation: sparse public cue replacement over-pruned useful evidence.
+
+## Active experiment — E14s
+
+Experiment:
+
+```text
+E14s-full-DEV-public-evidence-candidate-pool-consensus
+```
+
+Status:
+
+```text
+preregistered before transform: true
+structural CI: PASS
+CI run: 32285078034
+real transform consumed: false
+```
+
+### Intervention
+
+Single intervention class: deterministic evidence selection only.
+
+Inputs allowed:
+
+- fixed E14q2 evidence plan;
+- exact runner-selected visible case;
+- public tool registry;
+- public action state;
+- E14r deterministic selector as an independent public candidate source.
+
+Forbidden:
+
+- private expected paths;
+- private scorer rows;
+- per-row evaluator labels;
+- semantic judge rows;
+- VALIDATION feedback;
+- LOCKED_TEST;
+- group/ticket-specific evidence rules;
+- split `coverage_tags` as route-selection features.
+
+### Frozen E14s selection policy
+
+Candidate pool = union of:
+
+1. canonical reads already proposed by fixed E14q2;
+2. reads proposed by the deterministic E14r public selector.
+
+Priority:
+
+1. active action authorization / target-dependency reads;
+2. consensus reads appearing in both sources;
+3. remaining E14r deterministic reads;
+4. remaining original E14q2 reads in original order.
+
+Cap:
+
+```text
+6 reads per call
+```
+
+No read outside the public candidate pool may be synthesized.
+
+### Frozen E14s gate
+
+```text
+fixed calls                              = 10
+scoreable calls                          = 10
+evidence_correctness                    >= 0.5000
+mean_expected_read_recall               >= 0.8333
+mean_extra_public_read_count            <= 3.5000
+decision_correctness                    = 0.8000
+action_correctness                      = 0.8000
+escalation_correctness                  = 0.8000
+premature_action_rate                   = 0.0000
+unsupported_action_or_escalation_rate   = 0.0000
+locked_test_or_gold_leakage_rate        = 0.0000
+```
+
+## Immediate execution backlog
+
+### E14s deterministic phase
+
+- [ ] Apply E14s once to the same fixed E14q2 full-DEV outputs.
+- [ ] Require 10 / 10 parsed outputs.
+- [ ] Require zero non-evidence-field changes.
+- [ ] Require zero route-contract failures.
+- [ ] Require selected-read cap compliance on all calls.
+- [ ] Run public surface audit.
+- [ ] Require zero concrete provenance violations.
+- [ ] Run frozen E9 v4.1 once.
+- [ ] Compare only the aggregate to the preregistered E14s gate.
+- [ ] Do not inspect private rows.
+- [ ] Build a fresh E9 v4.2 packet because `evidence_plan` changes.
+- [ ] Record only aggregate packet shape.
+- [ ] Stop before semantic judge.
+
+### If E14s deterministic gate fails
+
+- [ ] Record sanitized aggregate failure.
+- [ ] Mark E14s rejected.
+- [ ] Do not use private rows, groups or ticket identities to redesign the candidate.
+- [ ] Do not run semantic judge for candidate promotion.
+- [ ] Do not use VALIDATION.
+- [ ] Preregister the next DEV-only evidence intervention from public invariants + aggregates only.
+
+### If E14s deterministic gate passes
+
+- [ ] Freeze exact new v4.2 packet shape before semantic labels.
+- [ ] Reuse the same qualified Qwen judge and frozen system prompt/settings.
+- [ ] Create a dedicated attempt lock.
+- [ ] Run exactly one full-DEV semantic judge attempt.
+- [ ] Require full claim coverage.
+- [ ] Require semantic groundedness PASS.
+- [ ] Keep VALIDATION blocked until semantic aggregation completes.
+
+## Promotion plan after full DEV
+
+### Full DEV deterministic + semantic PASS
+
+- [ ] Freeze candidate stack for VALIDATION.
+- [ ] Preregister VALIDATION measurement-only transport and thresholds.
+- [ ] Measure the two frozen VALIDATION groups / three scenarios.
+- [ ] Do not tune from validation feedback.
+- [ ] Apply the same deterministic quality/safety/leakage gates.
+- [ ] Apply the same semantic-groundedness protocol.
+
+### VALIDATION PASS
+
+- [ ] Freeze candidate policy/post-processing stack.
+- [ ] Integrate into production-shaped runtime without changing evaluated semantics.
+- [ ] Verify live API, transport, retry, trace, error handling and observability paths.
+- [ ] If integration changes evaluated semantics, return to DEV before final evaluation.
+- [ ] Freeze final architecture.
+- [ ] Freeze final evaluation artifact.
+
+### Final evaluation
+
+- [ ] Preregister LOCKED_TEST final measurement.
+- [ ] Execute LOCKED_TEST once.
+- [ ] Do not rerun or repair based on LOCKED_TEST results.
+- [ ] Record final metrics, limitations and failures.
+- [ ] Finalize README and system architecture documentation.
+- [ ] Finalize experiment report.
+- [ ] Prepare demo/presentation from the frozen evaluated system.
+
+## Gate sequence
+
+```text
+E14s deterministic full-DEV gate
+          ↓
+full-DEV semantic gate
+          ↓
+VALIDATION measurement-only
+          ↓
+candidate + architecture freeze
+          ↓
+LOCKED_TEST final-only
+          ↓
+final docs / demo / presentation
+```
+
+## Current decision
+
+**Do not run VALIDATION. Do not run LOCKED_TEST. Do not freeze final architecture.**
+
+The only authorized next quality action is the preregistered E14s full-DEV deterministic evidence-selection measurement over the same fixed E14q2 outputs.
