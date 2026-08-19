@@ -5,13 +5,15 @@
   "parent_fixed_candidate": "E14q2-over-E14p-full-DEV-5-group",
   "intervention_class": "deterministic_public_evidence_candidate_pool_consensus_selection_only",
   "structural_ci": {
-    "run_id": 32284907820,
+    "initial_green_run_id": 32284907820,
+    "final_activation_run_id": 32285078034,
     "conclusion": "success",
     "compile_pass": true,
     "public_synthetic_selfcheck_pass": true,
     "preregistration_constant_check_pass": true,
     "forbidden_selector_check_pass": true,
-    "provider_calls_made": 0
+    "provider_calls_made": 0,
+    "metadata_only_update_after_preregistration": true
   },
   "motivation_from_aggregate_only": {
     "E14q2_public_read_signatures_total": 63,
