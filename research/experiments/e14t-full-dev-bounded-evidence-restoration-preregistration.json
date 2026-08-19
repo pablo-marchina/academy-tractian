@@ -1,9 +1,18 @@
 {
   "experiment_id": "E14t-full-DEV-bounded-public-evidence-restoration",
-  "status": "PREREGISTERED_AFTER_E14S_AGGREGATE_FAILURE_AND_BEFORE_E14T_TRANSFORM",
+  "status": "ACTIVE_AFTER_STRUCTURAL_CI_PASS_BEFORE_E14T_TRANSFORM",
   "date": "2026-08-19",
   "parent_fixed_candidate": "E14q2-over-E14p-full-DEV-5-group",
   "intervention_class": "deterministic_bounded_public_evidence_restoration_only",
+  "structural_ci": {
+    "run_id": 32298665413,
+    "conclusion": "success",
+    "compile_pass": true,
+    "public_synthetic_selfcheck_pass": true,
+    "preregistration_constant_check_pass": true,
+    "forbidden_selector_check_pass": true,
+    "provider_calls_made": 0
+  },
   "motivation_from_aggregate_only": {
     "E14q2_public_reads_total": 63,
     "E14q2_evidence_correctness": 0.2,
