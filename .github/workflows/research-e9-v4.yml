@@ -38,6 +38,8 @@ jobs:
           python -m py_compile scripts/research/e14l_historical_capture_locator.py
           python -m py_compile scripts/research/e14n_public_identifier_provenance_guard.py
           python -m py_compile scripts/research/e14n_public_identifier_provenance_guard_selfcheck.py
+          python -m py_compile scripts/research/e14o_dev_only_public_factual_grounding_prompt.py
+          python -m py_compile scripts/research/e14o_dev_only_public_factual_grounding_prompt_selfcheck.py
       - name: Run oracle-free evaluator v4 synthetic validity checks
         run: PYTHONPATH=. python scripts/research/e9_v4_synthetic_selfcheck.py
       - name: Run oracle-free evaluator v4.1 structural regression checks
@@ -46,6 +48,8 @@ jobs:
         run: PYTHONPATH=. python scripts/research/e9_v4_1_groundedness_surface_selfcheck.py
       - name: Run E14n public identifier provenance guard synthetic checks
         run: PYTHONPATH=. python scripts/research/e14n_public_identifier_provenance_guard_selfcheck.py
+      - name: Run E14o public factual-grounding structural checks
+        run: PYTHONPATH=. python scripts/research/e14o_dev_only_public_factual_grounding_prompt_selfcheck.py
       - name: Run E9 v4.2 semantic claim packet builder synthetic checks
         run: PYTHONPATH=. python scripts/research/e9_v4_2_semantic_claim_packet_builder_selfcheck.py
       - name: Run E9 v4.2 semantic judge reliability validator synthetic checks
