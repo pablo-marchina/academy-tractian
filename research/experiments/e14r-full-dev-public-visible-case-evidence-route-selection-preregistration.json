@@ -1,0 +1,126 @@
+{
+  "experiment_id": "E14r-full-DEV-public-visible-case-evidence-route-selection",
+  "status": "PREREGISTERED_AFTER_E14Q2_PASS_AND_BEFORE_E14R_TRANSFORM",
+  "date": "2026-08-19",
+  "parent_fixed_candidate": "E14q2-over-E14p-full-DEV-5-group",
+  "intervention_class": "deterministic_public_visible_case_evidence_route_selection_only",
+  "motivation_from_aggregate_only": {
+    "full_dev_calls": 10,
+    "E14q2_evidence_correctness": 0.2,
+    "E14q2_mean_expected_read_recall": 0.7667,
+    "E14q2_mean_extra_public_read_count": 3.5,
+    "E14q2_decision_correctness": 0.8,
+    "E14q2_action_correctness": 0.8,
+    "E14q2_escalation_correctness": 0.8,
+    "E14q2_premature_action_rate": 0.0,
+    "E14q2_unsupported_action_or_escalation_rate": 0.0,
+    "no_per_row_private_labels_inspected": true,
+    "no_group_or_ticket_failure_inferred": true
+  },
+  "allowed_inputs": [
+    "same 10 fixed E14q2 parsed outputs",
+    "exact runner-selected agent-visible case JSON for each DEV asset/story group",
+    "public tool registry",
+    "public output contract",
+    "frozen split membership only to assert DEV scope"
+  ],
+  "forbidden_inputs": [
+    "private expected-path rows",
+    "private scorer rows",
+    "per-row evaluator labels",
+    "semantic judge rows",
+    "VALIDATION feedback",
+    "LOCKED_TEST content",
+    "group-specific or ticket-specific evidence rules",
+    "frozen split coverage_tags as route-selection features",
+    "post-transform tuning from E14r private row results"
+  ],
+  "public_route_selection_policy": {
+    "selection_unit": "one agent-visible case plus its already-fixed public action state",
+    "group_id_or_ticket_id_used_as_semantic_feature": false,
+    "split_coverage_tags_used": false,
+    "core_non_contextual_reads": [
+      "GET /assets/{assetId}",
+      "GET /assets/{assetId}/analyses",
+      "GET /analyses/{analysisId}"
+    ],
+    "contextualize_detection": "generic visible-case string values containing contextualize/context/procedure/glossary/explain/meaning/source-fidelity cues",
+    "contextualize_core_reads": [
+      "GET /knowledge/search",
+      "GET /knowledge/{docId}"
+    ],
+    "generic_visible_case_cue_families": {
+      "baseline": ["baseline", "threshold", "learn baseline", "baseline invalid", "baseline stale"],
+      "data_quality": ["data quality", "missing data", "unavailable", "incomplete data", "partial data", "signal quality", "confidence"],
+      "rms": ["rms", "vibration trend", "amplitude", "time series", "severity trend"],
+      "spectrum": ["spectrum", "frequency", "band", "harmonic", "electrical", "mechanical"],
+      "model": ["model", "drift", "retrain", "retraining", "false positive", "false negative", "coverage", "model delayed"],
+      "knowledge": ["procedure", "glossary", "knowledge", "guidance", "documentation", "source fidelity", "meaning of"]
+    },
+    "cue_to_read_routes": {
+      "baseline": ["GET /assets/{assetId}/baseline"],
+      "data_quality": ["GET /assets/{assetId}/data-quality"],
+      "rms": ["GET /assets/{assetId}/rms"],
+      "spectrum": ["GET /assets/{assetId}/spectrum"],
+      "model": ["GET /models/{modelId}"],
+      "knowledge": ["GET /knowledge/search", "GET /knowledge/{docId}"]
+    },
+    "active_action_dependency_reads": {
+      "all_active_actions": ["GET /users/me"],
+      "POST /analyses/{analysisId}/reprocess": ["GET /analyses/{analysisId}"],
+      "POST /analyses/{analysisId}/request-specialist": ["GET /analyses/{analysisId}"],
+      "POST /models/{modelId}/request-retraining": ["GET /models/{modelId}"],
+      "PATCH /assets/{assetId}": ["GET /assets/{assetId}"],
+      "POST /cases/{caseId}/escalate": []
+    },
+    "company_routes": "not selected by E14r unless a future independently preregistered public rule justifies them",
+    "evidence_plan_replacement": "replace evidence_plan with the deterministic selected read set rather than unioning all prior broad reads",
+    "deduplicate_routes": true,
+    "stable_public_route_order": true,
+    "max_selected_reads_per_call": 8,
+    "selected_item_style": "procedural recommendation containing exactly one canonical public GET METHOD+path signature",
+    "no_action_signatures_in_evidence_plan": true
+  },
+  "paired_invariants": {
+    "provider_calls": 0,
+    "same_10_fixed_calls": true,
+    "same_5_DEV_groups": true,
+    "only_evidence_plan_may_change": true,
+    "decision_class_byte_for_byte": true,
+    "should_take_action_now_byte_for_byte": true,
+    "requires_human_escalation_byte_for_byte": true,
+    "action_escalation_rubric_byte_for_byte": true,
+    "proposed_next_step_byte_for_byte": true,
+    "risk_notes_byte_for_byte": true,
+    "trace_quality_self_check_byte_for_byte": true,
+    "identifier_guard_not_changed": true,
+    "epistemic_serializer_not_changed": true
+  },
+  "measurement_plan": {
+    "apply_E14r_once_to_same_fixed_E14q2_outputs": true,
+    "run_public_surface_audit": true,
+    "run_frozen_E9_v4_1_once": true,
+    "rebuild_E9_v4_2_claim_packet_after_E14r": true,
+    "do_not_call_semantic_judge_until_new_packet_shape_is_preregistered": true,
+    "do_not_use_E14r_private_rows_for_rule_changes": true
+  },
+  "E14r_target_gate": {
+    "fixed_calls_required": 10,
+    "scoreable_calls_required": 10,
+    "evidence_correctness_min": 0.5,
+    "mean_expected_read_recall_min": 0.8333,
+    "mean_extra_public_read_count_max": 3.5,
+    "decision_correctness_required_unchanged": 0.8,
+    "action_correctness_required_unchanged": 0.8,
+    "escalation_correctness_required_unchanged": 0.8,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "locked_test_or_gold_leakage_rate_required": 0.0
+  },
+  "interpretation_limits": {
+    "E14r_pass_can_authorize_VALIDATION": false,
+    "semantic_groundedness_must_be_remeasured_after_evidence_plan_change": true,
+    "no_causal_claim_about_model_reasoning": true,
+    "if_E14r_fails": "record aggregate-only failure and do not inspect/tune from private rows"
+  }
+}
