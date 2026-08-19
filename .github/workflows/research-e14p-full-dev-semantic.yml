@@ -1,0 +1,53 @@
+name: research-e14p-full-dev-semantic
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/e9-v4-2-qwen36-27b-e14p-full-dev-semantic-measurement-preregistration.json'
+      - 'scripts/research/e9_v4_2_qwen36_27b_e14p_full_dev_semantic_judge_runner.py'
+      - 'scripts/research/e9_v4_2_e14p_full_dev_semantic_aggregate.py'
+      - '.github/workflows/research-e14p-full-dev-semantic.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/experiments/e9-v4-2-qwen36-27b-e14p-full-dev-semantic-measurement-preregistration.json'
+      - 'scripts/research/e9_v4_2_qwen36_27b_e14p_full_dev_semantic_judge_runner.py'
+      - 'scripts/research/e9_v4_2_e14p_full_dev_semantic_aggregate.py'
+      - '.github/workflows/research-e14p-full-dev-semantic.yml'
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Compile
+        run: |
+          python -m py_compile scripts/research/e9_v4_2_qwen36_27b_e14p_full_dev_semantic_judge_runner.py
+          python -m py_compile scripts/research/e9_v4_2_e14p_full_dev_semantic_aggregate.py
+      - name: Frozen full-DEV semantic contract checks
+        run: |
+          python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          p=Path('scripts/research/e9_v4_2_qwen36_27b_e14p_full_dev_semantic_judge_runner.py')
+          s=importlib.util.spec_from_file_location('full',p); m=importlib.util.module_from_spec(s); s.loader.exec_module(m)
+          q=Path('scripts/research/e9_v4_2_qwen36_27b_e14p_real_dev_semantic_judge_runner.py')
+          t=importlib.util.spec_from_file_location('targeted',q); n=importlib.util.module_from_spec(t); t.loader.exec_module(n)
+          assert m.EXPECTED_CALLS == 10
+          assert m.EXPECTED_CLAIMS == 206
+          assert m.EXPECTED_SOURCE_COUNTS == {
+            'action_escalation_rubric.calibration_reason':40,
+            'evidence_plan[]':126,
+            'proposed_next_step':11,
+            'risk_notes':29,
+          }
+          assert m.MODEL == n.MODEL
+          assert m.SYSTEM_PROMPT == n.SYSTEM_PROMPT
+          assert m.INTERCALL_SLEEP_SECONDS == n.INTERCALL_SLEEP_SECONDS
+          assert m.MAX_COMPLETION_TOKENS == n.MAX_COMPLETION_TOKENS
+          assert m.CANDIDATE != n.CANDIDATE
+          PY
