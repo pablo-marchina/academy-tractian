@@ -5,6 +5,12 @@
   "date": "2026-08-19",
   "parent_generation_candidate": "E14l",
   "preserved_post_generation_safeguard": "E14n",
+  "representative_groups": {
+    "DEV": ["G501", "C710", "S420"]
+  },
+  "repeats": {
+    "DEV_ACTION_ESCALATION_CALIBRATION": 2
+  },
   "scope": {
     "allowed_splits": ["DEV"],
     "representative_groups": ["G501", "C710", "S420"],
