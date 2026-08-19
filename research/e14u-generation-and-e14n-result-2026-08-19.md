@@ -93,10 +93,36 @@ locked_test_used                            false
 validation_gate_authorized                  false
 ```
 
+## E14q full-DEV public action-authorization guard
+
+The frozen E14q authorization guard was applied provider-free to the E14u-after-E14p fixed outputs. It fail-closed one action because the public evidence plan did not include the required `GET /users/me` authorization read. The evidence plan and all v4.2 free-text/trace fields were preserved exactly.
+
+```text
+status                                      E14Q_FULL_DEV_PUBLIC_ACTION_AUTHORIZATION_CONSISTENCY_GUARD_PASS
+provider_calls_made                         0
+fixed_calls_consumed                        10
+parsed_outputs                              10
+complete_fixed_transform                    true
+calls_changed                               1
+action_demotions                            1
+escalation_demotions                        0
+action_endpoints_cleared                    1
+decision_class_changes                      1
+authorization_failure_reason                missing_users_me_authorization_read: 1
+evidence_plan_changes                       0
+v4_2_free_text_or_trace_changes             0
+private_oracle_used                         false
+private_scorer_rows_used                    false
+semantic_judge_rows_used                    false
+validation_feedback_used                    false
+locked_test_used                            false
+validation_gate_authorized                  false
+```
+
 ## Interpretation
 
-E14u has cleared the operational generation gate, the unchanged E14n v1.1 identifier-provenance guard, and the unchanged full-DEV E14p serializer. The E14p transform preserved the ordered public evidence signatures exactly, so it does not alter the evidence-selection hypothesis under test.
+E14u has cleared the operational generation gate, the unchanged E14n v1.1 identifier-provenance guard, the unchanged full-DEV E14p serializer, and the unchanged E14q public action-authorization guard. E14p preserved the ordered public evidence signatures exactly, and E14q preserved the evidence plan byte-for-byte while fail-closing one unsupported active action. Therefore neither postprocessor changes the evidence-selection hypothesis under test.
 
-No deterministic quality claim is made yet. The fixed candidate must still pass E14q, E14q2, the public surface audit, and frozen E9 v4.1 before any new semantic-judge measurement can be authorized.
+No deterministic quality claim is made yet. The fixed candidate must still pass E14q2, the public surface audit, and frozen E9 v4.1 before any new semantic-judge measurement can be authorized.
 
 No raw outputs, identifiers, hashes, private expected paths, scorer rows, semantic labels, private file paths, VALIDATION feedback, or LOCKED_TEST content are committed here.
