@@ -32,6 +32,7 @@ SPEC.loader.exec_module(v4)
 METHOD_RE = re.compile(r"\b(GET|POST|PATCH|PUT|DELETE)\b", re.IGNORECASE)
 PATH_TOKEN_RE = re.compile(r"/[A-Za-z0-9_.:{}-]+(?:/[A-Za-z0-9_.:{}-]+)*")
 LOCKED_VALUE_TERMS = ("locked_test", "locked test")
+TERMINAL_SENTENCE_PUNCTUATION = ".,;:"
 
 
 def _kind_value(tool: Any) -> str:
@@ -86,16 +87,32 @@ def _method_path_pairs(text: str) -> list[tuple[str, str]]:
     return pairs
 
 
+def _matching_specs(method: str, observed_path: str) -> list[dict[str, Any]]:
+    # Try the exact token and a terminal-sentence-punctuation-stripped variant.
+    # We consider both before specificity ranking so e.g. /knowledge/search.
+    # resolves to the literal /knowledge/search route rather than the generic
+    # /knowledge/{docId} placeholder route.
+    candidates = [observed_path]
+    trimmed = observed_path.rstrip(TERMINAL_SENTENCE_PUNCTUATION)
+    if trimmed and trimmed != observed_path:
+        candidates.append(trimmed)
+    found: dict[str, dict[str, Any]] = {}
+    for candidate in candidates:
+        for spec in PUBLIC_TOOL_SPECS:
+            if spec["method"] != method:
+                continue
+            if _template_matches_path(str(spec["template"]), candidate):
+                found[str(spec["signature"])] = spec
+    return list(found.values())
+
+
 def canonical_tool_signatures(text: str, *, require_method: bool = True) -> list[tuple[str, str]]:
     if not require_method:
         raise AssertionError("v4.1 requires explicit METHOD+path signatures")
     result: list[tuple[str, str]] = []
     seen: set[str] = set()
     for method, observed_path in _method_path_pairs(text):
-        matches = [
-            spec for spec in PUBLIC_TOOL_SPECS
-            if spec["method"] == method and _template_matches_path(str(spec["template"]), observed_path)
-        ]
+        matches = _matching_specs(method, observed_path)
         if not matches:
             continue
         max_specificity = max(int(spec["specificity"]) for spec in matches)
