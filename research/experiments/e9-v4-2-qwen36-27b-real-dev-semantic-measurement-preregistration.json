@@ -5,7 +5,7 @@
   "parent_protocol": "E9-v4.2-semantic-groundedness",
   "judge_selection_preregistration": "E9-v4.2-QWEN36-27B-JUDGE-SELECTION",
   "synthetic_reliability_status": "PASS",
-  "purpose": "Freeze the real DEV semantic-groundedness measurement transport, coverage requirements, and aggregate gate before the independent judge reads the already-built E14n DEV semantic claim packet.",
+  "purpose": "Freeze the real DEV semantic-groundedness measurement transport, coverage requirements, single-attempt semantics, and aggregate gate before the independent judge reads the already-built E14n DEV semantic claim packet.",
   "judge": {
     "provider": "Groq",
     "model": "qwen/qwen3.6-27b",
@@ -36,6 +36,11 @@
     "raw_packet_must_remain_local_uncommitted": true
   },
   "provider_transport": {
+    "measurement_attempts_allowed": 1,
+    "attempt_definition": "one end-to-end run containing up to the six frozen provider requests",
+    "sanitized_attempt_lock_created_before_first_provider_call": true,
+    "attempt_lock_persists_on_success_or_failure": true,
+    "same_output_path_rerun_after_attempt_lock": false,
     "batching_unit": "one provider request per fixed DEV call",
     "expected_provider_requests": 6,
     "automatic_model_fallback": false,
@@ -43,8 +48,8 @@
     "automatic_semantic_retry": false,
     "intercall_sleep_seconds": 25,
     "max_completion_tokens_per_request": 2048,
-    "http_429_or_5xx_or_transport_error": "OPERATIONAL_FAILURE_MEASUREMENT_INCOMPLETE",
-    "invalid_or_incomplete_output_shape": "OUTPUT_CONTRACT_FAILURE_MEASUREMENT_INCOMPLETE",
+    "http_429_or_5xx_or_transport_error": "OPERATIONAL_FAILURE_MEASUREMENT_INCOMPLETE_AND_ATTEMPT_CONSUMED",
+    "invalid_or_incomplete_output_shape": "OUTPUT_CONTRACT_FAILURE_MEASUREMENT_INCOMPLETE_AND_ATTEMPT_CONSUMED",
     "partial_measurement_may_not_pass_gate": true,
     "provider_output_contract": "reuse frozen synthetic case_id + claim_type + support_label contract",
     "real_claim_to_provider_id_mapping": "deterministic opaque case_id R#### within each fixed call",
@@ -58,7 +63,8 @@
     "visible_case_values_written_to_judge_results": false,
     "provider_response_written": false,
     "aggregate_only_results_may_be_committed": true,
-    "raw_judge_rows_may_be_committed": false
+    "raw_judge_rows_may_be_committed": false,
+    "attempt_lock_contains_claim_text_or_visible_values_or_paths_or_hashes": false
   },
   "semantic_gate": {
     "full_coverage_required": true,
@@ -75,7 +81,7 @@
   "post_result_rules": {
     "candidate_or_judge_prompt_tuning_from_real_per_claim_labels": false,
     "print_or_commit_per_claim_rows": false,
-    "if_operational_or_contract_failure": "Do not infer semantic quality from the partial measurement and do not silently retry. Any replacement procedure must be preregistered before another real semantic measurement attempt.",
+    "if_operational_or_contract_failure": "The real measurement attempt is consumed. Do not infer semantic quality from partial execution and do not rerun. A replacement procedure requires a new explicit preregistered amendment before any further real semantic measurement.",
     "if_semantic_gate_fails": "Record aggregate failure and return to DEV candidate design without exposing or tuning from per-claim labels.",
     "if_semantic_gate_passes": "Combine this semantic-groundedness result with frozen deterministic v4.1 metrics and remaining full-DEV prerequisites; VALIDATION remains blocked until all prerequisites independently pass."
   }
