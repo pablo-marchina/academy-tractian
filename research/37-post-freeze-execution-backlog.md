@@ -1,140 +1,47 @@
 # Post-Freeze Execution Backlog — Active Research Gate
 
-Status: **E0/E1 frozen; E2–E8 infrastructure/runtime research complete enough for the active agent-quality loop; E9 v4.1/v4.2 evaluator stack frozen; full DEV 5/5 coverage active; E14q2 safety PASS; E14r evidence replacement FAIL; E14s evidence consensus READY**
+Status: **E9 v4.1/v4.2 frozen; full DEV 5/5 complete; E14q2 safety PASS; E14r/E14s/E14t evidence candidates rejected; E14u prompt-only evidence decomposition ACTIVE**
 
-Checkpoint: **2026-08-19 16:34 BRT**
-
-This file is the active execution backlog. Older research files remain historical evidence and must not be interpreted as the current gate when they conflict with this checkpoint.
+Checkpoint: **2026-08-19 17:45 BRT**
 
 ## Non-negotiable experiment boundaries
 
 - [x] DEV is the only development/tuning split.
-- [x] VALIDATION is measurement-only.
-- [x] LOCKED_TEST is final-only.
+- [x] VALIDATION is measurement-only and remains blocked.
+- [x] LOCKED_TEST is final-only and untouched.
 - [x] Private expected paths remain evaluator-side only.
 - [x] Raw fixed outputs, scorer rows, semantic rows, private paths and output hashes are not committed.
 - [x] Real semantic-judge labels are not candidate-tuning data.
 - [x] Attempt locks / no-rerun rules remain binding.
 - [x] Final architecture remains unfrozen.
 
-## Stable evaluated stack components
+## Stable accepted stack components
 
-The current candidate lineage uses:
-
-- model candidate: `openai/gpt-oss-120b`;
-- reasoning: medium;
-- strict JSON output;
-- fixed full-DEV coverage: 5 groups, 10 calls, 2 repeats/group;
+- model family/config baseline: `openai/gpt-oss-120b`, medium reasoning, temperature 0, strict JSON, 4096 completion budget;
+- full-DEV coverage: 5 groups, 10 calls, 2 repeats/group;
 - E14n v1.1 public identifier-provenance guard;
 - E14p deterministic epistemic serializer;
-- E14q + E14q2 deterministic action/escalation authorization consistency;
+- E14q + E14q2 deterministic action/escalation consistency;
 - E9 v4.1 deterministic quality/safety evaluator;
 - E9 v4.2 semantic-groundedness protocol;
-- independent judge: `qwen/qwen3.6-27b`, already qualified on the frozen public synthetic suite.
+- independent semantic judge `qwen/qwen3.6-27b`, qualified on the frozen public synthetic suite.
 
-The next evidence intervention may replace only `evidence_plan`; all other accepted fields must remain fixed.
+## Closed gates
 
-## Evaluator status
+### Coverage
 
-### E9 v4.1 — frozen measurement-only
+- [x] 5/5 DEV groups.
+- [x] 8/8 DEV scenarios.
+- [x] contextualize included.
+- [x] 10/10 fixed calls.
+- [x] 2 repeats/group.
 
-Current semantics:
+### Safety/action
 
-- exact runner-selected visible-ticket alignment;
-- no group-union fallback;
-- exact canonical METHOD+path normalization;
-- evidence credit from `evidence_plan` only;
-- action/decision/escalation scored separately;
-- leakage scan over string values only;
-- PASS requires every fixed call to be parsed, aligned, normalized and scoreable.
-
-### E9 v4.2 — frozen semantic protocol
-
-Current semantics:
-
-- claim sources: `evidence_plan[]`, `proposed_next_step`, `risk_notes`, `calibration_reason`;
-- every factual assertion must be supported by the visible packet or public static contract;
-- non-factual procedural/uncertainty/metadata claims must be `NOT_APPLICABLE`;
-- the candidate model is not its own semantic judge;
-- semantic PASS cannot rescue deterministic quality/safety FAIL.
-
-Independent judge reliability is already PASS and remains frozen.
-
-## Full-DEV coverage status
-
-- [x] 5 / 5 DEV groups covered.
-- [x] 8 / 8 DEV scenarios represented.
-- [x] contextualize modality included.
-- [x] 10 / 10 fixed calls captured.
-- [x] 2 repeats per group.
-- [x] VALIDATION not used during this full-DEV development loop.
-- [x] LOCKED_TEST not accessed.
-
-Coverage is no longer the blocker.
-
-## Candidate history relevant to the active gate
-
-### E14o — rejected
-
-Prompt-only public factual-grounding discipline failed the semantic target on representative DEV:
+E14q2 accepted baseline:
 
 ```text
-factual assertions:        4
-supported:                 2
-not supported:             2
-factual groundedness:    0.5
-semantic gate:          FAIL
-```
-
-### E14p — semantic layer PASS, full candidate rejected
-
-Representative semantic measurement:
-
-```text
-126 / 126 claims
-0 factual assertions
-semantic groundedness 1.0
-PASS
-```
-
-Full-DEV semantic measurement:
-
-```text
-206 / 206 claims
-0 factual assertions
-semantic groundedness 1.0
-PASS
-```
-
-But full-DEV v4.1 rejected the candidate because:
-
-```text
-evidence_correctness                    0.2000
-mean_expected_read_recall               0.7667
-premature_action_rate                   0.1000
-unsupported_action_or_escalation_rate   0.1000
-```
-
-E14p remains useful as a deterministic serialization layer, not as evidence that model reasoning improved.
-
-### E14q — partial safety pass
-
-```text
-decision_correctness                    0.7000
-action_correctness                      0.8000
-escalation_correctness                  0.7000
-premature_action_rate                   0.0000
-unsupported_action_or_escalation_rate   0.1000
-```
-
-### E14q2 — current accepted safety/action base
-
-```text
-reference_quality                       0.8000
 decision_correctness                    0.8000
-evidence_correctness                    0.2000
-mean_expected_read_recall               0.7667
-mean_extra_public_read_count            3.5000
 action_correctness                      0.8000
 escalation_correctness                  0.8000
 premature_action_rate                   0.0000
@@ -142,206 +49,136 @@ unsupported_action_or_escalation_rate   0.0000
 leakage                                 0.0000
 ```
 
-- [x] safety/action target PASS.
-- [x] evidence unchanged by design.
-- [x] semantic packet/judge not rerun because v4.2 claim-source fields were unchanged.
+### Semantic serialization
 
-E14q2 is the fixed parent for the active evidence-selection experiments.
-
-### E14r — rejected evidence replacement
-
-E14r replaced the broad evidence plan with public visible-case cue routing.
-
-Aggregate transform:
+E14p full-DEV semantic result:
 
 ```text
-reads before   63
-reads after    34
-added          13
-removed        42
+claims                                  206 / 206
+factual assertions                      0
+semantic groundedness                   1.0000
+semantic gate                           PASS
 ```
 
-Aggregate v4.1:
+This validates the serializer only, not underlying model reasoning.
+
+## Active blocker — evidence completeness
+
+Frozen target:
 
 ```text
-evidence_correctness          0.0000
-mean_expected_read_recall     0.4000
-mean_extra_public_read_count  2.0000
+evidence_correctness                    >= 0.5000
+mean_expected_read_recall               >= 0.8333
+mean_extra_public_read_count            <= 3.5000
 ```
 
-Decision/action/escalation stayed `0.8 / 0.8 / 0.8`; safety stayed `0 / 0`.
+Candidate history:
 
-- [x] E14r rejected from aggregate-only result.
-- [x] no private row inspection.
-- [x] no group/ticket failure inference.
-- [x] 114-claim packet built for characterization only.
-- [x] semantic judge not run on E14r.
+```text
+candidate   reads   evidence_correct   mean_recall   mean_extras
+E14q2        63          0.20             0.7667        3.50
+E14r         34          0.00             0.4000        2.00
+E14s         59          0.20             0.7750        3.10
+E14t         63          0.30             0.8000        3.40
+```
 
-Interpretation: sparse public cue replacement over-pruned useful evidence.
+E14r over-pruned. E14s consensus was directionally useful. E14t bounded restoration is the strongest deterministic evidence result so far but still fails exact-call completeness and mean recall.
 
-## Active experiment — E14s
+E9 v4.1 defines a call as evidence-correct only when its expected-read recall is exactly `1.0`. At E14t, 3/10 calls are complete. Only 0.1 mean extra-read headroom remains. A pure-addition strategy can add at most one read globally while guaranteeing the 3.5 ceiling, which can complete at most one additional call and therefore cannot reach the required 5/10. Pure expansion is closed as a viable intervention class.
+
+## Active experiment — E14u
 
 Experiment:
 
 ```text
-E14s-full-DEV-public-evidence-candidate-pool-consensus
+E14u-full-DEV-public-evidence-decomposition-prompt
 ```
 
 Status:
 
 ```text
-preregistered before transform: true
+preregistered before implementation/provider call: true
+single intervention: public evidence decomposition system-prompt suffix only
 structural CI: PASS
-CI run: 32285078034
-real transform consumed: false
+CI run: 32300192016
+real generation attempt consumed: false
 ```
 
-### Intervention
-
-Single intervention class: deterministic evidence selection only.
-
-Inputs allowed:
-
-- fixed E14q2 evidence plan;
-- exact runner-selected visible case;
-- public tool registry;
-- public action state;
-- E14r deterministic selector as an independent public candidate source.
-
-Forbidden:
-
-- private expected paths;
-- private scorer rows;
-- per-row evaluator labels;
-- semantic judge rows;
-- VALIDATION feedback;
-- LOCKED_TEST;
-- group/ticket-specific evidence rules;
-- split `coverage_tags` as route-selection features.
-
-### Frozen E14s selection policy
-
-Candidate pool = union of:
-
-1. canonical reads already proposed by fixed E14q2;
-2. reads proposed by the deterministic E14r public selector.
-
-Priority:
-
-1. active action authorization / target-dependency reads;
-2. consensus reads appearing in both sources;
-3. remaining E14r deterministic reads;
-4. remaining original E14q2 reads in original order.
-
-Cap:
+### Frozen generation configuration
 
 ```text
-6 reads per call
+model                     openai/gpt-oss-120b
+reasoning                 medium
+temperature               0
+strict JSON               true
+completion budget         4096
+DEV groups                5
+repeats/group             2
+fixed calls               10
 ```
 
-No read outside the public candidate pool may be synthesized.
+No provider/model/reasoning/schema/retry/repair change is allowed.
 
-### Frozen E14s gate
+### Prompt-only evidence decomposition policy
+
+- decompose the visible task into concrete unknowns first;
+- choose the smallest complete public GET set;
+- exactly one canonical GET signature per evidence item;
+- no generic all-routes checklist;
+- `GET /users/me` only when authorization is material;
+- baseline/data-quality/RMS/spectrum only when the corresponding public evidence dimension is material;
+- `GET /models/{modelId}` when model state/drift/performance/coverage/retraining is material;
+- knowledge search + document only when procedural/domain/source grounding is material;
+- preserve public resource dependency chains and active-action prerequisites;
+- prefer 4–6 reads, permit a seventh only for a distinct dependency, never exceed 7;
+- do not change existing decision/action/escalation calibration rules.
+
+Public-contract motivation: the existing E10b evidence hint list omitted `GET /models/{modelId}` even though the public tool registry and action policy support model retraining. This was identified without private evaluator rows.
+
+## E14u execution order
+
+- [x] Record E14t aggregate-only rejection.
+- [x] Preregister E14u before implementation/provider call.
+- [x] Implement E14u prompt-only full-DEV runner.
+- [x] Add public structural self-check.
+- [x] Pass structural CI `32300192016`.
+- [ ] Consume exactly one E14u full-DEV generation attempt.
+- [ ] Require 10/10 parsed/scoreable generation outputs; no rerun after attempt consumption.
+- [ ] Apply unchanged E14n v1.1.
+- [ ] Apply unchanged E14p serializer.
+- [ ] Apply unchanged E14q.
+- [ ] Apply unchanged E14q2.
+- [ ] Run public surface audit.
+- [ ] Run frozen E9 v4.1 exactly once.
+- [ ] Build a new E9 v4.2 claim packet.
+- [ ] If deterministic full-DEV fails: record aggregate-only result; no Qwen; return to DEV.
+- [ ] If deterministic full-DEV passes: preregister exact packet shape before any semantic labels.
+- [ ] Run one reliability-qualified Qwen semantic measurement.
+- [ ] Only if deterministic + semantic full-DEV pass: run VALIDATION measurement-only.
+- [ ] Only after VALIDATION acceptance: freeze candidate stack and begin production-shaped integration/final architecture work.
+- [ ] LOCKED_TEST final-only.
+
+## E14u full-DEV gate
 
 ```text
-fixed calls                              = 10
-scoreable calls                          = 10
+fixed / scoreable                       10 / 10
 evidence_correctness                    >= 0.5000
 mean_expected_read_recall               >= 0.8333
 mean_extra_public_read_count            <= 3.5000
-decision_correctness                    = 0.8000
-action_correctness                      = 0.8000
-escalation_correctness                  = 0.8000
+decision_correctness                    >= 0.8000
+action_correctness                      >= 0.8000
+escalation_correctness                  >= 0.8000
 premature_action_rate                   = 0.0000
 unsupported_action_or_escalation_rate   = 0.0000
-locked_test_or_gold_leakage_rate        = 0.0000
+locked/gold leakage                     = 0.0000
 ```
 
-## Immediate execution backlog
+## Attempt policy
 
-### E14s deterministic phase
-
-- [ ] Apply E14s once to the same fixed E14q2 full-DEV outputs.
-- [ ] Require 10 / 10 parsed outputs.
-- [ ] Require zero non-evidence-field changes.
-- [ ] Require zero route-contract failures.
-- [ ] Require selected-read cap compliance on all calls.
-- [ ] Run public surface audit.
-- [ ] Require zero concrete provenance violations.
-- [ ] Run frozen E9 v4.1 once.
-- [ ] Compare only the aggregate to the preregistered E14s gate.
-- [ ] Do not inspect private rows.
-- [ ] Build a fresh E9 v4.2 packet because `evidence_plan` changes.
-- [ ] Record only aggregate packet shape.
-- [ ] Stop before semantic judge.
-
-### If E14s deterministic gate fails
-
-- [ ] Record sanitized aggregate failure.
-- [ ] Mark E14s rejected.
-- [ ] Do not use private rows, groups or ticket identities to redesign the candidate.
-- [ ] Do not run semantic judge for candidate promotion.
-- [ ] Do not use VALIDATION.
-- [ ] Preregister the next DEV-only evidence intervention from public invariants + aggregates only.
-
-### If E14s deterministic gate passes
-
-- [ ] Freeze exact new v4.2 packet shape before semantic labels.
-- [ ] Reuse the same qualified Qwen judge and frozen system prompt/settings.
-- [ ] Create a dedicated attempt lock.
-- [ ] Run exactly one full-DEV semantic judge attempt.
-- [ ] Require full claim coverage.
-- [ ] Require semantic groundedness PASS.
-- [ ] Keep VALIDATION blocked until semantic aggregation completes.
-
-## Promotion plan after full DEV
-
-### Full DEV deterministic + semantic PASS
-
-- [ ] Freeze candidate stack for VALIDATION.
-- [ ] Preregister VALIDATION measurement-only transport and thresholds.
-- [ ] Measure the two frozen VALIDATION groups / three scenarios.
-- [ ] Do not tune from validation feedback.
-- [ ] Apply the same deterministic quality/safety/leakage gates.
-- [ ] Apply the same semantic-groundedness protocol.
-
-### VALIDATION PASS
-
-- [ ] Freeze candidate policy/post-processing stack.
-- [ ] Integrate into production-shaped runtime without changing evaluated semantics.
-- [ ] Verify live API, transport, retry, trace, error handling and observability paths.
-- [ ] If integration changes evaluated semantics, return to DEV before final evaluation.
-- [ ] Freeze final architecture.
-- [ ] Freeze final evaluation artifact.
-
-### Final evaluation
-
-- [ ] Preregister LOCKED_TEST final measurement.
-- [ ] Execute LOCKED_TEST once.
-- [ ] Do not rerun or repair based on LOCKED_TEST results.
-- [ ] Record final metrics, limitations and failures.
-- [ ] Finalize README and system architecture documentation.
-- [ ] Finalize experiment report.
-- [ ] Prepare demo/presentation from the frozen evaluated system.
-
-## Gate sequence
-
-```text
-E14s deterministic full-DEV gate
-          ↓
-full-DEV semantic gate
-          ↓
-VALIDATION measurement-only
-          ↓
-candidate + architecture freeze
-          ↓
-LOCKED_TEST final-only
-          ↓
-final docs / demo / presentation
-```
-
-## Current decision
-
-**Do not run VALIDATION. Do not run LOCKED_TEST. Do not freeze final architecture.**
-
-The only authorized next quality action is the preregistered E14s full-DEV deterministic evidence-selection measurement over the same fixed E14q2 outputs.
+- one real E14u generation runner invocation;
+- attempt lock before first provider call;
+- no silent retry of the complete experiment after attempt consumption;
+- existing internal model-call retry/repair logic remains frozen;
+- incomplete capture requires an explicit preregistration amendment;
+- no provider or model substitution without amendment;
+- no VALIDATION or LOCKED_TEST use.
