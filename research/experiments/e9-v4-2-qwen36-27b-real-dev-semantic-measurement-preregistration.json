@@ -45,7 +45,11 @@
     "max_completion_tokens_per_request": 2048,
     "http_429_or_5xx_or_transport_error": "OPERATIONAL_FAILURE_MEASUREMENT_INCOMPLETE",
     "invalid_or_incomplete_output_shape": "OUTPUT_CONTRACT_FAILURE_MEASUREMENT_INCOMPLETE",
-    "partial_measurement_may_not_pass_gate": true
+    "partial_measurement_may_not_pass_gate": true,
+    "provider_output_contract": "reuse frozen synthetic case_id + claim_type + support_label contract",
+    "real_claim_to_provider_id_mapping": "deterministic opaque case_id R#### within each fixed call",
+    "provider_case_id_mapped_back_to_local_claim_index_after_validation": true,
+    "provider_case_id_is_not_task_identifier": true
   },
   "output_contract": {
     "local_rows_only": true,
