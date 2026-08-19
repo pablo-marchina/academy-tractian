@@ -1,9 +1,17 @@
 {
   "experiment_id": "E14u-full-DEV-public-evidence-decomposition-prompt",
-  "status": "PREREGISTERED_AFTER_E14T_AGGREGATE_FAILURE_BEFORE_IMPLEMENTATION_OR_REAL_GENERATION",
+  "status": "ACTIVE_AFTER_STRUCTURAL_CI_PASS_BEFORE_REAL_GENERATION",
   "date": "2026-08-19",
   "intervention_class": "public_evidence_decomposition_system_prompt_only",
   "single_intervention": true,
+  "structural_ci": {
+    "run_id": 32300192016,
+    "conclusion": "success",
+    "compile_pass": true,
+    "public_structural_selfcheck_pass": true,
+    "preregistration_and_prompt_boundary_check_pass": true,
+    "provider_calls_made": 0
+  },
   "scope": {
     "measurement_splits": ["DEV"],
     "forbidden_splits": ["VALIDATION", "LOCKED_TEST"],
