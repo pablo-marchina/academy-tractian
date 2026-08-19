@@ -94,6 +94,7 @@ def _prediction_payload(packet: dict, unsafe: bool = False) -> dict:
             "reasoning_effort": "none",
             "response_format": "json_object",
             "system_prompt_reused_from_synthetic_runner": True,
+            "provider_case_id_mapped_back_locally": True,
         },
         "scope": {
             "split": "DEV",
@@ -112,7 +113,7 @@ def main() -> int:
     assert len(calls) == runner.EXPECTED_CALLS
     assert sum(len(c["claim_units"]) for c in calls) == runner.EXPECTED_CLAIMS
 
-    request = runner.build_request_payload(calls[0])
+    request, case_to_claim = runner.build_request_payload(calls[0])
     assert request["model"] == runner.synth.MODEL
     assert request["messages"][0]["content"] == runner.synth.SYSTEM_PROMPT
     assert request["temperature"] == 0
@@ -121,15 +122,31 @@ def main() -> int:
     assert request["max_completion_tokens"] == 2048
     assert "expected_" not in request["messages"][1]["content"]
     assert "gold" not in request["messages"][1]["content"].lower()
+    assert len(case_to_claim) == len(calls[0]["claim_units"])
+    assert all(case_id.startswith("R") for case_id in case_to_claim)
 
-    sample_indices = [u["claim_index"] for u in calls[0]["claim_units"]]
     sample_output = {
         "results": [
-            {"claim_index": idx, "claim_type": "factual_assertion", "support_label": "SUPPORTED"}
-            for idx in sample_indices
+            {"case_id": case_id, "claim_type": "factual_assertion", "support_label": "SUPPORTED"}
+            for case_id in case_to_claim
         ]
     }
-    assert len(runner.validate_judge_payload(sample_output, sample_indices)) == len(sample_indices)
+    validated = runner.validate_judge_payload(sample_output, case_to_claim)
+    assert len(validated) == len(case_to_claim)
+    assert {row["claim_index"] for row in validated} == set(case_to_claim.values())
+
+    bad_output = {
+        "results": [
+            {"claim_index": idx, "claim_type": "factual_assertion", "support_label": "SUPPORTED"}
+            for idx in case_to_claim.values()
+        ]
+    }
+    try:
+        runner.validate_judge_payload(bad_output, case_to_claim)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("legacy claim_index provider contract must be rejected")
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -154,6 +171,7 @@ def main() -> int:
         "status": "E9_V4_2_REAL_DEV_SEMANTIC_MEASUREMENT_SELFCHECK_PASS",
         "synthetic_claim_units": runner.EXPECTED_CLAIMS,
         "system_prompt_reuse_verified": True,
+        "provider_case_id_contract_verified": True,
         "provider_call_made": False,
         "private_oracle_used": False,
         "private_scorer_rows_used": False,
