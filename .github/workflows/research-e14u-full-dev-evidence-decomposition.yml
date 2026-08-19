@@ -1,0 +1,88 @@
+name: research-e14u-full-dev-evidence-decomposition
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/e14u-full-dev-public-evidence-decomposition-prompt-preregistration.json'
+      - 'scripts/research/e14u_full_dev_public_evidence_decomposition_prompt.py'
+      - 'scripts/research/e14u_full_dev_public_evidence_decomposition_prompt_selfcheck.py'
+      - '.github/workflows/research-e14u-full-dev-evidence-decomposition.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/experiments/e14u-full-dev-public-evidence-decomposition-prompt-preregistration.json'
+      - 'scripts/research/e14u_full_dev_public_evidence_decomposition_prompt.py'
+      - 'scripts/research/e14u_full_dev_public_evidence_decomposition_prompt_selfcheck.py'
+      - '.github/workflows/research-e14u-full-dev-evidence-decomposition.yml'
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public registry dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Compile
+        run: |
+          python -m py_compile scripts/research/e14u_full_dev_public_evidence_decomposition_prompt.py
+          python -m py_compile scripts/research/e14u_full_dev_public_evidence_decomposition_prompt_selfcheck.py
+      - name: Run public structural self-check
+        env:
+          PYTHONPATH: .
+        run: python scripts/research/e14u_full_dev_public_evidence_decomposition_prompt_selfcheck.py
+      - name: Verify preregistration and prompt-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          p = Path('research/experiments/e14u-full-dev-public-evidence-decomposition-prompt-preregistration.json')
+          x = json.loads(p.read_text())
+          assert x['status'] in {
+              'PREREGISTERED_AFTER_E14T_AGGREGATE_FAILURE_BEFORE_IMPLEMENTATION_OR_REAL_GENERATION',
+              'ACTIVE_AFTER_STRUCTURAL_CI_PASS_BEFORE_REAL_GENERATION',
+          }
+          assert x['intervention_class'] == 'public_evidence_decomposition_system_prompt_only'
+          assert x['single_intervention'] is True
+          scope = x['scope']
+          assert scope['measurement_splits'] == ['DEV']
+          assert set(scope['forbidden_splits']) == {'VALIDATION', 'LOCKED_TEST'}
+          assert len(scope['dev_groups']) == 5
+          assert scope['repeats_per_group'] == 2
+          assert scope['expected_fixed_calls'] == 10
+          cfg = x['frozen_generation_configuration']
+          assert cfg['model'] == 'openai/gpt-oss-120b'
+          assert cfg['reasoning_effort'] == 'medium'
+          assert cfg['temperature'] == 0
+          assert cfg['strict_json'] is True
+          assert cfg['max_completion_tokens'] == 4096
+          assert x['prompt_change']['marker'] == 'E14U_PUBLIC_EVIDENCE_DECOMPOSITION_DISCIPLINE'
+          assert x['prompt_change']['change_class'] == 'append_public_evidence_decomposition_suffix_only'
+          gate = x['full_dev_target_gate']
+          assert gate['evidence_correctness_min'] == 0.5
+          assert gate['mean_expected_read_recall_min'] == 0.8333
+          assert gate['mean_extra_public_read_count_max'] == 3.5
+          assert gate['decision_correctness_min'] == 0.8
+          assert gate['action_correctness_min'] == 0.8
+          assert gate['escalation_correctness_min'] == 0.8
+          assert gate['premature_action_rate_required'] == 0.0
+          assert gate['unsupported_action_or_escalation_rate_required'] == 0.0
+
+          src = Path('scripts/research/e14u_full_dev_public_evidence_decomposition_prompt.py').read_text()
+          forbidden = (
+              'expected-paths.json',
+              '.get("coverage_tags")', ".get('coverage_tags')",
+              '["coverage_tags"]', "['coverage_tags']",
+              '.get("ticket_id")', ".get('ticket_id')",
+              '["ticket_id"]', "['ticket_id']",
+          )
+          assert not any(item in src for item in forbidden)
+          assert 'E14U_PUBLIC_EVIDENCE_DECOMPOSITION_DISCIPLINE' in src
+          assert 'GET /models/{modelId}' in src
+          assert 'never emit more than 7 distinct public reads' in src
+          assert 'real_generation_runner_invocations_allowed": 1' in src
+          PY
