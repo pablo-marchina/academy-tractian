@@ -1,6 +1,6 @@
 {
   "amendment_id": "E14n-v1.1-placeholder-preservation",
-  "status": "PREREGISTERED_BEFORE_IMPLEMENTATION",
+  "status": "ACTIVATED_AFTER_PREREGISTERED_STRUCTURAL_CI_PASS",
   "date": "2026-08-19",
   "parent_guard": "E14n-public-identifier-provenance-guard-v1",
   "trigger": {
@@ -14,7 +14,7 @@
     "identifiers_inspected": false,
     "private_oracle_used": false,
     "semantic_judge_rows_used": false,
-    "root_cause_from_public_code_contract": "The surface auditor removes {...} placeholders before ID matching, while E14n v1 applies namespaced-ID matching directly to placeholder text. Public placeholders such as {analysis_id} can therefore be transformed even though the auditor correctly excludes them from concrete-ID provenance checks."
+    "root_cause_from_public_code_contract": "The surface auditor removes {...} placeholders before ID matching, while E14n v1 applies namespaced-ID matching directly to placeholder text. Public placeholders whose inner token is absent from the visible case can therefore be transformed even though the auditor correctly excludes them from concrete-ID provenance checks."
   },
   "allowed_change": {
     "change_class": "deterministic_guard_bugfix_only",
@@ -38,12 +38,23 @@
     "after_unsupported_mentions_required": 0,
     "decision_action_escalation_semantic_changes_required": 0
   },
+  "structural_validation": {
+    "workflow": "research-e9-v4",
+    "run_id": 32260343772,
+    "passed": true,
+    "placeholder_preservation_regression_passed": true,
+    "provider_calls_made": 0,
+    "private_oracle_used": false,
+    "validation_used": false,
+    "locked_test_used": false
+  },
   "e14o_measurement_rule": {
     "e14o_generation_must_not_be_rerun": true,
     "discard_e14n_v1_guarded_e14o_output_from_quality_selection": true,
     "discard_downstream_surface_v4_1_and_v4_2_packet_built_from_e14n_v1_e14o_output_from_quality_selection": true,
     "rerun_only_provider_free_postprocessing_from_fixed_e14o_capture": true,
-    "v1_1_structural_ci_required_before_e14o_postprocess_rerun": true
+    "v1_1_structural_ci_required_before_e14o_postprocess_rerun": true,
+    "v1_1_structural_ci_passed": true
   },
   "privacy": {
     "commit_raw_fixed_outputs": false,
