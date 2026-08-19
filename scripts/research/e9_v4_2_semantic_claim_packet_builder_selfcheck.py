@@ -20,8 +20,8 @@ def run() -> dict[str, object]:
     segmented = builder.segment_claim_units(
         "The analysis is stale. If needed, GET /analyses/{analysisId}. Escalate only if risk is material; otherwise investigate."
     )
-    if len(segmented) != 3:
-        raise AssertionError(f"expected 3 deterministic units, got {len(segmented)}")
+    if len(segmented) != 4:
+        raise AssertionError(f"expected 4 deterministic sentence/clause units, got {len(segmented)}")
 
     output = {
         "decision_class": "investigate_only",
@@ -65,6 +65,7 @@ def run() -> dict[str, object]:
     return {
         "status": "E9_V4_2_SEMANTIC_CLAIM_PACKET_BUILDER_SELF_CHECK_PASS",
         "deterministic_segmentation": True,
+        "semicolon_clause_split_verified": True,
         "all_preregistered_source_fields_included": True,
         "action_endpoint_excluded_as_independent_semantic_claim": True,
         "public_tool_registry_entries": len(builder.v41.PUBLIC_TOOL_SPECS),
