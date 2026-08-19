@@ -3,7 +3,6 @@ name: research-e14v-isolated-public-evidence-route-planner
 on:
   push:
     paths:
-      - 'research/experiments/e14v-full-dev-public-evidence-decomposition-prompt-preregistration.json'
       - 'research/experiments/e14v-full-dev-isolated-public-evidence-route-planner-preregistration.json'
       - 'research/fixtures/e14v-public-evidence-route-planner-synthetic-v1.json'
       - 'scripts/research/e14v_isolated_public_evidence_route_planner.py'
@@ -20,6 +19,8 @@ on:
 jobs:
   structural:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .
     steps:
       - uses: actions/checkout@v4
 
