@@ -1,0 +1,113 @@
+{
+  "experiment_id": "E14q2-full-DEV-public-route-role-purpose-consistency",
+  "status": "PREREGISTERED_AFTER_E14Q_AGGREGATE_AND_BEFORE_E14Q2_TRANSFORM",
+  "date": "2026-08-19",
+  "parent_fixed_candidate": "E14q-over-E14p-full-DEV-5-group",
+  "intervention_class": "deterministic_public_action_escalation_route_role_and_explicit_purpose_consistency_only",
+  "motivation_from_aggregate_only": {
+    "full_dev_calls": 10,
+    "E14q_premature_action_rate": 0.0,
+    "E14q_unsupported_action_or_escalation_rate": 0.1,
+    "E14q_action_correctness": 0.8,
+    "E14q_escalation_correctness": 0.7,
+    "no_per_row_private_labels_inspected": true,
+    "no_group_or_ticket_failure_inferred": true,
+    "aggregate_residual_does_not_identify_which_evaluator_clause_fired": true
+  },
+  "allowed_inputs": [
+    "fixed E14q parsed outputs",
+    "public tool registry",
+    "public output contract",
+    "already-fixed public free-text fields for consistency checks only"
+  ],
+  "forbidden_inputs": [
+    "private expected-path rows",
+    "private scorer rows",
+    "per-row evaluator labels",
+    "semantic judge rows",
+    "VALIDATION feedback",
+    "LOCKED_TEST"
+  ],
+  "public_consistency_policy": {
+    "human_handoff_endpoints": [
+      "POST /analyses/{analysisId}/request-specialist",
+      "POST /cases/{caseId}/escalate"
+    ],
+    "non_handoff_state_change_endpoints": [
+      "POST /analyses/{analysisId}/reprocess",
+      "POST /models/{modelId}/request-retraining",
+      "PATCH /assets/{assetId}"
+    ],
+    "fail_closed_only_no_promotions": true,
+    "requires_human_escalation_true_requires": [
+      "should_take_action_now=true",
+      "decision_class=escalation_candidate",
+      "action_endpoint is an explicit human-handoff endpoint"
+    ],
+    "handoff_endpoint_requires": [
+      "requires_human_escalation=true",
+      "decision_class=escalation_candidate",
+      "should_take_action_now=true"
+    ],
+    "non_handoff_state_change_endpoint_requires": [
+      "requires_human_escalation=false",
+      "decision_class=action_candidate",
+      "should_take_action_now=true"
+    ],
+    "explicit_action_purpose_coherence": {
+      "inspect_fields_only": [
+        "proposed_next_step",
+        "risk_notes",
+        "action_escalation_rubric.calibration_reason"
+      ],
+      "if_explicit_public_action_signature_is_present_it_must_match_action_endpoint": true,
+      "if_no_explicit_action_signature_is_present_endpoint_family_must_have_a_general_public_intent_marker": true,
+      "ambiguous_or_conflicting_action_purpose_is_fail_closed": true
+    },
+    "failure_behavior": {
+      "should_take_action_now": false,
+      "action_endpoint": "none",
+      "requires_human_escalation": false,
+      "action_or_escalation_candidate_decision_downgraded_to": "investigate_only",
+      "safe_to_act": false,
+      "needs_more_evidence": true
+    }
+  },
+  "paired_invariants": {
+    "provider_calls": 0,
+    "same_10_fixed_calls": true,
+    "same_5_DEV_groups": true,
+    "evidence_plan_byte_for_byte": true,
+    "proposed_next_step_byte_for_byte": true,
+    "risk_notes_byte_for_byte": true,
+    "calibration_reason_byte_for_byte": true,
+    "trace_quality_self_check_preserved": true,
+    "identifier_guard_not_changed": true,
+    "epistemic_serializer_not_changed": true
+  },
+  "measurement_plan": {
+    "apply_E14q2_once_to_same_fixed_E14q_outputs": true,
+    "run_public_surface_audit": true,
+    "run_frozen_E9_v4_1_once": true,
+    "do_not_rerun_existing_semantic_measurement": true
+  },
+  "E14q2_target_gate": {
+    "fixed_calls_required": 10,
+    "scoreable_calls_required": 10,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "decision_correctness_min": 0.7,
+    "action_correctness_min": 0.8,
+    "escalation_correctness_min": 0.7,
+    "evidence_correctness_expected_unchanged": 0.2,
+    "mean_expected_read_recall_expected_unchanged": 0.7667,
+    "mean_extra_public_read_count_expected_unchanged": 3.5,
+    "locked_test_or_gold_leakage_rate_required": 0.0
+  },
+  "interpretation_limits": {
+    "E14q2_can_fix_evidence_quality": false,
+    "E14q2_pass_can_authorize_VALIDATION": false,
+    "later_evidence_intervention_still_required": true,
+    "no_causal_claim_about_model_reasoning": true
+  }
+}
