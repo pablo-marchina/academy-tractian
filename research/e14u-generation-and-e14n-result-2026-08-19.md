@@ -119,10 +119,38 @@ locked_test_used                            false
 validation_gate_authorized                  false
 ```
 
+## E14q2 full-DEV route-role-purpose consistency guard
+
+The frozen E14q2 fail-closed consistency guard was then applied provider-free. It changed two calls to remove inconsistent escalation/action state while preserving the evidence plan and all v4.2 free-text/trace fields exactly. No action or escalation was promoted.
+
+```text
+status                                      E14Q2_FULL_DEV_PUBLIC_ROUTE_ROLE_PURPOSE_CONSISTENCY_GUARD_PASS
+provider_calls_made                         0
+fixed_calls_consumed                        10
+parsed_outputs                              10
+complete_fixed_transform                    true
+calls_changed                               2
+action_demotions                            1
+escalation_demotions                        2
+action_endpoints_cleared                    1
+decision_class_changes                      1
+consistency_failure_reason                  escalation_true_without_action_now: 1
+consistency_failure_reason                  escalation_true_without_escalation_candidate_decision: 1
+evidence_plan_changes                       0
+v4_2_free_text_or_trace_changes             0
+promotions_made                             0
+private_oracle_used                         false
+private_scorer_rows_used                    false
+semantic_judge_rows_used                    false
+validation_feedback_used                    false
+locked_test_used                            false
+validation_gate_authorized                  false
+```
+
 ## Interpretation
 
-E14u has cleared the operational generation gate, the unchanged E14n v1.1 identifier-provenance guard, the unchanged full-DEV E14p serializer, and the unchanged E14q public action-authorization guard. E14p preserved the ordered public evidence signatures exactly, and E14q preserved the evidence plan byte-for-byte while fail-closing one unsupported active action. Therefore neither postprocessor changes the evidence-selection hypothesis under test.
+E14u has now cleared the operational generation gate and the unchanged deterministic postprocessing stack E14n v1.1 -> E14p -> E14q -> E14q2. The E14p transform preserved ordered public evidence signatures exactly; E14q and E14q2 preserved the evidence plan and v4.2 claim-source fields while fail-closing unsupported or inconsistent action/escalation state. The evidence-selection hypothesis under test therefore remains intact through the deterministic safety stack.
 
-No deterministic quality claim is made yet. The fixed candidate must still pass E14q2, the public surface audit, and frozen E9 v4.1 before any new semantic-judge measurement can be authorized.
+No deterministic quality claim is made yet. The fixed E14u-after-E14q2 candidate must now run the public surface audit and one frozen E9 v4.1 measurement, after which a new v4.2 claim packet may be built. No semantic judge is authorized unless the deterministic full-DEV gate passes.
 
 No raw outputs, identifiers, hashes, private expected paths, scorer rows, semantic labels, private file paths, VALIDATION feedback, or LOCKED_TEST content are committed here.
