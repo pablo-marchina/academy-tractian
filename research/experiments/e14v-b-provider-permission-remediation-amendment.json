@@ -1,6 +1,6 @@
 {
   "experiment_id": "E14v-B-public-synthetic-provider-permission-remediation-amendment",
-  "status": "PREREGISTERED_WAITING_FOR_EXTERNAL_PROVIDER_PERMISSION_REMEDIATION",
+  "status": "PREREGISTERED_STRUCTURAL_CI_REQUIRED_BEFORE_PERMISSION_REMEDIATED_SYNTHETIC_ATTEMPT",
   "date": "2026-08-20",
   "parent_experiment": "E14v-A-public-synthetic-transport-contract-amendment",
   "amendment_class": "external_provider_permission_remediation_only",
@@ -48,6 +48,8 @@
     "required_model": "openai/gpt-oss-120b",
     "required_state": "allowed_for_the_api_key_project_and_organization",
     "manual_console_verification_allowed": true,
+    "manual_confirmation_received": true,
+    "manual_confirmation_date": "2026-08-20",
     "provider_generation_call_for_preflight_allowed": false,
     "model_substitution_allowed": false,
     "provider_substitution_allowed": false
@@ -73,10 +75,12 @@
   },
   "authorization_boundary": {
     "corrected_synthetic_attempt_authorized_now": false,
+    "structural_ci_required_before_corrected_attempt": true,
     "real_dev_authorized": false,
     "validation_authorized": false,
     "locked_test_authorized": false,
     "activation_condition": "manual confirmation that openai/gpt-oss-120b is allowed at both relevant Groq organization and project permission layers",
+    "activation_condition_satisfied": true,
     "if_e14v_b_synthetic_passes": "record aggregate PASS and explicitly activate one real DEV planner attempt",
     "if_e14v_b_synthetic_fails": "preserve lock and reject or amend without DEV/private-row inspection"
   }
