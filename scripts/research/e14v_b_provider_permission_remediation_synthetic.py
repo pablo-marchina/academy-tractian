@@ -26,6 +26,7 @@ parent = e14va.parent
 AMENDMENT = Path("research/experiments/e14v-b-provider-permission-remediation-amendment.json")
 PASS_STATUS = parent.PASS_SYNTHETIC
 LOCK_SUFFIX = ".attempt-lock.json"
+ACTIVE_STATUS = "ACTIVE_PERMISSION_REMEDIATED_SYNTHETIC_ATTEMPT_AUTHORIZED"
 
 
 def _load(path: Path) -> Any:
@@ -38,8 +39,8 @@ def assert_amendment(path: Path = AMENDMENT) -> dict[str, Any]:
         raise AssertionError("E14v-B amendment must be an object")
     if m.get("experiment_id") != "E14v-B-public-synthetic-provider-permission-remediation-amendment":
         raise AssertionError("wrong E14v-B amendment")
-    if m.get("status") != "PREREGISTERED_STRUCTURAL_CI_REQUIRED_BEFORE_PERMISSION_REMEDIATED_SYNTHETIC_ATTEMPT":
-        raise AssertionError("E14v-B is not in the preregistered structural-CI state")
+    if m.get("status") != ACTIVE_STATUS:
+        raise AssertionError("E14v-B is not in the active authorized synthetic-attempt state")
     if m.get("amendment_class") != "external_provider_permission_remediation_only":
         raise AssertionError("E14v-B amendment class changed")
 
@@ -75,6 +76,10 @@ def assert_amendment(path: Path = AMENDMENT) -> dict[str, Any]:
     auth = m.get("authorization_boundary")
     if not isinstance(auth, dict) or auth.get("activation_condition_satisfied") is not True:
         raise AssertionError("E14v-B activation condition not satisfied")
+    if auth.get("corrected_synthetic_attempt_authorized_now") is not True:
+        raise AssertionError("E14v-B corrected synthetic attempt is not authorized")
+    if auth.get("structural_ci_requirement_satisfied") is not True:
+        raise AssertionError("E14v-B structural CI requirement is not satisfied")
     if auth.get("real_dev_authorized") is not False or auth.get("validation_authorized") is not False or auth.get("locked_test_authorized") is not False:
         raise AssertionError("E14v-B cannot authorize DEV/VALIDATION/LOCKED_TEST")
     return m
