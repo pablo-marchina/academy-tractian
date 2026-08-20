@@ -1,6 +1,6 @@
 {
   "experiment_id": "E14v-B-public-synthetic-provider-permission-remediation-amendment",
-  "status": "PREREGISTERED_STRUCTURAL_CI_REQUIRED_BEFORE_PERMISSION_REMEDIATED_SYNTHETIC_ATTEMPT",
+  "status": "ACTIVE_PERMISSION_REMEDIATED_SYNTHETIC_ATTEMPT_AUTHORIZED",
   "date": "2026-08-20",
   "parent_experiment": "E14v-A-public-synthetic-transport-contract-amendment",
   "amendment_class": "external_provider_permission_remediation_only",
@@ -54,6 +54,18 @@
     "model_substitution_allowed": false,
     "provider_substitution_allowed": false
   },
+  "structural_ci": {
+    "workflow": "research-e14v-b-provider-permission-remediation",
+    "run_id": 32373085817,
+    "job_id": 96437951199,
+    "conclusion": "success",
+    "compile_pass": true,
+    "self_check_pass": true,
+    "zero_provider_dry_run_pass": true,
+    "amendment_boundary_pass": true,
+    "e14v_a_transport_reuse_pass": true,
+    "forbidden_selector_scan_pass": true
+  },
   "corrected_attempt_policy": {
     "corrected_real_provider_attempts_allowed": 1,
     "must_use_distinct_output_path_from_e14v_and_e14v_a": true,
@@ -74,8 +86,9 @@
     "required_max_read_cap_violations": 0
   },
   "authorization_boundary": {
-    "corrected_synthetic_attempt_authorized_now": false,
+    "corrected_synthetic_attempt_authorized_now": true,
     "structural_ci_required_before_corrected_attempt": true,
+    "structural_ci_requirement_satisfied": true,
     "real_dev_authorized": false,
     "validation_authorized": false,
     "locked_test_authorized": false,
