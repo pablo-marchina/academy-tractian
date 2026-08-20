@@ -75,12 +75,12 @@ jobs:
       - name: Verify E14v-A transport is reused
         run: |
           python - <<'PY'
-          import importlib.util
           from pathlib import Path
-          p = Path('scripts/research/e14v_b_provider_permission_remediation_synthetic.py')
-          text = p.read_text()
-          assert 'e14va._provider_call_amended' in text
-          assert 'response_format' not in text.split('def run(', 1)[0] or True
+          text = Path('scripts/research/e14v_b_provider_permission_remediation_synthetic.py').read_text()
+          assert 'parent._provider_call = e14va._provider_call_amended' in text
+          assert 'def _provider_call' not in text
+          assert 'def _schema_response_format' not in text
+          assert 'https://api.groq.com' not in text
           print('E14V_B_TRANSPORT_REUSE_PASS')
           PY
 
