@@ -47,7 +47,7 @@ jobs:
           p = Path('research/experiments/e14v-b-provider-permission-remediation-amendment.json')
           m = json.loads(p.read_text())
           assert m['experiment_id'] == 'E14v-B-public-synthetic-provider-permission-remediation-amendment'
-          assert m['status'] == 'PREREGISTERED_STRUCTURAL_CI_REQUIRED_BEFORE_PERMISSION_REMEDIATED_SYNTHETIC_ATTEMPT'
+          assert m['status'] == 'ACTIVE_PERMISSION_REMEDIATED_SYNTHETIC_ATTEMPT_AUTHORIZED'
           assert m['amendment_class'] == 'external_provider_permission_remediation_only'
           u = m['unchanged_scientific_candidate']
           assert u['planner_model'] == 'openai/gpt-oss-120b'
@@ -63,8 +63,15 @@ jobs:
           r = m['external_remediation_precondition']
           assert r['manual_confirmation_received'] is True
           assert r['required_model'] == 'openai/gpt-oss-120b'
+          ci = m['structural_ci']
+          assert ci['run_id'] == 32373085817
+          assert ci['job_id'] == 96437951199
+          assert ci['conclusion'] == 'success'
+          assert ci['e14v_a_transport_reuse_pass'] is True
           assert m['corrected_attempt_policy']['corrected_real_provider_attempts_allowed'] == 1
           a = m['authorization_boundary']
+          assert a['corrected_synthetic_attempt_authorized_now'] is True
+          assert a['structural_ci_requirement_satisfied'] is True
           assert a['activation_condition_satisfied'] is True
           assert a['real_dev_authorized'] is False
           assert a['validation_authorized'] is False
