@@ -15,28 +15,40 @@ No material component is considered complete merely because it works or passes a
 
 ## Status
 
-**Benchmark Integrity Gate — BIG-B0 complete / BIG-B1 complete / BIG-B2 active — agent optimization paused**
+**Benchmark Integrity Gate — BIG-B0/B1/B2 complete / BIG-B3 active — agent optimization paused**
 
-BIG-B0 reconstructed benchmark use from E3 onward. BIG-B1 then classified independence and adaptive influence for every B0 event without redesigning the benchmark.
+BIG-B0 reconstructed benchmark usage, BIG-B1 classified adaptive influence/independence, and BIG-B2 preregistered and executed a systematic benchmark-design comparison without selecting a winner.
 
-Canonical audit artifacts:
+Canonical benchmark-integrity artifacts:
 
 - [`research/big-b0-benchmark-integrity-audit-2026-08-21.md`](research/big-b0-benchmark-integrity-audit-2026-08-21.md) — factual chronological reconstruction;
 - [`research/results/big-b0-benchmark-access-ledger-2026-08-21.json`](research/results/big-b0-benchmark-access-ledger-2026-08-21.json) — B0 machine-readable access inventory;
 - [`research/big-b1-exposure-contamination-ledger-2026-08-21.md`](research/big-b1-exposure-contamination-ledger-2026-08-21.md) — B1 independence/influence classification;
-- [`research/results/big-b1-exposure-contamination-ledger-2026-08-21.json`](research/results/big-b1-exposure-contamination-ledger-2026-08-21.json) — B1 machine-readable 20-record ledger.
+- [`research/results/big-b1-exposure-contamination-ledger-2026-08-21.json`](research/results/big-b1-exposure-contamination-ledger-2026-08-21.json) — B1 machine-readable ledger;
+- [`research/experiments/big-b2-benchmark-design-comparison-preregistration.json`](research/experiments/big-b2-benchmark-design-comparison-preregistration.json) — criteria/candidate-space freeze before B2 conclusion;
+- [`research/big-b2-benchmark-design-alternatives-2026-08-21.md`](research/big-b2-benchmark-design-alternatives-2026-08-21.md) — B2 evidence synthesis and Pareto analysis;
+- [`research/results/big-b2-public-benchmark-geometry-2026-08-21.json`](research/results/big-b2-public-benchmark-geometry-2026-08-21.json) — provider-free public group/fold geometry;
+- [`research/results/big-b2-benchmark-design-comparison-2026-08-21.json`](research/results/big-b2-benchmark-design-comparison-2026-08-21.json) — machine-readable alternative comparison/Pareto frontier.
 
-Current split evidence status from BIG-B1:
+Current evidence status:
 
 - **DEV:** development-exposed by design; not an independent holdout.
-- **VALIDATION:** adaptively exposed; not independent for current/future descendant candidate-generalization claims because aggregate and split-level feedback repeatedly informed downstream development.
-- **LOCKED_TEST:** no committed candidate/task-quality execution established, but structurally exposed for evaluator design; the stronger `untouched/pristine` full-stack claim is unsupported and final-holdout eligibility is unresolved pending BIG-B2.
+- **VALIDATION:** adaptively exposed; not independent for current/future descendant candidate-generalization claims.
+- **LOCKED_TEST:** no committed candidate/task-quality execution established, but structurally exposed for evaluator design; `untouched/pristine` is unsupported.
+
+BIG-B2 found that the truthful future design must treat the historical DEV+VALIDATION groups as an exposed seven-group pool. Group-aware CV/LOGO is useful for prospective paired comparison and group sensitivity but cannot restore blind independence. Nested CV is appropriate only for selection procedures that can actually be rerun fully inside its loops. Fresh partner-held or independently authored/adjudicated blind evidence materially strengthens final generalization, while synthetic/adversarial suites remain supplementary rather than a real-domain replacement.
+
+The B2 Pareto frontier contains three families rather than a winner:
+
+1. external/partner-held blind hybrid;
+2. independently authored/adjudicated blind hybrid;
+3. deadline-minimal qualified legacy path using LOCKED_TEST with explicitly weaker claims.
+
+BIG-B3 now has selection authority and must apply the preregistered hard constraints/trade-offs without inventing a post-hoc weighted score.
 
 The active blocking sequence remains defined in [`docs/BENCHMARK-INTEGRITY-GATE.md`](docs/BENCHMARK-INTEGRITY-GATE.md):
 
-`BIG-B0 factual audit ✓ → BIG-B1 exposure/influence classification ✓ → BIG-B2 benchmark-design comparison → BIG-B3 protocol selection → BIG-B4 protocol freeze → resume agent optimization`
-
-BIG-B2 must now compare credible evaluation-design alternatives systematically and quantitatively. No split redesign or final protocol has been selected yet.
+`BIG-B0 ✓ → BIG-B1 ✓ → BIG-B2 ✓ → BIG-B3 protocol selection → BIG-B4 protocol freeze → resume agent optimization`
 
 Until B4 closes:
 
@@ -47,8 +59,7 @@ Until B4 closes:
 - final production architecture remains unfrozen.
 
 Current blocking/canonical status: [`docs/BENCHMARK-INTEGRITY-GATE.md`](docs/BENCHMARK-INTEGRITY-GATE.md)  
-BIG-B0 factual audit: [`research/big-b0-benchmark-integrity-audit-2026-08-21.md`](research/big-b0-benchmark-integrity-audit-2026-08-21.md)  
-BIG-B1 exposure ledger: [`research/big-b1-exposure-contamination-ledger-2026-08-21.md`](research/big-b1-exposure-contamination-ledger-2026-08-21.md)  
+BIG-B2 comparison: [`research/big-b2-benchmark-design-alternatives-2026-08-21.md`](research/big-b2-benchmark-design-alternatives-2026-08-21.md)  
 Historical agent execution plan (paused/subordinate during B0–B4): [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
 Research protocol: [`research/00-research-protocol.md`](research/00-research-protocol.md)  
 Research hub: [`research/README.md`](research/README.md)
@@ -116,7 +127,7 @@ The existence or previous qualification of a runtime, model, MCP topology, RAG d
 
 The immediate critical path is:
 
-`BIG-B0 factual reconstruction ✓ → BIG-B1 exposure/influence classification ✓ → BIG-B2 benchmark-design comparison → BIG-B3 evaluation-protocol selection → BIG-B4 executable freeze → resume eval-driven agent optimization`
+`BIG-B0 ✓ → BIG-B1 ✓ → BIG-B2 ✓ → BIG-B3 evaluation-protocol selection → BIG-B4 executable freeze → resume eval-driven agent optimization`
 
 After the evaluation protocol is frozen, production freeze still requires broad candidate comparison, full deterministic + semantic evaluation gates, production fitness/integration verification, architecture freeze and a final-only blind test under the frozen protocol.
 
