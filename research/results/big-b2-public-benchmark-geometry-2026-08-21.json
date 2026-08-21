@@ -1,0 +1,58 @@
+{
+  "schema_version": "big-b2-public-benchmark-geometry-v1",
+  "date": "2026-08-21",
+  "source": "research/frozen/benchmark-split-v1.json",
+  "privacy_boundary": "PUBLIC_SPLIT_METADATA_ONLY",
+  "exposed_pool": {
+    "groups": 7,
+    "scenarios": 11,
+    "tickets": 12,
+    "contextualize_groups": ["asset_B204", "asset_M101"],
+    "contextualize_group_count": 2
+  },
+  "balanced_2fold": {
+    "unique_partitions": 35,
+    "partitions_with_contextualize_in_both_test_folds": 20,
+    "fraction_with_contextualize_in_both_test_folds": 0.5714285714285714,
+    "minimum_scenario_count_imbalance": 1
+  },
+  "balanced_3fold": {
+    "unique_partitions": 105,
+    "partitions_with_contextualize_in_every_training_fold": 80,
+    "fraction_with_contextualize_in_every_training_fold": 0.7619047619047619,
+    "partitions_with_contextualize_in_every_test_fold": 0,
+    "minimum_scenario_count_imbalance": 1,
+    "best_test_scenario_counts": [3, 4, 4]
+  },
+  "leave_one_group_out": {
+    "folds": 7,
+    "training_folds_with_contextualize": 7,
+    "test_folds_with_contextualize": 2
+  },
+  "leave_two_groups_out": {
+    "folds": 21,
+    "training_folds_with_contextualize": 20,
+    "test_folds_with_contextualize": 11
+  },
+  "legacy_locked_test": {
+    "groups": 3,
+    "scenarios": 5,
+    "tickets": 5,
+    "contextualize_groups": ["asset_V301"],
+    "contextualize_group_count": 1
+  },
+  "illustrative_group_pass_wilson_95": {
+    "2": {"all_pass": [0.34238022750665303, 1.0], "near_half": [0.09453120573423074, 0.9054687942657693]},
+    "3": {"all_pass": [0.4385029682449546, 1.0], "near_half": [0.2076596008020477, 0.9385080552796037]},
+    "5": {"all_pass": [0.5655175352168251, 1.0], "near_half": [0.11762077423264783, 0.769275718723987]},
+    "7": {"all_pass": [0.6456695649333126, 1.0], "near_half": [0.2504583645276572, 0.8417801447485302]}
+  },
+  "interpretation_boundaries": [
+    "Cross-validation on the seven exposed groups can measure prospective comparison stability but cannot restore historical blind independence.",
+    "No balanced three-fold partition can place contextualize coverage in every test fold because only two exposed groups contain contextualize.",
+    "A constrained three-fold design can keep contextualize in every training fold in 80 of 105 unique balanced partitions.",
+    "The three-group legacy LOCKED_TEST has contextualize coverage concentrated in one independent group.",
+    "Wilson intervals are illustrative only because group-level outcomes need not be IID Bernoulli.",
+    "Naive standard deviation across overlapping CV folds is not a universally unbiased uncertainty estimator."
+  ]
+}
