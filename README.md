@@ -15,11 +15,18 @@ No material component is considered complete merely because it works or passes a
 
 ## Status
 
-**Benchmark Integrity Gate active — agent optimization paused**
+**Benchmark Integrity Gate — BIG-B0 complete / BIG-B1 active — agent optimization paused**
 
-A retrospective governance review identified that historical benchmark usage must be audited before the evaluation stack can be treated as a trustworthy basis for further optimization or final claims. The active blocking sequence is defined in [`docs/BENCHMARK-INTEGRITY-GATE.md`](docs/BENCHMARK-INTEGRITY-GATE.md):
+BIG-B0 completed the factual reconstruction of benchmark use from the E3 freeze onward without classifying any split as independent, contaminated, recoverable or unrecoverable. The reconstruction is recorded in:
 
-`B0 benchmark audit → B1 exposure/contamination ledger → B2 benchmark-design comparison → B3 protocol selection → B4 protocol freeze → resume agent optimization`
+- [`research/big-b0-benchmark-integrity-audit-2026-08-21.md`](research/big-b0-benchmark-integrity-audit-2026-08-21.md) — chronological human-readable audit;
+- [`research/results/big-b0-benchmark-access-ledger-2026-08-21.json`](research/results/big-b0-benchmark-access-ledger-2026-08-21.json) — machine-readable 20-event access ledger.
+
+The active blocking sequence remains defined in [`docs/BENCHMARK-INTEGRITY-GATE.md`](docs/BENCHMARK-INTEGRITY-GATE.md):
+
+`B0 benchmark audit ✓ → B1 exposure/contamination ledger → B2 benchmark-design comparison → B3 protocol selection → B4 protocol freeze → resume agent optimization`
+
+BIG-B1 must now classify influence and independence impact for every BIG-B0 event while preserving the B0 factual record unchanged.
 
 Until B4 closes:
 
@@ -30,6 +37,7 @@ Until B4 closes:
 - final production architecture remains unfrozen.
 
 Current blocking/canonical status: [`docs/BENCHMARK-INTEGRITY-GATE.md`](docs/BENCHMARK-INTEGRITY-GATE.md)  
+BIG-B0 factual audit: [`research/big-b0-benchmark-integrity-audit-2026-08-21.md`](research/big-b0-benchmark-integrity-audit-2026-08-21.md)  
 Historical agent execution plan (paused/subordinate during B0–B4): [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
 Research protocol: [`research/00-research-protocol.md`](research/00-research-protocol.md)  
 Research hub: [`research/README.md`](research/README.md)
@@ -97,7 +105,7 @@ The existence or previous qualification of a runtime, model, MCP topology, RAG d
 
 The immediate critical path is:
 
-`benchmark integrity B0 → exposure ledger B1 → benchmark-design comparison B2 → evaluation-protocol selection B3 → executable freeze B4 → resume eval-driven agent optimization`
+`BIG-B0 factual reconstruction ✓ → BIG-B1 exposure/influence classification → BIG-B2 benchmark-design comparison → BIG-B3 evaluation-protocol selection → BIG-B4 executable freeze → resume eval-driven agent optimization`
 
 After the evaluation protocol is frozen, production freeze still requires broad candidate comparison, full deterministic + semantic evaluation gates, production fitness/integration verification, architecture freeze and a final-only blind test under the frozen protocol.
 
