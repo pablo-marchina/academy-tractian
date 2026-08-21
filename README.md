@@ -15,11 +15,22 @@ No material component is considered complete merely because it works or passes a
 
 ## Status
 
-**DEV research gate active — E14v evidence-route-planner qualification**
+**Benchmark Integrity Gate active — agent optimization paused**
 
-The project remains in the DEV-only research loop. VALIDATION is measurement-only and currently blocked; LOCKED_TEST remains untouched/final-only; final production architecture is not frozen.
+A retrospective governance review identified that historical benchmark usage must be audited before the evaluation stack can be treated as a trustworthy basis for further optimization or final claims. The active blocking sequence is defined in [`docs/BENCHMARK-INTEGRITY-GATE.md`](docs/BENCHMARK-INTEGRITY-GATE.md):
+
+`B0 benchmark audit → B1 exposure/contamination ledger → B2 benchmark-design comparison → B3 protocol selection → B4 protocol freeze → resume agent optimization`
+
+Until B4 closes:
+
+- no new E14v-C or other agent-optimization candidate is authorized;
+- historical E14v work is preserved but not advanced;
+- VALIDATION candidate feedback is blocked;
+- LOCKED_TEST candidate evaluation remains blocked;
+- final production architecture remains unfrozen.
 
 Current canonical status: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
+Benchmark integrity gate: [`docs/BENCHMARK-INTEGRITY-GATE.md`](docs/BENCHMARK-INTEGRITY-GATE.md)  
 Research protocol: [`research/00-research-protocol.md`](research/00-research-protocol.md)  
 Research hub: [`research/README.md`](research/README.md)
 
@@ -64,6 +75,8 @@ Frozen artifacts:
 - `research/40-e3-benchmark-split-freeze-v1.md`
 - `research/frozen/benchmark-split-v1.json`
 
+The historical benchmark split remains an immutable historical artifact while B0–B4 determine its current evidential status and the future evaluation protocol.
+
 ## Framework-neutral foundation
 
 `research/e2/` contains executable:
@@ -82,9 +95,11 @@ The existence or previous qualification of a runtime, model, MCP topology, RAG d
 
 ## Critical path
 
-Current execution details live in [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md). In general, production freeze requires:
+Current execution details live in [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md). The immediate critical path is:
 
-`research/eval validity → broad candidate comparison → full DEV deterministic + semantic gates → VALIDATION measurement → production fitness/integration verification → architecture freeze → final-only LOCKED_TEST`
+`benchmark integrity B0 → exposure ledger B1 → benchmark-design comparison B2 → evaluation-protocol selection B3 → executable freeze B4 → resume eval-driven agent optimization`
+
+After the evaluation protocol is frozen, production freeze still requires broad candidate comparison, full deterministic + semantic evaluation gates, production fitness/integration verification, architecture freeze and a final-only blind test under the frozen protocol.
 
 Final delivery/presentation target: **2026-09-08**.
 
