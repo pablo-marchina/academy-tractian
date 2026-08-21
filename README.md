@@ -2,22 +2,26 @@
 
 Repository central do TAPI individual **Engenharia e Avaliação de Agentes Industriais** (Inteli × TRACTIAN).
 
+## Non-negotiable project governance
+
+All work in this repository is governed by [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md). The four repository-wide rules are:
+
+1. **Systematic research + comparison before every material decision.** Passing a minimum gate means `QUALIFIED`, not “best” or final. A decision is final only after broad alternative search, controlled quantitative comparison, robustness/sensitivity analysis and production-fit confirmation.
+2. **Production-first, never demo-first.** The final target is a real production-grade system. Demos, mocks and scripted happy paths may validate infrastructure but cannot establish production readiness or agent quality.
+3. **Quantitative and adaptive by default.** Prefer measurable, calibrated, data-driven behavior and evaluate context-sensitive adaptation against simpler/static baselines while preserving deterministic safety boundaries.
+4. **Eval-driven end to end.** Evaluation defines the engineering loop: requirement → evaluator → baseline → hypothesis → preregistered experiment → measurement → comparison → decision → regression coverage.
+
+No material component is considered complete merely because it works or passes a gate. If a credible materially different alternative remains unevaluated, the choice remains experimental.
+
 ## Status
 
-**E4 ACTIVE — Guarded Boundary Experiment B0–B3**
+**DEV research gate active — E14v evidence-route-planner qualification**
 
-The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN package. Four prerequisite gates are frozen or complete:
+The project remains in the DEV-only research loop. VALIDATION is measurement-only and currently blocked; LOCKED_TEST remains untouched/final-only; final production architecture is not frozen.
 
-- `NORMALIZED-CONTRACT-v1`;
-- ScenarioSchema/gold semantics v1;
-- E2 framework-neutral harness;
-- `BENCHMARK-SPLIT-v1`.
-
-E4 has started with a preregistered B0-B3 experiment manifest. The production architecture is still **not frozen**. Runtime, model, MCP, RAG, multi-agent, routing, memory and observability remain experimental decisions.
-
-Plan: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
-Research hub: [`research/README.md`](research/README.md)  
-Active backlog: [`research/37-post-freeze-execution-backlog.md`](research/37-post-freeze-execution-backlog.md)
+Current canonical status: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
+Research protocol: [`research/00-research-protocol.md`](research/00-research-protocol.md)  
+Research hub: [`research/README.md`](research/README.md)
 
 ## Project goal
 
@@ -30,11 +34,11 @@ The evaluation framework is part of the engineering loop, not a disconnected sec
 
 ## Evidence-first rule
 
-> **Best means best supported by evidence for this problem — not newest, most popular or most complex.**
+> **Best means best supported by systematic evidence for this problem — not newest, most popular, most complex, or merely the first option to pass.**
 
 Decision flow:
 
-`requirement → research → alternatives → hypothesis → TRACTIAN experiment → evidence → ADR → decision`
+`requirement → evaluator → systematic research → alternatives → baseline → hypothesis → preregistration → controlled experiment → robustness/production analysis → ADR → decision`
 
 ## Frozen TRACTIAN facts
 
@@ -60,7 +64,7 @@ Frozen artifacts:
 - `research/40-e3-benchmark-split-freeze-v1.md`
 - `research/frozen/benchmark-split-v1.json`
 
-## E2 — framework-neutral foundation
+## Framework-neutral foundation
 
 `research/e2/` contains executable:
 
@@ -74,42 +78,18 @@ Frozen artifacts:
 - configuration/artifact hashing;
 - integrated evaluator suite.
 
-E2 does **not** choose LangGraph, Pydantic AI/Graph, OpenAI Agents SDK, MCP, RAG, multi-agent or a model provider.
-
-## E3 — frozen benchmark split
-
-- **DEV:** `asset_G501`, `asset_C710`, `asset_S420`, `asset_M208`, `asset_M101`.
-- **VALIDATION:** `asset_B204`, `asset_M102`.
-- **LOCKED_TEST:** `asset_V301`, `asset_M605`, `asset_M205`.
-
-Locked-test groups are unavailable for architecture/model/prompt/runtime selection.
-
-## E4 — active central experiment
-
-H1 tests whether a **guarded contract-aware tool boundary** improves argument correctness and safety without materially reducing task success.
-
-- **B0:** minimal wrapper;
-- **B1:** + strict typed validation;
-- **B2:** + deterministic permission/company/resource guard;
-- **B3:** + evidence-aware action/escalation;
-- **B4:** confirmation as a separate safety extension unless canonical policy changes.
-
-E4 artifacts:
-
-- `research/41-e4-guarded-boundary-experiment-preregistration.md`
-- `research/42-e4-execution-start-report.md`
-- `research/experiments/e4-b0-b3-experiment-manifest.json`
-- `scripts/research/e4_validate_experiment_manifest.py`
+The existence or previous qualification of a runtime, model, MCP topology, RAG design, multi-agent design, judge, routing policy, memory strategy or observability stack does not automatically freeze it. Major final choices remain subject to the systematic-comparison and production-readiness rules.
 
 ## Critical path
 
-`E0 freeze → E1 freeze → E2 complete → E3 split frozen → E4 B0–B3 → evidence/stopping → runtime/MCP → pilot/model benchmark → conditional techniques → ADRs → FROZEN-v1`
+Current execution details live in [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md). In general, production freeze requires:
 
-Target `FROZEN-v1`: **2026-08-27** (internal project target).  
-Final delivery/presentation: **2026-09-08**.
+`research/eval validity → broad candidate comparison → full DEV deterministic + semantic gates → VALIDATION measurement → production fitness/integration verification → architecture freeze → final-only LOCKED_TEST`
+
+Final delivery/presentation target: **2026-09-08**.
 
 ## Development rule
 
-No component remains merely because it looks sophisticated. RAG, reranking, multi-agent, routing, persistent memory, prompt optimization and similar techniques require a measurable hypothesis or explicit requirement and must be removable when evidence does not support them.
+No component remains merely because it looks sophisticated. RAG, reranking, multi-agent, routing, persistent memory, prompt optimization, judge selection, model selection and similar techniques require a measurable hypothesis or explicit requirement, systematic alternatives research and controlled comparison. They must remain removable when evidence does not support them.
 
-No demo-first development: test doubles and scripted paths validate infrastructure only; agent-quality claims require controlled experiments against the TRACTIAN environment.
+No demo-first development: test doubles and scripted paths validate infrastructure only; agent-quality and production-readiness claims require controlled experiments against the TRACTIAN environment plus production-relevant reliability, security, observability and operational evaluation.
