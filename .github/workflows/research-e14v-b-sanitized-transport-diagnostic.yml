@@ -1,0 +1,42 @@
+name: research-e14v-b-sanitized-transport-diagnostic
+
+on:
+  push:
+    paths:
+      - 'scripts/research/e14v_b_sanitized_transport_diagnostic.py'
+      - '.github/workflows/research-e14v-b-sanitized-transport-diagnostic.yml'
+  pull_request:
+    paths:
+      - 'scripts/research/e14v_b_sanitized_transport_diagnostic.py'
+      - '.github/workflows/research-e14v-b-sanitized-transport-diagnostic.yml'
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile provider-free diagnostic
+        run: python -m py_compile scripts/research/e14v_b_sanitized_transport_diagnostic.py
+
+      - name: Run sanitized diagnostic self-check
+        run: python scripts/research/e14v_b_sanitized_transport_diagnostic.py --self-check
+
+      - name: Verify provider-free boundary
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/research/e14v_b_sanitized_transport_diagnostic.py')
+          text = path.read_text(encoding='utf-8')
+          forbidden = (
+              'api.groq.com',
+              'GROQ_API_KEY',
+              'urllib.request',
+              'requests.post',
+              'requests.get',
+          )
+          for needle in forbidden:
+              assert needle not in text, f'provider/network access marker found: {needle}'
+          print('E14V_B_PROVIDER_FREE_DIAGNOSTIC_BOUNDARY_PASS')
+          PY
