@@ -29,8 +29,8 @@ Until B4 closes:
 - LOCKED_TEST candidate evaluation remains blocked;
 - final production architecture remains unfrozen.
 
-Current canonical status: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
-Benchmark integrity gate: [`docs/BENCHMARK-INTEGRITY-GATE.md`](docs/BENCHMARK-INTEGRITY-GATE.md)  
+Current blocking/canonical status: [`docs/BENCHMARK-INTEGRITY-GATE.md`](docs/BENCHMARK-INTEGRITY-GATE.md)  
+Historical agent execution plan (paused/subordinate during B0–B4): [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
 Research protocol: [`research/00-research-protocol.md`](research/00-research-protocol.md)  
 Research hub: [`research/README.md`](research/README.md)
 
@@ -95,7 +95,7 @@ The existence or previous qualification of a runtime, model, MCP topology, RAG d
 
 ## Critical path
 
-Current execution details live in [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md). The immediate critical path is:
+The immediate critical path is:
 
 `benchmark integrity B0 → exposure ledger B1 → benchmark-design comparison B2 → evaluation-protocol selection B3 → executable freeze B4 → resume eval-driven agent optimization`
 
