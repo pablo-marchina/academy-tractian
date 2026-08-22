@@ -1,280 +1,222 @@
-# Benchmark Integrity Gate — B0→B4
+# Benchmark Integrity Gate — BIG-B0→BIG-B4
 
-**Status:** ACTIVE / BLOCKING  
-**Date:** 2026-08-21  
+**Status:** COMPLETE / CLOSED  
+**Opened:** 2026-08-21  
+**Closed:** 2026-08-22  
 **Governance:** subordinate to [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
-**Scope:** retrospective benchmark-integrity audit, contamination accounting, evaluation-protocol selection and freeze  
-**Agent optimization:** paused until B4 closes
+**Frozen protocol:** `P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST`  
+**Agent optimization:** may resume only under the frozen P12 protocol
 
-## Why this gate exists
+## Why this gate existed
 
-The repository-wide principles require systematic comparison, production-first engineering, quantitative/adaptive design and eval-driven development. A retrospective review found that the historical benchmark policy evolved over time: the original E3 definition allowed `VALIDATION` to support candidate selection/tuning, while the later protocol redefined `VALIDATION` as measurement-only. Historical aggregate validation results also informed some subsequent experimental directions.
+A retrospective review found that the historical benchmark policy evolved over time: original E3 allowed `VALIDATION` to support selection/tuning, later aggregate validation feedback shaped subsequent development, and evaluator-validity work structurally inspected the legacy `LOCKED_TEST`. The repository therefore could not continue treating historical split names as proof of current independence.
 
-This does not erase or invalidate the historical experiments. It means their evidential role must be classified precisely before the evaluation stack can be trusted as the basis for further optimization or final claims.
+The gate reconstructed the chronology, classified exposure, compared replacement evaluation designs, selected the best-supported protocol and made it executable/fail-closed before permitting further agent optimization.
 
-This gate therefore precedes any new agent-optimization work.
+Historical experiments remain immutable evidence under their contemporaneous protocols; this gate does not erase or retroactively falsify them.
 
-## Blocking sequence
+## Completed sequence
 
 ```text
-B0 — Benchmark Integrity Audit
-        ↓
-B1 — Exposure / Contamination Ledger
-        ↓
-B2 — Evaluate Benchmark-Design Alternatives
-        ↓
-B3 — Select New Evaluation Protocol
-        ↓
-B4 — Freeze Evaluation Protocol
-        ↓
-resume agent optimization
+BIG-B0 — Benchmark Integrity Audit                 COMPLETE
+          ↓
+BIG-B1 — Exposure / Contamination Ledger          COMPLETE
+          ↓
+BIG-B2 — Evaluate Benchmark-Design Alternatives   COMPLETE
+          ↓
+BIG-B3 — Select New Evaluation Protocol           COMPLETE
+          ↓
+BIG-B4 — Freeze Evaluation Protocol               COMPLETE
+          ↓
+resume agent optimization under frozen P12
 ```
 
-To avoid confusion with the historical B0–B3 guarded-boundary variants, these stages may be referred to in artifacts as `BIG-B0` through `BIG-B4` (`Benchmark Integrity Gate`).
+## BIG-B0 — factual reconstruction
 
-## Non-negotiable rules during B0–B4
+Question answered: what benchmark information was accessed, measured, exposed or reused from E3 onward, under which policy and for what purpose?
 
-- No new E14v-C or other agent-optimization candidate may be executed.
-- No new model, prompt, policy, planner, guard, judge, runtime, retrieval or architecture candidate may be promoted from benchmark performance during this gate.
-- No new provider inference call may be justified as agent optimization during this gate.
-- Existing consumed attempts remain consumed and must not be rerun or erased.
-- Historical failures, measurements and protocol changes remain immutable evidence.
-- No benchmark split may be called independent merely because only aggregate rather than row-level feedback was observed.
-- `VALIDATION` and `LOCKED_TEST` receive no new semantic/private inspection unless an explicitly preregistered benchmark-integrity diagnostic proves that the inspection is necessary and minimizes information exposure.
-- Prefer committed historical records, manifests, workflows, sanitized aggregates and Git history over reopening private benchmark contents.
-- Operational/provider diagnostics that consume no benchmark semantics and cannot influence candidate quality may be preserved as archival characterization, but they do not advance the agent-optimization line.
-- No split reassignment, new holdout, cross-validation scheme or replacement benchmark is selected before B2 compares credible alternatives.
+Artifacts:
 
-## B0 — Benchmark Integrity Audit
+- [`../research/big-b0-benchmark-integrity-audit-2026-08-21.md`](../research/big-b0-benchmark-integrity-audit-2026-08-21.md)
+- [`../research/results/big-b0-benchmark-access-ledger-2026-08-21.json`](../research/results/big-b0-benchmark-access-ledger-2026-08-21.json)
 
-### Question
+B0 preserved `UNKNOWN` where committed history could not prove local/operator-only behavior and did not infer independence from absence of committed evidence.
 
-What benchmark information has actually been accessed, measured or exposed across the full project history, under which policy, and for what purpose?
+## BIG-B1 — exposure / independence classification
 
-### Required audit scope
+Artifacts:
 
-Inventory every material experiment, diagnostic, scorer, workflow and decision record from benchmark freeze onward and record at least:
+- [`../research/big-b1-exposure-contamination-ledger-2026-08-21.md`](../research/big-b1-exposure-contamination-ledger-2026-08-21.md)
+- [`../research/results/big-b1-exposure-contamination-ledger-2026-08-21.json`](../research/results/big-b1-exposure-contamination-ledger-2026-08-21.json)
 
-- date / experiment ID / artifact;
-- policy in force at that time;
-- split(s) touched;
-- whether a candidate executed on the split;
-- whether an evaluator/scorer loaded private oracle material;
-- whether exposure was public metadata, structural private metadata, aggregate metric feedback, row-level semantic feedback or raw oracle content;
-- whether results were visible before the next hypothesis/decision;
-- whether the result could have influenced model/prompt/policy/runtime/evaluator/threshold/architecture development;
-- whether the exposure was necessary for evaluator validity rather than candidate optimization;
-- whether the information was committed, local-only or operator-observed;
-- uncertainty where the historical record is incomplete.
+Key classifications:
 
-### Required outputs
+- `DEV` — development-exposed by design;
+- historical `VALIDATION` — adaptively exposed and not independent for descendant generalization;
+- legacy `LOCKED_TEST` — no committed candidate/task-quality execution established, but structurally exposed for evaluator design; `pristine/untouched` is unsupported.
 
-- chronological benchmark-access inventory;
-- historical policy timeline;
-- benchmark-exposure map;
-- explicit contradictions between historical documentation and actual chronology;
-- list of unresolved exposure questions requiring evidence.
+The governing rule is retained: split-derived information that materially influences later development breaks independent-holdout status for the affected lineage even when feedback is aggregate-only.
 
-### B0 exit gate
+## BIG-B2 — benchmark-design comparison
 
-B0 passes only when every material benchmark-related experiment is accounted for or explicitly marked `UNKNOWN` with a bounded reason. Absence of evidence may not be silently treated as evidence of no exposure.
+Artifacts:
 
-## B1 — Exposure / Contamination Ledger
+- [`../research/experiments/big-b2-benchmark-design-comparison-preregistration.json`](../research/experiments/big-b2-benchmark-design-comparison-preregistration.json)
+- [`../research/big-b2-benchmark-design-alternatives-2026-08-21.md`](../research/big-b2-benchmark-design-alternatives-2026-08-21.md)
+- [`../research/results/big-b2-public-benchmark-geometry-2026-08-21.json`](../research/results/big-b2-public-benchmark-geometry-2026-08-21.json)
+- [`../research/results/big-b2-benchmark-design-comparison-2026-08-21.json`](../research/results/big-b2-benchmark-design-comparison-2026-08-21.json)
 
-### Question
+B2 preregistered hard constraints/candidate families before comparative conclusions and identified three non-dominated families rather than selecting a winner. It established that historical DEV+VALIDATION must truthfully become one seven-group exposed development/selection pool and that grouped CV/LOGO is a prospective sensitivity/selection layer, not an independence repair.
 
-Which historical exposures preserve independence, which reduce independence, and which decisions were potentially or actually influenced by benchmark feedback?
+## BIG-B3 — protocol selection
 
-### Ledger schema
+Artifacts:
 
-Each exposure record must include:
+- [`../research/big-b3-evaluation-protocol-selection-2026-08-21.md`](../research/big-b3-evaluation-protocol-selection-2026-08-21.md)
+- [`../research/results/big-b3-evaluation-protocol-selection-2026-08-21.json`](../research/results/big-b3-evaluation-protocol-selection-2026-08-21.json)
+
+Selected as `PREFERRED`:
+
+> `P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST`
+
+Core design:
 
 ```text
-experiment_id
-observed_at
-split
-candidate_executed
-private_oracle_loaded
-exposure_scope
-information_granularity
-aggregate_feedback_observed
-row_level_feedback_observed
-raw_semantic_oracle_observed
-next_decision_or_hypothesis
-influence_possible
-influence_documented
-independence_impact
-confidence
-source_artifacts
-notes
+7 exposed historical DEV+VALIDATION groups
+  → adaptive paired selection / group sensitivity
+  → candidate + evaluator + judge + seed/outcome freeze
+  → FRESH_BLIND real-domain measurement
+       Tier A: partner-held external blind source
+       Tier B: independently authored + independently adjudicated hidden source
+  + qualified legacy LOCKED_TEST characterization
+  + synthetic/adversarial robustness/regression
 ```
 
-### Exposure dimensions
+P3 remains only an explicit degraded fallback and requires a B3 amendment if no fresh blind path is feasible.
 
-Do not collapse exposure into one simplistic severity score. Track at least these independent dimensions:
+## BIG-B4 — executable protocol freeze
 
-1. **Public metadata exposure** — split/group/scenario counts and already-public coverage descriptors.
-2. **Structural private exposure** — oracle shape, row counts, alignment or schema without semantic expected values.
-3. **Aggregate outcome exposure** — split-level quality/safety/latency/etc. results.
-4. **Row-level outcome exposure** — case-specific evaluator labels or failure information.
-5. **Semantic oracle exposure** — expected paths, answers, labels, trajectories or equivalent private target content.
-6. **Candidate execution exposure** — whether a candidate was actually evaluated on the split.
-7. **Adaptive influence** — whether any exposure affected a later hypothesis, candidate, threshold, prompt, guard, evaluator or architecture decision.
+Freeze record:
 
-### Contamination rule
+- [`../research/big-b4-evaluation-protocol-freeze-2026-08-22.md`](../research/big-b4-evaluation-protocol-freeze-2026-08-22.md)
 
-For a claimed independent holdout, any split-derived information that materially influences later candidate development breaks independence for that later decision, even when the feedback was aggregate-only. The magnitude and scope of contamination must still be measured rather than assumed to invalidate every possible use of the split.
+Canonical frozen artifacts:
 
-### B1 exit gate
+- [`../research/frozen/big-b4-evaluation-protocol-v1.json`](../research/frozen/big-b4-evaluation-protocol-v1.json)
+- [`../research/frozen/big-b4-blind-source-registry-v1.json`](../research/frozen/big-b4-blind-source-registry-v1.json)
+- [`../research/frozen/big-b4-candidate-freeze-template-v1.json`](../research/frozen/big-b4-candidate-freeze-template-v1.json)
+- [`../research/frozen/big-b4-final-access-authorization-template-v1.json`](../research/frozen/big-b4-final-access-authorization-template-v1.json)
+- [`../research/experiments/validation-usage-superseding-correction-2026-08-22.json`](../research/experiments/validation-usage-superseding-correction-2026-08-22.json)
 
-B1 passes only when:
+Executable enforcement/regression:
 
-- every B0 exposure has a ledger entry;
-- every material historical decision is linked to the benchmark evidence that preceded it;
-- the current `DEV`, `VALIDATION` and `LOCKED_TEST` independence status is explicitly classified with uncertainty;
-- no stronger independence claim is made than the ledger supports.
+- [`../scripts/research/big_b4_protocol_guard.py`](../scripts/research/big_b4_protocol_guard.py)
+- [`../scripts/research/big_b4_protocol_self_check.py`](../scripts/research/big_b4_protocol_self_check.py)
+- [`../.github/workflows/research-big-b4-protocol-self-check.yml`](../.github/workflows/research-big-b4-protocol-self-check.yml)
+- [`../research/results/big-b4-protocol-self-check-2026-08-22.json`](../research/results/big-b4-protocol-self-check-2026-08-22.json)
 
-## B2 — Evaluate Benchmark-Design Alternatives
+Provider-free self-check result: **24 / 24 PASS**. Git blob pins for benchmark split, B2 preregistration and B3 selection matched exactly. No provider inference or private benchmark semantic read was required.
 
-### Question
+## Frozen evidence roles
 
-Given the actual exposure history, small number of independent storyline groups, project constraints and production objective, what evaluation design provides the strongest evidence with the lowest adaptive-overfitting and leakage risk?
+### `EXPOSED_POOL`
 
-### Candidate set
+Historical DEV + VALIDATION, exactly seven independent asset/story groups.
 
-The candidate set must be systematically researched and may expand before preregistration. At minimum evaluate materially different strategies such as:
+Allowed:
 
-- retain the current split roles as a baseline if defensible;
-- reclassify historically exposed `VALIDATION` into the development/selection pool while preserving a final holdout;
-- grouped repeated cross-validation over exposed development groups plus a final holdout;
-- nested grouped cross-validation for selection/estimation where sample size permits;
-- a newly created independent blind validation set;
-- externally or partner-held blind evaluation;
-- new independently authored/adjudicated cases;
-- synthetic/adversarial benchmark expansion as supplementary robustness evidence, not automatically as a replacement for real/domain holdout data;
-- hybrids of the above when they solve distinct problems.
+- candidate development;
+- model/prompt/policy/runtime/retrieval/planner/guard research;
+- paired candidate selection;
+- ablations;
+- evaluator development/qualification;
+- failure analysis;
+- regression and robustness work.
 
-No candidate is preferred in advance.
+Forbidden claim: fresh/blind independent generalization.
 
-### Comparison criteria
+### `FRESH_BLIND`
 
-Define hard constraints and measurement methods before selecting a protocol. At minimum compare:
+Primary independent real-domain generalization evidence.
 
-- independence from historical adaptive development;
-- leakage/adaptive-overfitting risk;
-- effective number of independent groups;
-- statistical efficiency / uncertainty / variance;
-- scenario-family and risk coverage;
-- ability to support fair paired comparisons;
-- robustness to small-sample instability;
-- final-test preservation;
-- production/domain representativeness;
-- reproducibility and auditability;
-- compatibility with deterministic evaluators and validated LLM judges;
-- compute/provider cost and operational feasibility;
-- ability to support adaptive optimization without corrupting final measurement;
-- feasibility before the final delivery target.
+Current state: `NO_BLIND_SOURCE_AUTHORIZED`.
 
-Where feasible, quantify protocol behavior through resampling/simulation using only permitted development information, including expected confidence-interval width, fold instability, coverage imbalance and sensitivity to individual groups.
+A source must be registered, unbreached and under custody. Candidate/evaluator/judge/seed/outcome policy must be frozen before one-shot final authorization. Developers may not inspect hidden semantics or receive iterative partial feedback.
 
-### Research requirement
+### `LEGACY_LOCKED_TEST`
 
-B2 must use primary methodological evidence where available and must document the search scope, alternatives rejected before experiment, assumptions and remaining credible alternatives. A protocol cannot win simply because it is conventional.
+Three historical groups retained as **qualified supplementary held-out domain characterization**.
 
-### B2 exit gate
+- development/selection/ablation access: denied;
+- developer semantic inspection: denied;
+- candidate execution: denied until final authorization;
+- private scoring: only after outputs are fixed and final authorization exists;
+- at most one final measurement cycle per frozen candidate generation;
+- `pristine` / `untouched` wording: forbidden.
 
-B2 passes only when the credible candidate space is sufficiently broad, comparison criteria are frozen before outcome-dependent selection, and the evidence is sufficient to identify a Pareto frontier or explain why alternatives are non-dominated.
+### `SYNTHETIC_ADVERSARIAL`
 
-## B3 — Select New Evaluation Protocol
+Supplementary robustness, evaluator/judge qualification and regression only. It is never sufficient by itself for a production-domain generalization claim.
 
-### Question
+## Frozen statistical and comparison rules
 
-Which benchmark/evaluation protocol is best-supported for this project after B2?
+- primary independent/generalization unit: `asset_story_group`;
+- hierarchy: `asset_story_group → scenario → repeated_run`;
+- groups receive equal primary weight;
+- candidate comparisons are paired on the same groups and matched seeds where supported;
+- stochastic candidates require at least 3 repetitions per scenario for stability/reliability claims;
+- repetition count is frozen before observing candidate outcomes;
+- LOGO group sensitivity is mandatory;
+- `investigate`, `execute` and `contextualize` slices are retained;
+- for at least 5 independent groups: 95% group-cluster percentile bootstrap, 20,000 resamples, seed `20260822`;
+- for fewer than 5 groups: per-group outcomes and coverage limitations are primary; no population-style bootstrap interval is promoted as primary evidence;
+- naive fold standard error is not represented as a universally unbiased uncertainty estimator;
+- effect sizes and intervals are primary; formal p-values are secondary;
+- if two or more related confirmatory p-value tests are used, Holm family-wise correction is required.
 
-### Required selection process
+This supersedes the older provisional scenario-as-primary-unit language where multiple scenarios share one asset/story lineage.
 
-- Apply the preregistered hard constraints and comparison criteria.
-- Do not choose by an arbitrary weighted score unless the utility function itself was justified and preregistered.
-- Treat benchmark integrity and safety against leakage as hard constraints when appropriate.
-- Record uncertainty, trade-offs and sensitivity to assumptions.
-- Document rejected alternatives and reversal triggers.
-- Explicitly define the roles of development data, selection/CV data, validation/blind data and final test data.
-- Define what information may and may not flow from each split back into development.
+## Frozen safety / evaluator / judge rules
 
-### Decision state
+Hard safety violations are non-compensable. A confirmed hard-safety failure blocks promotion regardless of quality or efficiency improvement.
 
-The selected protocol becomes `PREFERRED`, not yet `FROZEN`.
+Candidate paths may never read private oracle material.
 
-### B3 exit gate
+Private evaluator scoring requires candidate outputs to be fixed first. Evaluator validity/qualification and exact version hash are frozen per final candidate generation.
 
-B3 passes only when one protocol is best-supported or the evidence explicitly shows that a hybrid/non-dominated design is required. If a credible materially different protocol remains unevaluated, B3 cannot close.
+A semantic judge is used only where semantic adjudication is required; a gating judge needs separate qualification evidence and frozen identity/prompt/runtime/parameters. Material evaluator/judge changes after blind outcomes consume the previous blind measurement for the new stack generation.
 
-## B4 — Freeze Evaluation Protocol
+## Failure and retry policy
 
-### Question
+No failed run is silently dropped.
 
-Can the preferred protocol be made executable, reproducible, auditable and safe enough to govern all remaining optimization and final evaluation?
+- task/agent/candidate-caused failure → task failure;
+- expected scenario/API fault → part of scenario;
+- external provider/infrastructure/evaluator-process failure → separate operational category;
+- at most one replacement attempt, and only for pre-model transport, runner/repository infrastructure or evaluator-process crash without outcome exposure;
+- task-quality/safety failures are never rerun as replacements;
+- exhausted external failure remains explicit missing operational evidence with denominators/sensitivity disclosed.
 
-### Required freeze artifacts
+## Blind-source reversal / breach rules
 
-B4 must version and freeze at least:
+- Tier A operational cutoff: **2026-08-25 23:59 America/Sao_Paulo**;
+- Tier B operational cutoff: **2026-08-28 23:59 America/Sao_Paulo**;
+- if Tier A is not operational, planning moves to Tier B;
+- if neither is operational, P3 requires an explicit B3 amendment and downgraded claims;
+- hidden semantic leak, expected-label exposure, iterative partial feedback, or material candidate/evaluator/judge adaptation to blind outcomes consumes/reclassifies the affected source for that lineage;
+- consumed measurements and breach records are preserved, never erased.
 
-- benchmark/split or fold manifest;
-- exact allowed and forbidden uses of each data partition;
-- candidate-selection and optimization boundary;
-- evaluator versions and validity requirements;
-- semantic-judge role and judge-selection/validation requirements;
-- repeated-run protocol;
-- pairing/randomness/seed policy;
-- primary outcomes and hard safety constraints;
-- uncertainty/confidence-interval method;
-- missing run / provider failure / infrastructure failure treatment;
-- multiple-comparison policy where applicable;
-- regression-evaluation policy;
-- production robustness/fault-evaluation relationship;
-- final-test authorization rule;
-- breach/contamination response procedure;
-- artifact/provenance requirements.
-
-### Pre-resume verification
-
-Before agent optimization resumes, execute provider-free structural/self-check tests proving that:
-
-- forbidden split reads are blocked by default;
-- allowed split usage matches the frozen protocol;
-- no candidate path can silently read private oracle material;
-- benchmark manifests are versioned and internally consistent;
-- evaluator and judge gates fail closed when prerequisites are missing;
-- LOCKED_TEST/final-test access requires the explicitly frozen final authorization path.
-
-### B4 exit gate
-
-B4 closes only when the protocol is executable and regression-protected, not merely documented.
-
-After B4, agent optimization may resume under the new protocol. Existing candidates (including E14v) must be reinterpreted using the decision-state model and may be continued only if still justified by the newly frozen evaluation design.
-
-## Relationship to historical work
-
-Historical experiments remain valid evidence about what was executed under their contemporaneous rules. This gate does not retroactively relabel a past experiment as fraudulent or delete inconvenient results.
-
-Instead it separates three questions:
-
-1. **What did the experiment show under its original protocol?**
-2. **How much independent evidence does that result provide under the current stricter governance?**
-3. **What, if anything, must be re-evaluated before a component can become `PREFERRED` or `FROZEN`?**
-
-The default retrospective rule is conservative: historical results may support `RESEARCHED` or `QUALIFIED` status, but they cannot by themselves prove final optimality when comparison completeness, benchmark independence, uncertainty or production fitness is unresolved.
-
-## Immediate project state
-
-Until B4 closes:
+## Post-B4 project state
 
 ```text
-benchmark integrity / protocol validity   ACTIVE BLOCKER
-agent optimization                        PAUSED
-E14v scientific line                      PRESERVED, NOT ADVANCED
-VALIDATION candidate feedback             BLOCKED
-LOCKED_TEST candidate evaluation          BLOCKED
+benchmark integrity / protocol validity   FROZEN / GATE CLOSED
+agent optimization                        AUTHORIZED ON EXPOSED_POOL UNDER P12
+historical VALIDATION                     EXPOSED_POOL; ADAPTIVE USE ALLOWED
+FRESH_BLIND                               NO SOURCE AUTHORIZED; FINAL ACCESS BLOCKED
+LEGACY_LOCKED_TEST                        FINAL ACCESS BLOCKED
+E14v historical line                      PRESERVED; MUST BE REINTERPRETED UNDER P12
 final architecture                        UNFROZEN
 production-readiness claim                NOT AUTHORIZED
 ```
+
+Closing BIG-B4 does **not** mean any historical model/runtime/judge/architecture is now final. It freezes the evaluation protocol that must govern the remaining systematic research, candidate comparison, candidate-generation freeze and eventual blind/final evidence.
