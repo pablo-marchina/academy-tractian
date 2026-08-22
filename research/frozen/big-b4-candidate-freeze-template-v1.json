@@ -7,6 +7,7 @@
   "candidate_config_hash": null,
   "prompt_hash": null,
   "model_provider_runtime_identity": null,
+  "stochastic_candidate": null,
   "retrieval_policy_hash": null,
   "guard_policy_hash": null,
   "evaluator_version_hash": null,
