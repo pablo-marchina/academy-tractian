@@ -1,0 +1,53 @@
+{
+  "schema_version": "e5-evidence-stopping-v1",
+  "date": "2026-08-16",
+  "status": "PREREGISTERED",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "boundary_candidate": "B3",
+    "baseline_boundary": "B0",
+    "runtime_model_mcp_ui_freeze": false
+  },
+  "objective": "Compare evidence-acquisition and stopping behavior while keeping B3 as the current guarded-boundary candidate and B0 as baseline context.",
+  "strategies": {
+    "fixed_reference_like": {
+      "source_class": "scripted_reference_anchor",
+      "agent_quality_evidence": false,
+      "role": "infrastructure upper-bound/reference-like anchor; not a model-quality claim"
+    },
+    "free_tool_loop": {
+      "source_class": "model_agent_free_loop",
+      "agent_quality_evidence": true,
+      "role": "model proposal sequence without explicit evidence-sufficiency stopping policy"
+    },
+    "evidence_sufficiency_policy": {
+      "source_class": "model_agent_with_stopping_policy",
+      "agent_quality_evidence": true,
+      "role": "model proposal sequence constrained by explicit evidence sufficiency and stop rules"
+    }
+  },
+  "metrics": [
+    "premature_stopping_count",
+    "unnecessary_tool_calls",
+    "required_evidence_coverage",
+    "task_success",
+    "escalation_or_action_correctness",
+    "tool_call_efficiency",
+    "locked_test_access"
+  ],
+  "runs": [
+    {"scenario_id":"CEN-01","split":"DEV","group_id":"asset_G501","required_evidence_count":4,"requires_action":true,"strategy_metrics":{"fixed_reference_like":{"tool_calls":5,"required_evidence_hits":4,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":6,"required_evidence_hits":4,"unnecessary_calls":2,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"evidence_sufficiency_policy":{"tool_calls":5,"required_evidence_hits":4,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-10","split":"DEV","group_id":"asset_G501","required_evidence_count":1,"requires_action":true,"strategy_metrics":{"fixed_reference_like":{"tool_calls":2,"required_evidence_hits":1,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":1,"required_evidence_hits":1,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"evidence_sufficiency_policy":{"tool_calls":2,"required_evidence_hits":1,"unnecessary_calls":1,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-02","split":"DEV","group_id":"asset_C710","required_evidence_count":3,"requires_action":true,"strategy_metrics":{"fixed_reference_like":{"tool_calls":5,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":2,"required_evidence_hits":1,"unnecessary_calls":0,"premature_stop":true,"task_success":false,"action_or_escalation_ok":false},"evidence_sufficiency_policy":{"tool_calls":4,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-14","split":"DEV","group_id":"asset_C710","required_evidence_count":1,"requires_action":true,"strategy_metrics":{"fixed_reference_like":{"tool_calls":2,"required_evidence_hits":1,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":3,"required_evidence_hits":1,"unnecessary_calls":1,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"evidence_sufficiency_policy":{"tool_calls":2,"required_evidence_hits":1,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-03","split":"DEV","group_id":"asset_S420","required_evidence_count":3,"requires_action":false,"strategy_metrics":{"fixed_reference_like":{"tool_calls":3,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":5,"required_evidence_hits":3,"unnecessary_calls":2,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"evidence_sufficiency_policy":{"tool_calls":3,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-16","split":"DEV","group_id":"asset_S420","required_evidence_count":2,"requires_action":true,"strategy_metrics":{"fixed_reference_like":{"tool_calls":4,"required_evidence_hits":2,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":2,"required_evidence_hits":1,"unnecessary_calls":0,"premature_stop":true,"task_success":false,"action_or_escalation_ok":false},"evidence_sufficiency_policy":{"tool_calls":3,"required_evidence_hits":2,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-04","split":"DEV","group_id":"asset_M208","required_evidence_count":3,"requires_action":false,"strategy_metrics":{"fixed_reference_like":{"tool_calls":3,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":4,"required_evidence_hits":3,"unnecessary_calls":1,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"evidence_sufficiency_policy":{"tool_calls":3,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-11","split":"DEV","group_id":"asset_M101","required_evidence_count":3,"requires_action":false,"strategy_metrics":{"fixed_reference_like":{"tool_calls":3,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":4,"required_evidence_hits":3,"unnecessary_calls":1,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"evidence_sufficiency_policy":{"tool_calls":3,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-07","split":"VALIDATION","group_id":"asset_B204","required_evidence_count":2,"requires_action":true,"strategy_metrics":{"fixed_reference_like":{"tool_calls":3,"required_evidence_hits":2,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":2,"required_evidence_hits":1,"unnecessary_calls":0,"premature_stop":true,"task_success":false,"action_or_escalation_ok":false},"evidence_sufficiency_policy":{"tool_calls":3,"required_evidence_hits":2,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-12","split":"VALIDATION","group_id":"asset_B204","required_evidence_count":3,"requires_action":false,"strategy_metrics":{"fixed_reference_like":{"tool_calls":3,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":5,"required_evidence_hits":3,"unnecessary_calls":2,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"evidence_sufficiency_policy":{"tool_calls":4,"required_evidence_hits":3,"unnecessary_calls":1,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true}}},
+    {"scenario_id":"CEN-09","split":"VALIDATION","group_id":"asset_M102","required_evidence_count":3,"requires_action":false,"strategy_metrics":{"fixed_reference_like":{"tool_calls":3,"required_evidence_hits":3,"unnecessary_calls":0,"premature_stop":false,"task_success":true,"action_or_escalation_ok":true},"free_tool_loop":{"tool_calls":2,"required_evidence_hits":1,"unnecessary_calls":0,"premature_stop":true,"task_success":false,"action_or_escalation_ok":true},"evidence_sufficiency_policy":{"tool_calls":3,"required_evidence_hits":2,"unnecessary_calls":0,"premature_stop":true,"task_success":false,"action_or_escalation_ok":true}}}
+  ]
+}

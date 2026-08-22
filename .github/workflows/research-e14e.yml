@@ -1,0 +1,37 @@
+name: research-e14e-dev-only-explicit-current-handoff-semantics
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/120-e14e-dev-only-explicit-current-handoff-semantics.md'
+      - 'research/experiments/e14e-*.json'
+      - 'scripts/research/e14e_*.py'
+      - '.github/workflows/research-e14e.yml'
+  pull_request:
+    paths:
+      - 'research/120-e14e-dev-only-explicit-current-handoff-semantics.md'
+      - 'research/experiments/e14e-*.json'
+      - 'scripts/research/e14e_*.py'
+      - '.github/workflows/research-e14e.yml'
+
+jobs:
+  e14e-dev-only-explicit-current-handoff-semantics-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E14e DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14e_dev_only_explicit_current_handoff_semantics.py
+          --manifest research/experiments/e14e-dev-only-explicit-current-handoff-semantics-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14e-dev-only-explicit-current-handoff-semantics-dry-run.json
+          --dry-run
+      - name: Upload E14e dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14e-dev-only-explicit-current-handoff-semantics-dry-run
+          path: /tmp/e14e-dev-only-explicit-current-handoff-semantics-dry-run.json

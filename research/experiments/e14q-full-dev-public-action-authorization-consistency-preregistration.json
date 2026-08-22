@@ -1,0 +1,84 @@
+{
+  "experiment_id": "E14q-full-DEV-public-action-authorization-consistency",
+  "status": "PREREGISTERED_AFTER_E14P_FULL_DEV_REJECTION_AND_BEFORE_E14Q_TRANSFORM",
+  "date": "2026-08-19",
+  "parent_fixed_candidate": "E14p-full-DEV-5-group-after-E14o-E14n-v1.1",
+  "intervention_class": "deterministic_public_action_authorization_state_consistency_only",
+  "motivation_from_aggregate_only": {
+    "full_dev_calls": 10,
+    "premature_action_rate": 0.1,
+    "unsupported_action_or_escalation_rate": 0.1,
+    "no_per_row_private_labels_inspected": true,
+    "no_group_or_ticket_failure_inferred": true
+  },
+  "allowed_inputs": [
+    "fixed E14p full-DEV parsed outputs",
+    "public tool registry",
+    "public output contract"
+  ],
+  "forbidden_inputs": [
+    "private expected-path rows",
+    "private scorer rows",
+    "per-row evaluator labels",
+    "semantic judge rows",
+    "VALIDATION feedback",
+    "LOCKED_TEST"
+  ],
+  "public_authorization_policy": {
+    "all_state_changing_actions_require_users_me_read": true,
+    "endpoint_specific_target_read_required_when_public_read_endpoint_exists": {
+      "POST /analyses/{analysisId}/reprocess": "GET /analyses/{analysisId}",
+      "POST /analyses/{analysisId}/request-specialist": "GET /analyses/{analysisId}",
+      "POST /models/{modelId}/request-retraining": "GET /models/{modelId}",
+      "PATCH /assets/{assetId}": "GET /assets/{assetId}"
+    },
+    "case_escalate_requires_users_me_plus_one_public_diagnostic_read": true,
+    "action_requires_safe_to_act_true": true,
+    "action_requires_needs_more_evidence_false": true,
+    "unauthorized_action_behavior": {
+      "should_take_action_now": false,
+      "action_endpoint": "none",
+      "action_candidate_decision_downgraded_to": "investigate_only",
+      "evidence_plan_preserved_byte_for_byte": true
+    },
+    "non_action_output_with_state_changing_endpoint_behavior": "clear_action_endpoint_to_none",
+    "human_escalation_requires_either_explicit_handoff_endpoint_or_visible_safety_permission_human_review_reason": true
+  },
+  "paired_invariants": {
+    "provider_calls": 0,
+    "same_10_fixed_calls": true,
+    "same_5_DEV_groups": true,
+    "evidence_plan_byte_for_byte": true,
+    "no_new_public_read_signatures": true,
+    "no_removed_public_read_signatures": true,
+    "trace_quality_self_check_preserved": true,
+    "identifier_guard_not_changed": true,
+    "epistemic_serializer_not_changed": true
+  },
+  "measurement_plan": {
+    "apply_E14q_once_to_same_fixed_full_DEV_outputs": true,
+    "run_public_surface_audit": true,
+    "run_frozen_E9_v4_1_once": true,
+    "do_not_rerun_existing_E14p_semantic_measurement": true,
+    "semantic_remeasurement_required_for_E14q": "only_if_free_text_claim_packet_changes; otherwise existing E14p semantic result remains characterization of serializer layer and candidate still needs later final semantic measurement after evidence intervention"
+  },
+  "E14q_target_gate": {
+    "fixed_calls_required": 10,
+    "scoreable_calls_required": 10,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "decision_correctness_min": 0.7,
+    "action_correctness_min": 0.7,
+    "escalation_correctness_min": 0.7,
+    "evidence_correctness_expected_unchanged": 0.2,
+    "mean_expected_read_recall_expected_unchanged": 0.7667,
+    "mean_extra_public_read_count_expected_unchanged": 3.5,
+    "locked_test_or_gold_leakage_rate_required": 0.0
+  },
+  "interpretation_limits": {
+    "E14q_can_fix_evidence_quality": false,
+    "E14q_pass_can_authorize_VALIDATION": false,
+    "later_evidence_intervention_still_required": true,
+    "no_causal_claim_about_model_reasoning": true
+  }
+}

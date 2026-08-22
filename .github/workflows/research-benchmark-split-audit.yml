@@ -1,0 +1,16 @@
+name: research-benchmark-split-audit
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  benchmark-split-public-coverage-audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Audit frozen split and representative DEV coverage
+        run: PYTHONPATH=. python scripts/research/benchmark_split_public_coverage_audit.py

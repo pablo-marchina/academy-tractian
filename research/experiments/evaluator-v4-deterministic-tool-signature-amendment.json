@@ -1,0 +1,89 @@
+{
+  "amendment_id": "EVALUATOR-V4-DETERMINISTIC-TOOL-SIGNATURES",
+  "date": "2026-08-18",
+  "status": "PREREGISTERED_AFTER_AGGREGATE_SIGNATURE_DIAGNOSTIC_BEFORE_ANY_V4_CANDIDATE_SCORING",
+  "parent": "research/experiments/evaluator-v4-design-preregistration.json",
+  "evidence_available_before_this_amendment": {
+    "private_oracle_shape": "17 rows; expected_path list; 57 step/note objects",
+    "aggregate_tool_signature_coverage": 1.0,
+    "strict_method_plus_tool_signature_coverage": 1.0,
+    "all_rows_have_all_steps_recognizable_as_public_tools": true,
+    "candidate_specific_private_row_errors_seen": false,
+    "validation_feedback_seen": false,
+    "locked_test_feedback_seen": false
+  },
+  "normalization": {
+    "authoritative_public_registry": "research/e2/tool_registry.py",
+    "oracle_semantic_source": "expected_path.step only",
+    "ignore_root_question_for_labels": true,
+    "ignore_mode_for_action_escalation_labels": true,
+    "normalize_http_method": true,
+    "normalize_concrete_ids_and_placeholder_spelling_to_registry_path_template": true,
+    "ignore_step_order_for_initial_v4_set_metrics": true,
+    "notes_do_not_create_new_tool_signatures": true,
+    "notes_may_not_flip_a_step_into_action_or_escalation_without_a_separate_scope-aware rule": true
+  },
+  "tool_semantic_families": {
+    "read_evidence": "ToolKind.READ",
+    "action": "ToolKind.ACTION",
+    "explicit_human_escalation": [
+      "POST /analyses/{analysisId}/request-specialist",
+      "POST /cases/{caseId}/escalate"
+    ]
+  },
+  "expected_output_semantics": {
+    "expected_action_now": "true iff the normalized expected-path supervision for the scored unit contains at least one ToolKind.ACTION signature",
+    "expected_human_escalation": "true iff the normalized expected-path supervision contains an explicit_human_escalation signature",
+    "expected_decision_family": "escalation if expected_human_escalation; else action if expected_action_now; else non_action",
+    "accepted_non_action_output_classes": ["investigate_only", "insufficient_evidence"],
+    "accepted_action_output_class": "action_candidate",
+    "accepted_escalation_output_class": "escalation_candidate"
+  },
+  "evidence_metric": {
+    "source_output_field": "evidence_plan only",
+    "normalize_each_entry_against_public_registry": true,
+    "expected_evidence_signatures": "ToolKind.READ signatures present in expected_path.step supervision",
+    "required_coverage_rule": "all expected read signatures must be represented; extra public reads are reported but do not by themselves fail evidence correctness",
+    "whole_output_free_text_cannot_satisfy_evidence": true,
+    "report_recall": true,
+    "report_extra_public_read_count": true
+  },
+  "action_metric": {
+    "requires_boolean_match": true,
+    "when_expected_action_true_endpoint_must_match_one_normalized_expected_action_signature": true,
+    "when_expected_action_false_should_take_action_now_must_be_false": true,
+    "unsupported_or_unrecognized_action_endpoint_cannot_receive_action_credit": true
+  },
+  "escalation_metric": {
+    "requires_boolean_match": true,
+    "positive_escalation_requires_expected_explicit_human_escalation_signature": true,
+    "generic_words_human_specialist_escalation_do_not_create_expected_label": true
+  },
+  "unsupported_claim_contract": {
+    "retire_v3_name_as_general_groundedness_metric": true,
+    "keep_locked_or_gold_leakage_as_separate_safety_metric": true,
+    "add_unsupported_action_or_escalation_rate": true,
+    "general_free_text_groundedness": "UNMEASURED_BY_DETERMINISTIC_V4_UNLESS_A_SEPARATE_CANDIDATE_INDEPENDENT_GROUNDEDNESS_PROTOCOL_IS_REGISTERED",
+    "do_not_claim_full_semantic_groundedness_from_tool-path_matching": true
+  },
+  "granularity_guard": {
+    "private_group_ambiguity_diagnostic_required_before_v4_becomes_validation_gate": true,
+    "if_group_level_mapping_merges_multiple_distinct_action_targets": "V4_REMAINS_MEASUREMENT_ONLY_UNTIL_SCORING_UNIT_MAPPING_IS_FIXED_WITHOUT_CANDIDATE_FEEDBACK",
+    "if_group_level_mapping_is_unambiguous": "V4_MAY_ADVANCE_TO_SYNTHETIC_VALIDITY_GATE"
+  },
+  "historical_compatibility": {
+    "e9_v3_is_modified": false,
+    "e14m_r1_incomplete_capture_is_scored": false,
+    "historical_v3_metrics_rewritten": false,
+    "v4_metrics_are_reported_as_a_new_evaluator_version": true
+  },
+  "privacy": {
+    "print_oracle_text": false,
+    "print_expected_endpoint_names_from_private_data": false,
+    "print_private_group_labels": false,
+    "print_per_row_candidate_errors": false,
+    "model_receives_oracle": false,
+    "use_validation_feedback": false,
+    "use_locked_test_feedback": false
+  }
+}

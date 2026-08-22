@@ -1,0 +1,32 @@
+name: research-e10d
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/80-e10d-dev-only-escalation-consistency-guard.md'
+      - 'research/experiments/e10d-*.json'
+      - 'scripts/research/e10d_*.py'
+      - '.github/workflows/research-e10d.yml'
+  pull_request:
+    paths:
+      - 'research/80-e10d-dev-only-escalation-consistency-guard.md'
+      - 'research/experiments/e10d-*.json'
+      - 'scripts/research/e10d_*.py'
+      - '.github/workflows/research-e10d.yml'
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: E10d dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e10d_dev_only_escalation_consistency_guard.py
+          --manifest research/experiments/e10d-dev-only-escalation-consistency-guard-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e10d-capture-dry-run.json
+          --dry-run

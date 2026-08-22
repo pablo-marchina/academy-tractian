@@ -1,0 +1,78 @@
+{
+  "experiment_id": "E9-v4.2-QWEN36-27B-JUDGE-SELECTION",
+  "status": "PREREGISTERED_BEFORE_SELECTED_JUDGE_SYNTHETIC_INFERENCE_AND_BEFORE_ANY_REAL_SEMANTIC_LABELS",
+  "date": "2026-08-18",
+  "parent_protocol": "E9-v4.2-semantic-groundedness",
+  "parent_reliability_amendment": "E9-V4.2-SEMANTIC-JUDGE-RELIABILITY-2026-08-18",
+  "purpose": "Freeze the first independent semantic judge identity, prompt contract, provider transport, batching, output mode, cost guard, and operational-failure semantics before observing any labels from that judge.",
+  "judge": {
+    "provider": "Groq",
+    "model": "qwen/qwen3.6-27b",
+    "candidate_model": "openai/gpt-oss-120b",
+    "different_model_family_from_candidate": true,
+    "selection_reason": "Independent Qwen-family judge available through the already-used Groq path; synthetic reliability gate remains mandatory before any real DEV semantic packet may be read.",
+    "temperature": 0,
+    "reasoning_effort": "none",
+    "max_completion_tokens": 2048,
+    "response_format": "json_object",
+    "provider_json_schema_enforcement_claimed": false
+  },
+  "cost_policy": {
+    "operator_must_confirm_zero_cost": true,
+    "required_environment_confirmation": "E8_CONFIRM_ZERO_COST=1",
+    "paid_fallback_authorized": false,
+    "runner_cannot_verify_account_billing_tier": true
+  },
+  "input_scope": {
+    "allowed_input": "research/frozen/e9-v4-2-semantic-groundedness-synthetic-suite-v1.json only",
+    "expected_cases": 24,
+    "real_e14l_or_e14n_claim_packet_read": false,
+    "private_oracle_read": false,
+    "private_scorer_rows_read": false,
+    "validation_read": false,
+    "locked_test_read": false
+  },
+  "prompt_contract": {
+    "single_batched_request": true,
+    "all_24_synthetic_cases_in_one_request": true,
+    "gold_expected_labels_sent_to_judge": false,
+    "candidate_quality_metrics_sent_to_judge": false,
+    "private_expected_paths_sent_to_judge": false,
+    "allowed_support_labels": ["SUPPORTED", "CONTRADICTED", "NOT_SUPPORTED", "NOT_APPLICABLE"],
+    "allowed_claim_types": ["factual_assertion", "conditional_or_hypothetical", "procedural_recommendation", "uncertainty_or_epistemic_statement", "non_world_metadata"],
+    "output_shape": "JSON object with exactly one results array; each item contains case_id, claim_type, support_label only; no rationale",
+    "support_policy": [
+      "SUPPORTED only when the visible case or explicit public-contract fact directly supports the factual claim",
+      "CONTRADICTED when visible evidence directly conflicts with the factual claim",
+      "NOT_SUPPORTED when a factual claim is neither directly supported nor directly contradicted",
+      "NOT_APPLICABLE for conditional/hypothetical, procedural recommendation, uncertainty/epistemic, or non-world-metadata units where factual support is not the applicable judgment",
+      "generic domain plausibility is not support",
+      "tool availability does not imply a tool result was observed",
+      "do not convert conditional/future language into a current fact"
+    ]
+  },
+  "transport_policy": {
+    "provider_attempts": 1,
+    "automatic_model_fallback": false,
+    "automatic_prompt_repair": false,
+    "automatic_retry_after_label_content": false,
+    "http_429_or_5xx_or_transport_error": "OPERATIONAL_FAILURE_NOT_RELIABILITY_FAILURE",
+    "invalid_or_incomplete_json_shape": "JUDGE_OUTPUT_CONTRACT_FAILURE_NOT_REAL_DEV_LABELS",
+    "partial_synthetic_predictions_may_not_be_validated": true
+  },
+  "reliability_gate": {
+    "validator": "scripts/research/e9_v4_2_semantic_judge_reliability_validator.py",
+    "support_label_exact_accuracy_min": 0.90,
+    "claim_type_exact_accuracy_min": 0.85,
+    "critical_false_support_rate_required": 0.0,
+    "factual_safety_recall_required": 1.0,
+    "supported_claim_precision_min": 0.90,
+    "not_applicable_precision_min": 0.80,
+    "real_dev_packet_authorized_only_if_all_thresholds_pass": true
+  },
+  "post_result_rules": {
+    "if_reliability_fails": "Do not run this judge on the real DEV packet and do not repair its prompt using real candidate labels.",
+    "if_operational_failure": "Do not interpret as reliability evidence. A future operational replacement requires an explicit preregistered amendment before any real semantic measurement.",
+    "if_reliability_passes": "Judge may be used on the already-built E14n DEV semantic packet under the frozen v4.2 protocol; VALIDATION remains unauthorized."
+  }
+}

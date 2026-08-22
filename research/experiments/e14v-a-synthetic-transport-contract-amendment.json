@@ -1,0 +1,83 @@
+{
+  "experiment_id": "E14v-A-public-synthetic-transport-contract-amendment",
+  "status": "PREREGISTERED_STRUCTURAL_CI_REQUIRED_BEFORE_CORRECTED_SYNTHETIC_ATTEMPT",
+  "date": "2026-08-19",
+  "parent_experiment": "E14v-full-DEV-isolated-public-evidence-route-planner",
+  "amendment_class": "operational_transport_contract_only",
+  "reason_for_amendment": {
+    "first_synthetic_attempt_status": "E14V_PUBLIC_SYNTHETIC_ROUTE_PLANNER_QUALIFICATION_FAIL",
+    "sanitized_diagnostic": {
+      "synthetic_rows": 14,
+      "rows_with_provider_error": 14,
+      "rows_with_no_provider_error": 0,
+      "provider_error_category_counts": {"HTTPError": 14},
+      "transport_attempt_count_distribution": {"3": 14},
+      "route_contract_reason_counts": {"wrong_object_shape": 14},
+      "valid_route_contract_rows": 0
+    },
+    "classification": "OPERATIONALLY_INVALID_FOR_PLANNER_QUALITY_QUALIFICATION",
+    "rationale": "No synthetic case produced a provider response that reached the route contract. The failed attempt therefore cannot distinguish route-selection quality from transport/response-contract failure.",
+    "no_case_ids_inspected": true,
+    "no_selected_reads_inspected": true,
+    "no_expected_reads_inspected": true,
+    "no_private_rows_inspected": true
+  },
+  "unchanged_scientific_candidate": {
+    "planner_model": "openai/gpt-oss-120b",
+    "provider": "groq_zero_cost",
+    "reasoning_effort": "medium",
+    "temperature": 0,
+    "max_completion_tokens": 1024,
+    "system_prompt_changed": false,
+    "planner_input_packet_changed": false,
+    "public_route_catalog_changed": false,
+    "synthetic_fixture_changed": false,
+    "synthetic_case_count": 14,
+    "synthetic_expected_sets_changed": false,
+    "synthetic_thresholds_changed": false,
+    "max_distinct_reads": 7,
+    "retry_count_changed": false,
+    "between_call_delay_changed": false
+  },
+  "transport_change": {
+    "old_response_contract": {"type": "json_object"},
+    "new_response_contract": {
+      "type": "json_schema",
+      "strict": true,
+      "schema_name": "e14v_route_plan",
+      "required_object_shape": {"reads": ["canonical public GET route"]},
+      "additional_properties": false,
+      "max_items": 7,
+      "item_enum_source": "unchanged frozen E14v public GET route catalog"
+    },
+    "include_reasoning": false,
+    "reasoning_format_sent": false,
+    "rationale": "Use only GPT-OSS 120B response controls explicitly documented by Groq: strict Structured Outputs are supported for this model and GPT-OSS reasoning visibility is controlled with include_reasoning rather than reasoning_format."
+  },
+  "corrected_synthetic_attempt_policy": {
+    "corrected_real_provider_attempts_allowed": 1,
+    "new_attempt_lock_required_before_first_provider_call": true,
+    "must_use_distinct_output_path_from_first_attempt": true,
+    "must_preserve_first_attempt_output_and_lock": true,
+    "rerun_after_corrected_attempt_consumption": false,
+    "model_or_provider_substitution_without_new_amendment": false
+  },
+  "synthetic_gate_unchanged": {
+    "required_cases": 14,
+    "required_valid_output_rate": 1.0,
+    "required_route_recall": 1.0,
+    "required_action_dependency_recall": 1.0,
+    "required_exact_set_match_rate_min": 0.9,
+    "required_mean_extra_reads_max": 0.25,
+    "required_unknown_route_rate": 0.0,
+    "required_duplicate_route_rate": 0.0,
+    "required_max_read_cap_violations": 0
+  },
+  "authorization_boundary": {
+    "real_dev_authorized": false,
+    "validation_authorized": false,
+    "locked_test_authorized": false,
+    "if_corrected_synthetic_passes": "record aggregate pass and explicitly activate one real DEV planner attempt",
+    "if_corrected_synthetic_fails": "reject or amend E14v without running DEV and without private-row inspection"
+  }
+}

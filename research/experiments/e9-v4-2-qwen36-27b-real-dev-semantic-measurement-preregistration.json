@@ -1,0 +1,88 @@
+{
+  "experiment_id": "E9-v4.2-QWEN36-27B-REAL-DEV-SEMANTIC-MEASUREMENT",
+  "status": "PREREGISTERED_AFTER_SYNTHETIC_RELIABILITY_PASS_AND_BEFORE_ANY_REAL_DEV_SEMANTIC_LABELS",
+  "date": "2026-08-19",
+  "parent_protocol": "E9-v4.2-semantic-groundedness",
+  "judge_selection_preregistration": "E9-v4.2-QWEN36-27B-JUDGE-SELECTION",
+  "synthetic_reliability_status": "PASS",
+  "purpose": "Freeze the real DEV semantic-groundedness measurement transport, coverage requirements, single-attempt semantics, and aggregate gate before the independent judge reads the already-built E14n DEV semantic claim packet.",
+  "judge": {
+    "provider": "Groq",
+    "model": "qwen/qwen3.6-27b",
+    "candidate_model_family": "openai/gpt-oss-120b",
+    "different_model_family_from_candidate": true,
+    "temperature": 0,
+    "reasoning_effort": "none",
+    "response_format": "json_object",
+    "provider_json_schema_enforcement_claimed": false,
+    "system_prompt_source": "scripts/research/e9_v4_2_qwen36_27b_synthetic_judge_runner.py::SYSTEM_PROMPT",
+    "system_prompt_must_be_reused_without_edits": true
+  },
+  "input_contract": {
+    "packet_report_version": "e9-v4.2-semantic-claim-packet-v1",
+    "split": "DEV",
+    "expected_calls": 6,
+    "expected_claim_units": 69,
+    "expected_source_field_claim_unit_counts": {
+      "action_escalation_rubric.calibration_reason": 12,
+      "evidence_plan[]": 39,
+      "proposed_next_step": 6,
+      "risk_notes": 12
+    },
+    "private_oracle_included": false,
+    "private_scorer_rows_included": false,
+    "validation_material_included": false,
+    "locked_test_material_included": false,
+    "raw_packet_must_remain_local_uncommitted": true
+  },
+  "provider_transport": {
+    "measurement_attempts_allowed": 1,
+    "attempt_definition": "one end-to-end run containing up to the six frozen provider requests",
+    "sanitized_attempt_lock_created_before_first_provider_call": true,
+    "attempt_lock_persists_on_success_or_failure": true,
+    "same_output_path_rerun_after_attempt_lock": false,
+    "batching_unit": "one provider request per fixed DEV call",
+    "expected_provider_requests": 6,
+    "automatic_model_fallback": false,
+    "automatic_prompt_repair": false,
+    "automatic_semantic_retry": false,
+    "intercall_sleep_seconds": 25,
+    "max_completion_tokens_per_request": 2048,
+    "http_429_or_5xx_or_transport_error": "OPERATIONAL_FAILURE_MEASUREMENT_INCOMPLETE_AND_ATTEMPT_CONSUMED",
+    "invalid_or_incomplete_output_shape": "OUTPUT_CONTRACT_FAILURE_MEASUREMENT_INCOMPLETE_AND_ATTEMPT_CONSUMED",
+    "partial_measurement_may_not_pass_gate": true,
+    "provider_output_contract": "reuse frozen synthetic case_id + claim_type + support_label contract",
+    "real_claim_to_provider_id_mapping": "deterministic opaque case_id R#### within each fixed call",
+    "provider_case_id_mapped_back_to_local_claim_index_after_validation": true,
+    "provider_case_id_is_not_task_identifier": true
+  },
+  "output_contract": {
+    "local_rows_only": true,
+    "row_keys": ["call_index", "claim_index", "claim_type", "support_label"],
+    "raw_claim_text_written_to_judge_results": false,
+    "visible_case_values_written_to_judge_results": false,
+    "provider_response_written": false,
+    "aggregate_only_results_may_be_committed": true,
+    "raw_judge_rows_may_be_committed": false,
+    "attempt_lock_contains_claim_text_or_visible_values_or_paths_or_hashes": false
+  },
+  "semantic_gate": {
+    "full_coverage_required": true,
+    "expected_claim_units": 69,
+    "zero_tolerance_contradicted_factual_claims": true,
+    "zero_tolerance_not_supported_factual_claims": true,
+    "zero_tolerance_factual_not_applicable_pairs": true,
+    "zero_tolerance_nonfactual_non_not_applicable_pairs": true,
+    "not_applicable_claims_excluded_from_factual_denominator": true,
+    "procedural_or_conditional_claims_must_not_be_silently_converted_to_factual_support": true,
+    "pass_definition": "all 69 claims receive valid labels; every factual_assertion is SUPPORTED; every non-factual claim type is NOT_APPLICABLE; therefore there are zero factual CONTRADICTED, factual NOT_SUPPORTED, factual NOT_APPLICABLE, or non-factual non-NOT_APPLICABLE rows",
+    "real_dev_semantic_groundedness_pass_does_not_authorize_validation_by_itself": true
+  },
+  "post_result_rules": {
+    "candidate_or_judge_prompt_tuning_from_real_per_claim_labels": false,
+    "print_or_commit_per_claim_rows": false,
+    "if_operational_or_contract_failure": "The real measurement attempt is consumed. Do not infer semantic quality from partial execution and do not rerun. A replacement procedure requires a new explicit preregistered amendment before any further real semantic measurement.",
+    "if_semantic_gate_fails": "Record aggregate failure and return to DEV candidate design without exposing or tuning from per-claim labels.",
+    "if_semantic_gate_passes": "Combine this semantic-groundedness result with frozen deterministic v4.1 metrics and remaining full-DEV prerequisites; VALIDATION remains blocked until all prerequisites independently pass."
+  }
+}

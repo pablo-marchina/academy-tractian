@@ -1,0 +1,122 @@
+{
+  "report_version": "e10d-full-dev-validation-private-score-sanitized-summary-v1",
+  "date": "2026-08-16",
+  "status": "E10D_FULL_DEV_VALIDATION_PRIVATE_SCORE_IMPROVED_WITH_SAFETY_REGRESSION",
+  "source_run_status": "E9_TASK_QUALITY_SCORER_PASS",
+  "scope": {
+    "measurement_splits": ["DEV", "VALIDATION"],
+    "validation_used_for_tuning": false,
+    "validation_ran": true,
+    "locked_test_accessed": false,
+    "forbidden_splits": ["LOCKED_TEST"],
+    "oracle_scope": {
+      "oracle_formats_detected": ["expected_paths_asset_mention_adapter_v3_case_safe"],
+      "known_allowed_oracle_groups": ["asset_B204", "asset_C710", "asset_G501", "asset_M102", "asset_S420"],
+      "locked_test_oracle_groups_detected": [],
+      "outside_known_allowed_asset_groups": []
+    }
+  },
+  "inputs": {
+    "fixed_calls_consumed": 12,
+    "fixed_output_hashes_consumed": 5,
+    "parsed_model_outputs_available": 12,
+    "private_oracles_loaded": 5,
+    "calls_with_matching_private_oracle": 12,
+    "scoreable_calls": 12
+  },
+  "gold_leakage_controls": {
+    "model_prompt_receives_oracle": false,
+    "scorer_reads_oracle_after_outputs_fixed": true,
+    "outputs_hashed_before_scoring": true,
+    "evaluator_only_paths_blocked_from_model": true,
+    "locked_test_oracle_groups_rejected": true,
+    "raw_expected_values_printed": false
+  },
+  "e9_full_dev_validation_baseline": {
+    "scoreable_calls": 12,
+    "real_task_quality": 0.631,
+    "decision_correctness": 0.6667,
+    "evidence_correctness": 0.0,
+    "action_correctness": 0.25,
+    "escalation_correctness": 0.5,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "e10d_full_dev_validation_private_score": {
+    "scoreable_calls": 12,
+    "real_task_quality": 0.8214,
+    "decision_correctness": 0.75,
+    "evidence_correctness": 0.75,
+    "action_correctness": 0.75,
+    "escalation_correctness": 0.5,
+    "premature_action_rate": 0.25,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 0.5
+  },
+  "delta_vs_e9_full_baseline": {
+    "real_task_quality": 0.1904,
+    "decision_correctness": 0.0833,
+    "evidence_correctness": 0.75,
+    "action_correctness": 0.5,
+    "escalation_correctness": 0.0,
+    "premature_action_rate": 0.25,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": -0.5
+  },
+  "sanitized_split_summary": {
+    "DEV": {
+      "scoreable_calls": 6,
+      "real_task_quality": 1.0,
+      "decision_correctness": 1.0,
+      "evidence_correctness": 1.0,
+      "action_correctness": 1.0,
+      "escalation_correctness": 1.0,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0
+    },
+    "VALIDATION": {
+      "scoreable_calls": 6,
+      "real_task_quality": 0.6429,
+      "decision_correctness": 0.5,
+      "evidence_correctness": 0.5,
+      "action_correctness": 0.5,
+      "escalation_correctness": 0.0,
+      "premature_action_rate": 0.5,
+      "unsupported_final_claim_rate": 0.0
+    }
+  },
+  "interpretation": {
+    "full_remeasurement_acceptance_met": false,
+    "reason": "Full DEV+VALIDATION improves real task quality, decision, evidence and action over E9 full baseline, and keeps unsupported claims at 0.0, but fails the no-safety-regression gate because premature_action_rate increases from 0.0 to 0.25.",
+    "candidate_promoted_to_integration_gates": false,
+    "next_gate": "E10e DEV-only safety/premature-action guard design before any additional full remeasurement. VALIDATION must remain measurement-only and cannot be used for tuning."
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "committed_artifact_policy": {
+    "raw_fixed_outputs_committed": false,
+    "score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_oracle_values_committed": false,
+    "private_oracle_paths_committed": false,
+    "api_keys_committed": false,
+    "locked_test_material_committed": false
+  }
+}

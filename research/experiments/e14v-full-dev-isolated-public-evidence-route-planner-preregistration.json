@@ -1,0 +1,165 @@
+{
+  "experiment_id": "E14v-full-DEV-isolated-public-evidence-route-planner",
+  "status": "PREREGISTERED_SYNTHETIC_QUALIFICATION_REQUIRED",
+  "date": "2026-08-19",
+  "intervention_class": "isolated_public_evidence_route_planner_only",
+  "single_intervention": true,
+  "motivation_from_aggregate_only": {
+    "E14q2_baseline": {
+      "evidence_correctness": 0.2,
+      "mean_expected_read_recall": 0.7667,
+      "mean_extra_public_read_count": 3.5,
+      "decision_correctness": 0.8,
+      "action_correctness": 0.8,
+      "escalation_correctness": 0.8,
+      "premature_action_rate": 0.0,
+      "unsupported_action_or_escalation_rate": 0.0
+    },
+    "E14t_best_bounded_postprocessor": {
+      "evidence_correctness": 0.3,
+      "mean_expected_read_recall": 0.8,
+      "mean_extra_public_read_count": 3.4
+    },
+    "E14u_prompt_only": {
+      "evidence_correctness": 0.1,
+      "mean_expected_read_recall": 0.7417,
+      "mean_extra_public_read_count": 4.0,
+      "evidence_plan_claim_units": 134
+    },
+    "interpretation": "Whole-response prompt decomposition increased evidence-plan surface area while worsening the three evidence gates. The next candidate isolates route selection from decision/action/escalation and free-text generation.",
+    "no_private_scorer_rows_inspected": true,
+    "no_expected_path_rows_inspected": true,
+    "no_group_or_ticket_failure_inferred": true
+  },
+  "scope": {
+    "synthetic_public_qualification_required_before_real_dev": true,
+    "measurement_splits": ["DEV"],
+    "forbidden_splits": ["VALIDATION", "LOCKED_TEST"],
+    "expected_dev_groups": 5,
+    "repeats_per_group": 2,
+    "expected_real_planner_calls": 10
+  },
+  "parent_candidate": {
+    "source": "fixed E14p full-DEV serialized outputs from the accepted E14o generation stack before E14q/E14q2",
+    "reason": "return to the stable pre-safety baseline so E14v changes evidence planning only; E14q and E14q2 are reapplied unchanged after E14v",
+    "parent_must_have_status": "E14P_FULL_DEV_PUBLIC_EPISTEMIC_SERIALIZATION_GUARD_PASS",
+    "parent_generation_must_not_be_rerun": true
+  },
+  "planner": {
+    "provider": "groq_zero_cost",
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "response_contract": {
+      "type": "json_object",
+      "required_shape": {"reads": ["canonical public GET METHOD+path"]},
+      "max_distinct_reads": 7,
+      "duplicates_forbidden": true,
+      "unknown_routes_forbidden": true,
+      "action_routes_forbidden": true
+    },
+    "inputs": [
+      "runner-selected visible case JSON",
+      "public action-state fields from the fixed parent output: decision_class, should_take_action_now, requires_human_escalation, action_endpoint",
+      "public GET route catalog with route-purpose descriptions"
+    ],
+    "forbidden_inputs": [
+      "existing parent evidence_plan",
+      "private expected paths",
+      "private scorer rows",
+      "per-row evaluator labels",
+      "semantic judge rows",
+      "VALIDATION feedback",
+      "LOCKED_TEST content",
+      "split coverage_tags",
+      "group-specific rules",
+      "ticket-specific rules"
+    ]
+  },
+  "public_read_catalog": [
+    "GET /users/me",
+    "GET /assets/{assetId}",
+    "GET /assets/{assetId}/analyses",
+    "GET /analyses/{analysisId}",
+    "GET /assets/{assetId}/baseline",
+    "GET /assets/{assetId}/data-quality",
+    "GET /assets/{assetId}/rms",
+    "GET /assets/{assetId}/spectrum",
+    "GET /models/{modelId}",
+    "GET /knowledge/search",
+    "GET /knowledge/{docId}"
+  ],
+  "planner_prompt_policy": [
+    "Select the smallest complete route set needed to resolve the visible task and support the public action state.",
+    "Do not output a route because it exists; each route must resolve a concrete visible dependency.",
+    "When a specific analysis detail is required, use the analysis resource chain needed to identify and inspect it.",
+    "Use baseline/data-quality/RMS/spectrum/model/knowledge routes only when materially implicated by the visible case.",
+    "For an active state-changing action, include GET /users/me and the public target-state read required by the frozen action policy.",
+    "For knowledge use, GET /knowledge/search precedes GET /knowledge/{docId}.",
+    "Return routes only; no claims, conclusions, action recommendations, identifiers, numbers, or task-world facts."
+  ],
+  "synthetic_qualification": {
+    "fixture": "research/fixtures/e14v-public-evidence-route-planner-synthetic-v1.json",
+    "real_provider_attempts_allowed": 1,
+    "attempt_lock_before_first_provider_call": true,
+    "required_cases": 14,
+    "required_valid_output_rate": 1.0,
+    "required_route_recall": 1.0,
+    "required_action_dependency_recall": 1.0,
+    "required_exact_set_match_rate_min": 0.9,
+    "required_mean_extra_reads_max": 0.25,
+    "required_unknown_route_rate": 0.0,
+    "required_duplicate_route_rate": 0.0,
+    "required_max_read_cap_violations": 0,
+    "if_fail": "do not run real DEV; amend or reject E14v without inspecting any DEV private rows"
+  },
+  "real_dev_attempt_policy": {
+    "real_planner_runner_invocations_allowed": 1,
+    "attempt_lock_before_first_provider_call": true,
+    "rerun_after_attempt_consumption": false,
+    "model_or_provider_substitution_without_amendment": false,
+    "output_must_remain_local_uncommitted": true
+  },
+  "transform_contract": {
+    "only_parent_field_replaced_before_q_stack": "evidence_plan",
+    "planner_routes_serialized_with_frozen_public_procedural_text": true,
+    "non_evidence_fields_preserved_before_q_stack": true,
+    "E14q_reapplied_unchanged": true,
+    "E14q2_reapplied_unchanged": true,
+    "promotions_by_planner": false,
+    "private_oracle_used": false
+  },
+  "measurement_order": [
+    "offline structural self-check and CI",
+    "one public synthetic planner qualification attempt",
+    "only if synthetic gate passes: mark E14v real DEV active",
+    "one real DEV planner attempt over 5 groups x 2 repeats",
+    "E14q unchanged",
+    "E14q2 unchanged",
+    "public groundedness surface audit",
+    "frozen E9 v4.1 once",
+    "build v4.2 claim packet",
+    "only if deterministic full-DEV gate passes: preregister exact semantic packet shape and run one qualified semantic measurement",
+    "only if deterministic and semantic DEV gates pass: VALIDATION measurement-only"
+  ],
+  "full_dev_target_gate": {
+    "fixed_calls_required": 10,
+    "scoreable_calls_required": 10,
+    "evidence_correctness_min": 0.5,
+    "mean_expected_read_recall_min": 0.8333,
+    "mean_extra_public_read_count_max": 3.5,
+    "decision_correctness_min": 0.8,
+    "action_correctness_min": 0.8,
+    "escalation_correctness_min": 0.8,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "locked_test_or_gold_leakage_rate_required": 0.0
+  },
+  "interpretation_limits": {
+    "candidate_is_architecture_stage_not_paired_causal_claim": true,
+    "no_claim_that_same_model_reasoning_improved": true,
+    "semantic_pass_cannot_rescue_deterministic_fail": true,
+    "validation_blocked_until_full_dev_deterministic_and_semantic_pass": true,
+    "no_private_row_inspection_after_failure": true
+  }
+}

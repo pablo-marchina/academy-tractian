@@ -1,0 +1,21 @@
+{
+  "correction_id": "VALIDATION-USAGE-SUPERSEDING-CORRECTION-2026-08-22",
+  "status": "ACTIVE_SUPERSEDING_POLICY_WORDING",
+  "date": "2026-08-22",
+  "preserves_historical_artifact": "research/experiments/validation-measurement-only-usage-amendment.json",
+  "does_not_rewrite_history": true,
+  "historical_correction": {
+    "superseded_status_string": "REGISTERED_BEFORE_ANY_VALIDATION_RUN",
+    "reason": "Committed BIG-B0 chronology establishes VALIDATION runs and uses on 2026-08-16 and 2026-08-17 before the 2026-08-18 amendment. The historical status string is therefore not literally valid project-wide.",
+    "correct_interpretation_for_future_governance": "The 2026-08-18 amendment changed future VALIDATION behavior; it did not establish that no earlier VALIDATION run occurred."
+  },
+  "big_b4_effective_policy": {
+    "historical_validation_groups_are_exposed": true,
+    "historical_validation_is_part_of_exposed_pool": true,
+    "historical_validation_may_be_used_for_adaptive_development_and_selection_under_big_b4": true,
+    "historical_validation_may_not_be_claimed_as_fresh_blind_or_independent": true,
+    "fresh_blind_primary_generalization_evidence_comes_from_new_protected_source": true,
+    "legacy_locked_test_remains_separately_protected_until_final_authorization": true
+  },
+  "supersession_scope": "Future benchmark-role and access-control language only. Historical experiment reports remain immutable evidence under their contemporaneous protocols."
+}

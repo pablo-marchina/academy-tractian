@@ -1,0 +1,95 @@
+{
+  "id": "e13-dev-only-reprocess-authorization-boundary",
+  "date": "2026-08-16",
+  "status": "E13_DEV_ONLY_REPROCESS_AUTHORIZATION_BOUNDARY_PREREGISTERED_FOR_IMPLEMENTATION",
+  "phase_gate_mode": "hard_phase_gate",
+  "is_demo": false,
+  "is_integration": false,
+  "is_new_product": false,
+  "final_architecture_freeze": false,
+  "purpose": "Implement only the E13 preregistered reprocess-specific authorization boundary as a DEV-only candidate before any full remeasurement.",
+  "root_cause_source": {
+    "audit": "E12 hard-gate root-cause audit",
+    "root_cause_class": "policy_executed_but_over_permissive_or_wrong_authorization_class",
+    "relevant_findings": [
+      "E11 independent action authorization executed on full DEV+VALIDATION.",
+      "The policy checked all 12 full outputs and changed 0 outputs.",
+      "All full outputs were authorized as autonomous_state_change via POST /analyses/{analysis_id}/reprocess.",
+      "All full outputs had 7 detected evidence families, so generic evidence-family count was not discriminative."
+    ]
+  },
+  "candidate_change": {
+    "name": "reprocess_specific_authorization_boundary",
+    "target_endpoint": "POST /analyses/{analysis_id}/reprocess",
+    "target_failure_mode": "over_permissive_authorization_of_autonomous_reprocess_actions",
+    "implementation_scope": "DEV-only",
+    "description": "Do not authorize autonomous reprocess from generic evidence-family counts or generic human-review markers. Authorize POST /analyses/{analysis_id}/reprocess only when endpoint-specific visible evidence shows that the existing analysis itself is invalid, failed, stale, incomplete, blocked by data-quality failure, or otherwise unsafe to rely on without recomputation.",
+    "fallback_when_not_authorized": "Downgrade to investigation or human handoff without executing reprocess."
+  },
+  "allowed_inputs": {
+    "visible_parsed_output": true,
+    "public_project_tool_invariants": true,
+    "dev_split": true,
+    "validation_split": false,
+    "locked_test_split": false,
+    "private_oracle": false,
+    "private_expected_paths": false,
+    "raw_scorer_rows": false,
+    "validation_feedback": false,
+    "reference_trajectories": false,
+    "evaluator_labels": false
+  },
+  "scope": {
+    "measurement_splits": ["DEV"],
+    "validation_ran": false,
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false,
+    "representative_groups": {
+      "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+    },
+    "dev_repeats": 2,
+    "expected_total_calls": 6
+  },
+  "authorization_rules": {
+    "generic_evidence_family_count_is_not_sufficient": true,
+    "generic_human_review_markers_are_not_sufficient": true,
+    "requires_supported_reprocess_endpoint": true,
+    "requires_visible_analysis_identifier": true,
+    "requires_endpoint_specific_reprocess_defect_evidence": true,
+    "recognized_reprocess_defect_classes": [
+      "analysis_failed_or_error",
+      "analysis_invalid_or_unreliable",
+      "analysis_stale_or_outdated",
+      "analysis_incomplete_or_missing_required_data",
+      "data_quality_blocked_analysis",
+      "unsafe_to_rely_without_recomputation"
+    ],
+    "non_authorized_behavior": {
+      "should_take_action_now": false,
+      "requires_human_escalation": true,
+      "decision_class": "investigate_only_or_human_handoff",
+      "action_endpoint_authorized": false
+    }
+  },
+  "acceptance_before_full_remeasurement": {
+    "dev_private_scoring_required": true,
+    "score_with": "E9 v3 scorer after fixed outputs exist",
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "locked_test_accessed": false,
+    "raw_private_or_fixed_output_material_committed": false,
+    "minimum_real_task_quality": 0.8571,
+    "minimum_decision_correctness": 0.75,
+    "minimum_action_correctness": 0.75,
+    "minimum_evidence_correctness": 1.0,
+    "minimum_escalation_correctness": 1.0
+  },
+  "full_remeasurement_condition": "Only if DEV-only E13 passes the acceptance target, prepare a new full DEV+VALIDATION measurement-only run. Do not use VALIDATION for tuning.",
+  "blocked_until_dev_passes": [
+    "full DEV+VALIDATION rerun",
+    "integration",
+    "demo",
+    "UI/final architecture progression",
+    "final architecture freeze"
+  ]
+}

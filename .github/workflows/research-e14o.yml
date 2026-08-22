@@ -1,0 +1,51 @@
+name: research-e14o-dev-only-public-factual-grounding
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e14o-dev-only-factual-grounding-dry-run:
+    runs-on: ubuntu-24.04
+    env:
+      E8_GROQ_MODEL: openai/gpt-oss-120b
+      E8_MODEL_TEMPERATURE: "0"
+      E14_REASONING_EFFORT: medium
+      E14_REASONING_FORMAT: hidden
+      E14_RESPONSE_FORMAT_MODE: json_schema_strict
+      E14_MAX_COMPLETION_TOKENS: "4096"
+      # Structural dry-run skips pacing sleeps. Real E14o remains frozen at 25s by the inherited E14l assertions.
+      E8_BETWEEN_CALL_DELAY_SECONDS: "0"
+      E14F_REPAIR_DELAY_SECONDS: "0"
+      E14_MAX_RETRIES: "2"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Compile E14o runner and structural self-check
+        run: |
+          python -m py_compile scripts/research/e14o_dev_only_public_factual_grounding_prompt.py
+          python -m py_compile scripts/research/e14o_dev_only_public_factual_grounding_prompt_selfcheck.py
+      - name: Run E14o oracle-free structural self-check
+        run: PYTHONPATH=. python scripts/research/e14o_dev_only_public_factual_grounding_prompt_selfcheck.py
+      - name: Execute E14o DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14o_dev_only_public_factual_grounding_prompt.py
+          --manifest research/experiments/e14o-dev-only-public-factual-grounding-prompt-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14o-dev-only-public-factual-grounding-dry-run.json
+          --dry-run
+      - name: Upload E14o dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14o-dev-only-public-factual-grounding-dry-run
+          path: /tmp/e14o-dev-only-public-factual-grounding-dry-run.json

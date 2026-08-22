@@ -1,0 +1,78 @@
+{
+  "report_version": "e6-real-toolspec-langgraph-summary-v1",
+  "date": "2026-08-16",
+  "scope": {
+    "allowed_splits": [
+      "DEV",
+      "VALIDATION"
+    ],
+    "forbidden_splits": [
+      "LOCKED_TEST"
+    ],
+    "locked_test_accessed": false,
+    "tool_spec_constant": true,
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "runtime_candidate": "langgraph",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "ui_freeze": false
+  },
+  "adaptive_mode": true,
+  "adaptive_scope": "evidence acquisition order and tool selection only",
+  "tool_spec_registry_wired": true,
+  "tool_spec_registry_size": 18,
+  "tool_names_used": [
+    "get_analysis",
+    "get_asset",
+    "get_baseline",
+    "get_data_quality",
+    "get_spectrum",
+    "list_analyses",
+    "search_knowledge"
+  ],
+  "action_tools_used": [
+    "reprocess_analysis",
+    "request_specialist_analysis"
+  ],
+  "harness_runner_used": true,
+  "b3_external_guard_preserved": true,
+  "evidence_sufficiency_policy_explicit": true,
+  "runtrace_compatible_output": true,
+  "representative_scenarios": 4,
+  "splits": [
+    "DEV",
+    "VALIDATION"
+  ],
+  "adaptive_path_count": 3,
+  "required_evidence_coverage": 1.0,
+  "action_execution_proxy_ok": 2,
+  "action_execution_proxy_total": 2,
+  "b3_policy_events": 2,
+  "deterministic_replay_equal": true,
+  "checkpoint_pause_resume_roundtrip": true,
+  "direct_harness_avg_ms": 1.3582,
+  "langgraph_avg_ms": 20.3439,
+  "overhead_ratio": 14.979,
+  "ci_run_id": 31949049937,
+  "ci_artifact_id": 9264115250,
+  "ci_job_status": "success",
+  "comparators_retained": [
+    "pydantic_ai_graph",
+    "openai_agents_sdk"
+  ],
+  "decision": {
+    "langgraph": "advance to real DEV/VALIDATION integration implementation",
+    "pydantic_ai_graph": "retain as fallback/comparator",
+    "openai_agents_sdk": "retain as provider-native comparator"
+  },
+  "notes": [
+    "This is more adaptive than the previous micro-spike because tool selection is derived from missing evidence requirements, not from one fixed tool script.",
+    "Safety remains deterministic: B3 and evidence sufficiency are policy nodes outside model control.",
+    "HarnessRunner and the real ToolSpec registry are used for execution and trace generation.",
+    "LOCKED_TEST was not accessed.",
+    "Model/provider, MCP topology, RAG/vector DB, multi-agent design, observability backend and UI remain unfrozen."
+  ]
+}

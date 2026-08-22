@@ -1,0 +1,81 @@
+{
+  "experiment_id": "E14h",
+  "title": "DEV-only GPT-OSS 120B high-reasoning configuration",
+  "status": "PREREGISTERED_DEV_ONLY_CANDIDATE",
+  "date": "2026-08-17",
+  "parent_candidate": "E14g",
+  "scope": {
+    "splits": ["DEV"],
+    "validation_ran": false,
+    "validation_tuning_forbidden": true,
+    "locked_test_forbidden": true
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+  },
+  "repeats": {
+    "DEV_ACTION_ESCALATION_CALIBRATION": 2
+  },
+  "candidate_change": {
+    "change_class": "reasoning_effort_only",
+    "single_intervention": true,
+    "parent_reasoning_effort": "medium",
+    "candidate_reasoning_effort": "high",
+    "model_unchanged": true,
+    "provider_unchanged": true,
+    "prompt_unchanged": true,
+    "semantic_repair_unchanged": true,
+    "temperature_unchanged": true,
+    "completion_budget_unchanged": true,
+    "json_mode_unchanged": true,
+    "post_model_policy_unchanged": true,
+    "scorer_unchanged": true,
+    "acceptance_gate_unchanged": true
+  },
+  "preserved": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "e14f_conditional_public_semantic_repair": true,
+    "e14c_public_action_endpoint_canonicalization": true,
+    "e14d_public_evidence_resource_canonicalization": true,
+    "e14e_explicit_current_handoff_semantics": true,
+    "e10e_policy_and_thresholds": true,
+    "e10g_policy_and_thresholds": true,
+    "e11_independent_action_authorization": true,
+    "e14_selective_reprocess_boundary": true,
+    "temperature": 0,
+    "max_completion_tokens": 1600,
+    "response_format": "json_object",
+    "scorer": "E9 v3 unchanged",
+    "acceptance_gate": true
+  },
+  "operational_boundary": {
+    "high_reasoning_may_use_more_reasoning_tokens": true,
+    "completion_budget_intentionally_not_increased": true,
+    "reason": "isolate reasoning_effort as the only intervention",
+    "completeness_failure_if_any_is_candidate_result": true,
+    "no_token_budget_rescue_inside_same_experiment": true
+  },
+  "forbidden_inputs": {
+    "private_expected_paths_to_model_or_repair": true,
+    "private_scorer_rows_to_model_or_repair": true,
+    "evaluator_labels_to_model_or_repair": true,
+    "validation_feedback_to_model_or_repair": true,
+    "locked_test_to_model_or_repair": true,
+    "group_specific_expected_behavior_hardcoding": true
+  },
+  "acceptance_gate": {
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "real_task_quality_min": 0.8571,
+    "decision_correctness_min": 0.75,
+    "action_correctness_min": 0.75,
+    "evidence_correctness": 1.0,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "locked_test_accessed": false
+  },
+  "promotion_rule": "Only a complete real DEV E14h measurement that satisfies every unchanged gate threshold may proceed to measurement-only DEV+VALIDATION.",
+  "causal_interpretation": "E14g and E14h are separate model generations. The configuration difference is isolated to reasoning_effort, but aggregate score deltas are not treated as deterministic paired effects. Promotion uses the absolute frozen gate."
+}

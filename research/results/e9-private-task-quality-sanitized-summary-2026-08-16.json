@@ -1,0 +1,81 @@
+{
+  "report_version": "e9-private-task-quality-sanitized-summary-v1",
+  "date": "2026-08-16",
+  "status": "E9_TASK_QUALITY_SCORER_PASS",
+  "source": "local private E9 v3 scorer summary; raw oracle rows and fixed parsed outputs are intentionally not committed",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "oracle_format": "expected_paths_asset_mention_adapter_v3_case_safe",
+    "known_allowed_oracle_groups": [
+      "asset_B204",
+      "asset_C710",
+      "asset_G501",
+      "asset_M102",
+      "asset_S420"
+    ],
+    "locked_test_oracle_groups_detected": [],
+    "outside_known_allowed_asset_groups": []
+  },
+  "inputs": {
+    "fixed_calls_consumed": 12,
+    "fixed_output_hashes_consumed": 7,
+    "parsed_model_outputs_available": 12,
+    "private_oracle_file_provided": true,
+    "private_oracles_loaded": 5,
+    "calls_with_matching_private_oracle": 12
+  },
+  "gold_leakage_controls": {
+    "model_prompt_receives_oracle": false,
+    "scorer_reads_oracle_after_outputs_fixed": true,
+    "outputs_hashed_before_scoring": true,
+    "evaluator_only_paths_blocked_from_model": true,
+    "locked_test_oracle_groups_rejected": true,
+    "raw_expected_values_printed": false
+  },
+  "aggregate_metrics": {
+    "scoreable_calls": 12,
+    "real_task_quality": 0.631,
+    "decision_correctness": 0.6667,
+    "evidence_correctness": 0.0,
+    "action_correctness": 0.25,
+    "escalation_correctness": 0.5,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "interpretation": {
+    "e9_pass_meaning": "The evaluator-side scorer ran successfully against fixed Groq outputs and private DEV/VALIDATION expected paths.",
+    "model_quality_interpretation": "The leading free Groq candidate passes schema/proxy gates but does not yet meet task-quality expectations under private expected-path scoring.",
+    "major_gap": "Evidence correctness is 0.0 and proxy-vs-real disagreement is 1.0, so proxy success was over-optimistic.",
+    "next_gate": "Use E9 findings to improve prompt/evidence acquisition/action policy on DEV only, then rerun fixed-output capture and E9. Do not tune on VALIDATION or access LOCKED_TEST."
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "not_committed": [
+    "eval/expected-paths.json",
+    "fixed parsed Groq output rows",
+    "raw expected-path rows",
+    "expected answers",
+    "reference trajectories",
+    "evaluator-only labels",
+    "API keys or secrets",
+    "LOCKED_TEST labels or cases"
+  ],
+  "final_architecture_freeze": false
+}

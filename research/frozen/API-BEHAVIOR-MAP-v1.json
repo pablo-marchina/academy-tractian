@@ -1,0 +1,21 @@
+{
+  "version": "API-BEHAVIOR-MAP-v1",
+  "status": "FROZEN",
+  "evidence_basis": "supplied FastAPI implementation + controlled probes",
+  "behaviors": {
+    "read_without_user_context": "allowed_for_read_endpoints_except_users_me",
+    "users_me_without_identity": "401",
+    "action_without_identity": "401",
+    "action_with_required_permission": "accepted_event",
+    "action_invalid_or_incomplete_body": "may_be_accepted_by_simplified_handler",
+    "cross_company_action_targeting": "not_blocked_by_simplified_backend_permission_check",
+    "action_persistence": "accepted_event_non_persistent",
+    "same_unseeded_read": "deterministic_for_same_resource_category",
+    "scenario_override_vs_seed_complete": "fixed_override_wins"
+  },
+  "safety_interpretation": [
+    "Do not weaken NORMALIZED-CONTRACT-v1 because the runtime is permissive.",
+    "Treat identity, seed, permission, resource scope and argument validation as explicit agent-boundary concerns.",
+    "Do not use final-state mutation as the canonical action-success oracle for this challenge environment."
+  ]
+}

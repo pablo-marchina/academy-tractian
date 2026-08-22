@@ -1,0 +1,84 @@
+name: research-evaluator-next-prep
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/research/e9_private_oracle_semantic_signature_diagnostic.py'
+      - 'scripts/research/e14m_r1_existing_capture_diagnostic.py'
+      - 'research/e2/tool_registry.py'
+      - '.github/workflows/research-evaluator-next-prep.yml'
+  workflow_dispatch:
+
+jobs:
+  evaluator-next-prep-self-checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Compile diagnostics
+        run: |
+          python -m py_compile scripts/research/e9_private_oracle_semantic_signature_diagnostic.py
+          python -m py_compile scripts/research/e14m_r1_existing_capture_diagnostic.py
+
+      - name: Synthetic oracle semantic-signature diagnostic
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/oracle.json" <<'JSON'
+          [
+            {
+              "id": "synthetic",
+              "ticket_id": "synthetic",
+              "mode": "synthetic",
+              "root_question": "private-like text not printed",
+              "expected_path": [
+                {"step": "GET /assets/asset_x/analyses", "note": "inspect current analyses"},
+                {"step": "POST /analyses/analysis_x/reprocess", "note": "only if stale"}
+              ]
+            }
+          ]
+          JSON
+          python scripts/research/e9_private_oracle_semantic_signature_diagnostic.py \
+            --oracle-file "$RUNNER_TEMP/oracle.json" > "$RUNNER_TEMP/signature.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = json.loads((Path(os.environ['RUNNER_TEMP']) / 'signature.json').read_text())
+          assert p['status'] == 'E9_PRIVATE_ORACLE_SEMANTIC_SIGNATURE_DIAGNOSTIC'
+          assert p['public_tool_registry_entries_parsed'] == 18
+          assert p['expected_path_steps_found'] == 2
+          assert p['steps_with_method_and_recognizable_public_tool_path'] == 2
+          assert p['prints_oracle_values'] is False
+          assert p['prints_per_row_results'] is False
+          PY
+
+      - name: Synthetic occupied R1 classification
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/r1.json" <<'JSON'
+          {
+            "report_version": "e14m-r1-operational-replacement-v1",
+            "status": "E14M_R1_OPERATIONAL_REPLACEMENT_CAPTURE_PASS",
+            "dry_run": true,
+            "aggregate_metrics": {"total_calls": 6, "parsed_model_outputs_available": 6, "scoreable_calls": 6},
+            "scope": {"validation_ran": false, "locked_test_accessed": false},
+            "e14m_r1_operational_replacement": {
+              "amendment_id": "E14m-R1",
+              "replacement_capture_index": 1,
+              "replacement_captures_allowed": 1,
+              "same_candidate": true
+            }
+          }
+          JSON
+          python scripts/research/e14m_r1_existing_capture_diagnostic.py \
+            --capture "$RUNNER_TEMP/r1.json" > "$RUNNER_TEMP/r1diag.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = json.loads((Path(os.environ['RUNNER_TEMP']) / 'r1diag.json').read_text())
+          assert p['classification'] == 'R1_DRY_RUN_ARTIFACT_EXISTS'
+          assert p['is_e14m_r1'] is True
+          assert p['prints_raw_model_outputs'] is False
+          PY

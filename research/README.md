@@ -1,178 +1,113 @@
 # Systematic Research Hub
 
-Status: **ACTIVE — Wave 5 / E0 + E1 executing in parallel / Research Gate not passed**
+**Status: E0–E3 frozen/complete; E4–E14 measured; E14/E14b/E14c/E14d/E14e/E14f/E14g/E14k/E14l real DEV gates failed; E14h/E14i/E14j failed operationally; semantic-selection diagnosis is next**  
+**Date:** 2026-08-18
 
-The project now has the updated TAPI, kickoff evidence and the actual TRACTIAN project package. Production architecture is still **not frozen**: partner artifacts have replaced many hypotheses with executable facts, and E0/E1 are now converting those facts into trustworthy contract and benchmark representations before framework selection.
+The project has frozen contract/gold semantics, a framework-neutral experimental harness, a leakage-aware benchmark split, and a hard safety/action gate that still blocks downstream product integration.
 
-## Current execution — 2026-08-16
+Production architecture is **not frozen**. No demo/UI/integration phase is authorized while the DEV gate remains failed.
 
-### E0 — contract normalization/conformance
+## Current valid real DEV quality measurements
 
-Implemented and executed:
+| Metric | E14 | E14b | E14c | E14d | E14e | E14f | E14g | E14k | E14l | Required |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Parsed / scoreable | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 |
+| Real task quality | 0.7381 | 0.6429 | 0.8333 | 0.8095 | 0.7619 | 0.6429 | 0.6667 | 0.6429 | 0.6190 | >= 0.8571 |
+| Decision correctness | 0.5000 | 0.5000 | 0.6667 | 0.8333 | 0.6667 | 0.5000 | 0.5000 | 0.3333 | 0.3333 | >= 0.7500 |
+| Evidence correctness | 0.5000 | 0.3333 | 1.0000 | 0.6667 | 0.5000 | 0.1667 | 0.8333 | 0.8333 | 1.0000 | 1.0000 |
+| Action correctness | 0.1667 | 0.0000 | 0.1667 | 0.3333 | 0.3333 | 0.3333 | 0.1667 | 0.1667 | 0.0000 | >= 0.7500 |
+| Escalation correctness | 1.0000 | 0.6667 | 1.0000 | 0.8333 | 0.8333 | 0.5000 | 0.1667 | 0.1667 | 0.0000 | 1.0000 |
+| Premature action rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+| Unsupported final-claim rate | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
 
-- `scripts/research/e0_contract_pipeline.py`
-- `31-e0-contract-normalization-execution.md`
+E14h/E14i/E14j are excluded from the quality table because they produced zero parsed real outputs. Cross-generation score deltas are descriptive only and are not treated as deterministic paired causal effects.
 
-Current result:
+VALIDATION remains blocked. LOCKED_TEST remains untouched.
 
-- duplicate-aware parsing works;
-- duplicate `/assets/{assetId}` GET/PATCH mapping is merged losslessly in a private candidate;
-- normalized route surface and FastAPI runtime match structurally at **18 operations / 17 path templates**;
-- runtime semantic probes executed;
-- declared-vs-runtime differences are classified rather than silently reconciled;
-- `NORMALIZED-CONTRACT-v1` is **not frozen yet** while final naming/transformation manifest and API behavior metadata are completed.
+## Retained deterministic findings
 
-### E1 — gold normalization / ScenarioSchema v1
+E14c fixed public action-endpoint representation without rewriting model output. E14d fixed the analogous public evidence-resource representation. E14d/E14e closed the remaining deterministic boundary issue: the relevant reprocess proposal was not blocked by precedence but by missing public justification/anchor requirements. E14e narrowed historical broad escalation-marker semantics to explicit current handoff semantics. No further downstream guard relaxation is supported by current public evidence.
 
-Implemented and executed:
+E14f added one conditional same-model repair call only for preregistered public contradictions. Real E14f was complete and safe but failed the absolute task-quality gate, so public internal consistency is insufficient for benchmark correctness.
 
-- `scripts/research/e1_normalize_gold.py`
-- `schemas/scenario-v1-draft.schema.json`
-- `32-e1-gold-normalization-execution.md`
-- `33-e1-cross-modality-pilot-review.md`
+## E14g — 120B model selection
 
-Current result:
+E14g changed only the model to `openai/gpt-oss-120b`, preserving medium reasoning, 1600 completion tokens, JSON Object Mode and the frozen post-model stack. It completed 6/6 but failed the gate. All six calls contained concrete public-read equivalents and 6–8 normalized evidence families.
 
-- **16/16** narrative scenarios mechanically source-normalized;
-- **17/17** tickets mapped;
-- **10** split groups retained;
-- no missing expected narrative sections;
-- **10/16** scenarios show machine-vs-narrative endpoint-set divergence, confirming that raw `expected_path` cannot be the complete oracle;
-- cross-modality review complete for **4/16** scenarios;
-- action-oracle semantics refined after the pilot;
-- remaining **12/16** scenarios still require review before benchmark authority.
+## E14h / E14i / E14j — operational failures
 
-Evaluator-only normalized outputs stay under private/ignored paths until publication policy is clarified.
+All three high-reasoning real captures used GPT-OSS 120B with `max_completion_tokens=1600` and produced 0/6 parsed outputs. Their null scorer metrics are not quality measurements. Historical telemetry also over-classified generic provider `failed_generation` payloads as JSON-validation failures; future telemetry was refined without changing request semantics.
 
-## Source hierarchy
+## E14k / E14l — operational stack recovered, semantic gate still failed
 
-1. Updated TAPI / written Student Guide and partner package.
-2. Executable supplied API behavior/source.
-3. Raw OpenAPI + agent/eval/data artifacts.
-4. Confidence-labeled kickoff guidance where not contradicted by artifacts.
-5. Primary research/specifications/official framework docs.
-6. Reproducible experiments in this repository.
+E14k changed only `max_completion_tokens: 1600 -> 4096` at high reasoning and restored 6/6 operational completeness, but failed the quality gate.
 
-Raw package hash and derived findings are recorded in `26-tractian-artifact-ingestion-wave-4.md`. The raw package/eval gold is not copied into the public branch until publication policy is confirmed.
+E14l then changed only `reasoning_effort: high -> medium` while preserving strict JSON Schema, 4096 tokens and all prompts/policies. It also completed 6/6 and failed:
 
-## What the delivered artifacts resolve
+```text
+real_task_quality:        0.6190
+decision_correctness:     0.3333
+evidence_correctness:     1.0000
+action_correctness:       0.0000
+escalation_correctness:   0.0000
+premature_action_rate:    0.0000
+unsupported_claim_rate:   0.0000
+```
 
-- 17 agent-input cases and 16 narrative evaluation scenarios are available.
-- Agent-visible material and evaluator-only gold are explicitly separated.
-- Reference engineer trajectories are references, **not scripts**.
-- The local FastAPI runtime exposes 18 operations across 17 path templates.
-- Actual permission/action classes, synthetic entities and response-mode implementation are inspectable.
-- Actions return accepted execution events and do not persist state in the supplied store.
-- API response modes are controllable through deterministic explicit seeds; omitted seed is also deterministic in executable code.
-- Knowledge corpus is five documents with dedicated search/document endpoints.
-- Only 10 primary asset/story groups support 17 cases, so random ticket splitting would leak related stories.
+E14l had zero semantic-repair triggers, zero E10d/E10e/E10g/E11 output changes, six concrete public-read equivalents, normalized public evidence-family counts of 5–9, and zero selective-reprocess checks.
 
-## High-impact package findings
+The reasoning/budget/response-format tuning family is therefore closed. The remaining problem class is upstream semantic decision/action/escalation selection.
 
-### Contract integrity
+No per-row private labels may be inferred from aggregate E9 metrics. Before preregistering the next candidate, inspect only public fields of the fixed E14l model outputs using `scripts/research/e14l_public_decision_distribution_diagnostic.py`.
 
-The raw OpenAPI YAML contains `/assets/{assetId}` twice (GET and PATCH). A naïve YAML loader can silently overwrite one operation. Therefore raw contract → duplicate-aware audit → normalized derived contract → runtime conformance is mandatory before tool/code generation.
+## Required DEV acceptance
 
-### Raw API is intentionally/coarsely permissive
+| Target | Required |
+|---|---:|
+| Parsed outputs | 6 |
+| Scoreable calls | 6 |
+| Real task quality | >= 0.8571 |
+| Decision correctness | >= 0.75 |
+| Evidence correctness | 1.0 |
+| Action correctness | >= 0.75 |
+| Escalation correctness | 1.0 |
+| Premature action rate | 0.0 |
+| Unsupported final-claim rate | 0.0 |
+| LOCKED_TEST accessed | false |
 
-The supplied action handlers mainly enforce resource existence, coarse permission and justification length. Independent probes show malformed semantic action payloads can still be accepted.
+## Recent records
 
-This creates a strong project-specific experiment around a **guarded contract-aware tool boundary** rather than assuming raw API acceptance equals correct agent behavior.
+- `136-e14k-dev-only-high-reasoning-4096-completion-budget.md`
+- `137-e14k-structural-dry-run-result.md`
+- `138-e14k-real-dev-measurement-result.md`
+- `139-e14l-dev-only-120b-medium-reasoning-strict-4096.md`
+- `140-e14l-structural-dry-run-result.md`
+- `141-e14l-real-dev-measurement-result.md`
+- `results/e14k-real-dev-sanitized-summary.json`
+- `results/e14l-real-dev-sanitized-summary.json`
 
-### Backend does not enforce company/resource ownership
+## Methodological rules
 
-User context exposes company/permissions, but the simplified backend does not reject cross-company action targets when the caller has the coarse permission. Agent/system policy and API enforcement must therefore be evaluated separately.
+- DEV is the only tuning split.
+- VALIDATION is measurement-only after a DEV candidate passes.
+- LOCKED_TEST remains off-limits until final evaluation.
+- Do not commit raw fixed outputs, private scorer rows, output hashes, private local paths, expected paths, evaluator labels, or reference trajectories.
+- Private evaluator/gold never enters model prompts, schema, repair, or public policy logic.
+- Scripted/dry-run outputs validate structure only, not model quality.
+- Separate generations and model/provider substitutions invalidate naive paired causal claims.
+- Do not infer per-row private labels from aggregate scorer metrics.
 
-### Benchmark integrity requires bound context
+## Critical path
 
-- `x-user-id` must be bound by the case/session, not selected by the model.
-- response `seed` must be bound by the runner/evaluator, not exposed as a semantic tool argument.
-
-These are experiment-integrity/security constraints, not optional agent reasoning choices.
-
-### Action oracle changed from pre-API assumption
-
-Because accepted actions do not persist state, final-state equality is not the correct primary oracle for these action scenarios. Evaluate decision/tool/target/args/policy/justification/accepted response/no duplicate instead.
-
-### Gold requires normalization
-
-`eval/expected-paths.json` is useful but materially less complete than narrative scenario policies, expected resolutions and P1/P2 criteria. Exact sequence match must not be the benchmark. ScenarioSchema v1 merges both sources into separate structured oracles.
-
-### Kickoff confirmation guidance is demoted
-
-The kickoff described requester confirmation for mutations, but canonical delivered action scenarios do not model confirmation as a universal precondition. Confirmation remains a **separate guarded safety experiment** unless partner clarification promotes it to official case policy.
-
-## Research status
-
-| Area | Status after E0/E1 start |
-|---|---|
-| Requirements/scope | Strongly resolved; a few instructor/model/publication questions remain |
-| API/domain | Actual runtime/source mapped (`API-MAP-v0`) |
-| Contract | E0 executable pipeline active; 18/17 structural conformance achieved; final normalization freeze pending |
-| Package/gold | Inventory/audit complete; E1 source normalization 16/16 complete; review 4/16 complete |
-| Canonical ToolSpec | Exact constraints known; waits on E0/E1 freeze |
-| Evaluation | ScenarioSchema v1 draft source-derived and refined; final oracle review pending |
-| Safety/policy | Real raw-API weaknesses support controlled guarded-boundary experiment |
-| Evidence/stopping | Actual response modes/overrides known; experiment ready after harness |
-| Reliability | Fixed-environment model reliability and seed-based API robustness can be separated |
-| Runtime | LangGraph / Pydantic AI/Graph / OpenAI Agents SDK remain candidates; project spike pending |
-| MCP | Same ToolSpec native-vs-MCP experiment pending |
-| Models | Project benchmark method ready; provider availability to confirm at execution time |
-| RAG | Direct knowledge API baseline favored; external RAG conditional |
-| Multi-agent/routing/optimization | Conditional; no evidence yet to add them |
-| Statistics | Pilot unlocked after harness/split; exact `k` still not guessed |
-
-## Central experiment program
-
-The strongest current hypothesis candidate remains:
-
-> **Does a guarded, contract-aware tool boundary materially improve argument correctness and safety over a minimally wrapped baseline while preserving task success and acceptable efficiency?**
-
-Staged variants:
-
-- B0 benchmark-valid minimal wrapper;
-- B1 + strict typed argument validation;
-- B2 + deterministic permission/company/resource policy guard;
-- B3 + explicit evidence-aware action/escalation policy;
-- B4 confirmation extension, separately reported unless official policy changes.
-
-After this, runtime/MCP/model choices are evaluated while holding canonical tools/scenarios/evaluator constant.
-
-## Files
-
-### Waves 1–3
-
-`00`–`23` contain research protocol, requirements, literature/evidence synthesis, candidate stack, safety/reliability/statistics, state/memory/context, observability, model/RAG methodology, runtime/MCP deep dives, ScenarioSchema v0, TraceSchema v0, spikes and Swagger-audit preparation.
-
-### 2026-08-13 evidence updates
-
-- `24-updated-tapi-impact-2026-08-13.md`
-- `25-kickoff-evidence-2026-08-13.md`
-
-### Wave 4 — delivered TRACTIAN artifacts
-
-- `26-tractian-artifact-ingestion-wave-4.md`
-- `27-api-map-v0-wave-4.md`
-- `28-gold-map-v0-wave-4.md`
-- `29-contract-and-package-quality-audit-wave-4.md`
-- `30-post-artifact-experiment-program-wave-4.md`
-
-### Wave 5 — E0/E1 execution
-
-- `31-e0-contract-normalization-execution.md`
-- `32-e1-gold-normalization-execution.md`
-- `33-e1-cross-modality-pilot-review.md`
-- `schemas/scenario-v1-draft.schema.json`
-- `../scripts/research/e0_contract_pipeline.py`
-- `../scripts/research/e1_normalize_gold.py`
-
-### Schemas / decisions
-
-- `schemas/scenario-v0.schema.json`
-- `schemas/trace-v0.schema.json`
-- `sources.md`
-- `../docs/adr/000-template.md`
-
-## Immediate sequence
-
-**Finish E0 naming/manifest/API-BEHAVIOR-MAP-v1 + review remaining 12 E1 scenarios → freeze contract/scenario candidates → Canonical ToolSpec/evaluator/TraceSchema v1 → leakage-aware split → B0–B3 → evidence/stopping → runtime/MCP → pilot/model benchmark → conditional techniques only if justified → ADRs → `FROZEN-v1`.**
+```text
+E14l public-output-only semantic distribution diagnostic
+→ preregister one upstream semantic-selection intervention using public behavior only
+→ structural CI
+→ one complete real DEV capture
+→ only if 6/6 parsed: unchanged E9 v3 scoring exactly once
+→ only if every unchanged DEV threshold passes: measurement-only DEV+VALIDATION
+→ final safety/action gate decision
+→ architecture decisions backed by accumulated experiments
+→ integration/demo implementation
+→ final locked evaluation
+```

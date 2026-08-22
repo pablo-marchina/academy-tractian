@@ -1,0 +1,31 @@
+name: research-e13-blocker-audit
+
+on:
+  push:
+    paths:
+      - 'scripts/research/e13_blocker_audit_non_validation_tuned.py'
+      - 'research/experiments/e13-blocker-audit-non-validation-tuned-manifest.json'
+      - 'research/104-e13-blocker-audit-non-validation-tuned.md'
+      - '.github/workflows/research-e13-blocker-audit.yml'
+  pull_request:
+    paths:
+      - 'scripts/research/e13_blocker_audit_non_validation_tuned.py'
+      - 'research/experiments/e13-blocker-audit-non-validation-tuned-manifest.json'
+      - 'research/104-e13-blocker-audit-non-validation-tuned.md'
+      - '.github/workflows/research-e13-blocker-audit.yml'
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: E13 blocker audit dry-run
+        run: |
+          python scripts/research/e13_blocker_audit_non_validation_tuned.py \
+            --manifest research/experiments/e13-blocker-audit-non-validation-tuned-manifest.json \
+            --out /tmp/e13-blocker-audit-dry-run.json \
+            --dry-run
+          test -s /tmp/e13-blocker-audit-dry-run.json

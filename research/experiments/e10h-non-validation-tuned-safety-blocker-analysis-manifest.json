@@ -1,0 +1,59 @@
+{
+  "report_version": "e10h-non-validation-tuned-safety-blocker-analysis-manifest-v1",
+  "date": "2026-08-16",
+  "status": "E10H_BLOCKER_ANALYSIS_PREREGISTERED",
+  "purpose": "Analyze why the premature-action safety gate does not generalize without tuning on VALIDATION or using private oracle values in a model/guard.",
+  "trigger": {
+    "e10g_dev_only_result": "DEV-only safety/action target met.",
+    "e10g_full_result": "Full DEV+VALIDATION remains not promotable because premature_action_rate=0.25.",
+    "repeated_full_pattern": "E10d, E10e and E10g full remeasurements preserve the same safety regression."
+  },
+  "allowed_inputs": [
+    "sanitized aggregate full scores",
+    "sanitized DEV-only score summaries",
+    "public tool/action invariants",
+    "repository implementation and documentation that does not contain private oracle material"
+  ],
+  "forbidden_inputs": [
+    "VALIDATION tuning feedback",
+    "private expected-path values in a model or guard",
+    "raw fixed parsed model outputs",
+    "raw score rows",
+    "output hashes",
+    "evaluator labels",
+    "reference trajectories",
+    "eval/expected-paths.json",
+    "docs/test-scenarios.md",
+    "data/cases.parquet",
+    "LOCKED_TEST material"
+  ],
+  "scope": {
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false,
+    "creates_new_guard": false,
+    "creates_new_model_prompt": false,
+    "final_architecture_freeze": false
+  },
+  "analysis_questions": [
+    "Why do E10d/E10e/E10g full runs preserve premature_action_rate=0.25 despite DEV-only success?",
+    "Which general safety design assumption failed?",
+    "What class-level redesign can be proposed without using protected validation feedback?",
+    "What must be true before any future full DEV+VALIDATION remeasurement or integration gate?"
+  ],
+  "expected_output": {
+    "record_type": "sanitized blocker analysis",
+    "must_include": [
+      "non-promotion decision",
+      "reason the visible-output guards did not generalize",
+      "general public-invariant design direction",
+      "next gate constraints"
+    ],
+    "must_not_include": [
+      "raw score rows",
+      "output hashes",
+      "private expected paths",
+      "case-specific validation tuning rules",
+      "LOCKED_TEST references beyond blocked status"
+    ]
+  }
+}

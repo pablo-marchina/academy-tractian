@@ -1,0 +1,84 @@
+{
+  "schema": "e8-free-anywhere-real-candidate-run-v1",
+  "status": "PREREGISTERED",
+  "date": "2026-08-16",
+  "purpose": "Execute DEV smoke and then VALIDATION with an actually available zero-cost remote API or local system candidate.",
+  "budget_policy": {
+    "project_cost_limit_usd": 0,
+    "free_only": true,
+    "remote_apis_allowed": true,
+    "local_systems_allowed": true,
+    "locality_required": false,
+    "requires_explicit_zero_cost_confirmation_for_remote_calls": true,
+    "zero_cost_confirmation_env": "E8_CONFIRM_ZERO_COST=1",
+    "paid_reference_candidates_blocked": [
+      "openai_reference_optional",
+      "anthropic_reference_optional"
+    ],
+    "default_ci_external_model_calls": false
+  },
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "dev_smoke_before_validation": true
+  },
+  "candidate_priority": [
+    "groq_free_api",
+    "gemini_free_api",
+    "openrouter_free_router",
+    "huggingface_free_inference",
+    "ollama_local_optional",
+    "no_model_policy_baseline"
+  ],
+  "candidate_env": {
+    "groq_free_api": ["GROQ_API_KEY", "E8_ENABLE_GROQ=1", "E8_CONFIRM_ZERO_COST=1"],
+    "gemini_free_api": ["GEMINI_API_KEY or GOOGLE_API_KEY", "E8_ENABLE_GEMINI=1", "E8_CONFIRM_ZERO_COST=1"],
+    "openrouter_free_router": ["OPENROUTER_API_KEY", "E8_ENABLE_OPENROUTER_FREE=1", "E8_CONFIRM_ZERO_COST=1"],
+    "huggingface_free_inference": ["HF_TOKEN", "E8_ENABLE_HUGGINGFACE=1", "E8_CONFIRM_ZERO_COST=1"],
+    "ollama_local_optional": ["OLLAMA_HOST", "E8_ENABLE_OLLAMA=1"]
+  },
+  "default_models": {
+    "groq_free_api": "llama-3.1-8b-instant",
+    "gemini_free_api": "gemini-2.5-flash-lite"
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"],
+    "VALIDATION": ["asset_B204", "asset_M102"]
+  },
+  "repeats": {
+    "DEV_SMOKE": 2,
+    "VALIDATION_AFTER_DEV_PASS": 3
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "measured_metrics": [
+    "provider availability",
+    "remote call success rate",
+    "JSON/schema compliance",
+    "no LOCKED_TEST leakage",
+    "evidence-plan completeness proxy",
+    "action/escalation policy self-check proxy",
+    "trace completeness",
+    "latency average and p95",
+    "reported token usage when provider returns it",
+    "cost_usd recorded as zero only under explicit zero-cost confirmation"
+  ],
+  "interpretation_limits": [
+    "This gate provides real model-output evidence only for the enabled zero-cost provider candidate.",
+    "It does not use evaluator-only gold in prompts.",
+    "Task-success metrics remain proxy metrics unless a later scorer maps outputs to private oracles outside the model prompt.",
+    "No model/provider or final architecture is frozen by this gate."
+  ]
+}

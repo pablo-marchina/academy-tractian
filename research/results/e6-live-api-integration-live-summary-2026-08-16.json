@@ -1,0 +1,64 @@
+{
+  "report_version": "e6-live-api-integration-summary-v1",
+  "date": "2026-08-16",
+  "status": "LIVE_PASS",
+  "scope": {
+    "allowed_splits": [
+      "DEV",
+      "VALIDATION"
+    ],
+    "forbidden_splits": [
+      "LOCKED_TEST"
+    ],
+    "locked_test_accessed": false,
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "ui_freeze": false
+  },
+  "live_api_transport_configured": true,
+  "live_api_transport": "HttpxTransport",
+  "live_api_executed": true,
+  "api_base_url": "http://localhost:8000",
+  "seed_binding": "runner-bound",
+  "tool_spec_registry_size": 18,
+  "harness_runner_used": true,
+  "b3_external_guard_preserved": true,
+  "evidence_sufficiency_policy_explicit": true,
+  "adaptive_evidence_planning": true,
+  "model_proposal_generation_connected": true,
+  "proposal_source_class": "safe_agent_input_proposal_generator",
+  "proposal_generation_gold_leakage_blocked": true,
+  "checkpoint_pause_resume_roundtrip": true,
+  "comparators_retained": [
+    "pydantic_ai_graph",
+    "openai_agents_sdk"
+  ],
+  "representative_cases": 8,
+  "splits": [
+    "DEV",
+    "VALIDATION"
+  ],
+  "live_request_count": 37,
+  "live_successful_request_count": 37,
+  "live_success_rate": 1.0,
+  "action_execution_proxy_ok": 4,
+  "action_accepted_proxy_ok": 4,
+  "action_execution_proxy_total": 4,
+  "runtrace_compatible_output": true,
+  "tools_used": [
+    "escalate_case",
+    "get_analysis",
+    "get_asset",
+    "get_baseline",
+    "get_data_quality",
+    "get_rms",
+    "get_spectrum",
+    "list_analyses",
+    "reprocess_analysis",
+    "search_knowledge"
+  ],
+  "live_latency_avg_ms": 2422.9925,
+  "live_latency_p95_ms": 2108.5737
+}

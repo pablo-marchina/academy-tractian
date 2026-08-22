@@ -1,0 +1,148 @@
+{
+  "experiment_id": "E14u-full-DEV-public-evidence-decomposition-prompt",
+  "status": "REJECTED_DETERMINISTIC_FULL_DEV_GATE_FAIL",
+  "date": "2026-08-19",
+  "intervention_class": "public_evidence_decomposition_system_prompt_only",
+  "single_intervention": true,
+  "scope": {
+    "measurement_splits": ["DEV"],
+    "forbidden_splits": ["VALIDATION", "LOCKED_TEST"],
+    "dev_groups": ["asset_G501", "asset_C710", "asset_S420", "asset_M208", "asset_M101"],
+    "repeats_per_group": 2,
+    "expected_fixed_calls": 10
+  },
+  "structural_ci": {
+    "run_id": 32300192016,
+    "conclusion": "success"
+  },
+  "real_generation_checkpoint": {
+    "status": "E14U_FULL_DEV_PUBLIC_EVIDENCE_DECOMPOSITION_PROMPT_CAPTURE_PASS",
+    "fixed_calls": 10,
+    "parsed_outputs": 10,
+    "scoreable_calls": 10,
+    "complete": true,
+    "real_attempt_consumed": true,
+    "rerun_allowed": false,
+    "validation_ran": false,
+    "locked_test_used": false,
+    "private_oracle_used_by_model": false,
+    "validation_feedback_used": false
+  },
+  "deterministic_postprocessing_checkpoint": {
+    "e14n_status": "E14N_PUBLIC_IDENTIFIER_PROVENANCE_GUARD_TRANSFORM_PASS",
+    "e14p_status": "E14P_FULL_DEV_PUBLIC_EPISTEMIC_SERIALIZATION_GUARD_PASS",
+    "e14q_status": "E14Q_FULL_DEV_PUBLIC_ACTION_AUTHORIZATION_CONSISTENCY_GUARD_PASS",
+    "e14q2_status": "E14Q2_FULL_DEV_PUBLIC_ROUTE_ROLE_PURPOSE_CONSISTENCY_GUARD_PASS",
+    "evidence_plan_preserved_after_generation": true,
+    "v4_2_free_text_preserved_by_q_and_q2": true,
+    "provider_calls_after_generation": 0
+  },
+  "surface_audit_final": {
+    "fixed_calls": 10,
+    "assessed_calls": 10,
+    "complete_surface_coverage": true,
+    "unsupported_id_mentions": 0,
+    "unrecognized_method_path_mentions": 0,
+    "unsupported_unit_numeric_mentions": 0,
+    "false_trace_self_check_flags": 0,
+    "concrete_provenance_violation_count": 0,
+    "general_semantic_groundedness_established": false
+  },
+  "e9_v4_1_final_aggregate": {
+    "fixed_calls": 10,
+    "scoreable_calls": 10,
+    "reference_quality": 0.7857,
+    "decision_correctness": 0.8,
+    "evidence_correctness": 0.1,
+    "mean_expected_read_recall": 0.7417,
+    "mean_extra_public_read_count": 4.0,
+    "action_correctness": 0.8,
+    "escalation_correctness": 0.8,
+    "premature_action_rate": 0.0,
+    "unsupported_action_or_escalation_rate": 0.0,
+    "locked_test_or_gold_leakage_rate": 0.0,
+    "alignment_resolved": true,
+    "normalization_resolved": true,
+    "complete_fixed_measurement": true,
+    "validation_gate_authorized": false
+  },
+  "v4_2_packet_characterization": {
+    "claim_units_total": 214,
+    "source_field_claim_unit_counts": {
+      "action_escalation_rubric.calibration_reason": 40,
+      "evidence_plan[]": 134,
+      "proposed_next_step": 12,
+      "risk_notes": 28
+    },
+    "complete_claim_packet_coverage": true,
+    "judge_called": false,
+    "semantic_measurement_authorized": false
+  },
+  "motivation_from_aggregate_only": {
+    "E14q2_evidence_correctness": 0.2,
+    "E14q2_mean_expected_read_recall": 0.7667,
+    "E14q2_mean_extra_public_read_count": 3.5,
+    "E14s_evidence_correctness": 0.2,
+    "E14s_mean_expected_read_recall": 0.775,
+    "E14s_mean_extra_public_read_count": 3.1,
+    "E14t_evidence_correctness": 0.3,
+    "E14t_mean_expected_read_recall": 0.8,
+    "E14t_mean_extra_public_read_count": 3.4,
+    "E14u_evidence_correctness": 0.1,
+    "E14u_mean_expected_read_recall": 0.7417,
+    "E14u_mean_extra_public_read_count": 4.0,
+    "no_per_row_private_labels_inspected": true,
+    "no_group_or_ticket_failure_inferred": true
+  },
+  "frozen_generation_configuration": {
+    "provider_path": "Groq zero-cost path already used by the frozen generation stack",
+    "model": "openai/gpt-oss-120b",
+    "reasoning_effort": "medium",
+    "temperature": 0,
+    "strict_json": true,
+    "max_completion_tokens": 4096,
+    "model_changed": false,
+    "reasoning_effort_changed": false,
+    "temperature_changed": false,
+    "response_format_changed": false,
+    "completion_budget_changed": false,
+    "retry_policy_changed": false,
+    "semantic_repair_policy_changed": false
+  },
+  "real_attempt_policy": {
+    "real_generation_runner_invocations_allowed": 1,
+    "attempt_consumed": true,
+    "rerun_after_attempt_consumption": false,
+    "provider_or_model_substitution_without_amendment": false
+  },
+  "full_dev_target_gate": {
+    "fixed_calls_required": 10,
+    "scoreable_calls_required": 10,
+    "evidence_correctness_min": 0.5,
+    "mean_expected_read_recall_min": 0.8333,
+    "mean_extra_public_read_count_max": 3.5,
+    "decision_correctness_min": 0.8,
+    "action_correctness_min": 0.8,
+    "escalation_correctness_min": 0.8,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "locked_test_or_gold_leakage_rate_required": 0.0
+  },
+  "final_gate_outcome": {
+    "deterministic_full_dev_pass": false,
+    "failed_metrics": [
+      "evidence_correctness",
+      "mean_expected_read_recall",
+      "mean_extra_public_read_count"
+    ],
+    "semantic_judge_skipped_by_design": true,
+    "validation_remains_blocked": true,
+    "locked_test_remains_untouched": true
+  },
+  "interpretation_limits": {
+    "no_causal_claim_about_model_reasoning_beyond_prompt_intervention": true,
+    "semantic_pass_cannot_rescue_deterministic_fail": true,
+    "validation_remains_blocked_until_full_dev_deterministic_and_semantic_pass": true,
+    "next_candidate_must_not_use_private_rows": true
+  }
+}

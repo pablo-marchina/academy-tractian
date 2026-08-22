@@ -1,0 +1,60 @@
+{
+  "experiment_id": "E12",
+  "name": "hard-gate-root-cause-audit",
+  "status": "E12_HARD_GATE_ROOT_CAUSE_AUDIT_PREREGISTERED",
+  "date": "2026-08-16",
+  "purpose": "Audit why E11 full DEV+VALIDATION preserved premature_action_rate=0.25 before designing any next candidate.",
+  "is_demo": false,
+  "is_integration": false,
+  "is_new_product": false,
+  "is_new_guard": false,
+  "scope": {
+    "allowed_inputs": [
+      "E11 full fixed capture metadata from a local non-committed file",
+      "sanitized E11 full aggregate score summary",
+      "DEV/public project invariants",
+      "public tool endpoint/action-class invariants"
+    ],
+    "forbidden_inputs": [
+      "VALIDATION tuning feedback",
+      "private expected-path values",
+      "private oracle values",
+      "raw scorer rows as committed artifacts",
+      "output hashes as committed artifacts",
+      "evaluator labels",
+      "reference trajectories",
+      "eval/expected-paths.json",
+      "docs/test-scenarios.md",
+      "data/cases.parquet",
+      "LOCKED_TEST material"
+    ],
+    "measurement_splits": ["DEV", "VALIDATION"],
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false,
+    "final_architecture_freeze": false
+  },
+  "audit_questions": [
+    "Did the E11 independent action-authorization policy run on the full capture?",
+    "How many full outputs did the policy check?",
+    "How many full outputs did the policy change?",
+    "Was coverage complete across DEV and VALIDATION?",
+    "Were validation outputs authorized instead of blocked?",
+    "Was the remaining premature-action failure consistent with policy non-application, over-permissive authorization, or wrong action-class/endpoint classification?"
+  ],
+  "sanitization_rules": {
+    "do_not_commit_raw_fixed_outputs": true,
+    "do_not_commit_score_rows": true,
+    "do_not_commit_output_hashes": true,
+    "do_not_commit_private_paths": true,
+    "do_not_commit_oracle_values": true,
+    "do_not_commit_api_keys": true,
+    "do_not_commit_validation_feedback": true,
+    "do_not_commit_locked_test_material": true
+  },
+  "success_criteria": [
+    "A sanitized audit proves whether the E11 policy ran on full DEV+VALIDATION outputs.",
+    "The audit reports checked/changed counts by split without hashes, raw outputs or private oracle material.",
+    "The audit identifies the root-cause class before any new candidate is designed.",
+    "No full rerun or next candidate is proposed unless grounded in the audit result."
+  ]
+}

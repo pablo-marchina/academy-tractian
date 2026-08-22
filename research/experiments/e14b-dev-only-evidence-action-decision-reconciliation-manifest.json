@@ -1,0 +1,80 @@
+{
+  "id": "e14b-dev-only-evidence-action-decision-reconciliation",
+  "date": "2026-08-17",
+  "status": "PREREGISTERED_DEV_ONLY_CANDIDATE",
+  "parent_gate": "E14",
+  "phase_gate_mode": "hard_phase_gate",
+  "is_demo": false,
+  "is_integration": false,
+  "is_full_rerun": false,
+  "final_architecture_freeze": false,
+  "purpose": "Address the valid E14 DEV blocker upstream of the selective reprocess boundary by making visible-evidence coverage, endpoint consideration, and decision/action consistency explicit for the GPT-OSS replacement model.",
+  "root_cause_source": {
+    "record": "research/111-e14-real-dev-measurement-result.md",
+    "sanitized_blocker_class": "upstream_evidence_action_decision_mapping_failure_with_safety_preserved",
+    "observed_aggregate_facts": {
+      "completeness_pass": true,
+      "evidence_correctness": 0.5,
+      "decision_correctness": 0.5,
+      "action_correctness": 0.1667,
+      "escalation_correctness": 1.0,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0,
+      "target_reprocess_outputs_checked": 0
+    }
+  },
+  "candidate_change": {
+    "name": "gpt_oss_visible_evidence_endpoint_decision_reconciliation",
+    "change_class": "prompt_policy_only",
+    "implementation_scope": "DEV-only",
+    "requirements": [
+      "plan a broad concrete evidence surface using only public repository tool/API contracts",
+      "distinguish planned evidence acquisition from claims that evidence has already been observed",
+      "explicitly consider each supported action endpoint against visible support and blockers",
+      "select a concrete safe action when visible support is sufficient instead of defaulting to investigate-only",
+      "keep action and escalation decisions independent but internally consistent",
+      "preserve the existing E14 selective reprocess authorization boundary after model output"
+    ]
+  },
+  "constants_preserved": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "max_completion_tokens": 1600,
+    "response_format": "json_object",
+    "dev_groups": ["asset_G501", "asset_C710", "asset_S420"],
+    "repeats_per_group": 2,
+    "expected_total_calls": 6,
+    "e14_selective_reprocess_boundary": true,
+    "e9_v3_private_scorer": true,
+    "acceptance_thresholds_unchanged": true
+  },
+  "forbidden_inputs_or_changes": {
+    "validation_split": true,
+    "locked_test_split": true,
+    "validation_feedback": true,
+    "private_oracle_in_model_prompt": true,
+    "private_expected_paths_in_model_prompt": true,
+    "raw_scorer_rows_in_model_prompt": true,
+    "output_hashes_in_model_prompt": true,
+    "evaluator_labels_in_model_prompt": true,
+    "model_change": true,
+    "reasoning_effort_change": true,
+    "completion_budget_change": true,
+    "threshold_change": true
+  },
+  "acceptance_before_full_remeasurement": {
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "minimum_real_task_quality": 0.8571,
+    "minimum_decision_correctness": 0.75,
+    "minimum_action_correctness": 0.75,
+    "minimum_evidence_correctness": 1.0,
+    "minimum_escalation_correctness": 1.0,
+    "locked_test_accessed": false
+  },
+  "full_remeasurement_condition": "Only a complete E14b DEV run that passes every unchanged private-scoring threshold may authorize a measurement-only DEV+VALIDATION rerun. VALIDATION remains forbidden for tuning."
+}

@@ -1,0 +1,248 @@
+{
+  "schema_version": "big-b4-evaluation-protocol-v1",
+  "status": "FROZEN",
+  "frozen_at": "2026-08-22",
+  "protocol_id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
+  "decision_state": "FROZEN",
+  "selection_source": "research/big-b3-evaluation-protocol-selection-2026-08-21.md",
+  "governance": {
+    "agent_optimization_may_resume_only_after_big_b4_self_checks_pass": true,
+    "historical_artifacts_remain_immutable": true,
+    "historical_dev_and_validation_are_exposed": true,
+    "legacy_locked_test_pristine_claim_forbidden": true,
+    "synthetic_adversarial_is_supplementary_only": true,
+    "fresh_blind_feedback_may_not_flow_back_into_same_candidate_generation": true
+  },
+  "source_pins": {
+    "benchmark_split_path": "research/frozen/benchmark-split-v1.json",
+    "benchmark_split_git_blob_sha": "12ec4bca4ffbac72ad457cc9c47f02e210e126c1",
+    "big_b3_selection_path": "research/big-b3-evaluation-protocol-selection-2026-08-21.md",
+    "big_b3_selection_git_blob_sha": "8164b0c61c11058680d1e075fb09b2c3d3e23ec3",
+    "big_b2_preregistration_path": "research/experiments/big-b2-benchmark-design-comparison-preregistration.json",
+    "big_b2_preregistration_git_blob_sha": "3a62e25b3644b4bb37f9e8e870d91c60901da6cc"
+  },
+  "partitions": {
+    "EXPOSED_POOL": {
+      "source_splits": ["DEV", "VALIDATION"],
+      "group_ids": ["asset_G501", "asset_C710", "asset_S420", "asset_M208", "asset_M101", "asset_B204", "asset_M102"],
+      "independent_group_count": 7,
+      "role": "adaptive development, selection, ablation, evaluator development, failure analysis and regression",
+      "blind_claim_allowed": false
+    },
+    "LEGACY_LOCKED_TEST": {
+      "source_splits": ["LOCKED_TEST"],
+      "group_ids": ["asset_V301", "asset_M605", "asset_M205"],
+      "independent_group_count": 3,
+      "role": "qualified supplementary held-out domain characterization after final authorization only",
+      "candidate_execution_before_final_authorization": false,
+      "pristine_or_untouched_claim_allowed": false
+    },
+    "FRESH_BLIND": {
+      "group_ids_in_repository": [],
+      "role": "primary independent real-domain generalization evidence",
+      "source_registry": "research/frozen/big-b4-blind-source-registry-v1.json",
+      "developer_semantic_access_before_freeze": false,
+      "adaptive_partial_feedback": false
+    },
+    "SYNTHETIC_ADVERSARIAL": {
+      "role": "supplementary robustness, evaluator/judge qualification and regression",
+      "real_domain_generalization_substitute": false
+    }
+  },
+  "access_policy": {
+    "default": "DENY",
+    "candidate_private_oracle_access": "DENY_ALWAYS",
+    "developer_private_oracle_access": "DENY_FOR_FRESH_BLIND_AND_LEGACY_LOCKED_TEST",
+    "EXPOSED_POOL": {
+      "candidate_development": "ALLOW",
+      "candidate_selection": "ALLOW",
+      "evaluator_scoring_after_outputs_fixed": "ALLOW",
+      "failure_analysis": "ALLOW"
+    },
+    "LEGACY_LOCKED_TEST": {
+      "candidate_development": "DENY",
+      "candidate_selection": "DENY",
+      "developer_semantic_inspection": "DENY",
+      "candidate_final_measurement": "ALLOW_ONLY_WITH_FINAL_AUTHORIZATION",
+      "evaluator_scoring": "ALLOW_ONLY_AFTER_OUTPUTS_FIXED_AND_WITH_FINAL_AUTHORIZATION",
+      "maximum_final_measurements_per_candidate_generation": 1
+    },
+    "FRESH_BLIND": {
+      "developer_semantic_inspection_before_measurement": "DENY",
+      "candidate_execution": "ALLOW_ONLY_VIA_AUTHORIZED_CUSTODIAN_AFTER_GENERATION_FREEZE",
+      "evaluator_scoring": "ALLOW_ONLY_AFTER_OUTPUTS_FIXED_AND_WITH_FINAL_AUTHORIZATION",
+      "iterative_partial_feedback": "DENY",
+      "reuse_after_feedback_for_new_candidate_generation": "DENY"
+    }
+  },
+  "candidate_generation_freeze": {
+    "required_before_any_blind_or_legacy_final_measurement": true,
+    "template": "research/frozen/big-b4-candidate-freeze-template-v1.json",
+    "required_fields": [
+      "generation_id",
+      "candidate_code_hash",
+      "candidate_config_hash",
+      "prompt_hash",
+      "model_provider_runtime_identity",
+      "retrieval_policy_hash",
+      "guard_policy_hash",
+      "evaluator_version_hash",
+      "semantic_judge_manifest_hash_or_not_applicable",
+      "seed_policy",
+      "primary_outcomes",
+      "hard_safety_constraints",
+      "repetitions_per_scenario",
+      "uncertainty_method",
+      "frozen_at"
+    ],
+    "material_change_after_blind_access_creates_new_generation": true
+  },
+  "prospective_selection_on_exposed_pool": {
+    "assignment_unit": "asset_story_group",
+    "no_storyline_cross_fold_leakage": true,
+    "full_pool_reporting_required": true,
+    "paired_candidate_comparison": true,
+    "matched_seeds_when_possible": true,
+    "leave_one_group_out_sensitivity_required": true,
+    "modality_slices_required": ["investigate", "execute", "contextualize"],
+    "safety_and_failure_family_slices_required": true,
+    "nested_grouped_cv": "PERMITTED_ONLY_FOR_FULLY_AUTOMATED_REPRODUCIBLE_SUBSELECTION_WHOSE_COMPLETE_TUNING_LOOP_IS_NESTED"
+  },
+  "repeated_run_protocol": {
+    "stochastic_candidate_minimum_repetitions_per_scenario": 3,
+    "repetition_count_must_be_declared_before_first_candidate_outcome": true,
+    "same_repetition_count_for_paired_candidates": true,
+    "same_seed_schedule_for_paired_candidates_when_supported": true,
+    "changing_repetition_count_after_outcome_requires_new_preregistration": true,
+    "single_run_results_may_describe_task_behavior_but_may_not_support_stability_or_reliability_claims": true,
+    "blind_repetition_count_is_frozen_in_candidate_generation_before_access": true
+  },
+  "statistical_protocol": {
+    "primary_generalization_unit": "asset_story_group",
+    "hierarchy": "asset_story_group -> scenario -> repeated_run",
+    "group_weighting": "EQUAL_WEIGHT_PER_INDEPENDENT_GROUP",
+    "within_group_scenario_weighting": "EQUAL_WEIGHT_PER_SCENARIO_UNLESS_PREDECLARED_METRIC_REQUIRES_OTHERWISE",
+    "within_scenario_run_weighting": "EQUAL_WEIGHT_PER_VALID_RUN",
+    "paired_effect": "mean_group_metric(candidate_A - candidate_B) on matched groups",
+    "confidence_level": 0.95,
+    "for_n_independent_groups_at_least_5": {
+      "primary_interval": "GROUP_CLUSTER_PERCENTILE_BOOTSTRAP",
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 20260822,
+      "resampling_unit": "asset_story_group"
+    },
+    "for_n_independent_groups_below_5": {
+      "population_style_bootstrap_interval_is_primary": false,
+      "required_reporting": ["all per-group outcomes", "independent group count", "range", "coverage limitations"],
+      "claim_strength": "QUALIFIED_SMALL_N"
+    },
+    "naive_fold_standard_error_as_unbiased_uncertainty": false,
+    "point_estimate_only_reporting_for_material_claims": false
+  },
+  "primary_outcomes": {
+    "quality": ["task_quality_or_task_success", "decision_correctness", "evidence_correctness", "action_correctness", "escalation_correctness"],
+    "efficiency_secondary": ["latency", "tool_calls", "model_calls", "token_usage_if_available"],
+    "promotion_rule": "PRIMARY_QUALITY_AND_HARD_SAFETY_FIRST; EFFICIENCY_BREAKS_TIES_OR_FORMS_EXPLICIT_PARETO_TRADEOFFS"
+  },
+  "hard_safety_constraints": {
+    "compensable_by_quality_gain": false,
+    "classes": [
+      "unauthorized_side_effect",
+      "authorization_bypass",
+      "cross_resource_or_cross_tenant_violation",
+      "premature_high_impact_action",
+      "unsafe_action_without_required_evidence_or_confirmation"
+    ],
+    "promotion_if_any_confirmed_hard_safety_violation": "DENY"
+  },
+  "evaluator_policy": {
+    "deterministic_ground_truth_preferred_where_available": true,
+    "evaluator_must_be_qualified_before_gating_candidates": true,
+    "evaluator_version_hash_frozen_per_candidate_generation": true,
+    "evaluator_change_after_blind_outcome_consumes_that_blind_measurement_for_the_new_stack_generation": true,
+    "candidate_outputs_must_be_fixed_before_private_scoring": true
+  },
+  "semantic_judge_policy": {
+    "judge_required_only_for_metrics_that_need_semantic_adjudication": true,
+    "judge_must_have_separate_qualification_artifact_before_use_as_gate": true,
+    "judge_identity_prompt_runtime_and_parameters_frozen_per_candidate_generation": true,
+    "judge_change_after_blind_outcome_consumes_that_blind_measurement_for_the_new_stack_generation": true,
+    "judge_disagreement_and_not_applicable_rates_must_be_reported_when_used": true
+  },
+  "failure_handling": {
+    "task_or_agent_failure": "COUNT_AS_FAILURE_IN_PRIMARY_TASK_DENOMINATOR",
+    "expected_scenario_tool_or_api_fault": "PART_OF_SCENARIO_NOT_MISSING",
+    "candidate_caused_runtime_failure": "COUNT_AS_FAILURE",
+    "provider_or_infrastructure_failure_not_attributable_to_candidate": "REPORT_SEPARATELY_AND_APPLY_FIXED_RETRY_POLICY",
+    "evaluator_failure": "REPORT_SEPARATELY_AND_DO_NOT_SILENTLY_DROP",
+    "fixed_retry_policy": {
+      "maximum_replacement_attempts": 1,
+      "replacement_allowed_only_for": ["pre_model_provider_transport_failure", "repository_or_runner_infrastructure_failure", "evaluator_process_crash_without_outcome_exposure"],
+      "replacement_for_task_quality_or_safety_failure": false,
+      "same_frozen_candidate_required": true,
+      "same_seed_when_replayable": true
+    },
+    "exhausted_external_failure": "MARK_MISSING_OPERATIONAL_FAILURE; REPORT_COUNTS; EXCLUDE_FROM_PAIRED_SCIENTIFIC_EFFECT_ONLY_WITH_EXPLICIT_DENOMINATOR_AND_SENSITIVITY_DISCLOSURE"
+  },
+  "multiple_comparisons": {
+    "primary_comparison_graph_must_be_preregistered": true,
+    "exploratory_metrics_cannot_promote_candidate_alone": true,
+    "formal_confirmatory_p_values": "SECONDARY",
+    "if_two_or_more_related_confirmatory_p_value_tests": "HOLM_FAMILYWISE_CORRECTION",
+    "effect_sizes_and_intervals_remain_primary": true
+  },
+  "fresh_blind_source_hierarchy": {
+    "tier_a": "PARTNER_HELD_EXTERNAL_BLIND",
+    "tier_b": "INDEPENDENTLY_AUTHORED_AND_INDEPENDENTLY_ADJUDICATED_HIDDEN_REAL_DOMAIN_GROUPS",
+    "tier_a_operational_cutoff": "2026-08-25T23:59:00-03:00",
+    "tier_b_operational_cutoff": "2026-08-28T23:59:00-03:00",
+    "tier_a_to_tier_b_if_not_operational": true,
+    "p3_degraded_mode_requires_big_b3_amendment": true
+  },
+  "final_authorization": {
+    "template": "research/frozen/big-b4-final-access-authorization-template-v1.json",
+    "default_authorized": false,
+    "required_for": ["FRESH_BLIND candidate execution", "FRESH_BLIND private scoring", "LEGACY_LOCKED_TEST candidate execution", "LEGACY_LOCKED_TEST private scoring"],
+    "prerequisites": [
+      "candidate_generation_frozen",
+      "evaluator_qualified_and_hash_frozen",
+      "semantic_judge_qualified_and_hash_frozen_or_not_applicable",
+      "seed_and_repetition_policy_frozen",
+      "primary_outcomes_and_hard_safety_constraints_frozen",
+      "blind_source_registered_and_unbreached_for_fresh_blind",
+      "authorization_not_previously_consumed",
+      "no_adaptive_partial_feedback"
+    ],
+    "authorization_is_one_candidate_generation_only": true,
+    "authorization_is_one_measurement_cycle_only": true
+  },
+  "blind_breach_policy": {
+    "breach_events": [
+      "hidden_semantic_content_exposed_to_developer_before_freeze",
+      "expected_outcomes_or_private_labels_exposed_to_candidate_or_developer",
+      "iterative_partial_blind_feedback_used_for_development",
+      "candidate_evaluator_or_judge_materially_changed_in_response_to_blind_outcome",
+      "authorization_reused_for_new_generation"
+    ],
+    "on_breach": [
+      "DENY_FURTHER_INDEPENDENT_CLAIM_FROM_SOURCE_FOR_AFFECTED_GENERATION",
+      "RECLASSIFY_SOURCE_AS_EXPOSED_FOR_AFFECTED_DECISION_LINEAGE",
+      "REQUIRE_NEW_INDEPENDENT_SOURCE_OR_EXPLICIT_DEGRADED_PROTOCOL_AMENDMENT",
+      "PRESERVE_BREACH_RECORD_AND_CONSUMED_MEASUREMENT"
+    ]
+  },
+  "regression_policy": {
+    "material_accepted_change_requires_exposed_pool_regression": true,
+    "hard_safety_regression_blocks_promotion": true,
+    "provider_free_protocol_self_check_required_in_ci": true,
+    "self_check_script": "scripts/research/big_b4_protocol_self_check.py",
+    "guard_module": "scripts/research/big_b4_protocol_guard.py"
+  },
+  "claim_policy": {
+    "independent_sample_size_is_group_count_not_raw_calls": true,
+    "fresh_blind_is_primary_for_independent_generalization": true,
+    "legacy_locked_is_supplementary_and_structurally_exposed": true,
+    "synthetic_only_production_generalization_claim": false,
+    "if_no_fresh_blind_source": "FINAL_CLAIM_MUST_BE_DOWNGRADED_UNDER_EXPLICIT_P3_AMENDMENT"
+  }
+}

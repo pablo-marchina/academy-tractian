@@ -1,0 +1,76 @@
+{
+  "experiment_id": "E14l",
+  "status": "FAIL_UNCHANGED_DEV_HARD_GATE",
+  "date": "2026-08-18",
+  "scope": {
+    "split": "DEV",
+    "validation_ran": false,
+    "locked_test_accessed": false
+  },
+  "configuration": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "reasoning_effort": "medium",
+    "response_format": "json_schema",
+    "strict": true,
+    "max_completion_tokens": 4096,
+    "temperature": 0
+  },
+  "capture": {
+    "status": "E14L_DEV_ONLY_120B_MEDIUM_REASONING_STRICT_4096_CAPTURE_PASS",
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "scoreable_calls": 6,
+    "retry_count": 0,
+    "repair_count": 0
+  },
+  "aggregate_metrics": {
+    "real_task_quality": 0.619,
+    "decision_correctness": 0.3333,
+    "evidence_correctness": 1.0,
+    "action_correctness": 0.0,
+    "escalation_correctness": 0.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "semantic_repair": {
+    "triggered_calls": 0,
+    "repair_calls": 0,
+    "calls_with_residual_public_violations": 0
+  },
+  "downstream_boundary_effects": {
+    "e10d_outputs_changed": 0,
+    "e10d_reason_counts": {"none": 6},
+    "e10e_outputs_changed": 0,
+    "e10g_outputs_changed": 0,
+    "e11_outputs_changed": 0,
+    "e14_reprocess_checked": 0,
+    "e14_reprocess_authorized": 0,
+    "e14_reprocess_blocked": 0
+  },
+  "normalized_public_evidence_family_count_histogram": {
+    "5": 1,
+    "7": 1,
+    "8": 3,
+    "9": 1
+  },
+  "calls_with_concrete_public_read_equivalent": 6,
+  "acceptance_gate_pass": false,
+  "interpretation": {
+    "operational_completeness_restored": true,
+    "evidence_gate_passed": true,
+    "safety_rates_passed": true,
+    "decision_action_escalation_gate_failed": true,
+    "reasoning_budget_response_format_tuning_family_closed": true,
+    "per_row_private_labels_inferred_from_aggregate": false
+  },
+  "privacy": {
+    "raw_fixed_outputs_committed": false,
+    "private_scorer_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_paths_committed": false,
+    "oracle_data_committed": false,
+    "evaluator_labels_committed": false
+  }
+}

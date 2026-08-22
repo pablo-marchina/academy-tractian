@@ -1,0 +1,34 @@
+{
+  "schema_version": "big-b2-benchmark-design-comparison-preregistration-v1",
+  "date": "2026-08-21",
+  "status": "PREREGISTERED_BEFORE_COMPARATIVE_CONCLUSION",
+  "gate": "BIG-B2",
+  "purpose": "Compare credible benchmark/evaluation designs after BIG-B1 without selecting a winner before the comparison is complete.",
+  "inputs_allowed": ["BIG-B0 factual access ledger", "BIG-B1 exposure/independence classifications", "frozen public benchmark split metadata", "public methodological literature", "provider-free combinatorial/resampling analysis of public group metadata"],
+  "inputs_forbidden": ["new candidate execution on VALIDATION", "new candidate execution on LOCKED_TEST", "new semantic/private inspection of VALIDATION or LOCKED_TEST", "private expected paths for protocol optimization", "new agent/provider inference justified as optimization"],
+  "known_constraints": {"independent_story_groups_total":10,"historically_adaptively_exposed_groups":7,"historically_candidate_unexecuted_locked_groups":3,"locked_test_structural_private_exposure":true,"exposed_pool_scenarios":11,"exposed_pool_tickets":12,"exposed_pool_contextualize_groups":2,"locked_test_contextualize_groups":1,"target_delivery":"2026-09-08"},
+  "hard_constraints": [
+    "Asset/story group is the indivisible assignment unit; no storyline may cross train/selection/evaluation partitions.",
+    "Historically exposed VALIDATION may not be relabeled as blind/independent merely by changing its name.",
+    "No protocol may claim LOCKED_TEST pristine/untouched full-stack independence because structural oracle exposure is documented.",
+    "A final protocol must separate adaptive development feedback from at least one final measurement path, or explicitly downgrade the strength of the final generalization claim.",
+    "Synthetic/adversarial cases may supplement robustness but cannot by themselves replace real/domain blind evidence for production-readiness claims.",
+    "All future split/fold generation must be deterministic or seeded and auditable.",
+    "The protocol must permit paired candidate comparison at the asset/story-group unit and must report uncertainty rather than point estimates only.",
+    "No candidate is selected in BIG-B2; BIG-B2 may identify dominated alternatives and a Pareto frontier only. BIG-B3 performs selection."
+  ],
+  "candidate_families": [
+    {"id":"A","name":"retain-current-roles-baseline"},
+    {"id":"B","name":"reclassify-exposed-validation-into-development-pool"},
+    {"id":"C","name":"grouped-repeated-cv-on-seven-exposed-groups"},
+    {"id":"D","name":"nested-grouped-cv-on-seven-exposed-groups"},
+    {"id":"E","name":"new-blind-validation-set"},
+    {"id":"F","name":"partner-held-blind-evaluation"},
+    {"id":"G","name":"independently-authored-adjudicated-new-cases"},
+    {"id":"H","name":"synthetic-adversarial-supplement"},
+    {"id":"I","name":"hybrid-development-cv-plus-fresh-blind-final"}
+  ],
+  "comparison_dimensions": ["independence_from_historical_adaptive_development","adaptive_overfitting_and_leakage_risk","effective_independent_group_count_for_selection","fresh_blind_group_count_for_final_measurement","modality_and_risk-family_coverage","paired-comparison_support","small-sample_variance_and_fold_instability","ability_to_estimate_selection_procedure_not_just_fixed_candidate","production_domain_representativeness","auditability_and_reproducibility","operational_cost_and_external_dependency","feasibility_before_2026-09-08","ability_to_support_future_adaptive_optimization_without_corrupting_final_measurement"],
+  "quantitative_analysis_plan": {"public_geometry":["enumerate balanced 2-fold and 3-fold partitions of the 7 exposed groups","measure per-fold group/scenario/ticket balance","measure contextualize-modality presence in train/test folds","characterize Leave-One-Group-Out and Leave-Two-Groups-Out geometry","quantify concentration of contextualize evidence in the 3-group legacy LOCKED_TEST"],"uncertainty":["do not use naive fold standard deviation as a universal unbiased variance estimator","report group-level distributions and sensitivity to individual groups","use resampling on exposed data only as descriptive uncertainty, never as restoration of blind independence","label binary group-pass Wilson intervals as illustrative assumptions only"]},
+  "decision_policy": {"arbitrary_weighted_score":false,"hard_constraints_first":true,"pareto_frontier_required":true,"selection_deferred_to":"BIG-B3","credible_alternative_left_unexamined_blocks_exit":true}
+}

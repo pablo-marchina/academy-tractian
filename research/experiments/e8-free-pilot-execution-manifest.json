@@ -1,0 +1,83 @@
+{
+  "schema_version": "e8-free-pilot-execution-v1",
+  "id": "E8-free-only-pilot-execution",
+  "date": "2026-08-16",
+  "status": "PREREGISTERED",
+  "purpose": "Execute the E8 pilot in a completely free mode first, with paid model candidates disabled and LOCKED_TEST blocked.",
+  "budget_policy": {
+    "default_mode": "free_only",
+    "project_cost_limit_usd": 0,
+    "paid_models_enabled": false,
+    "openai_reference_enabled": false,
+    "anthropic_reference_enabled": false,
+    "external_free_model_calls_enabled_by_default": false,
+    "external_free_model_calls_require_env_opt_in": true,
+    "secrets_committed": false
+  },
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "run_order": ["DEV_SMOKE", "VALIDATION_AFTER_DEV_PASS"]
+  },
+  "constants": {
+    "runtime_candidate": "LangGraph",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "execution_boundary": "HarnessRunner",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "identity_binding": "runner",
+    "seed_binding": "runner",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "observability_freeze": false,
+    "ui_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "candidate_availability_policy": {
+    "always_available_free_baseline": "no_model_policy_baseline",
+    "optional_free_external_candidates": [
+      "groq_openai_compatible_free_first",
+      "google_gemini_free_or_low_cost"
+    ],
+    "optional_local_candidates": ["local_ollama_optional"],
+    "disabled_paid_candidates": [
+      "openai_reference_optional",
+      "anthropic_reference_optional"
+    ]
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"],
+    "VALIDATION": ["asset_B204", "asset_M102"]
+  },
+  "repeats": {
+    "DEV_SMOKE": 3,
+    "VALIDATION_AFTER_DEV_PASS": 5
+  },
+  "measurement_requirements": [
+    "candidate_availability",
+    "dev_smoke_first",
+    "fixed_observation_packet_hashes",
+    "stochastic_repeat_count",
+    "task_success_proxy",
+    "action_escalation_correctness_proxy",
+    "evidence_coverage_proxy",
+    "runtrace_completeness",
+    "latency_avg_ms",
+    "latency_p95_ms",
+    "cost_usd",
+    "locked_test_access_flag"
+  ],
+  "success_interpretation": {
+    "free_pilot_smoke_pass": "The free-only pilot executes the statistical-pilot harness over DEV first and VALIDATION second with zero paid calls, explicit availability detection, fixed observation packets and LOCKED_TEST blocked.",
+    "not_agent_quality_claim": true,
+    "not_model_provider_freeze": true,
+    "not_final_architecture_freeze": true
+  }
+}

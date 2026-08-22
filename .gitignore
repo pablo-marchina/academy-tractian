@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local configuration
+.env
+.env.*
+
+# Partner package / evaluator-only material must not be published until policy is clarified
+inteli-tractian-project.zip
+inteli-tractian-project/
+partner-private/
+artifacts/private/
+artifacts/generated-private/
+
+# Local experiment scratch
+.tmp/
+tmp/

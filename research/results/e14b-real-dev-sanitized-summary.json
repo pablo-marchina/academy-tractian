@@ -1,0 +1,63 @@
+{
+  "id": "e14b-real-dev-sanitized-summary",
+  "date": "2026-08-17",
+  "status": "E14B_REAL_DEV_GATE_FAIL",
+  "scope": "DEV-only",
+  "capture_validity": {
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "scoreable_calls": 6,
+    "completeness_pass": true,
+    "retry_count": 2,
+    "repair_count": 0,
+    "validation_ran": false,
+    "locked_test_accessed": false
+  },
+  "selective_reprocess_boundary": {
+    "target_reprocess_outputs_checked": 0,
+    "authorized_target_reprocess_outputs": 0,
+    "blocked_target_reprocess_outputs": 0
+  },
+  "aggregate_metrics": {
+    "real_task_quality": 0.6429,
+    "decision_correctness": 0.5,
+    "evidence_correctness": 0.3333,
+    "action_correctness": 0.0,
+    "escalation_correctness": 0.6667,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "acceptance": {
+    "minimum_real_task_quality": 0.8571,
+    "minimum_decision_correctness": 0.75,
+    "minimum_evidence_correctness": 1.0,
+    "minimum_action_correctness": 0.75,
+    "minimum_escalation_correctness": 1.0,
+    "required_premature_action_rate": 0.0,
+    "required_unsupported_final_claim_rate": 0.0,
+    "passed": false
+  },
+  "comparison_to_e14_real_dev": {
+    "interpretation": "same recovered provider/model/settings and same DEV gate; E14b prompt-policy candidate degraded every positive-quality metric while preserving the two safety rates",
+    "real_task_quality_delta": -0.0952,
+    "decision_correctness_delta": 0.0,
+    "evidence_correctness_delta": -0.1667,
+    "action_correctness_delta": -0.1667,
+    "escalation_correctness_delta": -0.3333,
+    "premature_action_rate_delta": 0.0,
+    "unsupported_final_claim_rate_delta": 0.0
+  },
+  "decision": "reject_e14b_candidate",
+  "next_step": "run sanitized semantic/boundary diagnostic on the already-fixed E14b capture before preregistering another DEV-only candidate",
+  "privacy": {
+    "raw_fixed_outputs_committed": false,
+    "score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_paths_committed": false,
+    "oracle_values_committed": false,
+    "validation_feedback_used": false,
+    "locked_test_used": false
+  },
+  "final_architecture_freeze": false
+}

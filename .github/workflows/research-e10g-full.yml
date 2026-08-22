@@ -1,0 +1,35 @@
+name: research-e10g-full
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/e10g_full_dev_validation_capture.py"
+      - "scripts/research/e10g_dev_only_balanced_safety_action_guard.py"
+      - "scripts/research/e10d_full_dev_validation_capture.py"
+      - "research/experiments/e10g-full-dev-validation-remeasurement-manifest.json"
+      - ".github/workflows/research-e10g-full.yml"
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - "scripts/research/e10g_full_dev_validation_capture.py"
+      - "scripts/research/e10g_dev_only_balanced_safety_action_guard.py"
+      - "scripts/research/e10d_full_dev_validation_capture.py"
+      - "research/experiments/e10g-full-dev-validation-remeasurement-manifest.json"
+      - ".github/workflows/research-e10g-full.yml"
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: E10g full dry-run
+        run: |
+          python scripts/research/e10g_full_dev_validation_capture.py \
+            --manifest research/experiments/e10g-full-dev-validation-remeasurement-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --dry-run \
+            --out "$RUNNER_TEMP/e10g-full-dry-run.json"
+          test -s "$RUNNER_TEMP/e10g-full-dry-run.json"

@@ -1,0 +1,73 @@
+{
+  "experiment_id": "E9-v4.1-groundedness-surface",
+  "title": "Public-only one-sided concrete-claim groundedness surface audit",
+  "status": "PREREGISTERED_BEFORE_IMPLEMENTATION_AND_BEFORE_RUNNING_ON_FIXED_OUTPUTS",
+  "date": "2026-08-18",
+  "scope": "DEV-only evaluator-validity diagnostic; no model generation",
+  "motivation": {
+    "source": "evaluator validity state only",
+    "general_free_text_groundedness_current_state": "UNMEASURED",
+    "candidate_specific_raw_outputs_inspected_for_rule_design": false,
+    "private_oracle_used_for_rule_design": false,
+    "private_scorer_rows_used_for_rule_design": false,
+    "validation_feedback_used": false,
+    "locked_test_used": false
+  },
+  "inputs_allowed": [
+    "fixed DEV capture",
+    "agent-input cases used by the public runner",
+    "frozen split manifest for DEV/LOCKED_TEST boundary enforcement",
+    "public tool registry"
+  ],
+  "inputs_forbidden": [
+    "private expected paths",
+    "private scorer rows",
+    "VALIDATION fixed outputs",
+    "LOCKED_TEST fixed outputs",
+    "hidden labels"
+  ],
+  "frozen_checks": {
+    "visible_case_selection": "first agent-input case per asset/group, matching the runner",
+    "free_text_fields": [
+      "evidence_plan string items",
+      "proposed_next_step",
+      "risk_notes",
+      "action_escalation_rubric.calibration_reason",
+      "action_escalation_rubric.action_endpoint"
+    ],
+    "concrete_id_provenance": {
+      "check": "non-placeholder asset/analysis/model/case/ticket-style identifiers and UUIDs mentioned in free text must occur in the selected visible case",
+      "placeholders_ignored": true
+    },
+    "public_endpoint_provenance": {
+      "check": "explicit METHOD+path mentions must normalize to a public tool signature",
+      "normalizer": "E9 v4.1 public registry normalizer"
+    },
+    "unit_numeric_provenance": {
+      "check": "unit-bearing numeric claims in a narrow industrial unit allowlist must have both the numeric literal and unit represented in the selected visible case",
+      "units": ["Hz", "kHz", "rpm", "mm/s", "m/s", "g", "dB", "C", "°C", "%"],
+      "interpretation": "one-sided heuristic; violations are actionable, absence of violations is not proof of semantic entailment"
+    },
+    "self_attested_trace": {
+      "check": "trace_quality_self_check.uses_only_visible_packet/no_locked_test/no_gold_claim must not be false",
+      "interpretation": "supporting structural signal only, never accepted as proof by itself"
+    }
+  },
+  "interpretation": {
+    "any_concrete_provenance_violation": "groundedness validity gate remains blocked and concrete unsupported-claim surface is demonstrated",
+    "zero_concrete_provenance_violations": "general semantic groundedness remains UNMEASURED; zero findings cannot authorize VALIDATION",
+    "can_authorize_validation": false,
+    "can_change_candidate": false,
+    "can_infer_private_expected_paths": false
+  },
+  "privacy": {
+    "print_raw_outputs": false,
+    "print_visible_case_values": false,
+    "print_identifiers": false,
+    "print_numeric_claim_values": false,
+    "print_group_ids": false,
+    "print_per_call_results": false,
+    "print_hashes": false,
+    "print_private_paths": false
+  }
+}

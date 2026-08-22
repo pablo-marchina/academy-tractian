@@ -1,0 +1,48 @@
+name: research-e10f
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+    paths:
+      - 'scripts/research/e10f_dev_only_stricter_visible_safety_guard.py'
+      - 'scripts/research/e10e_dev_only_premature_action_guard.py'
+      - 'scripts/research/e10d_dev_only_escalation_consistency_guard.py'
+      - 'scripts/research/e10c_dev_only_escalation_capture.py'
+      - 'scripts/research/e10b_dev_only_action_escalation_capture.py'
+      - 'scripts/research/e8_capture_fixed_groq_outputs.py'
+      - 'research/experiments/e10f-dev-only-stricter-visible-safety-guard-manifest.json'
+      - 'research/frozen/benchmark-split-v1.json'
+      - '.github/workflows/research-e10f.yml'
+  workflow_dispatch:
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: E10f dry-run
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/research/e10f_dev_only_stricter_visible_safety_guard.py \
+            --manifest research/experiments/e10f-dev-only-stricter-visible-safety-guard-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --dry-run \
+            --out /tmp/e10f-dev-only-stricter-visible-safety-dry-run.json
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/e10f-dev-only-stricter-visible-safety-dry-run.json'))
+          assert data['status'] == 'E10F_DEV_ONLY_STRICTER_VISIBLE_SAFETY_GUARD_CAPTURE_PASS'
+          assert data['scope']['validation_ran'] is False
+          assert data['scope']['locked_test_accessed'] is False
+          assert data['dry_run'] is True
+          assert data['e10f_strict_visible_safety_guard']['uses_private_oracle'] is False
+          assert data['e10f_strict_visible_safety_guard']['uses_validation_feedback'] is False
+          assert data['e10f_strict_visible_safety_guard']['uses_locked_test'] is False
+          assert data['aggregate_metrics']['total_calls'] == 6
+          assert data['aggregate_metrics']['parsed_model_outputs_available'] == 6
+          PY

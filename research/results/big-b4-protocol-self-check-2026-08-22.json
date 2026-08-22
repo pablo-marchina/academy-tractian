@@ -1,0 +1,65 @@
+{
+  "schema_version": "big-b4-protocol-self-check-result-v1",
+  "status": "PASS",
+  "executed_at": "2026-08-22T11:39:00-03:00",
+  "protocol_id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
+  "execution_mode": "SANDBOX_MIRROR_EXECUTION_WITH_GITHUB_BLOB_PIN_VERIFICATION",
+  "provider_inference_calls": 0,
+  "private_benchmark_semantics_read": false,
+  "checks_passed": 24,
+  "checks_total": 24,
+  "all_passed": true,
+  "github_artifact_identity": {
+    "protocol_manifest": {
+      "path": "research/frozen/big-b4-evaluation-protocol-v1.json",
+      "git_blob_sha": "910b9c8368ee37b5bf5c144413a57b683dc8e8b9"
+    },
+    "guard": {
+      "path": "scripts/research/big_b4_protocol_guard.py",
+      "git_blob_sha": "7142c191fddfc84a1e5059cb54b1fa2b08682ab5"
+    },
+    "self_check": {
+      "path": "scripts/research/big_b4_protocol_self_check.py",
+      "git_blob_sha": "a354576fe1f8154dbf2e7dcf90ba50765c228144"
+    }
+  },
+  "source_pin_verification": {
+    "benchmark_split": {
+      "expected_git_blob_sha": "12ec4bca4ffbac72ad457cc9c47f02e210e126c1",
+      "observed_git_blob_sha": "12ec4bca4ffbac72ad457cc9c47f02e210e126c1",
+      "match": true
+    },
+    "big_b3_selection": {
+      "expected_git_blob_sha": "8164b0c61c11058680d1e075fb09b2c3d3e23ec3",
+      "observed_git_blob_sha": "8164b0c61c11058680d1e075fb09b2c3d3e23ec3",
+      "match": true
+    },
+    "big_b2_preregistration": {
+      "expected_git_blob_sha": "3a62e25b3644b4bb37f9e8e870d91c60901da6cc",
+      "observed_git_blob_sha": "3a62e25b3644b4bb37f9e8e870d91c60901da6cc",
+      "match": true
+    }
+  },
+  "check_families": {
+    "manifest_and_registry": "PASS",
+    "candidate_generation_freeze_default_deny": "PASS",
+    "stochastic_minimum_repetition_guard": "PASS",
+    "final_authorization_default_deny": "PASS",
+    "candidate_private_oracle_isolation": "PASS",
+    "exposed_pool_adaptive_access": "PASS",
+    "private_scoring_requires_fixed_outputs": "PASS",
+    "legacy_locked_test_development_block": "PASS",
+    "legacy_locked_test_final_authorization_gate": "PASS",
+    "fresh_blind_source_registration_gate": "PASS",
+    "evaluator_and_judge_fail_closed_gates": "PASS",
+    "breached_source_block": "PASS",
+    "consumed_authorization_block": "PASS",
+    "developer_fresh_blind_semantic_access_block": "PASS",
+    "unknown_partition_default_deny": "PASS"
+  },
+  "execution_note": "The connected GitHub interface did not expose a newly triggered Actions run/check for the workflow at freeze time. The exact access-decision/freeze/authorization logic was therefore executed provider-free in the local sandbox mirror; immutable source pins and the committed protocol/guard/self-check blob identities were independently verified through GitHub. The committed Actions workflow remains the regression enforcement path for subsequent repository executions.",
+  "ci_workflow": ".github/workflows/research-big-b4-protocol-self-check.yml",
+  "final_blind_authorization_state_at_execution": "NO_BLIND_SOURCE_AUTHORIZED",
+  "legacy_locked_test_authorized_at_execution": false,
+  "fresh_blind_authorized_at_execution": false
+}

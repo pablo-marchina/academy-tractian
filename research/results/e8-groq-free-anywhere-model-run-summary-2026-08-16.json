@@ -1,0 +1,80 @@
+{
+  "report_version": "e8-groq-free-anywhere-model-run-summary-v1",
+  "date": "2026-08-16",
+  "status": "E8_FREE_ANYWHERE_MODEL_RUN_PASS",
+  "provider": "groq",
+  "model": "llama-3.1-8b-instant",
+  "runner": "scripts/research/e8_free_anywhere_model_runner_v2.py",
+  "dry_run": false,
+  "external_model_calls_made": true,
+  "free_anywhere_scope": true,
+  "project_cost_limit_usd": 0,
+  "cost_usd": 0.0,
+  "zero_cost_confirmed_by_env": true,
+  "paid_models_enabled": false,
+  "agent_input_cases_used": true,
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "dev_smoke_ran_before_validation": true
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "dev_smoke": {
+    "split": "DEV",
+    "groups": ["asset_G501", "asset_C710", "asset_S420"],
+    "repeats_per_group": 2,
+    "total_calls": 6,
+    "successful_calls": 6,
+    "passed": true,
+    "task_success_proxy": 1.0,
+    "schema_valid_rate": 1.0,
+    "no_locked_test_claim_rate": 1.0,
+    "trace_completeness": true,
+    "latency_avg_ms": 8974.732,
+    "latency_p95_ms": 30724.136,
+    "cost_usd": 0.0
+  },
+  "validation": {
+    "split": "VALIDATION",
+    "groups": ["asset_B204", "asset_M102"],
+    "repeats_per_group": 3,
+    "total_calls": 6,
+    "successful_calls": 6,
+    "passed": true,
+    "task_success_proxy": 1.0,
+    "schema_valid_rate": 1.0,
+    "no_locked_test_claim_rate": 1.0,
+    "trace_completeness": true,
+    "latency_avg_ms": 9766.9,
+    "latency_p95_ms": 50841.424,
+    "cost_usd": 0.0
+  },
+  "aggregate_metrics": {
+    "task_success_proxy": 1.0,
+    "schema_valid_rate": 1.0,
+    "trace_completeness": true,
+    "latency_avg_ms": 9370.816,
+    "latency_p95_ms": 50841.424,
+    "cost_usd": 0.0
+  },
+  "interpretation_limits": [
+    "This result scores model-output structure and safety/trace proxy metrics without leaking evaluator-only gold.",
+    "Task-success remains a proxy until a scorer maps outputs to private oracles outside the model prompt.",
+    "No model/provider or final architecture is frozen by this run.",
+    "This commit stores a sanitized summary, not raw provider IDs or secrets."
+  ],
+  "final_architecture_freeze": false
+}

@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://academy-tractian.local/schemas/trace-v0.schema.json",
+  "title": "TRACTIAN Industrial Agent Trace v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["trace_schema_version", "manifest", "spans", "evaluations"],
+  "properties": {
+    "trace_schema_version": {"const": "trace-v0"},
+    "manifest": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "experiment_id",
+        "scenario_id",
+        "run_id",
+        "config_hash",
+        "git_commit",
+        "scenario_hash",
+        "api_contract_hash",
+        "policy_version",
+        "tool_contract_version",
+        "runtime",
+        "model",
+        "started_at",
+        "status"
+      ],
+      "properties": {
+        "experiment_id": {"type": "string"},
+        "scenario_id": {"type": "string"},
+        "run_id": {"type": "string"},
+        "conversation_id": {"type": ["string", "null"]},
+        "config_hash": {"type": "string"},
+        "git_commit": {"type": "string"},
+        "scenario_hash": {"type": "string"},
+        "api_contract_hash": {"type": ["string", "null"]},
+        "policy_version": {"type": "string"},
+        "tool_contract_version": {"type": "string"},
+        "runtime": {
+          "type": "object",
+          "required": ["name", "version"],
+          "properties": {
+            "name": {"type": "string"},
+            "version": {"type": "string"}
+          }
+        },
+        "model": {
+          "type": "object",
+          "required": ["provider", "model_id"],
+          "properties": {
+            "provider": {"type": "string"},
+            "model_id": {"type": "string"},
+            "reported_version": {"type": ["string", "null"]},
+            "parameters_hash": {"type": ["string", "null"]}
+          }
+        },
+        "seed": {
+          "type": ["object", "null"],
+          "properties": {
+            "requested": {},
+            "provider_guarantee": {"type": "string"}
+          }
+        },
+        "fault_profile_id": {"type": ["string", "null"]},
+        "started_at": {"type": "string"},
+        "ended_at": {"type": ["string", "null"]},
+        "status": {"enum": ["running", "success", "failed", "interrupted", "infrastructure_error"]}
+      }
+    },
+    "spans": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/span"}
+    },
+    "evaluations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["name", "version", "outcome"],
+        "properties": {
+          "name": {"type": "string"},
+          "version": {"type": "string"},
+          "outcome": {},
+          "failure_code": {"type": ["string", "null"]},
+          "failure_severity": {"type": ["string", "null"]},
+          "details_ref": {"type": ["string", "null"]}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "span": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["span_id", "operation", "started_at", "status", "attributes"],
+      "properties": {
+        "span_id": {"type": "string"},
+        "parent_span_id": {"type": ["string", "null"]},
+        "otel_trace_id": {"type": ["string", "null"]},
+        "otel_span_id": {"type": ["string", "null"]},
+        "operation": {
+          "enum": [
+            "run",
+            "model.request",
+            "decision",
+            "tool.proposal",
+            "policy.check",
+            "approval",
+            "tool.execute",
+            "state.observe",
+            "retrieval",
+            "fault",
+            "retry",
+            "final_response",
+            "evaluation"
+          ]
+        },
+        "started_at": {"type": "string"},
+        "ended_at": {"type": ["string", "null"]},
+        "status": {"enum": ["ok", "error", "blocked", "pending"]},
+        "attributes": {"type": "object", "additionalProperties": true},
+        "input_ref": {"type": ["string", "null"]},
+        "output_ref": {"type": ["string", "null"]},
+        "error": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

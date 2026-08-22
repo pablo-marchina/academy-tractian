@@ -1,0 +1,199 @@
+{
+  "schema_version": "e4-model-proposal-plan-v1",
+  "split": "DEV",
+  "proposal_source_class": "model_agent",
+  "source": {
+    "provider": "OpenAI ChatGPT",
+    "model": "GPT-5.5 Thinking",
+    "generation_time_local": "2026-08-16T08:48:00-03:00",
+    "generation_context": "Conversation-generated first DEV proposal plan. Intended for boundary metrics only; the adapter does not load evaluator-only gold or locked-test groups.",
+    "prompt_scope": [
+      "frozen DEV split membership",
+      "agent-visible ticket metadata",
+      "canonical ToolSpec names and argument shapes",
+      "runtime identity/seed binding rules"
+    ],
+    "non_demo_attestation": "This proposal plan is not a presentation demo and must not be used for architecture/model/runtime selection without DEV/VALIDATION evidence."
+  },
+  "runs": [
+    {
+      "scenario_id": "CEN-01",
+      "split_group_id": "asset_G501",
+      "ticket_id": "TKT-INV-04",
+      "user_id": "usr_pedro",
+      "user_company_id": "comp_mineracao_andes",
+      "user_permissions": ["read", "escalate"],
+      "resource_company_lookup": {
+        "asset_G501": "comp_mineracao_andes",
+        "case_tkt_inv_04": "comp_mineracao_andes"
+      },
+      "required_evidence_before_action": ["asset", "baseline", "data_quality", "rms"],
+      "required_action": {
+        "tool_name": "escalate_case",
+        "target_resource": "case_tkt_inv_04",
+        "permission": "escalate"
+      },
+      "proposals": [
+        {"label": "inspect_asset", "tool_name": "get_asset", "arguments": {"asset_id": "asset_G501"}, "evidence_id": "asset"},
+        {"label": "inspect_baseline", "tool_name": "get_baseline", "arguments": {"asset_id": "asset_G501"}, "evidence_id": "baseline"},
+        {"label": "inspect_data_quality", "tool_name": "get_data_quality", "arguments": {"asset_id": "asset_G501"}, "evidence_id": "data_quality"},
+        {"label": "inspect_rms", "tool_name": "get_rms", "arguments": {"asset_id": "asset_G501"}, "evidence_id": "rms"},
+        {"label": "handoff_after_evidence", "tool_name": "escalate_case", "arguments": {"case_id": "case_tkt_inv_04", "body": {"justification": "Offline sensor and incomplete evidence require human field follow up"}}}
+      ],
+      "final": {"decision": "ESCALATE_HUMAN", "facts": ["field_handoff_needed"], "claims": []}
+    },
+    {
+      "scenario_id": "CEN-10",
+      "split_group_id": "asset_G501",
+      "ticket_id": "TKT-EXE-16",
+      "user_id": "usr_pedro",
+      "user_company_id": "comp_mineracao_andes",
+      "user_permissions": ["read", "escalate"],
+      "resource_company_lookup": {
+        "asset_G501": "comp_mineracao_andes",
+        "case_tkt_exe_16": "comp_mineracao_andes"
+      },
+      "required_evidence_before_action": ["asset"],
+      "required_action": {
+        "tool_name": "escalate_case",
+        "target_resource": "case_tkt_exe_16",
+        "permission": "escalate"
+      },
+      "proposals": [
+        {"label": "confirm_case_asset", "tool_name": "get_asset", "arguments": {"asset_id": "asset_G501"}, "evidence_id": "asset"},
+        {"label": "user_requested_handoff", "tool_name": "escalate_case", "arguments": {"case_id": "case_tkt_exe_16", "body": {"justification": "Requester explicitly says remote support is insufficient and asks field escalation"}}}
+      ],
+      "final": {"decision": "ESCALATE_HUMAN", "facts": ["requested_field_escalation"], "claims": []}
+    },
+    {
+      "scenario_id": "CEN-02",
+      "split_group_id": "asset_C710",
+      "ticket_id": "TKT-INV-05",
+      "user_id": "usr_sofia",
+      "user_company_id": "comp_petro_delta",
+      "user_permissions": ["read", "action_low"],
+      "resource_company_lookup": {
+        "asset_C710": "comp_petro_delta",
+        "an_9902": "comp_petro_delta",
+        "mdl_vib_v3": "comp_petro_delta"
+      },
+      "required_evidence_before_action": ["analyses", "data_quality", "model"],
+      "required_action": {
+        "tool_name": "request_specialist_analysis",
+        "target_resource": "an_9902",
+        "permission": "action_low"
+      },
+      "proposals": [
+        {"label": "inspect_asset", "tool_name": "get_asset", "arguments": {"asset_id": "asset_C710"}, "evidence_id": "asset"},
+        {"label": "inspect_pending_analysis", "tool_name": "list_analyses", "arguments": {"asset_id": "asset_C710", "status": "pending"}, "evidence_id": "analyses"},
+        {"label": "inspect_signal_quality", "tool_name": "get_data_quality", "arguments": {"asset_id": "asset_C710"}, "evidence_id": "data_quality"},
+        {"label": "inspect_model_state", "tool_name": "get_model", "arguments": {"model_id": "mdl_vib_v3"}, "evidence_id": "model"},
+        {"label": "ask_specialist", "tool_name": "request_specialist_analysis", "arguments": {"analysis_id": "an_9902", "body": {"justification": "Pending high severity compressor analysis should be reviewed by a specialist"}}}
+      ],
+      "final": {"decision": "ACT_REQUEST_SPECIALIST", "facts": ["specialist_review_requested"], "claims": []}
+    },
+    {
+      "scenario_id": "CEN-14",
+      "split_group_id": "asset_C710",
+      "ticket_id": "TKT-EXE-13",
+      "user_id": "usr_sofia",
+      "user_company_id": "comp_petro_delta",
+      "user_permissions": ["read", "action_low"],
+      "resource_company_lookup": {
+        "asset_C710": "comp_petro_delta",
+        "an_9902": "comp_petro_delta"
+      },
+      "required_evidence_before_action": ["analyses"],
+      "required_action": {
+        "tool_name": "request_specialist_analysis",
+        "target_resource": "an_9902",
+        "permission": "action_low"
+      },
+      "proposals": [
+        {"label": "find_analysis", "tool_name": "list_analyses", "arguments": {"asset_id": "asset_C710"}, "evidence_id": "analyses"},
+        {"label": "requested_specialist", "tool_name": "request_specialist_analysis", "arguments": {"analysis_id": "an_9902", "body": {"justification": "Requester asked for Tractian specialist review of inconclusive compressor insight"}}}
+      ],
+      "final": {"decision": "ACT_REQUEST_SPECIALIST", "facts": ["specialist_review_requested"], "claims": []}
+    },
+    {
+      "scenario_id": "CEN-03",
+      "split_group_id": "asset_S420",
+      "ticket_id": "TKT-INV-06",
+      "user_id": "usr_bruno",
+      "user_company_id": "comp_acme",
+      "user_permissions": ["read"],
+      "resource_company_lookup": {
+        "asset_S420": "comp_acme",
+        "an_9903": "comp_acme",
+        "an_9904": "comp_acme"
+      },
+      "proposals": [
+        {"label": "inspect_asset", "tool_name": "get_asset", "arguments": {"asset_id": "asset_S420"}, "evidence_id": "asset"},
+        {"label": "inspect_current_analyses", "tool_name": "list_analyses", "arguments": {"asset_id": "asset_S420", "status": "current"}, "evidence_id": "analyses"},
+        {"label": "inspect_baseline", "tool_name": "get_baseline", "arguments": {"asset_id": "asset_S420"}, "evidence_id": "baseline"}
+      ],
+      "final": {"decision": "INVESTIGATE", "facts": ["read_only_investigation"], "claims": []}
+    },
+    {
+      "scenario_id": "CEN-16",
+      "split_group_id": "asset_S420",
+      "ticket_id": "TKT-EXE-15",
+      "user_id": "usr_carla",
+      "user_company_id": "comp_cimento_vale",
+      "user_permissions": ["read", "action_high"],
+      "resource_company_lookup": {
+        "asset_S420": "comp_acme",
+        "mdl_vib_v3": "comp_acme"
+      },
+      "required_evidence_before_action": ["analyses", "model"],
+      "required_action": {
+        "tool_name": "request_retraining",
+        "target_resource": "mdl_vib_v3",
+        "permission": "action_high"
+      },
+      "proposals": [
+        {"label": "inspect_asset", "tool_name": "get_asset", "arguments": {"asset_id": "asset_S420"}, "evidence_id": "asset"},
+        {"label": "inspect_analyses", "tool_name": "list_analyses", "arguments": {"asset_id": "asset_S420"}, "evidence_id": "analyses"},
+        {"label": "inspect_model", "tool_name": "get_model", "arguments": {"model_id": "mdl_vib_v3"}, "evidence_id": "model"},
+        {"label": "request_retraining", "tool_name": "request_retraining", "arguments": {"model_id": "mdl_vib_v3", "body": {"justification": "Repeated poor spindle insights justify retraining request after evidence review"}}}
+      ],
+      "final": {"decision": "ACT_REQUEST_RETRAINING", "facts": ["retraining_requested"], "claims": []}
+    },
+    {
+      "scenario_id": "CEN-04",
+      "split_group_id": "asset_M208",
+      "ticket_id": "TKT-INV-11b",
+      "user_id": "usr_gustavo",
+      "user_company_id": "comp_cimento_vale",
+      "user_permissions": ["read", "action_low"],
+      "resource_company_lookup": {
+        "asset_M208": "comp_cimento_vale",
+        "an_9905": "comp_cimento_vale"
+      },
+      "proposals": [
+        {"label": "inspect_asset", "tool_name": "get_asset", "arguments": {"asset_id": "asset_M208"}, "evidence_id": "asset"},
+        {"label": "inspect_lubrication_analysis", "tool_name": "get_analysis", "arguments": {"analysis_id": "an_9905"}, "evidence_id": "analysis"},
+        {"label": "retrieve_symptom_guidance", "tool_name": "search_knowledge", "arguments": {"q": "detecção sintomática lubrificação sem baseline", "type": "guidance"}, "evidence_id": "knowledge"}
+      ],
+      "final": {"decision": "INVESTIGATE", "facts": ["symptom_based_detection_explained"], "claims": []}
+    },
+    {
+      "scenario_id": "CEN-11",
+      "split_group_id": "asset_M101",
+      "ticket_id": "TKT-CTX-01",
+      "user_id": "usr_ana",
+      "user_company_id": "comp_forja_br",
+      "user_permissions": ["read", "action_high", "escalate"],
+      "resource_company_lookup": {
+        "asset_M101": "comp_forja_br",
+        "kb_proc_001": "comp_forja_br"
+      },
+      "proposals": [
+        {"label": "inspect_asset", "tool_name": "get_asset", "arguments": {"asset_id": "asset_M101"}, "evidence_id": "asset"},
+        {"label": "search_bearing_procedure", "tool_name": "search_knowledge", "arguments": {"q": "troca de rolamento motor industrial torque baseline", "type": "procedure"}, "evidence_id": "knowledge_search"},
+        {"label": "fetch_procedure_doc", "tool_name": "get_knowledge_doc", "arguments": {"doc_id": "kb_proc_001"}, "evidence_id": "knowledge_doc"}
+      ],
+      "final": {"decision": "ORIENT", "facts": ["procedure_guidance_retrieved"], "claims": []}
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "schema": "e8-free-anywhere-candidate-discovery-v1",
+  "status": "PREREGISTERED",
+  "date": "2026-08-16",
+  "budget_policy": {
+    "project_cost_limit_usd": 0,
+    "free_only": true,
+    "paid_models_enabled": false,
+    "paid_reference_candidates_blocked": [
+      "openai_reference_optional",
+      "anthropic_reference_optional"
+    ],
+    "external_calls_in_default_ci": false,
+    "remote_free_apis_allowed": true,
+    "local_systems_allowed": true,
+    "locality_required": false
+  },
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "dev_smoke_before_validation": true
+  },
+  "candidate_slots": [
+    {
+      "slot_id": "no_model_policy_baseline",
+      "kind": "built_in_baseline",
+      "default_enabled": true,
+      "external_model_calls": false,
+      "cost_policy": "always_zero"
+    },
+    {
+      "slot_id": "groq_free_api",
+      "kind": "remote_hosted_api",
+      "default_enabled": false,
+      "required_env": ["GROQ_API_KEY", "E8_ENABLE_GROQ", "E8_CONFIRM_ZERO_COST"],
+      "external_model_calls": true,
+      "cost_policy": "free_tier_only"
+    },
+    {
+      "slot_id": "gemini_free_api",
+      "kind": "remote_hosted_api",
+      "default_enabled": false,
+      "required_env_any_key": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+      "required_env": ["E8_ENABLE_GEMINI", "E8_CONFIRM_ZERO_COST"],
+      "external_model_calls": true,
+      "cost_policy": "free_tier_only"
+    },
+    {
+      "slot_id": "openrouter_free_router",
+      "kind": "remote_free_model_router",
+      "default_enabled": false,
+      "required_env": ["OPENROUTER_API_KEY", "E8_ENABLE_OPENROUTER_FREE", "E8_CONFIRM_ZERO_COST"],
+      "external_model_calls": true,
+      "cost_policy": "free_models_only"
+    },
+    {
+      "slot_id": "huggingface_free_inference",
+      "kind": "remote_inference_provider_credits",
+      "default_enabled": false,
+      "required_env": ["HF_TOKEN", "E8_ENABLE_HUGGINGFACE", "E8_CONFIRM_ZERO_COST"],
+      "external_model_calls": true,
+      "cost_policy": "monthly_free_credits_only_with_explicit_zero_cost_confirmation"
+    },
+    {
+      "slot_id": "ollama_local_optional",
+      "kind": "local_runtime",
+      "default_enabled": false,
+      "required_env": ["OLLAMA_HOST", "E8_ENABLE_OLLAMA"],
+      "external_model_calls": false,
+      "cost_policy": "local_compute_only"
+    },
+    {
+      "slot_id": "openai_reference_optional",
+      "kind": "paid_reference",
+      "default_enabled": false,
+      "blocked_under_current_project_constraint": true,
+      "external_model_calls": false,
+      "cost_policy": "blocked"
+    },
+    {
+      "slot_id": "anthropic_reference_optional",
+      "kind": "paid_reference",
+      "default_enabled": false,
+      "blocked_under_current_project_constraint": true,
+      "external_model_calls": false,
+      "cost_policy": "blocked"
+    }
+  ],
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "success_criteria": [
+    "remote free APIs are treated as eligible candidates, not local-only",
+    "paid candidates remain blocked",
+    "candidate availability is derived only from explicit environment variables",
+    "default CI makes zero external model calls",
+    "LOCKED_TEST remains blocked",
+    "final architecture remains unfrozen"
+  ]
+}

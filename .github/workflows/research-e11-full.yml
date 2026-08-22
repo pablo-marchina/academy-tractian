@@ -1,0 +1,42 @@
+name: research-e11-full
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/e11-full-dev-validation-remeasurement-manifest.json'
+      - 'scripts/research/e11_full_dev_validation_capture.py'
+      - 'scripts/research/e11_dev_only_independent_action_authorization.py'
+      - 'scripts/research/e10g_full_dev_validation_capture.py'
+      - 'scripts/research/e10g_dev_only_balanced_safety_action_guard.py'
+      - 'scripts/research/e10d_full_dev_validation_capture.py'
+      - 'research/97-e11-full-dev-validation-remeasurement.md'
+      - '.github/workflows/research-e11-full.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/experiments/e11-full-dev-validation-remeasurement-manifest.json'
+      - 'scripts/research/e11_full_dev_validation_capture.py'
+      - 'scripts/research/e11_dev_only_independent_action_authorization.py'
+      - 'scripts/research/e10g_full_dev_validation_capture.py'
+      - 'scripts/research/e10g_dev_only_balanced_safety_action_guard.py'
+      - 'scripts/research/e10d_full_dev_validation_capture.py'
+      - 'research/97-e11-full-dev-validation-remeasurement.md'
+      - '.github/workflows/research-e11-full.yml'
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: E11 full dry-run
+        run: |
+          python scripts/research/e11_full_dev_validation_capture.py \
+            --manifest research/experiments/e11-full-dev-validation-remeasurement-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --dry-run \
+            --out "$RUNNER_TEMP/e11-full-dry-run.json"
+          test -s "$RUNNER_TEMP/e11-full-dry-run.json"

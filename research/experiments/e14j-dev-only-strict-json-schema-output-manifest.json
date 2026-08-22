@@ -1,0 +1,104 @@
+{
+  "experiment_id": "E14j",
+  "name": "DEV-only strict JSON Schema output enforcement",
+  "status": "preregistered_before_implementation",
+  "scope": {
+    "splits": ["DEV"],
+    "validation_ran": false,
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false
+  },
+  "parent_candidate": "E14i",
+  "motivation": {
+    "fixed_capture_diagnostic": "E14I_SANITIZED_PROVIDER_FAILURE_SEQUENCE_DIAGNOSTIC",
+    "observed_total_calls": 6,
+    "observed_provider_failure_attempts": 18,
+    "calls_with_any_json_generation_validation_failure": 6,
+    "calls_without_json_generation_validation_failure": 0,
+    "calls_with_only_json_generation_validation_failures": 5,
+    "calls_with_mixed_json_and_unknown_failures": 1,
+    "unknown_failure_isolated_from_json_validation": false,
+    "dominant_json_validation_failure_pattern": true,
+    "interpretation": "json validation dominates every failed benchmark call; unknown failures are not an independent call-level mechanism"
+  },
+  "candidate_change": {
+    "intervention_class": "provider_response_format_enforcement_only",
+    "from": {
+      "response_format": "json_object"
+    },
+    "to": {
+      "response_format": "json_schema",
+      "strict": true,
+      "schema_source": "public existing E10b output contract only"
+    }
+  },
+  "strict_schema_constraints": {
+    "root_additional_properties": false,
+    "all_declared_root_fields_required": true,
+    "decision_class_enum_preserved_from_existing_public_contract": [
+      "investigate_only",
+      "action_candidate",
+      "escalation_candidate",
+      "insufficient_evidence"
+    ],
+    "evidence_plan_item_type": "string",
+    "action_endpoint_type": "string",
+    "action_endpoint_enum_added": false,
+    "new_semantic_evidence_requirements_added": false,
+    "new_action_policy_added": false,
+    "new_escalation_policy_added": false
+  },
+  "frozen_configuration": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "reasoning_effort": "high",
+    "reasoning_format_environment_value": "hidden",
+    "reasoning_format_effect_not_claimed_for_gpt_oss": true,
+    "max_completion_tokens": 1600,
+    "temperature": 0,
+    "initial_prompt_changed": false,
+    "conditional_semantic_repair_changed": false,
+    "e14c_endpoint_canonicalization_changed": false,
+    "e14d_evidence_canonicalization_changed": false,
+    "e14e_handoff_semantics_changed": false,
+    "e10e_guard_changed": false,
+    "e10g_guard_changed": false,
+    "e11_policy_changed": false,
+    "e14_selective_reprocess_changed": false,
+    "e9_scorer_changed": false,
+    "dev_split_changed": false,
+    "acceptance_thresholds_changed": false
+  },
+  "preflight": {
+    "required_before_real_dev_capture": true,
+    "provider_calls": 1,
+    "uses_private_task_packet": false,
+    "reads_private_oracle": false,
+    "reads_private_scorer_rows": false,
+    "uses_exact_e14j_output_schema": true,
+    "required_status": "E14J_GROQ_STRICT_JSON_SCHEMA_COMPATIBILITY_PREFLIGHT_PASS"
+  },
+  "acceptance_gate": {
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "real_task_quality_min": 0.8571,
+    "decision_correctness_min": 0.75,
+    "action_correctness_min": 0.75,
+    "evidence_correctness": 1.0,
+    "escalation_correctness": 1.0,
+    "locked_test_accessed": false
+  },
+  "causal_language": "E14j tests whether strict provider-side output enforcement resolves the operational JSON-generation/validation failure under the frozen candidate. Separate model generations are not paired deterministic observations; use the absolute gate for task quality.",
+  "security": {
+    "model_receives_private_oracle": false,
+    "model_receives_evaluator_labels": false,
+    "model_receives_validation_feedback": false,
+    "locked_test_forbidden": true,
+    "do_not_commit_real_capture": true,
+    "do_not_commit_private_scorer_rows": true,
+    "do_not_commit_output_hashes": true,
+    "do_not_commit_private_paths": true
+  }
+}

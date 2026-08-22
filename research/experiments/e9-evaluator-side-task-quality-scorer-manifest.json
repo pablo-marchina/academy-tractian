@@ -1,0 +1,73 @@
+{
+  "experiment_id": "E9-evaluator-side-task-quality-scorer",
+  "date": "2026-08-16",
+  "status": "E9_SCORER_MANIFEST_REGISTERED",
+  "purpose": "Evaluate fixed Groq E8 model outputs against private DEV/VALIDATION oracles after generation without leaking gold into prompts.",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false
+  },
+  "fixed_output_source": {
+    "preferred_provider": "groq",
+    "preferred_model": "llama-3.1-8b-instant",
+    "default_summary_path": "research/results/e8-groq-free-anywhere-model-run-summary-2026-08-16.json",
+    "requires_outputs_fixed_before_oracle_scoring": true,
+    "sanitized_hash_only_summaries_are_integrity_evidence_not_semantic_scoring_input": true
+  },
+  "oracle_boundary": {
+    "model_prompt_can_read_oracle": false,
+    "scorer_can_read_dev_validation_private_oracles_after_output_hashing": true,
+    "locked_test_oracles_forbidden_until_final": true,
+    "expected_answers_forbidden_in_prompt": true,
+    "reference_trajectories_forbidden_in_prompt": true,
+    "private_scoring_labels_forbidden_in_prompt": true
+  },
+  "metrics": [
+    "real_task_quality",
+    "decision_class_correctness",
+    "required_evidence_coverage",
+    "evidence_plan_correctness",
+    "action_correctness",
+    "escalation_correctness",
+    "premature_action_rate",
+    "unsupported_final_claim_rate",
+    "trace_completeness",
+    "schema_validity",
+    "proxy_success_rate",
+    "proxy_vs_real_disagreement_rate",
+    "latency_avg_ms",
+    "latency_p95_ms",
+    "cost_usd"
+  ],
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "execution_order": [
+    "consume fixed Groq outputs or fixed output hashes",
+    "load DEV/VALIDATION private oracles only inside scorer",
+    "reject LOCKED_TEST paths or split rows",
+    "score parsed outputs against oracles when available",
+    "report when sanitized summaries are hash-only and require local private rerun for semantic scoring",
+    "compare proxy success to real task-quality scores",
+    "keep final architecture unfrozen"
+  ],
+  "ci_mode": {
+    "private_oracle_file_committed": false,
+    "ci_uses_locked_test": false,
+    "ci_status_when_private_inputs_absent": "E9_SCORER_CONTRACT_PASS_PRIVATE_ORACLE_OR_OUTPUTS_REQUIRED",
+    "real_task_quality_claim_in_ci": false
+  }
+}

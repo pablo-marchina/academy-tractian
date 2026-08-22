@@ -1,0 +1,67 @@
+{
+  "amendment_id": "E14n-v1.1-placeholder-preservation",
+  "status": "ACTIVATED_AFTER_PREREGISTERED_STRUCTURAL_CI_PASS",
+  "date": "2026-08-19",
+  "parent_guard": "E14n-public-identifier-provenance-guard-v1",
+  "trigger": {
+    "aggregate_only_observation": {
+      "unsupported_identifier_mentions_before": 1,
+      "unsupported_identifier_replacements": 3,
+      "unsupported_identifier_mentions_after": 0,
+      "decision_action_escalation_semantic_changes": 0
+    },
+    "raw_outputs_inspected": false,
+    "identifiers_inspected": false,
+    "private_oracle_used": false,
+    "semantic_judge_rows_used": false,
+    "root_cause_from_public_code_contract": "The surface auditor removes {...} placeholders before ID matching, while E14n v1 applies namespaced-ID matching directly to placeholder text. Public placeholders whose inner token is absent from the visible case can therefore be transformed even though the auditor correctly excludes them from concrete-ID provenance checks."
+  },
+  "allowed_change": {
+    "change_class": "deterministic_guard_bugfix_only",
+    "preserve_every_brace_placeholder_literal": true,
+    "transform_only_text_outside_brace_placeholders": true,
+    "unsupported_concrete_identifier_detection_changed": false,
+    "typed_replacement_mapping_changed": false,
+    "visible_case_selection_changed": false,
+    "audited_fields_changed": false,
+    "decision_action_escalation_fields_changed": false,
+    "provider_calls_allowed": false,
+    "private_oracle_allowed": false,
+    "validation_feedback_allowed": false,
+    "locked_test_allowed": false
+  },
+  "regression_requirements": {
+    "existing_public_placeholders_preserved_byte_for_byte": true,
+    "unsupported_concrete_ids_still_replaced": true,
+    "supported_visible_ids_preserved": true,
+    "before_unsupported_mentions_equal_replacement_distinct_mentions": true,
+    "after_unsupported_mentions_required": 0,
+    "decision_action_escalation_semantic_changes_required": 0
+  },
+  "structural_validation": {
+    "workflow": "research-e9-v4",
+    "run_id": 32260343772,
+    "passed": true,
+    "placeholder_preservation_regression_passed": true,
+    "provider_calls_made": 0,
+    "private_oracle_used": false,
+    "validation_used": false,
+    "locked_test_used": false
+  },
+  "e14o_measurement_rule": {
+    "e14o_generation_must_not_be_rerun": true,
+    "discard_e14n_v1_guarded_e14o_output_from_quality_selection": true,
+    "discard_downstream_surface_v4_1_and_v4_2_packet_built_from_e14n_v1_e14o_output_from_quality_selection": true,
+    "rerun_only_provider_free_postprocessing_from_fixed_e14o_capture": true,
+    "v1_1_structural_ci_required_before_e14o_postprocess_rerun": true,
+    "v1_1_structural_ci_passed": true
+  },
+  "privacy": {
+    "commit_raw_fixed_outputs": false,
+    "commit_guarded_outputs": false,
+    "commit_identifiers": false,
+    "commit_per_call_results": false,
+    "commit_hashes": false,
+    "commit_private_paths": false
+  }
+}

@@ -1,0 +1,86 @@
+name: research-e14v-a-synthetic-transport-amendment
+
+on:
+  push:
+    paths:
+      - 'research/experiments/e14v-a-synthetic-transport-contract-amendment.json'
+      - 'scripts/research/e14v_a_synthetic_transport_contract_amendment.py'
+      - '.github/workflows/research-e14v-a-synthetic-transport-amendment.yml'
+  pull_request:
+    paths:
+      - 'research/experiments/e14v-a-synthetic-transport-contract-amendment.json'
+      - 'scripts/research/e14v_a_synthetic_transport_contract_amendment.py'
+      - '.github/workflows/research-e14v-a-synthetic-transport-amendment.yml'
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install public registry dependency
+        run: python -m pip install 'pydantic>=2,<3'
+
+      - name: Compile E14v-A
+        run: python -m py_compile scripts/research/e14v_a_synthetic_transport_contract_amendment.py
+
+      - name: Run amendment self-check
+        run: |
+          python scripts/research/e14v_a_synthetic_transport_contract_amendment.py \
+            --out /tmp/e14v-a-unused.json \
+            --self-check
+
+      - name: Run zero-provider amended synthetic dry-run
+        run: |
+          python scripts/research/e14v_a_synthetic_transport_contract_amendment.py \
+            --mode synthetic \
+            --out /tmp/e14v-a-synthetic-dry.json \
+            --dry-run
+
+      - name: Verify amendment boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('research/experiments/e14v-a-synthetic-transport-contract-amendment.json')
+          m = json.loads(p.read_text())
+          assert m['experiment_id'] == 'E14v-A-public-synthetic-transport-contract-amendment'
+          assert m['status'] == 'PREREGISTERED_STRUCTURAL_CI_REQUIRED_BEFORE_CORRECTED_SYNTHETIC_ATTEMPT'
+          assert m['amendment_class'] == 'operational_transport_contract_only'
+          u = m['unchanged_scientific_candidate']
+          assert u['planner_model'] == 'openai/gpt-oss-120b'
+          assert u['reasoning_effort'] == 'medium'
+          assert u['temperature'] == 0
+          assert u['synthetic_case_count'] == 14
+          assert u['synthetic_fixture_changed'] is False
+          assert u['synthetic_thresholds_changed'] is False
+          t = m['transport_change']
+          assert t['new_response_contract']['type'] == 'json_schema'
+          assert t['new_response_contract']['strict'] is True
+          assert t['include_reasoning'] is False
+          assert t['reasoning_format_sent'] is False
+          assert m['corrected_synthetic_attempt_policy']['corrected_real_provider_attempts_allowed'] == 1
+          assert m['authorization_boundary']['real_dev_authorized'] is False
+          assert m['authorization_boundary']['validation_authorized'] is False
+          assert m['authorization_boundary']['locked_test_authorized'] is False
+          print('E14V_A_AMENDMENT_BOUNDARY_PASS')
+          PY
+
+      - name: Reject private selectors in amendment source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('scripts/research/e14v_a_synthetic_transport_contract_amendment.py').read_text()
+          literal_forbidden = ['expected-paths.json', 'oracle-file', 'LOCKED_TEST_CASE']
+          semantic_forbidden = [
+              '.get("coverage_tags")', ".get('coverage_tags')",
+              '["coverage_tags"]', "['coverage_tags']",
+              '.get("ticket_id")', ".get('ticket_id')",
+              '["ticket_id"]', "['ticket_id']",
+          ]
+          for needle in literal_forbidden + semantic_forbidden:
+              assert needle not in text, f'forbidden selector access found: {needle}'
+          print('E14V_A_FORBIDDEN_SELECTOR_SCAN_PASS')
+          PY

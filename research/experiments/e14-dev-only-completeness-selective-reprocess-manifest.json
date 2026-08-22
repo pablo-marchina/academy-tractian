@@ -1,0 +1,105 @@
+{
+  "id": "e14-dev-only-completeness-selective-reprocess",
+  "date": "2026-08-16",
+  "status": "E14_DEV_ONLY_COMPLETENESS_SELECTIVE_REPROCESS_IMPLEMENTATION",
+  "phase_gate_mode": "hard_phase_gate",
+  "is_demo": false,
+  "is_integration": false,
+  "is_new_product": false,
+  "is_full_rerun": false,
+  "final_architecture_freeze": false,
+  "purpose": "Implement only the preregistered E14 DEV-only candidate that guarantees complete scoreable capture or fails closed and selectively authorizes reprocess from concrete visible support.",
+  "root_cause_source": {
+    "audit": "E13 blocker audit non-validation-tuned",
+    "root_cause_classes": [
+      "parsed_output_missing_in_dev_capture",
+      "boundary_changed_all_target_reprocess_actions",
+      "action_collapse_consistent_with_overblocking_reprocess_boundary",
+      "decision_regression_after_reprocess_downgrade"
+    ]
+  },
+  "candidate_change": {
+    "name": "completeness_preserving_selective_reprocess_authorization",
+    "implementation_scope": "DEV-only",
+    "completeness": {
+      "expected_total_calls": 6,
+      "required_parsed_outputs": 6,
+      "required_scoreable_calls": 6,
+      "retry_failed_model_calls": true,
+      "retry_parse_failures": true,
+      "default_max_retries_per_fixed_call": 2,
+      "syntax_only_json_repair": true,
+      "semantic_field_invention_forbidden": true,
+      "fail_closed_if_incomplete": true
+    },
+    "selectivity": {
+      "target_endpoint": "POST /analyses/{analysis_id}/reprocess",
+      "generic_evidence_family_count_is_not_sufficient": true,
+      "generic_human_review_markers_are_not_sufficient": true,
+      "all_required": [
+        "exact reprocess endpoint",
+        "visible analysis identifier or analysis resource reference",
+        "visible asset or case identifier/reference",
+        "proposed action limited to reprocess without higher-risk asset/model mutation",
+        "human-readable evidence-to-reprocess reason"
+      ],
+      "minimum_concrete_support_anchors": 2,
+      "support_anchor_classes": [
+        "concrete_sensor_rms_spectrum_baseline_or_data_quality_observation",
+        "diagnosis_uncertainty_or_incompleteness",
+        "stale_failed_unreliable_or_incomplete_analysis_signal",
+        "evidence_analysis_conclusion_mismatch",
+        "case_or_user_requests_updated_analysis",
+        "knowledge_or_model_context_supports_low_risk_reprocess"
+      ]
+    }
+  },
+  "allowed_inputs": {
+    "visible_parsed_output": true,
+    "visible_dev_call_context": true,
+    "public_project_tool_invariants": true,
+    "dev_split": true,
+    "validation_split": false,
+    "locked_test_split": false,
+    "private_oracle": false,
+    "private_expected_paths": false,
+    "raw_scorer_rows": false,
+    "validation_feedback": false,
+    "reference_trajectories": false,
+    "evaluator_labels": false
+  },
+  "scope": {
+    "measurement_splits": ["DEV"],
+    "validation_ran": false,
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false,
+    "representative_groups": {
+      "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+    },
+    "dev_repeats": 2,
+    "expected_total_calls": 6
+  },
+  "acceptance_before_full_remeasurement": {
+    "dev_private_scoring_required": true,
+    "score_with": "E9 v3 scorer after fixed E14 outputs exist",
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "minimum_real_task_quality": 0.8571,
+    "minimum_decision_correctness": 0.75,
+    "minimum_action_correctness": 0.75,
+    "minimum_evidence_correctness": 1.0,
+    "minimum_escalation_correctness": 1.0,
+    "locked_test_accessed": false,
+    "raw_private_or_fixed_output_material_committed": false
+  },
+  "full_remeasurement_condition": "Only if DEV-only E14 passes completeness and private scoring acceptance may a measurement-only DEV+VALIDATION rerun be prepared. VALIDATION remains forbidden for tuning.",
+  "blocked_until_dev_passes": [
+    "full DEV+VALIDATION rerun",
+    "integration",
+    "demo",
+    "UI/final architecture progression",
+    "final architecture freeze"
+  ]
+}

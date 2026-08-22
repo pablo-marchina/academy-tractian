@@ -1,0 +1,49 @@
+{
+  "experiment_id": "E14p-full-DEV-five-group",
+  "status": "FROZEN_BEFORE_REAL_FULL_DEV_GENERATION",
+  "date": "2026-08-19",
+  "scope": {
+    "measurement_splits": ["DEV"],
+    "forbidden_splits": ["VALIDATION", "LOCKED_TEST"],
+    "validation_used_for_tuning": false,
+    "validation_ran": false,
+    "locked_test_accessed": false
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420", "asset_M208", "asset_M101"]
+  },
+  "repeats": {
+    "DEV_ACTION_ESCALATION_CALIBRATION": 2
+  },
+  "expected_fixed_calls": 10,
+  "candidate_change": {
+    "change_class": "full_dev_coverage_cardinality_and_manifest_plumbing_only",
+    "candidate_quality_policy_changed": false,
+    "model_changed": false,
+    "prompt_changed": false,
+    "reasoning_changed": false,
+    "schema_changed": false,
+    "completion_budget_changed": false,
+    "post_model_guard_policy_changed": false,
+    "E14n_v1_1_changed": false,
+    "E14p_serializer_changed": false,
+    "evaluator_changed": false
+  },
+  "candidate_stack": [
+    "E14o public factual-grounding prompt",
+    "E14l GPT-OSS 120B medium reasoning strict 4096",
+    "E14f existing public semantic repair",
+    "E14c/d/e and E10e/g/E11/E14 existing deterministic policies",
+    "E14n v1.1 identifier provenance guard",
+    "E14p epistemic serializer"
+  ],
+  "real_generation_attempts_allowed": 1,
+  "automatic_replacement_allowed": false,
+  "validation_gate_authorized": false,
+  "privacy": {
+    "commit_raw_outputs": false,
+    "commit_private_scorer_rows": false,
+    "commit_semantic_judge_rows": false,
+    "private_oracle_in_model_prompt": false
+  }
+}

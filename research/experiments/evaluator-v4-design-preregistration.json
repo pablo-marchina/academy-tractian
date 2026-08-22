@@ -1,0 +1,86 @@
+{
+  "experiment_id": "EVALUATOR-V4-VALIDITY-DESIGN",
+  "date": "2026-08-18",
+  "status": "PREREGISTERED_BEFORE_E14M_R1_RESULT",
+  "purpose": "Design a candidate-independent evaluator that uses the structured private expected-path contract without the lexical-label confounds identified in frozen E9 v3.",
+  "relationship_to_e14m_r1": {
+    "changes_e14m_candidate": false,
+    "changes_e14m_r1_execution": false,
+    "changes_frozen_e9_v3_for_historical_r1_score": false,
+    "if_r1_complete_e9_v3_still_runs_exactly_once": true,
+    "v4_is_required_before_validation": true,
+    "v4_design_must_not_use_r1_private_per_row_errors": true
+  },
+  "observed_oracle_contract_shape_only": {
+    "top_level": "list",
+    "row_fields": ["id", "ticket_id", "mode", "root_question", "expected_path"],
+    "expected_path_type": "list",
+    "expected_path_item_type": "object",
+    "expected_path_item_fields": ["step", "note"],
+    "oracle_values_used_to_register_this_design": false
+  },
+  "frozen_label_inference_boundaries": {
+    "root_question_may_define_expected_action": false,
+    "root_question_may_define_expected_escalation": false,
+    "ticket_id_may_define_semantic_label": false,
+    "row_id_may_define_semantic_label": false,
+    "mode_may_be_used_for_reporting_or_stratification": true,
+    "mode_may_be_used_as_an_action_or_escalation_label_without_independent_semantic_validation": false,
+    "expected_path_step_is_primary_semantic_supervision": true,
+    "expected_path_note_may_only_modify_the_semantics_of_its_own_step": true,
+    "negation_and_conditionals_must_be_scope_aware": true
+  },
+  "public_tool_contract_normalization": {
+    "source": "research/e2/tool_registry.py",
+    "normalize_method_and_path_templates": true,
+    "normalize_concrete_resource_ids_to_public_placeholders": true,
+    "do_not_score_literal_placeholder_formatting": true,
+    "semantic_signature_diagnostic_required_before_implementation": true,
+    "high_coverage_threshold_for_deterministic_tool_signature_strategy": 0.8,
+    "if_below_threshold": "DO_NOT_INVENT_MORE_LEXICAL_HEURISTICS;REGISTER_A_SEPARATE_CANDIDATE_INDEPENDENT_NORMALIZATION_OR_ANNOTATION_PROTOCOL"
+  },
+  "metric_contract_requirements": {
+    "evidence_correctness": {
+      "score_only_evidence_plan": true,
+      "whole_output_text_may_satisfy_missing_evidence": false,
+      "prefer_public_resource_family_or_tool_signature_coverage_over_free_text_token_hits": true
+    },
+    "action_correctness": {
+      "must_not_be_inferred_from_question_wording": true,
+      "must_distinguish_current_safe_action_from_conditional_or_future_action": true,
+      "must_be_grounded_in_expected_path_step_semantics": true
+    },
+    "escalation_correctness": {
+      "must_not_treat_negative_or_conditional_escalation_language_as_current_positive_escalation": true,
+      "must_distinguish_specialist_endpoint_from_generic_mentions_of_human_or_specialist": true
+    },
+    "unsupported_final_claim_rate": {
+      "absence_of_gold_or_locked_test_phrases_is_not_sufficient": true,
+      "must_measure_semantic_groundedness_of_final_claims_or_explicitly_report_groundedness_unmeasured": true
+    },
+    "decision_correctness": {
+      "must_be_derived_from_validated_action_escalation_and_evidence_state_semantics": true,
+      "must_not_use_candidate_output_to_construct_expected_class": true
+    }
+  },
+  "validity_checks_required_before_v4_can_gate_validation": [
+    "oracle-free synthetic negation cases",
+    "oracle-free synthetic conditional cases",
+    "oracle-free synthetic root-question confound cases",
+    "oracle-free synthetic evidence-plan isolation cases",
+    "oracle-free synthetic unsupported-claim groundedness cases",
+    "private-oracle aggregate semantic-signature coverage diagnostic without printing values",
+    "full-DEV coverage measurement uses all frozen DEV groups",
+    "LOCKED_TEST remains untouched"
+  ],
+  "privacy": {
+    "model_can_read_oracle": false,
+    "print_expected_path_text": false,
+    "print_root_question_text": false,
+    "print_private_ids": false,
+    "print_private_paths": false,
+    "print_per_row_expected_labels_for_candidate_tuning": false,
+    "use_validation_feedback_for_v4_design": false,
+    "use_locked_test": false
+  }
+}

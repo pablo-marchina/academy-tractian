@@ -1,0 +1,113 @@
+{
+  "experiment_id": "E14p",
+  "title": "Provider-free public epistemic serialization guard over fixed E14o output",
+  "status": "ACTIVE_AFTER_PREREGISTRATION_AND_STRUCTURAL_CI_PASS_BEFORE_ANY_E14P_REAL_TRANSFORM",
+  "date": "2026-08-19",
+  "parent_candidate": "E14o-after-E14n-v1.1",
+  "design_basis": {
+    "aggregate_only_observation": {
+      "e14o_claim_units": 66,
+      "factual_assertions": 4,
+      "factual_supported": 2,
+      "factual_not_supported": 2,
+      "factual_contradicted": 0,
+      "nonfactual_claims": 62,
+      "nonfactual_type_support_consistent": 62,
+      "e14o_v4_1_evidence_correctness": 0.5,
+      "e14o_v4_1_mean_expected_read_recall": 0.8333,
+      "e14o_v4_1_mean_extra_public_read_count": 3.5
+    },
+    "per_claim_labels_or_text_used": false,
+    "private_oracle_used_for_design": false,
+    "interpretation": "Prompt-only factual discipline failed to move the aggregate factual-support failure while v4.1 trajectory metrics improved. E14p changes final serialization rather than model reasoning."
+  },
+  "intervention": {
+    "change_class": "deterministic_public_epistemic_serialization_only",
+    "provider_calls": 0,
+    "model_output_regenerated": false,
+    "input": "same fixed E14o-after-E14n-v1.1 DEV output",
+    "fields_rewritten": [
+      "evidence_plan[]",
+      "proposed_next_step",
+      "risk_notes",
+      "action_escalation_rubric.calibration_reason"
+    ],
+    "fields_required_byte_semantically_unchanged": [
+      "decision_class",
+      "should_take_action_now",
+      "requires_human_escalation",
+      "action_escalation_rubric.needs_more_evidence",
+      "action_escalation_rubric.safe_to_act",
+      "action_escalation_rubric.action_endpoint",
+      "action_escalation_rubric.needs_human_escalation",
+      "trace_quality_self_check"
+    ],
+    "evidence_signature_policy": "preserve_exact_set_and_order_of_public_METHOD_plus_path_signatures_from_original_evidence_plan",
+    "serialization_policy": {
+      "evidence_plan": "render recognized public tool signatures as procedural retrieval instructions only",
+      "proposed_next_step": "render from selected public action endpoint when present, otherwise from first evidence signature or generic evidence-acquisition instruction",
+      "risk_notes": "render only policy/uncertainty statements derived from existing rubric booleans; assert no task-world diagnosis/severity/causality/temporal result",
+      "calibration_reason": "render rubric metadata booleans only and explicitly avoid additional task-world factual assertions"
+    },
+    "new_task_world_facts_allowed": false,
+    "private_oracle_allowed": false,
+    "semantic_judge_rows_allowed": false,
+    "validation_feedback_allowed": false,
+    "locked_test_allowed": false
+  },
+  "paired_validity_requirements": {
+    "structural_ci_run": 32264286810,
+    "structural_ci_passed": true,
+    "fixed_calls_required": 6,
+    "parsed_calls_required": 6,
+    "decision_action_escalation_semantic_changes_required": 0,
+    "action_endpoint_changes_required": 0,
+    "trace_quality_self_check_changes_required": 0,
+    "evidence_public_signature_loss_required": 0,
+    "evidence_public_signature_gain_required": 0,
+    "provider_calls_required": 0,
+    "e14n_v1_1_guard_already_applied": true
+  },
+  "measurement_order": [
+    "apply E14p deterministically to fixed E14o-after-E14n-v1.1 output",
+    "run one-sided groundedness surface audit",
+    "run E9 v4.1 aggregate measurement",
+    "build E9 v4.2 semantic claim packet and observe aggregate claim count only",
+    "preregister E14p semantic judge transport for that count before any E14p semantic labels",
+    "run reliability-qualified independent judge once",
+    "aggregate semantic groundedness"
+  ],
+  "acceptance": {
+    "surface_concrete_provenance_violation_count_required": 0,
+    "semantic_groundedness_gate_required": true,
+    "factual_groundedness_rate_required": 1.0,
+    "decision_correctness_noninferiority_min": 0.6667,
+    "action_correctness_noninferiority_min": 0.6667,
+    "escalation_correctness_noninferiority_min": 0.6667,
+    "evidence_correctness_noninferiority_min": 0.5,
+    "mean_expected_read_recall_noninferiority_min": 0.8333,
+    "mean_extra_public_read_count_noninferiority_max": 3.5,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "locked_test_or_gold_leakage_rate_required": 0.0,
+    "validation_gate_authorized": false
+  },
+  "interpretation": {
+    "paired_causal_claim_allowed_for_serializer_effect": true,
+    "paired_causal_claim_not_allowed_for_underlying_model_reasoning": true,
+    "targeted_pass_does_not_establish_full_task_quality": true,
+    "full_five_group_DEV_gate_still_required_before_VALIDATION": true,
+    "do_not_tune_from_per_claim_labels": true,
+    "do_not_rerun_E14o_generation": true,
+    "do_not_rerun_E14m_or_E14m_R1": true
+  },
+  "privacy": {
+    "commit_raw_outputs": false,
+    "commit_transformed_outputs": false,
+    "commit_claim_text": false,
+    "commit_semantic_judge_rows": false,
+    "commit_identifiers": false,
+    "commit_hashes": false,
+    "commit_private_paths": false
+  }
+}
