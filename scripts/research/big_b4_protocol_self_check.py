@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 from scripts.research.big_b4_protocol_guard import (
@@ -91,7 +90,6 @@ def main() -> int:
         "no_adaptive_partial_feedback": True,
         "authorization_previously_consumed": False,
         "authorized": True,
-        "authorization_id": "SELF_CHECK_AUTH",
         "measurement_cycle_id": "SELF_CHECK_CYCLE",
     })
     auth_ok, auth_missing = final_authorization_ready(valid_auth)
@@ -169,7 +167,7 @@ def main() -> int:
         "status": "BIG_B4_PROTOCOL_SELF_CHECK_PASS",
         "protocol_id": protocol["protocol_id"],
         "provider_inference_calls": 0,
-        "private_benchmark_semantics_read": false,
+        "private_benchmark_semantics_read": False,
         "checks_passed": passed,
         "checks_total": len(results),
         "all_passed": passed == len(results),
