@@ -1,0 +1,148 @@
+{
+  "schema_version": "p12-historical-candidate-component-reinterpretation-v1",
+  "date": "2026-08-22",
+  "status": "COMPLETE",
+  "protocol_id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
+  "protocol_state": "FROZEN",
+  "scope": "material decision-bearing candidates/components from E0 through E14v plus unresolved architecture surfaces",
+  "method": "retrospective evidence reclassification only",
+  "new_provider_or_model_inference_calls": 0,
+  "new_private_validation_semantic_access": false,
+  "new_private_locked_test_semantic_access": false,
+  "fresh_blind_access": false,
+  "classification_rules": [
+    "Historical DEV and historical VALIDATION are EXPOSED_POOL development/selection evidence under P12.",
+    "Historical hard-gate failures remain failures and cannot become QUALIFIED solely because P12 changed split roles.",
+    "A component can remain QUALIFIED only for the property actually demonstrated by its evidence.",
+    "Synthetic evidence can qualify robustness/evaluator/judge behavior but cannot establish real-domain production generalization.",
+    "EXPERIMENT_FROZEN reproducibility is distinct from project-level FROZEN selection.",
+    "No historical implementation candidate is promoted to PREFERRED or project-level FROZEN by this reinterpretation."
+  ],
+  "summary": {
+    "project_level_frozen_implementation_or_architecture_candidates": 0,
+    "project_level_frozen_evaluation_protocols": 1,
+    "historical_implementation_candidates_at_preferred": 0,
+    "final_architecture_state": "RESEARCHED_NOT_PREFERRED_NOT_FROZEN",
+    "production_readiness_claim": "NOT_AUTHORIZED",
+    "fresh_blind_state": "NO_BLIND_SOURCE_AUTHORIZED",
+    "legacy_locked_test_state": "BLOCKED_PENDING_FINAL_AUTHORIZATION"
+  },
+  "records": [
+    {"id":"F01","category":"foundation","name":"E0 API/behavior contract freeze","p12_state":"FROZEN","artifact_freeze":"EXPERIMENT_FROZEN","evidence_partition":"CANONICAL_FACTUAL","claim_limit":"Canonical supplied API/tool behavior facts only; not architecture selection.","next_evidence":"Explicit versioned contract amendment only if source contract changes."},
+    {"id":"F02","category":"foundation","name":"E1 evaluator-only gold freeze","p12_state":"FROZEN","artifact_freeze":"EXPERIMENT_FROZEN","evidence_partition":"PRIVATE_ORACLE_CANONICAL","claim_limit":"Immutable supervision artifact; candidate/developer oracle access remains forbidden.","next_evidence":"None for immutability; evaluator implementations require separate qualification."},
+    {"id":"F03","category":"foundation","name":"ScenarioSchema / Canonical ToolSpec / TraceSchema / deterministic replay","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL_AND_DETERMINISTIC","claim_limit":"Qualified research foundation, not production architecture.","next_evidence":"Production reliability/operability evidence and regression under accepted changes."},
+    {"id":"F04","category":"benchmark","name":"E3 benchmark-split-v1 role assignment","p12_state":"SUPERSEDED","artifact_freeze":"EXPERIMENT_FROZEN","evidence_partition":"HISTORICAL_SPLIT","claim_limit":"Assignment remains immutable provenance; old DEV/VALIDATION role semantics are superseded.","superseded_by":"P12 partition roles"},
+    {"id":"F05","category":"evaluation_protocol","name":"P12 Fresh-Blind Hybrid External-First","p12_state":"FROZEN","evidence_partition":"GOVERNANCE","claim_limit":"Freezes evaluation protocol only; does not freeze candidate architecture/model/provider.","next_evidence":"Use as governing protocol."},
+
+    {"id":"E4-B0","category":"guard","name":"E4 B0 baseline boundary","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL","claim_limit":"Historical unsafe baseline only.","reason":"Invalid and premature action proposals remained uncontained.","superseded_by":"B3 and later deterministic guard stacks"},
+    {"id":"E4-B1","category":"guard","name":"E4 B1 invalid-argument guard","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL","claim_limit":"Retains evidence that argument validation is a necessary safety invariant.","superseded_by":"B3 and later deterministic guard stacks"},
+    {"id":"E4-B2","category":"guard","name":"E4 B2 resource/permission guard","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL","claim_limit":"Retains DEV evidence for resource/scope safety invariant; E4 VALIDATION lacked new scope pressure.","superseded_by":"B3 and later deterministic guard stacks"},
+    {"id":"E4-B3","category":"guard","name":"E4 B3 combined guarded boundary","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL","validation_adaptive_influence":"DIRECT_DOCUMENTED","claim_limit":"Best B0-B3 historical safety/task signal on exposed evidence only; no independent validation claim.","superseded_by":"E10-E14 deterministic safety/authorization stack"},
+
+    {"id":"E5-REF","category":"evidence_policy","name":"fixed_reference_like","p12_state":"RESEARCHED","evidence_partition":"EXPOSED_POOL_INFRASTRUCTURE","claim_limit":"Infrastructure/reference anchor only; explicitly not agent-quality evidence."},
+    {"id":"E5-FREE","category":"evidence_policy","name":"free_tool_loop","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL","claim_limit":"Behavioral baseline for premature stopping/unnecessary calls.","superseded_by":"evidence_sufficiency_policy"},
+    {"id":"E5-SUFF","category":"evidence_policy","name":"evidence-sufficiency/stopping policy","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL","claim_limit":"Qualified only for improved stopping/call-discipline behavior versus free loop; not evidence-route correctness or blind generalization.","next_evidence":"Prospective P12 paired comparison and regression on all 7 groups."},
+
+    {"id":"E6-LG","category":"runtime","name":"LangGraph","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL_PLUS_LIVE_INTEGRATION","claim_limit":"Qualified research runtime candidate for replay/checkpoint/HITL/guard integration; not preferred/final.","next_evidence":"Implementation-symmetric P12 comparison vs retained runtimes plus production metrics."},
+    {"id":"E6-PYD","category":"runtime","name":"Pydantic AI/Graph","p12_state":"RESEARCHED","evidence_partition":"DOCUMENTATION_SCORECARD","claim_limit":"Credible comparator; lacked equivalent live integration depth.","next_evidence":"Equivalent prospective implementation spike and P12 comparison."},
+    {"id":"E6-OAI","category":"runtime","name":"OpenAI Agents SDK","p12_state":"RESEARCHED","evidence_partition":"DOCUMENTATION_SCORECARD","claim_limit":"Credible provider-native comparator; portability and provider dependence unresolved.","next_evidence":"Equivalent prospective implementation spike and P12 comparison."},
+    {"id":"E6-LIVE","category":"integration","name":"LangGraph + ToolSpec + HarnessRunner + HttpxTransport","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL_LIVE","claim_limit":"37/37 live requests and trace/checkpoint path demonstrated; not production reliability evidence.","next_evidence":"Concurrency, SLO, long-run, retries/idempotency, fault/recovery and operational testing."},
+    {"id":"E6-HARNESS","category":"integration","name":"HarnessRunner + HttpxTransport experiment boundary","p12_state":"QUALIFIED","evidence_partition":"DETERMINISTIC_PLUS_LIVE","claim_limit":"Qualified controlled research execution boundary, not production execution platform.","next_evidence":"Production transport/reliability comparison."},
+
+    {"id":"E7-NATIVE","category":"tool_topology","name":"Native ToolSpec envelope","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL","claim_limit":"Qualified internal tool surface with lower envelope complexity and preserved schema/guard/trace behavior.","next_evidence":"Production topology comparison and delivery requirement check."},
+    {"id":"E7-MCP-ADAPTER","category":"tool_topology","name":"MCP-compatible adapter","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL","claim_limit":"Qualified interoperability adapter; 18/18 coverage and equivalent guard/trace behavior.","next_evidence":"Production interoperability/ops requirements if MCP is to be required."},
+    {"id":"E7-MCP-TOPOLOGY","category":"tool_topology","name":"MCP as core runtime topology","p12_state":"RESEARCHED","evidence_partition":"EXPOSED_POOL_ADAPTER_ONLY","claim_limit":"No evidence requires replacing native internal execution.","next_evidence":"Only compare as core topology if partner/deployment/evaluator requirements make it material."},
+
+    {"id":"E8-GROQ-PROVIDER","category":"provider","name":"Groq zero-cost remote provider path","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL_PROXY_AND_LIVE","claim_limit":"Qualified for zero-cost operability/schema/trace path only; provider leadership is not final.","next_evidence":"Broad prospective provider comparison on P12 EXPOSED_POOL with quality/cost/latency/reliability."},
+    {"id":"E8-LLAMA31","category":"model","name":"Groq llama-3.1-8b-instant","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL","claim_limit":"Historical operational model baseline; E9 exposed major task-quality gaps.","superseded_by":"later GPT-OSS-120B research line"},
+    {"id":"E8-ALTERNATIVES","category":"provider_model","name":"Gemini/OpenRouter/Hugging Face/Ollama/no-model alternatives","p12_state":"RESEARCHED","evidence_partition":"DISCOVERY","claim_limit":"Credible alternatives identified but execution breadth insufficient for selection.","next_evidence":"Prospective broad comparison where materially feasible."},
+
+    {"id":"E9-V3","category":"evaluator","name":"E9 v3 private task-quality scorer","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL_PRIVATE_SCORING_AFTER_FIXED_OUTPUTS","claim_limit":"Retained only for historical comparability; known lexical/alignment defects prevent current promotion-gate use.","superseded_by":"E9 v4.1/v4.2 direction"},
+    {"id":"E9-V41","category":"evaluator","name":"E9 v4.1 deterministic public-tool-signature evaluator / selected-ticket alignment","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL_PLUS_STRUCTURAL_PRIVATE_ALL_SPLITS","locked_test_dependency":"STRUCTURAL_ALIGNMENT_ONLY","claim_limit":"Qualified evaluator direction; legacy LOCKED_TEST structure was inspected, so full-stack pristine independence is unavailable.","next_evidence":"Exact hash qualification/freeze per candidate generation; regression and validity checks before gating."},
+    {"id":"E9-V42","category":"evaluator","name":"E9 v4.2 semantic-groundedness protocol","p12_state":"QUALIFIED","evidence_partition":"SYNTHETIC_ADVERSARIAL","claim_limit":"Qualified semantic measurement protocol, not blind-domain evidence.","next_evidence":"Freeze exact protocol/judge generation and compare/adversarially validate when used as gate."},
+    {"id":"JUDGE-QWEN","category":"semantic_judge","name":"Groq qwen/qwen3.6-27b","p12_state":"QUALIFIED","evidence_partition":"SYNTHETIC_ADVERSARIAL","claim_limit":"Qualified judge candidate on frozen synthetic suite; not project-final judge selection.","next_evidence":"Broader adversarial/repeatability comparison and exact generation freeze before final gating."},
+
+    {"id":"E10-LEGACY-GUARDS","category":"guard","name":"E10/E10b/E10c/E10d/E10e/E10f/E10g exact guard candidates","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL","validation_adaptive_influence":"DOCUMENTED_FOR_MULTIPLE_ITERATIONS","claim_limit":"Historical failure-mode and guard evidence only; exact variants are not current candidates.","superseded_by":"later deterministic E14 guard stack"},
+    {"id":"E10H-E12-DIAG","category":"diagnostic","name":"E10h + E12 blocker/root-cause diagnostics","p12_state":"RESEARCHED","evidence_partition":"EXPOSED_POOL_AGGREGATE_AND_CAPTURE_METADATA","claim_limit":"Diagnostic evidence, not deployable candidate; identified over-permissive/wrong authorization-class failure mode."},
+    {"id":"E11-AUTH","category":"guard","name":"E11 independent authorization/hard-gate implementation","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL","claim_limit":"Retains deterministic independent-authorization principle.","superseded_by":"E14q/E14q2 retained safety/action authorization guards"},
+    {"id":"E13-REPROCESS","category":"guard","name":"E13 reprocess-specific authorization candidate","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL_DEV_ONLY","claim_limit":"Rejected candidate: action correctness 0.0, decision 0.4, task quality 0.7714, missing parsed output despite safety floor.","reason":"Failed preregistered DEV acceptance; do not revive as-is."},
+
+    {"id":"E14-E14B","category":"whole_agent_generation","name":"Initial E14/E14b generations","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL_DEV","claim_limit":"Historical full-agent baselines; failed absolute DEV quality gates."},
+    {"id":"E14C-ACTION-NORM","category":"deterministic_component","name":"E14c public action-endpoint representation fix","p12_state":"QUALIFIED","evidence_partition":"PUBLIC_DETERMINISTIC_PLUS_EXPOSED_POOL","claim_limit":"Qualified representation/canonicalization property only; parent whole-agent generation remained failed.","next_evidence":"Regression under future P12 candidate changes."},
+    {"id":"E14D-EVIDENCE-NORM","category":"deterministic_component","name":"E14d public evidence-resource representation fix","p12_state":"QUALIFIED","evidence_partition":"PUBLIC_DETERMINISTIC_PLUS_EXPOSED_POOL","claim_limit":"Qualified evidence-resource representation property only.","next_evidence":"Regression under future P12 candidate changes."},
+    {"id":"E14E-ESCALATION","category":"deterministic_component","name":"E14e explicit handoff/escalation semantics","p12_state":"QUALIFIED","evidence_partition":"PUBLIC_DETERMINISTIC_PLUS_EXPOSED_POOL","claim_limit":"Qualified explicit handoff semantics; not whole-agent qualification.","next_evidence":"Regression under future P12 candidate changes."},
+    {"id":"E14F-REPAIR","category":"repair_policy","name":"E14f conditional same-model public contradiction repair","p12_state":"RESEARCHED","evidence_partition":"EXPOSED_POOL_DEV","claim_limit":"Bounded public-consistency repair demonstrated, but parent generation failed quality gate.","next_evidence":"Only retain if prospective ablation shows benefit without cost/safety regression."},
+    {"id":"E14G-120B","category":"whole_agent_generation","name":"E14g GPT-OSS-120B generation","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL_DEV","claim_limit":"Operational feasibility evidence for GPT-OSS-120B; 6/6 complete but quality gate failed."},
+    {"id":"E14H-I-J","category":"whole_agent_generation","name":"E14h/E14i/E14j high-reasoning 1600-token attempts","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL_DEV_OPERATIONAL","claim_limit":"Operational/provider failure evidence only; 0/6 parsed outputs, no valid quality conclusion."},
+    {"id":"E14K-L","category":"whole_agent_generation","name":"E14k/E14l 4096-token reasoning variants","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL_DEV","claim_limit":"Operational completeness restored but quality failed; reasoning/budget/response-format tuning family is closed."},
+
+    {"id":"E14N","category":"guard","name":"E14n v1.1 identifier-provenance guard","p12_state":"QUALIFIED","evidence_partition":"PUBLIC_DETERMINISTIC_PLUS_EXPOSED_POOL","claim_limit":"Qualified provenance/identifier guard invariant; not whole-agent qualification.","next_evidence":"Mandatory regression on material candidate changes."},
+    {"id":"E14P","category":"serializer","name":"E14p deterministic epistemic serializer","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL_PLUS_SEMANTIC_MEASUREMENT","claim_limit":"Qualified deterministic serializer component; not whole-agent qualification.","next_evidence":"Exact version/hash freeze per future candidate generation and regression."},
+    {"id":"E14Q-Q2-GUARDS","category":"guard","name":"E14q/E14q2 deterministic safety/action authorization guards","p12_state":"QUALIFIED","evidence_partition":"EXPOSED_POOL_FULL_DEV","claim_limit":"Current qualified deterministic safety baseline; hard-safety clean history does not solve evidence completeness.","next_evidence":"Non-compensable safety regression gate in every prospective P12 comparison."},
+    {"id":"E14Q2-BASE","category":"whole_agent_generation","name":"E14q2 full-DEV baseline","p12_state":"RESEARCHED","evidence_partition":"EXPOSED_POOL_DEV","claim_limit":"Useful exposed-pool evidence-selection baseline; failed evidence gate (0.20 correctness, 0.7667 recall)."},
+    {"id":"E14R","category":"evidence_selection","name":"E14r visible-case replacement","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL_DEV","claim_limit":"Over-pruning failure mode; evidence correctness 0, recall 0.4."},
+    {"id":"E14S","category":"evidence_selection","name":"E14s capped candidate-pool consensus","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL_DEV","claim_limit":"Directional but below gate: evidence 0.20, recall 0.775."},
+    {"id":"E14T","category":"evidence_selection","name":"E14t bounded restoration","p12_state":"RESEARCHED","evidence_partition":"EXPOSED_POOL_DEV","claim_limit":"Strongest retained historical evidence-selection reference but not qualified: evidence 0.30 < 0.50 and recall 0.80 < 0.8333; extras 3.40.","next_evidence":"Use as baseline in new prospective P12 comparison."},
+    {"id":"E14U","category":"evidence_selection","name":"E14u public evidence-decomposition prompt","p12_state":"SUPERSEDED","evidence_partition":"EXPOSED_POOL_DEV","claim_limit":"Rejected: evidence 0.10, recall 0.7417, extras 4.0; increasing evidence surface worsened selection."},
+
+    {"id":"E14V-CONCEPT","category":"planner","name":"E14v isolated public evidence-route planner","p12_state":"RESEARCHED","evidence_partition":"SYNTHETIC_ADVERSARIAL_PUBLIC_ONLY","claim_limit":"Scientifically motivated planner architecture, but no valid synthetic qualification has passed.","next_evidence":"Only a newly preregistered, scientifically justified public synthetic qualification variant; no automatic E14v-C."},
+    {"id":"E14V-1","category":"planner_attempt","name":"E14v synthetic attempt #1","p12_state":"SUPERSEDED","evidence_partition":"SYNTHETIC_ADVERSARIAL_PUBLIC_ONLY","claim_limit":"Operational failure only: 14/14 provider errors, zero valid contracts.","attempt_state":"CONSUMED_NO_RERUN"},
+    {"id":"E14V-A","category":"planner_attempt","name":"E14v-A transport-contract attempt","p12_state":"SUPERSEDED","evidence_partition":"SYNTHETIC_ADVERSARIAL_PUBLIC_ONLY","claim_limit":"Provider permission/access failure: 14/14 HTTP 403; no planner-quality conclusion.","attempt_state":"CONSUMED_NO_RERUN"},
+    {"id":"E14V-B","category":"planner_attempt","name":"E14v-B permission-remediation attempt","p12_state":"SUPERSEDED","evidence_partition":"SYNTHETIC_ADVERSARIAL_PUBLIC_ONLY","claim_limit":"0 valid outputs; route quality unresolved; preserved transport characterization only.","attempt_state":"CONSUMED_NO_RERUN"},
+
+    {"id":"ARCH-RAG","category":"architecture_surface","name":"RAG/vector DB/reranking","p12_state":"UNASSESSED","claim_limit":"No project-final comparative evidence.","next_evidence":"Compare only from an explicit P12 hypothesis against simpler retrieval baseline."},
+    {"id":"ARCH-MULTI","category":"architecture_surface","name":"multi-agent decomposition","p12_state":"UNASSESSED","claim_limit":"No evidence yet that multi-agent complexity is necessary.","next_evidence":"Prospective comparison against single-agent baseline if material."},
+    {"id":"ARCH-MEM","category":"architecture_surface","name":"persistent memory","p12_state":"UNASSESSED","claim_limit":"No project-final requirement/evidence.","next_evidence":"Requirement-driven production comparison only."},
+    {"id":"ARCH-OBS","category":"architecture_surface","name":"observability backend","p12_state":"UNASSESSED","claim_limit":"TraceSchema exists but backend/SLO/alerts/ownership remain open.","next_evidence":"Production observability requirements and backend comparison."},
+    {"id":"ARCH-UI","category":"architecture_surface","name":"UI/demo architecture","p12_state":"UNASSESSED","claim_limit":"Demo surface cannot determine agent-quality architecture.","next_evidence":"Product/delivery requirement after core agent evidence is sufficient."},
+    {"id":"ARCH-FINAL","category":"architecture_surface","name":"whole production architecture","p12_state":"RESEARCHED","claim_limit":"Qualified building blocks exist, but comparative completeness and production fitness are unresolved.","next_evidence":"Prospective component comparisons plus production reliability/security/operability evaluation before PREFERRED/FROZEN."}
+  ],
+  "authorized_next_experimental_surface": {
+    "partition": "EXPOSED_POOL_ONLY",
+    "baseline": "E14t plus retained E14n -> E14p -> E14q -> E14q2 deterministic stack",
+    "do_not_auto_execute": "E14v-C",
+    "required_candidate_space": [
+      "E14t retained baseline",
+      "E14v-style isolated route planning only if a newly justified public synthetic qualification passes",
+      "at least one materially simpler evidence-route selection baseline"
+    ],
+    "assignment_unit": "asset_story_group",
+    "independent_groups": 7,
+    "full_pool_reporting": true,
+    "logo_sensitivity": true,
+    "modality_and_safety_slices": true,
+    "minimum_stochastic_repetitions_per_scenario": 3,
+    "paired_matched_seeds_where_supported": true,
+    "uncertainty": {
+      "method": "GROUP_CLUSTER_PERCENTILE_BOOTSTRAP",
+      "confidence": 0.95,
+      "resamples": 20000,
+      "seed": 20260822
+    },
+    "fresh_blind_access": false,
+    "legacy_locked_test_access": false,
+    "promotion_semantics": {
+      "QUALIFIED": "passes preregistered component/candidate gates under P12",
+      "PREFERRED": "requires comparative superiority/robustness and production fit",
+      "FROZEN": "cannot be obtained from exposed-pool performance alone"
+    }
+  },
+  "source_artifacts": [
+    "research/frozen/big-b4-evaluation-protocol-v1.json",
+    "research/big-b4-evaluation-protocol-freeze-2026-08-22.md",
+    "research/46-e4-validation-boundary-results.md",
+    "research/48-e5-evidence-stopping-results.md",
+    "research/50-e6-runtime-spike-results-adr.md",
+    "research/56-e6-live-api-integration-live-results.md",
+    "research/58-e7-native-tools-vs-mcp-results.md",
+    "research/59-e7-topology-adr.md",
+    "research/65-e8-groq-free-anywhere-model-run-results.md",
+    "research/73-e9-private-task-quality-results.md",
+    "research/evaluator-v4-validity-status.md",
+    "research/evaluator-v4-visible-case-alignment-result.md",
+    "research/103-e13-dev-only-private-score-results.md",
+    "research/README.md",
+    "research/141-e14l-real-dev-measurement-result.md",
+    "docs/PROJECT-PLAN.md"
+  ]
+}
