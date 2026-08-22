@@ -58,6 +58,7 @@ def main() -> int:
         "candidate_config_hash": "sha256:self-check-config",
         "prompt_hash": "sha256:self-check-prompt",
         "model_provider_runtime_identity": "self-check-model-provider-runtime",
+        "stochastic_candidate": True,
         "retrieval_policy_hash": "sha256:self-check-retrieval",
         "guard_policy_hash": "sha256:self-check-guard",
         "evaluator_version_hash": "sha256:self-check-evaluator",
@@ -72,6 +73,12 @@ def main() -> int:
     })
     freeze_ok, freeze_missing = validate_candidate_freeze(valid_freeze)
     _record(results, "complete_candidate_generation_can_pass_freeze_schema", freeze_ok, f"missing={freeze_missing}")
+
+    invalid_stochastic_freeze = dict(valid_freeze)
+    invalid_stochastic_freeze["repetitions_per_scenario"] = 2
+    stochastic_ok, stochastic_missing = validate_candidate_freeze(invalid_stochastic_freeze)
+    _record(results, "stochastic_generation_below_three_repetitions_denied", not stochastic_ok and "stochastic_repetitions_per_scenario>=3" in stochastic_missing,
+            f"missing={stochastic_missing}")
 
     valid_auth = dict(auth_template)
     valid_auth.update({
