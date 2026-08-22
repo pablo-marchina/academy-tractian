@@ -1,0 +1,51 @@
+{
+  "schema_version": "big-b4-blind-source-registry-v1",
+  "status": "FROZEN_REGISTRY_SCHEMA_WITH_NO_SOURCE_AUTHORIZED",
+  "as_of": "2026-08-22",
+  "protocol_id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
+  "authorization_state": "NO_BLIND_SOURCE_AUTHORIZED",
+  "active_planning_tier": "TIER_A_PARTNER_HELD_EXTERNAL_BLIND",
+  "tier_a_cutoff": "2026-08-25T23:59:00-03:00",
+  "tier_b_cutoff": "2026-08-28T23:59:00-03:00",
+  "authorized_sources": [],
+  "required_source_record_fields": [
+    "source_id",
+    "tier",
+    "custodian_identity_or_role",
+    "author_identity_or_role",
+    "adjudicator_identity_or_role",
+    "author_isolated_from_candidate_development",
+    "adjudicator_isolated_from_candidate_development",
+    "developer_cannot_access_hidden_semantics_before_freeze",
+    "no_iterative_partial_feedback",
+    "asset_story_group_independence_confirmed",
+    "group_count",
+    "modality_coverage",
+    "safety_critical_coverage",
+    "provenance_record",
+    "custody_start",
+    "expected_measurement_window",
+    "breach_state"
+  ],
+  "tier_a_requirements": {
+    "partner_or_external_source_owner_distinct_from_development_loop": true,
+    "hidden_case_content_and_expected_outcomes_unavailable_before_candidate_freeze": true,
+    "results_returned_only_after_candidate_freeze": true,
+    "iterative_partial_feedback": false,
+    "provenance_and_adjudication_auditable": true
+  },
+  "tier_b_requirements": {
+    "case_author_not_candidate_developer_for_the_measured_generation": true,
+    "adjudicator_independent_from_candidate_development": true,
+    "author_may_not_tailor_hidden_cases_using_candidate_outputs": true,
+    "hidden_semantics_unavailable_to_developer_before_freeze": true,
+    "iterative_partial_feedback": false,
+    "provenance_authoring_date_adjudication_date_and_custody_recorded": true
+  },
+  "transition_rules": {
+    "tier_a_not_operational_by_cutoff": "MOVE_PLANNING_TO_TIER_B_WITHOUT_REOPENING_BIG_B2",
+    "tier_a_and_tier_b_not_operational_by_tier_b_cutoff": "REQUIRE_BIG_B3_AMENDMENT_BEFORE_P3",
+    "any_breach": "SOURCE_BECOMES_EXPOSED_FOR_AFFECTED_GENERATION_AND_FINAL_AUTHORIZATION_DENIED"
+  },
+  "default_fail_closed": true
+}
