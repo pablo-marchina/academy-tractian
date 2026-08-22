@@ -77,6 +77,7 @@ def validate_protocol(root: Path = Path(".")) -> dict[str, Any]:
     _require((partitions.get("FRESH_BLIND") or {}).get("group_ids_in_repository") == [], "fresh blind semantics must not be committed in protocol")
     _require((protocol.get("final_authorization") or {}).get("default_authorized") is False, "final authorization must default false")
     _require((protocol.get("candidate_generation_freeze") or {}).get("required_before_any_blind_or_legacy_final_measurement") is True, "candidate freeze must be mandatory")
+    _require((protocol.get("repeated_run_protocol") or {}).get("stochastic_candidate_minimum_repetitions_per_scenario") == 3, "stochastic repeat minimum must remain three")
     _require((protocol.get("regression_policy") or {}).get("provider_free_protocol_self_check_required_in_ci") is True, "provider-free self-check must be required")
     return protocol
 
@@ -99,6 +100,7 @@ def validate_candidate_freeze(freeze: dict[str, Any]) -> tuple[bool, list[str]]:
         "candidate_config_hash",
         "prompt_hash",
         "model_provider_runtime_identity",
+        "stochastic_candidate",
         "retrieval_policy_hash",
         "guard_policy_hash",
         "evaluator_version_hash",
@@ -118,6 +120,8 @@ def validate_candidate_freeze(freeze: dict[str, Any]) -> tuple[bool, list[str]]:
     reps = freeze.get("repetitions_per_scenario")
     if isinstance(reps, int) and reps < 1:
         missing.append("repetitions_per_scenario>=1")
+    if freeze.get("stochastic_candidate") is True and (not isinstance(reps, int) or reps < 3):
+        missing.append("stochastic_repetitions_per_scenario>=3")
     return (not missing, missing)
 
 
