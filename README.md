@@ -15,11 +15,11 @@ No material component is considered complete merely because it works or passes a
 
 ## Status
 
-**Benchmark Integrity Gate — BIG-B0/B1/B2/B3/B4 COMPLETE — P12 evaluation protocol `FROZEN`**
+**Benchmark Integrity Gate COMPLETE — P12 evaluation protocol `FROZEN` — historical candidates reinterpreted under P12**
 
-The benchmark-integrity gate is closed. Agent optimization may resume **only under the frozen P12 protocol and only on permitted adaptive-development evidence**. FRESH_BLIND and LEGACY_LOCKED_TEST remain fail-closed until their separate final-authorization prerequisites are satisfied.
+The benchmark-integrity gate is closed. Historical decision-bearing candidates/components from E0 through E14v have now been retrospectively reclassified under the frozen P12 evidence contract without any new provider/model inference or new private VALIDATION/LOCKED_TEST/FRESH_BLIND semantic access.
 
-Canonical benchmark-integrity artifacts:
+Canonical benchmark-integrity / reinterpretation artifacts:
 
 - [`research/big-b0-benchmark-integrity-audit-2026-08-21.md`](research/big-b0-benchmark-integrity-audit-2026-08-21.md) — factual chronological reconstruction;
 - [`research/results/big-b0-benchmark-access-ledger-2026-08-21.json`](research/results/big-b0-benchmark-access-ledger-2026-08-21.json) — B0 machine-readable access inventory;
@@ -33,7 +33,9 @@ Canonical benchmark-integrity artifacts:
 - [`research/results/big-b3-evaluation-protocol-selection-2026-08-21.json`](research/results/big-b3-evaluation-protocol-selection-2026-08-21.json) — machine-readable B3 selection and reversal triggers;
 - [`research/big-b4-evaluation-protocol-freeze-2026-08-22.md`](research/big-b4-evaluation-protocol-freeze-2026-08-22.md) — executable B4 freeze record;
 - [`research/frozen/big-b4-evaluation-protocol-v1.json`](research/frozen/big-b4-evaluation-protocol-v1.json) — canonical frozen P12 protocol manifest;
-- [`research/results/big-b4-protocol-self-check-2026-08-22.json`](research/results/big-b4-protocol-self-check-2026-08-22.json) — provider-free 24/24 fail-closed self-check evidence.
+- [`research/results/big-b4-protocol-self-check-2026-08-22.json`](research/results/big-b4-protocol-self-check-2026-08-22.json) — provider-free 24/24 fail-closed self-check evidence;
+- [`research/p12-historical-candidate-component-reinterpretation-2026-08-22.md`](research/p12-historical-candidate-component-reinterpretation-2026-08-22.md) — present-day evidence/state reinterpretation of historical candidates/components;
+- [`research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json`](research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json) — machine-readable reinterpretation registry.
 
 Current evidence roles under P12:
 
@@ -72,6 +74,85 @@ Frozen operational rules include:
 - final/blind access is one-generation/one-measurement-cycle authorization and defaults to deny;
 - semantic leak, iterative partial feedback or material evaluator/judge adaptation consumes the affected blind measurement.
 
+### Historical candidate/component reinterpretation
+
+The retrospective P12 review makes a strict distinction between qualified **components** and qualified **whole candidates**.
+
+Current decision-state summary:
+
+```text
+project-level FROZEN
+  P12 evaluation protocol only
+
+QUALIFIED building blocks
+  ToolSpec / trace / replay research foundation
+  evidence-sufficiency stopping behavior (limited claim)
+  LangGraph runtime candidate
+  HarnessRunner + HttpxTransport research integration
+  native ToolSpec surface
+  MCP-compatible adapter
+  Groq zero-cost provider path (operability only)
+  evaluator v4.1 / v4.2 direction
+  Qwen semantic judge candidate
+  retained E14 deterministic normalization/provenance/serializer/safety guards
+
+PREFERRED historical implementation candidates
+  NONE
+
+RESEARCHED active references
+  Pydantic AI/Graph
+  OpenAI Agents SDK
+  provider/model alternatives and GPT-OSS-120B family
+  E14q2 baseline
+  E14t strongest historical evidence-selection reference
+  E14v isolated planner concept
+  whole production architecture
+
+SUPERSEDED / rejected / consumed
+  unsafe/obsolete early boundary and guard bundles
+  llama-3.1-8b-instant as leading model candidate
+  E9 v3 as current promotion gate
+  E13
+  failed exact E14 generations
+  E14r / E14s / E14u
+  consumed E14v / E14v-A / E14v-B attempts
+
+UNASSESSED for final selection
+  RAG/vector DB/reranking
+  multi-agent decomposition
+  persistent memory
+  observability backend
+  UI architecture
+```
+
+Historical VALIDATION results are preserved as EXPOSED_POOL development evidence; they no longer carry an independent-validation interpretation. Historical hard-gate failures remain failures. `EXPERIMENT_FROZEN` manifests remain immutable reproducibility evidence but do not imply project-level architecture freeze.
+
+### Next authorized experimental surface
+
+No automatic E14v-C run is authorized by historical momentum alone. The next agent experiment must be a **new P12 preregistration** on `EXPOSED_POOL` only.
+
+The strongest justified starting point is:
+
+```text
+retained baseline
+  E14t evidence-selection reference
+  + E14n → E14p → E14q → E14q2 deterministic stack
+
+prospective comparison
+  + E14v-style isolated route planner only if a newly justified public synthetic qualification passes
+  + at least one materially simpler route-selection baseline
+
+measurement
+  all 7 asset/story groups
+  full-pool + LOGO + modality/safety slices
+  >=3 repetitions/scenario for stochastic candidates
+  matched seeds where supported
+  95% group-cluster bootstrap / 20,000 resamples / seed 20260822
+  hard safety non-compensable
+```
+
+FRESH_BLIND and LEGACY_LOCKED_TEST remain inaccessible to candidate development and selection.
+
 Blind-source reversal triggers remain:
 
 - **2026-08-25 23:59 America/Sao_Paulo:** if Tier A has no operational blind-custody path, planning moves to Tier B;
@@ -86,13 +167,13 @@ The active protocol guard and regression check are:
 
 Benchmark Integrity Gate status:
 
-`BIG-B0 ✓ → BIG-B1 ✓ → BIG-B2 ✓ → BIG-B3 ✓ → BIG-B4 ✓ → resume eval-driven agent optimization under P12`
+`BIG-B0 ✓ → BIG-B1 ✓ → BIG-B2 ✓ → BIG-B3 ✓ → BIG-B4 ✓ → historical reinterpretation ✓ → prospective P12 optimization`
 
-Important: closing B4 does **not** authorize final measurement. Current blind registry state remains `NO_BLIND_SOURCE_AUTHORIZED`, and LEGACY_LOCKED_TEST also remains unauthorized.
+Important: closing B4 and completing reinterpretation do **not** authorize final measurement. Current blind registry state remains `NO_BLIND_SOURCE_AUTHORIZED`, and LEGACY_LOCKED_TEST also remains unauthorized.
 
 Current canonical protocol: [`research/frozen/big-b4-evaluation-protocol-v1.json`](research/frozen/big-b4-evaluation-protocol-v1.json)  
-B4 freeze record: [`research/big-b4-evaluation-protocol-freeze-2026-08-22.md`](research/big-b4-evaluation-protocol-freeze-2026-08-22.md)  
-Historical execution plan: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
+P12 historical reinterpretation: [`research/p12-historical-candidate-component-reinterpretation-2026-08-22.md`](research/p12-historical-candidate-component-reinterpretation-2026-08-22.md)  
+Historical execution plan (context only; authorization superseded by P12): [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
 Research protocol: [`research/00-research-protocol.md`](research/00-research-protocol.md)  
 Research hub: [`research/README.md`](research/README.md)
 
@@ -159,7 +240,7 @@ The existence or previous qualification of a runtime, model, MCP topology, RAG d
 
 The immediate critical path is now:
 
-`P12 frozen evaluation protocol → reinterpret historical candidate state → resume systematic agent optimization on EXPOSED_POOL → freeze candidate generation → authorized fresh blind/final measurement → production-fit/architecture freeze`
+`P12 reinterpretation complete → preregister prospective evidence-selection comparison on EXPOSED_POOL → controlled paired evaluation → select/qualify candidate → production-fit comparisons → freeze candidate generation → separately authorized fresh blind/final measurement → architecture freeze`
 
 Production freeze still requires broad candidate comparison, full deterministic + semantic evaluation gates, production fitness/integration verification, architecture freeze and final blind evidence under P12.
 
