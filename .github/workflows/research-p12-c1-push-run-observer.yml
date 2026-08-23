@@ -16,8 +16,8 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_HEAD_SHA: cfb1cc597772828e39881a5411d0f801ab7626f6
-      TARGET_WORKFLOW_NAME: research-p12-c1-promote-validated-runner
+      TARGET_HEAD_SHA: 1dc5b5d8be9c57bb576d941c610a8b656c90876b
+      TARGET_WORKFLOW_NAME: research-p12-c1-paired-exposed-pool
     steps:
       - name: Locate target push run
         id: locate
@@ -34,7 +34,7 @@ jobs:
           [ -n "$row" ] || { echo 'Target push run not found' >&2; exit 1; }
           run_id=$(printf '%s' "$row" | jq -r '.id')
           html_url=$(printf '%s' "$row" | jq -r '.html_url')
-          for _ in $(seq 1 60); do
+          for _ in $(seq 1 120); do
             current=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")
             status=$(printf '%s' "$current" | jq -r '.status')
             conclusion=$(printf '%s' "$current" | jq -r '.conclusion // ""')
