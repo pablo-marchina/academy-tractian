@@ -1,0 +1,67 @@
+{
+  "schema_version": "p12-c3-b1-pre-provider-pacing-validation-amendment-v1",
+  "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
+  "execution_id": "P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23",
+  "date": "2026-08-23",
+  "state": "FROZEN_PRE_OUTCOME_INFRASTRUCTURE_AMENDMENT",
+  "failed_run": {
+    "run_id": 32671370930,
+    "preflight_job_id": 97272619713,
+    "collect_batch_job_id": 97272643880,
+    "head_sha": "74f02556f8064c52663ff7c9190b64cca0c89b9b",
+    "batch_id": "B1",
+    "failure_stage": "BEFORE_FIRST_PROVIDER_REQUEST",
+    "failure_reason": "retained E14l configuration assertion requires historical E8_BETWEEN_CALL_DELAY_SECONDS=25, E14F_REPAIR_DELAY_SECONDS=25, E14_MAX_RETRIES=2 while P12-C3 prospectively transfers those transport controls to the checkpoint controller and therefore runs the inherited boundary with 0/0/0",
+    "provider_requests_sent": 0,
+    "completed_cells": 0,
+    "pending_cells": 36,
+    "first_live_call_at": null,
+    "horizon_deadline": null,
+    "transport_failures": 0,
+    "rate_limit_events": 0,
+    "candidate_outcomes_observed": 0,
+    "private_oracle_rows_read": 0,
+    "terminal_failure": false,
+    "sanitized_handoff_artifact_id": 9501474531,
+    "sanitized_handoff_digest": "sha256:2561bb09bf3b24d9872cf3c2d6aa9fadb030db89ab602ffa18171c03dbec15c0",
+    "private_checkpoint_artifact_id": 9501474395,
+    "private_checkpoint_digest": "sha256:0417321a1a4f02d4b62c795c690ef531bee649f47a26a839f2e169e6163b832f"
+  },
+  "scientific_consumption": {
+    "authorized_experiment_consumed": false,
+    "reason": "the frozen P12-C3 horizon and scientific consumption begin at the first actual provider request; the failure occurred before urllib request construction/send and the sanitized checkpoint confirms first_live_call_at=null with 0 completed cells",
+    "github_rerun_allowed": false,
+    "continuation_must_use_checkpoint_chain": true,
+    "continuation_batch": "B1",
+    "continuation_checkpoint_source_run_id": 32671370930
+  },
+  "amendment_scope": {
+    "candidate_definitions_changed": false,
+    "model_changed": false,
+    "prompt_changed": false,
+    "evaluator_changed": false,
+    "seeds_changed": false,
+    "batch_map_changed": false,
+    "capacity_policy_changed": false,
+    "checkpoint_semantics_changed": false,
+    "statistical_plan_changed": false,
+    "deterministic_gates_changed": false,
+    "only_change": "bridge the retained E14l historical transport invariant assertion by temporarily presenting 25/25/2 during validation, then restoring the already-frozen P12-C3 controller-owned 0/0/0 transport overrides before any provider request"
+  },
+  "required_operational_invariants_after_bridge": {
+    "E8_BETWEEN_CALL_DELAY_SECONDS": "0",
+    "E14F_REPAIR_DELAY_SECONDS": "0",
+    "E14_MAX_RETRIES": "0",
+    "controller_minimum_inter_request_delay_seconds": 30,
+    "controller_reset_safety_margin_seconds": 30,
+    "controller_max_pre_output_attempts_per_cell": 3,
+    "completed_parent_regeneration": "FORBIDDEN",
+    "github_workflow_rerun": "FORBIDDEN"
+  },
+  "implementation": {
+    "path": "scripts/research/p12_c3_checkpointed_runner_preprovider_amendment.py",
+    "prior_effective_runner_sha256": "00cdf340714449bc0424777ec73598f5d8f172436c543918fc9e3ef383fc806e",
+    "amended_effective_runner_sha256": "TO_BE_FILLED_FROM_PROVIDER_FREE_QUALIFICATION_BEFORE_LIVE_CONTINUATION"
+  },
+  "authorization_boundary": "NO_B1_CONTINUATION_TRIGGER_MAY_BE_CREATED_UNTIL_PROVIDER_FREE_QUALIFICATION_OF_THIS_AMENDMENT_PASSES"
+}
