@@ -51,9 +51,9 @@
   "runner_source_bundles": {
     "candidate_execution": {
       "path": "research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz",
-      "git_blob_sha": "ccd5acfbf128290314b30003d8f91328cc4fed94",
-      "gzip_sha256": "d862d8e9fe8ab6bb3e1af4e066cbe5692b78408bedb92abba384c843763eb0c7",
-      "decompressed_sha256": "2d25485b353c0c6ad63d6acb143abff0c16aeb8f8841861b990e2d28a1a7cb4e"
+      "git_blob_sha": "a5c27394014bac656faa0a2f923a5c5da72d66f5",
+      "gzip_sha256": "aaede3965177b80d8d9d389b340d572ee05c786f2fd5ae4470329cb82c5806ca",
+      "decompressed_sha256": "be16ec6d2c33ad68134a0fbf7aa280b4103ee411b01233b6de7a76668e899a50"
     },
     "evaluator_scoring": {
       "path": "research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz",
@@ -61,6 +61,18 @@
       "gzip_sha256": "211e25666f71b487587d75dcadeda346c8398177abedd76194d83cf1f473bc94",
       "decompressed_sha256": "4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73"
     }
+  },
+  "pre_outcome_runner_contract_remediation": {
+    "manifest_path": "research/experiments/p12-c1-runner-contract-remediation-v1.json",
+    "validation_run_id": 32654928709,
+    "validation_job_id": 97232078560,
+    "validation_conclusion": "success",
+    "validation_artifact_id": 9497192914,
+    "contract_only_patch_pass": true,
+    "corrected_36_cell_provider_free_preflight_pass": true,
+    "provider_calls_before_promotion": 0,
+    "c0_or_c1_outcomes_before_promotion": 0,
+    "provider_cycle_remaining": 1
   },
   "pinned_candidate_policy": {
     "path": "scripts/research/p12_c1_evidence_route_candidates.py",
