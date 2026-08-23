@@ -5,6 +5,8 @@ on:
     branches: [research/systematic-foundation]
     paths:
       - 'research/experiments/p12-c1-paired-exposed-pool-execution-v1.json'
+      - 'research/experiments/p12-c1-preflight-materialization-remediation-v1.json'
+      - 'research/fixtures/p12-c1-exposed-agent-input-cases-v1.json'
       - 'research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz'
       - 'research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz'
       - '.github/workflows/research-p12-c1-paired-exposed-pool.yml'
@@ -16,6 +18,8 @@ env:
   PYTHONPATH: .
   ACTIVATION: research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json
   EXECUTION_MANIFEST: research/experiments/p12-c1-paired-exposed-pool-execution-v1.json
+  REMEDIATION: research/experiments/p12-c1-preflight-materialization-remediation-v1.json
+  EXPOSED_CASES_FIXTURE: research/fixtures/p12-c1-exposed-agent-input-cases-v1.json
   EXEC_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
   SCORE_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz
 
@@ -42,11 +46,41 @@ jobs:
           echo '4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73  /tmp/p12_score.py' | sha256sum -c -
           python -m py_compile /tmp/p12_exec.py /tmp/p12_score.py
           cp /tmp/p12_exec.py scripts/research/p12_c1_paired_exposed_pool_execution.py
-      - name: Verify one-cycle execution manifest
+      - name: Materialize exact EXPOSED_POOL agent inputs
+        run: |
+          echo 'a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef  research/fixtures/p12-c1-exposed-agent-input-cases-v1.json' | sha256sum -c -
+          mkdir -p agent-input
+          cp "$EXPOSED_CASES_FIXTURE" agent-input/cases.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          expected_tickets={
+            'TKT-INV-04','TKT-EXE-16','TKT-INV-05','TKT-EXE-13',
+            'TKT-INV-06','TKT-EXE-15','TKT-INV-11b','TKT-CTX-01',
+            'TKT-INV-09','TKT-EXE-12','TKT-CTX-02','TKT-INV-11'
+          }
+          expected_groups={'asset_G501','asset_C710','asset_S420','asset_M208','asset_M101','asset_B204','asset_M102'}
+          forbidden_groups={'asset_M605','asset_M205','asset_V301'}
+          rows=json.loads(Path('agent-input/cases.json').read_text(encoding='utf-8'))
+          assert len(rows)==12
+          assert {r['ticket_id'] for r in rows}==expected_tickets
+          assert {r['asset_id'] for r in rows}==expected_groups
+          assert not ({r['asset_id'] for r in rows} & forbidden_groups)
+          assert all(set(r)=={'id','ticket_id','company_id','user_id','asset_id','message'} for r in rows)
+          print('P12_C1_EXPOSED_AGENT_INPUT_MATERIALIZATION_PASS')
+          PY
+      - name: Verify infrastructure-only remediation and one-cycle manifest
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
+          r=json.loads(Path('research/experiments/p12-c1-preflight-materialization-remediation-v1.json').read_text())
+          assert r['status']=='INFRASTRUCTURE_REMEDIATION_BEFORE_PROVIDER_OR_EXPOSED_OUTCOME'
+          assert r['scientific_candidate_changed'] is False
+          assert r['previous_failed_run']['run_id']==32651750779
+          assert r['previous_failed_run']['provider_calls_made']==0
+          assert r['previous_failed_run']['scientific_cycle_consumed'] is False
+          assert r['retry_authorization']['provider_cycle_remaining']==1
           m=json.loads(Path('research/experiments/p12-c1-paired-exposed-pool-execution-v1.json').read_text())
           assert m['status']=='AUTHORIZED_CONSUMABLE_ONCE'
           assert m['participating_arms']==['C0','C1'] and m['c2_authorized'] is False
@@ -57,7 +91,7 @@ jobs:
           assert m['attempt_policy']['github_rerun_of_generation_job_allowed'] is False
           assert m['semantic_stage_authorized'] is False
           assert m['fresh_blind_authorized'] is False and m['legacy_locked_test_authorized'] is False
-          print('P12_C1_ONE_CYCLE_MANIFEST_PASS')
+          print('P12_C1_ONE_CYCLE_REMEDIATED_MANIFEST_PASS')
           PY
       - name: Candidate-side privacy boundary and 36-cell dry preflight
         env:
@@ -118,6 +152,18 @@ jobs:
         run: |
           test "$GITHUB_RUN_ATTEMPT" = '1'
           test -n "$GROQ_API_KEY"
+      - name: Materialize exact EXPOSED_POOL agent inputs
+        run: |
+          echo 'a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef  research/fixtures/p12-c1-exposed-agent-input-cases-v1.json' | sha256sum -c -
+          mkdir -p agent-input
+          cp "$EXPOSED_CASES_FIXTURE" agent-input/cases.json
+          python - <<'PY'
+          import json
+          x=json.load(open('agent-input/cases.json'))
+          assert len(x)==12
+          assert len({r['asset_id'] for r in x})==7
+          assert not ({r['asset_id'] for r in x} & {'asset_M605','asset_M205','asset_V301'})
+          PY
       - name: Materialize pinned candidate runner
         run: |
           gzip -dc "$EXEC_BUNDLE" > scripts/research/p12_c1_paired_exposed_pool_execution.py
@@ -154,64 +200,39 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-  score-aggregate:
+  private-scoring-handoff:
     needs: generate-freeze
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Install public evaluator dependency
-        run: python -m pip install 'pydantic>=2,<3'
-      - name: Assert provider credential is absent from scorer
-        run: test -z "${GROQ_API_KEY:-}"
-      - name: Materialize pinned evaluator-side scorer
+      - name: Assert scorer job has no provider credential and no oracle committed
         run: |
-          gzip -dc "$SCORE_BUNDLE" > scripts/research/p12_c1_paired_exposed_pool_score.py
-          echo '4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73  scripts/research/p12_c1_paired_exposed_pool_score.py' | sha256sum -c -
-          python -m py_compile scripts/research/p12_c1_paired_exposed_pool_score.py
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
       - uses: actions/download-artifact@v4
         with:
           name: p12-c1-fixed-candidate-outputs-private-intermediate
           path: ${{ runner.temp }}/fixed
-      - name: Resolve evaluator-only oracle without printing it
+      - name: Validate frozen-output handoff without reading outcomes
         run: |
-          if [ -f eval/expected-paths.json ]; then
-            echo 'ORACLE_FILE=eval/expected-paths.json' >> "$GITHUB_ENV"
-          elif [ -f private-eval/expected-paths.json ]; then
-            echo 'ORACLE_FILE=private-eval/expected-paths.json' >> "$GITHUB_ENV"
-          else
-            echo 'evaluator-only oracle not found' >&2
-            exit 1
-          fi
-      - name: Score all 72 frozen outputs and aggregate by 7 groups
-        run: |
-          python scripts/research/p12_c1_paired_exposed_pool_score.py \
-            --activation "$ACTIVATION" \
-            --fixed-outputs "$RUNNER_TEMP/fixed/p12-c1-fixed-candidate-outputs.json" \
-            --oracle-file "$ORACLE_FILE" \
-            --out "$RUNNER_TEMP/p12-c1-deterministic-paired-result.json"
-      - name: Validate sanitized result boundary
-        run: |
+          test -s "$RUNNER_TEMP/fixed/p12-c1-fixed-candidate-outputs.json"
+          sha256sum "$RUNNER_TEMP/fixed/p12-c1-fixed-candidate-outputs.json" > "$RUNNER_TEMP/p12-c1-fixed-output-hash.txt"
           python - <<'PY'
           import json, os
-          p=os.path.join(os.environ['RUNNER_TEMP'],'p12-c1-deterministic-paired-result.json')
-          x=json.load(open(p))
-          assert x['status']=='P12_C1_DETERMINISTIC_PAIRED_SCORING_COMPLETE'
-          assert x['fixed_candidate_outputs_scored']==72 and x['scoreable_outputs']==72
-          assert x['independent_groups']==7
-          assert x['private_oracle_candidate_accesses']==0
-          assert x['private_oracle_rows_in_summary'] is False
-          assert x['fresh_blind_accesses']==0 and x['legacy_locked_test_accesses']==0
-          assert x['c2_calls']==0 and x['semantic_stage_executed'] is False
-          print('P12_C1_SANITIZED_RESULT_PASS')
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'fixed/p12-c1-fixed-candidate-outputs.json'
+          x=json.loads(p.read_text())
+          calls=x.get('calls') or x.get('fixed_candidate_outputs') or []
+          if isinstance(calls, list):
+              assert len(calls)==72
+          print('P12_C1_PRIVATE_SCORING_HANDOFF_READY')
           PY
-      - name: Upload sanitized deterministic paired result
+      - name: Upload handoff hash only
         uses: actions/upload-artifact@v4
         with:
-          name: p12-c1-deterministic-paired-result
-          path: ${{ runner.temp }}/p12-c1-deterministic-paired-result.json
+          name: p12-c1-private-scoring-handoff
+          path: ${{ runner.temp }}/p12-c1-fixed-output-hash.txt
           retention-days: 90
           if-no-files-found: error
