@@ -1,0 +1,62 @@
+name: research-p12-c1-runner-contract-diagnostic
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - '.github/workflows/research-p12-c1-runner-contract-diagnostic.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c1-runner-contract-diagnostic.yml'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+  EXEC_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
+
+jobs:
+  inspect-provider-free-runner-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Materialize frozen execution source
+        run: |
+          gzip -dc "$EXEC_BUNDLE" > /tmp/p12_exec.py
+          echo '2d25485b353c0c6ad63d6acb143abff0c16aeb8f8841861b990e2d28a1a7cb4e  /tmp/p12_exec.py' | sha256sum -c -
+      - name: Print only relevant function definitions
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          p=Path('/tmp/p12_exec.py')
+          text=p.read_text()
+          tree=ast.parse(text)
+          wanted={
+            'decision_signature', '_decision_signature',
+            'apply_upstream_deterministic_stack', 'generate_one'
+          }
+          for node in tree.body:
+            if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)) and node.name in wanted:
+              print(f'### FUNCTION {node.name} lines {node.lineno}-{node.end_lineno}')
+              print('\n'.join(text.splitlines()[node.lineno-1:node.end_lineno]))
+          PY
+      - name: Compare P12 signature with frozen E14p signature definition
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          for path in ['/tmp/p12_exec.py','scripts/research/e14p_public_epistemic_serialization_guard.py']:
+            text=Path(path).read_text()
+            tree=ast.parse(text)
+            print(f'### {path}')
+            for node in ast.walk(tree):
+              if isinstance(node,ast.FunctionDef) and node.name in {'decision_signature','_decision_signature','serialize_output'}:
+                print(f'FUNCTION {node.name} lines {node.lineno}-{node.end_lineno}')
+                print('\n'.join(text.splitlines()[node.lineno-1:node.end_lineno]))
+          PY
