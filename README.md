@@ -15,184 +15,59 @@ No material component is considered complete merely because it works or passes a
 
 ## Status
 
-**Benchmark Integrity Gate COMPLETE — P12 evaluation protocol `FROZEN` — P12-C1 deterministic C0 vs C1 comparison CLOSED with no qualified arm**
+**Benchmark Integrity Gate COMPLETE — P12 evaluation protocol `FROZEN` — P12-C1 CLOSED with no qualified arm — P12-C2 factorial evidence × safety comparison PREREGISTERED**
 
-The benchmark-integrity gate is closed. Historical decision-bearing candidates/components from E0 through E14v have been retrospectively reclassified under P12, and the first prospective P12 candidate comparison has now been preregistered, activated, executed on `EXPOSED_POOL`, scored evaluator-side and closed. Neither C0 nor C1 passed the frozen deterministic promotion gates; no implementation candidate is currently `PREFERRED`.
+P12-C1 is closed and must not be rerun. P12-C2 is now preregistered on `EXPOSED_POOL` as a 2×2 factorial comparison of evidence completeness and deterministic safety authorization. Execution is **not authorized** until the child P12-C2 activation/eligibility manifest passes.
 
-Canonical benchmark-integrity / reinterpretation / P12-C1 artifacts:
+Canonical current artifacts:
 
-- [`research/big-b0-benchmark-integrity-audit-2026-08-21.md`](research/big-b0-benchmark-integrity-audit-2026-08-21.md) — factual chronological reconstruction;
-- [`research/results/big-b0-benchmark-access-ledger-2026-08-21.json`](research/results/big-b0-benchmark-access-ledger-2026-08-21.json) — B0 machine-readable access inventory;
-- [`research/big-b1-exposure-contamination-ledger-2026-08-21.md`](research/big-b1-exposure-contamination-ledger-2026-08-21.md) — B1 independence/influence classification;
-- [`research/results/big-b1-exposure-contamination-ledger-2026-08-21.json`](research/results/big-b1-exposure-contamination-ledger-2026-08-21.json) — B1 machine-readable ledger;
-- [`research/experiments/big-b2-benchmark-design-comparison-preregistration.json`](research/experiments/big-b2-benchmark-design-comparison-preregistration.json) — criteria/candidate-space freeze before B2 conclusion;
-- [`research/big-b2-benchmark-design-alternatives-2026-08-21.md`](research/big-b2-benchmark-design-alternatives-2026-08-21.md) — B2 evidence synthesis and Pareto analysis;
-- [`research/results/big-b2-public-benchmark-geometry-2026-08-21.json`](research/results/big-b2-public-benchmark-geometry-2026-08-21.json) — provider-free public group/fold geometry;
-- [`research/results/big-b2-benchmark-design-comparison-2026-08-21.json`](research/results/big-b2-benchmark-design-comparison-2026-08-21.json) — machine-readable alternative comparison/Pareto frontier;
-- [`research/big-b3-evaluation-protocol-selection-2026-08-21.md`](research/big-b3-evaluation-protocol-selection-2026-08-21.md) — B3 protocol decision record;
-- [`research/results/big-b3-evaluation-protocol-selection-2026-08-21.json`](research/results/big-b3-evaluation-protocol-selection-2026-08-21.json) — machine-readable B3 selection and reversal triggers;
-- [`research/big-b4-evaluation-protocol-freeze-2026-08-22.md`](research/big-b4-evaluation-protocol-freeze-2026-08-22.md) — executable B4 freeze record;
-- [`research/frozen/big-b4-evaluation-protocol-v1.json`](research/frozen/big-b4-evaluation-protocol-v1.json) — canonical frozen P12 protocol manifest;
-- [`research/results/big-b4-protocol-self-check-2026-08-22.json`](research/results/big-b4-protocol-self-check-2026-08-22.json) — provider-free fail-closed self-check evidence;
-- [`research/p12-historical-candidate-component-reinterpretation-2026-08-22.md`](research/p12-historical-candidate-component-reinterpretation-2026-08-22.md) — present-day evidence/state reinterpretation of historical candidates/components;
-- [`research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json`](research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json) — machine-readable reinterpretation registry;
-- [`research/p12-c1-exposed-pool-candidate-comparison-preregistration-2026-08-23.md`](research/p12-c1-exposed-pool-candidate-comparison-preregistration-2026-08-23.md) — prospective P12-C1 comparison freeze;
-- [`research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json`](research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json) — activation/eligibility manifest;
-- [`research/results/p12-c1-generation-summary-2026-08-23.json`](research/results/p12-c1-generation-summary-2026-08-23.json) — 36/36 common-parent generation evidence;
-- [`research/results/p12-c1-deterministic-paired-result-2026-08-23.json`](research/results/p12-c1-deterministic-paired-result-2026-08-23.json) — sanitized machine-readable deterministic comparison;
-- [`research/p12-c1-deterministic-paired-result-2026-08-23.md`](research/p12-c1-deterministic-paired-result-2026-08-23.md) — human-readable P12-C1 conclusion.
+- [`research/frozen/big-b4-evaluation-protocol-v1.json`](research/frozen/big-b4-evaluation-protocol-v1.json) — frozen P12 protocol;
+- [`research/results/p12-c1-deterministic-paired-result-2026-08-23.json`](research/results/p12-c1-deterministic-paired-result-2026-08-23.json) — sanitized P12-C1 result;
+- [`research/p12-c1-deterministic-paired-result-2026-08-23.md`](research/p12-c1-deterministic-paired-result-2026-08-23.md) — P12-C1 human conclusion;
+- [`research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json`](research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json) — machine-readable P12-C2 freeze;
+- [`research/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-2026-08-23.md`](research/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-2026-08-23.md) — human-readable P12-C2 preregistration.
 
 Current evidence roles under P12:
 
 - **EXPOSED_POOL = historical DEV + VALIDATION:** seven independent asset/story groups for adaptive development, selection, ablation, evaluator work and regression; never a fresh holdout.
 - **FRESH_BLIND:** primary independent real-domain generalization evidence; currently `NO_BLIND_SOURCE_AUTHORIZED`.
-- **LEGACY_LOCKED_TEST:** three historical groups retained as qualified supplementary held-out domain characterization; candidate execution remains blocked until final authorization and `untouched/pristine` is forbidden wording.
-- **SYNTHETIC_ADVERSARIAL:** robustness, evaluator/judge qualification and regression only; never a real-domain substitute.
+- **LEGACY_LOCKED_TEST:** qualified supplementary held-out characterization; candidate execution remains blocked until final authorization.
+- **SYNTHETIC_ADVERSARIAL:** robustness, evaluator/judge qualification and regression only.
 
-### Frozen protocol
+### P12-C2 frozen design
 
-**`P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST` — Fresh-Blind Hybrid with External-First Source Hierarchy**
-
-Decision state: **`FROZEN`**.
+P12-C2 tests four arms over newly generated common parents:
 
 ```text
-7 exposed historical DEV+VALIDATION groups
-  → group-aware paired selection / LOGO sensitivity / modality slices
-  → candidate + evaluator + judge + seed/outcome freeze
-  → fresh blind real-domain measurement
-       Tier A: partner-held external blind source (preferred)
-       Tier B: independently authored + independently adjudicated hidden source (fallback)
-  + qualified legacy LOCKED_TEST characterization
-  + synthetic/adversarial robustness and regression
+A00 = retained evidence reference + retained E14q/E14q2
+A10 = bounded public intent/dependency closure + retained E14q/E14q2
+A01 = retained evidence reference + strict public authorization certificate
+A11 = bounded public intent/dependency closure + strict public authorization certificate
 ```
 
-Frozen operational rules include:
-
-- `asset_story_group` is the primary independent/generalization unit;
-- candidate private-oracle access is always denied;
-- evaluator private scoring requires fixed outputs;
-- stochastic candidates require at least 3 repetitions per scenario for stability/reliability claims;
-- paired candidates use the same groups/repetition count and matched seeds where supported;
-- LOGO group sensitivity and modality slices are mandatory;
-- for at least 5 independent groups, the primary interval is a 95% group-cluster percentile bootstrap with 20,000 resamples and seed `20260822`;
-- hard safety violations are non-compensable and block promotion;
-- final/blind access is one-generation/one-measurement-cycle authorization and defaults to deny;
-- semantic leak, iterative partial feedback or material evaluator/judge adaptation consumes the affected blind measurement.
-
-### Historical candidate/component reinterpretation
-
-The retrospective P12 review makes a strict distinction between qualified **components** and qualified **whole candidates**.
-
-Current decision-state summary:
+The design uses:
 
 ```text
-project-level FROZEN
-  P12 evaluation protocol only
-
-QUALIFIED building blocks
-  ToolSpec / trace / replay research foundation
-  evidence-sufficiency stopping behavior (limited claim)
-  LangGraph runtime candidate
-  HarnessRunner + HttpxTransport research integration
-  native ToolSpec surface
-  MCP-compatible adapter
-  Groq zero-cost provider path (operability only)
-  evaluator v4.1 / v4.2 direction
-  Qwen semantic judge candidate
-  retained E14 deterministic normalization/provenance/serializer/safety guards
-
-PREFERRED implementation candidates
-  NONE
-
-RESEARCHED active references
-  Pydantic AI/Graph
-  OpenAI Agents SDK
-  provider/model alternatives and GPT-OSS-120B family
-  E14q2 baseline
-  C0 / E14t-style evidence-selection reference — failed P12-C1 gates
-  whole production architecture
-
-SUPERSEDED / rejected / consumed
-  unsafe/obsolete early boundary and guard bundles
-  llama-3.1-8b-instant as leading model candidate
-  E9 v3 as current promotion gate
-  E13
-  failed exact E14 generations
-  E14r / E14s / E14u
-  consumed E14v / E14v-A / E14v-B attempts
-  C1 PARENT_TOP7_CANONICAL_V1 for its tested candidate definition
-
-UNASSESSED for final selection
-  RAG/vector DB/reranking
-  multi-agent decomposition
-  persistent memory
-  observability backend
-  UI architecture
+7 EXPOSED_POOL groups
+11 scenario families
+12 agent-visible tickets
+3 repetitions/ticket
+36 new common-parent generations
+144 fixed arm outputs
+seeds 2026082304 / 2026082305 / 2026082306
 ```
 
-Historical VALIDATION results are preserved as EXPOSED_POOL development evidence; they no longer carry an independent-validation interpretation. Historical hard-gate failures remain failures. `EXPERIMENT_FROZEN` manifests remain immutable reproducibility evidence but do not imply project-level architecture freeze.
+Deterministic thresholds remain unchanged from P12-C1. Hard safety remains non-compensable. P12-C2 cannot authorize semantic v4.2, FRESH_BLIND, LEGACY_LOCKED_TEST, architecture freeze, or production-readiness claims.
 
-### P12-C1 result and next authorized experimental surface
+### Next authorized step
 
-P12-C1 is closed and **must not be rerun**. Its 36 shared common-parent generations and 72 fixed C0/C1 outputs completed successfully, with zero operational failures and zero candidate access to private oracle, `FRESH_BLIND` or `LEGACY_LOCKED_TEST`.
+The immediate next step is:
 
-Full-pool deterministic result:
+**build and pass the child `P12-C2 activation / eligibility manifest` before any new P12-C2 provider call or private scoring outcome.**
 
-```text
-C0 evidence correctness       0.261905   FAIL >= 0.5000
-C0 expected-read recall       0.732155   FAIL >= 0.8333
-C0 extra public reads         3.964286   FAIL <= 3.5000
-C0 decision/action            0.785714 / 0.714286
-C0 hard-safety violations     3
+Activation must freeze the common-parent runner/config, E0/E1/S0/S1 implementations and hashes, public intent map, ToolSpec registry, exact 12-ticket mapping, evaluator stack, seeds, and P12 failure policy. It must also pass provider-free synthetic qualification for both the bounded evidence closure and the strict authorization certificate.
 
-C1 evidence correctness       0.083333   FAIL >= 0.5000
-C1 expected-read recall       0.615083   FAIL >= 0.8333
-C1 extra public reads         3.571429   FAIL <= 3.5000
-C1 decision/action            0.785714 / 0.714286
-C1 hard-safety violations     3
-```
-
-Paired C1−C0 effects:
-
-```text
-expected-read recall          -0.117071  95% CI [-0.259929, -0.003976]
-extra public reads            -0.392857  95% CI [-0.761905, -0.083333]
-decision/action/escalation     0 / 0 / 0
-```
-
-C1 is therefore more read-efficient but materially worse on expected-read recall, with no decision/action/escalation/safety gain. C1 is `SUPERSEDED_REJECTED_FOR_THIS_CANDIDATE_DEFINITION`; C0 remains a `RESEARCHED` reference but is not `QUALIFIED`.
-
-The next agent work must be a **new P12 preregistration on `EXPOSED_POOL`** for a new candidate generation/decision step that explicitly targets:
-
-1. evidence completeness / expected-read recall without uncontrolled read growth; and
-2. unsupported action/escalation hard-safety failures.
-
-No semantic v4.2 candidate scoring is authorized from P12-C1 because both arms failed deterministic gates. FRESH_BLIND and LEGACY_LOCKED_TEST remain inaccessible to candidate development and selection.
-
-Blind-source reversal triggers remain:
-
-- **2026-08-25 23:59 America/Sao_Paulo:** if Tier A has no operational blind-custody path, planning moves to Tier B;
-- **2026-08-28 23:59 America/Sao_Paulo:** if neither Tier A nor Tier B is feasible, a B3 amendment is required before any P3 degraded fallback;
-- P3 is never evidentially equivalent to P12 with fresh blind evidence.
-
-The active protocol guard and regression check are:
-
-- [`scripts/research/big_b4_protocol_guard.py`](scripts/research/big_b4_protocol_guard.py)
-- [`scripts/research/big_b4_protocol_self_check.py`](scripts/research/big_b4_protocol_self_check.py)
-- [`.github/workflows/research-big-b4-protocol-self-check.yml`](.github/workflows/research-big-b4-protocol-self-check.yml)
-
-Benchmark Integrity / P12 status:
-
-`BIG-B0 ✓ → BIG-B1 ✓ → BIG-B2 ✓ → BIG-B3 ✓ → BIG-B4 ✓ → historical reinterpretation ✓ → P12-C1 prereg ✓ → activation ✓ → C0/C1 execution ✓ → deterministic scoring ✓ → no arm qualified → new preregistered candidate step NEXT`
-
-Important: P12-C1 completion does **not** authorize final measurement. Current blind registry state remains `NO_BLIND_SOURCE_AUTHORIZED`, and LEGACY_LOCKED_TEST also remains unauthorized.
-
-Current canonical protocol: [`research/frozen/big-b4-evaluation-protocol-v1.json`](research/frozen/big-b4-evaluation-protocol-v1.json)  
-P12-C1 result: [`research/p12-c1-deterministic-paired-result-2026-08-23.md`](research/p12-c1-deterministic-paired-result-2026-08-23.md)  
-P12 historical reinterpretation: [`research/p12-historical-candidate-component-reinterpretation-2026-08-22.md`](research/p12-historical-candidate-component-reinterpretation-2026-08-22.md)  
-Historical execution plan (context only; authorization superseded by P12): [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
-Research protocol: [`research/00-research-protocol.md`](research/00-research-protocol.md)  
-Research hub: [`research/README.md`](research/README.md)
+`FRESH_BLIND` and `LEGACY_LOCKED_TEST` remain inaccessible to candidate development/selection.
 
 ## Project goal
 
@@ -225,39 +100,15 @@ Decision flow:
 - raw action validation is permissive and backend company/resource isolation is coarse;
 - knowledge API exposes the supplied corpus directly.
 
-Frozen historical artifacts:
-
-- `research/34-e0-contract-freeze-v1.md`
-- `research/frozen/e0-contract-freeze.manifest.json`
-- `research/frozen/API-BEHAVIOR-MAP-v1.json`
-- `research/35-e1-gold-freeze-v1.md`
-- `research/frozen/e1-gold-freeze.manifest.json`
-- `research/40-e3-benchmark-split-freeze-v1.md`
-- `research/frozen/benchmark-split-v1.json`
-
-The historical E3 split remains immutable evidence, while P12 now governs the future evidential role of those groups.
-
 ## Framework-neutral foundation
 
-`research/e2/` contains executable:
+`research/e2/` contains executable ScenarioSchema models, the Canonical ToolSpec registry, runner-owned identity/seed binding, HTTP transport + HarnessRunner, deterministic boundaries, TraceSchema, replay, hashing and evaluator infrastructure.
 
-- ScenarioSchema v1 models;
-- 18-operation Canonical ToolSpec registry;
-- runner-owned identity/seed binding;
-- B0 HTTP transport + live/replay `HarnessRunner`;
-- B1/B2/B3 deterministic boundaries;
-- TraceSchema v1;
-- deterministic replay;
-- configuration/artifact hashing;
-- integrated evaluator suite.
-
-The existence or previous qualification of a runtime, model, MCP topology, RAG design, multi-agent design, judge, routing policy, memory strategy or observability stack does not automatically freeze it. Major final choices remain subject to the systematic-comparison and production-readiness rules.
+The existence or previous qualification of a runtime, model, MCP topology, RAG design, multi-agent design, judge, routing policy, memory strategy or observability stack does not automatically freeze it. Major final choices remain subject to systematic comparison and production-readiness rules.
 
 ## Critical path
 
-The immediate critical path is now:
-
-`P12-C1 closed with no qualified arm → new preregistered EXPOSED_POOL candidate generation/comparison → deterministic gate → semantic gate only if deterministic pass → production-fit comparisons → freeze candidate generation → separately authorized fresh blind/final measurement → architecture freeze`
+`P12-C1 closed → P12-C2 preregistered → P12-C2 activation/eligibility NEXT → controlled factorial EXPOSED_POOL evaluation → deterministic gate → semantic child gate only for deterministic survivors → production-fit comparison → generation freeze → separately authorized blind/final evidence → architecture freeze`
 
 Production freeze still requires broad candidate comparison, full deterministic + semantic evaluation gates, production fitness/integration verification, architecture freeze and final blind evidence under P12.
 
