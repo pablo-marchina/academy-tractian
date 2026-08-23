@@ -1,0 +1,108 @@
+{
+  "schema_version": "p12-c1-paired-exposed-pool-execution-v1",
+  "execution_id": "P12-C1-PAIR-C0-C1-2026-08-23",
+  "experiment_id": "P12-C1_EXPOSED_POOL_EVIDENCE_ROUTE_SELECTION",
+  "activation_id": "P12-C1-ACTIVATION-2026-08-23",
+  "date": "2026-08-23",
+  "status": "AUTHORIZED_CONSUMABLE_ONCE",
+  "authorization": {
+    "activation_manifest_path": "research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json",
+    "activation_manifest_git_blob_sha": "3ed5df0d63b5bc2d210e1636ef9a618c87e73d12",
+    "required_activation_status": "ACTIVATION_ELIGIBILITY_PASS",
+    "required_execution_authorized": true,
+    "authorized_scope": "ONE_DETERMINISTIC_PAIRED_C0_VS_C1_EXPOSED_POOL_COMMON_PARENT_GENERATION_EVALUATION_CYCLE"
+  },
+  "participating_arms": ["C0", "C1"],
+  "c2_authorized": false,
+  "corpus": {
+    "partition": "EXPOSED_POOL",
+    "independent_groups": 7,
+    "scenario_families": 11,
+    "agent_visible_tickets": 12,
+    "repetitions_per_ticket": 3,
+    "common_parent_generations": 36,
+    "fixed_candidate_outputs": 72,
+    "seeds": [2026082301, 2026082302, 2026082303]
+  },
+  "pairing_and_freeze_contract": {
+    "one_common_parent_per_ticket_repetition": true,
+    "parent_generated_before_candidate_route_selection": true,
+    "all_36_parents_frozen_before_any_candidate_transform": true,
+    "c0_and_c1_receive_identical_parent_for_each_cell": true,
+    "candidate_specific_parent_regeneration": false,
+    "candidate_outputs_fixed_before_private_scoring": true,
+    "after_candidate_route_selection_apply_unchanged_e14q_then_e14q2": true
+  },
+  "candidate_side_isolation": {
+    "private_oracle_files_must_be_physically_absent": true,
+    "semantic_scenario_files_must_be_physically_absent": true,
+    "fresh_blind_accesses_allowed": 0,
+    "legacy_locked_test_accesses_allowed": 0,
+    "candidate_private_oracle_accesses_allowed": 0,
+    "c2_provider_calls_allowed": 0
+  },
+  "evaluator_side_isolation": {
+    "provider_credentials_must_be_absent": true,
+    "evaluator": "E9_v4_1_SELECTED_TICKET_ALIGNMENT",
+    "exact_ticket_alignment_only": true,
+    "group_union_fallback": false,
+    "raw_private_rows_may_be_emitted": false
+  },
+  "runner_source_bundles": {
+    "candidate_execution": {
+      "path": "research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz",
+      "git_blob_sha": "ccd5acfbf128290314b30003d8f91328cc4fed94",
+      "gzip_sha256": "d862d8e9fe8ab6bb3e1af4e066cbe5692b78408bedb92abba384c843763eb0c7",
+      "decompressed_sha256": "2d25485b353c0c6ad63d6acb143abff0c16aeb8f8841861b990e2d28a1a7cb4e"
+    },
+    "evaluator_scoring": {
+      "path": "research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz",
+      "git_blob_sha": "bf0f47c5d65ed2a0cf59b7b0971bc5f232daf1f5",
+      "gzip_sha256": "211e25666f71b487587d75dcadeda346c8398177abedd76194d83cf1f473bc94",
+      "decompressed_sha256": "4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73"
+    }
+  },
+  "pinned_candidate_policy": {
+    "path": "scripts/research/p12_c1_evidence_route_candidates.py",
+    "git_blob_sha": "e5d0b3d005ffbd9068d32a094133c0cb7cd8a9f5",
+    "c0": "E14T_REFERENCE_PORT_V1",
+    "c1": "PARENT_TOP7_CANONICAL_V1"
+  },
+  "provider_configuration": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "reasoning_format_environment_value": "hidden",
+    "response_format_mode": "json_schema_strict",
+    "max_completion_tokens": 4096,
+    "between_call_delay_seconds": 25,
+    "semantic_repair_delay_seconds": 25,
+    "max_runner_retries": 2,
+    "zero_cost_opt_in_required": true
+  },
+  "attempt_policy": {
+    "new_provider_cycle_authorized": 1,
+    "github_generation_job_run_attempt_required": 1,
+    "github_rerun_of_generation_job_allowed": false,
+    "historical_consumed_attempts_reopened": false,
+    "operational_failures_preserved": true
+  },
+  "statistics": {
+    "primary_independent_unit": "asset_story_group",
+    "aggregation": "group -> scenario -> ticket -> repetition",
+    "group_weighting": "equal",
+    "confirmatory_effect": "C1_MINUS_C0",
+    "group_cluster_percentile_bootstrap_resamples": 20000,
+    "bootstrap_seed": 20260822,
+    "logo_estimates_required": 7,
+    "modality_slices_required": ["investigate", "execute", "contextualize"],
+    "weighted_utility_score_allowed": false
+  },
+  "semantic_stage_authorized": false,
+  "fresh_blind_authorized": false,
+  "legacy_locked_test_authorized": false,
+  "final_measurement_authorized": false,
+  "architecture_freeze_authorized": false,
+  "production_readiness_claim_authorized": false
+}

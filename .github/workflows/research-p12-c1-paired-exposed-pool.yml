@@ -1,0 +1,217 @@
+name: research-p12-c1-paired-exposed-pool
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/p12-c1-paired-exposed-pool-execution-v1.json'
+      - 'research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz'
+      - 'research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz'
+      - '.github/workflows/research-p12-c1-paired-exposed-pool.yml'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+  ACTIVATION: research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json
+  EXECUTION_MANIFEST: research/experiments/p12-c1-paired-exposed-pool-execution-v1.json
+  EXEC_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
+  SCORE_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public evaluator dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Re-run frozen P12 and activation guards
+        run: |
+          python scripts/research/big_b4_protocol_guard.py
+          python scripts/research/p12_c1_activation_self_check.py >/tmp/p12-activation-preflight.json
+      - name: Materialize and verify frozen execution source bundles
+        run: |
+          gzip -dc "$EXEC_BUNDLE" > /tmp/p12_exec.py
+          gzip -dc "$SCORE_BUNDLE" > /tmp/p12_score.py
+          echo '2d25485b353c0c6ad63d6acb143abff0c16aeb8f8841861b990e2d28a1a7cb4e  /tmp/p12_exec.py' | sha256sum -c -
+          echo '4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73  /tmp/p12_score.py' | sha256sum -c -
+          python -m py_compile /tmp/p12_exec.py /tmp/p12_score.py
+          cp /tmp/p12_exec.py scripts/research/p12_c1_paired_exposed_pool_execution.py
+      - name: Verify one-cycle execution manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('research/experiments/p12-c1-paired-exposed-pool-execution-v1.json').read_text())
+          assert m['status']=='AUTHORIZED_CONSUMABLE_ONCE'
+          assert m['participating_arms']==['C0','C1'] and m['c2_authorized'] is False
+          assert m['corpus']['independent_groups']==7 and m['corpus']['scenario_families']==11
+          assert m['corpus']['agent_visible_tickets']==12 and m['corpus']['common_parent_generations']==36
+          assert m['corpus']['fixed_candidate_outputs']==72
+          assert m['attempt_policy']['new_provider_cycle_authorized']==1
+          assert m['attempt_policy']['github_rerun_of_generation_job_allowed'] is False
+          assert m['semantic_stage_authorized'] is False
+          assert m['fresh_blind_authorized'] is False and m['legacy_locked_test_authorized'] is False
+          print('P12_C1_ONE_CYCLE_MANIFEST_PASS')
+          PY
+      - name: Candidate-side privacy boundary and 36-cell dry preflight
+        env:
+          E8_GROQ_MODEL: openai/gpt-oss-120b
+          E8_MODEL_TEMPERATURE: '0'
+          E14_REASONING_EFFORT: medium
+          E14_REASONING_FORMAT: hidden
+          E14_RESPONSE_FORMAT_MODE: json_schema_strict
+          E14_MAX_COMPLETION_TOKENS: '4096'
+          E14_MAX_RETRIES: '2'
+          E8_BETWEEN_CALL_DELAY_SECONDS: '0'
+          E14F_REPAIR_DELAY_SECONDS: '0'
+        run: |
+          rm -f eval/expected-paths.json private-eval/expected-paths.json docs/test-scenarios.md eval/test-scenarios.md
+          test ! -e eval/expected-paths.json
+          python scripts/research/p12_c1_paired_exposed_pool_execution.py \
+            --activation "$ACTIVATION" \
+            --fixed-outputs /tmp/p12-fixed-dry.json \
+            --generation-summary /tmp/p12-generation-dry.json \
+            --dry-run
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/p12-generation-dry.json'))
+          assert x['status']=='PASS'
+          assert x['successful_common_parent_generations']==36
+          assert x['fixed_candidate_outputs']==72
+          assert x['candidate_private_oracle_accesses']==0
+          assert x['fresh_blind_accesses']==0 and x['legacy_locked_test_accesses']==0
+          print('P12_C1_DRY_PREFLIGHT_PASS')
+          PY
+
+  generate-freeze:
+    needs: preflight
+    if: ${{ github.run_attempt == 1 }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      E8_ENABLE_GROQ: '1'
+      E8_CONFIRM_ZERO_COST: '1'
+      E8_GROQ_MODEL: openai/gpt-oss-120b
+      E8_MODEL_TEMPERATURE: '0'
+      E14_REASONING_EFFORT: medium
+      E14_REASONING_FORMAT: hidden
+      E14_RESPONSE_FORMAT_MODE: json_schema_strict
+      E14_MAX_COMPLETION_TOKENS: '4096'
+      E8_BETWEEN_CALL_DELAY_SECONDS: '25'
+      E14F_REPAIR_DELAY_SECONDS: '25'
+      E14_MAX_RETRIES: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public registry dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Enforce non-rerunnable provider attempt
+        run: |
+          test "$GITHUB_RUN_ATTEMPT" = '1'
+          test -n "$GROQ_API_KEY"
+      - name: Materialize pinned candidate runner
+        run: |
+          gzip -dc "$EXEC_BUNDLE" > scripts/research/p12_c1_paired_exposed_pool_execution.py
+          echo '2d25485b353c0c6ad63d6acb143abff0c16aeb8f8841861b990e2d28a1a7cb4e  scripts/research/p12_c1_paired_exposed_pool_execution.py' | sha256sum -c -
+          python -m py_compile scripts/research/p12_c1_paired_exposed_pool_execution.py
+      - name: Physically remove candidate-side private and blind-semantic files
+        run: |
+          rm -f eval/expected-paths.json private-eval/expected-paths.json docs/test-scenarios.md eval/test-scenarios.md
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+          test ! -e docs/test-scenarios.md
+          test ! -e eval/test-scenarios.md
+      - name: Execute exactly 36 common parents then freeze C0/C1 outputs
+        run: |
+          python scripts/research/p12_c1_paired_exposed_pool_execution.py \
+            --activation "$ACTIVATION" \
+            --fixed-outputs "$RUNNER_TEMP/p12-c1-fixed-candidate-outputs.json" \
+            --generation-summary "$RUNNER_TEMP/p12-c1-generation-summary.json" \
+            --timeout-seconds 90
+      - name: Upload fixed private scoring intermediate
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c1-fixed-candidate-outputs-private-intermediate
+          path: ${{ runner.temp }}/p12-c1-fixed-candidate-outputs.json
+          retention-days: 1
+          if-no-files-found: error
+      - name: Upload sanitized generation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c1-generation-summary
+          path: ${{ runner.temp }}/p12-c1-generation-summary.json
+          retention-days: 90
+          if-no-files-found: warn
+
+  score-aggregate:
+    needs: generate-freeze
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public evaluator dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Assert provider credential is absent from scorer
+        run: test -z "${GROQ_API_KEY:-}"
+      - name: Materialize pinned evaluator-side scorer
+        run: |
+          gzip -dc "$SCORE_BUNDLE" > scripts/research/p12_c1_paired_exposed_pool_score.py
+          echo '4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73  scripts/research/p12_c1_paired_exposed_pool_score.py' | sha256sum -c -
+          python -m py_compile scripts/research/p12_c1_paired_exposed_pool_score.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: p12-c1-fixed-candidate-outputs-private-intermediate
+          path: ${{ runner.temp }}/fixed
+      - name: Resolve evaluator-only oracle without printing it
+        run: |
+          if [ -f eval/expected-paths.json ]; then
+            echo 'ORACLE_FILE=eval/expected-paths.json' >> "$GITHUB_ENV"
+          elif [ -f private-eval/expected-paths.json ]; then
+            echo 'ORACLE_FILE=private-eval/expected-paths.json' >> "$GITHUB_ENV"
+          else
+            echo 'evaluator-only oracle not found' >&2
+            exit 1
+          fi
+      - name: Score all 72 frozen outputs and aggregate by 7 groups
+        run: |
+          python scripts/research/p12_c1_paired_exposed_pool_score.py \
+            --activation "$ACTIVATION" \
+            --fixed-outputs "$RUNNER_TEMP/fixed/p12-c1-fixed-candidate-outputs.json" \
+            --oracle-file "$ORACLE_FILE" \
+            --out "$RUNNER_TEMP/p12-c1-deterministic-paired-result.json"
+      - name: Validate sanitized result boundary
+        run: |
+          python - <<'PY'
+          import json, os
+          p=os.path.join(os.environ['RUNNER_TEMP'],'p12-c1-deterministic-paired-result.json')
+          x=json.load(open(p))
+          assert x['status']=='P12_C1_DETERMINISTIC_PAIRED_SCORING_COMPLETE'
+          assert x['fixed_candidate_outputs_scored']==72 and x['scoreable_outputs']==72
+          assert x['independent_groups']==7
+          assert x['private_oracle_candidate_accesses']==0
+          assert x['private_oracle_rows_in_summary'] is False
+          assert x['fresh_blind_accesses']==0 and x['legacy_locked_test_accesses']==0
+          assert x['c2_calls']==0 and x['semantic_stage_executed'] is False
+          print('P12_C1_SANITIZED_RESULT_PASS')
+          PY
+      - name: Upload sanitized deterministic paired result
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c1-deterministic-paired-result
+          path: ${{ runner.temp }}/p12-c1-deterministic-paired-result.json
+          retention-days: 90
+          if-no-files-found: error
