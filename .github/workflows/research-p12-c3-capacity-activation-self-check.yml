@@ -1,0 +1,60 @@
+name: research-p12-c3-capacity-activation-self-check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/experiments/p12-c3-capacity-controlled-activation-eligibility-v1.json'
+      - 'research/experiments/p12-c3-exposed-pool-capacity-controlled-factorial-preregistration-v1.json'
+      - 'research/frozen/p12-c3-capacity-batch-map-v1.json'
+      - 'scripts/research/p12_c3_capacity_control.py'
+      - 'scripts/research/p12_c3_capacity_activation_self_check.py'
+      - '.github/workflows/research-p12-c3-capacity-activation-self-check.yml'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  provider-free-capacity-activation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert provider/private boundaries
+        run: |
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Compile capacity gate code
+        run: |
+          python -m py_compile scripts/research/p12_c3_capacity_control.py
+          python -m py_compile scripts/research/p12_c3_capacity_activation_self_check.py
+      - name: Re-run frozen P12 guard
+        run: python scripts/research/big_b4_protocol_guard.py
+      - name: Run P12-C3 capacity activation self-check
+        run: |
+          mkdir -p /tmp/p12-c3
+          python scripts/research/p12_c3_capacity_activation_self_check.py | tee /tmp/p12-c3/p12-c3-capacity-activation-self-check.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/p12-c3/p12-c3-capacity-activation-self-check.json'))
+          assert x['status']=='PASS' and x['all_passed'] is True
+          assert x['provider_calls']==0 and x['private_oracle_access']==0
+          assert x['fresh_blind_access']==0 and x['legacy_locked_test_access']==0
+          assert x['batch_geometry']=={'batches':6,'parents_per_batch':6,'unique_cells':36}
+          assert x['capacity_contract']=={'min_delay_seconds':30,'max_pre_output_attempts':3,'horizon_hours':72,'reset_safety_margin_seconds':30}
+          assert x['candidate_definition_changed'] is False
+          print('P12_C3_CAPACITY_ACTIVATION_PROVIDER_FREE_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c3-capacity-activation-self-check
+          path: /tmp/p12-c3/p12-c3-capacity-activation-self-check.json
+          retention-days: 90
+          if-no-files-found: error
