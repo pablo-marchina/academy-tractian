@@ -5,6 +5,10 @@ on:
     branches: [research/systematic-foundation]
     paths:
       - '.github/workflows/research-p12-c1-push-run-observer.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c1-push-run-observer.yml'
 
 permissions:
   actions: read
