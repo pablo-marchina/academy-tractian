@@ -7,9 +7,9 @@ This fail-closed infrastructure fixup is frozen before any P12-C3 provider call.
 It does not alter candidate definitions, model/prompt config, evaluator, seeds,
 batch geometry, or deterministic gates. It ensures capacity pauses survive the
 qualified parent runner's exception-to-record boundary, terminal checkpoints are
-publicly summarizable but never resumable, and a derived parent runner placed in
-a temporary directory receives byte-identical public sibling modules required by
-its frozen path-relative imports.
+publicly summarizable but never resumable, and the byte-identical derived parent
+runner is imported from `scripts/research/` so all historical path-relative
+module and repository-root resolution semantics remain unchanged.
 """
 import argparse
 import hashlib
@@ -33,8 +33,8 @@ def derive(text: str) -> str:
     text = replace_once(
         text,
         '''def mod(name:str,p:Path):\n    s=importlib.util.spec_from_file_location(name,p); assert s and s.loader; m=importlib.util.module_from_spec(s); s.loader.exec_module(m); return m\n''',
-        '''def mod(name:str,p:Path):\n    s=importlib.util.spec_from_file_location(name,p); assert s and s.loader; m=importlib.util.module_from_spec(s); s.loader.exec_module(m); return m\n\ndef base_mod(name:str,p:Path):\n    source=Path("scripts/research")\n    assert source.is_dir()\n    p.parent.mkdir(parents=True,exist_ok=True)\n    if p.parent.resolve()!=source.resolve():\n        for src in source.glob("*.py"):\n            dst=p.parent/src.name\n            if dst.resolve()==p.resolve():\n                continue\n            dst.write_bytes(src.read_bytes())\n    return mod(name,p)\n''',
-        "derived_runner_public_siblings",
+        '''def mod(name:str,p:Path):\n    s=importlib.util.spec_from_file_location(name,p); assert s and s.loader; m=importlib.util.module_from_spec(s); s.loader.exec_module(m); return m\n\ndef base_mod(name:str,p:Path):\n    source=Path("scripts/research")\n    assert source.is_dir()\n    if p.parent.resolve()!=source.resolve():\n        runtime=source/"p12_c3_runtime_parent_execution.py"\n        runtime.write_bytes(p.read_bytes())\n        p=runtime\n    return mod(name,p)\n''',
+        "derived_runner_repository_topology",
     )
     text = replace_once(
         text,
