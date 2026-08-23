@@ -69,11 +69,12 @@ Deterministic thresholds remain unchanged. Hard safety remains non-compensable. 
 
 ### P12-C3 activation result
 
-Provider-free activation passed twice:
+Provider-free activation passed three consistency points:
 
 ```text
 pre-promotion run        32666884507   79/79 PASS
 post-promotion run       32666992054   success
+final manifest run       32667163104   success
 provider/model calls     0
 private-oracle access    0
 FRESH_BLIND access       0
