@@ -1,0 +1,85 @@
+{
+  "schema_version": "p12-c2-live-cycle-closure-v1",
+  "experiment_id": "P12-C2_EXPOSED_POOL_FACTORIAL_EVIDENCE_SAFETY",
+  "execution_id": "P12-C2-LIVE-EXPOSED-POOL-2026-08-23",
+  "date": "2026-08-23",
+  "workflow_run_id": 32663659575,
+  "trigger_head_sha": "2536e3deee0dfaf7b6c71c6e1366369c45798439",
+  "run_conclusion": "failure",
+  "preflight_job": {
+    "job_id": 97253541865,
+    "conclusion": "success"
+  },
+  "generate_freeze_job": {
+    "job_id": 97253566866,
+    "conclusion": "failure",
+    "failure_stage": "LIVE_COMMON_PARENT_GENERATION",
+    "failure_class": "EXTERNAL_PROVIDER_RATE_LIMIT_LONG_WINDOW"
+  },
+  "private_scoring_handoff": {
+    "job_id": 97256434951,
+    "conclusion": "skipped",
+    "reason": "36-of-36 common-parent completion and 144-output freeze gate was not satisfied"
+  },
+  "generation_summary": {
+    "status": "OPERATIONAL_FAILURE",
+    "expected_common_parent_generations": 36,
+    "attempted_common_parent_generations": 36,
+    "successful_common_parent_generations": 31,
+    "failed_common_parent_generations": 5,
+    "successful_fraction": 0.8611111111,
+    "failed_fraction": 0.1388888889,
+    "failure_category_counts": {
+      "rate_limit_long_window": 5
+    },
+    "total_internal_retries": 10,
+    "total_semantic_repair_calls": 0,
+    "total_syntax_repairs": 0,
+    "provider_or_model_cycle_consumed": true,
+    "rerun_allowed": false,
+    "candidate_private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "arm_specific_provider_calls": 0,
+    "raw_outputs_in_summary": false
+  },
+  "freeze_status": {
+    "required_common_parents": 36,
+    "required_fixed_factorial_outputs": 144,
+    "freeze_completed": false,
+    "fixed_private_scoring_intermediate_uploaded": false,
+    "immutable_geometry_validation_executed": false
+  },
+  "artifact_evidence": {
+    "sanitized_generation_summary_artifact_id": 9499705496,
+    "artifact_name": "p12-c2-generation-summary",
+    "artifact_digest": "sha256:da4a3f05a388e7306091d47960e4c2238d488d7cac98f8c1403aa175cca934cb",
+    "raw_fixed_outputs_artifact_present": false,
+    "private_scoring_handoff_artifact_present": false
+  },
+  "deterministic_scoring": {
+    "executed": false,
+    "reason": "No complete 36-parent/144-output frozen measurement packet exists. The preregistered scorer requires the full fixed packet before private-oracle access.",
+    "private_oracle_loaded": false
+  },
+  "factorial_analysis": {
+    "executed": false,
+    "bootstrap_20000_executed": false,
+    "logo_executed": false,
+    "reason": "No deterministic scored factorial packet exists."
+  },
+  "scientific_decision": {
+    "cycle_state": "CONSUMED_OPERATIONAL_FAILURE",
+    "p12_c2_arm_qualification_available": false,
+    "qualified_arms": [],
+    "preferred_arm": null,
+    "semantic_child_preregistration_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "architecture_freeze_authorized": false,
+    "production_readiness_claim_authorized": false,
+    "rerun_same_generation_cycle_authorized": false,
+    "interpretation": "The single authorized live P12-C2 EXPOSED_POOL cycle was consumed but did not produce the complete frozen measurement packet required for deterministic arm comparison. No arm-level scientific conclusion may be inferred from this run."
+  },
+  "next_governance_step": "If further EXPOSED_POOL development evidence is desired, preregister a new experiment/generation with an explicit provider-capacity strategy rather than rerunning P12-C2."
+}
