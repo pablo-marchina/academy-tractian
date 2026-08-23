@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_HEAD_SHA: dd7679f358beb132cde29863372bfb55be28d94f
+      TARGET_HEAD_SHA: 2536e3deee0dfaf7b6c71c6e1366369c45798439
       TARGET_WORKFLOW_NAME: research-p12-c2-factorial-exposed-pool
     steps:
       - name: Locate and observe one-shot P12-C2 push run
