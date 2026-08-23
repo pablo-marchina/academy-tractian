@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_HEAD_SHA: e3ed60ab5cf00ceeadfbb350b84f2e19286f9240
+      TARGET_HEAD_SHA: d3901bad501bb7682ef3da15b130a088f8ef5e43
       TARGET_WORKFLOW_NAME: research-p12-c1-paired-exposed-pool
     steps:
       - name: Locate the non-rerunnable target push run
@@ -25,7 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           row=''
-          for _ in $(seq 1 12); do
+          for _ in $(seq 1 24); do
             data=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs" \
               -f branch=research/systematic-foundation \
               -f event=push \
@@ -40,9 +40,14 @@ jobs:
             exit 1
           fi
           run_id=$(printf '%s' "$row" | jq -r '.id')
-          status=$(printf '%s' "$row" | jq -r '.status')
-          conclusion=$(printf '%s' "$row" | jq -r '.conclusion // ""')
           html_url=$(printf '%s' "$row" | jq -r '.html_url')
+          for _ in $(seq 1 180); do
+            current=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")
+            status=$(printf '%s' "$current" | jq -r '.status')
+            conclusion=$(printf '%s' "$current" | jq -r '.conclusion // ""')
+            [ "$status" = completed ] && break
+            sleep 10
+          done
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "status=$status" >> "$GITHUB_OUTPUT"
           echo "conclusion=$conclusion" >> "$GITHUB_OUTPUT"
