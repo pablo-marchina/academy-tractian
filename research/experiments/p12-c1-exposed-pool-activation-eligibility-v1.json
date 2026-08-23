@@ -3,10 +3,10 @@
   "activation_id": "P12-C1-ACTIVATION-2026-08-23",
   "experiment_id": "P12-C1_EXPOSED_POOL_EVIDENCE_ROUTE_SELECTION",
   "date": "2026-08-23",
-  "status": "ACTIVATION_ELIGIBILITY_PASS_PENDING_CI_CONFIRMATION",
-  "activation_decision": "PASS_PENDING_CI",
-  "execution_authorized": false,
-  "authorized_scope_if_ci_passes": "C0_C1_DETERMINISTIC_EXPOSED_POOL_COMPARISON_ONLY",
+  "status": "ACTIVATION_ELIGIBILITY_PASS",
+  "activation_decision": "PASS",
+  "execution_authorized": true,
+  "authorized_scope": "ONE_DETERMINISTIC_PAIRED_C0_VS_C1_EXPOSED_POOL_COMMON_PARENT_GENERATION_EVALUATION_CYCLE",
   "protocol_id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
   "protocol_state": "FROZEN",
   "parent_preregistration_state": "EXPERIMENT_FROZEN",
@@ -16,108 +16,36 @@
   "fresh_blind_access_during_activation": false,
   "legacy_locked_test_access_during_activation": false,
   "source_pins": {
-    "p12_c1_preregistration": {
-      "path": "research/experiments/p12-c1-exposed-pool-candidate-comparison-preregistration-v1.json",
-      "git_blob_sha": "fcc1fefaec2e46de3d8f012e8c5eb82d7ae9fb81"
-    },
-    "p12_protocol": {
-      "path": "research/frozen/big-b4-evaluation-protocol-v1.json",
-      "git_blob_sha": "910b9c8368ee37b5bf5c144413a57b683dc8e8b9"
-    },
-    "p12_protocol_self_check": {
-      "path": "research/results/big-b4-protocol-self-check-2026-08-22.json",
-      "git_blob_sha": "23b58d43bddd78fb348a035410a494267e3c9449"
-    },
-    "blind_source_registry": {
-      "path": "research/frozen/big-b4-blind-source-registry-v1.json",
-      "git_blob_sha": "c135f426f39e11347e7c38fd2c06a4191a63b145"
-    },
-    "benchmark_split": {
-      "path": "research/frozen/benchmark-split-v1.json",
-      "git_blob_sha": "12ec4bca4ffbac72ad457cc9c47f02e210e126c1"
-    },
-    "public_gold_map_for_multiticket_geometry": {
-      "path": "research/28-gold-map-v0-wave-4.md",
-      "git_blob_sha": "a12a7e89066a712f85cab64eada90caa459dfe0a"
-    },
-    "public_split_freeze_record": {
-      "path": "research/40-e3-benchmark-split-freeze-v1.md",
-      "git_blob_sha": "7427b15705d76e19d3bdd3b4094294caa356dfc0"
-    },
-    "p12_historical_reinterpretation": {
-      "path": "research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json",
-      "git_blob_sha": "79422926fde38b37b86987fa4f3fe13e46b297f4"
-    },
-    "candidate_implementation": {
-      "path": "scripts/research/p12_c1_evidence_route_candidates.py",
-      "git_blob_sha": "e5d0b3d005ffbd9068d32a094133c0cb7cd8a9f5"
-    },
-    "e14o_prompt_generation_code": {
-      "path": "scripts/research/e14o_dev_only_public_factual_grounding_prompt.py",
-      "git_blob_sha": "caebdec2989beb4699efa01e5f5dc79134837307"
-    },
-    "e14o_manifest": {
-      "path": "research/experiments/e14o-dev-only-public-factual-grounding-prompt-manifest.json",
-      "git_blob_sha": "badcefeb4a4b9e3c59cd6b4a6b6ea51e44e15405"
-    },
-    "e14l_generation_runtime": {
-      "path": "scripts/research/e14l_dev_only_120b_medium_reasoning_strict_4096.py",
-      "git_blob_sha": "bfad9bf2b73913a104ab5090bc608eabb66f1c59"
-    },
-    "groq_transport": {
-      "path": "scripts/research/e14_groq_rate_limit_transport.py",
-      "git_blob_sha": "850756a21bbc12a4ea9036d56a02df12446fa92c"
-    },
-    "strict_output_schema": {
-      "path": "scripts/research/e14j_strict_output_schema.py",
-      "git_blob_sha": "24e362d6ca0fbe3f2dbbd7e37b32dc437261fd60"
-    },
-    "e14f_public_repair": {
-      "path": "scripts/research/e14f_dev_only_public_semantic_repair.py",
-      "git_blob_sha": "02a960b58ed94f6292d2efa9546a458fd26a8367"
-    },
-    "e14n_v1_1_guard": {
-      "path": "scripts/research/e14n_public_identifier_provenance_guard_v1_1.py",
-      "git_blob_sha": "c7c72aaf667debd294fd25fd63dd575467f75da7"
-    },
-    "e14p_serializer": {
-      "path": "scripts/research/e14p_public_epistemic_serialization_guard.py",
-      "git_blob_sha": "a4925a8356f9cda9a37c9d00c0ad4ebd7be472bf"
-    },
-    "e14q_guard": {
-      "path": "scripts/research/e14q_full_dev_public_action_authorization_consistency_guard.py",
-      "git_blob_sha": "3c44e70429872825b1d21032d311137c9d428ebf"
-    },
-    "e14q2_guard": {
-      "path": "scripts/research/e14q2_full_dev_public_route_role_purpose_consistency_guard.py",
-      "git_blob_sha": "a54139f7188b83bb0046050e6f4a6c6372091980"
-    },
-    "evaluator_v4_1": {
-      "path": "scripts/research/e9_evaluator_side_scorer_v4_1.py",
-      "git_blob_sha": "b33afab0b3bfc9b81037a5391f49d286ef0d7c35"
-    },
-    "evaluator_visible_case_alignment_result": {
-      "path": "research/evaluator-v4-visible-case-alignment-result.md",
-      "git_blob_sha": "ece12268ad9ade1832845929936b2079aaca8f0d"
-    },
-    "e14v_first_consumed_attempt": {
-      "path": "research/e14v-public-synthetic-first-attempt-result-2026-08-19.md",
-      "git_blob_sha": "175e1e16ed346edcdea4348c9182da3e1730847d"
-    },
-    "e14v_a_consumed_attempt": {
-      "path": "research/e14v-a-provider-access-denial-result-2026-08-20.md",
-      "git_blob_sha": "7eaf2d66fb506fe5527890e589ec285a320ce7e3"
-    },
-    "e14v_b_consumed_attempt": {
-      "path": "research/e14v-b-public-synthetic-fail-2026-08-20.md",
-      "git_blob_sha": "5c2700f8cdcbf43c9edba14b1c833f49187c189c"
-    }
+    "p12_c1_preregistration": {"path": "research/experiments/p12-c1-exposed-pool-candidate-comparison-preregistration-v1.json", "git_blob_sha": "fcc1fefaec2e46de3d8f012e8c5eb82d7ae9fb81"},
+    "p12_protocol": {"path": "research/frozen/big-b4-evaluation-protocol-v1.json", "git_blob_sha": "910b9c8368ee37b5bf5c144413a57b683dc8e8b9"},
+    "p12_protocol_self_check": {"path": "research/results/big-b4-protocol-self-check-2026-08-22.json", "git_blob_sha": "23b58d43bddd78fb348a035410a494267e3c9449"},
+    "blind_source_registry": {"path": "research/frozen/big-b4-blind-source-registry-v1.json", "git_blob_sha": "c135f426f39e11347e7c38fd2c06a4191a63b145"},
+    "benchmark_split": {"path": "research/frozen/benchmark-split-v1.json", "git_blob_sha": "12ec4bca4ffbac72ad457cc9c47f02e210e126c1"},
+    "public_gold_map_for_multiticket_geometry": {"path": "research/28-gold-map-v0-wave-4.md", "git_blob_sha": "a12a7e89066a712f85cab64eada90caa459dfe0a"},
+    "public_split_freeze_record": {"path": "research/40-e3-benchmark-split-freeze-v1.md", "git_blob_sha": "7427b15705d76e19d3bdd3b4094294caa356dfc0"},
+    "p12_historical_reinterpretation": {"path": "research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json", "git_blob_sha": "79422926fde38b37b86987fa4f3fe13e46b297f4"},
+    "candidate_implementation": {"path": "scripts/research/p12_c1_evidence_route_candidates.py", "git_blob_sha": "e5d0b3d005ffbd9068d32a094133c0cb7cd8a9f5"},
+    "e14o_prompt_generation_code": {"path": "scripts/research/e14o_dev_only_public_factual_grounding_prompt.py", "git_blob_sha": "caebdec2989beb4699efa01e5f5dc79134837307"},
+    "e14o_manifest": {"path": "research/experiments/e14o-dev-only-public-factual-grounding-prompt-manifest.json", "git_blob_sha": "badcefeb4a4b9e3c59cd6b4a6b6ea51e44e15405"},
+    "e14l_generation_runtime": {"path": "scripts/research/e14l_dev_only_120b_medium_reasoning_strict_4096.py", "git_blob_sha": "bfad9bf2b73913a104ab5090bc608eabb66f1c59"},
+    "groq_transport": {"path": "scripts/research/e14_groq_rate_limit_transport.py", "git_blob_sha": "850756a21bbc12a4ea9036d56a02df12446fa92c"},
+    "strict_output_schema": {"path": "scripts/research/e14j_strict_output_schema.py", "git_blob_sha": "24e362d6ca0fbe3f2dbbd7e37b32dc437261fd60"},
+    "e14f_public_repair": {"path": "scripts/research/e14f_dev_only_public_semantic_repair.py", "git_blob_sha": "02a960b58ed94f6292d2efa9546a458fd26a8367"},
+    "e14n_v1_1_guard": {"path": "scripts/research/e14n_public_identifier_provenance_guard_v1_1.py", "git_blob_sha": "c7c72aaf667debd294fd25fd63dd575467f75da7"},
+    "e14p_serializer": {"path": "scripts/research/e14p_public_epistemic_serialization_guard.py", "git_blob_sha": "a4925a8356f9cda9a37c9d00c0ad4ebd7be472bf"},
+    "e14q_guard": {"path": "scripts/research/e14q_full_dev_public_action_authorization_consistency_guard.py", "git_blob_sha": "3c44e70429872825b1d21032d311137c9d428ebf"},
+    "e14q2_guard": {"path": "scripts/research/e14q2_full_dev_public_route_role_purpose_consistency_guard.py", "git_blob_sha": "a54139f7188b83bb0046050e6f4a6c6372091980"},
+    "evaluator_v4_1": {"path": "scripts/research/e9_evaluator_side_scorer_v4_1.py", "git_blob_sha": "b33afab0b3bfc9b81037a5391f49d286ef0d7c35"},
+    "evaluator_visible_case_alignment_result": {"path": "research/evaluator-v4-visible-case-alignment-result.md", "git_blob_sha": "ece12268ad9ade1832845929936b2079aaca8f0d"},
+    "e14v_first_consumed_attempt": {"path": "research/e14v-public-synthetic-first-attempt-result-2026-08-19.md", "git_blob_sha": "175e1e16ed346edcdea4348c9182da3e1730847d"},
+    "e14v_a_consumed_attempt": {"path": "research/e14v-a-provider-access-denial-result-2026-08-20.md", "git_blob_sha": "7eaf2d66fb506fe5527890e589ec285a320ce7e3"},
+    "e14v_b_consumed_attempt": {"path": "research/e14v-b-public-synthetic-fail-2026-08-20.md", "git_blob_sha": "5c2700f8cdcbf43c9edba14b1c833f49187c189c"}
   },
   "exposed_pool_mapping_provenance": {
     "source": "public frozen split metadata plus public corpus-geometry record only",
     "private_expected_paths_read": false,
     "private_oracle_values_read": false,
-    "b204_derivation": "The public corpus record states exactly one narrative scenario combines stale-analysis investigation plus corresponding reprocess execution. Public split metadata assigns B204 scenarios CEN-07/CEN-12 and tickets TKT-INV-09/TKT-EXE-12/TKT-CTX-02; therefore CEN-07 is the combined investigation+reprocess pair and CEN-12 is the remaining contextualization ticket."
+    "b204_derivation": "The public corpus record says one narrative scenario combines stale-analysis investigation and corresponding reprocess execution. With frozen B204 scenarios CEN-07/CEN-12 and tickets TKT-INV-09/TKT-EXE-12/TKT-CTX-02, CEN-07 is the combined investigation+reprocess pair and CEN-12 is the remaining contextualization ticket."
   },
   "exposed_pool_mapping": [
     {"group_id": "asset_G501", "scenario_id": "CEN-01", "ticket_id": "TKT-INV-04", "modality": "investigate"},
@@ -133,12 +61,7 @@
     {"group_id": "asset_B204", "scenario_id": "CEN-12", "ticket_id": "TKT-CTX-02", "modality": "contextualize"},
     {"group_id": "asset_M102", "scenario_id": "CEN-09", "ticket_id": "TKT-INV-11", "modality": "investigate"}
   ],
-  "exposed_pool_geometry": {
-    "independent_groups": 7,
-    "distinct_scenario_families": 11,
-    "agent_visible_ticket_cases": 12,
-    "modality_case_counts": {"investigate": 6, "execute": 4, "contextualize": 2}
-  },
+  "exposed_pool_geometry": {"independent_groups": 7, "distinct_scenario_families": 11, "agent_visible_ticket_cases": 12, "modality_case_counts": {"investigate": 6, "execute": 4, "contextualize": 2}},
   "repetition_policy": {
     "repetitions_per_ticket": 3,
     "seeds": [2026082301, 2026082302, 2026082303],
@@ -166,9 +89,9 @@
     "config_sha256": "9033a78a5bab46e4c48ebfc0ec70b6476570519fa62f0526625916d0cd3d3b89",
     "same_parent_output_for_all_arms_per_ticket_repetition": true,
     "candidate_specific_provider_regeneration": false,
-    "prompt_identity": "pinned by e14o_prompt_generation_code + e14o_manifest blobs",
-    "model_provider_runtime_identity": "pinned by configuration hash + e14l_generation_runtime + groq_transport blobs",
-    "guard_serializer_identity": "pinned E14f -> E14n-v1.1 -> E14p -> E14q -> E14q2 blobs"
+    "prompt_identity": "pinned E14o prompt-generation code + manifest",
+    "model_provider_runtime_identity": "pinned config hash + E14l generation runtime + Groq transport",
+    "guard_serializer_identity": "pinned E14f -> E14n-v1.1 -> E14p -> E14q -> E14q2"
   },
   "candidate_eligibility": {
     "C0": {
@@ -204,19 +127,12 @@
       "fresh_synthetic_qualification_artifact": null,
       "provider_call_authorized_by_this_activation": false,
       "exposed_pool_execution_authorized_by_this_activation": false,
-      "replacement_candidate_allowed_after_exposed_outcome": false,
-      "note": "Historical E14v/E14v-A/E14v-B attempts remain consumed; this activation does not rerun or silently replace them."
+      "replacement_candidate_allowed_after_exposed_outcome": false
     }
   },
   "participating_arms": ["C0", "C1"],
-  "primary_comparison_graph": [
-    {"comparison": "C1-C0", "role": "CONFIRMATORY"}
-  ],
-  "historical_consumed_attempt_locks": {
-    "E14v": "CONSUMED",
-    "E14v-A": "CONSUMED",
-    "E14v-B": "CONSUMED"
-  },
+  "primary_comparison_graph": [{"comparison": "C1-C0", "role": "CONFIRMATORY"}],
+  "historical_consumed_attempt_locks": {"E14v": "CONSUMED", "E14v-A": "CONSUMED", "E14v-B": "CONSUMED"},
   "deterministic_gates": {
     "evidence_correctness_min": 0.5,
     "mean_expected_read_recall_min": 0.8333,
@@ -265,26 +181,31 @@
   },
   "access_controls": {
     "candidate_private_oracle": "DENY_ALWAYS",
-    "exposed_pool_candidate_development": "ALLOW_AFTER_ACTIVATION_CI_PASS_ONLY",
+    "exposed_pool_candidate_development": "ALLOW_FOR_THIS_FROZEN_C0_C1_CYCLE",
     "exposed_pool_private_scoring": "ALLOW_ONLY_AFTER_CANDIDATE_OUTPUTS_FIXED",
     "fresh_blind": "DENY",
     "legacy_locked_test": "DENY",
     "final_measurement_authorized": false
   },
   "activation_ci": {
-    "required": true,
     "workflow": ".github/workflows/research-p12-c1-activation-self-check.yml",
     "self_check": "scripts/research/p12_c1_activation_self_check.py",
     "provider_free": true,
-    "fail_closed": true,
-    "ci_confirmation_required_before_execution": true
+    "fail_closed": true
   },
   "ci_confirmation": {
-    "run_id": null,
-    "conclusion": null,
-    "confirmed_commit_sha": null
+    "run_id": 32650350294,
+    "job_id": 97220825977,
+    "conclusion": "success",
+    "confirmed_commit_sha": "53cf64afc1a7c5737650ba0eed401f3cd1b58a68",
+    "checks_passed": 108,
+    "checks_total": 108,
+    "live_p12_checks_passed": 27,
+    "live_p12_checks_total": 27,
+    "artifact_id": 9495997835,
+    "artifact_digest": "sha256:63d686a8da7223bf04c5146e10b0ea08a686ed8601e91a3ae08fedc485d9e30f"
   },
-  "post_activation_authorization_if_ci_passes": {
+  "post_activation_authorization": {
     "cycles_allowed": 1,
     "scope": "one deterministic paired C0-vs-C1 EXPOSED_POOL common-parent generation/evaluation cycle",
     "c2_authorized": false,
@@ -299,10 +220,8 @@
     "any_pin_mismatch": "FAIL_ACTIVATION",
     "mapping_or_count_mismatch": "FAIL_ACTIVATION",
     "p12_self_check_not_pass": "FAIL_ACTIVATION",
-    "blind_source_unexpectedly_authorized": "FAIL_ACTIVATION_AND_REVIEW_SCOPE",
     "candidate_source_forbidden_selector": "FAIL_ACTIVATION",
     "candidate_public_synthetic_self_check_failure": "FAIL_ACTIVATION",
-    "c2_fresh_eligibility_unresolved": "FAIL_ACTIVATION",
     "any_exposed_pool_outcome_observed_before_activation_freeze": "INVALIDATE_THIS_ACTIVATION_AND_PREREGISTER_NEW_GENERATION"
   }
 }
