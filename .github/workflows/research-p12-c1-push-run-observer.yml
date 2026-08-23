@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_HEAD_SHA: d3901bad501bb7682ef3da15b130a088f8ef5e43
-      TARGET_WORKFLOW_NAME: research-p12-c1-paired-exposed-pool
+      TARGET_HEAD_SHA: 5ec6dbb301dcab504dc6c3c7261c5f509cf4c74e
+      TARGET_WORKFLOW_NAME: research-p12-c1-promote-validated-runner
     steps:
-      - name: Locate the non-rerunnable target push run
+      - name: Locate target push run
         id: locate
         shell: bash
         run: |
@@ -36,17 +36,17 @@ jobs:
             sleep 5
           done
           if [ -z "$row" ]; then
-            echo 'Target P12-C1 push run not found' >&2
+            echo 'Target push run not found' >&2
             exit 1
           fi
           run_id=$(printf '%s' "$row" | jq -r '.id')
           html_url=$(printf '%s' "$row" | jq -r '.html_url')
-          for _ in $(seq 1 180); do
+          for _ in $(seq 1 60); do
             current=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")
             status=$(printf '%s' "$current" | jq -r '.status')
             conclusion=$(printf '%s' "$current" | jq -r '.conclusion // ""')
             [ "$status" = completed ] && break
-            sleep 10
+            sleep 5
           done
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "status=$status" >> "$GITHUB_OUTPUT"
