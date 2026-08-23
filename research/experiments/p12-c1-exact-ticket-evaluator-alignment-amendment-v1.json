@@ -1,0 +1,69 @@
+{
+  "schema_version": "p12-c1-exact-ticket-evaluator-alignment-amendment-v1",
+  "experiment_id": "P12-C1_EXPOSED_POOL_EVIDENCE_ROUTE_SELECTION",
+  "activation_id": "P12-C1-ACTIVATION-2026-08-23",
+  "status": "FROZEN_EVALUATOR_ONLY_ALIGNMENT_AMENDMENT_BEFORE_METRICS",
+  "date": "2026-08-23",
+  "scope": "EXPOSED_POOL_ONLY",
+  "triggering_condition": {
+    "candidate_generation_run_id": 32657203292,
+    "candidate_generation_job_id": 97237756190,
+    "candidate_generation_conclusion": "success",
+    "fixed_candidate_outputs_sha256": "94d975b022bec04c89f343748b59da643d2690d7e73c4fe07df28716fb9c1590",
+    "common_parent_generations": 36,
+    "fixed_candidate_outputs": 72,
+    "candidate_outputs_fixed_before_private_scoring": true,
+    "first_private_scoring_attempt_result_file_written": false,
+    "aggregate_candidate_metrics_observed_before_amendment": false,
+    "raw_candidate_outputs_printed_or_inspected_before_amendment": false,
+    "failure_class": "EVALUATOR_ALIGNMENT_STRUCTURAL_INCOMPATIBILITY",
+    "failure_reason": "historical v4.1 adapter requires both private-row asset mention and exact ticket_id; the P12-C1 full-ticket corpus contains an exact public ticket whose unique oracle row does not satisfy the redundant asset-mention precondition"
+  },
+  "frozen_change": {
+    "old_alignment": "PRIVATE_ROW_MUST_MENTION_GROUP_ASSET_AND_MATCH_EXACT_PUBLIC_TICKET_ID",
+    "new_alignment": "PRIVATE_ROW_MUST_MATCH_EXACT_PUBLIC_TICKET_ID_UNIQUELY",
+    "public_group_consistency_still_required": true,
+    "group_consistency_source": "frozen P12-C1 activation mapping",
+    "zero_exact_ticket_matches": "FAIL_CLOSED",
+    "multiple_exact_ticket_matches": "FAIL_CLOSED",
+    "group_union_fallback": false,
+    "fuzzy_ticket_matching": false,
+    "private_expected_path_text_used_to_select_candidate": false
+  },
+  "unchanged_evaluator_semantics": {
+    "e9_v4_1_git_blob_sha": "b33afab0b3bfc9b81037a5391f49d286ef0d7c35",
+    "e9_v4_git_blob_sha": "63145e6fe14d7dd9b90d5567ffca6aa54ced933f",
+    "v4_1_normalization_unchanged": true,
+    "v4_1_score_call_unchanged": true,
+    "metric_definitions_unchanged": true,
+    "aggregation_unchanged": true,
+    "bootstrap_protocol_unchanged": true,
+    "deterministic_thresholds_unchanged": true,
+    "candidate_outputs_unchanged": true,
+    "provider_model_or_seed_configuration_unchanged": true
+  },
+  "structural_qualification_before_rescore": {
+    "activated_public_tickets": 12,
+    "tickets_with_exactly_one_oracle_row": 12,
+    "tickets_with_zero_or_multiple_oracle_rows": 0,
+    "v4_1_expected_step_normalization_complete_tickets": 12,
+    "private_oracle_sha256": "d6fb6186e4c035effe7dafa44758eaf40948ac334f0a91f8634a5731b7e0cb38",
+    "private_oracle_content_committed": false
+  },
+  "scorer_derivation": {
+    "base_scorer_sha256": "4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73",
+    "derived_scorer_sha256": "e12d603edd14b00edd76b65fdbe54b0f0534b3478a9c94c192a82b67080fd233",
+    "deterministic_patch_path": "scripts/research/p12_c1_exact_ticket_alignment_patch.py",
+    "deterministic_patch_git_blob_sha": "473b4c9fdf47044eaf5764b8c348dea251a302a5"
+  },
+  "authorization": {
+    "provider_rerun_authorized": false,
+    "candidate_regeneration_authorized": false,
+    "evaluator_only_rescore_of_existing_frozen_outputs_authorized": true,
+    "number_of_amended_scoring_passes_authorized": 1,
+    "fresh_blind_access_authorized": false,
+    "legacy_locked_test_candidate_access_authorized": false,
+    "semantic_v4_2_authorized": false
+  },
+  "interpretation": "This amendment repairs evaluator plumbing required by P12-C1's preregistered all-12-ticket design. It does not alter candidate behavior or deterministic scoring semantics and cannot by itself promote either arm."
+}
