@@ -3,7 +3,7 @@
   "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
   "execution_id": "P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23",
   "date": "2026-08-23",
-  "state": "FROZEN_PRE_OUTCOME_INFRASTRUCTURE_AMENDMENT",
+  "state": "FROZEN_PRE_OUTCOME_INFRASTRUCTURE_AMENDMENT_QUALIFIED",
   "failed_run": {
     "run_id": 32671370930,
     "preflight_job_id": 97272619713,
@@ -59,9 +59,28 @@
     "github_workflow_rerun": "FORBIDDEN"
   },
   "implementation": {
-    "path": "scripts/research/p12_c3_checkpointed_runner_preprovider_amendment.py",
+    "amendment_path": "scripts/research/p12_c3_checkpointed_runner_preprovider_amendment.py",
+    "amendment_git_blob_sha": "6058c28ab84b3041c7d757532579d9086e40a413",
+    "preserved_prior_fixup_path": "scripts/research/p12_c3_checkpointed_runner_fixup_v1_frozen.py",
+    "preserved_prior_fixup_git_blob_sha": "edf38534ee6cede336432c644e01fda2b49944c3",
+    "canonical_fixup_path": "scripts/research/p12_c3_checkpointed_runner_fixup.py",
+    "canonical_fixup_git_blob_sha": "8e5ee853577ac68eaa37480564eee1401e9095d8",
     "prior_effective_runner_sha256": "00cdf340714449bc0424777ec73598f5d8f172436c543918fc9e3ef383fc806e",
-    "amended_effective_runner_sha256": "TO_BE_FILLED_FROM_PROVIDER_FREE_QUALIFICATION_BEFORE_LIVE_CONTINUATION"
+    "amended_effective_runner_sha256": "07808b140d5f90211d5c3445988b46983754825303cbb66123255143094e08be"
   },
-  "authorization_boundary": "NO_B1_CONTINUATION_TRIGGER_MAY_BE_CREATED_UNTIL_PROVIDER_FREE_QUALIFICATION_OF_THIS_AMENDMENT_PASSES"
+  "provider_free_qualification": {
+    "run_id": 32671829920,
+    "job_id": 97273721703,
+    "conclusion": "success",
+    "artifact_id": 9501584749,
+    "artifact_digest": "sha256:bb2c0aaa15fe246371d9e5db24ee6130e602a54d75bb09aea34e2b6bd53e5312",
+    "e14l_validation_bridge": "PASS",
+    "frozen_c3_transport_overrides_restored": "PASS",
+    "exact_failed_checkpoint_resume": "PASS",
+    "provider_calls": 0,
+    "private_oracle_access": 0,
+    "fresh_blind_access": 0,
+    "legacy_locked_test_access": 0
+  },
+  "authorization_boundary": "B1_CONTINUATION_MAY_USE_THE_EXACT_CHECKPOINT_FROM_RUN_32671370930; NO_GITHUB_RERUN; NO_NEW_EXPERIMENT; NO_CANDIDATE_OR_EVALUATOR_CHANGE"
 }
