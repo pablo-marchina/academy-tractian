@@ -1,0 +1,68 @@
+{
+  "schema_version": "p12-c2-activation-self-check-result-v1",
+  "activation_id": "P12-C2-ACTIVATION-2026-08-23",
+  "experiment_id": "P12-C2_EXPOSED_POOL_FACTORIAL_EVIDENCE_SAFETY",
+  "status": "PASS",
+  "execution_authorized": true,
+  "authorized_scope": "ONE_P12_C2_FACTORIAL_A00_A10_A01_A11_EXPOSED_POOL_COMMON_PARENT_GENERATION_EVALUATION_CYCLE",
+  "final_verification": {
+    "workflow_run_id": 32661560570,
+    "job_id": 97248418351,
+    "conclusion": "success",
+    "checks_passed": 97,
+    "checks_total": 97,
+    "all_passed": true,
+    "artifact_id": 9498878921,
+    "artifact_digest": "sha256:bdd43b6dfb14c042e74a0aabbc290e308f7a4dbcbd1459f219969d4bf38d50a4",
+    "full_self_check_payload_sha256": "5fec96011696398ccd7bb431c1d14e9d7a9805a7661d96bc40d8897adb8c1960"
+  },
+  "pre_promotion_qualification": {
+    "workflow_run_id": 32661467838,
+    "job_id": 97248188901,
+    "conclusion": "success",
+    "checks_passed": 96,
+    "checks_total": 96,
+    "artifact_id": 9498858069,
+    "artifact_digest": "sha256:ef08251d9e115bd980eb5eb019152f463467324c84035ee1aa7b6a4ab1d2562e"
+  },
+  "derived_runner": {
+    "qualified_parent_bundle_git_blob_sha": "a5c27394014bac656faa0a2f923a5c5da72d66f5",
+    "qualified_parent_source_sha256": "be16ec6d2c33ad68134a0fbf7aa280b4103ee411b01233b6de7a76668e899a50",
+    "derived_p12_c2_source_sha256": "f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59",
+    "common_parent_config_sha256": "9033a78a5bab46e4c48ebfc0ec70b6476570519fa62f0526625916d0cd3d3b89"
+  },
+  "provider_free_synthetic_qualification": {
+    "public_read_route_families": {"passed": 13, "total": 13},
+    "public_action_dependency_cases": {"passed": 5, "total": 5},
+    "e1_max_read_cap": 7,
+    "e1_unknown_or_action_routes_emitted": 0,
+    "e1_group_ticket_selectors": 0,
+    "s1_expected_case_outcomes": {"passed": 7, "total": 7},
+    "s1_promotions": 0,
+    "s1_invented_endpoints": 0,
+    "s1_invented_handoffs": 0
+  },
+  "provider_free_factorial_dry_run": {
+    "common_parent_generations": {"successful": 36, "expected": 36},
+    "fixed_arm_outputs": {"successful": 144, "expected": 144},
+    "same_parent_hash_for_all_four_arms": true,
+    "arm_specific_provider_calls": 0,
+    "candidate_private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0
+  },
+  "activation_access": {
+    "provider_or_model_calls": 0,
+    "private_oracle_access": false,
+    "fresh_blind_access": false,
+    "legacy_locked_test_access": false,
+    "new_p12_c2_candidate_outcomes_observed": false
+  },
+  "factorial_arms": ["A00", "A10", "A01", "A11"],
+  "live_cycle_authorization_count": 1,
+  "semantic_v4_2_authorized": false,
+  "fresh_blind_authorized": false,
+  "legacy_locked_test_authorized": false,
+  "architecture_freeze_authorized": false,
+  "production_readiness_claim_authorized": false
+}
