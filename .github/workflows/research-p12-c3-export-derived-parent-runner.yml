@@ -1,0 +1,41 @@
+name: research-p12-c3-export-derived-parent-runner
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c3-export-derived-parent-runner.yml'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  export-provider-free:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert no provider/private inputs
+        run: |
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Derive exact P12-C2 runner
+        run: |
+          git hash-object research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz | grep -Fx 'a5c27394014bac656faa0a2f923a5c5da72d66f5'
+          python scripts/research/p12_c2_execution_derivation.py \
+            --parent-gz research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz \
+            --out /tmp/p12_c2_factorial_execution.py
+          echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  /tmp/p12_c2_factorial_execution.py' | sha256sum -c -
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c3-qualified-derived-parent-runner-source
+          path: /tmp/p12_c2_factorial_execution.py
+          retention-days: 1
+          if-no-files-found: error
