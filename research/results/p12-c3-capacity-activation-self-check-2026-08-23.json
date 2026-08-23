@@ -1,0 +1,72 @@
+{
+  "schema_version": "p12-c3-capacity-activation-result-v1",
+  "activation_id": "P12-C3-CAPACITY-ACTIVATION-2026-08-23",
+  "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
+  "date": "2026-08-23",
+  "status": "ACTIVATION_ELIGIBILITY_PASS",
+  "execution_authorized": true,
+  "authorized_live_experiments": 1,
+  "authorized_scope": "ONE_P12_C3_CAPACITY_CONTROLLED_A00_A10_A01_A11_EXPOSED_POOL_EXPERIMENT_WITH_SIX_FIXED_BATCHES",
+  "pre_promotion": {
+    "workflow_run_id": 32666884507,
+    "job_id": 97261551174,
+    "conclusion": "success",
+    "checks_passed": 79,
+    "checks_total": 79,
+    "artifact_id": 9500275650,
+    "artifact_digest": "sha256:7512f800ab21d98c300fcfe4a40aa801981e1744dc4070d2d7d118a717ad170a"
+  },
+  "post_promotion": {
+    "workflow_run_id": 32666992054,
+    "job_id": 97261833385,
+    "conclusion": "success",
+    "artifact_id": 9500292605,
+    "artifact_digest": "sha256:f3ff884571a59bfb0c54a4c25daefc11b183db0da8c4ce28be8c351a9ff2d224",
+    "execution_authorized_verified": true
+  },
+  "boundaries": {
+    "provider_calls": 0,
+    "private_oracle_access": 0,
+    "fresh_blind_access": 0,
+    "legacy_locked_test_access": 0,
+    "candidate_definition_changed_from_p12_c2": false
+  },
+  "batch_geometry": {
+    "fixed_batches": 6,
+    "parents_per_batch": 6,
+    "unique_ticket_seed_cells": 36,
+    "expected_fixed_arm_outputs_after_full_collection": 144,
+    "seed_schedule": [2026082307, 2026082308, 2026082309]
+  },
+  "capacity_contract": {
+    "minimum_inter_request_delay_seconds": 30,
+    "reset_safety_margin_seconds": 30,
+    "maximum_pre_output_transport_attempts_per_cell": 3,
+    "collection_horizon_hours": 72,
+    "retry_after_supported": true,
+    "groq_reset_headers_supported": ["x-ratelimit-reset-requests", "x-ratelimit-reset-tokens"],
+    "headroom_headers_supported": ["x-ratelimit-remaining-requests", "x-ratelimit-remaining-tokens"],
+    "missing_reset_metadata_behavior": "ABORT_BATCH_NO_GUESS",
+    "completed_parent_regeneration_allowed": false,
+    "resume_only_pending_predeclared_cells": true,
+    "private_scoring_between_batches": false,
+    "partial_factorial_analysis": false
+  },
+  "frozen_components": {
+    "batch_map_git_blob_sha": "bd7691073387ae957557d6fd1bcdb0f385849643",
+    "capacity_control_git_blob_sha": "bd249107ef7814ea0c3b7b14aae3afd3ce256349",
+    "activation_self_check_git_blob_sha": "66ccfdd08bad7f878eebf241330ed1781a161910",
+    "candidate_factorial_code_git_blob_sha": "33fbeec64d65ca666d30a14f9a3c196b6c607bec",
+    "public_intent_map_git_blob_sha": "26c666e335d8264fb913c5598cfa6d12b42c6798",
+    "common_parent_config_sha256": "9033a78a5bab46e4c48ebfc0ec70b6476570519fa62f0526625916d0cd3d3b89",
+    "factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22"
+  },
+  "not_authorized": [
+    "semantic_v4_2",
+    "FRESH_BLIND",
+    "LEGACY_LOCKED_TEST",
+    "architecture_freeze",
+    "production_readiness_claim"
+  ],
+  "next_step": "FREEZE_P12_C3_LIVE_EXECUTION_MANIFEST_AND_BATCH_CHECKPOINT_WORKFLOW_BEFORE_FIRST_PROVIDER_CALL"
+}
