@@ -4,6 +4,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'scripts/research/p12_c3_checkpointed_runner_fixup.py'
+      - 'scripts/research/p12_c3_checkpointed_runner_fixup_v1_frozen.py'
       - 'scripts/research/p12_c3_checkpointed_runner_preprovider_amendment.py'
       - 'research/experiments/p12-c3-b1-pre-provider-pacing-validation-amendment-v1.json'
       - '.github/workflows/research-p12-c3-b1-preprovider-amendment-self-check.yml'
@@ -19,6 +21,7 @@ env:
   BATCH_MAP: research/frozen/p12-c3-capacity-batch-map-v1.json
   CAPACITY_CONTROL: scripts/research/p12_c3_capacity_control.py
   CHECKPOINT_BASE: scripts/research/p12_c3_checkpointed_batch_runner.py
+  CHECKPOINT_FIXUP: scripts/research/p12_c3_checkpointed_runner_fixup.py
   PARENT_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
 
 jobs:
@@ -41,12 +44,16 @@ jobs:
         run: |
           python scripts/research/big_b4_protocol_guard.py
           python scripts/research/p12_c3_capacity_activation_self_check.py >/tmp/p12-c3-activation.json
-      - name: Derive parent runner and amended checkpoint runner
+      - name: Derive parent runner and amended checkpoint runner through canonical path
         run: |
           git hash-object "$PARENT_BUNDLE" | grep -Fx 'a5c27394014bac656faa0a2f923a5c5da72d66f5'
+          git hash-object scripts/research/p12_c3_checkpointed_runner_fixup_v1_frozen.py | grep -Fx 'edf38534ee6cede336432c644e01fda2b49944c3'
+          git hash-object scripts/research/p12_c3_checkpointed_runner_preprovider_amendment.py | grep -Fx '6058c28ab84b3041c7d757532579d9086e40a413'
+          git hash-object "$CHECKPOINT_FIXUP" | grep -Fx '8e5ee853577ac68eaa37480564eee1401e9095d8'
           python scripts/research/p12_c2_execution_derivation.py --parent-gz "$PARENT_BUNDLE" --out scripts/research/p12_c3_runtime_parent_execution.py
           echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  scripts/research/p12_c3_runtime_parent_execution.py' | sha256sum -c -
-          python scripts/research/p12_c3_checkpointed_runner_preprovider_amendment.py --base "$CHECKPOINT_BASE" --out /tmp/p12_c3_checkpointed_batch_runner_amended.py | tee /tmp/amended-runner.sha256
+          python "$CHECKPOINT_FIXUP" --base "$CHECKPOINT_BASE" --out /tmp/p12_c3_checkpointed_batch_runner_amended.py | tee /tmp/amended-runner.sha256
+          echo '07808b140d5f90211d5c3445988b46983754825303cbb66123255143094e08be  /tmp/p12_c3_checkpointed_batch_runner_amended.py' | sha256sum -c -
           python -m py_compile scripts/research/p12_c3_runtime_parent_execution.py /tmp/p12_c3_checkpointed_batch_runner_amended.py
       - name: Prove E14l validation bridge restores frozen C3 transport ownership
         env:
@@ -100,7 +107,7 @@ jobs:
           assert p['private_oracle_present'] is False
           print('P12_C3_EXACT_B1_CHECKPOINT_RESUME_PASS')
           PY
-      - name: Emit sanitized amendment qualification
+      - name: Emit sanitized canonical amendment qualification
         run: |
           python - <<'PY'
           import json
@@ -113,6 +120,7 @@ jobs:
             'completed_cells_before_amendment':0,
             'pending_cells':36,
             'amended_effective_runner_sha256':sha,
+            'canonical_fixup_path':'scripts/research/p12_c3_checkpointed_runner_fixup.py',
             'e14l_validation_bridge':'PASS',
             'frozen_c3_transport_overrides_restored':'PASS',
             'exact_failed_checkpoint_resume':'PASS',
