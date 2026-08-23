@@ -25,7 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           row=''
-          for _ in $(seq 1 24); do
+          for _ in $(seq 1 36); do
             data=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs" -f branch=research/systematic-foundation -f event=push -f per_page=100)
             row=$(printf '%s' "$data" | jq -c --arg sha "$TARGET_HEAD_SHA" --arg name "$TARGET_WORKFLOW_NAME" '.workflow_runs[] | select(.head_sha==$sha and .name==$name)' | head -n 1 || true)
             [ -n "$row" ] && break
@@ -34,7 +34,7 @@ jobs:
           [ -n "$row" ] || { echo 'Target push run not found' >&2; exit 1; }
           run_id=$(printf '%s' "$row" | jq -r '.id')
           html_url=$(printf '%s' "$row" | jq -r '.html_url')
-          for _ in $(seq 1 120); do
+          for _ in $(seq 1 180); do
             current=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")
             status=$(printf '%s' "$current" | jq -r '.status')
             conclusion=$(printf '%s' "$current" | jq -r '.conclusion // ""')
@@ -45,7 +45,7 @@ jobs:
           echo "status=$status" >> "$GITHUB_OUTPUT"
           echo "conclusion=$conclusion" >> "$GITHUB_OUTPUT"
           echo "html_url=$html_url" >> "$GITHUB_OUTPUT"
-      - name: Publish discoverable commit status
+      - name: Publish discoverable target-commit status
         shell: bash
         run: |
           set -euo pipefail
@@ -59,4 +59,4 @@ jobs:
           fi
           desc="target_run=$run_id status=$status"
           [ -n "$conclusion" ] && desc="$desc conclusion=$conclusion"
-          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='p12-c1-target-run' -f description="$desc" -f target_url="$url" >/dev/null
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$TARGET_HEAD_SHA" -f state="$state" -f context='p12-c1-target-run' -f description="$desc" -f target_url="$url" >/dev/null
