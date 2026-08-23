@@ -27,10 +27,11 @@
     "qualified_parent_runner_bundle": {"path": "research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz", "git_blob_sha": "a5c27394014bac656faa0a2f923a5c5da72d66f5", "uncompressed_source_sha256": "be16ec6d2c33ad68134a0fbf7aa280b4103ee411b01233b6de7a76668e899a50"},
     "p12_c2_runner_derivation": {"path": "scripts/research/p12_c2_execution_derivation.py", "git_blob_sha": "3fad678c60c99d50925360f12332a98386b8b400", "derived_runner_source_sha256": "f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59"},
     "p12_c2_factorial_candidates": {"path": "scripts/research/p12_c2_factorial_candidates.py", "git_blob_sha": "33fbeec64d65ca666d30a14f9a3c196b6c607bec"},
-    "factorial_scorer": {"path": "scripts/research/p12_c2_factorial_score.py", "git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531", "source_sha256": "e31c5905a7e260d4c69ddbf7101ff5430d8213505f7e35a8cf900d1c0b259da4"},
-    "live_workflow": {"path": ".github/workflows/research-p12-c2-factorial-exposed-pool.yml", "git_blob_sha": "f27f5e5c8df14f846323a091cb836f14cf5ba360"},
+    "factorial_scorer": {"path": "scripts/research/p12_c2_factorial_score.py", "git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531", "source_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22"},
+    "live_workflow": {"path": ".github/workflows/research-p12-c2-factorial-exposed-pool.yml", "git_blob_sha": "dffd56e3cfa088e1efc11f8aeb5f7099941e839d"},
     "evaluator_v4_1": {"path": "scripts/research/e9_evaluator_side_scorer_v4_1.py", "git_blob_sha": "b33afab0b3bfc9b81037a5391f49d286ef0d7c35"},
-    "exact_ticket_alignment_amendment": {"path": "research/experiments/p12-c1-exact-ticket-evaluator-alignment-amendment-v1.json", "git_blob_sha": "87c6ce56d7bd90ca866ad31721365e70f70d2e6c", "derived_scorer_sha256": "e12d603edd14b00edd76b65fdbe54b0f0534b3478a9c94c192a82b67080fd233"}
+    "exact_ticket_alignment_amendment": {"path": "research/experiments/p12-c1-exact-ticket-evaluator-alignment-amendment-v1.json", "git_blob_sha": "87c6ce56d7bd90ca866ad31721365e70f70d2e6c", "derived_scorer_sha256": "e12d603edd14b00edd76b65fdbe54b0f0534b3478a9c94c192a82b67080fd233"},
+    "pre_outcome_failure_record": {"path": "research/results/p12-c2-live-preflight-failure-2026-08-23.json"}
   },
   "common_parent": {
     "provider": "groq",
@@ -60,7 +61,7 @@
   },
   "scoring": {
     "deterministic_evaluator": "P12 exact-ticket-aligned v4.1",
-    "factorial_scorer_sha256": "e31c5905a7e260d4c69ddbf7101ff5430d8213505f7e35a8cf900d1c0b259da4",
+    "factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22",
     "private_oracle_provisioning": "evaluator-side authorized local package only; path and rows are not committed",
     "private_oracle_loaded_only_after_144_outputs_fixed": true,
     "exact_unique_ticket_alignment": true,
@@ -80,6 +81,14 @@
   },
   "attempt_policy": {
     "new_provider_cycle_authorized": 1,
+    "provider_cycles_consumed_before_replacement": 0,
+    "pre_outcome_infrastructure_failures": 1,
+    "failed_preflight_run_id": 32663288072,
+    "failed_preflight_generate_job_skipped": true,
+    "failed_preflight_provider_or_model_calls": 0,
+    "failed_preflight_candidate_outcomes_observed": 0,
+    "replacement_attempt_authorized": true,
+    "replacement_attempt_index": 1,
     "generation_job_consumes_cycle_when_live_provider_execution_begins": true,
     "github_rerun_of_generation_job_allowed": false,
     "silent_rerun_allowed": false,
@@ -90,6 +99,15 @@
       "evaluator crash with no candidate outcome exposure"
     ],
     "replacement_for_task_quality_or_safety_failure": false
+  },
+  "remediation_qualification": {
+    "provider_free_workflow_run_id": 32663466000,
+    "provider_free_job_id": 97253055678,
+    "conclusion": "success",
+    "dry_common_parent_generations": 36,
+    "dry_fixed_factorial_outputs": 144,
+    "provider_calls": 0,
+    "private_oracle_accesses": 0
   },
   "artifacts": {
     "fixed_private_scoring_intermediate": {"name": "p12-c2-fixed-factorial-outputs-private-intermediate", "retention_days": 1},
@@ -113,9 +131,11 @@
   "production_readiness_claim_authorized": false,
   "pre_live_preparation": {
     "factorial_scorer_commit": "ca2ac3a2c2770ef34036f8ac89a7676bc9df78cf",
-    "live_workflow_commit": "ca483cc8a00f2865f5da9cc432ecae92979cd842",
-    "provider_outcomes_observed_before_manifest_freeze": 0,
-    "private_oracle_rows_read_before_manifest_freeze": 0
+    "initial_live_workflow_commit": "ca483cc8a00f2865f5da9cc432ecae92979cd842",
+    "remediated_live_workflow_commit": "c554051f1e35817223cbe4db8a6fedaa75aa835e",
+    "remediation_self_check_commit": "81f11af1551428b92dfbf540f5dd0cf47170e5ce",
+    "provider_outcomes_observed_before_replacement_manifest_freeze": 0,
+    "private_oracle_rows_read_before_replacement_manifest_freeze": 0
   },
-  "next_step": "CREATE_LIVE_TRIGGER_ONCE_AND_OBSERVE_NON_RERUNNABLE_PROVIDER_CYCLE"
+  "next_step": "CREATE_REPLACEMENT_LIVE_TRIGGER_V2_ONCE_AND_OBSERVE_NON_RERUNNABLE_PROVIDER_CYCLE"
 }
