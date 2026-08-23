@@ -1,0 +1,74 @@
+{
+  "schema_version": "p12-c1-preflight-materialization-remediation-v1",
+  "experiment_id": "P12-C1_EXPOSED_POOL_EVIDENCE_ROUTE_SELECTION",
+  "date": "2026-08-23",
+  "status": "INFRASTRUCTURE_REMEDIATION_BEFORE_PROVIDER_OR_EXPOSED_OUTCOME",
+  "amendment_class": "input_materialization_and_private_scoring_handoff_only",
+  "scientific_candidate_changed": false,
+  "candidate_policy_changed": false,
+  "provider_model_configuration_changed": false,
+  "repetition_or_seed_schedule_changed": false,
+  "evaluation_metrics_or_thresholds_changed": false,
+  "comparison_graph_changed": false,
+  "previous_failed_run": {
+    "run_id": 32651750779,
+    "head_sha": "e3ed60ab5cf00ceeadfbb350b84f2e19286f9240",
+    "failure_stage": "preflight",
+    "failure_step": "Candidate-side privacy boundary and 36-cell dry preflight",
+    "failure_reason": "agent-input/cases.json was not materialized in the GitHub Actions workspace",
+    "generate_freeze_job": "SKIPPED",
+    "score_aggregate_job": "SKIPPED",
+    "provider_calls_made": 0,
+    "common_parent_generations_observed": 0,
+    "c0_or_c1_outcomes_observed": 0,
+    "scientific_cycle_consumed": false
+  },
+  "source_integrity": {
+    "original_partner_package_cases_sha256": "804b1269ad5cc6867c6f74d30fb985ff70af52a30ec207f0c60118e1fe677c0d",
+    "original_record_count": 17,
+    "original_agent_visible_fields": ["id", "ticket_id", "company_id", "user_id", "asset_id", "message"],
+    "private_expected_path_content_used_to_build_fixture": false
+  },
+  "exposed_only_fixture": {
+    "path": "research/fixtures/p12-c1-exposed-agent-input-cases-v1.json",
+    "git_blob_sha": "f9fef316ab9245de1e36d1d6d787326cde2e27be",
+    "sha256": "a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef",
+    "record_count": 12,
+    "asset_story_group_count": 7,
+    "includes_only_p12_exposed_pool_groups": true,
+    "legacy_locked_test_groups_included": false,
+    "fresh_blind_content_included": false,
+    "purpose": "materialize the exact agent-visible development inputs required by P12-C1 without publishing the 5 legacy-locked agent cases"
+  },
+  "workflow_materialization_contract": {
+    "target_path": "agent-input/cases.json",
+    "materialize_in_preflight": true,
+    "materialize_in_generate_freeze": true,
+    "verify_fixture_sha256_before_use": true,
+    "verify_exact_12_ticket_set_before_use": true,
+    "verify_exact_7_group_set_before_use": true,
+    "fail_if_legacy_locked_group_present": true
+  },
+  "private_scoring_contract": {
+    "github_generation_job_must_not_receive_private_oracle": true,
+    "fixed_candidate_outputs_must_be_frozen_before_private_scoring": true,
+    "private_oracle_source_remains_uncommitted": true,
+    "private_scoring_may_run_outside_the_provider_job_after_artifact_download": true,
+    "only_sanitized_aggregate_result_may_be_committed": true,
+    "candidate_private_oracle_access_required": 0
+  },
+  "retry_authorization": {
+    "authorized": true,
+    "basis": "the prior run failed before generate-freeze and made zero provider calls, therefore the sole preregistered provider cycle remains unconsumed",
+    "new_scientific_attempt_created": false,
+    "provider_cycle_remaining": 1,
+    "github_rerun_of_a_generation_job_after_generation_starts": false
+  },
+  "still_forbidden": [
+    "C2",
+    "FRESH_BLIND",
+    "LEGACY_LOCKED_TEST candidate execution",
+    "semantic v4.2 measurement",
+    "adaptive changes after observing C0/C1 outcomes"
+  ]
+}
