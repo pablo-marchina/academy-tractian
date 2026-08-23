@@ -1,7 +1,0 @@
-{
-  "schema_version": "p12-c2-parent-runner-export-trigger-v1",
-  "purpose": "provider-free export of the already-qualified P12-C1 execution runner source for derivation/audit only",
-  "provider_calls_authorized": 0,
-  "candidate_outcomes_authorized": 0,
-  "private_oracle_access_authorized": false
-}
