@@ -3,11 +3,13 @@ from __future__ import annotations
 
 """Derive the effective P12-C3 checkpoint runner from the frozen base source.
 
-This is a fail-closed infrastructure fixup created before any P12-C3 provider
-call. It does not alter candidate definitions, model/prompt config, evaluator,
-seeds, batch geometry, or deterministic gates. It only ensures capacity pauses
-survive the qualified parent runner's exception-to-record boundary and that
-terminal checkpoints remain publicly summarizable but never resumable.
+This fail-closed infrastructure fixup is frozen before any P12-C3 provider call.
+It does not alter candidate definitions, model/prompt config, evaluator, seeds,
+batch geometry, or deterministic gates. It ensures capacity pauses survive the
+qualified parent runner's exception-to-record boundary, terminal checkpoints are
+publicly summarizable but never resumable, and a derived parent runner placed in
+a temporary directory receives byte-identical public sibling modules required by
+its frozen path-relative imports.
 """
 import argparse
 import hashlib
@@ -28,6 +30,12 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 
 def derive(text: str) -> str:
+    text = replace_once(
+        text,
+        '''def mod(name:str,p:Path):\n    s=importlib.util.spec_from_file_location(name,p); assert s and s.loader; m=importlib.util.module_from_spec(s); s.loader.exec_module(m); return m\n''',
+        '''def mod(name:str,p:Path):\n    s=importlib.util.spec_from_file_location(name,p); assert s and s.loader; m=importlib.util.module_from_spec(s); s.loader.exec_module(m); return m\n\ndef base_mod(name:str,p:Path):\n    source=Path("scripts/research")\n    assert source.is_dir()\n    p.parent.mkdir(parents=True,exist_ok=True)\n    if p.parent.resolve()!=source.resolve():\n        for src in source.glob("*.py"):\n            dst=p.parent/src.name\n            if dst.resolve()==p.resolve():\n                continue\n            dst.write_bytes(src.read_bytes())\n    return mod(name,p)\n''',
+        "derived_runner_public_siblings",
+    )
     text = replace_once(
         text,
         '''def valid(cap,cp,bm,execution):\n    assert cp["schema_version"]==SCHEMA and cp["experiment_id"]==EXP and cp["execution_id"]==execution\n    cap.validate_checkpoint(cp,ids(bm)); assert cp.get("terminal_failure") is None\n''',
@@ -56,6 +64,10 @@ def derive(text: str) -> str:
         'req=urllib.request.Request(url,data=json.dumps(payload).encode(),headers=rh,method="POST"); self.sent=True',
         "provider_request_send_tracking",
     )
+    text = text.replace('mod("c3base",a.base_runner)', 'base_mod("c3base",a.base_runner)')
+    text = text.replace('mod("c3basefin",a.base_runner)', 'base_mod("c3basefin",a.base_runner)')
+    if text.count('base_mod("c3base",a.base_runner)') != 1 or text.count('base_mod("c3basefin",a.base_runner)') != 1:
+        raise AssertionError("base runner import anchors changed")
     old = '''    try:\n        rec=runner.generate_one(mapping=cell,visible_case=case,source_split=split,seed=int(cell["seed"]),repeat_index=int(cell["repeat_index"]),timeout=a.timeout_seconds,dry_run=a.dry_run,is_first_call=True)\n    except Pause as e:\n        persist(cap,cp,a.checkpoint_out,a.public_out,a.batch_id); write(a.cell_summary,{"status":"PAUSED_PRE_OUTPUT","continue_with_batch":False,"terminal":False,"cell_id":cid,"reason":e.reason,"resume_at":e.resume,"provider_call_made":not a.dry_run}); return 0\n    except RuntimeError as e:\n        reason=str(e); post=reason.startswith("c3_terminal_post_output:"); cp["terminal_failure"]={"cell_id":cid,"batch_id":a.batch_id,"reason":reason,"post_initial_output":post,"recorded_at":now().isoformat()}; persist(cap,cp,a.checkpoint_out,a.public_out,a.batch_id); write(a.cell_summary,{"status":"TERMINAL_EXPERIMENT_FAILURE","continue_with_batch":False,"terminal":True,"cell_id":cid,"reason":reason,"provider_call_made":not a.dry_run}); return 0\n    finally: runner.transport.post_json=old\n    if rec.get("success") is not True:\n        reason=str(rec.get("error_category") or "UNKNOWN_PARENT_FAILURE"); cp["terminal_failure"]={"cell_id":cid,"batch_id":a.batch_id,"reason":reason,"post_initial_output":not reason.startswith("c3_terminal_pre_output:"),"recorded_at":now().isoformat()}; persist(cap,cp,a.checkpoint_out,a.public_out,a.batch_id); write(a.cell_summary,{"status":"TERMINAL_EXPERIMENT_FAILURE","continue_with_batch":False,"terminal":True,"cell_id":cid,"reason":reason,"provider_call_made":not a.dry_run}); return 0\n'''
     new = '''    try:\n        rec=runner.generate_one(mapping=cell,visible_case=case,source_split=split,seed=int(cell["seed"]),repeat_index=int(cell["repeat_index"]),timeout=a.timeout_seconds,dry_run=a.dry_run,is_first_call=True)\n    finally:\n        runner.transport.post_json=old\n    if rec.get("success") is not True:\n        reason=str(rec.get("error_category") or "UNKNOWN_PARENT_FAILURE")\n        if reason.startswith("c3_pause_pre_output:"):\n            persist(cap,cp,a.checkpoint_out,a.public_out,a.batch_id); write(a.cell_summary,{"status":"PAUSED_PRE_OUTPUT","continue_with_batch":False,"terminal":False,"cell_id":cid,"reason":reason,"resume_at":cp.get("cell_resume_at",{}).get(cid),"provider_call_made":ctl.sent}); return 0\n        post=reason.startswith("c3_terminal_post_output:") or ctl.response_seen\n        cp["terminal_failure"]={"cell_id":cid,"batch_id":a.batch_id,"reason":reason,"post_initial_output":post,"recorded_at":now().isoformat()}; persist(cap,cp,a.checkpoint_out,a.public_out,a.batch_id); write(a.cell_summary,{"status":"TERMINAL_EXPERIMENT_FAILURE","continue_with_batch":False,"terminal":True,"cell_id":cid,"reason":reason,"provider_call_made":ctl.sent}); return 0\n'''
     text = replace_once(text, old, new, "qualified_runner_exception_boundary")
