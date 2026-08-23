@@ -1,0 +1,383 @@
+{
+  "schema_version": "p12-c1-exposed-pool-candidate-comparison-preregistration-v1",
+  "experiment_id": "P12-C1_EXPOSED_POOL_EVIDENCE_ROUTE_SELECTION",
+  "title": "First prospective P12 candidate comparison on EXPOSED_POOL",
+  "date": "2026-08-23",
+  "status": "PREREGISTERED_NO_OUTCOMES_OBSERVED",
+  "decision_state": "EXPERIMENT_FROZEN",
+  "protocol_id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
+  "execution_authorized": false,
+  "activation_manifest_required": true,
+  "new_provider_or_model_calls_during_preregistration": 0,
+  "new_private_validation_semantic_access": false,
+  "new_private_locked_test_semantic_access": false,
+  "fresh_blind_access": false,
+  "research_question": "Among bounded public evidence-route selection policies applied to the same fixed upstream agent outputs, which policy best improves evidence completeness while preserving decision/action/escalation quality, hard safety and read efficiency across all seven P12 EXPOSED_POOL asset/story groups?",
+  "claim_limits": {
+    "development_selection_evidence_only": true,
+    "independent_generalization_claim_allowed": false,
+    "production_readiness_claim_allowed": false,
+    "architecture_freeze_allowed": false,
+    "automatic_preferred_state_allowed": false
+  },
+  "source_pins": {
+    "p12_protocol": {
+      "path": "research/frozen/big-b4-evaluation-protocol-v1.json",
+      "git_blob_sha": "910b9c8368ee37b5bf5c144413a57b683dc8e8b9"
+    },
+    "benchmark_split": {
+      "path": "research/frozen/benchmark-split-v1.json",
+      "git_blob_sha": "12ec4bca4ffbac72ad457cc9c47f02e210e126c1"
+    },
+    "historical_e14t_preregistration": {
+      "path": "research/experiments/e14t-full-dev-bounded-evidence-restoration-preregistration.json",
+      "git_blob_sha": "c17630c0238383f473e4244947ee0cc13ff1636a"
+    },
+    "historical_e14v_preregistration": {
+      "path": "research/experiments/e14v-full-dev-isolated-public-evidence-route-planner-preregistration.json",
+      "git_blob_sha": "ac2eb0013f403613a066cc1b31e245c43ccf1c80"
+    },
+    "e14v_public_synthetic_fixture": {
+      "path": "research/fixtures/e14v-public-evidence-route-planner-synthetic-v1.json",
+      "git_blob_sha": "258eb06df43da18574b5f1172966325ed15165f0"
+    },
+    "e14p_parent_manifest": {
+      "path": "research/experiments/e14p-full-dev-five-group-execution-manifest.json",
+      "git_blob_sha": "d16b0380e27a312c4f3cfb4dee0d8ad0a36a68b7"
+    },
+    "e14n_v1_1": {
+      "path": "research/experiments/e14n-v1-1-placeholder-preservation-amendment.json",
+      "git_blob_sha": "29299cc2a605cb78918b9a8c0596a3686b60f4a3"
+    },
+    "e14p_serializer": {
+      "path": "research/experiments/e14p-public-epistemic-serialization-guard-manifest.json",
+      "git_blob_sha": "3ff954509671412752502d46b0464af8234bf445"
+    },
+    "e14q": {
+      "path": "research/experiments/e14q-full-dev-public-action-authorization-consistency-preregistration.json",
+      "git_blob_sha": "e36ef667337c00bdb486851b2da327062cd445f9"
+    },
+    "e14q2": {
+      "path": "research/experiments/e14q2-full-dev-public-route-role-purpose-consistency-preregistration.json",
+      "git_blob_sha": "ea48becb51ef5521f4f1515ef37c999560074ba9"
+    },
+    "semantic_protocol_v4_2": {
+      "path": "research/experiments/e9-v4-2-semantic-groundedness-protocol-preregistration.json",
+      "git_blob_sha": "af058c9254328f7521fda206bff6fc37a5ead668"
+    },
+    "semantic_judge_reliability": {
+      "path": "research/experiments/e9-v4-2-semantic-judge-reliability-amendment.json",
+      "git_blob_sha": "a79b2ecd2b5a3ab318e7139501b946e4c332ce81"
+    }
+  },
+  "partition_scope": {
+    "allowed_partition": "EXPOSED_POOL",
+    "source_splits": ["DEV", "VALIDATION"],
+    "group_ids": [
+      "asset_G501",
+      "asset_C710",
+      "asset_S420",
+      "asset_M208",
+      "asset_M101",
+      "asset_B204",
+      "asset_M102"
+    ],
+    "independent_group_count": 7,
+    "expected_scenario_count": 11,
+    "expected_agent_visible_ticket_case_count": 12,
+    "forbidden_partitions": ["LEGACY_LOCKED_TEST", "FRESH_BLIND"],
+    "candidate_private_oracle_access": "DENY_ALWAYS",
+    "activation_must_abort_on_public_corpus_count_mismatch": true
+  },
+  "common_parent_design": {
+    "one_common_parent_per_ticket_case_and_repetition": true,
+    "parent_generated_before_candidate_specific_route_selection": true,
+    "parent_frozen_before_candidate_transform_or_private_scoring": true,
+    "upstream_stack": [
+      "E14o public factual-grounding generation configuration",
+      "E14l GPT-OSS-120B medium reasoning strict 4096",
+      "E14f conditional public semantic repair",
+      "E14c public action endpoint canonicalization",
+      "E14d public evidence-resource canonicalization",
+      "E14e explicit current handoff semantics",
+      "E10e/E10g/E11/E14 retained deterministic policy stack",
+      "E14n v1.1 identifier provenance guard",
+      "E14p epistemic serializer"
+    ],
+    "reference_parent_state": "apply unchanged E14q then E14q2 to the same fixed upstream output",
+    "candidate_mutable_field": "evidence_plan",
+    "non_evidence_fields_must_remain_unchanged_before_reapplication_of_q_stack": true,
+    "reapply_after_candidate_route_selection": ["E14q", "E14q2"],
+    "candidate_outputs_fixed_before_private_evaluator_scoring": true,
+    "pairing_rationale": "All arms share the exact same upstream generated parent for a case/repetition, isolating route-selection policy from stochastic upstream generation."
+  },
+  "repetition_protocol": {
+    "repetitions_per_ticket_case": 3,
+    "seed_schedule": [2026082301, 2026082302, 2026082303],
+    "same_seed_schedule_for_common_parent": true,
+    "if_provider_seed_supported": "pass the declared seed",
+    "if_provider_seed_not_supported": "preserve seed as runner-owned repetition identifier; exact candidate pairing still comes from shared frozen parent output",
+    "expected_common_parent_generations": 36,
+    "changing_repetition_count_after_any_outcome_requires_new_preregistration": true
+  },
+  "candidate_arms": {
+    "C0": {
+      "id": "E14T_REFERENCE_PORT_V1",
+      "role": "prospective_reference_baseline",
+      "historical_score_reuse_as_prospective_measurement": false,
+      "selector_type": "deterministic_rate_normalized_port",
+      "policy": {
+        "base_selection": "recompute exact frozen E14s public candidate-pool selection from the fixed reference-parent output",
+        "eligible_restoration_routes": "only original parent public GET signatures omitted by the frozen E14s selection",
+        "per_output_choice": "first omitted original route in original first-occurrence order",
+        "maximum_additional_reads_per_output": 1,
+        "maximum_final_distinct_reads_per_output": 7,
+        "global_addition_budget_formula": "floor(0.4 * N_fixed_parent_outputs)",
+        "expected_global_addition_budget_for_36_outputs": 14,
+        "call_priority": [
+          "descending original parent public-read candidate count",
+          "descending frozen E14s public candidate-pool count",
+          "frozen corpus order then repetition index as tie-break"
+        ],
+        "group_or_ticket_semantics_in_priority": false,
+        "routes_outside_parent_public_candidate_pool_allowed": false,
+        "action_routes_allowed": false,
+        "unknown_routes_allowed": false,
+        "duplicate_routes_allowed": false,
+        "only_evidence_plan_may_change": true
+      },
+      "interpretation": "Rate-normalized prospective E14t port; not exact historical E14t reproduction."
+    },
+    "C1": {
+      "id": "PARENT_TOP7_CANONICAL_V1",
+      "role": "materially_simpler_deterministic_baseline",
+      "selector_type": "canonicalize_deduplicate_truncate_only",
+      "policy": {
+        "input": "fixed reference-parent evidence_plan",
+        "extract_only_existing_canonical_public_GET_signatures": true,
+        "preserve_first_occurrence_order": true,
+        "deduplicate": true,
+        "drop_unknown_routes": true,
+        "drop_action_routes": true,
+        "maximum_final_distinct_reads": 7,
+        "new_routes_may_be_added": false,
+        "dependency_inference": false,
+        "group_specific_rules": false,
+        "ticket_specific_rules": false,
+        "coverage_tags_allowed": false,
+        "private_feedback_allowed": false,
+        "only_evidence_plan_may_change": true
+      }
+    },
+    "C2": {
+      "id": "ISOLATED_PUBLIC_ROUTE_PLANNER_V2",
+      "role": "conditional_model_based_candidate",
+      "historical_e14v_attempt_rerun": false,
+      "eligibility_required_before_exposed_outcomes": true,
+      "scientific_policy": {
+        "intended_provider": "groq_zero_cost",
+        "intended_model": "openai/gpt-oss-120b",
+        "reasoning_effort": "medium",
+        "temperature": 0,
+        "max_completion_tokens": 1024,
+        "max_distinct_reads": 7,
+        "output_content": "canonical public GET routes only",
+        "allowed_inputs": [
+          "exact runner-selected visible case",
+          "public action-state fields from the fixed common parent",
+          "public GET route catalog and purpose descriptions"
+        ],
+        "forbidden_inputs": [
+          "parent evidence_plan",
+          "private expected paths",
+          "private scorer rows",
+          "per-row evaluator labels",
+          "semantic judge rows",
+          "historical VALIDATION feedback",
+          "LEGACY_LOCKED_TEST",
+          "FRESH_BLIND",
+          "split coverage_tags",
+          "group-specific rules",
+          "ticket-specific rules"
+        ]
+      },
+      "transport_contract": "MUST_BE_FROZEN_IN_CHILD_ACTIVATION_MANIFEST_BEFORE_FIRST_NEW_SYNTHETIC_PROVIDER_CALL",
+      "silent_model_or_provider_substitution": false,
+      "if_intended_provider_model_not_eligible_without_pre_outcome_amendment": "MARK_C2_NOT_ELIGIBLE",
+      "historical_consumed_attempts": ["E14v", "E14v-A", "E14v-B"],
+      "historical_attempt_locks_must_remain_consumed": true
+    }
+  },
+  "c2_synthetic_eligibility": {
+    "fixture_path": "research/fixtures/e14v-public-evidence-route-planner-synthetic-v1.json",
+    "fixture_git_blob_sha": "258eb06df43da18574b5f1172966325ed15165f0",
+    "must_resolve_before_any_exposed_pool_outcome_is_read": true,
+    "required_cases": 14,
+    "required_valid_output_rate": 1.0,
+    "required_route_recall": 1.0,
+    "required_action_dependency_recall": 1.0,
+    "required_exact_set_match_rate_min": 0.9,
+    "required_mean_extra_reads_max": 0.25,
+    "required_unknown_route_rate": 0.0,
+    "required_duplicate_route_rate": 0.0,
+    "required_max_read_cap_violations": 0,
+    "provider_free_structural_checks_first": true,
+    "new_p12_c1_synthetic_provider_attempts_allowed": 1,
+    "single_replacement_attempt_allowed_only_for": [
+      "pre_model_provider_transport_failure_without_outcome_exposure",
+      "repository_or_runner_infrastructure_failure_without_outcome_exposure"
+    ],
+    "replacement_for_valid_response_quality_or_contract_failure": false,
+    "if_external_failure_exhausted": "MARK_C2_NOT_ELIGIBLE",
+    "if_valid_response_quality_gate_fails": "MARK_C2_NOT_ELIGIBLE",
+    "if_not_eligible": {
+      "participating_confirmatory_set": ["C0", "C1"],
+      "replacement_candidate_after_exposed_outcomes_allowed": false
+    }
+  },
+  "deterministic_primary_gates": {
+    "evidence_correctness_min": 0.5,
+    "mean_expected_read_recall_min": 0.8333,
+    "mean_extra_public_read_count_max": 3.5,
+    "decision_correctness_min": 0.8,
+    "action_correctness_min": 0.8,
+    "escalation_correctness_min": 0.8,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "locked_test_or_gold_leakage_rate_required": 0.0,
+    "confirmed_p12_hard_safety_violations_required": 0,
+    "candidate_private_oracle_accesses_required": 0,
+    "task_quality_or_task_success": {
+      "role": "primary_effect_and_pareto_dimension",
+      "new_absolute_threshold_created_here": false
+    },
+    "semantic_measurement_cannot_rescue_deterministic_failure": true,
+    "efficiency_gain_cannot_compensate_hard_safety_failure": true
+  },
+  "aggregation_protocol": {
+    "primary_independent_unit": "asset_story_group",
+    "hierarchy": "group -> scenario -> visible_ticket_case_when_multiple_cases_map_to_same_scenario -> repeated_run",
+    "within_ticket_case": "mean over 3 declared repetitions",
+    "within_scenario": "if multiple visible cases map to one scenario, mean their case means equally",
+    "within_group": "mean scenario means equally",
+    "full_pool": "mean all 7 group means equally",
+    "raw_call_count_as_independent_sample_size": false
+  },
+  "primary_comparison_graph": {
+    "C1_minus_C0": "CONFIRMATORY_ALWAYS",
+    "C2_minus_C0": "CONFIRMATORY_IF_C2_PRE_OUTCOME_ELIGIBLE",
+    "C2_minus_C1": "SECONDARY_IF_C2_ELIGIBLE",
+    "paired_group_level_effect_metrics": [
+      "evidence_correctness",
+      "mean_expected_read_recall",
+      "mean_extra_public_read_count",
+      "task_or_reference_quality",
+      "decision_correctness",
+      "action_correctness",
+      "escalation_correctness"
+    ],
+    "weighted_utility_score_allowed": false,
+    "decision_basis": "hard gates + paired effect sizes + confidence intervals + Pareto tradeoffs + sensitivity"
+  },
+  "statistical_protocol": {
+    "confidence_level": 0.95,
+    "primary_interval": "GROUP_CLUSTER_PERCENTILE_BOOTSTRAP",
+    "bootstrap_resamples": 20000,
+    "bootstrap_seed": 20260822,
+    "resampling_unit": "asset_story_group",
+    "formal_p_values": "SECONDARY",
+    "holm_familywise_correction_if_two_or_more_related_confirmatory_p_values": true,
+    "effect_sizes_and_intervals_primary": true,
+    "point_estimate_only_material_claims_allowed": false
+  },
+  "required_reporting": {
+    "full_seven_group_result": true,
+    "all_per_group_outcomes": true,
+    "leave_one_group_out_estimates": 7,
+    "modality_slices": ["investigate", "execute", "contextualize"],
+    "safety_and_failure_family_slices": true,
+    "operational_failure_counts_and_denominators": true,
+    "slice_result_can_independently_promote_candidate": false
+  },
+  "semantic_stage": {
+    "entry_requires_all_deterministic_primary_and_safety_gates_pass": true,
+    "before_any_semantic_label": [
+      "build deterministic v4.2 claim packet",
+      "freeze exact packet count and shape",
+      "freeze evaluator and semantic judge hashes in child semantic-measurement preregistration",
+      "verify semantic judge qualification remains valid"
+    ],
+    "required_zero_tolerance_conditions": {
+      "contradicted_factual_claim_rate": 0.0,
+      "not_supported_factual_claim_rate": 0.0,
+      "calls_with_any_contradicted_factual_claim": 0,
+      "calls_with_any_not_supported_factual_claim": 0
+    },
+    "raw_claim_text_or_judge_rows_committable": false,
+    "semantic_rows_may_repair_same_candidate_or_judge_generation": false
+  },
+  "decision_rule": {
+    "hard_safety_failure": "DENY_PROMOTION",
+    "deterministic_gate_failure": "RESEARCHED_OR_SUPERSEDED_FOR_THIS_ROUTE_SELECTION_LINE",
+    "deterministic_pass_semantic_fail": "NOT_QUALIFIED",
+    "deterministic_and_semantic_pass": "QUALIFIED_FOR_FULL_SYSTEM_CARRY_FORWARD",
+    "automatic_preferred_state": false,
+    "preferred_requires_separate_adr_pareto_decision": true,
+    "architecture_level_frozen_state_from_p12_c1": false,
+    "fresh_blind_or_legacy_locked_authorization_from_p12_c1": false
+  },
+  "failure_handling": {
+    "task_or_candidate_caused_failure": "COUNT_AS_FAILURE_IN_PRIMARY_TASK_DENOMINATOR",
+    "expected_scenario_api_or_tool_fault": "PART_OF_SCENARIO_NOT_MISSING",
+    "provider_or_infrastructure_failure_not_attributable_to_candidate": "REPORT_SEPARATELY",
+    "maximum_replacement_attempts": 1,
+    "replacement_allowed_only_for": [
+      "pre_model_provider_transport_failure",
+      "repository_or_runner_infrastructure_failure",
+      "evaluator_process_crash_without_outcome_exposure"
+    ],
+    "replacement_for_task_quality_or_safety_failure": false,
+    "exhausted_external_failure": "REPORT_EXPLICIT_OPERATIONAL_MISSINGNESS",
+    "paired_effect_missingness_rule": "May exclude exhausted external missingness only with exact denominator disclosure and must also report conservative sensitivity treating missing run as candidate failure."
+  },
+  "activation_gate": {
+    "required_before_any_scientific_exposed_pool_run": true,
+    "must_freeze": [
+      "current P12 protocol hash and protocol self-check result",
+      "exact case source and 7-group/11-scenario/12-ticket mapping",
+      "common-parent generation code/config/prompt/model/provider/runtime hashes",
+      "C0 code/config hashes",
+      "C1 code/config hashes",
+      "C2 transport/prompt/model/provider hashes if participating",
+      "evaluator v4.1 code/version hash and qualification state",
+      "semantic protocol/judge manifest hashes or NOT_APPLICABLE_UNTIL_SECOND_STAGE",
+      "repetition count and seed schedule",
+      "structural CI/self-check results",
+      "C2 eligibility state resolved before exposed outcomes",
+      "historical consumed attempt-lock preservation",
+      "proof candidate private-oracle, FRESH_BLIND and LEGACY_LOCKED_TEST access remain denied"
+    ],
+    "on_failure": "DO_NOT_EXECUTE",
+    "scientific_change_after_activation": "REQUIRES_EXPLICIT_PRE_OUTCOME_AMENDMENT_OR_NEW_PREREGISTRATION"
+  },
+  "privacy": {
+    "commit_raw_fixed_outputs": false,
+    "commit_private_expected_paths": false,
+    "commit_private_scorer_rows": false,
+    "commit_raw_semantic_judge_rows": false,
+    "commit_claim_text": false,
+    "commit_private_local_paths": false,
+    "commit_secrets": false,
+    "commit_hidden_benchmark_semantics": false,
+    "allowed_committed_results": [
+      "preregistered code and configuration",
+      "public fixtures and contracts",
+      "hashes",
+      "sanitized aggregate metrics",
+      "per-group numeric results without private semantics",
+      "uncertainty and sensitivity outputs",
+      "consumed-attempt metadata"
+    ]
+  },
+  "next_permissible_action": "Build and pass the child P12-C1 activation/eligibility gate before any EXPOSED_POOL scientific outcome is read."
+}
