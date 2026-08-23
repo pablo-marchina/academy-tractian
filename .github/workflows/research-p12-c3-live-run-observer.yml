@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_HEAD_SHA: 74f02556f8064c52663ff7c9190b64cca0c89b9b
+      TARGET_HEAD_SHA: d952113ef96f668b5e2e5692607f189404eae126
       TARGET_WORKFLOW_NAME: research-p12-c3-checkpointed-six-batch-live-v2
     steps:
-      - name: Locate and observe frozen P12-C3 B1 run
+      - name: Locate and observe frozen P12-C3 B1 continuation run
         id: locate
         shell: bash
         run: |
@@ -35,7 +35,7 @@ jobs:
             [ -n "$row" ] && break
             sleep 5
           done
-          [ -n "$row" ] || { echo 'P12-C3 B1 target push run not found' >&2; exit 1; }
+          [ -n "$row" ] || { echo 'P12-C3 B1 continuation target push run not found' >&2; exit 1; }
           run_id=$(printf '%s' "$row" | jq -r '.id')
           html_url=$(printf '%s' "$row" | jq -r '.html_url')
           gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$TARGET_HEAD_SHA" \
