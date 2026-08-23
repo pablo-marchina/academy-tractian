@@ -1,0 +1,228 @@
+name: research-p12-c3-live-infra-self-check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c3-live-infra-self-check.yml'
+      - '.github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml'
+      - 'scripts/research/p12_c3_checkpointed_batch_runner.py'
+      - 'scripts/research/p12_c3_checkpointed_runner_fixup.py'
+      - 'scripts/research/p12_c3_capacity_control.py'
+      - 'research/frozen/p12-c3-capacity-batch-map-v1.json'
+      - 'research/experiments/p12-c3-capacity-controlled-live-execution-v1.json'
+      - 'research/experiments/p12-c3-e14f-transaction-semantics-clarification-v1.json'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+  EXECUTION_ID: P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23
+  ACTIVATION: research/experiments/p12-c3-capacity-controlled-activation-eligibility-v1.json
+  BATCH_MAP: research/frozen/p12-c3-capacity-batch-map-v1.json
+  CAPACITY_CONTROL: scripts/research/p12_c3_capacity_control.py
+  CHECKPOINT_BASE: scripts/research/p12_c3_checkpointed_batch_runner.py
+  CHECKPOINT_FIXUP: scripts/research/p12_c3_checkpointed_runner_fixup.py
+  PARENT_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
+  EXPOSED_CASES: research/fixtures/p12-c1-exposed-agent-input-cases-v1.json
+  LIVE_WORKFLOW: .github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml
+
+jobs:
+  provider-free-live-infrastructure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install provider-free dependencies
+        run: python -m pip install 'pydantic>=2,<3' 'PyYAML>=6,<7'
+      - name: Assert no provider/private inputs
+        run: |
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+          test ! -e research/experiments/p12-c3-live-batch-trigger-v1.json
+      - name: Verify P12 and activation gates
+        run: |
+          python scripts/research/big_b4_protocol_guard.py
+          python scripts/research/p12_c3_capacity_activation_self_check.py >/tmp/activation.json
+      - name: Derive effective checkpoint runner and freeze its hash for this check
+        run: |
+          git hash-object "$PARENT_BUNDLE" | grep -Fx 'a5c27394014bac656faa0a2f923a5c5da72d66f5'
+          python scripts/research/p12_c2_execution_derivation.py --parent-gz "$PARENT_BUNDLE" --out /tmp/p12_c2_factorial_execution.py
+          echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  /tmp/p12_c2_factorial_execution.py' | sha256sum -c -
+          python "$CHECKPOINT_FIXUP" --base "$CHECKPOINT_BASE" --out /tmp/p12_c3_checkpointed_batch_runner.py | tee /tmp/effective-runner.sha256
+          python -m py_compile /tmp/p12_c2_factorial_execution.py /tmp/p12_c3_checkpointed_batch_runner.py "$CAPACITY_CONTROL" "$CHECKPOINT_FIXUP"
+          echo "EFFECTIVE_RUNNER_SHA256=$(cat /tmp/effective-runner.sha256)"
+      - name: Validate live workflow is inactive until explicit trigger
+        run: |
+          python - <<'PY'
+          import pathlib, yaml
+          p=pathlib.Path('.github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml')
+          x=yaml.load(p.read_text(), Loader=yaml.BaseLoader)
+          on=x['on']
+          assert set(on)=={'push'}
+          assert on['push']['branches']==['research/systematic-foundation']
+          assert on['push']['paths']==['research/experiments/p12-c3-live-batch-trigger-v1.json']
+          assert x['concurrency']['cancel-in-progress']=='false'
+          assert x['concurrency']['group']=='p12-c3-live-capacity-controlled-experiment'
+          text=p.read_text()
+          assert 'workflow_dispatch' not in text and 'schedule:' not in text
+          assert 'pull_request:' not in text
+          assert "E14_MAX_RETRIES: '0'" in text
+          assert "E8_PROVIDER_MAX_ATTEMPTS: '1'" in text
+          assert 'p12-c3-private-checkpoint-latest' in text
+          assert 'retention-days: 5' in text
+          print('P12_C3_LIVE_WORKFLOW_INACTIVE_AND_PINNABLE')
+          PY
+      - name: Materialize exact public EXPOSED_POOL cases
+        run: |
+          echo 'a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef  research/fixtures/p12-c1-exposed-agent-input-cases-v1.json' | sha256sum -c -
+          mkdir -p agent-input
+          cp "$EXPOSED_CASES" agent-input/cases.json
+      - name: Test checkpoint resume and strict batch ordering provider-free
+        env:
+          E8_GROQ_MODEL: openai/gpt-oss-120b
+          E8_MODEL_TEMPERATURE: '0'
+          E14_REASONING_EFFORT: medium
+          E14_REASONING_FORMAT: hidden
+          E14_RESPONSE_FORMAT_MODE: json_schema_strict
+          E14_MAX_COMPLETION_TOKENS: '4096'
+          E14_MAX_RETRIES: '0'
+          E8_PROVIDER_MAX_ATTEMPTS: '1'
+          E8_BETWEEN_CALL_DELAY_SECONDS: '0'
+          E14F_REPAIR_DELAY_SECONDS: '0'
+        run: |
+          mkdir -p /tmp/resume
+          python /tmp/p12_c3_checkpointed_batch_runner.py prepare \
+            --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+            --batch-id B1 --checkpoint-out /tmp/resume/checkpoint.json --public-out /tmp/resume/public.json --allow-initialize
+          for ordinal in 1 2; do
+            python /tmp/p12_c3_checkpointed_batch_runner.py run-cell \
+              --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+              --batch-id B1 --cell-ordinal "$ordinal" --base-runner /tmp/p12_c2_factorial_execution.py \
+              --checkpoint-in /tmp/resume/checkpoint.json --checkpoint-out /tmp/resume/next.json --public-out /tmp/resume/public.json \
+              --cell-summary /tmp/resume/cell.json --agent-input-cases agent-input/cases.json --dry-run
+            mv /tmp/resume/next.json /tmp/resume/checkpoint.json
+          done
+          python /tmp/p12_c3_checkpointed_batch_runner.py prepare \
+            --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+            --batch-id B1 --checkpoint-in /tmp/resume/checkpoint.json --checkpoint-out /tmp/resume/resumed.json --public-out /tmp/resume/resumed-public.json
+          if python /tmp/p12_c3_checkpointed_batch_runner.py prepare \
+            --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+            --batch-id B2 --checkpoint-in /tmp/resume/checkpoint.json --checkpoint-out /tmp/resume/illegal.json --public-out /tmp/resume/illegal-public.json; then
+            echo 'B2 incorrectly accepted before B1 completion' >&2; exit 1
+          fi
+          python /tmp/p12_c3_checkpointed_batch_runner.py run-cell \
+            --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+            --batch-id B1 --cell-ordinal 1 --base-runner /tmp/p12_c2_factorial_execution.py \
+            --checkpoint-in /tmp/resume/checkpoint.json --checkpoint-out /tmp/resume/skip.json --public-out /tmp/resume/skip-public.json \
+            --cell-summary /tmp/resume/skip-cell.json --agent-input-cases agent-input/cases.json --dry-run
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/resume/skip-cell.json'))
+          assert x['status']=='SKIPPED_ALREADY_COMPLETE' and x['provider_call_made'] is False
+          cp=json.load(open('/tmp/resume/checkpoint.json'))
+          cp['terminal_failure']={'cell_id':'synthetic','batch_id':'B1','reason':'synthetic','post_initial_output':True}
+          json.dump(cp,open('/tmp/resume/terminal.json','w'))
+          PY
+          set +e
+          python /tmp/p12_c3_checkpointed_batch_runner.py summarize \
+            --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+            --batch-id B1 --checkpoint-in /tmp/resume/terminal.json --summary-out /tmp/resume/terminal-summary.json
+          code=$?
+          set -e
+          test "$code" = '3'
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/resume/terminal-summary.json'))
+          assert x['terminal_failure'] is True and x['raw_outputs_in_summary'] is False
+          PY
+      - name: Full provider-free six-batch 36-parent to 144-arm dry cycle
+        env:
+          E8_GROQ_MODEL: openai/gpt-oss-120b
+          E8_MODEL_TEMPERATURE: '0'
+          E14_REASONING_EFFORT: medium
+          E14_REASONING_FORMAT: hidden
+          E14_RESPONSE_FORMAT_MODE: json_schema_strict
+          E14_MAX_COMPLETION_TOKENS: '4096'
+          E14_MAX_RETRIES: '0'
+          E8_PROVIDER_MAX_ATTEMPTS: '1'
+          E8_BETWEEN_CALL_DELAY_SECONDS: '0'
+          E14F_REPAIR_DELAY_SECONDS: '0'
+        run: |
+          mkdir -p /tmp/full
+          python /tmp/p12_c3_checkpointed_batch_runner.py prepare \
+            --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+            --batch-id B1 --checkpoint-out /tmp/full/checkpoint.json --public-out /tmp/full/public.json --allow-initialize
+          for batch in B1 B2 B3 B4 B5 B6; do
+            if [ "$batch" != 'B1' ]; then
+              python /tmp/p12_c3_checkpointed_batch_runner.py prepare \
+                --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+                --batch-id "$batch" --checkpoint-in /tmp/full/checkpoint.json --checkpoint-out /tmp/full/next.json --public-out /tmp/full/public.json
+              mv /tmp/full/next.json /tmp/full/checkpoint.json
+            fi
+            for ordinal in 1 2 3 4 5 6; do
+              python /tmp/p12_c3_checkpointed_batch_runner.py run-cell \
+                --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+                --batch-id "$batch" --cell-ordinal "$ordinal" --base-runner /tmp/p12_c2_factorial_execution.py \
+                --checkpoint-in /tmp/full/checkpoint.json --checkpoint-out /tmp/full/next.json --public-out /tmp/full/public.json \
+                --cell-summary /tmp/full/cell.json --agent-input-cases agent-input/cases.json --dry-run
+              mv /tmp/full/next.json /tmp/full/checkpoint.json
+            done
+            python /tmp/p12_c3_checkpointed_batch_runner.py summarize \
+              --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+              --batch-id "$batch" --checkpoint-in /tmp/full/checkpoint.json --summary-out /tmp/full/batch.json
+          done
+          python /tmp/p12_c3_checkpointed_batch_runner.py finalize \
+            --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+            --base-runner /tmp/p12_c2_factorial_execution.py --checkpoint-in /tmp/full/checkpoint.json \
+            --fixed-outputs /tmp/full/fixed.json --generation-summary /tmp/full/generation.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/full/checkpoint.json')); f=json.load(open('/tmp/full/fixed.json')); g=json.load(open('/tmp/full/generation.json'))
+          assert len(cp['completed'])==36 and cp['pending']==[] and cp['terminal_failure'] is None
+          assert f['status']=='P12_C3_FIXED_FACTORIAL_OUTPUTS_PASS'
+          assert f['common_parent_count']==36 and f['fixed_arm_output_count']==144 and len(f['calls'])==144
+          assert f['participating_arms']==['A00','A10','A01','A11']
+          assert f['fixed_before_private_scoring'] is True
+          assert f['candidate_private_oracle_accesses']==0 and f['fresh_blind_accesses']==0 and f['legacy_locked_test_accesses']==0
+          assert f['arm_specific_provider_calls']==0
+          assert g['successful_common_parent_generations']==36 and g['fixed_arm_outputs']==144
+          assert g['same_parent_hash_for_all_four_arms'] is True
+          assert g['raw_outputs_in_summary'] is False
+          print('P12_C3_FULL_PROVIDER_FREE_LIVE_DRY_PASS')
+          PY
+      - name: Emit compact provider-free qualification evidence
+        run: |
+          python - <<'PY' > /tmp/p12-c3-live-infra-self-check.json
+          import hashlib, json, pathlib
+          effective=pathlib.Path('/tmp/p12_c3_checkpointed_batch_runner.py').read_bytes()
+          workflow=pathlib.Path('.github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml').read_bytes()
+          print(json.dumps({
+            'schema_version':'p12-c3-live-infra-self-check-v1',
+            'status':'PASS',
+            'provider_calls':0,
+            'private_oracle_access':0,
+            'fresh_blind_access':0,
+            'legacy_locked_test_access':0,
+            'effective_checkpoint_runner_sha256':hashlib.sha256(effective).hexdigest(),
+            'live_workflow_sha256':hashlib.sha256(workflow).hexdigest(),
+            'dry_common_parents':36,
+            'dry_fixed_arm_outputs':144,
+            'resume_test':'PASS',
+            'premature_batch_test':'PASS',
+            'terminal_summary_test':'PASS',
+            'live_trigger_present':False
+          },indent=2))
+          PY
+          cat /tmp/p12-c3-live-infra-self-check.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c3-live-infra-self-check
+          path: /tmp/p12-c3-live-infra-self-check.json
+          retention-days: 90
+          if-no-files-found: error
