@@ -15,9 +15,11 @@ No material component is considered complete merely because it works or passes a
 
 ## Status
 
-**Benchmark Integrity Gate COMPLETE — P12 evaluation protocol `FROZEN` — P12-C1 CLOSED with no qualified arm — P12-C2 CONSUMED as provider-capacity operational failure — P12-C3 PREREGISTERED — P12-C3 capacity activation PASS**
+**Benchmark Integrity Gate COMPLETE — P12 evaluation protocol `FROZEN` — P12-C1 CLOSED with no qualified arm — P12-C2 CONSUMED as provider-capacity operational failure — P12-C3 PREREGISTERED — capacity activation PASS — live execution manifest/workflow FROZEN and READY_NOT_STARTED**
 
-P12-C1 and P12-C2 are consumed and must not be rerun. P12-C2 produced no deterministic arm comparison because only 31/36 common parents completed before `rate_limit_long_window` failures. P12-C3 preserves the same E0/E1 × S0/S1 candidate definitions while prospectively controlling provider capacity. Its child capacity activation gate has passed provider-free and authorizes exactly **one** P12-C3 live experiment; no P12-C3 provider call has been made yet.
+P12-C1 and P12-C2 are consumed and must not be rerun. P12-C2 produced no deterministic arm comparison because only 31/36 common parents completed before `rate_limit_long_window` failures. P12-C3 preserves the same E0/E1 × S0/S1 candidate definitions while prospectively controlling provider capacity. Its child capacity activation gate passed provider-free and authorizes exactly **one** P12-C3 live experiment.
+
+The P12-C3 live execution manifest and checkpointed six-batch workflow are now frozen **before the first P12-C3 provider call**. The freeze self-check passed `113/113`; the separate live trigger does not exist, no P12-C3 candidate outcome has been observed, and no provider/private/blind/locked access occurred during freeze verification.
 
 Canonical current artifacts:
 
@@ -26,10 +28,13 @@ Canonical current artifacts:
 - [`research/results/p12-c2-live-cycle-closure-2026-08-23.json`](research/results/p12-c2-live-cycle-closure-2026-08-23.json) — P12-C2 consumed operational-failure closure;
 - [`research/experiments/p12-c3-exposed-pool-capacity-controlled-factorial-preregistration-v1.json`](research/experiments/p12-c3-exposed-pool-capacity-controlled-factorial-preregistration-v1.json) — P12-C3 preregistration;
 - [`research/experiments/p12-c3-capacity-controlled-activation-eligibility-v1.json`](research/experiments/p12-c3-capacity-controlled-activation-eligibility-v1.json) — P12-C3 activation manifest (`PASS`);
-- [`research/results/p12-c3-capacity-activation-self-check-2026-08-23.json`](research/results/p12-c3-capacity-activation-self-check-2026-08-23.json) — provider-free activation evidence;
-- [`research/p12-c3-capacity-activation-pass-2026-08-23.md`](research/p12-c3-capacity-activation-pass-2026-08-23.md) — human activation conclusion;
 - [`research/frozen/p12-c3-capacity-batch-map-v1.json`](research/frozen/p12-c3-capacity-batch-map-v1.json) — exact six-batch/36-cell map;
-- [`scripts/research/p12_c3_capacity_control.py`](scripts/research/p12_c3_capacity_control.py) — frozen reset/headroom/checkpoint semantics.
+- [`research/experiments/p12-c3-capacity-controlled-live-execution-v1.json`](research/experiments/p12-c3-capacity-controlled-live-execution-v1.json) — frozen live execution manifest (`FROZEN_READY_NOT_STARTED`);
+- [`.github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml`](.github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml) — canonical checkpointed live workflow;
+- [`scripts/research/p12_c3_capacity_control.py`](scripts/research/p12_c3_capacity_control.py) — frozen reset/headroom/checkpoint semantics;
+- [`scripts/research/p12_c3_live_manifest_freeze_self_check.py`](scripts/research/p12_c3_live_manifest_freeze_self_check.py) — provider-free manifest/pin verification;
+- [`research/results/p12-c3-live-manifest-freeze-self-check-2026-08-23.json`](research/results/p12-c3-live-manifest-freeze-self-check-2026-08-23.json) — sanitized `113/113` freeze evidence;
+- [`research/p12-c3-live-manifest-freeze-pass-2026-08-23.md`](research/p12-c3-live-manifest-freeze-pass-2026-08-23.md) — human freeze conclusion.
 
 Current evidence roles under P12:
 
@@ -61,15 +66,15 @@ The scientific geometry remains:
 new seeds 2026082307 / 2026082308 / 2026082309
 ```
 
-The operational collection geometry is frozen as **6 fixed batches × 6 parents** with immutable checkpoints. Provider waits may depend only on `Retry-After` / rate-limit reset metadata, never candidate content or evaluator outcomes. A `429` before any model output leaves the same predeclared cell pending; a completed parent may never be regenerated. The complete collection horizon is frozen at 72 hours from the first P12-C3 live provider call.
+The operational collection geometry is frozen as **6 fixed batches × 6 parents** with immutable checkpoints. Provider waits may depend only on `Retry-After` / rate-limit reset metadata, never candidate content or evaluator outcomes. A `429` before any usable model output leaves the same predeclared cell pending within the frozen attempt ceiling; a completed parent may never be regenerated. The complete collection horizon is frozen at 72 hours from the first P12-C3 live provider call.
 
 No private scoring is allowed until **36/36 new parents and 144/144 arm outputs** are frozen. Partial/complete-case-only factorial analysis is forbidden.
 
 Deterministic thresholds remain unchanged. Hard safety remains non-compensable. P12-C3 cannot authorize semantic v4.2, FRESH_BLIND, LEGACY_LOCKED_TEST, architecture freeze, or production-readiness claims.
 
-### P12-C3 activation result
+### P12-C3 activation and live-freeze verification
 
-Provider-free activation passed three consistency points:
+Provider-free capacity activation:
 
 ```text
 pre-promotion run        32666884507   79/79 PASS
@@ -81,15 +86,46 @@ FRESH_BLIND access       0
 LEGACY_LOCKED_TEST       0
 ```
 
-The gate verified exact candidate pins, 6×6 batch geometry, 36 unique ticket-seed cells, Groq reset/header parsing, proactive headroom stop, no-reset fail-closed behavior, immutable checkpoints, no regeneration, pending-only resume, maximum 3 pre-output transport attempts, and the exact 72-hour horizon.
+Provider-free live-infrastructure dry qualification:
+
+```text
+run                       32668588503
+36/36 dry parents         PASS
+144/144 dry arm outputs   PASS
+resume/order/terminal     PASS
+provider calls            0
+```
+
+Provider-free frozen-live-manifest verification:
+
+```text
+run                       32671038513
+checks                    113 / 113 PASS
+provider calls            0
+private-oracle access     0
+FRESH_BLIND access        0
+LEGACY_LOCKED_TEST        0
+live trigger present      false
+first P12-C3 live call    false
+```
+
+Frozen execution pins:
+
+```text
+effective checkpoint runner SHA-256
+00cdf340714449bc0424777ec73598f5d8f172436c543918fc9e3ef383fc806e
+
+canonical live workflow SHA-256
+48e4bfdf5de0e624ec2e1d8feadf4ed5d3d6a7ead245875b15b641d4c486168d
+```
 
 ### Next authorized step
 
-The immediate next step is:
+The preparation/freeze stage is complete. The next intentionally separate action is:
 
-**freeze the P12-C3 live execution manifest and checkpointed six-batch workflow before the first P12-C3 provider call.**
+**create the frozen B1 trigger and start the single authorized P12-C3 capacity-controlled live experiment.**
 
-The live workflow must preserve the activation pins, use only the frozen batch map and capacity-control module, never regenerate completed cells, expose only sanitized checkpoint metadata between batches, and keep private scoring blocked until the 36-parent/144-output completeness gate passes.
+The canonical workflow can run only from `research/experiments/p12-c3-live-batch-trigger-v1.json` on `research/systematic-foundation`. That trigger is deliberately absent at the current `FROZEN_READY_NOT_STARTED` state. GitHub reruns of live runs are forbidden; later batches or resumes must continue through the exact private checkpoint chain and only pending predeclared cells.
 
 `FRESH_BLIND` and `LEGACY_LOCKED_TEST` remain inaccessible to candidate development/selection.
 
@@ -132,7 +168,7 @@ The existence or previous qualification of a runtime, model, MCP topology, RAG d
 
 ## Critical path
 
-`P12-C1 closed → P12-C2 consumed operational failure → P12-C3 preregistered → P12-C3 capacity activation PASS → live execution manifest/checkpoint workflow NEXT → capacity-controlled EXPOSED_POOL factorial collection → deterministic gate → semantic child gate only for deterministic survivors → production-fit comparison → generation freeze → separately authorized blind/final evidence → architecture freeze`
+`P12-C1 closed → P12-C2 consumed operational failure → P12-C3 preregistered → capacity activation PASS → live execution manifest/workflow FROZEN_READY_NOT_STARTED → B1 trigger/live collection NEXT → capacity-controlled EXPOSED_POOL factorial collection → deterministic gate → semantic child gate only for deterministic survivors → production-fit comparison → generation freeze → separately authorized blind/final evidence → architecture freeze`
 
 Production freeze still requires broad candidate comparison, full deterministic + semantic evaluation gates, production fitness/integration verification, architecture freeze and final blind evidence under P12.
 
