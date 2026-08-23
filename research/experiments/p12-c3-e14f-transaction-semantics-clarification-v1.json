@@ -1,0 +1,39 @@
+{
+  "schema_version": "p12-c3-e14f-transaction-semantics-clarification-v1",
+  "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
+  "date": "2026-08-23",
+  "status": "FROZEN_PRE_OUTCOME_CLARIFICATION",
+  "reason": "The preregistration simultaneously preserves the P12-C2 upstream E14f conditional semantic-repair stack and states that any returned model output consumes a cell. This clarification resolves that wording before any P12-C3 provider call without changing candidate definitions, model, prompt, evaluator, gates, seeds, or factorial estimand.",
+  "provider_calls_before_clarification": 0,
+  "p12_c3_candidate_outcomes_observed_before_clarification": 0,
+  "private_oracle_access_before_clarification": 0,
+  "interpretation": {
+    "cell_generation_transaction": "The frozen E14f transaction consists of the initial common-parent model call plus at most one conditional public semantic-repair call exactly as defined by the pinned E14f implementation.",
+    "cell_consumption_point": "A cell is consumed when that frozen E14f transaction returns its final raw response to the parent parser, or when any post-initial-response failure makes the transaction terminal under this clarification.",
+    "intermediate_initial_draft": "If E14f detects a preregistered public contradiction and invokes its single repair call, the initial draft is an internal transaction intermediate. It is never exposed to candidate selection, scoring, cross-batch inspection, or adaptive control.",
+    "pre_output_capacity_retry": "Capacity/transport retry or cross-run resume is permitted only while no response content has yet been returned for the initial request of that cell.",
+    "after_initial_response": "Once the initial request has returned response content, no cross-run regeneration or replacement is permitted. If the conditional E14f repair call is needed, it may execute once as part of the already-frozen transaction. A transport/capacity failure of that repair call is terminal for the cell and cannot be resumed or regenerated.",
+    "parse_or_quality_failure": "A final transaction response that is unparseable or fails the frozen parent proxy/schema/leakage gate consumes the cell as a task/candidate failure and cannot be replaced.",
+    "completed_parent": "A successfully finalized common parent is checkpointed immediately and may never be regenerated."
+  },
+  "unchanged": {
+    "candidate_definitions": true,
+    "E0_E1_S0_S1": true,
+    "initial_prompt": true,
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "strict_json_schema": true,
+    "max_completion_tokens": 4096,
+    "E14f_max_conditional_repair_calls": 1,
+    "post_model_deterministic_stack": true,
+    "deterministic_evaluator": true,
+    "deterministic_gates": true,
+    "bootstrap_and_LOGO": true,
+    "private_oracle_boundary": true,
+    "blind_boundaries": true
+  },
+  "capacity_policy_effect": "Only provider-capacity collection/retry/checkpoint mechanics change relative to P12-C2. Candidate logic and accepted-parent transformation remain unchanged.",
+  "live_manifest_must_pin_this_clarification": true
+}
