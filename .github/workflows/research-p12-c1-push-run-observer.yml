@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_HEAD_SHA: 5ec6dbb301dcab504dc6c3c7261c5f509cf4c74e
+      TARGET_HEAD_SHA: cfb1cc597772828e39881a5411d0f801ab7626f6
       TARGET_WORKFLOW_NAME: research-p12-c1-promote-validated-runner
     steps:
       - name: Locate target push run
@@ -26,19 +26,12 @@ jobs:
           set -euo pipefail
           row=''
           for _ in $(seq 1 24); do
-            data=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs" \
-              -f branch=research/systematic-foundation \
-              -f event=push \
-              -f per_page=100)
-            row=$(printf '%s' "$data" | jq -c --arg sha "$TARGET_HEAD_SHA" --arg name "$TARGET_WORKFLOW_NAME" \
-              '.workflow_runs[] | select(.head_sha==$sha and .name==$name)' | head -n 1 || true)
+            data=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs" -f branch=research/systematic-foundation -f event=push -f per_page=100)
+            row=$(printf '%s' "$data" | jq -c --arg sha "$TARGET_HEAD_SHA" --arg name "$TARGET_WORKFLOW_NAME" '.workflow_runs[] | select(.head_sha==$sha and .name==$name)' | head -n 1 || true)
             [ -n "$row" ] && break
             sleep 5
           done
-          if [ -z "$row" ]; then
-            echo 'Target push run not found' >&2
-            exit 1
-          fi
+          [ -n "$row" ] || { echo 'Target push run not found' >&2; exit 1; }
           run_id=$(printf '%s' "$row" | jq -r '.id')
           html_url=$(printf '%s' "$row" | jq -r '.html_url')
           for _ in $(seq 1 60); do
@@ -66,8 +59,4 @@ jobs:
           fi
           desc="target_run=$run_id status=$status"
           [ -n "$conclusion" ] && desc="$desc conclusion=$conclusion"
-          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -f state="$state" \
-            -f context='p12-c1-target-run' \
-            -f description="$desc" \
-            -f target_url="$url" >/dev/null
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='p12-c1-target-run' -f description="$desc" -f target_url="$url" >/dev/null
