@@ -65,8 +65,10 @@ def derive(base_text: str) -> str:
     new = '''    if not a.dry_run:\n        assert_parent_config_with_c3_transport_override(runner); runner.e14o.e14l.schema.run_self_checks(); runner.base.assert_zero_cost_guard("groq",False); assert os.getenv("GROQ_API_KEY")\n'''
     text = replace_once(text, old, new, "e14l_transport_assertion_bridge")
 
-    if text.count("assert_parent_config_with_c3_transport_override(runner)") != 1:
-        raise AssertionError("C3 transport validation bridge count changed")
+    definition = "def assert_parent_config_with_c3_transport_override(runner):"
+    call = "        assert_parent_config_with_c3_transport_override(runner);"
+    if text.count(definition) != 1 or text.count(call) != 1:
+        raise AssertionError("C3 transport validation bridge definition/call count changed")
     return text
 
 
