@@ -9,9 +9,9 @@ The child activation gate is **`ACTIVATION_ELIGIBILITY_PASS`**. Exactly one P12-
 
 ## Provider-free qualification
 
-Pre-promotion workflow run `32666884507`, job `97261551174`, completed successfully with **79/79 checks PASS**. Artifact `9500275650`, digest `sha256:7512f800ab21d98c300fcfe4a40aa801981e1744dc4070d2d7d118a717ad170a`.
-
-Post-promotion workflow run `32666992054`, job `97261833385`, also completed successfully and verified the final manifest with `execution_authorized=true`. Artifact `9500292605`, digest `sha256:f3ff884571a59bfb0c54a4c25daefc11b183db0da8c4ce28be8c351a9ff2d224`.
+- Pre-promotion: workflow `32666884507`, job `97261551174`, **79/79 checks PASS**. Artifact `9500275650`, digest `sha256:7512f800ab21d98c300fcfe4a40aa801981e1744dc4070d2d7d118a717ad170a`.
+- Post-promotion: workflow `32666992054`, job `97261833385`, `success`. Artifact `9500292605`, digest `sha256:f3ff884571a59bfb0c54a4c25daefc11b183db0da8c4ce28be8c351a9ff2d224`.
+- Final canonical-manifest verification: workflow `32667163104`, job `97262293993`, `success`.
 
 No provider/model call, private-oracle access, FRESH_BLIND access, or LEGACY_LOCKED_TEST access occurred during activation.
 
