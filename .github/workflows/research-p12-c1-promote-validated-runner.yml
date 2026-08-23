@@ -51,11 +51,15 @@ jobs:
           new=os.environ['CORRECTED_SOURCE_SHA256']
           assert text.count(old)==2, text.count(old)
           text=text.replace(old,new)
+          anchor="      - 'research/experiments/p12-c1-preflight-materialization-remediation-v1.json'\n"
+          runner_remediation="      - 'research/experiments/p12-c1-runner-contract-remediation-v1.json'\n"
           trigger="      - 'research/experiments/p12-c1-live-execution-trigger-v1.json'\n"
-          anchor="      - 'research/experiments/p12-c1-runner-contract-remediation-v1.json'\n"
+          assert anchor in text
+          if runner_remediation not in text:
+              text=text.replace(anchor, anchor+runner_remediation)
           if trigger not in text:
-              assert anchor in text
-              text=text.replace(anchor, anchor+trigger)
+              text=text.replace(runner_remediation, runner_remediation+trigger)
+          assert runner_remediation in text and trigger in text
           workflow.write_text(text)
 
           p=Path(os.environ['EXECUTION_MANIFEST'])
@@ -75,7 +79,7 @@ jobs:
             'corrected_36_cell_provider_free_preflight_pass': True,
             'provider_calls_before_promotion': 0,
             'c0_or_c1_outcomes_before_promotion': 0,
-            'provider_cycle_remaining': 1,
+            'provider_cycle_remaining': 1
           }
           p.write_text(json.dumps(m,indent=2,ensure_ascii=False)+'\n')
           PY
