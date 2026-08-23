@@ -1,0 +1,27 @@
+name: research-p12-c1-export-frozen-scorer
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c1-export-frozen-scorer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export-frozen-scorer:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decompress and verify frozen scorer
+        run: |
+          gzip -dc research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz > /tmp/p12_c1_paired_exposed_pool_score.py
+          echo '4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73  /tmp/p12_c1_paired_exposed_pool_score.py' | sha256sum -c -
+          python -m py_compile /tmp/p12_c1_paired_exposed_pool_score.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c1-frozen-scorer-source
+          path: /tmp/p12_c1_paired_exposed_pool_score.py
+          retention-days: 7
+          if-no-files-found: error
