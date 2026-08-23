@@ -21,7 +21,7 @@ import hashlib
 import importlib.util
 from pathlib import Path
 
-PRIOR_FIXUP_PATH = Path("scripts/research/p12_c3_checkpointed_runner_fixup.py")
+PRIOR_FIXUP_PATH = Path("scripts/research/p12_c3_checkpointed_runner_fixup_v1_frozen.py")
 PRIOR_FIXUP_GIT_BLOB_SHA = "edf38534ee6cede336432c644e01fda2b49944c3"
 PRIOR_EFFECTIVE_RUNNER_SHA256 = "00cdf340714449bc0424777ec73598f5d8f172436c543918fc9e3ef383fc806e"
 
