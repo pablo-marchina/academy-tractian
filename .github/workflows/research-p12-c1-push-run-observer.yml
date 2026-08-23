@@ -23,7 +23,7 @@ jobs:
       TARGET_HEAD_SHA: 85bde21eb051881317c4920ccab080b57894fb50
       TARGET_WORKFLOW_NAME: research-p12-c1-paired-exposed-pool
     steps:
-      - name: Locate target push run
+      - name: Locate and observe target push run
         id: locate
         shell: bash
         run: |
@@ -38,6 +38,11 @@ jobs:
           [ -n "$row" ] || { echo 'Target push run not found' >&2; exit 1; }
           run_id=$(printf '%s' "$row" | jq -r '.id')
           html_url=$(printf '%s' "$row" | jq -r '.html_url')
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$TARGET_HEAD_SHA" \
+            -f state='pending' \
+            -f context='p12-c1-target-run' \
+            -f description="target_run=$run_id status=observing" \
+            -f target_url="$html_url" >/dev/null
           for _ in $(seq 1 180); do
             current=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")
             status=$(printf '%s' "$current" | jq -r '.status')
@@ -49,7 +54,7 @@ jobs:
           echo "status=$status" >> "$GITHUB_OUTPUT"
           echo "conclusion=$conclusion" >> "$GITHUB_OUTPUT"
           echo "html_url=$html_url" >> "$GITHUB_OUTPUT"
-      - name: Publish discoverable target-commit status
+      - name: Publish final target-commit status
         shell: bash
         run: |
           set -euo pipefail
