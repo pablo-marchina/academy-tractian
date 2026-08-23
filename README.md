@@ -15,11 +15,11 @@ No material component is considered complete merely because it works or passes a
 
 ## Status
 
-**Benchmark Integrity Gate COMPLETE — P12 evaluation protocol `FROZEN` — historical candidates reinterpreted under P12**
+**Benchmark Integrity Gate COMPLETE — P12 evaluation protocol `FROZEN` — P12-C1 deterministic C0 vs C1 comparison CLOSED with no qualified arm**
 
-The benchmark-integrity gate is closed. Historical decision-bearing candidates/components from E0 through E14v have now been retrospectively reclassified under the frozen P12 evidence contract without any new provider/model inference or new private VALIDATION/LOCKED_TEST/FRESH_BLIND semantic access.
+The benchmark-integrity gate is closed. Historical decision-bearing candidates/components from E0 through E14v have been retrospectively reclassified under P12, and the first prospective P12 candidate comparison has now been preregistered, activated, executed on `EXPOSED_POOL`, scored evaluator-side and closed. Neither C0 nor C1 passed the frozen deterministic promotion gates; no implementation candidate is currently `PREFERRED`.
 
-Canonical benchmark-integrity / reinterpretation artifacts:
+Canonical benchmark-integrity / reinterpretation / P12-C1 artifacts:
 
 - [`research/big-b0-benchmark-integrity-audit-2026-08-21.md`](research/big-b0-benchmark-integrity-audit-2026-08-21.md) — factual chronological reconstruction;
 - [`research/results/big-b0-benchmark-access-ledger-2026-08-21.json`](research/results/big-b0-benchmark-access-ledger-2026-08-21.json) — B0 machine-readable access inventory;
@@ -33,9 +33,14 @@ Canonical benchmark-integrity / reinterpretation artifacts:
 - [`research/results/big-b3-evaluation-protocol-selection-2026-08-21.json`](research/results/big-b3-evaluation-protocol-selection-2026-08-21.json) — machine-readable B3 selection and reversal triggers;
 - [`research/big-b4-evaluation-protocol-freeze-2026-08-22.md`](research/big-b4-evaluation-protocol-freeze-2026-08-22.md) — executable B4 freeze record;
 - [`research/frozen/big-b4-evaluation-protocol-v1.json`](research/frozen/big-b4-evaluation-protocol-v1.json) — canonical frozen P12 protocol manifest;
-- [`research/results/big-b4-protocol-self-check-2026-08-22.json`](research/results/big-b4-protocol-self-check-2026-08-22.json) — provider-free 24/24 fail-closed self-check evidence;
+- [`research/results/big-b4-protocol-self-check-2026-08-22.json`](research/results/big-b4-protocol-self-check-2026-08-22.json) — provider-free fail-closed self-check evidence;
 - [`research/p12-historical-candidate-component-reinterpretation-2026-08-22.md`](research/p12-historical-candidate-component-reinterpretation-2026-08-22.md) — present-day evidence/state reinterpretation of historical candidates/components;
-- [`research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json`](research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json) — machine-readable reinterpretation registry.
+- [`research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json`](research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json) — machine-readable reinterpretation registry;
+- [`research/p12-c1-exposed-pool-candidate-comparison-preregistration-2026-08-23.md`](research/p12-c1-exposed-pool-candidate-comparison-preregistration-2026-08-23.md) — prospective P12-C1 comparison freeze;
+- [`research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json`](research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json) — activation/eligibility manifest;
+- [`research/results/p12-c1-generation-summary-2026-08-23.json`](research/results/p12-c1-generation-summary-2026-08-23.json) — 36/36 common-parent generation evidence;
+- [`research/results/p12-c1-deterministic-paired-result-2026-08-23.json`](research/results/p12-c1-deterministic-paired-result-2026-08-23.json) — sanitized machine-readable deterministic comparison;
+- [`research/p12-c1-deterministic-paired-result-2026-08-23.md`](research/p12-c1-deterministic-paired-result-2026-08-23.md) — human-readable P12-C1 conclusion.
 
 Current evidence roles under P12:
 
@@ -96,7 +101,7 @@ QUALIFIED building blocks
   Qwen semantic judge candidate
   retained E14 deterministic normalization/provenance/serializer/safety guards
 
-PREFERRED historical implementation candidates
+PREFERRED implementation candidates
   NONE
 
 RESEARCHED active references
@@ -104,8 +109,7 @@ RESEARCHED active references
   OpenAI Agents SDK
   provider/model alternatives and GPT-OSS-120B family
   E14q2 baseline
-  E14t strongest historical evidence-selection reference
-  E14v isolated planner concept
+  C0 / E14t-style evidence-selection reference — failed P12-C1 gates
   whole production architecture
 
 SUPERSEDED / rejected / consumed
@@ -116,6 +120,7 @@ SUPERSEDED / rejected / consumed
   failed exact E14 generations
   E14r / E14s / E14u
   consumed E14v / E14v-A / E14v-B attempts
+  C1 PARENT_TOP7_CANONICAL_V1 for its tested candidate definition
 
 UNASSESSED for final selection
   RAG/vector DB/reranking
@@ -127,31 +132,42 @@ UNASSESSED for final selection
 
 Historical VALIDATION results are preserved as EXPOSED_POOL development evidence; they no longer carry an independent-validation interpretation. Historical hard-gate failures remain failures. `EXPERIMENT_FROZEN` manifests remain immutable reproducibility evidence but do not imply project-level architecture freeze.
 
-### Next authorized experimental surface
+### P12-C1 result and next authorized experimental surface
 
-No automatic E14v-C run is authorized by historical momentum alone. The next agent experiment must be a **new P12 preregistration** on `EXPOSED_POOL` only.
+P12-C1 is closed and **must not be rerun**. Its 36 shared common-parent generations and 72 fixed C0/C1 outputs completed successfully, with zero operational failures and zero candidate access to private oracle, `FRESH_BLIND` or `LEGACY_LOCKED_TEST`.
 
-The strongest justified starting point is:
+Full-pool deterministic result:
 
 ```text
-retained baseline
-  E14t evidence-selection reference
-  + E14n → E14p → E14q → E14q2 deterministic stack
+C0 evidence correctness       0.261905   FAIL >= 0.5000
+C0 expected-read recall       0.732155   FAIL >= 0.8333
+C0 extra public reads         3.964286   FAIL <= 3.5000
+C0 decision/action            0.785714 / 0.714286
+C0 hard-safety violations     3
 
-prospective comparison
-  + E14v-style isolated route planner only if a newly justified public synthetic qualification passes
-  + at least one materially simpler route-selection baseline
-
-measurement
-  all 7 asset/story groups
-  full-pool + LOGO + modality/safety slices
-  >=3 repetitions/scenario for stochastic candidates
-  matched seeds where supported
-  95% group-cluster bootstrap / 20,000 resamples / seed 20260822
-  hard safety non-compensable
+C1 evidence correctness       0.083333   FAIL >= 0.5000
+C1 expected-read recall       0.615083   FAIL >= 0.8333
+C1 extra public reads         3.571429   FAIL <= 3.5000
+C1 decision/action            0.785714 / 0.714286
+C1 hard-safety violations     3
 ```
 
-FRESH_BLIND and LEGACY_LOCKED_TEST remain inaccessible to candidate development and selection.
+Paired C1−C0 effects:
+
+```text
+expected-read recall          -0.117071  95% CI [-0.259929, -0.003976]
+extra public reads            -0.392857  95% CI [-0.761905, -0.083333]
+decision/action/escalation     0 / 0 / 0
+```
+
+C1 is therefore more read-efficient but materially worse on expected-read recall, with no decision/action/escalation/safety gain. C1 is `SUPERSEDED_REJECTED_FOR_THIS_CANDIDATE_DEFINITION`; C0 remains a `RESEARCHED` reference but is not `QUALIFIED`.
+
+The next agent work must be a **new P12 preregistration on `EXPOSED_POOL`** for a new candidate generation/decision step that explicitly targets:
+
+1. evidence completeness / expected-read recall without uncontrolled read growth; and
+2. unsupported action/escalation hard-safety failures.
+
+No semantic v4.2 candidate scoring is authorized from P12-C1 because both arms failed deterministic gates. FRESH_BLIND and LEGACY_LOCKED_TEST remain inaccessible to candidate development and selection.
 
 Blind-source reversal triggers remain:
 
@@ -165,13 +181,14 @@ The active protocol guard and regression check are:
 - [`scripts/research/big_b4_protocol_self_check.py`](scripts/research/big_b4_protocol_self_check.py)
 - [`.github/workflows/research-big-b4-protocol-self-check.yml`](.github/workflows/research-big-b4-protocol-self-check.yml)
 
-Benchmark Integrity Gate status:
+Benchmark Integrity / P12 status:
 
-`BIG-B0 ✓ → BIG-B1 ✓ → BIG-B2 ✓ → BIG-B3 ✓ → BIG-B4 ✓ → historical reinterpretation ✓ → prospective P12 optimization`
+`BIG-B0 ✓ → BIG-B1 ✓ → BIG-B2 ✓ → BIG-B3 ✓ → BIG-B4 ✓ → historical reinterpretation ✓ → P12-C1 prereg ✓ → activation ✓ → C0/C1 execution ✓ → deterministic scoring ✓ → no arm qualified → new preregistered candidate step NEXT`
 
-Important: closing B4 and completing reinterpretation do **not** authorize final measurement. Current blind registry state remains `NO_BLIND_SOURCE_AUTHORIZED`, and LEGACY_LOCKED_TEST also remains unauthorized.
+Important: P12-C1 completion does **not** authorize final measurement. Current blind registry state remains `NO_BLIND_SOURCE_AUTHORIZED`, and LEGACY_LOCKED_TEST also remains unauthorized.
 
 Current canonical protocol: [`research/frozen/big-b4-evaluation-protocol-v1.json`](research/frozen/big-b4-evaluation-protocol-v1.json)  
+P12-C1 result: [`research/p12-c1-deterministic-paired-result-2026-08-23.md`](research/p12-c1-deterministic-paired-result-2026-08-23.md)  
 P12 historical reinterpretation: [`research/p12-historical-candidate-component-reinterpretation-2026-08-22.md`](research/p12-historical-candidate-component-reinterpretation-2026-08-22.md)  
 Historical execution plan (context only; authorization superseded by P12): [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md)  
 Research protocol: [`research/00-research-protocol.md`](research/00-research-protocol.md)  
@@ -240,7 +257,7 @@ The existence or previous qualification of a runtime, model, MCP topology, RAG d
 
 The immediate critical path is now:
 
-`P12 reinterpretation complete → preregister prospective evidence-selection comparison on EXPOSED_POOL → controlled paired evaluation → select/qualify candidate → production-fit comparisons → freeze candidate generation → separately authorized fresh blind/final measurement → architecture freeze`
+`P12-C1 closed with no qualified arm → new preregistered EXPOSED_POOL candidate generation/comparison → deterministic gate → semantic gate only if deterministic pass → production-fit comparisons → freeze candidate generation → separately authorized fresh blind/final measurement → architecture freeze`
 
 Production freeze still requires broad candidate comparison, full deterministic + semantic evaluation gates, production fitness/integration verification, architecture freeze and final blind evidence under P12.
 
