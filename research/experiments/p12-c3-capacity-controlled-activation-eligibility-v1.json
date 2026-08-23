@@ -3,10 +3,10 @@
   "activation_id": "P12-C3-CAPACITY-ACTIVATION-2026-08-23",
   "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
   "date": "2026-08-23",
-  "status": "PENDING_PROVIDER_FREE_QUALIFICATION",
-  "activation_decision": "PENDING",
-  "execution_authorized": false,
-  "authorized_live_experiments": 0,
+  "status": "ACTIVATION_ELIGIBILITY_PASS",
+  "activation_decision": "PASS",
+  "execution_authorized": true,
+  "authorized_live_experiments": 1,
   "authorized_scope_if_passed": "ONE_P12_C3_CAPACITY_CONTROLLED_A00_A10_A01_A11_EXPOSED_POOL_EXPERIMENT_WITH_SIX_FIXED_BATCHES",
   "provider_or_model_calls_during_activation": 0,
   "private_oracle_access_during_activation": false,
@@ -77,14 +77,28 @@
     "arm_specific_provider_calls_required":0
   },
   "authorization": {
-    "provider_free_qualification_pass":false,
-    "authorized_live_experiments":0,
+    "provider_free_qualification_pass":true,
+    "authorized_live_experiments":1,
     "semantic_v4_2_authorized":false,
     "fresh_blind_authorized":false,
     "legacy_locked_test_authorized":false,
     "architecture_freeze_authorized":false,
     "production_readiness_claim_authorized":false
   },
-  "qualification_evidence": null,
-  "next_step": "RUN_PROVIDER_FREE_CAPACITY_ACTIVATION_SELF_CHECK"
+  "qualification_evidence": {
+    "pre_promotion_workflow_run_id":32666884507,
+    "pre_promotion_job_id":97261551174,
+    "conclusion":"success",
+    "artifact_id":9500275650,
+    "artifact_digest":"sha256:7512f800ab21d98c300fcfe4a40aa801981e1744dc4070d2d7d118a717ad170a",
+    "self_check":{"checks_passed":79,"checks_total":79,"all_passed":true},
+    "provider_calls":0,
+    "private_oracle_access":0,
+    "fresh_blind_access":0,
+    "legacy_locked_test_access":0,
+    "batch_geometry":{"batches":6,"parents_per_batch":6,"unique_cells":36},
+    "capacity_contract":{"min_delay_seconds":30,"max_pre_output_attempts":3,"horizon_hours":72,"reset_safety_margin_seconds":30},
+    "candidate_definition_changed":false
+  },
+  "next_step": "POST_PROMOTION_PROVIDER_FREE_VERIFICATION"
 }
