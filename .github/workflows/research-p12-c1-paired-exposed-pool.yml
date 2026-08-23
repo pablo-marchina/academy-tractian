@@ -4,12 +4,7 @@ on:
   push:
     branches: [research/systematic-foundation]
     paths:
-      - 'research/experiments/p12-c1-paired-exposed-pool-execution-v1.json'
-      - 'research/experiments/p12-c1-preflight-materialization-remediation-v1.json'
-      - 'research/fixtures/p12-c1-exposed-agent-input-cases-v1.json'
-      - 'research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz'
-      - 'research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz'
-      - '.github/workflows/research-p12-c1-paired-exposed-pool.yml'
+      - 'research/experiments/p12-c1-live-execution-trigger-v1.json'
 
 permissions:
   contents: read
@@ -19,6 +14,7 @@ env:
   ACTIVATION: research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json
   EXECUTION_MANIFEST: research/experiments/p12-c1-paired-exposed-pool-execution-v1.json
   REMEDIATION: research/experiments/p12-c1-preflight-materialization-remediation-v1.json
+  RUNNER_REMEDIATION: research/experiments/p12-c1-runner-contract-remediation-v1.json
   EXPOSED_CASES_FIXTURE: research/fixtures/p12-c1-exposed-agent-input-cases-v1.json
   EXEC_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
   SCORE_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz
@@ -42,7 +38,7 @@ jobs:
         run: |
           gzip -dc "$EXEC_BUNDLE" > /tmp/p12_exec.py
           gzip -dc "$SCORE_BUNDLE" > /tmp/p12_score.py
-          echo '2d25485b353c0c6ad63d6acb143abff0c16aeb8f8841861b990e2d28a1a7cb4e  /tmp/p12_exec.py' | sha256sum -c -
+          echo 'be16ec6d2c33ad68134a0fbf7aa280b4103ee411b01233b6de7a76668e899a50  /tmp/p12_exec.py' | sha256sum -c -
           echo '4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73  /tmp/p12_score.py' | sha256sum -c -
           python -m py_compile /tmp/p12_exec.py /tmp/p12_score.py
           cp /tmp/p12_exec.py scripts/research/p12_c1_paired_exposed_pool_execution.py
@@ -69,7 +65,7 @@ jobs:
           assert all(set(r)=={'id','ticket_id','company_id','user_id','asset_id','message'} for r in rows)
           print('P12_C1_EXPOSED_AGENT_INPUT_MATERIALIZATION_PASS')
           PY
-      - name: Verify infrastructure-only remediation and one-cycle manifest
+      - name: Verify pre-outcome remediations and one-cycle manifest
         run: |
           python - <<'PY'
           import json
@@ -80,7 +76,13 @@ jobs:
           assert r['previous_failed_run']['run_id']==32651750779
           assert r['previous_failed_run']['provider_calls_made']==0
           assert r['previous_failed_run']['scientific_cycle_consumed'] is False
-          assert r['retry_authorization']['provider_cycle_remaining']==1
+          rr=json.loads(Path('research/experiments/p12-c1-runner-contract-remediation-v1.json').read_text())
+          assert rr['status']=='PROVIDER_FREE_RUNNER_CONTRACT_REMEDIATION_AUTHORIZED'
+          assert rr['scientific_candidate_changed'] is False
+          assert rr['second_failed_run']['run_id']==32654720202
+          assert rr['second_failed_run']['provider_calls_made']==0
+          assert rr['second_failed_run']['scientific_cycle_consumed'] is False
+          assert rr['retry_authorization']['provider_cycle_remaining']==1
           m=json.loads(Path('research/experiments/p12-c1-paired-exposed-pool-execution-v1.json').read_text())
           assert m['status']=='AUTHORIZED_CONSUMABLE_ONCE'
           assert m['participating_arms']==['C0','C1'] and m['c2_authorized'] is False
@@ -89,6 +91,11 @@ jobs:
           assert m['corpus']['fixed_candidate_outputs']==72
           assert m['attempt_policy']['new_provider_cycle_authorized']==1
           assert m['attempt_policy']['github_rerun_of_generation_job_allowed'] is False
+          pr=m['pre_outcome_runner_contract_remediation']
+          assert pr['validation_run_id']==32654928709
+          assert pr['validation_conclusion']=='success'
+          assert pr['corrected_36_cell_provider_free_preflight_pass'] is True
+          assert pr['provider_cycle_remaining']==1
           assert m['semantic_stage_authorized'] is False
           assert m['fresh_blind_authorized'] is False and m['legacy_locked_test_authorized'] is False
           print('P12_C1_ONE_CYCLE_REMEDIATED_MANIFEST_PASS')
@@ -167,7 +174,7 @@ jobs:
       - name: Materialize pinned candidate runner
         run: |
           gzip -dc "$EXEC_BUNDLE" > scripts/research/p12_c1_paired_exposed_pool_execution.py
-          echo '2d25485b353c0c6ad63d6acb143abff0c16aeb8f8841861b990e2d28a1a7cb4e  scripts/research/p12_c1_paired_exposed_pool_execution.py' | sha256sum -c -
+          echo 'be16ec6d2c33ad68134a0fbf7aa280b4103ee411b01233b6de7a76668e899a50  scripts/research/p12_c1_paired_exposed_pool_execution.py' | sha256sum -c -
           python -m py_compile scripts/research/p12_c1_paired_exposed_pool_execution.py
       - name: Physically remove candidate-side private and blind-semantic files
         run: |
