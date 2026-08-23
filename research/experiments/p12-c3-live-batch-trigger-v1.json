@@ -1,0 +1,20 @@
+{
+  "schema_version": "p12-c3-live-batch-trigger-v1",
+  "execution_id": "P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23",
+  "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
+  "consume_authorized_experiment": true,
+  "trigger_index": 1,
+  "batch_id": "B1",
+  "checkpoint_source_run_id": null,
+  "github_rerun_allowed": false,
+  "candidate_or_evaluator_change": false,
+  "live_execution_manifest_path": "research/experiments/p12-c3-capacity-controlled-live-execution-v1.json",
+  "live_execution_manifest_git_blob_sha": "864f1d1ce3eae1c7f5a4cb327f5fdb18f38fa379",
+  "freeze_self_check_run_id": 32671038513,
+  "freeze_self_check_checks": "113/113 PASS",
+  "previous_p12_c3_provider_calls": 0,
+  "previous_p12_c3_candidate_outcomes_observed": 0,
+  "first_batch": true,
+  "created_after_execution_freeze": true,
+  "additional_experiment_authorized": false
+}
