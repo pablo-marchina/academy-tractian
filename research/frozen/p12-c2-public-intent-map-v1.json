@@ -1,0 +1,43 @@
+{
+  "schema_version": "p12-c2-public-intent-map-v1",
+  "status": "FROZEN_PUBLIC_ONLY",
+  "derived_from": "public ToolSpec names/path purposes plus retained E14q action dependencies; no private outcomes",
+  "stable_route_order": [
+    "GET /users/me",
+    "GET /companies/{companyId}",
+    "GET /companies/{companyId}/assets",
+    "GET /assets/{assetId}",
+    "GET /assets/{assetId}/analyses",
+    "GET /analyses/{analysisId}",
+    "GET /assets/{assetId}/baseline",
+    "GET /assets/{assetId}/data-quality",
+    "GET /assets/{assetId}/rms",
+    "GET /assets/{assetId}/spectrum",
+    "GET /models/{modelId}",
+    "GET /knowledge/search",
+    "GET /knowledge/{docId}"
+  ],
+  "routes": {
+    "GET /users/me": {"required_placeholders": [], "markers": ["usuário", "usuario", "user", "permiss", "autoriza", "approval", "aprovação", "aprovar"]},
+    "GET /companies/{companyId}": {"required_placeholders": ["{companyId}"], "markers": ["empresa", "company", "planta", "site"]},
+    "GET /companies/{companyId}/assets": {"required_placeholders": ["{companyId}"], "markers": ["ativos", "assets", "equipamentos", "máquinas", "maquinas"]},
+    "GET /assets/{assetId}": {"required_placeholders": ["{assetId}"], "markers": ["ativo", "asset", "equipamento", "máquina", "maquina", "motor", "compressor", "spindle", "bomba", "redutor"]},
+    "GET /assets/{assetId}/analyses": {"required_placeholders": ["{assetId}"], "markers": ["análise", "analise", "analysis", "insight", "diagnóstico", "diagnostico", "alerta", "falha"]},
+    "GET /analyses/{analysisId}": {"required_placeholders": ["{analysisId}"], "markers": ["análise", "analise", "analysis", "insight", "diagnóstico", "diagnostico", "reprocess", "especialista", "specialist"]},
+    "GET /assets/{assetId}/baseline": {"required_placeholders": ["{assetId}"], "markers": ["baseline", "histórico", "historico", "history", "referência", "referencia"]},
+    "GET /assets/{assetId}/data-quality": {"required_placeholders": ["{assetId}"], "markers": ["qualidade", "quality", "dados", "data", "sensor", "histórico insuficiente", "historico insuficiente"]},
+    "GET /assets/{assetId}/rms": {"required_placeholders": ["{assetId}"], "markers": ["rms", "vibração", "vibracao", "vibration", "tendência", "tendencia", "subindo"]},
+    "GET /assets/{assetId}/spectrum": {"required_placeholders": ["{assetId}"], "markers": ["espectro", "spectrum", "bpfo", "frequência", "frequencia", "frequency"]},
+    "GET /models/{modelId}": {"required_placeholders": ["{modelId}"], "markers": ["modelo", "model", "retrain", "retrein", "treina", "compatível", "compativel", "compatibility"]},
+    "GET /knowledge/search": {"required_placeholders": [], "markers": ["procedimento", "procedure", "orientação", "orientacao", "guidance", "torque", "folga", "bpfo", "o que é", "o que e", "what is", "como trocar"]},
+    "GET /knowledge/{docId}": {"required_placeholders": ["{docId}"], "markers": ["documento", "document", "manual", "procedimento", "procedure", "guidance"]}
+  },
+  "action_dependencies": {
+    "POST /analyses/{analysisId}/reprocess": ["GET /users/me", "GET /analyses/{analysisId}"],
+    "POST /analyses/{analysisId}/request-specialist": ["GET /users/me", "GET /analyses/{analysisId}"],
+    "POST /models/{modelId}/request-retraining": ["GET /users/me", "GET /models/{modelId}"],
+    "PATCH /assets/{assetId}": ["GET /users/me", "GET /assets/{assetId}"],
+    "POST /cases/{caseId}/escalate": ["GET /users/me"]
+  },
+  "forbidden_selectors": ["group_id", "ticket_id", "private expected path", "evaluator label", "FRESH_BLIND", "LEGACY_LOCKED_TEST"]
+}
