@@ -1,0 +1,81 @@
+name: research-p12-c4-provider-contract-self-check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c4-provider-contract-self-check.yml'
+      - 'docs/adr/001-provider-capacity-serving-path-2026-08-24.md'
+      - 'research/experiments/p12-c4-provider-serving-contract-v1.json'
+      - 'scripts/research/p12_c4_cerebras_request_contract.py'
+      - 'scripts/research/p12_c4_provider_contract_self_check.py'
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - '.github/workflows/research-p12-c4-provider-contract-self-check.yml'
+      - 'docs/adr/001-provider-capacity-serving-path-2026-08-24.md'
+      - 'research/experiments/p12-c4-provider-serving-contract-v1.json'
+      - 'scripts/research/p12_c4_cerebras_request_contract.py'
+      - 'scripts/research/p12_c4_provider_contract_self_check.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p12-c4-provider-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  provider-free-serving-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert provider and benchmark credentials are not exposed
+        run: |
+          test -z "${CEREBRAS_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Compile provider-free contract code
+        run: |
+          python -m py_compile \
+            scripts/research/p12_c4_cerebras_request_contract.py \
+            scripts/research/p12_c4_provider_contract_self_check.py
+      - name: Run P12-C4 provider-free serving contract self-check
+        run: |
+          python scripts/research/p12_c4_provider_contract_self_check.py \
+            --output /tmp/p12-c4-provider-contract-self-check.json
+      - name: Assert compact qualification evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result=json.loads(Path('/tmp/p12-c4-provider-contract-self-check.json').read_text())
+          assert result['status']=='PASS'
+          assert result['provider']=='cerebras'
+          assert result['model_id']=='gpt-oss-120b'
+          assert result['provider_calls']==0
+          assert result['credentials_read']==0
+          assert result['benchmark_inputs_loaded']==0
+          assert result['private_oracle_accesses']==0
+          assert result['fresh_blind_accesses']==0
+          assert result['legacy_locked_test_accesses']==0
+          assert result['live_generation_authorized'] is False
+          assert result['synthetic_live_probe_authorized'] is False
+          assert result['next_gate']=='VERIFY_ACCOUNT_LIMITS_AND_PREREGISTER_SYNTHETIC_LIVE_COMPATIBILITY_PROBE'
+          assert all(result['assertions'].values())
+          assert len(result['request_hashes']['structured_request_sha256'])==64
+          assert len(result['request_hashes']['tool_request_sha256'])==64
+          print('P12_C4_PROVIDER_FREE_SERVING_CONTRACT_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-provider-contract-self-check
+          path: /tmp/p12-c4-provider-contract-self-check.json
+          retention-days: 90
+          if-no-files-found: error
