@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "p12-c4-cerebras-account-capacity-attestation-schema-v2",
+  "title": "P12-C4 Cerebras effective account/project capacity attestation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status", "observed_at_utc", "evidence_source",
+    "provider", "model_id", "account_access", "quota_context",
+    "effective_limits", "attestation"
+  ],
+  "properties": {
+    "schema_version": {"const": "p12-c4-cerebras-account-capacity-attestation-v2"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "observed_at_utc": {"type": "string", "format": "date-time"},
+    "evidence_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "first_party", "contains_secret", "org_limits_observed", "project_limits_observed_or_inherited"],
+      "properties": {
+        "type": {"enum": ["cerebras_account_limits_page", "cerebras_first_party_account_export"]},
+        "first_party": {"const": true},
+        "contains_secret": {"const": false},
+        "org_limits_observed": {"const": true},
+        "project_limits_observed_or_inherited": {"const": true},
+        "artifact_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "provider": {"const": "cerebras"},
+    "model_id": {"const": "gpt-oss-120b"},
+    "account_access": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["api_access_active", "tier", "zero_cash_spend_claim_allowed"],
+      "properties": {
+        "api_access_active": {"type": "boolean"},
+        "tier": {"enum": ["free_trial", "developer", "enterprise"]},
+        "zero_cash_spend_claim_allowed": {"type": "boolean"},
+        "trial_credit_active": {"type": ["boolean", "null"]},
+        "trial_credit_expiry_utc": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "quota_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["api_key_scope", "project_quota_applies", "org_and_project_both_enforced"],
+      "properties": {
+        "api_key_scope": {"enum": ["organization", "project"]},
+        "project_quota_applies": {"type": "boolean"},
+        "org_and_project_both_enforced": {"const": true},
+        "project_identifier_committed": {"const": false}
+      }
+    },
+    "effective_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rpm", "uncached_tpm", "total_tpm", "tph", "tpd"],
+      "properties": {
+        "rpm": {"type": "integer", "minimum": 0},
+        "uncached_tpm": {"type": "integer", "minimum": 0},
+        "total_tpm": {"type": "integer", "minimum": 0},
+        "tph": {"type": ["integer", "null"], "minimum": 0},
+        "tpd": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_rpm_met", "minimum_uncached_tpm_met", "minimum_total_tpm_met",
+        "hourly_daily_capacity_met_or_not_applicable", "active_access_met",
+        "effective_project_and_org_context_checked", "secrets_excluded"
+      ],
+      "properties": {
+        "minimum_rpm_met": {"type": "boolean"},
+        "minimum_uncached_tpm_met": {"type": "boolean"},
+        "minimum_total_tpm_met": {"type": "boolean"},
+        "hourly_daily_capacity_met_or_not_applicable": {"type": "boolean"},
+        "active_access_met": {"type": "boolean"},
+        "effective_project_and_org_context_checked": {"type": "boolean"},
+        "secrets_excluded": {"const": true}
+      }
+    }
+  }
+}
