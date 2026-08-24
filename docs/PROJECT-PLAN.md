@@ -71,17 +71,15 @@ FRESH_BLIND must remain independent until candidate generation is frozen.
 
 ## 4. Workstream A — provider-capacity decision and next EXPOSED_POOL experiment
 
-### A0 — Close P12-C3 formally — NOW
+### A0 — Close P12-C3 formally — COMPLETE
 
-Deliverables:
+Completed:
 
-- commit sanitized C3 terminal closure;
-- record run `32672167702` as terminal operational failure;
-- preserve artifact hashes and public checkpoint metadata;
-- explicitly forbid C3 resume/retry;
-- do not inspect or commit raw parent outputs.
-
-Exit criterion: repository status and PR no longer describe B1 as active.
+- sanitized C3 terminal closure committed;
+- run `32672167702` recorded as terminal operational failure;
+- artifact hashes and public checkpoint metadata preserved;
+- C3 resume/rerun explicitly forbidden;
+- raw parent outputs remain uncommitted and uninspected for candidate/scoring decisions.
 
 ### A1 — Provider-capacity alternative analysis — 2026-08-24
 
@@ -315,7 +313,6 @@ Required before delivery:
 
 ### 2026-08-24
 
-- close/document C3 terminal failure;
 - complete provider-capacity alternative analysis;
 - start/continue FRESH_BLIND Tier A authorization work;
 - continue production-fit research.
