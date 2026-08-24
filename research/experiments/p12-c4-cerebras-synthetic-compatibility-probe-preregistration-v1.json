@@ -10,19 +10,24 @@
   "purpose": "Qualify request/response semantics of the selected Cerebras serving path using synthetic prompts only. This probe is infrastructure qualification, not candidate evaluation.",
   "provider": {
     "name": "cerebras",
+    "tier": "free_trial_or_verified_higher",
     "model_id": "gpt-oss-120b",
     "underlying_model_family": "openai/gpt-oss-120b",
     "credential_env": "CEREBRAS_API_KEY",
-    "automatic_failover": false
+    "automatic_failover": false,
+    "free_trial_is_time_and_credit_bounded": true
   },
   "hard_preconditions": {
     "accepted_provider_capacity_adr": true,
     "provider_free_contract_self_check_pass_required": true,
     "fresh_seed_isolation_self_check_pass_required": true,
     "actual_account_limit_attestation_required": true,
-    "minimum_verified_account_tpm": 64000,
+    "active_api_access_required": true,
+    "minimum_verified_account_tpm": 30000,
+    "minimum_verified_account_tph": 1000000,
     "minimum_verified_account_tpd": 1000000,
-    "minimum_verified_account_rpm": 30,
+    "minimum_verified_account_rpm": 5,
+    "prompt_plus_max_completion_token_reservation_understood": true,
     "benchmark_inputs_available_to_probe": false,
     "private_oracle_available_to_probe": false,
     "fresh_blind_available_to_probe": false,
@@ -35,7 +40,7 @@
     "structured_output_probe_seed": 424242,
     "tool_probe_seed": 424243,
     "deterministic_byte_equality_is_not_a_success_requirement": true,
-    "rationale": "The provider documents seed as best-effort deterministic rather than guaranteed deterministic."
+    "rationale": "Cerebras documents seed as best-effort deterministic rather than guaranteed deterministic."
   },
   "frozen_probe_calls": [
     {
@@ -50,14 +55,8 @@
         "reasoning_format": "hidden",
         "stream": false,
         "messages": [
-          {
-            "role": "system",
-            "content": "Synthetic provider-compatibility probe only. Do not use external data. Return only the requested structured marker."
-          },
-          {
-            "role": "user",
-            "content": "Return contract_marker='P12-C4-SYNTHETIC', ok=true."
-          }
+          {"role": "system", "content": "Synthetic provider-compatibility probe only. Do not use external data. Return only the requested structured marker."},
+          {"role": "user", "content": "Return contract_marker='P12-C4-SYNTHETIC', ok=true."}
         ],
         "response_format": {
           "type": "json_schema",
@@ -66,10 +65,7 @@
             "strict": true,
             "schema": {
               "type": "object",
-              "properties": {
-                "contract_marker": {"type": "string"},
-                "ok": {"type": "boolean"}
-              },
+              "properties": {"contract_marker": {"type": "string"}, "ok": {"type": "boolean"}},
               "required": ["contract_marker", "ok"],
               "additionalProperties": false
             }
@@ -98,32 +94,22 @@
         "reasoning_format": "hidden",
         "stream": false,
         "messages": [
-          {
-            "role": "system",
-            "content": "Synthetic provider-compatibility probe only. Do not access external or benchmark data."
-          },
-          {
-            "role": "user",
-            "content": "Call the synthetic_lookup function with marker='P12-C4-TOOL'."
-          }
+          {"role": "system", "content": "Synthetic provider-compatibility probe only. Do not access external or benchmark data."},
+          {"role": "user", "content": "Call the synthetic_lookup function with marker='P12-C4-TOOL'."}
         ],
-        "tools": [
-          {
-            "type": "function",
-            "function": {
-              "name": "synthetic_lookup",
-              "description": "Synthetic no-I/O function used only to qualify function-call serialization.",
-              "parameters": {
-                "type": "object",
-                "properties": {
-                  "marker": {"type": "string"}
-                },
-                "required": ["marker"],
-                "additionalProperties": false
-              }
+        "tools": [{
+          "type": "function",
+          "function": {
+            "name": "synthetic_lookup",
+            "description": "Synthetic no-I/O function used only to qualify function-call serialization.",
+            "parameters": {
+              "type": "object",
+              "properties": {"marker": {"type": "string"}},
+              "required": ["marker"],
+              "additionalProperties": false
             }
           }
-        ],
+        }],
         "tool_choice": "required",
         "parallel_tool_calls": false
       },
@@ -173,10 +159,12 @@
       "provider_free_contract_self_check_PASS",
       "fresh_seed_isolation_self_check_PASS",
       "actual_account_limit_attestation_PASS",
+      "active_cerebras_api_access_PASS",
       "probe_runner_static_isolation_check_PASS"
     ],
     "exposed_pool_live_generation_can_become_true_only_after": [
       "synthetic_live_probe_PASS",
+      "prompt_token_budget_and_safe_pacing_frozen",
       "full_p12_c4_provider_free_activation_PASS",
       "complete_packet_missingness_failure_semantics_frozen",
       "p12_c4_live_manifest_frozen_before_first_benchmark_call"
