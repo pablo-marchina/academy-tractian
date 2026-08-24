@@ -27,6 +27,13 @@
     "free_trial_credit_expiry_days": 30,
     "zero_cash_spend_is_conditional_on_active_trial_credit": true
   },
+  "transport_contract": {
+    "sdk_package": "cerebras_cloud_sdk",
+    "sdk_version": "1.91.0",
+    "client_warm_tcp_connection": false,
+    "implicit_warming_requests_allowed": false,
+    "exact_sdk_version_must_be_reported_in_probe_evidence": true
+  },
   "published_capacity_feasibility_boundary": {
     "source_review_date": "2026-08-24",
     "minimum_tpm": 30000,
@@ -83,7 +90,6 @@
     "verify_actual_cerebras_account_limits_and_active_trial_or_developer_access",
     "measure_or_upper_bound_prompt_tokens_per_parent",
     "derive_safe_request_pacing_from_verified_rpm_tpm_and_prompt_plus_4096_reservation",
-    "freeze_exact_provider_sdk_api_version_and_request_semantics",
     "pass_provider_free_request_contract_self_check",
     "preregister_synthetic_non_benchmark_provider_compatibility_probe",
     "pass_synthetic_provider_compatibility_probe",
@@ -95,6 +101,7 @@
     "if_account_limits_are_below_the_preregistered_capacity_boundary_reopen_adr_before_any_live_probe",
     "if_free_trial_is_inactive_or_expired_do_not_claim_zero_cash_spend",
     "if_measured_prompt_plus_4096_reservation_lacks_safe_tpm_margin_reopen_capacity_plan",
+    "if_sdk_version_or_warming_behavior_differs_from_frozen_transport_contract_stop_before_probe",
     "if_required_request_semantics_need_candidate_visible_workarounds_reopen_adr",
     "if_provider_model_or_serving_contract_changes_after_freeze_do_not_silently_continue",
     "if_any_benchmark_or_private_input_is_loaded_by_provider_qualification_stop",
