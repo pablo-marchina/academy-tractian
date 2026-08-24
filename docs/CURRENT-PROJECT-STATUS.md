@@ -1,12 +1,13 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-23 23:50 BRT  
+**Canonical status checkpoint:** 2026-08-24 09:53 BRT  
 **Branch:** `research/systematic-foundation`  
 **PR:** #2 — draft research-governance PR  
 **Final delivery target:** 2026-09-08  
-**Governance:** [`docs/PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
+**Governance:** [`docs/PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
+**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-24.json`](../research/results/project-progress-checkpoint-2026-08-24.json)
 
-This document is the canonical human-readable status of the project. Historical plans and experiments remain preserved as evidence, but they do not override this checkpoint.
+This document is the canonical human-readable status of the project. Historical plans, attempts and intermediate states remain preserved as evidence but do not override this checkpoint.
 
 ## Executive summary
 
@@ -14,8 +15,8 @@ The Benchmark Integrity Gate is closed and the P12 evaluation protocol is `FROZE
 
 ```text
 P12-C1   CLOSED / DETERMINISTIC FAIL / NO ARM QUALIFIED
-P12-C2   CONSUMED_OPERATIONAL_FAILURE / NO SCORING
-P12-C3   CONSUMED_TERMINAL_OPERATIONAL_FAILURE / NO SCORING
+P12-C2   CONSUMED_OPERATIONAL_FAILURE / 31 OF 36 / NO SCORING
+P12-C3   CONSUMED_TERMINAL_OPERATIONAL_FAILURE / 3 OF 36 / NO SCORING
 current QUALIFIED implementation     NONE
 current PREFERRED implementation     NONE
 semantic v4.2                        NOT AUTHORIZED
@@ -25,11 +26,13 @@ final architecture                   UNFROZEN
 production-readiness claim           NOT AUTHORIZED
 ```
 
-P12-C1 completed a valid prospective deterministic comparison, but both arms failed the frozen gates. P12-C2 failed operationally after 31/36 common parents. P12-C3 prospectively introduced capacity control, passed provider-free activation and live-infrastructure qualification, reached live execution, accepted three common parents, and then entered a frozen terminal experiment state on the fourth cell. No 36-parent/144-output packet exists for C2 or C3, so no deterministic, semantic or arm-level conclusion may be inferred from their partial collections.
+P12-C1 produced the only complete prospective deterministic comparison so far; both arms failed the frozen gates. P12-C2 and P12-C3 failed operationally before a complete 36-parent packet could be frozen, so neither supports deterministic, semantic or arm-level scientific conclusions.
 
-The largest schedule risks are now **provider-capacity reliability** and **absence of an authorized FRESH_BLIND source**.
+The project is now in a **capacity-decision + independent-evidence readiness** phase. The next valid prospective experiment must not simply repeat C2/C3. Provider-capacity feasibility must first be decided systematically, while FRESH_BLIND source preparation proceeds in parallel without outcome exposure.
 
-## Governance milestones
+## Progress completed to date
+
+### Governance and benchmark integrity
 
 | Milestone | State |
 |---|---|
@@ -38,10 +41,16 @@ The largest schedule risks are now **provider-capacity reliability** and **absen
 | BIG-B2 benchmark-design alternatives | COMPLETE |
 | BIG-B3 protocol selection | COMPLETE |
 | BIG-B4 protocol freeze | COMPLETE / `FROZEN` |
-| Historical candidate reinterpretation | COMPLETE |
-| P12-C1 | CLOSED |
-| P12-C2 | CONSUMED_OPERATIONAL_FAILURE |
-| P12-C3 | CONSUMED_TERMINAL_OPERATIONAL_FAILURE |
+| Historical candidate/component reinterpretation | COMPLETE |
+| Canonical current-status/action-plan split from historical plan | COMPLETE |
+
+### Prospective P12 experiments
+
+| Experiment | State | Complete packet | Scoring | Scientific arm conclusion |
+|---|---|---:|---|---|
+| P12-C1 | CLOSED / deterministic fail | 36 parents / 72 outputs | COMPLETE | no arm qualified |
+| P12-C2 | CONSUMED_OPERATIONAL_FAILURE | 31/36 parents | BLOCKED | none |
+| P12-C3 | CONSUMED_TERMINAL_OPERATIONAL_FAILURE | 3/36 parents | BLOCKED | none |
 
 ## Evidence partitions under P12
 
@@ -53,7 +62,7 @@ Historical DEV + VALIDATION, seven independent asset/story groups. Allowed for a
 
 Primary independent real-domain evidence. Current state: `NO_BLIND_SOURCE_AUTHORIZED`.
 
-This is now a critical-path dependency. Source preparation and access control should progress in parallel with EXPOSED_POOL development, while outcomes remain inaccessible to candidate development.
+This is a critical-path dependency. Source preparation and access control must progress in parallel with EXPOSED_POOL development, while expected paths/outcomes remain inaccessible to candidate development.
 
 ### LEGACY_LOCKED_TEST
 
@@ -71,7 +80,7 @@ Retained/qualified foundations include ScenarioSchema, Canonical ToolSpec, Trace
 
 No historical implementation is currently `PREFERRED` at project level.
 
-## P12-C1
+## P12-C1 — complete prospective deterministic comparison
 
 `P12-C1_EXPOSED_POOL_EVIDENCE_ROUTE_SELECTION` completed 36 common parents and 72 fixed outputs.
 
@@ -89,7 +98,7 @@ Both arms failed deterministic gates. C1 reduced read count but worsened recall 
 
 Canonical evidence: `research/results/p12-c1-deterministic-paired-result-2026-08-23.json`.
 
-## P12-C2
+## P12-C2 — provider-capacity operational failure
 
 `P12-C2_EXPOSED_POOL_FACTORIAL_EVIDENCE_SAFETY` required 36 common parents and 144 fixed factorial outputs.
 
@@ -106,9 +115,11 @@ private scoring                NOT EXECUTED
 bootstrap / LOGO               NOT EXECUTED
 ```
 
-Decision: `CONSUMED_OPERATIONAL_FAILURE`. Canonical closure: `research/results/p12-c2-live-cycle-closure-2026-08-23.json`.
+Decision: `CONSUMED_OPERATIONAL_FAILURE`.
 
-## P12-C3
+Canonical closure: `research/results/p12-c2-live-cycle-closure-2026-08-23.json`.
+
+## P12-C3 — capacity-controlled terminal operational failure
 
 `P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL` preserved A00/A10/A01/A11 and changed only the prospective operational collection protocol.
 
@@ -185,23 +196,45 @@ Canonical closure:
 
 ### CRITICAL — provider capacity
 
-Two consecutive prospective experiments failed operationally during provider collection: C2 at 31/36 and C3 at 3/36. A new experiment must not simply repeat C3; provider capacity is now a material decision requiring alternative comparison before preregistration.
+Two consecutive prospective experiments failed operationally during provider collection: C2 at 31/36 and C3 at 3/36. A new experiment must not simply repeat C3. Provider capacity is now a material decision requiring alternative comparison and an explicit ADR before P12-C4 preregistration.
 
 ### CRITICAL — no authorized FRESH_BLIND source
 
-P12 requires fresh independent real-domain evidence for the primary generalization claim. Preparation should progress in parallel while preserving strict outcome blindness.
+P12 requires fresh independent real-domain evidence for the primary generalization claim. Preparation must progress in parallel while preserving strict outcome blindness.
 
 ### HIGH — no qualified current candidate
 
 C1 failed scientifically. C2/C3 failed operationally before complete measurement.
 
-### HIGH — architecture decision debt
-
-Retrieval/RAG, reranking, multi-agent decomposition, persistent memory, observability backend and final deployment/UI choices remain unfrozen.
-
 ### HIGH — schedule
 
-Final delivery is 2026-09-08. Time must remain for independent evidence, production-fit validation, integration/regression and documentation.
+Final delivery is 2026-09-08. The next 72 hours determine whether a complete new prospective comparison remains feasible without compromising the integration/regression/documentation buffer.
+
+### HIGH — architecture decision debt
+
+Retrieval/RAG, reranking, multi-agent decomposition, persistent memory, observability backend, provider serving, deployment and UI choices remain unfrozen.
+
+## Plan review — 2026-08-24
+
+The existing action plan remains scientifically valid, but its execution order is tightened into three parallel workstreams:
+
+1. **Provider-capacity / candidate evidence:** complete a provider-capacity alternatives ADR first; only then preregister and activate a new EXPOSED_POOL experiment.
+2. **Independent evidence:** prepare/authorize FRESH_BLIND Tier A now, with Tier B fallback by the frozen deadline, while outcomes remain inaccessible.
+3. **Production-fit / architecture:** compare open architecture and serving alternatives in parallel, but do not freeze architecture before candidate evidence supports it.
+
+### Hard go/no-go checkpoints
+
+- **Before P12-C4:** provider-capacity ADR complete, feasibility argument defensible, scientific confounds characterized, fresh seeds, no C2/C3 partial-parent reuse, provider-free activation path defined.
+- **Before private scoring:** complete prospective packet only; no partial/complete-case reinterpretation; all operational missingness classified; private/blind/locked access remains zero.
+- **By end of 2026-08-27:** if no complete prospective EXPOSED_POOL packet exists, reassess scope and prioritize an evidence-honest final delivery instead of repeated low-feasibility attempts.
+- **By 2026-08-28 23:59 BRT:** if Tier A FRESH_BLIND is unavailable, Tier B independently authored fallback must be ready or the final generalization claim must be downgraded explicitly.
+
+## Immediate priorities — next 24 hours
+
+1. Complete the systematic provider-capacity alternatives comparison and freeze a decision ADR with Pareto tradeoffs, feasibility evidence and reversal triggers.
+2. Begin/continue FRESH_BLIND Tier A authorization and access-control preparation without outcome exposure.
+3. Continue production-fit research on provider/model serving and major architecture alternatives, recording evidence states but making no premature freeze.
+4. Only if the capacity ADR identifies a viable path, preregister P12-C4 with fresh seeds, frozen complete-packet requirements and evaluator/statistical contract before any outcome.
 
 ## Explicit non-claims
 
@@ -213,4 +246,4 @@ Infrastructure gates and dry runs validate plumbing only.
 
 See [`docs/PROJECT-PLAN.md`](PROJECT-PLAN.md).
 
-The prior E14v-era plan is preserved at `docs/archive/PROJECT-PLAN-2026-08-20.md`.
+The prior E14v-era plan is preserved at `docs/archive/PROJECT-PLAN-2026-08-20.md`. The prior machine checkpoint remains preserved at `research/results/project-progress-checkpoint-2026-08-23.json`.
