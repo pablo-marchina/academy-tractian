@@ -5,6 +5,7 @@
 **Final delivery target:** 2026-09-08  
 **Supersedes:** the E14v-era plan from 2026-08-20, archived at `docs/archive/PROJECT-PLAN-2026-08-20.md`  
 **Current status source:** [`docs/CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
+**Progress ledger:** [`docs/PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
 **Machine checkpoint:** [`research/results/project-progress-checkpoint-2026-08-24.json`](../research/results/project-progress-checkpoint-2026-08-24.json)
 
 ## 1. Planning objective
@@ -79,7 +80,7 @@ Completed:
 - run `32672167702` recorded as terminal operational failure;
 - C3 resume/rerun/partial scoring forbidden;
 - raw partial parents remain unavailable for candidate/scoring decisions;
-- current-status and action-plan documents updated.
+- current-status, progress-ledger and action-plan documents updated.
 
 ### A1 — Provider-capacity alternatives ADR — HARD PREREQUISITE / 2026-08-24
 
@@ -377,7 +378,7 @@ P12-C3 terminal operational failure
               │
               ▼
 provider-capacity ADR ─────────────── FRESH_BLIND readiness (parallel)
-              │
+              │                       production-fit research (parallel)
           ┌───┴────┐
           │        │
         NO-GO      GO
