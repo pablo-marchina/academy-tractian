@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Fail-closed P12-C4 Cerebras synthetic compatibility probe.
 
-Live mode is intentionally impossible unless a separate first-party account
-capacity attestation and a separate live-probe authorization artifact both PASS.
+Live mode is impossible unless a separate first-party effective-capacity
+attestation and a separate one-shot live-probe authorization artifact both PASS.
 Provider-free contract-check mode performs no SDK import, credential read, sleep,
 or network I/O.
 """
@@ -22,11 +22,12 @@ ROOT = Path(__file__).resolve().parents[2]
 PREREG = ROOT / "research" / "experiments" / "p12-c4-cerebras-synthetic-compatibility-probe-preregistration-v1.json"
 SERVING = ROOT / "research" / "experiments" / "p12-c4-provider-serving-contract-v1.json"
 PACING = ROOT / "research" / "frozen" / "p12-c4-prompt-budget-and-pacing-v1.json"
-DEFAULT_ATTESTATION = ROOT / "research" / "experiments" / "p12-c4-cerebras-account-capacity-attestation-v1.json"
+DEFAULT_ATTESTATION = ROOT / "research" / "experiments" / "p12-c4-cerebras-account-capacity-attestation-v2.json"
 DEFAULT_AUTHORIZATION = ROOT / "research" / "frozen" / "p12-c4-cerebras-synthetic-probe-live-authorization-v1.json"
 SDK_PACKAGE = "cerebras_cloud_sdk"
 SDK_VERSION = "1.91.0"
 EXPECTED_PROBE_ID = "P12-C4-CEREBRAS-SYNTHETIC-COMPATIBILITY-V1"
+ATTESTATION_SCHEMA = "p12-c4-cerebras-account-capacity-attestation-v2"
 
 
 class ProbeBlocked(RuntimeError):
@@ -83,28 +84,55 @@ def validate_frozen_contracts() -> tuple[dict[str, Any], dict[str, Any], dict[st
 
 def validate_account_attestation(path: Path) -> dict[str, Any]:
     if not path.exists():
-        raise ProbeBlocked("actual Cerebras account attestation is absent")
+        raise ProbeBlocked("actual Cerebras account attestation v2 is absent")
     x = load_json(path)
-    if x.get("schema_version") != "p12-c4-cerebras-account-capacity-attestation-v1" or x.get("status") != "PASS":
-        raise ProbeBlocked("account capacity attestation has not PASSed")
+    if x.get("schema_version") != ATTESTATION_SCHEMA or x.get("status") != "PASS":
+        raise ProbeBlocked("effective account/project capacity attestation has not PASSed")
     if x.get("provider") != "cerebras" or x.get("model_id") != "gpt-oss-120b":
         raise ProbeBlocked("account attestation provider/model mismatch")
+
     src = x.get("evidence_source", {})
     if src.get("first_party") is not True or src.get("contains_secret") is not False:
         raise ProbeBlocked("account attestation must be first-party and secret-free")
+    if src.get("org_limits_observed") is not True or src.get("project_limits_observed_or_inherited") is not True:
+        raise ProbeBlocked("organization/project limit context was not fully observed")
+
     access = x.get("account_access", {})
     if access.get("api_access_active") is not True:
         raise ProbeBlocked("Cerebras API access is not attested active")
-    limits = x.get("limits", {})
-    if int(limits.get("rpm", -1)) < 5 or int(limits.get("tpm", -1)) < 30000:
-        raise ProbeBlocked("account RPM/TPM below frozen boundary")
+
+    quota = x.get("quota_context", {})
+    if quota.get("org_and_project_both_enforced") is not True:
+        raise ProbeBlocked("organization/project quota enforcement not attested")
+    if quota.get("api_key_scope") not in {"organization", "project"}:
+        raise ProbeBlocked("API key scope is not attested")
+    if quota.get("api_key_scope") == "project" and quota.get("project_quota_applies") is not True:
+        raise ProbeBlocked("project-scoped API key requires project quota attestation")
+
+    limits = x.get("effective_limits", {})
+    if int(limits.get("rpm", -1)) < 5:
+        raise ProbeBlocked("effective RPM below frozen boundary")
+    if int(limits.get("uncached_tpm", -1)) < 30000:
+        raise ProbeBlocked("effective uncached TPM below frozen boundary")
+    if int(limits.get("total_tpm", -1)) < 30000:
+        raise ProbeBlocked("effective total TPM below frozen boundary")
+
     if access.get("tier") == "free_trial":
-        if int(limits.get("tph", -1)) < 1000000 or int(limits.get("tpd", -1)) < 1000000:
+        if int(limits.get("tph") or -1) < 1000000 or int(limits.get("tpd") or -1) < 1000000:
             raise ProbeBlocked("Free Trial TPH/TPD below frozen boundary")
         if access.get("trial_credit_active") is not True:
             raise ProbeBlocked("Free Trial credit is not attested active")
+
     att = x.get("attestation", {})
-    required_flags = ["minimum_rpm_met", "minimum_tpm_met", "minimum_tph_met", "minimum_tpd_met", "active_access_met", "secrets_excluded"]
+    required_flags = [
+        "minimum_rpm_met",
+        "minimum_uncached_tpm_met",
+        "minimum_total_tpm_met",
+        "hourly_daily_capacity_met_or_not_applicable",
+        "active_access_met",
+        "effective_project_and_org_context_checked",
+        "secrets_excluded",
+    ]
     if not all(att.get(key) is True for key in required_flags):
         raise ProbeBlocked("account attestation flags are incomplete")
     return x
@@ -190,7 +218,7 @@ def provider_free_contract_check() -> dict[str, Any]:
     prereg, serving, pacing = validate_frozen_contracts()
     calls = prereg["frozen_probe_calls"]
     return {
-        "schema_version": "p12-c4-cerebras-synthetic-probe-runner-self-check-v1",
+        "schema_version": "p12-c4-cerebras-synthetic-probe-runner-self-check-v2",
         "status": "PASS_PROVIDER_FREE_LIVE_STILL_BLOCKED",
         "provider_calls": 0,
         "credentials_read": 0,
@@ -201,11 +229,12 @@ def provider_free_contract_check() -> dict[str, Any]:
         "exact_frozen_probe_calls": 2,
         "request_sha256": [canonical_sha256(c["request_contract"]) for c in calls],
         "sdk_contract": serving["transport_contract"],
+        "attestation_schema_version": ATTESTATION_SCHEMA,
         "minimum_seconds_between_any_provider_requests": pacing["frozen_pacing"]["minimum_seconds_between_any_provider_requests"],
         "account_attestation_present": DEFAULT_ATTESTATION.exists(),
         "live_authorization_present": DEFAULT_AUTHORIZATION.exists(),
         "live_probe_authorized": False,
-        "next_gate": "REAL_ACCOUNT_ATTESTATION_PASS_THEN_SEPARATE_ONE_SHOT_LIVE_PROBE_AUTHORIZATION",
+        "next_gate": "REAL_EFFECTIVE_CAPACITY_ATTESTATION_PASS_THEN_SEPARATE_ONE_SHOT_LIVE_PROBE_AUTHORIZATION",
     }
 
 
@@ -240,10 +269,7 @@ def execute_live(attestation_path: Path, authorization_path: Path, output: Path)
         payload = parsed.to_dict()
         elapsed_seconds = time.monotonic() - started
         previous_finished = time.monotonic()
-        if index == 0:
-            semantic = validate_structured_response(payload)
-        else:
-            semantic = validate_tool_response(payload)
+        semantic = validate_structured_response(payload) if index == 0 else validate_tool_response(payload)
         evidence_calls.append({
             "ordinal": index + 1,
             "probe": call["probe"],
@@ -273,6 +299,7 @@ def execute_live(attestation_path: Path, authorization_path: Path, output: Path)
         "private_oracle_accesses": 0,
         "fresh_blind_accesses": 0,
         "legacy_locked_test_accesses": 0,
+        "attestation_schema_version": ATTESTATION_SCHEMA,
         "attestation_sha256": canonical_sha256(attestation),
         "authorization_sha256": canonical_sha256(authorization),
         "calls": evidence_calls,
