@@ -2,149 +2,143 @@
 
 Repository central do TAPI individual **Engenharia e Avaliação de Agentes Industriais** (Inteli × TRACTIAN).
 
-## Non-negotiable project governance
+## Governance
 
-All work in this repository is governed by [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md). The four repository-wide rules are:
+All material work is governed by [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md):
 
-1. **Systematic research + comparison before every material decision.** Passing a minimum gate means `QUALIFIED`, not “best” or final. A decision is final only after broad alternative search, controlled quantitative comparison, robustness/sensitivity analysis and production-fit confirmation.
-2. **Production-first, never demo-first.** The final target is a real production-grade system. Demos, mocks and scripted happy paths may validate infrastructure but cannot establish production readiness or agent quality.
-3. **Quantitative and adaptive by default.** Prefer measurable, calibrated, data-driven behavior and evaluate context-sensitive adaptation against simpler/static baselines while preserving deterministic safety boundaries.
-4. **Eval-driven end to end.** Evaluation defines the engineering loop: requirement → evaluator → baseline → hypothesis → preregistered experiment → measurement → comparison → decision → regression coverage.
+1. systematic research + controlled comparison before material decisions;
+2. production-first, never demo-first;
+3. quantitative/adaptive by default with deterministic safety boundaries;
+4. eval-driven engineering end to end.
 
-No material component is considered complete merely because it works or passes a gate. If a credible materially different alternative remains unevaluated, the choice remains experimental.
+Passing a gate means evidence for that gate. It does **not** automatically mean `PREFERRED`, `FROZEN`, final or production-ready.
 
-## Status
+## Current canonical status
 
-**Benchmark Integrity Gate COMPLETE — P12 evaluation protocol `FROZEN` — P12-C1 CLOSED with no qualified arm — P12-C2 CONSUMED as provider-capacity operational failure — P12-C3 PREREGISTERED — capacity activation PASS — live execution manifest/workflow FROZEN and READY_NOT_STARTED**
+See:
 
-P12-C1 and P12-C2 are consumed and must not be rerun. P12-C2 produced no deterministic arm comparison because only 31/36 common parents completed before `rate_limit_long_window` failures. P12-C3 preserves the same E0/E1 × S0/S1 candidate definitions while prospectively controlling provider capacity. Its child capacity activation gate passed provider-free and authorizes exactly **one** P12-C3 live experiment.
+- [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — complete current status/evidence checkpoint;
+- [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md) — current action plan through the 2026-09-08 delivery;
+- [`research/results/project-progress-checkpoint-2026-08-23.json`](research/results/project-progress-checkpoint-2026-08-23.json) — machine-readable checkpoint.
 
-The P12-C3 live execution manifest and checkpointed six-batch workflow are now frozen **before the first P12-C3 provider call**. The freeze self-check passed `113/113`; the separate live trigger does not exist, no P12-C3 candidate outcome has been observed, and no provider/private/blind/locked access occurred during freeze verification.
+The E14v-era project plan previously stored at `docs/PROJECT-PLAN.md` is preserved at [`docs/archive/PROJECT-PLAN-2026-08-20.md`](docs/archive/PROJECT-PLAN-2026-08-20.md).
 
-Canonical current artifacts:
-
-- [`research/frozen/big-b4-evaluation-protocol-v1.json`](research/frozen/big-b4-evaluation-protocol-v1.json) — frozen P12 protocol;
-- [`research/results/p12-c1-deterministic-paired-result-2026-08-23.json`](research/results/p12-c1-deterministic-paired-result-2026-08-23.json) — sanitized P12-C1 result;
-- [`research/results/p12-c2-live-cycle-closure-2026-08-23.json`](research/results/p12-c2-live-cycle-closure-2026-08-23.json) — P12-C2 consumed operational-failure closure;
-- [`research/experiments/p12-c3-exposed-pool-capacity-controlled-factorial-preregistration-v1.json`](research/experiments/p12-c3-exposed-pool-capacity-controlled-factorial-preregistration-v1.json) — P12-C3 preregistration;
-- [`research/experiments/p12-c3-capacity-controlled-activation-eligibility-v1.json`](research/experiments/p12-c3-capacity-controlled-activation-eligibility-v1.json) — P12-C3 activation manifest (`PASS`);
-- [`research/frozen/p12-c3-capacity-batch-map-v1.json`](research/frozen/p12-c3-capacity-batch-map-v1.json) — exact six-batch/36-cell map;
-- [`research/experiments/p12-c3-capacity-controlled-live-execution-v1.json`](research/experiments/p12-c3-capacity-controlled-live-execution-v1.json) — frozen live execution manifest (`FROZEN_READY_NOT_STARTED`);
-- [`.github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml`](.github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml) — canonical checkpointed live workflow;
-- [`scripts/research/p12_c3_capacity_control.py`](scripts/research/p12_c3_capacity_control.py) — frozen reset/headroom/checkpoint semantics;
-- [`scripts/research/p12_c3_live_manifest_freeze_self_check.py`](scripts/research/p12_c3_live_manifest_freeze_self_check.py) — provider-free manifest/pin verification;
-- [`research/results/p12-c3-live-manifest-freeze-self-check-2026-08-23.json`](research/results/p12-c3-live-manifest-freeze-self-check-2026-08-23.json) — sanitized `113/113` freeze evidence;
-- [`research/p12-c3-live-manifest-freeze-pass-2026-08-23.md`](research/p12-c3-live-manifest-freeze-pass-2026-08-23.md) — human freeze conclusion.
-
-Current evidence roles under P12:
-
-- **EXPOSED_POOL = historical DEV + VALIDATION:** seven independent asset/story groups for adaptive development, selection, ablation, evaluator work and regression; never a fresh holdout.
-- **FRESH_BLIND:** primary independent real-domain generalization evidence; currently `NO_BLIND_SOURCE_AUTHORIZED`.
-- **LEGACY_LOCKED_TEST:** qualified supplementary held-out characterization; candidate execution remains blocked until final authorization.
-- **SYNTHETIC_ADVERSARIAL:** robustness, evaluator/judge qualification and regression only.
-
-### P12-C3 frozen design
-
-P12-C3 keeps the P12-C2 2×2 factorial candidates unchanged:
+### Executive state
 
 ```text
-A00 = retained evidence reference + retained E14q/E14q2
-A10 = bounded public intent/dependency closure + retained E14q/E14q2
-A01 = retained evidence reference + strict public authorization certificate
-A11 = bounded public intent/dependency closure + strict public authorization certificate
+Benchmark Integrity Gate            COMPLETE
+P12 evaluation protocol             FROZEN
+P12-C1                              CLOSED / DETERMINISTIC FAIL / NO ARM QUALIFIED
+P12-C2                              CONSUMED_OPERATIONAL_FAILURE / NO SCORING
+P12-C3                              CONSUMED_TERMINAL_OPERATIONAL_FAILURE / NO SCORING
+current QUALIFIED candidate         NONE
+current PREFERRED candidate         NONE
+semantic v4.2                       NOT AUTHORIZED
+FRESH_BLIND                         NO SOURCE AUTHORIZED
+LEGACY_LOCKED_TEST                  ACCESS BLOCKED
+final architecture                  UNFROZEN
+production-readiness claim          NOT AUTHORIZED
 ```
 
-The scientific geometry remains:
+## P12 evidence roles
+
+- **EXPOSED_POOL = historical DEV + VALIDATION:** seven independent asset/story groups for adaptive development, selection, ablation, evaluator work and regression. It cannot support a fresh generalization claim.
+- **FRESH_BLIND:** primary independent real-domain generalization evidence. Current state: `NO_BLIND_SOURCE_AUTHORIZED`.
+- **LEGACY_LOCKED_TEST:** qualified supplementary held-out characterization; candidate execution remains blocked until separately authorized final access.
+- **SYNTHETIC_ADVERSARIAL:** evaluator/judge qualification, robustness and regression only.
+
+## Prospective P12 history
+
+### P12-C1 — scientific comparison completed
+
+36 common parents → 72 fixed C0/C1 outputs → deterministic scoring.
+
+Both arms failed deterministic gates. C1 reduced extra reads but worsened expected-read recall and did not improve decision/action/escalation quality. No arm became `QUALIFIED`.
+
+Canonical result: [`research/results/p12-c1-deterministic-paired-result-2026-08-23.json`](research/results/p12-c1-deterministic-paired-result-2026-08-23.json).
+
+### P12-C2 — provider-capacity operational failure
+
+The 2×2 A00/A10/A01/A11 experiment attempted all 36 common-parent cells, but only 31 completed. Five failed with `rate_limit_long_window`. The 144-output packet was never frozen, so deterministic scoring/LOGO/bootstrap were correctly blocked.
+
+Canonical closure: [`research/results/p12-c2-live-cycle-closure-2026-08-23.json`](research/results/p12-c2-live-cycle-closure-2026-08-23.json).
+
+### P12-C3 — capacity-controlled terminal operational failure
+
+P12-C3 kept A00/A10/A01/A11 scientifically unchanged and prospectively introduced six fixed batches, reset-aware capacity control, immutable checkpoints, pending-only resume and a 72-hour horizon.
+
+Provider-free activation/live infrastructure passed before live execution. The first B1 run stopped before provider access on a retained compatibility assertion; a narrow pre-outcome infrastructure amendment was frozen and provider-free qualified without changing the candidate/evaluator/scientific design.
+
+The continued B1 run `32672167702` then reached live provider execution:
 
 ```text
-7 EXPOSED_POOL groups
-11 scenario families
-12 agent-visible tickets
-3 repetitions/ticket
-36 new common-parent generations
-144 fixed arm outputs
-new seeds 2026082307 / 2026082308 / 2026082309
+completed cells        3
+pending cells         33
+transport failures     1
+rate-limit events      1
+terminal failure    true
+horizon expired     false
 ```
 
-The operational collection geometry is frozen as **6 fixed batches × 6 parents** with immutable checkpoints. Provider waits may depend only on `Retry-After` / rate-limit reset metadata, never candidate content or evaluator outcomes. A `429` before any usable model output leaves the same predeclared cell pending within the frozen attempt ceiling; a completed parent may never be regenerated. The complete collection horizon is frozen at 72 hours from the first P12-C3 live provider call.
+The frozen controller entered a terminal experiment state on the fourth cell. Therefore P12-C3 cannot be resumed, rerun, partially scored or interpreted as a complete-case comparison.
 
-No private scoring is allowed until **36/36 new parents and 144/144 arm outputs** are frozen. Partial/complete-case-only factorial analysis is forbidden.
+Canonical closure:
 
-Deterministic thresholds remain unchanged. Hard safety remains non-compensable. P12-C3 cannot authorize semantic v4.2, FRESH_BLIND, LEGACY_LOCKED_TEST, architecture freeze, or production-readiness claims.
+- [`research/results/p12-c3-live-cycle-closure-2026-08-23.json`](research/results/p12-c3-live-cycle-closure-2026-08-23.json)
+- [`research/p12-c3-live-cycle-closure-2026-08-23.md`](research/p12-c3-live-cycle-closure-2026-08-23.md)
 
-### P12-C3 activation and live-freeze verification
+## Current critical path
 
-Provider-free capacity activation:
+The next step is **not** another P12-C3 trigger.
 
 ```text
-pre-promotion run        32666884507   79/79 PASS
-post-promotion run       32666992054   success
-final manifest run       32667163104   success
-provider/model calls     0
-private-oracle access    0
-FRESH_BLIND access       0
-LEGACY_LOCKED_TEST       0
+C3 terminal closure
+    ↓
+provider-capacity alternatives decision
+    ↓
+new preregistered EXPOSED_POOL experiment (provisionally P12-C4)
+    ↓
+complete prospective packet only
+    ↓
+deterministic gate + 20k group bootstrap + 7 LOGO
+    ↓
+semantic child gate only for deterministic survivors
+    ↓
+production-fit comparison / generation freeze
+    ↓
+separately authorized FRESH_BLIND final evidence
+    ↓
+architecture freeze + regression + final delivery
 ```
 
-Provider-free live-infrastructure dry qualification:
+In parallel, FRESH_BLIND source preparation/authorization begins now while outcome access remains blocked. This is a critical schedule dependency.
 
-```text
-run                       32668588503
-36/36 dry parents         PASS
-144/144 dry arm outputs   PASS
-resume/order/terminal     PASS
-provider calls            0
-```
+Full plan: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md).
 
-Provider-free frozen-live-manifest verification:
+## Main current risks
 
-```text
-run                       32671038513
-checks                    113 / 113 PASS
-provider calls            0
-private-oracle access     0
-FRESH_BLIND access        0
-LEGACY_LOCKED_TEST        0
-live trigger present      false
-first P12-C3 live call    false
-```
+1. **Provider capacity — CRITICAL:** P12-C2 failed at 31/36; P12-C3 became terminal at 3/36.
+2. **No FRESH_BLIND source — CRITICAL:** independent generalization evidence is not yet available.
+3. **No qualified current candidate — HIGH:** C1 failed scientifically; C2/C3 failed before complete scoring.
+4. **Architecture decision debt — HIGH:** retrieval, reranking, multi-agent, memory, observability and final deployment/UI choices remain unfrozen.
+5. **Schedule — HIGH:** final target remains **2026-09-08**.
 
-Frozen execution pins:
+## Frozen/retained foundations
 
-```text
-effective checkpoint runner SHA-256
-00cdf340714449bc0424777ec73598f5d8f172436c543918fc9e3ef383fc806e
+Historical evidence supports several reusable foundations, including:
 
-canonical live workflow SHA-256
-48e4bfdf5de0e624ec2e1d8feadf4ed5d3d6a7ead245875b15b641d4c486168d
-```
+- ScenarioSchema / Canonical ToolSpec / TraceSchema / deterministic replay;
+- HarnessRunner / HttpxTransport boundary;
+- LangGraph runtime candidate;
+- native ToolSpec envelope / MCP-compatible adapter;
+- E9 v4.1 deterministic evaluator;
+- E9 v4.2 semantic protocol;
+- E14c/d/e public canonicalization/handoff semantics;
+- E14n v1.1 identifier-provenance guard;
+- E14p epistemic serializer;
+- E14q/E14q2 safety/action authorization guards.
 
-### Next authorized step
-
-The preparation/freeze stage is complete. The next intentionally separate action is:
-
-**create the frozen B1 trigger and start the single authorized P12-C3 capacity-controlled live experiment.**
-
-The canonical workflow can run only from `research/experiments/p12-c3-live-batch-trigger-v1.json` on `research/systematic-foundation`. That trigger is deliberately absent at the current `FROZEN_READY_NOT_STARTED` state. GitHub reruns of live runs are forbidden; later batches or resumes must continue through the exact private checkpoint chain and only pending predeclared cells.
-
-`FRESH_BLIND` and `LEGACY_LOCKED_TEST` remain inaccessible to candidate development/selection.
-
-## Project goal
-
-The updated TAPI requires both components:
-
-1. **Industrial Agent Engineering** — contextualize, investigate, execute and escalate against the supplied industrial API.
-2. **Agent Evaluation & Reliability** — quantitatively measure tool choice, arguments, trajectory, evidence, conclusion/response, safety, robustness, stability and action behavior.
-
-The evaluation framework is part of the engineering loop, not a disconnected second product.
-
-## Evidence-first rule
-
-> **Best means best supported by systematic evidence for this problem — not newest, most popular, most complex, or merely the first option to pass.**
-
-Decision flow:
-
-`requirement → evaluator → systematic research → alternatives → baseline → hypothesis → preregistration → controlled experiment → robustness/production analysis → ADR → decision`
+These are evidence-backed components, not an automatically frozen final architecture.
 
 ## Frozen TRACTIAN facts
 
@@ -160,20 +154,17 @@ Decision flow:
 - raw action validation is permissive and backend company/resource isolation is coarse;
 - knowledge API exposes the supplied corpus directly.
 
-## Framework-neutral foundation
+## Project goal
 
-`research/e2/` contains executable ScenarioSchema models, the Canonical ToolSpec registry, runner-owned identity/seed binding, HTTP transport + HarnessRunner, deterministic boundaries, TraceSchema, replay, hashing and evaluator infrastructure.
+The final project must address both:
 
-The existence or previous qualification of a runtime, model, MCP topology, RAG design, multi-agent design, judge, routing policy, memory strategy or observability stack does not automatically freeze it. Major final choices remain subject to systematic comparison and production-readiness rules.
+1. **Industrial Agent Engineering** — contextualize, investigate, execute and escalate against the supplied industrial API.
+2. **Agent Evaluation & Reliability** — quantitatively evaluate tool choice, arguments, trajectory, evidence, conclusion/response, safety, robustness, stability and action behavior.
 
-## Critical path
-
-`P12-C1 closed → P12-C2 consumed operational failure → P12-C3 preregistered → capacity activation PASS → live execution manifest/workflow FROZEN_READY_NOT_STARTED → B1 trigger/live collection NEXT → capacity-controlled EXPOSED_POOL factorial collection → deterministic gate → semantic child gate only for deterministic survivors → production-fit comparison → generation freeze → separately authorized blind/final evidence → architecture freeze`
-
-Production freeze still requires broad candidate comparison, full deterministic + semantic evaluation gates, production fitness/integration verification, architecture freeze and final blind evidence under P12.
-
-Final delivery/presentation target: **2026-09-08**.
+The evaluation framework is part of the engineering loop, not a disconnected QA layer.
 
 ## Development rule
 
-No component remains merely because it looks sophisticated. RAG, reranking, multi-agent, routing, persistent memory, prompt optimization, judge selection, model selection and similar techniques require a measurable hypothesis or explicit requirement, systematic alternatives research and controlled comparison. They must remain removable when evidence does not support them.
+No component remains because it looks sophisticated. RAG, reranking, multi-agent routing, persistent memory, prompt optimization, model selection, judge selection and similar techniques require an explicit hypothesis/requirement, credible alternatives and controlled evidence. Optional complexity remains removable until supported.
+
+Final delivery/presentation target: **2026-09-08**.
