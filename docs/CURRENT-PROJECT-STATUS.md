@@ -5,6 +5,7 @@
 **PR:** #2 — draft research-governance PR  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`docs/PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
+**Progress ledger:** [`docs/PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
 **Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-24.json`](../research/results/project-progress-checkpoint-2026-08-24.json)
 
 This document is the canonical human-readable status of the project. Historical plans, attempts and intermediate states remain preserved as evidence but do not override this checkpoint.
@@ -51,6 +52,8 @@ The project is now in a **capacity-decision + independent-evidence readiness** p
 | P12-C1 | CLOSED / deterministic fail | 36 parents / 72 outputs | COMPLETE | no arm qualified |
 | P12-C2 | CONSUMED_OPERATIONAL_FAILURE | 31/36 parents | BLOCKED | none |
 | P12-C3 | CONSUMED_TERMINAL_OPERATIONAL_FAILURE | 3/36 parents | BLOCKED | none |
+
+For the detailed chronology and canonical artifacts for each phase, see [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md).
 
 ## Evidence partitions under P12
 
