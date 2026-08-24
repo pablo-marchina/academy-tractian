@@ -8,6 +8,7 @@ on:
       - 'scripts/research/p12_c4_cerebras_synthetic_probe.py'
       - 'research/experiments/p12-c4-cerebras-synthetic-compatibility-probe-preregistration-v1.json'
       - 'research/experiments/p12-c4-provider-serving-contract-v1.json'
+      - 'research/experiments/p12-c4-cerebras-account-capacity-attestation-schema-v2.json'
       - 'research/frozen/p12-c4-prompt-budget-and-pacing-v1.json'
 
 permissions:
@@ -31,7 +32,7 @@ jobs:
           test -z "${GROQ_API_KEY:-}"
           test ! -e eval/expected-paths.json
           test ! -e private-eval/expected-paths.json
-          test ! -e research/experiments/p12-c4-cerebras-account-capacity-attestation-v1.json
+          test ! -e research/experiments/p12-c4-cerebras-account-capacity-attestation-v2.json
           test ! -e research/frozen/p12-c4-cerebras-synthetic-probe-live-authorization-v1.json
       - name: Static isolation scan
         run: |
@@ -55,11 +56,12 @@ jobs:
           assert x['sdk_contract']['sdk_version']=='1.91.0'
           assert x['sdk_contract']['client_warm_tcp_connection'] is False
           assert x['sdk_contract']['client_max_retries']==0
+          assert x['attestation_schema_version']=='p12-c4-cerebras-account-capacity-attestation-v2'
           assert x['minimum_seconds_between_any_provider_requests']==75
           assert x['account_attestation_present'] is False
           assert x['live_authorization_present'] is False
           assert x['live_probe_authorized'] is False
-          print('P12_C4_CEREBRAS_SYNTHETIC_PROBE_RUNNER_PROVIDER_FREE_PASS')
+          print('P12_C4_CEREBRAS_SYNTHETIC_PROBE_RUNNER_PROVIDER_FREE_V2_PASS')
           PY
       - uses: actions/upload-artifact@v4
         with:
