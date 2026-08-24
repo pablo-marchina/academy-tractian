@@ -23,7 +23,7 @@
     "P12-C1 prospective deterministic comparison completed and closed",
     "P12-C2 prospective factorial cycle consumed as provider-capacity operational failure",
     "P12-C3 capacity-controlled preregistration, activation, live infrastructure qualification, live execution, and terminal closure completed",
-    "canonical current-status and current-action-plan documents established",
+    "canonical current-status, progress-ledger and current-action-plan documents established",
     "historical E14v-era project plan archived"
   ],
   "experiments": {
@@ -100,25 +100,26 @@
   ],
   "plan_review": {
     "reviewed_at": "2026-08-24T09:53:00-03:00",
-    "conclusion": "The plan remains scientifically valid but must now be executed as three parallel tracks with explicit go/no-go gates: provider-capacity decision and next EXPOSED_POOL experiment; FRESH_BLIND source readiness without outcome access; production-fit/architecture evidence gathering without freeze.",
+    "conclusion": "The plan remains scientifically valid but is now explicitly organized as three parallel tracks with go/no-go gates: provider-capacity/candidate evidence; FRESH_BLIND source readiness without outcome access; production-fit/architecture evidence gathering without freeze.",
     "changes": [
-      "Remove already-completed P12-C3 closure from future actions.",
-      "Make provider-capacity ADR the hard prerequisite for any P12-C4 preregistration or live generation.",
+      "Remove completed P12-C3 closure from future actions.",
+      "Make provider-capacity ADR a hard prerequisite for any P12-C4 preregistration or live generation.",
       "Treat FRESH_BLIND authorization as a parallel schedule-critical dependency rather than a post-selection task.",
-      "Add explicit 24-hour, 72-hour and 2026-08-27 go/no-go checkpoints.",
-      "Reserve post-2026-09-03 time for regression, documentation and delivery instead of repeated scientific retries."
+      "Treat serving/provider production fit as overlapping evidence with the provider-capacity decision.",
+      "Add explicit next-24h, next-48h, next-72h and 2026-08-27 go/no-go checkpoints.",
+      "Reserve 2026-09-03 onward primarily for regression, documentation and delivery rather than repeated scientific retries."
     ]
   },
   "next_24_hours": [
     "Complete provider-capacity alternatives comparison and freeze an ADR with Pareto tradeoffs, feasibility evidence and reversal triggers.",
     "Begin/continue FRESH_BLIND Tier A source authorization and access-control preparation without exposing outcomes.",
     "Continue production-fit research for provider/model serving and major architecture alternatives, recording evidence states without freezing architecture.",
-    "Only if the capacity ADR supports a viable path, preregister P12-C4 with fresh seeds, complete-packet requirement, deterministic scorer, bootstrap and LOGO frozen before outcomes."
+    "Only if the capacity ADR returns GO, preregister P12-C4 with fresh seeds, complete-packet requirement, deterministic scorer, bootstrap and LOGO frozen before outcomes."
   ],
   "go_no_go": {
     "before_p12_c4": [
       "provider-capacity ADR complete",
-      "selected path has a defensible feasibility argument for completing the full prospective geometry",
+      "selected path has a defensible feasibility argument materially stronger than C2/C3",
       "scientific confounds from provider/model changes explicitly characterized",
       "fresh seeds and no C2/C3 partial-parent reuse",
       "provider-free activation/eligibility plan defined"
@@ -130,10 +131,11 @@
       "FRESH_BLIND accesses = 0",
       "LEGACY_LOCKED_TEST accesses = 0"
     ],
-    "by_2026_08_27_end": "If no complete prospective EXPOSED_POOL packet exists, reassess scope and prioritize an evidence-honest delivery instead of repeated invalid or low-feasibility attempts.",
+    "by_2026_08_27_end": "If no complete prospective EXPOSED_POOL packet exists, reassess scope and prioritize an evidence-honest delivery instead of repeated low-feasibility attempts.",
     "by_2026_08_28_2359_brt": "If Tier A FRESH_BLIND is unavailable, Tier B independently authored fallback must be ready or the final generalization claim must be explicitly downgraded."
   },
   "canonical_human_status": "docs/CURRENT-PROJECT-STATUS.md",
+  "canonical_progress_ledger": "docs/PROJECT-PROGRESS-LOG.md",
   "canonical_action_plan": "docs/PROJECT-PLAN.md",
   "previous_checkpoint": "research/results/project-progress-checkpoint-2026-08-23.json"
 }
