@@ -1,328 +1,435 @@
-# Academy × TRACTIAN — Project Action Plan
+# Academy × TRACTIAN — Current Project Action Plan
 
-**Status:** full-DEV safety/authorization gate closed; evidence-completeness gate still open; E14v-B synthetic qualification failed before route-quality could be established  
-**Planning date:** 2026-08-19  
-**Progress checkpoint:** 2026-08-20 23:03 BRT  
-**Target final delivery:** 2026-09-08
+**Status:** ACTIVE / canonical plan  
+**Planning checkpoint:** 2026-08-23 23:50 BRT  
+**Final delivery target:** 2026-09-08  
+**Supersedes:** the E14v-era plan from 2026-08-20, archived at `docs/archive/PROJECT-PLAN-2026-08-20.md`  
+**Current status source:** [`docs/CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)
 
-## Executive status
+## 1. Planning objective
 
-The project remains in the DEV-only research loop. VALIDATION is measurement-only and blocked; LOCKED_TEST remains untouched/final-only; final architecture is not frozen.
+Finish the project with the strongest evidence that can be obtained under the frozen P12 governance while preserving scientific validity, production-first requirements and the 2026-09-08 delivery deadline.
 
-Stable foundations:
+The plan is no longer a linear "finish EXPOSED_POOL first, then think about everything else" sequence. Two critical dependencies must progress in parallel:
 
-- E9 v4.1 deterministic evaluator frozen and structurally valid.
-- E9 v4.2 semantic-groundedness protocol frozen.
-- Independent semantic judge `qwen/qwen3.6-27b` qualified on the frozen synthetic suite.
-- Full DEV coverage complete: 5/5 groups, 8/8 scenarios, 10 fixed calls, 2 repeats/group, contextualize included.
-- E14n v1.1 identifier-provenance guard retained.
-- E14p deterministic epistemic serializer retained; its previously accepted full-DEV semantic run passed groundedness.
-- E14q/E14q2 deterministic safety/action authorization guards retained.
-- The E14u full-DEV stack remained safety-clean at decision/action/escalation `0.8/0.8/0.8`, premature `0`, unsupported `0`, leakage `0`.
+1. **Candidate-evidence track:** recover from the C2/C3 provider-capacity failures, obtain a complete prospective EXPOSED_POOL comparison, then run deterministic/semantic gates.
+2. **Independent-evidence track:** authorize and prepare a FRESH_BLIND source without exposing its outcomes to candidate development.
 
-The unresolved blocker remains **evidence completeness/selection**. No candidate has yet satisfied the frozen full-DEV evidence gate, and the isolated E14v planner has not yet completed a valid public synthetic qualification because all three authorized synthetic attempts have failed before route-quality could be established.
+Production-fit and architecture research also proceeds in parallel, but no architecture is frozen before evidence supports a candidate.
 
-## Frozen evidence gate
+## 2. Current starting point
 
 ```text
-evidence_correctness                    >= 0.5000
-mean_expected_read_recall               >= 0.8333
-mean_extra_public_read_count            <= 3.5000
+P12-C1    complete scientific comparison; both arms failed deterministic gates
+P12-C2    consumed operational failure; 31/36 parents; no scoring
+P12-C3    consumed terminal operational failure; 3/36 parents; no scoring
+QUALIFIED current candidate      none
+PREFERRED current candidate      none
+FRESH_BLIND source               none authorized
+LEGACY_LOCKED_TEST               blocked
+semantic v4.2 current candidate  not authorized
+architecture                     unfrozen
 ```
 
-## Evidence-gate history
+The immediate problem is **not another blind retry of P12-C3**. The immediate problem is deciding how to obtain a complete 36-parent prospective packet reliably enough to justify a new experiment.
 
-### E14q2 baseline
+## 3. Priority order
+
+### P0 — Preserve validity
+
+Never trade scientific validity for schedule speed.
+
+Non-negotiable:
+
+- no C2 or C3 rerun;
+- no reuse of partial C2/C3 parents as a confirmatory packet;
+- no private scoring on incomplete packets;
+- no complete-case reinterpretation;
+- no candidate tuning from FRESH_BLIND/LEGACY_LOCKED_TEST outcomes;
+- no semantic measurement unless deterministic gate prerequisites pass;
+- no architecture or production-readiness claim from dry-run/infrastructure evidence.
+
+### P1 — Solve provider-capacity collection before the next experiment
+
+Two consecutive prospective cycles failed operationally at provider collection. A new experiment must be preceded by an explicit capacity decision.
+
+### P2 — Prepare FRESH_BLIND in parallel
+
+Independent evidence is now a schedule-critical dependency. Waiting until after candidate selection creates unacceptable deadline risk.
+
+### P3 — Obtain one complete EXPOSED_POOL prospective comparison
+
+Only a complete frozen packet may reach private deterministic scoring.
+
+### P4 — Close deterministic → semantic → production-fit gates
+
+Only survivors advance.
+
+### P5 — Freeze generation/architecture, then execute final independent evidence
+
+FRESH_BLIND must remain independent until candidate generation is frozen.
+
+## 4. Workstream A — provider-capacity decision and next EXPOSED_POOL experiment
+
+### A0 — Close P12-C3 formally — NOW
+
+Deliverables:
+
+- commit sanitized C3 terminal closure;
+- record run `32672167702` as terminal operational failure;
+- preserve artifact hashes and public checkpoint metadata;
+- explicitly forbid C3 resume/retry;
+- do not inspect or commit raw parent outputs.
+
+Exit criterion: repository status and PR no longer describe B1 as active.
+
+### A1 — Provider-capacity alternative analysis — 2026-08-24
+
+Decision question:
+
+> Which operational generation path is most likely to complete the frozen 36-parent prospective geometry within the remaining schedule while preserving acceptable scientific comparability, cost and reproducibility?
+
+At minimum compare these credible classes:
+
+1. **Same Groq model/config with a newly preregistered longer-horizon/reset-aware schedule.**
+   - strongest scientific comparability;
+   - must prove capacity feasibility before live outcome collection;
+   - cannot merely reuse the terminal C3 policy.
+2. **Same model through another provider/serving path, if actually available.**
+   - preserves model family but changes transport/provider behavior;
+   - requires provider/config qualification and cost/availability evidence.
+3. **Alternative model/provider candidate.**
+   - larger scientific change;
+   - requires a new model-selection rationale and prospective comparison;
+   - may improve operational feasibility at the cost of comparability.
+4. **Local or self-hosted inference path.**
+   - evaluate hardware/runtime feasibility, throughput and reproducibility;
+   - do not assume viability if it cannot complete the experiment on schedule.
+5. **Paid/credit-backed provider capacity, if project constraints allow it.**
+   - compare expected completion reliability and total cost against zero-cost paths;
+   - cost is a production-fit metric, not an automatic disqualifier unless project constraints make it hard.
+
+Required comparison dimensions:
+
+- probability of completing 36 parents before deadline;
+- rate-limit/reset behavior and capacity guarantees;
+- model/prompt equivalence;
+- latency/throughput;
+- total cost;
+- reproducibility;
+- operational complexity;
+- risk of introducing a scientific confound;
+- ease of provider-free prequalification;
+- fit with final production requirements.
+
+Output: a short ADR/decision record with a Pareto comparison and reversal triggers.
+
+### A2 — Preregister the next prospective experiment — target 2026-08-24/25
+
+Provisionally call it **P12-C4** only after A1 selects the collection path.
+
+Requirements:
+
+- fresh seeds;
+- no C2/C3 partial parent reuse;
+- same 7-group EXPOSED_POOL unless the new hypothesis explicitly changes scope;
+- clear provider-capacity policy before first outcome;
+- complete packet requirement preserved;
+- deterministic scorer/aggregation/bootstrap/LOGO frozen before outcomes;
+- candidate definition changes explicitly isolated from operational changes;
+- activation/eligibility child gate provider-free before live execution.
+
+### A3 — Execute complete prospective collection — target 2026-08-25 to 2026-08-27
+
+Exit gate:
 
 ```text
-evidence_correctness                    0.2000
-mean_expected_read_recall               0.7667
-mean_extra_public_read_count            3.5000
+36/36 new common parents
+144/144 fixed factorial outputs (if factorial design retained)
+same parent shared across compared arms
+candidate private-oracle accesses = 0
+FRESH_BLIND accesses = 0
+LEGACY_LOCKED_TEST accesses = 0
+all operational missingness explicitly classified
 ```
 
-### E14r — FAIL
+If this gate is not reached, do not score partial data.
 
-Visible-case replacement over-pruned evidence:
+### A4 — Deterministic scoring and factorial/paired analysis — immediately after complete freeze
+
+Use the frozen deterministic evaluator unless a prospectively justified evaluator amendment is required before scoring.
+
+Required outputs:
+
+- full-pool metrics;
+- absolute deterministic gates;
+- primary paired/factorial contrasts;
+- 95% group-cluster percentile bootstrap, 20,000 resamples, seed 20260822;
+- all 7 LOGO analyses;
+- per-group results;
+- modality slices;
+- safety/failure families;
+- operational denominators/missingness;
+- no weighted utility score.
+
+Decision:
+
+- **no arm passes:** stop semantic stage, diagnose failures, decide whether another EXPOSED_POOL experiment is still justified by remaining time/evidence value;
+- **one or more arms pass:** only deterministic survivors become eligible for a semantic child preregistration;
+- deterministic PASS means `QUALIFIED` at that gate, not `PREFERRED`/final.
+
+## 5. Workstream B — FRESH_BLIND readiness in parallel
+
+This workstream starts **now**, without waiting for A4.
+
+### B1 — Tier A external blind source — target by 2026-08-25 23:59 BRT
+
+Attempt to authorize an external independently controlled blind source consistent with the frozen P12 protocol.
+
+Required properties:
+
+- real-domain relevance;
+- independent authorship/control from candidate development;
+- no candidate developer access to expected paths/outcomes;
+- explicit source ownership and access log;
+- fixed evaluation packet before candidate-final access;
+- no adaptive feedback during candidate development.
+
+Preparation may include schema/contracts and operational readiness, but not outcome exposure.
+
+### B2 — Tier B independently authored blind fallback — target by 2026-08-28 23:59 BRT
+
+If Tier A is unavailable, prepare the independently authored blind fallback already contemplated by BIG-B3/B4.
+
+The fallback must be genuinely independent. It cannot be a relabeling of already-exposed DEV/VALIDATION/LOCKED_TEST information.
+
+### B3 — Blind access gate
+
+Do not execute the final blind packet until:
+
+- candidate generation is frozen;
+- evaluator is frozen;
+- no further candidate/evaluator changes are allowed from blind outcomes;
+- access authorization is explicit and logged.
+
+Any blind breach consumes that source for the affected generation.
+
+## 6. Workstream C — semantic gate
+
+Target: immediately after deterministic survivors, ideally 2026-08-27/28.
+
+### C1 — Child preregistration
+
+Before any semantic label is produced, freeze:
+
+- exact survivor arms;
+- claim packet construction;
+- judge/model/config;
+- semantic metrics/thresholds;
+- missingness/failure treatment;
+- one-shot attempt semantics.
+
+### C2 — Qualified semantic measurement
+
+Run only for deterministic survivors. If semantic fails, candidate remains unqualified for progression.
+
+Do not use semantic labels as candidate-tuning data in the same generation.
+
+## 7. Workstream D — production-fit and architecture comparison
+
+Target window: 2026-08-24 to 2026-08-31 in parallel with evidence collection.
+
+This workstream is evidence gathering, not architecture freeze.
+
+Material open choices include:
+
+- orchestration/runtime final choice;
+- retrieval/RAG vs simpler evidence routing;
+- vector DB / reranking need;
+- multi-agent decomposition vs single-agent orchestration;
+- persistent memory need;
+- observability backend;
+- provider/model serving strategy;
+- authorization/idempotency/retry boundaries;
+- UI/demo architecture;
+- deployment topology.
+
+For each material choice:
+
+1. define requirement and measurement;
+2. identify simple/null baseline and credible alternatives;
+3. compare latency, reliability, cost, maintainability, observability and security;
+4. keep optional complexity removable unless evidence supports it;
+5. record decision state (`UNASSESSED`, `RESEARCHED`, `QUALIFIED`, `PREFERRED`, `FROZEN`).
+
+Do not let integration/demo work silently freeze architecture.
+
+## 8. Workstream E — final generation, blind evidence and architecture freeze
+
+Target window: 2026-08-30 to 2026-09-04, conditional on prior gates.
+
+### E1 — Generation freeze
+
+Freeze the candidate generation only after:
+
+- deterministic gates pass;
+- semantic gates pass where required;
+- production-fit comparison supports the selected candidate;
+- no material candidate alternative remains unevaluated within the declared search scope.
+
+### E2 — FRESH_BLIND measurement
+
+Run the separately authorized blind packet exactly as frozen.
+
+- PASS can support independent generalization evidence.
+- FAIL cannot be tuned against without consuming that blind generation and requiring a new independent source for a changed generation.
+
+### E3 — LEGACY_LOCKED_TEST
+
+Use only if separately authorized under P12 for supplementary final characterization. Do not substitute it for FRESH_BLIND.
+
+### E4 — Architecture freeze
+
+Only after candidate evidence and production-fit validation support the architecture.
+
+A component becomes `FROZEN` only when the repository-wide completion gate in `PROJECT-PRINCIPLES.md` is satisfied.
+
+## 9. Workstream F — regression, integration and delivery
+
+Target window: 2026-09-03 to 2026-09-08.
+
+Required before delivery:
+
+- end-to-end real-contract regression;
+- deterministic safety/security regression;
+- provider failure/recovery tests;
+- reproducible environment and secrets setup;
+- deployment/runbook documentation;
+- observability evidence;
+- final architecture/ADR documentation;
+- evaluation methodology/results narrative;
+- limitations and non-claims explicitly documented;
+- final demo/presentation built from the production path, not a separate mock path.
+
+## 10. Schedule checkpoint
+
+### 2026-08-24
+
+- close/document C3 terminal failure;
+- complete provider-capacity alternative analysis;
+- start/continue FRESH_BLIND Tier A authorization work;
+- continue production-fit research.
+
+### 2026-08-24/25
+
+- preregister and activate next EXPOSED_POOL experiment only after capacity decision;
+- freeze live execution contract provider-free;
+- target Tier A blind source authorization by 25 Aug 23:59 BRT.
+
+### 2026-08-25 to 2026-08-27
+
+- execute complete prospective EXPOSED_POOL collection;
+- deterministic scoring immediately after freeze;
+- no partial scoring.
+
+### 2026-08-27/28
+
+- semantic child gate only for deterministic survivors;
+- Tier B blind-source fallback deadline by 28 Aug 23:59 BRT if Tier A fails.
+
+### 2026-08-28 to 2026-08-31
+
+- production-fit comparison and candidate-selection decision;
+- close remaining material architecture alternatives;
+- prepare generation freeze.
+
+### 2026-08-31 to 2026-09-03
+
+- freeze candidate generation/evaluator;
+- execute authorized FRESH_BLIND final measurement;
+- supplementary locked characterization only if separately authorized.
+
+### 2026-09-03 to 2026-09-05
+
+- architecture freeze if evidence supports it;
+- end-to-end regression and deployment validation.
+
+### 2026-09-05 to 2026-09-08
+
+- final documentation;
+- reproducibility/runbook cleanup;
+- presentation/demo from production path;
+- delivery buffer for non-scientific defects.
+
+## 11. Decision tree
 
 ```text
-public reads                            34
-evidence_correctness                    0.0000
-mean_expected_read_recall               0.4000
-mean_extra_public_read_count            2.0000
+P12-C3 terminal operational failure
+              │
+              ▼
+provider-capacity alternatives + production-fit comparison
+              │
+              ▼
+new preregistered EXPOSED_POOL experiment (provisionally C4)
+              │
+        ┌─────┴─────┐
+        │           │
+ incomplete       complete freeze
+        │           │
+        ▼           ▼
+no partial      deterministic scoring
+scoring             │
+                 ┌──┴────────────┐
+                 │               │
+             no survivors     survivor(s)
+                 │               │
+                 ▼               ▼
+      diagnose / decide      semantic child
+      if another DEV loop       gate
+      is worth schedule          │
+                             ┌───┴───┐
+                             │       │
+                           FAIL     PASS
+                             │       │
+                             ▼       ▼
+                         no freeze  production-fit
+                                    comparison
+                                         │
+                                         ▼
+                                candidate generation freeze
+                                         │
+                                         ▼
+                                 authorized FRESH_BLIND
+                                         │
+                                  ┌──────┴──────┐
+                                  │             │
+                                FAIL           PASS
+                                  │             │
+                           no final claim   architecture/final
+                                           evidence freeze
 ```
 
-### E14s — FAIL
+FRESH_BLIND source authorization/preparation runs in parallel on the left side of this tree but outcome access remains blocked until generation freeze.
 
-Candidate-pool consensus with cap 6:
+## 12. Stop / pivot rules
 
-```text
-public reads                            59
-evidence_correctness                    0.2000
-mean_expected_read_recall               0.7750
-mean_extra_public_read_count            3.1000
-```
+To protect the 2026-09-08 delivery:
 
-Directionally useful but below the frozen evidence gate. Its semantic packet was characterization-only; no semantic judge was called.
+- do not spend repeated cycles on the same provider-capacity failure mode without a materially improved feasibility argument;
+- if no complete prospective EXPOSED_POOL packet can be produced by the end of 2026-08-27, reassess scope and prioritize a scientifically honest final report over invalid repeated attempts;
+- if no FRESH_BLIND source is authorized by the Tier B deadline, explicitly downgrade the final generalization claim rather than substituting exposed evidence;
+- if no candidate passes deterministic/semantic gates, do not force a production-ready claim; deliver the strongest validated foundation, failure analysis and next research path;
+- preserve time after 2026-09-03 for integration/regression/documentation.
 
-### E14t — FAIL, strongest deterministic evidence result so far
+## 13. Definition of project success
 
-Bounded restoration added four public reads to the E14s selection while preserving all non-evidence fields:
+The strongest target remains:
 
-```text
-public reads                            63
-evidence_correctness                    0.3000
-mean_expected_read_recall               0.8000
-mean_extra_public_read_count            3.4000
-reference_quality                       0.8143
-decision_correctness                    0.8000
-action_correctness                      0.8000
-escalation_correctness                  0.8000
-premature_action_rate                   0.0000
-unsupported_action_or_escalation_rate   0.0000
-leakage                                 0.0000
-```
+1. at least one candidate passes deterministic and required semantic gates;
+2. candidate is best-supported after credible alternative comparison and production-fit analysis;
+3. candidate generation is frozen;
+4. independent FRESH_BLIND evidence supports the generalization claim;
+5. architecture passes production-fit validation and is frozen;
+6. end-to-end regression and operational documentation are complete.
 
-E9 v4.1 defines `evidence_correct` per call as full expected-read recall. Therefore E14t at `0.3` means 3/10 calls are complete. With only 0.1 mean extra-read headroom, pure expansion cannot guarantee 5/10 complete calls. This established that the next intervention had to improve **evidence selection/reasoning**, not simply add reads.
-
-### E14u — FAIL
-
-E14u moved the intervention upstream into a public evidence-decomposition system prompt. The authorized generation completed 10/10 full-DEV calls, followed by the unchanged deterministic post-stack:
-
-```text
-E14u raw generation
-→ E14n v1.1
-→ E14p
-→ E14q
-→ E14q2
-→ public surface audit
-→ E9 v4.1 once
-→ v4.2 claim packet
-```
-
-The deterministic safety surface remained clean, but the evidence blocker worsened:
-
-```text
-evidence_correctness                    0.1000
-mean_expected_read_recall               0.7417
-mean_extra_public_read_count            4.0000
-decision_correctness                    0.8000
-action_correctness                      0.8000
-escalation_correctness                  0.8000
-premature_action_rate                   0.0000
-unsupported_action_or_escalation_rate   0.0000
-leakage                                 0.0000
-```
-
-The E14u v4.2 packet contained 214 claims, including 134 evidence-plan claim units. Because frozen v4.1 failed, that packet is characterization-only and **no Qwen semantic measurement was run**.
-
-Conclusion: whole-response prompt decomposition increased evidence-plan surface area without improving route selection. E14u is rejected.
-
-## Active research line — E14v isolated public evidence-route planner
-
-E14v separates evidence-route selection from whole-response generation. The planner outputs only canonical public GET routes and is qualified on a frozen public synthetic suite before any real DEV planner call is allowed.
-
-Frozen scientific candidate:
-
-```text
-provider                    Groq free
-model                       openai/gpt-oss-120b
-reasoning effort            medium
-temperature                 0
-max completion tokens       1024
-synthetic cases             14
-max distinct reads          7
-VALIDATION                   forbidden
-LOCKED_TEST                  forbidden
-```
-
-The planner is forbidden from using private expected paths, private scorer rows, semantic judge labels, VALIDATION feedback, LOCKED_TEST, coverage tags, ticket-specific rules, or parent evidence-plan selections.
-
-### E14v synthetic attempt #1 — operationally invalid
-
-Structural CI passed before the attempt. The single authorized public synthetic run produced:
-
-```text
-synthetic rows                      14
-rows with provider error            14
-rows with valid route contract       0
-provider error category       HTTPError
-```
-
-No route-quality conclusion was drawn and the attempt lock remains consumed.
-
-### E14v-A synthetic attempt #2 — operationally invalid, HTTP 403
-
-E14v-A was preregistered as a transport-contract-only amendment:
-
-```text
-response format        strict json_schema
-include_reasoning      false
-reasoning_format       not sent
-```
-
-Model, prompt, fixture, thresholds, route catalog, reasoning effort, temperature, retry policy and pacing remained unchanged.
-
-Sanitized aggregate diagnostic:
-
-```text
-synthetic rows                      14
-HTTP 403                            14
-rows with provider error            14
-rows with valid route contract       0
-transport attempts / row             3
-```
-
-This was classified as **external provider permission/access denial**, not planner-quality failure. The E14v-A output and lock remain consumed and preserved.
-
-### E14v-B synthetic attempt #3 — FAIL, transport diagnosis pending
-
-After manual confirmation that `openai/gpt-oss-120b` was permitted at the relevant Groq organization/project layers, E14v-B was preregistered as a provider-permission-remediation-only continuation.
-
-The wrapper reuses the E14v-A provider transport rather than reimplementing it. Final structural CI passed:
-
-```text
-workflow   research-e14v-b-provider-permission-remediation
-run_id     32373474815
-job_id     96439178694
-conclusion success
-```
-
-The single authorized E14v-B synthetic attempt was then consumed and returned:
-
-```text
-status                              FAIL
-synthetic cases                       14
-valid_output_rate                 0.0000
-route_recall                      0.0000
-action_dependency_recall          0.0000
-exact_set_match_rate              0.0000
-mean_extra_reads                   0.0000
-unknown_route_count                     0
-duplicate_route_count                   0
-read_cap_violations                     0
-```
-
-This aggregate alone does **not** establish planner-quality failure because no valid output reached route evaluation. The current required step is a local, provider-free sanitized transport diagnostic over the fixed E14v-B artifact, exposing only aggregate error category, HTTP status, transport-attempt distribution and route-contract validity.
-
-No E14v-C or real DEV attempt is authorized yet.
-
-## Current action checklist
-
-### Foundations and evaluator
-
-- [x] Freeze E9 v4.1 evaluator semantics.
-- [x] Freeze E9 v4.2 semantic protocol.
-- [x] Qualify independent Qwen semantic judge on frozen public synthetic suite.
-- [x] Complete 5/5 full-DEV coverage.
-- [x] Retain E14n v1.1 provenance guard.
-- [x] Validate E14p serializer behavior.
-- [x] Close deterministic safety/action guard stack with E14q/E14q2.
-
-### Evidence-selection experiments
-
-- [x] Reject E14r from aggregate-only evidence.
-- [x] Reject E14s from aggregate-only evidence.
-- [x] Reject E14t from aggregate-only evidence.
-- [x] Record the upper-bound argument showing pure-addition cannot satisfy the evidence-correctness target under the extras budget.
-- [x] Preregister and structurally qualify E14u.
-- [x] Run the single authorized E14u 10-call full-DEV generation.
-- [x] Apply unchanged E14n → E14p → E14q → E14q2 stack to E14u.
-- [x] Run E14u public surface audit and E9 v4.1 once.
-- [x] Build E14u v4.2 claim packet.
-- [x] Reject E14u from aggregate-only v4.1 evidence; do not run Qwen.
-
-### E14v isolated route planner
-
-- [x] Preregister isolated public evidence-route planner.
-- [x] Freeze 14-case public synthetic qualification suite and thresholds.
-- [x] Pass E14v structural CI.
-- [x] Consume E14v synthetic attempt #1; classify as operationally invalid.
-- [x] Preregister E14v-A transport-only amendment.
-- [x] Pass E14v-A structural CI.
-- [x] Consume E14v-A synthetic attempt #2.
-- [x] Diagnose E14v-A as 14/14 HTTP 403 provider-access denial.
-- [x] Confirm Groq model permission remediation externally.
-- [x] Preregister E14v-B provider-permission-remediation-only continuation.
-- [x] Pass final E14v-B structural CI (`32373474815`).
-- [x] Consume the single E14v-B synthetic attempt #3.
-- [ ] Run the provider-free sanitized E14v-B transport diagnostic.
-- [ ] Classify E14v-B as provider/transport failure versus valid-response contract/planner failure using aggregate-only diagnostics.
-- [ ] If another operational amendment is justified, preregister it before any provider call; never silently rerun a consumed attempt.
-- [ ] Authorize real E14v DEV only after a frozen public synthetic qualification passes.
-
-### Gates after a valid E14v synthetic PASS
-
-- [ ] Run exactly one real E14v DEV planner attempt over the fixed E14p parent.
-- [ ] Reapply unchanged E14q → E14q2.
-- [ ] Run public surface audit.
-- [ ] Run frozen E9 v4.1 exactly once on the new fixed candidate.
-- [ ] Build the new v4.2 claim packet.
-- [ ] If deterministic full DEV passes, preregister the exact semantic packet shape before one qualified semantic measurement.
-- [ ] If deterministic + semantic full DEV pass, authorize VALIDATION measurement-only.
-- [ ] Keep final architecture unfrozen until the full-DEV gate closes.
-- [ ] Keep LOCKED_TEST untouched until final evaluation.
-
-## Decision tree from the current checkpoint
-
-```text
-E14v-B fixed synthetic artifact
-            │
-            ▼
-provider-free sanitized transport diagnostic
-            │
-     ┌──────┴───────────────────────────────┐
-     │                                      │
-provider/transport error             valid provider responses
-     │                                      │
-     ▼                                      ▼
-classify exact aggregate cause       assess output-contract/planner failure
-     │                                      │
-     ▼                                      ▼
-explicit amendment only              reject/amend scientifically
-(no silent rerun)                    without DEV/private-row inspection
-     │                                      │
-     └──────────────────┬───────────────────┘
-                        │
-                        ▼
-             frozen synthetic PASS required
-                        │
-                        ▼
-                one real DEV planner attempt
-                        │
-                        ▼
-              E14q → E14q2 → surface
-                        │
-                        ▼
-                    E9 v4.1
-                        │
-                ┌───────┴───────┐
-                │               │
-              FAIL             PASS
-                │               │
-          stay in DEV     build/preregister
-                           semantic packet
-                                │
-                                ▼
-                         one semantic measure
-                                │
-                         ┌──────┴──────┐
-                         │             │
-                       FAIL           PASS
-                         │             │
-                    stay in DEV   VALIDATION
-                                  measurement-only
-```
-
-## Non-negotiable boundaries
-
-- No tuning on VALIDATION.
-- No LOCKED_TEST access before final evaluation.
-- No private expected paths or private scorer rows in model prompts or candidate logic.
-- No per-row private-label inspection to design E14u/E14v follow-ups.
-- No semantic-judge labels used as candidate-tuning data.
-- All consumed real-provider attempts retain their attempt locks; locks must never be deleted or bypassed.
-- E14u full-DEV generation must never be rerun.
-- E14v, E14v-A and E14v-B synthetic attempts must never be rerun under their consumed locks.
-- Any new provider/model/transport/prompt/fixture/threshold change requires an explicit preregistration or amendment before provider execution.
-- No real E14v DEV run before public synthetic qualification passes.
-- No integration/demo/final architecture freeze until deterministic + semantic full-DEV gates close.
+If external constraints prevent this full target, success becomes an **evidence-honest delivery**: preserve every failed attempt, avoid unsupported claims, quantify remaining uncertainty and deliver the strongest components whose states are actually supported by evidence.
