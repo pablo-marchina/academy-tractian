@@ -1,0 +1,84 @@
+name: research-p12-c4-prompt-contract-inspection
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c4-prompt-contract-inspection.yml'
+      - 'research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz'
+      - 'scripts/research/p12_c2_execution_derivation.py'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  provider-free-prompt-contract-inspection:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert provider/private boundaries
+        run: |
+          test -z "${CEREBRAS_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Derive frozen P12-C2 common-parent runner
+        run: |
+          python scripts/research/p12_c2_execution_derivation.py \
+            --parent-gz research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz \
+            --out /tmp/p12_c2_factorial_execution.py
+          echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  /tmp/p12_c2_factorial_execution.py' | sha256sum -c -
+      - name: Extract request-construction source only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('/tmp/p12_c2_factorial_execution.py').read_text(encoding='utf-8').splitlines()
+          needles=('def generate_one', 'messages', 'payload', 'post_json', 'response_format', 'max_completion_tokens', 'reasoning_effort', 'tool')
+          selected=set()
+          for i,line in enumerate(src):
+              if any(n in line for n in needles):
+                  for j in range(max(0,i-12), min(len(src),i+28)):
+                      selected.add(j)
+          out=[]
+          last=None
+          for i in sorted(selected):
+              if last is not None and i>last+1:
+                  out.append('...')
+              out.append(f'{i+1:05d}: {src[i]}')
+              last=i
+          Path('/tmp/p12-c4-request-construction-inspection.txt').write_text('\n'.join(out)+'\n',encoding='utf-8')
+          print(f'lines_selected={len(selected)} total_source_lines={len(src)}')
+          PY
+      - name: Emit isolation evidence
+        run: |
+          python - <<'PY' > /tmp/p12-c4-prompt-inspection-evidence.json
+          import hashlib,json,pathlib
+          p=pathlib.Path('/tmp/p12-c4-request-construction-inspection.txt')
+          print(json.dumps({
+            'schema_version':'p12-c4-prompt-contract-inspection-v1',
+            'status':'PASS',
+            'provider_calls':0,
+            'credentials_read':0,
+            'benchmark_inputs_loaded':0,
+            'private_oracle_accesses':0,
+            'fresh_blind_accesses':0,
+            'legacy_locked_test_accesses':0,
+            'derived_runner_sha256':hashlib.sha256(pathlib.Path('/tmp/p12_c2_factorial_execution.py').read_bytes()).hexdigest(),
+            'inspection_sha256':hashlib.sha256(p.read_bytes()).hexdigest()
+          },indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-prompt-contract-inspection
+          path: |
+            /tmp/p12-c4-request-construction-inspection.txt
+            /tmp/p12-c4-prompt-inspection-evidence.json
+          retention-days: 30
+          if-no-files-found: error
