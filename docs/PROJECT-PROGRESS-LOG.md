@@ -29,7 +29,7 @@ Canonical artifacts:
 
 ### BIG-B2 — benchmark-design alternatives — COMPLETE
 
-Compared balanced folds, LOGO, leave-two-out and fresh-blind designs using the known 7-group exposed geometry.
+Compared balanced folds, LOGO, leave-two-out and fresh-blind designs using the known seven-group exposed geometry.
 
 Canonical artifacts:
 
@@ -76,7 +76,7 @@ Canonical artifacts:
 
 ### Preregistration and activation — COMPLETE
 
-Frozen a paired EXPOSED_POOL comparison between C0 reference evidence restoration and C1 bounded canonical route selection using 36 common parents and 3 repetitions per visible ticket.
+Froze a paired EXPOSED_POOL comparison between C0 reference evidence restoration and C1 bounded canonical route selection using 36 common parents and three repetitions per visible ticket.
 
 ### Live execution and deterministic scoring — COMPLETE
 
@@ -191,12 +191,13 @@ Canonical closure:
 - `research/results/p12-c3-live-cycle-closure-2026-08-23.json`
 - `research/p12-c3-live-cycle-closure-2026-08-23.md`
 
-## Phase 6 — canonical project checkpoint and plan reset
+## Phase 6 — canonical checkpoint and plan reset
 
 After C3, the repository separated historical planning from current control documents:
 
 - `docs/CURRENT-PROJECT-STATUS.md` — canonical current evidence/status;
-- `docs/PROJECT-PLAN.md` — active action plan;
+- `docs/PROJECT-PLAN.md` — active reviewed action plan;
+- `docs/PROJECT-PROGRESS-LOG.md` — this chronological ledger;
 - `docs/archive/PROJECT-PLAN-2026-08-20.md` — archived historical plan;
 - `research/results/project-progress-checkpoint-2026-08-23.json` — preserved prior machine checkpoint;
 - `research/results/project-progress-checkpoint-2026-08-24.json` — current machine checkpoint.
