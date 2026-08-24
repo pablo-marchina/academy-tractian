@@ -31,7 +31,9 @@
     "sdk_package": "cerebras_cloud_sdk",
     "sdk_version": "1.91.0",
     "client_warm_tcp_connection": false,
+    "client_max_retries": 0,
     "implicit_warming_requests_allowed": false,
+    "implicit_retry_requests_allowed": false,
     "exact_sdk_version_must_be_reported_in_probe_evidence": true
   },
   "published_capacity_feasibility_boundary": {
@@ -101,7 +103,7 @@
     "if_account_limits_are_below_the_preregistered_capacity_boundary_reopen_adr_before_any_live_probe",
     "if_free_trial_is_inactive_or_expired_do_not_claim_zero_cash_spend",
     "if_measured_prompt_plus_4096_reservation_lacks_safe_tpm_margin_reopen_capacity_plan",
-    "if_sdk_version_or_warming_behavior_differs_from_frozen_transport_contract_stop_before_probe",
+    "if_sdk_version_warming_or_retry_behavior_differs_from_frozen_transport_contract_stop_before_probe",
     "if_required_request_semantics_need_candidate_visible_workarounds_reopen_adr",
     "if_provider_model_or_serving_contract_changes_after_freeze_do_not_silently_continue",
     "if_any_benchmark_or_private_input_is_loaded_by_provider_qualification_stop",
