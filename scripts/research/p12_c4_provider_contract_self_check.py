@@ -38,18 +38,9 @@ def load_json(path: Path) -> dict[str, Any]:
 def validate_static_isolation() -> dict[str, bool]:
     source = BUILDER_SOURCE.read_text(encoding="utf-8")
     forbidden_fragments = [
-        "CEREBRAS_API_KEY",
-        "GROQ_API_KEY",
-        "import requests",
-        "from requests",
-        "import httpx",
-        "from httpx",
-        "import urllib",
-        "from urllib",
-        "import socket",
-        "from socket",
-        "api.cerebras.ai",
-        "api.groq.com",
+        "CEREBRAS_API_KEY", "GROQ_API_KEY", "import requests", "from requests",
+        "import httpx", "from httpx", "import urllib", "from urllib",
+        "import socket", "from socket", "api.cerebras.ai", "api.groq.com",
     ]
     hits = [fragment for fragment in forbidden_fragments if fragment in source]
     require(not hits, f"pure request builder contains forbidden provider-I/O fragments: {hits}")
@@ -67,18 +58,21 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, bool]:
 
     predecessor = manifest["predecessor_reuse_policy"]
     require(all(predecessor.get(key) is False for key in [
-        "rerun_consumed_experiments",
-        "reuse_partial_parent_outputs",
-        "reuse_partial_scores",
-        "reuse_live_seeds",
+        "rerun_consumed_experiments", "reuse_partial_parent_outputs", "reuse_partial_scores", "reuse_live_seeds",
     ]), "consumed predecessor reuse must remain forbidden")
 
     provider = manifest["provider"]
     require(provider.get("name") == contract.PROVIDER, "provider mismatch")
+    require(provider.get("tier") == "free_trial", "Cerebras tier must be recorded as Free Trial, not permanent free")
     require(provider.get("model_id") == contract.MODEL_ID, "model id mismatch")
     require(provider.get("underlying_model_family") == contract.UNDERLYING_MODEL_FAMILY, "underlying model family mismatch")
     require(provider.get("automatic_failover") is False and provider.get("fallback_provider") is None, "silent provider fallback must remain forbidden")
     require(provider.get("serving_path_change_is_explicit_confound") is True, "serving-path confound must stay explicit")
+    require(provider.get("permanently_free_tier") is False, "Cerebras must not be represented as permanently free")
+    require(provider.get("free_trial_requires_verified_payment_method") is True, "Free Trial payment-method prerequisite must remain explicit")
+    require(provider.get("free_trial_credit_usd") == 5, "Free Trial credit boundary mismatch")
+    require(provider.get("free_trial_credit_expiry_days") == 30, "Free Trial expiry boundary mismatch")
+    require(provider.get("zero_cash_spend_is_conditional_on_active_trial_credit") is True, "zero-cash-spend claim must remain conditional")
 
     request = manifest["frozen_request_contract"]
     require(request.get("temperature") == contract.TEMPERATURE, "temperature mismatch")
@@ -86,6 +80,7 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, bool]:
     require(request.get("reasoning_format") == contract.REASONING_FORMAT, "reasoning format mismatch")
     require(request.get("max_completion_tokens") == contract.MAX_COMPLETION_TOKENS, "completion budget mismatch")
     require(request.get("seed_binding") == "required_per_common_parent", "seed binding must be required")
+    require(request.get("seed_determinism_guarantee") == "best_effort_only", "seed determinism must not be overstated")
     require(request["structured_output"] == {"type": "json_schema", "strict": True}, "structured-output contract mismatch")
     require(request["tool_semantics"]["support_required"] is True, "tool support must remain required")
     require(request["tool_semantics"]["tool_choice_support_required"] is True, "tool_choice support must remain required")
@@ -110,19 +105,20 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, bool]:
     authorization = manifest["authorization"]
     require(authorization.get("provider_free_contract_checks") is True, "provider-free check must be authorized")
     require(all(authorization.get(key) is False for key in [
-        "synthetic_live_provider_probe",
-        "exposed_pool_live_generation",
-        "private_scoring",
-        "fresh_blind_measurement",
-        "legacy_locked_test_measurement",
+        "synthetic_live_provider_probe", "exposed_pool_live_generation", "private_scoring",
+        "fresh_blind_measurement", "legacy_locked_test_measurement",
     ]), "all live/scoring authorization must remain false at this stage")
 
     capacity = manifest["published_capacity_feasibility_boundary"]
-    require(capacity.get("minimum_tpm") >= 64000, "TPM feasibility boundary regressed")
+    require(capacity.get("minimum_tpm") >= 30000, "TPM feasibility boundary regressed below documented Free Trial baseline")
+    require(capacity.get("minimum_tph") >= 1000000, "TPH feasibility boundary regressed")
     require(capacity.get("minimum_tpd") >= 1000000, "TPD feasibility boundary regressed")
-    require(capacity.get("minimum_rpm") >= 30, "RPM feasibility boundary regressed")
+    require(capacity.get("minimum_rpm") >= 5, "RPM feasibility boundary regressed below documented Free Trial baseline")
     expected_budget = packet["common_parent_generations"] * request["max_completion_tokens"]
     require(capacity.get("maximum_completion_token_budget") == expected_budget == 147456, "completion-token feasibility math mismatch")
+    require(capacity.get("rate_limit_estimation_includes_prompt_plus_max_completion_tokens") is True, "provider token-reservation semantics must remain explicit")
+    require(capacity.get("pre_live_prompt_token_estimate_required") is True, "prompt-token estimate must gate live execution")
+    require(capacity.get("pacing_must_be_derived_from_verified_limits_and_measured_prompt_size") is True, "pacing cannot be hard-coded without request-size evidence")
     require(capacity.get("account_level_limits_verified") is False, "account limits cannot be marked verified without separate evidence")
     require(capacity.get("account_level_verification_required_before_any_live_probe") is True, "account-level verification must gate live probe")
 
@@ -130,12 +126,15 @@ def validate_manifest(manifest: dict[str, Any]) -> dict[str, bool]:
         "manifest_bound_to_accepted_adr": True,
         "consumed_runs_reuse_forbidden": True,
         "serving_provider_frozen": True,
+        "free_trial_semantics_explicit": True,
         "silent_failover_forbidden": True,
         "request_semantics_frozen": True,
+        "seed_determinism_not_overstated": True,
         "complete_packet_invariant_frozen": True,
         "benchmark_isolation_frozen": True,
         "all_live_authorizations_blocked": True,
         "capacity_boundary_consistent": True,
+        "prompt_plus_completion_reservation_accounted_for": True,
         "account_limit_verification_still_required": True,
     }
 
@@ -147,18 +146,12 @@ def validate_synthetic_requests() -> tuple[dict[str, bool], dict[str, str]]:
     ]
     schema = {
         "type": "object",
-        "properties": {
-            "contract_marker": {"type": "string"},
-            "ok": {"type": "boolean"},
-        },
+        "properties": {"contract_marker": {"type": "string"}, "ok": {"type": "boolean"}},
         "required": ["contract_marker", "ok"],
         "additionalProperties": False,
     }
     structured = contract.build_structured_output_request(
-        messages,
-        seed=424242,
-        schema_name="p12_c4_provider_contract_probe",
-        schema=schema,
+        messages, seed=424242, schema_name="p12_c4_provider_contract_probe", schema=schema,
     )
     require(structured["model"] == "gpt-oss-120b", "structured request model mismatch")
     require(structured["temperature"] == 0, "structured request temperature mismatch")
