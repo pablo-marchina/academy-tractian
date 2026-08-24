@@ -7,16 +7,38 @@ on:
       - '.github/workflows/research-p12-c4-provider-contract-self-check.yml'
       - 'docs/adr/001-provider-capacity-serving-path-2026-08-24.md'
       - 'research/experiments/p12-c4-provider-serving-contract-v1.json'
+      - 'research/frozen/p12-c4-fresh-seed-map-v1.json'
+      - 'research/experiments/p12-c1-*.json'
+      - 'research/experiments/p12-c2-*.json'
+      - 'research/experiments/p12-c3-*.json'
+      - 'research/frozen/p12-c1-*.json'
+      - 'research/frozen/p12-c2-*.json'
+      - 'research/frozen/p12-c3-*.json'
+      - 'research/results/p12-c1-*.json'
+      - 'research/results/p12-c2-*.json'
+      - 'research/results/p12-c3-*.json'
       - 'scripts/research/p12_c4_cerebras_request_contract.py'
       - 'scripts/research/p12_c4_provider_contract_self_check.py'
+      - 'scripts/research/p12_c4_seed_isolation_self_check.py'
   push:
     branches: [research/systematic-foundation]
     paths:
       - '.github/workflows/research-p12-c4-provider-contract-self-check.yml'
       - 'docs/adr/001-provider-capacity-serving-path-2026-08-24.md'
       - 'research/experiments/p12-c4-provider-serving-contract-v1.json'
+      - 'research/frozen/p12-c4-fresh-seed-map-v1.json'
+      - 'research/experiments/p12-c1-*.json'
+      - 'research/experiments/p12-c2-*.json'
+      - 'research/experiments/p12-c3-*.json'
+      - 'research/frozen/p12-c1-*.json'
+      - 'research/frozen/p12-c2-*.json'
+      - 'research/frozen/p12-c3-*.json'
+      - 'research/results/p12-c1-*.json'
+      - 'research/results/p12-c2-*.json'
+      - 'research/results/p12-c3-*.json'
       - 'scripts/research/p12_c4_cerebras_request_contract.py'
       - 'scripts/research/p12_c4_provider_contract_self_check.py'
+      - 'scripts/research/p12_c4_seed_isolation_self_check.py'
 
 permissions:
   contents: read
@@ -44,38 +66,58 @@ jobs:
         run: |
           python -m py_compile \
             scripts/research/p12_c4_cerebras_request_contract.py \
-            scripts/research/p12_c4_provider_contract_self_check.py
+            scripts/research/p12_c4_provider_contract_self_check.py \
+            scripts/research/p12_c4_seed_isolation_self_check.py
       - name: Run P12-C4 provider-free serving contract self-check
         run: |
           python scripts/research/p12_c4_provider_contract_self_check.py \
             --output /tmp/p12-c4-provider-contract-self-check.json
+      - name: Run P12-C4 predecessor seed-isolation self-check
+        run: |
+          python scripts/research/p12_c4_seed_isolation_self_check.py \
+            --output /tmp/p12-c4-seed-isolation-self-check.json
       - name: Assert compact qualification evidence
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
 
-          result=json.loads(Path('/tmp/p12-c4-provider-contract-self-check.json').read_text())
-          assert result['status']=='PASS'
-          assert result['provider']=='cerebras'
-          assert result['model_id']=='gpt-oss-120b'
-          assert result['provider_calls']==0
-          assert result['credentials_read']==0
-          assert result['benchmark_inputs_loaded']==0
-          assert result['private_oracle_accesses']==0
-          assert result['fresh_blind_accesses']==0
-          assert result['legacy_locked_test_accesses']==0
-          assert result['live_generation_authorized'] is False
-          assert result['synthetic_live_probe_authorized'] is False
-          assert result['next_gate']=='VERIFY_ACCOUNT_LIMITS_AND_PREREGISTER_SYNTHETIC_LIVE_COMPATIBILITY_PROBE'
-          assert all(result['assertions'].values())
-          assert len(result['request_hashes']['structured_request_sha256'])==64
-          assert len(result['request_hashes']['tool_request_sha256'])==64
-          print('P12_C4_PROVIDER_FREE_SERVING_CONTRACT_PASS')
+          contract=json.loads(Path('/tmp/p12-c4-provider-contract-self-check.json').read_text())
+          assert contract['status']=='PASS'
+          assert contract['provider']=='cerebras'
+          assert contract['model_id']=='gpt-oss-120b'
+          assert contract['provider_calls']==0
+          assert contract['credentials_read']==0
+          assert contract['benchmark_inputs_loaded']==0
+          assert contract['private_oracle_accesses']==0
+          assert contract['fresh_blind_accesses']==0
+          assert contract['legacy_locked_test_accesses']==0
+          assert contract['live_generation_authorized'] is False
+          assert contract['synthetic_live_probe_authorized'] is False
+          assert contract['next_gate']=='VERIFY_ACCOUNT_LIMITS_AND_PREREGISTER_SYNTHETIC_LIVE_COMPATIBILITY_PROBE'
+          assert all(contract['assertions'].values())
+          assert len(contract['request_hashes']['structured_request_sha256'])==64
+          assert len(contract['request_hashes']['tool_request_sha256'])==64
+
+          seeds=json.loads(Path('/tmp/p12-c4-seed-isolation-self-check.json').read_text())
+          assert seeds['status']=='PASS'
+          assert seeds['provider_calls']==0
+          assert seeds['credentials_read']==0
+          assert seeds['benchmark_outcomes_read']==0
+          assert seeds['c4_seed_count']==36
+          assert seeds['c4_seed_unique_count']==36
+          assert seeds['predecessor_artifact_count'] > 0
+          assert seeds['seed_collisions']==[]
+          assert seeds['derivation_recomputed'] is True
+          assert seeds['live_generation_authorized'] is False
+          assert seeds['next_gate']=='VERIFY_ACCOUNT_LIMITS_AND_PREREGISTER_SYNTHETIC_LIVE_COMPATIBILITY_PROBE'
+          print('P12_C4_PROVIDER_FREE_SERVING_AND_SEED_ISOLATION_PASS')
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: p12-c4-provider-contract-self-check
-          path: /tmp/p12-c4-provider-contract-self-check.json
+          name: p12-c4-provider-free-self-checks
+          path: |
+            /tmp/p12-c4-provider-contract-self-check.json
+            /tmp/p12-c4-seed-isolation-self-check.json
           retention-days: 90
           if-no-files-found: error
