@@ -1,0 +1,85 @@
+{
+  "schema_version": "p12-c4-prompt-budget-and-pacing-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "status": "FROZEN_PROVIDER_FREE_CONDITIONAL_ON_ACCOUNT_ATTESTATION",
+  "date": "2026-08-24",
+  "provider": "cerebras",
+  "model_id": "gpt-oss-120b",
+  "tokenizer": {
+    "library": "tiktoken",
+    "version": "0.14.0",
+    "encoding": "o200k_harmony"
+  },
+  "request_contract": {
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "reasoning_format": "hidden",
+    "max_completion_tokens": 4096,
+    "strict_json_schema": true,
+    "fresh_c4_seed_binding": true
+  },
+  "provider_free_measurement": {
+    "parents_materialized": 36,
+    "provider_calls": 0,
+    "credentials_read": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "serialized_request_token_range": {"min": 2195, "max": 2217},
+    "max_system_plus_user_content_tokens": 1691,
+    "conservative_bound_method": {
+      "serialized_request_safety_multiplier": 1.25,
+      "fixed_template_margin_tokens": 512,
+      "provider_exact_prompt_token_count_claimed": false
+    },
+    "max_conservative_prompt_upper_bound_tokens": 3284,
+    "max_reserved_admission_tokens_including_completion": 7380,
+    "worst_case_parent_id": "P20",
+    "worst_case_ticket_id": "TKT-INV-11b",
+    "full_packet_reserved_admission_upper_bound_tokens": 265002
+  },
+  "minimum_account_boundary_required": {
+    "rpm": 5,
+    "uncached_tpm": 30000,
+    "tph": 1000000,
+    "tpd": 1000000,
+    "exact_organization_limits_must_be_attested": true,
+    "active_api_access_must_be_attested": true
+  },
+  "frozen_pacing": {
+    "minimum_seconds_between_any_provider_requests": 75,
+    "maximum_requests_in_any_60_second_window": 1,
+    "nominal_request_rate_per_minute": 0.8,
+    "minimum_elapsed_seconds_for_36_requests": 2625,
+    "minimum_elapsed_minutes_for_36_requests": 43.75,
+    "implicit_sdk_retries": 0,
+    "implicit_sdk_warming_requests": 0,
+    "automatic_failover": false,
+    "minimum_tpm_headroom_tokens_at_published_boundary": 22620,
+    "minimum_tpm_headroom_fraction_at_published_boundary": 0.754,
+    "token_bucket_bursting_above_this_schedule_forbidden": true
+  },
+  "scientific_scope": {
+    "uses_public_exposed_geometry_only": true,
+    "uses_c1_c2_c3_candidate_outputs": false,
+    "uses_c1_c2_c3_scores": false,
+    "uses_c2_c3_partial_parents": false,
+    "uses_c2_c3_live_seeds": false
+  },
+  "qualification_evidence": {
+    "workflow": "research-p12-c4-prompt-token-sizing",
+    "workflow_run_id": 32739612487,
+    "job_id": 97470645167,
+    "conclusion": "success",
+    "artifact_id": 9524622257,
+    "artifact_digest": "sha256:3fe9344d7b0224b17ef1d0c6542840c64f8d020c874b45cdb6f2708a1951f882",
+    "sizing_script": "scripts/research/p12_c4_prompt_token_sizing.py"
+  },
+  "authorization": {
+    "prompt_budget_and_pacing_frozen": true,
+    "synthetic_live_probe": false,
+    "exposed_pool_live_generation": false,
+    "private_scoring": false
+  },
+  "next_gate": "ACTUAL_CEREBRAS_ACCOUNT_LIMIT_ATTESTATION_AND_ACTIVE_API_ACCESS_PASS"
+}
