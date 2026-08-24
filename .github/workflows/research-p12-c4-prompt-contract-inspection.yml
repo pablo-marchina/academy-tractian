@@ -40,11 +40,15 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           src=Path('/tmp/p12_c2_factorial_execution.py').read_text(encoding='utf-8').splitlines()
-          needles=('def generate_one', 'messages', 'payload', 'post_json', 'response_format', 'max_completion_tokens', 'reasoning_effort', 'tool')
+          needles=(
+              'def model_call_with_repair', 'def generate_one', 'e10b_build_prompt',
+              'messages', 'payload', 'post_json', 'response_format',
+              'max_completion_tokens', 'reasoning_effort', 'reasoning_format', 'tool'
+          )
           selected=set()
           for i,line in enumerate(src):
               if any(n in line for n in needles):
-                  for j in range(max(0,i-12), min(len(src),i+28)):
+                  for j in range(max(0,i-30), min(len(src),i+80)):
                       selected.add(j)
           out=[]
           last=None
@@ -62,7 +66,7 @@ jobs:
           import hashlib,json,pathlib
           p=pathlib.Path('/tmp/p12-c4-request-construction-inspection.txt')
           print(json.dumps({
-            'schema_version':'p12-c4-prompt-contract-inspection-v1',
+            'schema_version':'p12-c4-prompt-contract-inspection-v2',
             'status':'PASS',
             'provider_calls':0,
             'credentials_read':0,
@@ -78,6 +82,7 @@ jobs:
         with:
           name: p12-c4-prompt-contract-inspection
           path: |
+            /tmp/p12_c2_factorial_execution.py
             /tmp/p12-c4-request-construction-inspection.txt
             /tmp/p12-c4-prompt-inspection-evidence.json
           retention-days: 30
