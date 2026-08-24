@@ -1,0 +1,80 @@
+{
+  "schema_version": "p12-c3-live-cycle-closure-v1",
+  "date": "2026-08-23",
+  "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
+  "execution_id": "P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23",
+  "state": "CONSUMED_TERMINAL_OPERATIONAL_FAILURE",
+  "scientific_candidate_definitions_changed_from_p12_c2": false,
+  "initial_b1_preprovider_run": {
+    "workflow_run_id": 32671370930,
+    "trigger_head_sha": "74f02556f8064c52663ff7c9190b64cca0c89b9b",
+    "provider_requests": 0,
+    "candidate_outcomes_observed": 0,
+    "completed_cells": 0,
+    "pending_cells": 36,
+    "terminal_failure": false,
+    "classification": "PRE_PROVIDER_INFRASTRUCTURE_COMPATIBILITY_FAILURE"
+  },
+  "pre_outcome_amendment": {
+    "scope": "E14l transport-invariant compatibility only; restore frozen C3 controller values before provider access",
+    "candidate_model_prompt_evaluator_seeds_batch_map_metrics_or_gates_changed": false,
+    "effective_runner_sha256": "07808b140d5f90211d5c3445988b46983754825303cbb66123255143094e08be",
+    "provider_free_qualification_runs": [32671829920, 32672049576]
+  },
+  "continued_b1_run": {
+    "workflow_run_id": 32672167702,
+    "trigger_head_sha": "d952113ef96f668b5e2e5692607f189404eae126",
+    "preflight_conclusion": "success",
+    "collect_job_id": 97274694081,
+    "collect_conclusion": "failure",
+    "failure_gate": "FAIL_CLOSED_TERMINAL_EXPERIMENT_STATE",
+    "first_live_call_at": "2026-08-23T23:00:30.073807+00:00",
+    "horizon_deadline": "2026-08-26T23:00:30.073807+00:00"
+  },
+  "sanitized_checkpoint_state": {
+    "batch_id": "B1",
+    "batch_complete": false,
+    "all_36_complete": false,
+    "completed_cell_count": 3,
+    "pending_cell_count": 33,
+    "transport_failure_count": 1,
+    "rate_limit_event_count": 1,
+    "terminal_failure": true,
+    "horizon_expired": false,
+    "raw_outputs_in_summary": false,
+    "private_oracle_present": false
+  },
+  "artifact_evidence": {
+    "sanitized_batch_handoff": {
+      "artifact_id": 9501780930,
+      "digest": "sha256:e876709f13f36f0df3202a1ebd0c2feb1452e8483963915e1c56945316ad247c"
+    },
+    "private_checkpoint": {
+      "artifact_id": 9501780767,
+      "digest": "sha256:9189c8b840040b782b3e4ec8ef4dcc9450fa383d32804deb600b518c4df0d917",
+      "raw_checkpoint_committed": false
+    }
+  },
+  "completeness_gate": {
+    "required_common_parents": 36,
+    "required_fixed_factorial_outputs": 144,
+    "common_parents_complete": false,
+    "fixed_factorial_packet_created": false,
+    "private_scoring_authorized": false,
+    "partial_or_complete_case_scoring_allowed": false
+  },
+  "scientific_decision": {
+    "p12_c3_arm_qualification_available": false,
+    "qualified_arms": [],
+    "preferred_arm": null,
+    "semantic_v4_2_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "architecture_freeze_authorized": false,
+    "production_readiness_claim_authorized": false,
+    "same_experiment_resume_authorized": false,
+    "same_experiment_github_rerun_authorized": false,
+    "interpretation": "P12-C3 reached live provider execution but the frozen controller entered terminal experiment failure during B1 after three accepted common parents. The preregistered 36-parent/144-output completeness gate was not reached. No deterministic or semantic arm-level scientific conclusion may be inferred from the partial collection."
+  },
+  "next_governance_step": "Perform an explicit provider-capacity alternatives decision under PROJECT-PRINCIPLES before preregistering any new prospective EXPOSED_POOL experiment; do not resume or rerun P12-C3."
+}
