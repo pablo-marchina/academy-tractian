@@ -17,13 +17,14 @@ Passing a gate means evidence for that gate. It does **not** automatically mean 
 
 See:
 
-- [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — complete current status/evidence checkpoint;
-- [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md) — current action plan through the 2026-09-08 delivery;
-- [`research/results/project-progress-checkpoint-2026-08-23.json`](research/results/project-progress-checkpoint-2026-08-23.json) — machine-readable checkpoint.
+- [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — canonical current evidence/status checkpoint;
+- [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md) — reviewed action plan through the 2026-09-08 delivery;
+- [`docs/PROJECT-PROGRESS-LOG.md`](docs/PROJECT-PROGRESS-LOG.md) — chronological progress/evidence ledger;
+- [`research/results/project-progress-checkpoint-2026-08-24.json`](research/results/project-progress-checkpoint-2026-08-24.json) — current machine-readable checkpoint.
 
-The E14v-era project plan previously stored at `docs/PROJECT-PLAN.md` is preserved at [`docs/archive/PROJECT-PLAN-2026-08-20.md`](docs/archive/PROJECT-PLAN-2026-08-20.md).
+The previous machine checkpoint remains preserved at `research/results/project-progress-checkpoint-2026-08-23.json`. The E14v-era project plan is preserved at [`docs/archive/PROJECT-PLAN-2026-08-20.md`](docs/archive/PROJECT-PLAN-2026-08-20.md).
 
-### Executive state
+### Executive state — reviewed 2026-08-24 09:53 BRT
 
 ```text
 Benchmark Integrity Gate            COMPLETE
@@ -87,41 +88,58 @@ Canonical closure:
 - [`research/results/p12-c3-live-cycle-closure-2026-08-23.json`](research/results/p12-c3-live-cycle-closure-2026-08-23.json)
 - [`research/p12-c3-live-cycle-closure-2026-08-23.md`](research/p12-c3-live-cycle-closure-2026-08-23.md)
 
-## Current critical path
+## Reviewed critical path
 
-The next step is **not** another P12-C3 trigger.
+The next step is **not** another P12-C3 trigger and P12-C4 is **conditional**, not automatic.
 
 ```text
-C3 terminal closure
-    ↓
-provider-capacity alternatives decision
-    ↓
-new preregistered EXPOSED_POOL experiment (provisionally P12-C4)
-    ↓
-complete prospective packet only
-    ↓
-deterministic gate + 20k group bootstrap + 7 LOGO
-    ↓
-semantic child gate only for deterministic survivors
-    ↓
-production-fit comparison / generation freeze
-    ↓
-separately authorized FRESH_BLIND final evidence
-    ↓
-architecture freeze + regression + final delivery
+provider-capacity alternatives ADR ─────────────── FRESH_BLIND readiness (parallel)
+              │                                   production-fit research (parallel)
+              ▼
+       ADR GO decision?
+         ┌────┴────┐
+         │         │
+       NO-GO       GO
+         │         │
+         ▼         ▼
+ honest scope   P12-C4 preregistration + provider-free activation
+ reassessment                     │
+                                  ▼
+                         complete prospective packet only
+                                  │
+                                  ▼
+                    deterministic gate + 20k bootstrap + LOGO
+                                  │
+                                  ▼
+                    semantic child gate for survivors only
+                                  │
+                                  ▼
+                     production-fit / generation freeze
+                                  │
+                                  ▼
+                      authorized FRESH_BLIND evidence
+                                  │
+                                  ▼
+                    architecture freeze + regression + delivery
 ```
 
-In parallel, FRESH_BLIND source preparation/authorization begins now while outcome access remains blocked. This is a critical schedule dependency.
+Hard schedule checkpoints:
 
-Full plan: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md).
+- provider-capacity ADR: **2026-08-24**;
+- Tier A FRESH_BLIND target: **2026-08-25 23:59 BRT**;
+- complete prospective EXPOSED_POOL packet or scope reassessment: **end of 2026-08-27**;
+- Tier B FRESH_BLIND fallback deadline: **2026-08-28 23:59 BRT**;
+- preserve **2026-09-03 onward** primarily for integration, regression, documentation and delivery.
+
+Full reviewed plan: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md).
 
 ## Main current risks
 
 1. **Provider capacity — CRITICAL:** P12-C2 failed at 31/36; P12-C3 became terminal at 3/36.
 2. **No FRESH_BLIND source — CRITICAL:** independent generalization evidence is not yet available.
 3. **No qualified current candidate — HIGH:** C1 failed scientifically; C2/C3 failed before complete scoring.
-4. **Architecture decision debt — HIGH:** retrieval, reranking, multi-agent, memory, observability and final deployment/UI choices remain unfrozen.
-5. **Schedule — HIGH:** final target remains **2026-09-08**.
+4. **Schedule — HIGH:** final target remains **2026-09-08** and the next 72 hours are decision-critical.
+5. **Architecture decision debt — HIGH:** retrieval, reranking, multi-agent, memory, observability and final deployment/UI choices remain unfrozen.
 
 ## Frozen/retained foundations
 
