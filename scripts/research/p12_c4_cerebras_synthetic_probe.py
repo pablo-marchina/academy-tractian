@@ -120,8 +120,11 @@ def validate_account_attestation(path: Path) -> dict[str, Any]:
     if access.get("tier") == "free_trial":
         if int(limits.get("tph") or -1) < 1000000 or int(limits.get("tpd") or -1) < 1000000:
             raise ProbeBlocked("Free Trial TPH/TPD below frozen boundary")
-        if access.get("trial_credit_active") is not True:
-            raise ProbeBlocked("Free Trial credit is not attested active")
+        # Trial-credit evidence is required only for a zero-cash-spend claim.
+        # Provider qualification itself is gated by authenticated active API access
+        # and effective capacity, so an unknown credit state must not be invented.
+        if access.get("zero_cash_spend_claim_allowed") is True and access.get("trial_credit_active") is not True:
+            raise ProbeBlocked("zero-cash-spend claim requires active trial-credit evidence")
 
     att = x.get("attestation", {})
     required_flags = [
