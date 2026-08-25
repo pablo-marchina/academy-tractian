@@ -1,0 +1,74 @@
+{
+  "schema_version": "p12-c4-cerebras-user-reported-capacity-evidence-v1",
+  "date": "2026-08-25",
+  "provider": "cerebras",
+  "model_id": "gpt-oss-120b",
+  "source": {
+    "type": "user_transcription_from_cerebras_limits_view",
+    "first_party_values_reported_by_user": true,
+    "screenshot_or_export_committed": false,
+    "org_project_scope_disambiguated": false,
+    "secret_present": false
+  },
+  "reported_limits": {
+    "requests": {
+      "per_minute": 5,
+      "per_hour": 150,
+      "per_day": 2400
+    },
+    "total_tokens": {
+      "per_minute": 90000,
+      "per_hour": 3000000,
+      "per_day": 3000000
+    },
+    "uncached_tokens": {
+      "per_minute": 30000,
+      "per_hour": 1000000,
+      "per_day": 1000000
+    },
+    "unlabeled_model_table_numeric_columns": [131000, 40000]
+  },
+  "frozen_prompt_budget_evidence": {
+    "workflow_run_id": 32900254104,
+    "artifact_id": 9582787877,
+    "artifact_digest": "sha256:87113cfbf4bc1305144d85ca1a88100cd20bf298027f1c508f8a9ccc5bd667c2",
+    "parents": 36,
+    "max_conservative_prompt_upper_bound_tokens": 3284,
+    "max_completion_tokens": 4096,
+    "max_reserved_admission_tokens": 7380,
+    "full_packet_reserved_admission_upper_bound_tokens": 265002,
+    "minimum_seconds_between_provider_requests": 75,
+    "minimum_elapsed_seconds_for_36_requests": 2625
+  },
+  "capacity_math": {
+    "effective_frozen_request_rate_per_minute": 0.8,
+    "rpm_headroom_fraction_vs_limit": 0.84,
+    "worst_request_reserved_tokens_share_of_uncached_tpm": 0.246,
+    "worst_request_reserved_tokens_share_of_total_tpm": 0.082,
+    "full_packet_reserved_tokens_share_of_uncached_tph": 0.265002,
+    "full_packet_reserved_tokens_share_of_uncached_tpd": 0.265002,
+    "full_packet_reserved_tokens_share_of_total_tph": 0.088334,
+    "full_packet_reserved_tokens_share_of_total_tpd": 0.088334,
+    "packet_requests_share_of_hour_limit": 0.24,
+    "packet_requests_share_of_day_limit": 0.015
+  },
+  "numeric_capacity_gate": {
+    "status": "PASS",
+    "minimum_rpm_met": true,
+    "minimum_uncached_tpm_met": true,
+    "minimum_total_tpm_met": true,
+    "hourly_capacity_met": true,
+    "daily_capacity_met": true,
+    "frozen_75_second_pacing_is_conservative": true
+  },
+  "account_scope_gate": {
+    "status": "UNVERIFIED",
+    "reason": "The supplied table gives the effective numeric limits but does not identify whether it is the organization All Projects view, the API-key project view, or explicit project inheritance. The v2 attestation requires both org and project context to be checked."
+  },
+  "authorization": {
+    "synthetic_live_probe": false,
+    "exposed_pool_live_generation": false,
+    "private_scoring": false
+  },
+  "next_gate": "DISAMBIGUATE_ORG_AND_PROJECT_LIMIT_CONTEXT_THEN_MATERIALIZE_ATTESTATION_V2"
+}
