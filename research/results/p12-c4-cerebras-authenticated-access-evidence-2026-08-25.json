@@ -1,0 +1,75 @@
+{
+  "schema_version": "p12-c4-cerebras-authenticated-access-evidence-v1",
+  "date": "2026-08-25",
+  "status": "ACCESS_PASS_CAPACITY_UNVERIFIED",
+  "provider": "cerebras",
+  "model_id": "gpt-oss-120b",
+  "credential": {
+    "github_actions_secret_name": "CEREBRAS_API_KEY",
+    "secret_resolved_in_actions": true,
+    "secret_value_read_by_research_artifact": false,
+    "secret_value_persisted": false
+  },
+  "authenticated_model_access": {
+    "http_status": 200,
+    "gpt_oss_120b_accessible": true,
+    "other_accessible_models_observed": ["gemma-4-31b"],
+    "source_endpoint": "GET /v1/models"
+  },
+  "no_inference_capacity_preflight": {
+    "workflow_run_id": 32900815717,
+    "workflow_head_sha": "60308be334c91c9a4ce5f187f0a3dabff5196ea3",
+    "artifact_id": 9582990112,
+    "artifact_digest": "sha256:c8fac5da0293a579f1288925472195dc525d8243c9cb95d60dc4290d607a5582",
+    "authenticated_api_requests": 5,
+    "valid_generation_requests": 0,
+    "synthetic_probe_requests": 0,
+    "benchmark_inputs_loaded": 0,
+    "inference_requests": 0,
+    "generation_tokens_consumed": 0,
+    "probes": [
+      {"method": "GET", "path": "/v1/models", "http_status": 200},
+      {"method": "HEAD", "path": "/v1/chat/completions", "http_status": 405},
+      {"method": "OPTIONS", "path": "/v1/chat/completions", "http_status": 405},
+      {"method": "GET", "path": "/v1/chat/completions", "http_status": 405},
+      {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "body": {},
+        "http_status": 400,
+        "model_present": false,
+        "messages_present": false,
+        "validation_failure_before_inference": true
+      }
+    ],
+    "observed_rate_limit_headers": {},
+    "rate_limit_headers_observed": false
+  },
+  "capacity_attestation": {
+    "schema": "research/experiments/p12-c4-cerebras-account-capacity-attestation-schema-v2.json",
+    "actual_attestation_file_present": false,
+    "status": "UNVERIFIED",
+    "pass_claimed": false,
+    "reason": "Authenticated non-inference endpoints did not expose effective org/project quota dimensions. Missing limits are not inferred from published tier defaults."
+  },
+  "first_party_console_evidence_still_required": {
+    "org_context": "Cloud Console -> All Projects -> Limits",
+    "project_context": "Cloud Console -> project owning CEREBRAS_API_KEY -> Limits",
+    "required_model": "gpt-oss-120b",
+    "required_effective_dimensions": [
+      "requests_per_minute",
+      "uncached_tokens_per_minute",
+      "total_tokens_per_minute",
+      "tokens_per_hour_if_applicable",
+      "tokens_per_day_if_applicable"
+    ],
+    "project_inheritance_or_custom_limit_must_be_visible": true,
+    "secret_must_not_be_in_evidence": true
+  },
+  "authorization": {
+    "synthetic_live_probe": false,
+    "exposed_pool_live_generation": false,
+    "private_scoring": false
+  },
+  "next_gate": "FIRST_PARTY_ORG_AND_PROJECT_LIMITS_EVIDENCE_THEN_ATTESTATION_V2_PASS"
+}
