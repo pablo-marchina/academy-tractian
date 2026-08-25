@@ -1,0 +1,67 @@
+name: research-p12-c4-cerebras-synthetic-authorization-self-check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c4-cerebras-synthetic-authorization-self-check.yml'
+      - 'scripts/research/p12_c4_cerebras_authorize_synthetic_probe.py'
+      - 'scripts/research/p12_c4_cerebras_synthetic_probe.py'
+      - 'research/experiments/p12-c4-cerebras-account-capacity-attestation-v2.json'
+      - 'research/experiments/p12-c4-cerebras-synthetic-compatibility-probe-preregistration-v1.json'
+      - 'research/experiments/p12-c4-provider-serving-contract-v1.json'
+      - 'research/frozen/p12-c4-prompt-budget-and-pacing-v1.json'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  provider-free-one-shot-authorization-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert provider and benchmark isolation
+        run: |
+          test -z "${CEREBRAS_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+          test -f research/experiments/p12-c4-cerebras-account-capacity-attestation-v2.json
+          test ! -e research/frozen/p12-c4-cerebras-synthetic-probe-live-authorization-v1.json
+      - name: Compile authorization path
+        run: |
+          python -m py_compile scripts/research/p12_c4_cerebras_synthetic_probe.py
+          python -m py_compile scripts/research/p12_c4_cerebras_authorize_synthetic_probe.py
+      - name: Generate authorization artifact only
+        run: |
+          python scripts/research/p12_c4_cerebras_authorize_synthetic_probe.py \
+            --attestation research/experiments/p12-c4-cerebras-account-capacity-attestation-v2.json \
+            --output /tmp/p12-c4-cerebras-synthetic-probe-live-authorization-v1.json \
+            | tee /tmp/p12-c4-cerebras-synthetic-authorization-generation.json
+          python - <<'PY'
+          import json
+          p='/tmp/p12-c4-cerebras-synthetic-probe-live-authorization-v1.json'
+          x=json.load(open(p,encoding='utf-8'))
+          assert x['status']=='AUTHORIZED_ONE_SYNTHETIC_PROBE_ATTEMPT'
+          assert x['authorized_attempts']==1
+          assert x['github_actions_run_attempt_required']==1
+          assert x['rerun_allowed'] is False
+          assert x['automatic_retry_allowed'] is False
+          assert x['exposed_pool_live_generation_authorized'] is False
+          assert x['authorization_scope']=='EXACTLY_TWO_PREREGISTERED_SYNTHETIC_CEREBRAS_CALLS_ONLY'
+          assert len(x['probe_request_sha256'])==2
+          print('P12_C4_SYNTHETIC_ONE_SHOT_AUTHORIZATION_PROVIDER_FREE_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-cerebras-synthetic-probe-live-authorization-v1
+          path: /tmp/p12-c4-cerebras-synthetic-probe-live-authorization-v1.json
+          retention-days: 90
+          if-no-files-found: error
