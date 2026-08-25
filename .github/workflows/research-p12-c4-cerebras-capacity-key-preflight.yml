@@ -1,8 +1,8 @@
 name: research-p12-c4-cerebras-capacity-key-preflight
 
 on:
-  push:
-    branches: [research/systematic-foundation]
+  pull_request:
+    branches: [main]
     paths:
       - '.github/workflows/research-p12-c4-cerebras-capacity-key-preflight.yml'
 
