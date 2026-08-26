@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-26",
+  "frozen_pacing": {
+    "automatic_fallbacks": false,
+    "automatic_retries": 0,
+    "bursting_forbidden": true,
+    "full_packet_capacity_authorized": false,
+    "full_packet_common_parent_calls": 36,
+    "minimum_seconds_between_any_provider_requests": 75,
+    "synthetic_authorization_maximum_request_attempts": 2,
+    "warming_requests": 0
+  },
+  "model": "openai/gpt-oss-120b",
+  "provider": "nvidia_hosted_nim",
+  "rationale": {
+    "published_free_endpoint_availability_is_not_treated_as_proof_of_36_call_capacity": true,
+    "separate_activation_capacity_gate_required_after_synthetic_pass": true,
+    "synthetic_pacing_is_conservative_and_preserves_prior_c4_request_spacing": true
+  },
+  "schema_version": "p12-c4-nvidia-request-budget-and-pacing-v1",
+  "status": "FROZEN_PROVIDER_FREE_SYNTHETIC_ONLY_FULL_PACKET_CAPACITY_NOT_YET_AUTHORIZED"
+}
