@@ -1,0 +1,77 @@
+name: research-p12-c4-nvidia-activation-capacity-provider-free
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+    paths:
+      - research/frozen/p12-c4-nvidia-activation-gate-trigger-v1.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-p12-c4-nvidia-activation-capacity-provider-free
+  cancel-in-progress: false
+
+jobs:
+  provider-free-activation-capacity-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Assert provider credential is not injected
+        shell: bash
+        run: |
+          if [[ -n "${NVIDIA_API_KEY:-}" ]]; then
+            echo "NVIDIA_API_KEY must not be available to provider-free activation gate" >&2
+            exit 1
+          fi
+
+      - name: Run full provider-free activation and capacity gate
+        run: |
+          python scripts/research/p12_c4_nvidia_activation_capacity_self_check.py \
+            --out research/results/p12-c4-nvidia-activation-capacity-self-check-ci.json
+
+      - name: Require PASS and zero provider access
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('research/results/p12-c4-nvidia-activation-capacity-self-check-ci.json')
+          d = json.loads(p.read_text())
+          assert d['status'] == 'PASS', d
+          assert d['all_passed'] is True, d
+          assert d['provider_calls'] == 0, d
+          assert d['credentials_read'] == 0, d
+          assert d['benchmark_inputs_loaded'] == 0, d
+          assert d['execution_authorized_by_this_gate'] is True, d
+          assert d['live_manifest_frozen_by_this_gate'] is False, d
+          assert d['private_scoring_authorized_by_this_gate'] is False, d
+          assert d['common_parents_authorized_if_live_manifest_frozen'] == 36, d
+          assert d['maximum_provider_request_attempts_if_live_manifest_frozen'] == 36, d
+          assert d['fixed_arm_outputs_required_before_scoring'] == 144, d
+          assert d['capacity_basis']['mode'] == 'BOUNDED_EXECUTION_PLAN_WITHOUT_QUOTA_GUARANTEE', d
+          assert d['capacity_basis']['provider_quota_guarantee'] == 'UNKNOWN_NOT_CLAIMED', d
+          assert d['next_gate'] == 'FREEZE_ONE_SHOT_C4_LIVE_MANIFEST', d
+          print('P12_C4_NVIDIA_ACTIVATION_CAPACITY_PROVIDER_FREE_PASS')
+          PY
+
+      - name: Upload provider-free gate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-nvidia-activation-capacity-provider-free-pass
+          path: research/results/p12-c4-nvidia-activation-capacity-self-check-ci.json
+          if-no-files-found: error
+          retention-days: 30
