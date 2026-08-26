@@ -1,13 +1,12 @@
 name: p12-c4-nvidia-one-shot-comment-dispatch
 
 on:
-  issue_comment:
-    types: [created]
+  pull_request:
+    types: [synchronize]
 
 permissions:
   contents: read
   pull-requests: read
-  issues: read
 
 concurrency:
   group: p12-c4-nvidia-one-shot-live-dispatch
@@ -16,10 +15,9 @@ concurrency:
 jobs:
   dispatch-live:
     if: >-
-      github.event.issue.pull_request &&
-      github.event.issue.number == 2 &&
-      github.event.comment.user.login == 'pablo-marchina' &&
-      github.event.comment.body == '/p12-c4-nvidia-one-shot-live 20260826-9e7a4d1c'
+      github.event.pull_request.number == 2 &&
+      github.event.pull_request.head.ref == 'research/systematic-foundation' &&
+      github.event.pull_request.head.sha == '226d9303249721f1d998a0842de45469c3516c35'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -29,33 +27,12 @@ jobs:
           set -euo pipefail
           test "${GITHUB_RUN_ATTEMPT}" = "1"
           test "${GITHUB_RUN_NUMBER}" = "1"
-
-      - name: Resolve and pin PR head
-        id: head
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          curl -fsSL \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/pulls/2" > /tmp/pr.json
-          python - <<'PY' > /tmp/head.env
-          import json
-          p=json.load(open('/tmp/pr.json'))
-          print('HEAD_SHA='+p['head']['sha'])
-          print('HEAD_REF='+p['head']['ref'])
-          PY
-          source /tmp/head.env
-          test "${HEAD_REF}" = "research/systematic-foundation"
-          test "${HEAD_SHA}" = "70229a74a197977fe38771638ee20862b9095585"
-          echo "sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+          test "${{ github.event.pull_request.head.sha }}" = "226d9303249721f1d998a0842de45469c3516c35"
 
       - name: Checkout exact authorized research head
         uses: actions/checkout@v4
         with:
-          ref: 70229a74a197977fe38771638ee20862b9095585
+          ref: 226d9303249721f1d998a0842de45469c3516c35
           fetch-depth: 1
 
       - name: Set up Python
