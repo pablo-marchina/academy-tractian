@@ -1,0 +1,226 @@
+{
+  "authorization": {
+    "exposed_pool_live_generation": false,
+    "preregistration_frozen": true,
+    "private_scoring": false,
+    "provider_free_validation": true,
+    "synthetic_live_probe": false
+  },
+  "authorization_transition": {
+    "exposed_pool_live_generation_can_become_true_only_after": [
+      "openrouter_synthetic_probe_2_of_2_PASS",
+      "full_p12_c4_provider_free_activation_PASS",
+      "p12_c4_live_manifest_frozen_before_first_benchmark_call"
+    ],
+    "synthetic_live_probe_can_become_true_only_after": [
+      "provider_free_contract_self_check_PASS",
+      "probe_runner_static_isolation_check_PASS",
+      "new_one_shot_authorization_generated_without_provider_credentials"
+    ]
+  },
+  "date": "2026-08-26",
+  "decision_source": "docs/adr/002-openrouter-no-card-serving-amendment-2026-08-26.md",
+  "evidence_contract": {
+    "persist_api_key": false,
+    "persist_authorization_header": false,
+    "persist_benchmark_data": false,
+    "persist_model_identifier": true,
+    "persist_provider_identifier": true,
+    "persist_request_sha256": true,
+    "persist_response_headers_sanitized": true,
+    "persist_response_sha256": true,
+    "persist_synthetic_request": true,
+    "persist_synthetic_response": true,
+    "persist_usage": true
+  },
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "failure_semantics": {
+    "any_http_auth_or_permission_failure": "BLOCK_P12_C4_AND_REOPEN_PROVIDER_READINESS",
+    "any_rate_limit_or_capacity_failure": "BLOCK_P12_C4_AND_REOPEN_PROVIDER_CAPACITY",
+    "automatic_retry_policy": "ZERO",
+    "partial_probe_success_does_not_authorize_live_generation": true,
+    "same_authorization_rerun_allowed": false,
+    "structured_output_schema_failure": "BLOCK_P12_C4_AND_REOPEN_SERVING_CONTRACT",
+    "tool_contract_failure": "BLOCK_P12_C4_AND_REOPEN_SERVING_CONTRACT",
+    "transport_failure": "BLOCK_P12_C4_PENDING_DIAGNOSIS",
+    "unsupported_required_parameter": "BLOCK_P12_C4_AND_REOPEN_SERVING_CONTRACT",
+    "wrong_upstream_provider": "BLOCK_P12_C4_AND_REOPEN_SERVING_CONTRACT"
+  },
+  "frozen_probe_calls": [
+    {
+      "ordinal": 1,
+      "probe": "strict_structured_output",
+      "request_contract": {
+        "max_tokens": 4096,
+        "messages": [
+          {
+            "content": "Synthetic provider-compatibility probe only. Do not use external data. Return only the requested structured marker.",
+            "role": "system"
+          },
+          {
+            "content": "Return contract_marker='P12-C4-OPENROUTER-SYNTHETIC', ok=true.",
+            "role": "user"
+          }
+        ],
+        "model": "openai/gpt-oss-120b:free",
+        "provider": {
+          "allow_fallbacks": false,
+          "only": [
+            "open-inference"
+          ],
+          "order": [
+            "open-inference"
+          ],
+          "require_parameters": true
+        },
+        "reasoning": {
+          "effort": "medium",
+          "exclude": true
+        },
+        "response_format": {
+          "json_schema": {
+            "name": "p12_c4_openrouter_provider_contract_probe",
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "contract_marker": {
+                  "type": "string"
+                },
+                "ok": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "contract_marker",
+                "ok"
+              ],
+              "type": "object"
+            },
+            "strict": true
+          },
+          "type": "json_schema"
+        },
+        "seed": 524242,
+        "stream": false,
+        "temperature": 0
+      },
+      "success_criteria": {
+        "contract_marker_equals": "P12-C4-OPENROUTER-SYNTHETIC",
+        "finish_reason_allowed": [
+          "stop"
+        ],
+        "http_success": true,
+        "ok_equals": true,
+        "response_is_valid_json": true,
+        "response_matches_strict_schema": true,
+        "upstream_provider_equals": "OpenInference"
+      }
+    },
+    {
+      "ordinal": 2,
+      "probe": "forced_function_tool_call",
+      "request_contract": {
+        "max_tokens": 4096,
+        "messages": [
+          {
+            "content": "Synthetic provider-compatibility probe only. Do not access external or benchmark data.",
+            "role": "system"
+          },
+          {
+            "content": "Call the synthetic_lookup function with marker='P12-C4-OPENROUTER-TOOL'.",
+            "role": "user"
+          }
+        ],
+        "model": "openai/gpt-oss-120b:free",
+        "parallel_tool_calls": false,
+        "provider": {
+          "allow_fallbacks": false,
+          "only": [
+            "open-inference"
+          ],
+          "order": [
+            "open-inference"
+          ],
+          "require_parameters": true
+        },
+        "reasoning": {
+          "effort": "medium",
+          "exclude": true
+        },
+        "seed": 524243,
+        "stream": false,
+        "temperature": 0,
+        "tool_choice": "required",
+        "tools": [
+          {
+            "function": {
+              "description": "Synthetic no-I/O function used only to qualify function-call serialization.",
+              "name": "synthetic_lookup",
+              "parameters": {
+                "additionalProperties": false,
+                "properties": {
+                  "marker": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "marker"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          }
+        ]
+      },
+      "success_criteria": {
+        "exactly_one_tool_call": true,
+        "finish_reason_allowed": [
+          "tool_calls"
+        ],
+        "function_arguments_valid_json": true,
+        "function_marker_equals": "P12-C4-OPENROUTER-TOOL",
+        "function_name_equals": "synthetic_lookup",
+        "http_success": true,
+        "tool_execution_required": false,
+        "tool_type_equals": "function",
+        "upstream_provider_equals": "OpenInference"
+      }
+    }
+  ],
+  "hard_preconditions": {
+    "adr_002_accepted": true,
+    "benchmark_inputs_available_to_probe": false,
+    "fresh_blind_available_to_probe": false,
+    "legacy_locked_test_available_to_probe": false,
+    "live_exposed_pool_generation_authorized": false,
+    "prior_cerebras_authorization_reuse_forbidden": true,
+    "prior_cerebras_one_shot_consumed": true,
+    "private_oracle_available_to_probe": false,
+    "provider_free_contract_self_check_pass_required": true
+  },
+  "prior_consumed_probe_closure": "research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json",
+  "probe_id": "P12-C4-OPENROUTER-SYNTHETIC-COMPATIBILITY-V1",
+  "provider": {
+    "automatic_failover": false,
+    "credential_env": "OPENROUTER_API_KEY",
+    "gateway": "openrouter",
+    "model_fallbacks": [],
+    "model_id": "openai/gpt-oss-120b:free",
+    "underlying_model_family": "openai/gpt-oss-120b",
+    "upstream_provider": "OpenInference",
+    "upstream_provider_slug": "open-inference"
+  },
+  "purpose": "Qualify the no-card OpenRouter + OpenInference serving path using synthetic prompts only. This is infrastructure qualification, not candidate evaluation.",
+  "schema_version": "p12-c4-openrouter-synthetic-compatibility-probe-preregistration-v1",
+  "serving_contract": "research/experiments/p12-c4-openrouter-provider-serving-contract-v1.json",
+  "status": "PREREGISTERED_BLOCKED_PENDING_PROVIDER_FREE_GATE",
+  "synthetic_seed_policy": {
+    "deterministic_byte_equality_is_not_a_success_requirement": true,
+    "must_not_reuse_cerebras_probe_seeds": true,
+    "must_not_use_live_common_parent_seed_map": true,
+    "namespace": "academy-tractian:P12-C4:synthetic-provider-qualification:openrouter:v1",
+    "structured_output_probe_seed": 524242,
+    "tool_probe_seed": 524243
+  }
+}

@@ -1,0 +1,119 @@
+name: research-p12-c4-openrouter-synthetic-provider-free-qualification
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - '.github/workflows/research-p12-c4-openrouter-synthetic-provider-free-qualification.yml'
+      - 'docs/adr/002-openrouter-no-card-serving-amendment-2026-08-26.md'
+      - 'research/experiments/p12-c4-openrouter-provider-serving-contract-v1.json'
+      - 'research/experiments/p12-c4-openrouter-synthetic-compatibility-probe-preregistration-v1.json'
+      - 'research/frozen/p12-c4-openrouter-request-budget-and-pacing-v1.json'
+      - 'research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json'
+      - 'scripts/research/p12_c4_openrouter_synthetic_probe.py'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  provider-free-compatibility-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert credential and benchmark isolation
+        run: |
+          test -z "${OPENROUTER_API_KEY:-}"
+          test -z "${CEREBRAS_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+          test -f research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json
+          test ! -e research/frozen/p12-c4-openrouter-synthetic-probe-live-authorization-v1.json
+      - name: Compile provider-free path
+        run: |
+          python -m py_compile scripts/research/p12_c4_openrouter_synthetic_probe.py
+      - name: Execute provider-free compatibility gate
+        run: |
+          python scripts/research/p12_c4_openrouter_synthetic_probe.py \
+            --provider-free-contract-check \
+            | tee /tmp/p12-c4-openrouter-provider-free-self-check.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/p12-c4-openrouter-provider-free-self-check.json',encoding='utf-8'))
+          assert x['status']=='PASS_PROVIDER_FREE_LIVE_STILL_BLOCKED'
+          assert x['provider_calls']==0
+          assert x['credentials_read']==0
+          assert x['network_io']==0
+          assert x['benchmark_inputs_loaded']==0
+          assert x['private_oracle_accesses']==0
+          assert x['fresh_blind_accesses']==0
+          assert x['legacy_locked_test_accesses']==0
+          assert x['prior_cerebras_authorization_reuse_allowed'] is False
+          assert x['exact_frozen_probe_calls']==2
+          assert x['model_id']=='openai/gpt-oss-120b:free'
+          assert x['upstream_provider_slug']=='open-inference'
+          assert x['routing_contract']['only']==['open-inference']
+          assert x['routing_contract']['order']==['open-inference']
+          assert x['routing_contract']['allow_fallbacks'] is False
+          assert x['routing_contract']['require_parameters'] is True
+          assert x['transport_contract']['application_retries']==0
+          assert len(x['request_sha256'])==2
+          print('P12_C4_OPENROUTER_PROVIDER_FREE_COMPATIBILITY_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-openrouter-synthetic-provider-free-self-check-v1
+          path: /tmp/p12-c4-openrouter-provider-free-self-check.json
+          retention-days: 90
+          if-no-files-found: error
+
+  generate-new-one-shot-authorization:
+    needs: provider-free-compatibility-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert provider-free authorization boundary
+        run: |
+          test -z "${OPENROUTER_API_KEY:-}"
+          test -z "${CEREBRAS_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e research/frozen/p12-c4-openrouter-synthetic-probe-live-authorization-v1.json
+      - name: Generate separate OpenRouter one-shot authorization
+        run: |
+          python scripts/research/p12_c4_openrouter_synthetic_probe.py \
+            --emit-authorization /tmp/p12-c4-openrouter-synthetic-probe-live-authorization-v1.json \
+            | tee /tmp/p12-c4-openrouter-authorization-generation.json
+          python - <<'PY'
+          import json
+          p='/tmp/p12-c4-openrouter-synthetic-probe-live-authorization-v1.json'
+          x=json.load(open(p,encoding='utf-8'))
+          assert x['status']=='AUTHORIZED_ONE_OPENROUTER_SYNTHETIC_PROBE_ATTEMPT'
+          assert x['authorized_attempts']==1
+          assert x['github_actions_run_attempt_required']==1
+          assert x['rerun_allowed'] is False
+          assert x['automatic_retry_allowed'] is False
+          assert x['provider_fallback_allowed'] is False
+          assert x['model_fallback_allowed'] is False
+          assert x['prior_cerebras_authorization_reuse_allowed'] is False
+          assert x['exposed_pool_live_generation_authorized'] is False
+          assert x['authorization_scope']=='AT_MOST_TWO_PREREGISTERED_SYNTHETIC_OPENROUTER_CALLS_ONLY_2_OF_2_REQUIRED_FOR_PASS'
+          assert len(x['probe_request_sha256'])==2
+          print('P12_C4_OPENROUTER_ONE_SHOT_AUTHORIZATION_PROVIDER_FREE_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-openrouter-synthetic-probe-live-authorization-v1
+          path: /tmp/p12-c4-openrouter-synthetic-probe-live-authorization-v1.json
+          retention-days: 90
+          if-no-files-found: error

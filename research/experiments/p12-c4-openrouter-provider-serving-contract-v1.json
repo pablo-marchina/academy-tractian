@@ -1,0 +1,137 @@
+{
+  "authorization": {
+    "exposed_pool_live_generation": false,
+    "fresh_blind_measurement": false,
+    "legacy_locked_test_measurement": false,
+    "private_scoring": false,
+    "provider_free_contract_checks": true,
+    "synthetic_live_provider_probe": false
+  },
+  "cerebras_synthetic_closure": "research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json",
+  "consumed_predecessors": [
+    "P12-C1",
+    "P12-C2",
+    "P12-C3",
+    "P12-C4-CEREBRAS-SYNTHETIC-COMPATIBILITY-V1"
+  ],
+  "date": "2026-08-26",
+  "decision_source": "docs/adr/002-openrouter-no-card-serving-amendment-2026-08-26.md",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "frozen_request_semantics": {
+    "max_tokens": 4096,
+    "provider_routing_must_be_in_every_request": true,
+    "reasoning": {
+      "effort": "medium",
+      "exclude": true
+    },
+    "seed_binding": "required_per_request",
+    "seed_determinism_guarantee": "best_effort_only",
+    "structured_output": {
+      "strict": true,
+      "type": "json_schema"
+    },
+    "temperature": 0,
+    "tool_semantics": {
+      "parallel_tool_calls": false,
+      "support_required": true,
+      "tool_choice_support_required": true
+    }
+  },
+  "historical_cerebras_contract_remains_immutable": true,
+  "isolation_contract": {
+    "fresh_blind_accesses_during_generation": 0,
+    "legacy_locked_test_accesses_during_generation": 0,
+    "private_oracle_accesses_during_generation": 0,
+    "provider_free_self_check_must_load_benchmark_inputs": false,
+    "provider_free_self_check_must_perform_network_io": false,
+    "provider_free_self_check_must_read_credentials": false
+  },
+  "packet_contract": {
+    "arm_specific_provider_calls_forbidden": true,
+    "common_parent_generations": 36,
+    "complete_packet_required_before_scoring": true,
+    "fixed_arm_outputs": 144,
+    "partial_packet_scoring_forbidden": true,
+    "participating_arms": [
+      "A00",
+      "A10",
+      "A01",
+      "A11"
+    ],
+    "same_parent_for_all_four_arms": true
+  },
+  "provider": {
+    "api_family": "openai_compatible_chat_completions",
+    "automatic_failover": false,
+    "card_required_by_project": false,
+    "credential_env": "OPENROUTER_API_KEY",
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+    "fallback_provider": null,
+    "gateway": "openrouter",
+    "model_fallbacks": [],
+    "model_id": "openai/gpt-oss-120b:free",
+    "serving_path_change_is_explicit_confound": true,
+    "token_price_usd": 0,
+    "underlying_model_family": "openai/gpt-oss-120b",
+    "upstream_provider_name": "OpenInference",
+    "upstream_provider_slug": "open-inference"
+  },
+  "published_free_capacity_boundary": {
+    "assumes_no_unrelated_free_model_calls_same_account_same_day": true,
+    "failed_requests_may_consume_daily_allowance": true,
+    "free_requests_per_day": 50,
+    "free_requests_per_minute": 20,
+    "nominal_daily_request_headroom": 12,
+    "p12_c4_common_parent_generation_calls": 36,
+    "planned_total_generation_calls": 38,
+    "source_review_date": "2026-08-26",
+    "synthetic_generation_calls": 2
+  },
+  "routing_contract": {
+    "allow_fallbacks": false,
+    "model_switching_allowed": false,
+    "only": [
+      "open-inference"
+    ],
+    "order": [
+      "open-inference"
+    ],
+    "provider_switching_allowed": false,
+    "require_parameters": true
+  },
+  "schema_version": "p12-c4-openrouter-provider-serving-contract-v1",
+  "status": "PROVIDER_CONTRACT_FROZEN_SYNTHETIC_NOT_AUTHORIZED",
+  "stop_rules": [
+    "never_reuse_or_rerun_consumed_cerebras_authorization",
+    "no_openrouter_automatic_retry",
+    "no_openrouter_provider_fallback",
+    "no_model_fallback",
+    "any_synthetic_failure_blocks_activation",
+    "any_incomplete_c4_packet_blocks_scoring",
+    "if_free_variant_or_openinference_route_changes_reopen_adr_before_benchmark_generation"
+  ],
+  "supersedes_for_future_provider_qualification": "research/experiments/p12-c4-provider-serving-contract-v1.json",
+  "transition_order": [
+    "OPENROUTER_PROVIDER_FREE_SELF_CHECK_PASS",
+    "NEW_OPENROUTER_ONE_SHOT_AUTHORIZATION_FROZEN",
+    "EXACTLY_TWO_PREREGISTERED_SYNTHETIC_CALLS_ATTEMPTED_UNDER_ONE_SHOT_RULES",
+    "SYNTHETIC_2_OF_2_PASS",
+    "FULL_PROVIDER_FREE_C4_ACTIVATION_PASS",
+    "LIVE_MANIFEST_FROZEN",
+    "C4_36_OF_36_COMMON_PARENTS",
+    "C4_144_OF_144_FIXED_ARM_OUTPUTS",
+    "ONLY_THEN_PRIVATE_DETERMINISTIC_SCORING"
+  ],
+  "transport_contract": {
+    "application_retries": 0,
+    "client": "httpx",
+    "connect_timeout_seconds": 10,
+    "implicit_retry_requests_allowed": false,
+    "package": "httpx",
+    "pool_timeout_seconds": 10,
+    "read_timeout_seconds": 180,
+    "stream": false,
+    "version": "0.28.1",
+    "write_timeout_seconds": 30
+  }
+}
