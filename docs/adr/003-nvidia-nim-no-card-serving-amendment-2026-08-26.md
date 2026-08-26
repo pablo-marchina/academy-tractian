@@ -90,6 +90,6 @@ A 2/2 synthetic PASS is necessary but not sufficient for the 36-call collection.
 
 ## Evidence sources reviewed
 
-- NVIDIA hosted model page for `openai/gpt-oss-120b`, showing the free prototype endpoint and OpenAI-compatible example.
-- NVIDIA model-specific Chat Completions API reference, current 2026-08-26.
-- NVIDIA model overview/model card describing configurable reasoning, tool use, and structured-output capability.
+- NVIDIA hosted model page for `openai/gpt-oss-120b`, showing the free prototype endpoint and OpenAI-compatible example: `https://build.nvidia.com/openai/gpt-oss-120b/build`.
+- NVIDIA model-specific Chat Completions API reference, current 2026-08-26: `https://docs.api.nvidia.com/nim/reference/openai-gpt-oss-120b-infer`.
+- NVIDIA model overview/model card describing configurable reasoning, tool use, and structured-output capability: `https://build.nvidia.com/openai/gpt-oss-120b/modelcard`.
