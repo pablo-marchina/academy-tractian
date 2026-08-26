@@ -1,0 +1,126 @@
+name: p12-c4-nvidia-one-shot-comment-dispatch
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+concurrency:
+  group: p12-c4-nvidia-one-shot-live-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch-live:
+    if: >-
+      github.event.issue.pull_request &&
+      github.event.issue.number == 2 &&
+      github.event.comment.user.login == 'pablo-marchina' &&
+      github.event.comment.body == '/p12-c4-nvidia-one-shot-live 20260826-9e7a4d1c'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Enforce sole dispatcher run
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_RUN_ATTEMPT}" = "1"
+          test "${GITHUB_RUN_NUMBER}" = "1"
+
+      - name: Resolve and pin PR head
+        id: head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/pulls/2" > /tmp/pr.json
+          python - <<'PY' > /tmp/head.env
+          import json
+          p=json.load(open('/tmp/pr.json'))
+          print('HEAD_SHA='+p['head']['sha'])
+          print('HEAD_REF='+p['head']['ref'])
+          PY
+          source /tmp/head.env
+          test "${HEAD_REF}" = "research/systematic-foundation"
+          test "${HEAD_SHA}" = "70229a74a197977fe38771638ee20862b9095585"
+          echo "sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout exact authorized research head
+        uses: actions/checkout@v4
+        with:
+          ref: 70229a74a197977fe38771638ee20862b9095585
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install exact transport
+        run: python -m pip install --disable-pip-version-check httpx==0.28.1
+
+      - name: Provider-free exact-materialization preflight
+        run: |
+          python scripts/research/p12_c4_nvidia_one_shot_live.py --provider-free-check \
+            > research/results/p12-c4-nvidia-one-shot-live-preflight-ci.json
+
+      - name: Execute sole NVIDIA C4 attempt
+        shell: bash
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          set +e
+          python scripts/research/p12_c4_nvidia_one_shot_live.py \
+            > research/results/p12-c4-nvidia-one-shot-live-console-ci.json
+          echo "$?" > /tmp/live-exit-code
+          exit 0
+
+      - name: Upload complete one-shot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-nvidia-one-shot-live-evidence
+          path: |
+            research/results/p12-c4-nvidia-one-shot-live-preflight-ci.json
+            research/results/p12-c4-nvidia-one-shot-live-console-ci.json
+            research/live/p12-c4-nvidia-one-shot-v1/
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Require 36 of 36 or terminally fail
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('research/live/p12-c4-nvidia-one-shot-v1/execution-result.json')
+          if not p.is_file():
+              raise SystemExit('NO_LIVE_RESULT: execution blocked before a provider-attempt result')
+          d=json.loads(p.read_text())
+          s=d.get('status')
+          if s == 'PASS_36_OF_36_FRESH_COMMON_PARENTS':
+              assert d['provider_request_attempts'] == 36
+              assert d['valid_common_parents'] == 36
+              assert d['local_arm_expansion_authorized'] is True
+              assert d['private_scoring_authorized'] is False
+              assert d['next_gate'] == 'C4_144_OF_144_LOCAL_ARM_OUTPUTS'
+              print('P12_C4_NVIDIA_36_OF_36_PASS')
+          elif s == 'CONSUMED_TERMINAL_INCOMPLETE_NO_SCORING':
+              assert d['valid_common_parents'] < 36
+              assert d['local_arm_expansion_authorized'] is False
+              assert d['private_scoring_authorized'] is False
+              assert d['rerun_allowed'] is False
+              assert d['resume_allowed'] is False
+              print('P12_C4_NVIDIA_TERMINAL_INCOMPLETE_NO_SCORING')
+              raise SystemExit(1)
+          else:
+              raise SystemExit(f'UNAUTHORIZED_RESULT_STATE: {s}')
+          PY
