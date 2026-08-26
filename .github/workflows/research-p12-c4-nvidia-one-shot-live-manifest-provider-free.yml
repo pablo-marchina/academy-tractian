@@ -79,3 +79,5 @@ jobs:
           path: research/results/p12-c4-nvidia-one-shot-live-manifest-self-check-ci.json
           if-no-files-found: error
           retention-days: 30
+
+# Push trigger after workflow registration; no live-provider semantics changed.
