@@ -1,0 +1,208 @@
+{
+  "authorization_sha256": "ea83fd99611f9b6be7a63a2ed9e93884b1d2de9f2ca97c58afc4ac4f64fc64a2",
+  "automatic_retries": 0,
+  "benchmark_inputs_loaded": 0,
+  "calls": [
+    {
+      "elapsed_seconds": 11.536773899000003,
+      "http_status": 200,
+      "model_identifier": "openai/gpt-oss-120b",
+      "ordinal": 1,
+      "probe": "strict_structured_output_and_seed_contract",
+      "raw_response_sha256": "1d111ee05a49b3a591129c125669f8d5c74de42f279091af1435fd208e5005f3",
+      "request": {
+        "max_tokens": 4096,
+        "messages": [
+          {
+            "content": "Synthetic provider-compatibility probe only. Do not use external data. Return only the requested structured marker.",
+            "role": "system"
+          },
+          {
+            "content": "Return contract_marker='P12-C4-NVIDIA-SYNTHETIC', ok=true.",
+            "role": "user"
+          }
+        ],
+        "model": "openai/gpt-oss-120b",
+        "reasoning_effort": "medium",
+        "response_format": {
+          "json_schema": {
+            "name": "p12_c4_nvidia_provider_contract_probe",
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "contract_marker": {
+                  "type": "string"
+                },
+                "ok": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "contract_marker",
+                "ok"
+              ],
+              "type": "object"
+            },
+            "strict": true
+          },
+          "type": "json_schema"
+        },
+        "seed": 624242,
+        "stream": false,
+        "temperature": 0
+      },
+      "request_sha256": "63c44a7605250dc30a21526e06f44060cad4946ca39993dde03a3e418880272c",
+      "response_headers_sanitized": {},
+      "sanitized_response": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "message": {
+              "content": "{\"contract_marker\":\"P12-C4-NVIDIA-SYNTHETIC\",\"ok\":true}",
+              "role": "assistant",
+              "tool_calls": []
+            }
+          }
+        ],
+        "model": "openai/gpt-oss-120b",
+        "usage": {
+          "completion_tokens": 180,
+          "prompt_tokens": 112,
+          "prompt_tokens_details": null,
+          "total_tokens": 292
+        }
+      },
+      "sanitized_response_sha256": "866097975e5f50628852525fb338fa6016dace866986e1df3dece3d3505d6e4b",
+      "semantic_validation": {
+        "contract_marker": "P12-C4-NVIDIA-SYNTHETIC",
+        "ok": true
+      },
+      "started_at_utc": "2026-08-26T14:56:33.307276+00:00",
+      "usage": {
+        "completion_tokens": 180,
+        "prompt_tokens": 112,
+        "prompt_tokens_details": null,
+        "total_tokens": 292
+      }
+    },
+    {
+      "elapsed_seconds": 1.195437204000001,
+      "http_status": 200,
+      "model_identifier": "openai/gpt-oss-120b",
+      "ordinal": 2,
+      "probe": "forced_function_tool_call_and_seed_contract",
+      "raw_response_sha256": "910338099ffaa1e09afdd0fe854ae256dd48f44faa8f32fda86aff2d5c59ea55",
+      "request": {
+        "max_tokens": 4096,
+        "messages": [
+          {
+            "content": "Synthetic provider-compatibility probe only. Do not access external or benchmark data.",
+            "role": "system"
+          },
+          {
+            "content": "Call the synthetic_lookup function with marker='P12-C4-NVIDIA-TOOL'.",
+            "role": "user"
+          }
+        ],
+        "model": "openai/gpt-oss-120b",
+        "parallel_tool_calls": false,
+        "reasoning_effort": "medium",
+        "seed": 624243,
+        "stream": false,
+        "temperature": 0,
+        "tool_choice": {
+          "function": {
+            "name": "synthetic_lookup"
+          },
+          "type": "function"
+        },
+        "tools": [
+          {
+            "function": {
+              "description": "Synthetic no-I/O function used only to qualify function-call serialization.",
+              "name": "synthetic_lookup",
+              "parameters": {
+                "additionalProperties": false,
+                "properties": {
+                  "marker": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "marker"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "function"
+          }
+        ]
+      },
+      "request_sha256": "0911638f7d0bdf68318e1e36335fb52aa2a5184cd9b34e35df7d7af56ba8c28f",
+      "response_headers_sanitized": {},
+      "sanitized_response": {
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "message": {
+              "content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"marker\": \"P12-C4-NVIDIA-TOOL\"}",
+                    "name": "synthetic_lookup"
+                  },
+                  "id": "chatcmpl-tool-a047d70ef04eb220",
+                  "type": "function"
+                }
+              ]
+            }
+          }
+        ],
+        "model": "openai/gpt-oss-120b",
+        "usage": {
+          "completion_tokens": 59,
+          "prompt_tokens": 167,
+          "prompt_tokens_details": null,
+          "total_tokens": 226
+        }
+      },
+      "sanitized_response_sha256": "b417db4a2560267d231de08fc333cceeded8b7a7c2638a967036e17d382a550c",
+      "semantic_validation": {
+        "marker": "P12-C4-NVIDIA-TOOL"
+      },
+      "started_at_utc": "2026-08-26T14:57:59.844242+00:00",
+      "usage": {
+        "completion_tokens": 59,
+        "prompt_tokens": 167,
+        "prompt_tokens_details": null,
+        "total_tokens": 226
+      }
+    }
+  ],
+  "executed_at_utc": "2026-08-26T14:58:01.039985+00:00",
+  "exposed_pool_live_generation_authorized_by_this_result": false,
+  "fresh_blind_accesses": 0,
+  "full_packet_capacity_authorized_by_this_result": false,
+  "legacy_locked_test_accesses": 0,
+  "minimum_seconds_between_any_provider_requests": 75,
+  "model_fallbacks": 0,
+  "model_outputs_observed": 2,
+  "next_gate": "FULL_PROVIDER_FREE_C4_ACTIVATION_AND_CAPACITY_GATE",
+  "pacing_sha256": "74756e2d88ee89f1515e67579cd8988cadd2cb1a28f9c5a6a3042b034526c1d0",
+  "preregistration_sha256": "ecbb675426fe75bda77f6112988e091720d74a44fd67c2610a148e4b7c93b600",
+  "prior_cerebras_closure_sha256": "7a22157117285aed99b0da8a1072b8ededa4e563fb48ff37803184feca5b83fc",
+  "prior_openrouter_closure_sha256": "64322c1576d08297fe266d8659a760d71e9e4d08e2cddf98d73ceec4c74bd4a1",
+  "private_oracle_accesses": 0,
+  "probe_id": "P12-C4-NVIDIA-SYNTHETIC-COMPATIBILITY-V1",
+  "provider_account_identifiers_persisted": false,
+  "provider_calls": 2,
+  "provider_fallbacks": 0,
+  "provider_request_attempts": 2,
+  "reasoning_content_persisted": false,
+  "schema_version": "p12-c4-nvidia-synthetic-compatibility-probe-result-v1",
+  "serving_contract_sha256": "b78ddeb7fc35c2767175ab12644f1948bfbf5f3a04393e0956f57a9f25c14250",
+  "status": "PASS",
+  "successful_http_responses": 2
+}

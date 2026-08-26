@@ -1,0 +1,77 @@
+{
+  "authorization": {
+    "consumed": true,
+    "git_blob_sha": "bb41ac2e53d658865a94533b7bb025c8a94faffd",
+    "path": "research/frozen/p12-c4-nvidia-synthetic-probe-live-authorization-v1.json",
+    "rerun_allowed": false,
+    "sha256": "ea83fd99611f9b6be7a63a2ed9e93884b1d2de9f2ca97c58afc4ac4f64fc64a2"
+  },
+  "authorization_boundary": {
+    "exposed_pool_live_generation_authorized_by_this_result": false,
+    "full_packet_capacity_authorized_by_this_result": false,
+    "private_scoring_authorized_by_this_result": false
+  },
+  "calls": [
+    {
+      "http_status": 200,
+      "ordinal": 1,
+      "request_sha256": "63c44a7605250dc30a21526e06f44060cad4946ca39993dde03a3e418880272c",
+      "semantic_pass": true,
+      "semantic_validation": {
+        "contract_marker": "P12-C4-NVIDIA-SYNTHETIC",
+        "ok": true
+      },
+      "started_at_utc": "2026-08-26T14:56:33.307276+00:00"
+    },
+    {
+      "http_status": 200,
+      "ordinal": 2,
+      "request_sha256": "0911638f7d0bdf68318e1e36335fb52aa2a5184cd9b34e35df7d7af56ba8c28f",
+      "semantic_pass": true,
+      "semantic_validation": {
+        "marker": "P12-C4-NVIDIA-TOOL"
+      },
+      "started_at_utc": "2026-08-26T14:57:59.844242+00:00"
+    }
+  ],
+  "canonical_pass_artifact": {
+    "path": "research/results/p12-c4-nvidia-synthetic-compatibility-probe-result-2026-08-26.json",
+    "sha256": "9017129b9bb6e6db8bc25e04a2cb18e9c808a38d8c59e8b1f188a024dbbebd8f"
+  },
+  "closed_at_utc": "2026-08-26T17:04:00+00:00",
+  "execution": {
+    "automatic_retries": 0,
+    "minimum_seconds_between_requests": 75,
+    "model_fallbacks": 0,
+    "model_outputs_observed": 2,
+    "observed_start_spacing_seconds": 86.536966,
+    "provider_fallbacks": 0,
+    "provider_request_attempts": 2,
+    "reasoning_content_persisted": false,
+    "successful_http_responses": 2
+  },
+  "github_actions": {
+    "conclusion": "success",
+    "head_sha": "514da4680e62ffdae2d494814060add6ff6ab1ee",
+    "job_id": 98225138246,
+    "run_attempt": 1,
+    "run_id": 32983331693,
+    "workflow": "research-p12-c4-nvidia-synthetic-live-probe"
+  },
+  "next_gate": "FULL_PROVIDER_FREE_C4_ACTIVATION_AND_CAPACITY_GATE",
+  "probe_id": "P12-C4-NVIDIA-SYNTHETIC-COMPATIBILITY-V1",
+  "provider": {
+    "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+    "hosting_path": "nvidia_hosted_nim",
+    "model_id": "openai/gpt-oss-120b",
+    "provider": "NVIDIA"
+  },
+  "restricted_access_audit": {
+    "benchmark_inputs_loaded": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "private_oracle_accesses": 0
+  },
+  "schema_version": "p12-c4-nvidia-synthetic-live-probe-closure-v1",
+  "status": "PASS_SYNTHETIC_COMPATIBILITY_2_OF_2"
+}
