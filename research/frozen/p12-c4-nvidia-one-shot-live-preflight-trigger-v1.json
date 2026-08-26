@@ -1,0 +1,14 @@
+{
+  "schema_version": "p12-c4-nvidia-one-shot-live-preflight-trigger-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "manifest_id": "P12-C4-NVIDIA-ONE-SHOT-LIVE-V1",
+  "status": "FROZEN_TRIGGER_PROVIDER_FREE_PREFLIGHT_ONLY",
+  "date": "2026-08-26",
+  "manifest_git_blob_sha": "28971da8c4c20dad9b73b909997b6e486a420cd5",
+  "authorization_git_blob_sha": "f177dd6f12fdf3b097c3e964ddda2f6ef9251edd",
+  "runner_git_blob_sha": "7f83f0143046208e5c37da4dbd3a57156d5a0a78",
+  "provider_calls_authorized": false,
+  "credentials_read_authorized": false,
+  "expected_materialized_common_parents": 36,
+  "next_gate_if_pass": "FREEZE_SOLE_LIVE_EXECUTION_TRIGGER_V2"
+}
