@@ -9,13 +9,21 @@ on:
       - research/experiments/p12-c4-nvidia-one-shot-live-manifest-v1.json
       - scripts/research/p12_c4_nvidia_one_shot_live_manifest_self_check.py
       - .github/workflows/research-p12-c4-nvidia-one-shot-live-manifest-provider-free.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - research/frozen/p12-c4-nvidia-one-shot-live-manifest-gate-trigger-v1.json
+      - research/experiments/p12-c4-nvidia-one-shot-live-manifest-v1.json
+      - scripts/research/p12_c4_nvidia_one_shot_live_manifest_self_check.py
+      - .github/workflows/research-p12-c4-nvidia-one-shot-live-manifest-provider-free.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: research-p12-c4-nvidia-one-shot-live-manifest-provider-free
+  group: research-p12-c4-nvidia-one-shot-live-manifest-provider-free-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
@@ -26,7 +34,7 @@ jobs:
       - name: Checkout exact commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 1
 
       - name: Set up Python
