@@ -1,0 +1,85 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "project": "Academy x TRACTIAN - Industrial Agent Engineering & Evaluation",
+  "checkpoint_at": "2026-08-26T11:10:00-03:00",
+  "branch": "research/systematic-foundation",
+  "final_delivery_target": "2026-09-08",
+  "governance": {
+    "benchmark_integrity_gate": "CLOSED",
+    "p12_protocol": "FROZEN",
+    "partial_packet_scoring_allowed": false,
+    "fresh_blind_outcome_access_before_generation_freeze_allowed": false,
+    "legacy_locked_test_access": "BLOCKED"
+  },
+  "prospective_history": {
+    "P12-C1": {"status": "CLOSED_DETERMINISTIC_FAIL_NO_ARM_QUALIFIED", "common_parents_completed": 36, "fixed_outputs": 72, "scoring": "COMPLETE"},
+    "P12-C2": {"status": "CONSUMED_OPERATIONAL_FAILURE", "common_parents_completed": 31, "common_parents_required": 36, "scoring": "BLOCKED"},
+    "P12-C3": {"status": "CONSUMED_TERMINAL_OPERATIONAL_FAILURE", "common_parents_completed": 3, "common_parents_required": 36, "scoring": "BLOCKED"},
+    "P12-C4": {"status": "PROVIDER_QUALIFICATION_BLOCKED_NO_CARD_ROUTE_UNQUALIFIED", "common_parents_completed": 0, "common_parents_required": 36, "fixed_outputs_created": 0, "fixed_outputs_required": 144, "scoring": "BLOCKED"}
+  },
+  "serving_route_history": {
+    "cerebras": {
+      "status": "CONSUMED_OPERATIONAL_FAILURE_NO_MODEL_OUTPUT",
+      "workflow_run_id": 32901958789,
+      "http_status": 402,
+      "failure_family": "PAYMENT_REQUIRED",
+      "model_outputs_observed": 0,
+      "same_authorization_rerun_allowed": false
+    },
+    "openrouter_openinference": {
+      "status": "CONSUMED_OPERATIONAL_FAILURE_NO_MODEL_OUTPUT",
+      "provider_free_qualification_run_id": 32977533642,
+      "provider_free_qualification": "PASS",
+      "one_shot_authorization_head": "2e73bb22a391a8a5180047a1b4e4d57f74012546",
+      "live_workflow_run_id": 32977791243,
+      "live_job_id": 98206680887,
+      "live_run_attempt": 1,
+      "http_status": 404,
+      "failure_family": "FREE_MODEL_VARIANT_UNAVAILABLE",
+      "provider_request_attempts": 1,
+      "successful_http_responses": 0,
+      "model_outputs_observed": 0,
+      "second_synthetic_request_attempted": false,
+      "automatic_retries": 0,
+      "provider_fallbacks": 0,
+      "model_fallbacks": 0,
+      "same_authorization_rerun_allowed": false,
+      "canonical_closure": "research/results/p12-c4-openrouter-synthetic-live-probe-closure-2026-08-26.json"
+    }
+  },
+  "restricted_access_counts_for_openrouter_probe": {
+    "benchmark_inputs_loaded": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0
+  },
+  "current_candidate_state": {
+    "qualified": null,
+    "preferred": null,
+    "semantic_v4_2": "NOT_AUTHORIZED",
+    "final_architecture": "UNFROZEN",
+    "production_readiness": "NOT_AUTHORIZED"
+  },
+  "fresh_blind": {
+    "status": "NO_SOURCE_AUTHORIZED",
+    "hidden_content_access": false,
+    "expected_outcome_access": false,
+    "final_measurement_authorized": false
+  },
+  "current_phase": {
+    "number": 3,
+    "name": "P12-C4 provider qualification and readiness",
+    "state": "BLOCKED_NO_QUALIFIED_NO_CARD_SERVING_ROUTE"
+  },
+  "next_valid_steps": [
+    "identify_a_new_no_card_serving_route_for_openai_gpt_oss_120b_or_explicitly_reopen_model_provider_tradeoff",
+    "freeze_a_new_prospective_adr_amendment_before_any_provider_call",
+    "freeze_new_provider_model_transport_and_request_contract",
+    "pass_provider_free_compatibility_gate",
+    "generate_a_new_one_shot_synthetic_authorization",
+    "require_exactly_two_preregistered_synthetic_calls_to_pass",
+    "only_then_run_full_provider_free_c4_activation_and_freeze_live_manifest",
+    "only_then_collect_36_of_36_common_parents_and_expand_to_144_of_144_fixed_arm_outputs",
+    "only_then_run_private_deterministic_scoring_bootstrap_logo_and_slices"
+  ]
+}
