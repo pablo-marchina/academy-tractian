@@ -1,0 +1,56 @@
+{
+  "schema_version": "p12-c4-nvidia-one-shot-live-preflight-gate-closure-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "manifest_id": "P12-C4-NVIDIA-ONE-SHOT-LIVE-V1",
+  "authorization_id": "P12-C4-NVIDIA-ONE-SHOT-LIVE-EXECUTION-AUTH-V1",
+  "status": "PASS_PROVIDER_FREE_LIVE_PREFLIGHT",
+  "closed_at_utc": "2026-08-26T22:42:16Z",
+  "github_actions": {
+    "workflow": "research-p12-c4-nvidia-one-shot-live-preflight-provider-free",
+    "run_id": 33020498092,
+    "run_number": 1,
+    "run_attempt": 1,
+    "job_id": 98349441575,
+    "head_sha": "f51b68b11f1bc637641e5c55adf1ca6535ba2db8",
+    "conclusion": "success"
+  },
+  "evidence": {
+    "artifact_id": 9626339644,
+    "artifact_name": "p12-c4-nvidia-one-shot-live-preflight-provider-free",
+    "artifact_zip_digest": "sha256:99cbdbcc12adbdbba6650c2446b86c3886ee83ae316d907b652dbf5603bad2ae",
+    "evidence_file": "p12-c4-nvidia-one-shot-live-preflight-ci.json",
+    "evidence_file_sha256": "59af629ec4c8c21cc16187c7927535ee931dee83b803ca5709ae0e817ed9fd4d"
+  },
+  "audit": {
+    "status": "PASS_PROVIDER_FREE_LIVE_NOT_STARTED",
+    "materialized_common_parents": 36,
+    "unique_parent_ids": 36,
+    "unique_seeds": 36,
+    "unique_requests": 36,
+    "provider_calls": 0,
+    "network_io": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "authorized_live_execution_attempts": 1,
+    "response_format_sha256": "9ffeb4bd39b8a5dff9a8167047467ae5c36d2a76b511c11253dab0cb189a3b31"
+  },
+  "pins": {
+    "manifest_git_blob_sha": "28971da8c4c20dad9b73b909997b6e486a420cd5",
+    "authorization_git_blob_sha": "f177dd6f12fdf3b097c3e964ddda2f6ef9251edd",
+    "runner_git_blob_sha": "7f83f0143046208e5c37da4dbd3a57156d5a0a78"
+  },
+  "authorization_boundary": {
+    "provider_calls_consumed_by_preflight": 0,
+    "live_authorization_consumed_by_preflight": false,
+    "sole_live_execution_trigger_may_now_be_frozen": true,
+    "maximum_live_executions": 1,
+    "maximum_provider_request_attempts": 36,
+    "maximum_attempts_per_parent": 1,
+    "minimum_seconds_between_request_starts": 75,
+    "rerun_allowed": false,
+    "resume_allowed": false,
+    "private_scoring_authorized": false
+  },
+  "next_gate": "FREEZE_AND_EXECUTE_SOLE_NVIDIA_C4_LIVE_TRIGGER_V2"
+}
