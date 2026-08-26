@@ -1,0 +1,81 @@
+name: research-p12-c4-nvidia-one-shot-live-manifest-provider-free
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+    paths:
+      - research/experiments/p12-c4-nvidia-one-shot-live-manifest-v1.json
+      - scripts/research/p12_c4_nvidia_one_shot_live_manifest_self_check.py
+      - .github/workflows/research-p12-c4-nvidia-one-shot-live-manifest-provider-free.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-p12-c4-nvidia-one-shot-live-manifest-provider-free
+  cancel-in-progress: false
+
+jobs:
+  provider-free-one-shot-manifest-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Assert NVIDIA credential is not injected
+        shell: bash
+        run: |
+          if [[ -n "${NVIDIA_API_KEY:-}" ]]; then
+            echo "NVIDIA_API_KEY must not be available to provider-free manifest gate" >&2
+            exit 1
+          fi
+
+      - name: Validate frozen one-shot manifest
+        run: |
+          python scripts/research/p12_c4_nvidia_one_shot_live_manifest_self_check.py \
+            --out research/results/p12-c4-nvidia-one-shot-live-manifest-self-check-ci.json
+
+      - name: Require PASS without live execution
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('research/results/p12-c4-nvidia-one-shot-live-manifest-self-check-ci.json')
+          d = json.loads(p.read_text())
+          assert d['status'] == 'PASS', d
+          assert d['all_passed'] is True, d
+          assert d['provider_calls'] == 0, d
+          assert d['credentials_read'] == 0, d
+          assert d['benchmark_inputs_loaded'] == 0, d
+          assert d['live_execution_attempts_authorized_if_pass'] == 1, d
+          assert d['maximum_provider_request_attempts_if_pass'] == 36, d
+          assert d['maximum_attempts_per_parent_if_pass'] == 1, d
+          assert d['minimum_seconds_between_request_starts'] == 75, d
+          assert d['expected_fresh_common_parents'] == 36, d
+          assert d['expected_local_arm_outputs_after_complete_live_packet'] == 144, d
+          assert d['live_execution_performed_by_this_check'] is False, d
+          assert d['common_parents_generated_by_this_check'] == 0, d
+          assert d['local_arm_outputs_generated_by_this_check'] == 0, d
+          assert d['private_scoring_authorized_by_this_check'] is False, d
+          assert d['next_gate'] == 'C4_36_OF_36_FRESH_COMMON_PARENTS', d
+          print('P12_C4_NVIDIA_ONE_SHOT_LIVE_MANIFEST_PROVIDER_FREE_PASS')
+          PY
+
+      - name: Upload provider-free manifest evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-nvidia-one-shot-live-manifest-provider-free-pass
+          path: research/results/p12-c4-nvidia-one-shot-live-manifest-self-check-ci.json
+          if-no-files-found: error
+          retention-days: 30
