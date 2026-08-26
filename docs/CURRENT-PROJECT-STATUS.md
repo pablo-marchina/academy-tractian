@@ -1,26 +1,28 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-25 22:50 BRT  
+**Canonical status checkpoint:** 2026-08-26 11:10 BRT  
 **Branch:** `research/systematic-foundation`  
 **PR:** #2 — draft research-governance PR  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`docs/PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Progress ledger:** [`docs/PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
-**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-25.json`](../research/results/project-progress-checkpoint-2026-08-25.json)
+**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-26.json`](../research/results/project-progress-checkpoint-2026-08-26.json)
 
-This document is the canonical human-readable status of the project. Historical plans, attempts and intermediate states remain preserved as evidence but do not override this checkpoint.
+This document is the canonical human-readable project status. Historical plans, failed serving routes and consumed one-shot attempts remain preserved as evidence but do not authorize later gates.
 
 ## Executive summary
 
-The Benchmark Integrity Gate is closed and the P12 evaluation protocol is `FROZEN`.
+The Benchmark Integrity Gate is closed and the P12 protocol remains `FROZEN`.
 
 ```text
 P12-C1   CLOSED / DETERMINISTIC FAIL / NO ARM QUALIFIED
 P12-C2   CONSUMED_OPERATIONAL_FAILURE / 31 OF 36 / NO SCORING
 P12-C3   CONSUMED_TERMINAL_OPERATIONAL_FAILURE / 3 OF 36 / NO SCORING
-P12-C4   PROVIDER QUALIFICATION BLOCKED / SYNTHETIC OPERATIONAL FAIL / 0 OF 36
-Cerebras numeric capacity            PASS
-Cerebras generation access           FAIL / HTTP 402 PAYMENT_REQUIRED
+P12-C4   PROVIDER QUALIFICATION BLOCKED / 0 OF 36 / 0 OF 144 / NO SCORING
+
+Cerebras synthetic route     CONSUMED_OPERATIONAL_FAILURE_NO_MODEL_OUTPUT / HTTP 402
+OpenRouter synthetic route   CONSUMED_OPERATIONAL_FAILURE_NO_MODEL_OUTPUT / HTTP 404 FREE VARIANT UNAVAILABLE
+
 current QUALIFIED implementation     NONE
 current PREFERRED implementation     NONE
 semantic v4.2                        NOT AUTHORIZED
@@ -30,167 +32,136 @@ final architecture                   UNFROZEN
 production-readiness claim           NOT AUTHORIZED
 ```
 
-The project is currently in **Phase 3: P12-C4 provider qualification / experiment readiness**. It has not yet entered C4 benchmark collection or candidate qualification.
+The project is still in **Phase 3 — P12-C4 provider qualification and readiness**. Benchmark generation has not started. The current blocking question is now narrower: **qualify a new no-card serving route prospectively before any EXPOSED_POOL call**.
 
 ## Completed foundations
 
-### Governance and benchmark integrity
+The benchmark-integrity work, P12 protocol freeze, evidence partitions, deterministic evaluator infrastructure, fresh C4 seed map, complete-packet-only scoring rules and statistical contract remain valid.
 
-| Milestone | State |
-|---|---|
-| BIG-B0 benchmark integrity audit | COMPLETE |
-| BIG-B1 exposure/contamination ledger | COMPLETE |
-| BIG-B2 benchmark-design alternatives | COMPLETE |
-| BIG-B3 protocol selection | COMPLETE |
-| BIG-B4 protocol freeze | COMPLETE / `FROZEN` |
-| Historical candidate/component reinterpretation | COMPLETE |
+P12-C1/C2/C3 remain consumed and may not be rerun or repackaged. No C2/C3 partial parent or live seed may be reused to form a confirmatory C4 packet.
 
-### Prospective P12 history
+## C4 serving-route history
 
-| Experiment | State | Complete packet | Scoring | Scientific conclusion |
-|---|---|---:|---|---|
-| P12-C1 | CLOSED / deterministic fail | 36 parents / 72 outputs | COMPLETE | no arm qualified |
-| P12-C2 | CONSUMED_OPERATIONAL_FAILURE | 31/36 parents | BLOCKED | none |
-| P12-C3 | CONSUMED_TERMINAL_OPERATIONAL_FAILURE | 3/36 parents | BLOCKED | none |
-| P12-C4 | PROVIDER QUALIFICATION BLOCKED | 0/36 parents | BLOCKED | none |
+### Cerebras — consumed before model output
 
-C1/C2/C3 remain consumed. Their partial outputs, scores and live seeds may not be reused to form a confirmatory C4 packet.
-
-## P12-C4 preparation completed
-
-The provider-capacity ADR is `ACCEPTED` with `CONDITIONAL_GO_TO_P12_C4_PREREGISTRATION`. Cerebras + `gpt-oss-120b` is a temporary experimental serving path, not a frozen production provider.
-
-Completed provider-free / account-level work includes:
-
-- fresh C4 seed map frozen with no C1/C2/C3 live-seed reuse;
-- serving contract frozen: `cerebras_cloud_sdk==1.91.0`, no warming, retries or failover;
-- `temperature=0`, `reasoning_effort=medium`, hidden reasoning, strict JSON schema and 4096 completion budget frozen;
-- prompt sizing completed for all 36 parents;
-- maximum conservative prompt bound = 3,284 tokens;
-- maximum reserved admission/request = 7,380 tokens;
-- full 36-parent reserved upper bound = 265,002 tokens;
-- minimum pacing = 75 seconds between provider requests;
-- effective numeric account/project limits attested: 5 RPM, 30k uncached TPM, 90k total TPM, 1M TPH, 1M TPD;
-- authenticated model-catalog access to `gpt-oss-120b` confirmed;
-- one-shot synthetic authorization frozen.
-
-## P12-C4 synthetic live probe — operational failure
-
-The one-shot live workflow was:
-
-```text
-workflow        research-p12-c4-cerebras-synthetic-live-probe
-run             32901958789
-run attempt     1
-job             97977601612
-head            9e0a89e1959dcc4ffd659baef1a4f07e137a7245
-preflight       PASS
-SDK pin         PASS
-live execution  FAIL
-```
-
-The first preregistered synthetic provider request reached Cerebras and failed with:
-
-```text
-HTTP 402
-error type: payment_required_error
-code:       payment_required
-param:      quota
-message:    Payment required to access this resource. Visit your billing tab.
-```
-
-Consequences:
-
-```text
-provider request attempts observed   1
-successful generation calls          0
-model outputs observed                0
-first synthetic probe complete       false
-second synthetic request attempted   false
-benchmark inputs loaded               0
-private-oracle accesses               0
-FRESH_BLIND accesses                  0
-LEGACY_LOCKED_TEST accesses           0
-```
-
-The authorization attempt is **consumed**. The same workflow run or authorization must not be rerun/reused.
+The Cerebras path passed provider-free checks and numeric-capacity attestation, but the one-shot live synthetic run `32901958789` received HTTP 402 `payment_required` on its first request. There were zero model outputs and the second synthetic request was not attempted.
 
 Canonical closure:
 
 - `research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json`
 
-## Correct interpretation of the account attestation
+The Cerebras authorization and workflow run are consumed and may not be rerun/reused.
 
-The previous account attestation remains valid historical evidence for:
+### OpenRouter + OpenInference — consumed before model output
 
-- first-party organization/project numeric limits;
-- API-key authentication;
-- model catalog accessibility.
-
-It is **not sufficient evidence of active generation access** after the live endpoint returned HTTP 402.
-
-Before any new synthetic attempt or benchmark generation, new first-party evidence must establish that billing/trial/developer generation access is active. No secret or payment credential may be committed.
-
-## Current blockers
-
-### CRITICAL — Cerebras generation/billing access
-
-Numeric quota is sufficient, but live Chat Completions generation is not currently available to this account/key context. This blocks the synthetic compatibility gate and therefore all P12-C4 activation and EXPOSED_POOL generation.
-
-### CRITICAL — FRESH_BLIND source not authorized
-
-Current state: `NO_SOURCE_AUTHORIZED`. Tier A target remains 2026-08-25 23:59 BRT. If not operational by the frozen cutoff, planning transitions to the Tier B independently authored fallback, with 2026-08-28 23:59 BRT as the fallback deadline.
-
-### HIGH — no qualified current candidate
-
-C1 failed scientifically. C2/C3 failed operationally before complete measurement. C4 has not begun benchmark generation.
-
-### HIGH — architecture remains unfrozen
-
-Retrieval/RAG, reranking, multi-agent decomposition, persistent memory, observability, final provider, deployment and UI remain open. This is intentional until candidate evidence supports a freeze.
-
-## Immediate critical path
-
-The next valid sequence is:
+ADR-002 prospectively selected the no-card route:
 
 ```text
-1. first-party generation/billing activation evidence
-2. narrow pre-outcome infrastructure amendment
-3. provider-free validation of the amended one-shot path
-4. new one-shot synthetic authorization only if all gates PASS
-5. exactly 2 preregistered synthetic calls → PASS required
-6. full provider-free C4 activation
-7. C4 live manifest freeze
-8. exactly 36/36 common parents
-9. local A00/A10/A01/A11 expansion → exactly 144/144 outputs
-10. packet freeze
-11. deterministic gates → 20k bootstrap → LOGO → slices/failure analysis
-12. semantic child gate for deterministic survivors only
-13. production-fit decision + generation freeze
-14. separately authorized FRESH_BLIND measurement
-15. architecture freeze → regression → documentation → delivery
+gateway             OpenRouter
+model               openai/gpt-oss-120b:free
+upstream provider   OpenInference only
+provider fallback   false
+model fallback      none
+application retries 0
+transport            httpx==0.28.1
+minimum pacing       75 seconds
 ```
 
-Hard rules:
+The provider-free qualification completed successfully in run `32977533642`. It generated a distinct one-shot authorization that was committed at head `2e73bb22a391a8a5180047a1b4e4d57f74012546`.
 
-- same failed synthetic authorization/run: **no rerun**;
-- no EXPOSED_POOL call before synthetic PASS + activation PASS + live manifest freeze;
-- no partial scoring;
-- no semantic evaluation before deterministic survival;
+The resulting live synthetic run was:
+
+```text
+workflow        research-p12-c4-openrouter-synthetic-live-probe
+run             32977791243
+run attempt     1
+job             98206680887
+preflight       PASS
+httpx pin       PASS
+first request   HTTP 404
+model outputs   0
+second request  NOT ATTEMPTED
+```
+
+The provider returned:
+
+```text
+This model is unavailable for free. The paid version is available now - use this slug instead: openai/gpt-oss-120b
+```
+
+Consequences:
+
+```text
+provider request attempts      1
+successful HTTP responses      0
+model outputs observed         0
+automatic retries              0
+provider fallbacks             0
+model fallbacks                0
+benchmark inputs loaded        0
+private-oracle accesses        0
+FRESH_BLIND accesses           0
+LEGACY_LOCKED_TEST accesses    0
+```
+
+The one-shot OpenRouter authorization is now **consumed**. The same authorization/workflow run must not be rerun or reinterpreted.
+
+Canonical closure:
+
+- `research/results/p12-c4-openrouter-synthetic-live-probe-closure-2026-08-26.json`
+
+The raw Actions artifact is intentionally not committed because it contains a provider-assigned user identifier. The canonical closure preserves hashes/provenance without that identifier.
+
+## Current critical path
+
+```text
+new no-card provider route identified
+        ↓
+prospective ADR amendment
+        ↓
+provider/model/transport/request contract frozen
+        ↓
+provider-free compatibility gate PASS
+        ↓
+NEW one-shot synthetic authorization
+        ↓
+exactly 2 preregistered synthetic calls
+        ↓
+2 / 2 PASS ?
+   ┌────────────┐
+   │ no         │ yes
+   ▼            ▼
+ STOP      full provider-free C4 activation
+                 ↓
+           live manifest freeze
+                 ↓
+            36 / 36 parents
+                 ↓
+        local A00/A10/A01/A11 expansion
+                 ↓
+           144 / 144 outputs
+                 ↓
+             packet freeze
+                 ↓
+ deterministic gates → 20k bootstrap → LOGO → slices/failure analysis
+```
+
+No shortcut around this sequence is authorized.
+
+## Parallel work
+
+FRESH_BLIND source/custody preparation may continue without outcome exposure. Canonical documentation, reproducibility work and production-fit research may also continue, but final architecture must remain unfrozen until candidate evidence supports a decision.
+
+## Hard rules
+
+- no reuse or rerun of the consumed Cerebras or OpenRouter synthetic authorizations;
+- no EXPOSED_POOL provider call before a new synthetic 2/2 PASS, full activation PASS and live-manifest freeze;
+- C4 must reach exactly 36/36 common parents and 144/144 fixed arm outputs before scoring;
+- no partial/complete-case scoring;
+- semantic evaluation only for deterministic survivors;
 - no FRESH_BLIND outcome access before candidate/evaluator generation freeze and separate authorization;
-- no production-readiness or final-architecture claim before evidence supports it.
-
-## Parallel work allowed now
-
-Only work that cannot contaminate or bypass the experimental path should proceed in parallel:
-
-1. FRESH_BLIND source/custody/authorization preparation without outcome exposure;
-2. canonical documentation and reproducibility maintenance;
-3. provider-free preparation for a narrow access-remediation amendment;
-4. production-fit research that does not freeze final architecture prematurely.
+- no production-readiness or final-architecture claim before supporting evidence exists.
 
 ## Explicit non-claims
 
-The project currently has **no** qualified/preferred candidate, successful C2/C3/C4 factorial comparison, semantic-v4.2 pass, authorized FRESH_BLIND source, final LOCKED_TEST authorization, frozen production architecture or production-readiness evidence.
-
-Infrastructure and access checks validate only what they explicitly test.
+The project currently has no qualified/preferred candidate, no successful C4 packet, no semantic-v4.2 pass, no authorized FRESH_BLIND source, no final LOCKED_TEST authorization, no frozen production architecture and no production-readiness evidence.
