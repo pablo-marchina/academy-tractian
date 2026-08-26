@@ -18,159 +18,103 @@ Passing a gate means evidence for that gate. It does **not** automatically mean 
 See:
 
 - [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — canonical current evidence/status checkpoint;
-- [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md) — reviewed action plan through the 2026-09-08 delivery;
+- [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md) — active macro plan through the 2026-09-08 delivery;
 - [`docs/PROJECT-PROGRESS-LOG.md`](docs/PROJECT-PROGRESS-LOG.md) — chronological progress/evidence ledger;
-- [`research/results/project-progress-checkpoint-2026-08-24.json`](research/results/project-progress-checkpoint-2026-08-24.json) — current machine-readable checkpoint.
+- [`research/results/project-progress-checkpoint-2026-08-25.json`](research/results/project-progress-checkpoint-2026-08-25.json) — current machine-readable checkpoint.
 
-The previous machine checkpoint remains preserved at `research/results/project-progress-checkpoint-2026-08-23.json`. The E14v-era project plan is preserved at [`docs/archive/PROJECT-PLAN-2026-08-20.md`](docs/archive/PROJECT-PLAN-2026-08-20.md).
-
-### Executive state — reviewed 2026-08-24 09:53 BRT
+### Executive state — reviewed 2026-08-25 22:50 BRT
 
 ```text
 Benchmark Integrity Gate            COMPLETE
 P12 evaluation protocol             FROZEN
 P12-C1                              CLOSED / DETERMINISTIC FAIL / NO ARM QUALIFIED
-P12-C2                              CONSUMED_OPERATIONAL_FAILURE / NO SCORING
-P12-C3                              CONSUMED_TERMINAL_OPERATIONAL_FAILURE / NO SCORING
+P12-C2                              CONSUMED_OPERATIONAL_FAILURE / 31 OF 36 / NO SCORING
+P12-C3                              CONSUMED_TERMINAL_OPERATIONAL_FAILURE / 3 OF 36 / NO SCORING
+P12-C4 provider qualification       BLOCKED / SYNTHETIC OPERATIONAL FAIL / 0 OF 36
+Cerebras numeric capacity           PASS
+Cerebras generation access          FAIL / HTTP 402 PAYMENT_REQUIRED
 current QUALIFIED candidate         NONE
 current PREFERRED candidate         NONE
-semantic v4.2                       NOT AUTHORIZED
 FRESH_BLIND                         NO SOURCE AUTHORIZED
 LEGACY_LOCKED_TEST                  ACCESS BLOCKED
 final architecture                  UNFROZEN
 production-readiness claim          NOT AUTHORIZED
 ```
 
-## P12 evidence roles
+## Where the project is now
 
-- **EXPOSED_POOL = historical DEV + VALIDATION:** seven independent asset/story groups for adaptive development, selection, ablation, evaluator work and regression. It cannot support a fresh generalization claim.
-- **FRESH_BLIND:** primary independent real-domain generalization evidence. Current state: `NO_BLIND_SOURCE_AUTHORIZED`.
-- **LEGACY_LOCKED_TEST:** qualified supplementary held-out characterization; candidate execution remains blocked until separately authorized final access.
-- **SYNTHETIC_ADVERSARIAL:** evaluator/judge qualification, robustness and regression only.
+The project has moved beyond the original provider-capacity ADR. Cerebras + `gpt-oss-120b` was selected conditionally for P12-C4 qualification, fresh seeds and pacing were frozen, numeric organization/project capacity passed, and a one-shot synthetic compatibility probe was authorized.
 
-## Prospective P12 history
-
-### P12-C1 — scientific comparison completed
-
-36 common parents → 72 fixed C0/C1 outputs → deterministic scoring.
-
-Both arms failed deterministic gates. C1 reduced extra reads but worsened expected-read recall and did not improve decision/action/escalation quality. No arm became `QUALIFIED`.
-
-Canonical result: [`research/results/p12-c1-deterministic-paired-result-2026-08-23.json`](research/results/p12-c1-deterministic-paired-result-2026-08-23.json).
-
-### P12-C2 — provider-capacity operational failure
-
-The 2×2 A00/A10/A01/A11 experiment attempted all 36 common-parent cells, but only 31 completed. Five failed with `rate_limit_long_window`. The 144-output packet was never frozen, so deterministic scoring/LOGO/bootstrap were correctly blocked.
-
-Canonical closure: [`research/results/p12-c2-live-cycle-closure-2026-08-23.json`](research/results/p12-c2-live-cycle-closure-2026-08-23.json).
-
-### P12-C3 — capacity-controlled terminal operational failure
-
-P12-C3 kept A00/A10/A01/A11 scientifically unchanged and prospectively introduced six fixed batches, reset-aware capacity control, immutable checkpoints, pending-only resume and a 72-hour horizon.
-
-Provider-free activation/live infrastructure passed before live execution. The first B1 run stopped before provider access on a retained compatibility assertion; a narrow pre-outcome infrastructure amendment was frozen and provider-free qualified without changing the candidate/evaluator/scientific design.
-
-The continued B1 run `32672167702` then reached live provider execution:
-
-```text
-completed cells        3
-pending cells         33
-transport failures     1
-rate-limit events      1
-terminal failure    true
-horizon expired     false
-```
-
-The frozen controller entered a terminal experiment state on the fourth cell. Therefore P12-C3 cannot be resumed, rerun, partially scored or interpreted as a complete-case comparison.
+The live synthetic workflow `32901958789` failed on the **first** provider request with HTTP `402 payment_required`. No model output was produced, no benchmark input was loaded, and the second synthetic request was not sent. The one-shot authorization is consumed and may not be rerun or reused.
 
 Canonical closure:
 
-- [`research/results/p12-c3-live-cycle-closure-2026-08-23.json`](research/results/p12-c3-live-cycle-closure-2026-08-23.json)
-- [`research/p12-c3-live-cycle-closure-2026-08-23.md`](research/p12-c3-live-cycle-closure-2026-08-23.md)
+- [`research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json`](research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json)
 
-## Reviewed critical path
+Therefore **P12-C4 EXPOSED_POOL generation is still blocked**. Current progress is `0/36` common parents, `0/144` fixed outputs, and scoring remains forbidden.
 
-The next step is **not** another P12-C3 trigger and P12-C4 is **conditional**, not automatic.
+## Macro project phases
 
 ```text
-provider-capacity alternatives ADR ─────────────── FRESH_BLIND readiness (parallel)
-              │                                   production-fit research (parallel)
-              ▼
-       ADR GO decision?
-         ┌────┴────┐
-         │         │
-       NO-GO       GO
-         │         │
-         ▼         ▼
- honest scope   P12-C4 preregistration + provider-free activation
- reassessment                     │
-                                  ▼
-                         complete prospective packet only
-                                  │
-                                  ▼
-                    deterministic gate + 20k bootstrap + LOGO
-                                  │
-                                  ▼
-                    semantic child gate for survivors only
-                                  │
-                                  ▼
-                     production-fit / generation freeze
-                                  │
-                                  ▼
-                      authorized FRESH_BLIND evidence
-                                  │
-                                  ▼
-                    architecture freeze + regression + delivery
+1. Benchmark / governance foundation                     COMPLETE
+2. Prospective exploration and failure learning C1-C3   COMPLETE
+3. P12-C4 provider qualification / readiness             CURRENT
+4. Complete candidate qualification (36/36 → 144/144)   PENDING
+5. Deterministic + semantic + independent validation     PENDING
+6. Production-fit decision + architecture freeze         PENDING
+7. Integration, regression, documentation and delivery   PENDING
 ```
 
-Hard schedule checkpoints:
+## Immediate critical path
 
-- provider-capacity ADR: **2026-08-24**;
-- Tier A FRESH_BLIND target: **2026-08-25 23:59 BRT**;
-- complete prospective EXPOSED_POOL packet or scope reassessment: **end of 2026-08-27**;
-- Tier B FRESH_BLIND fallback deadline: **2026-08-28 23:59 BRT**;
-- preserve **2026-09-03 onward** primarily for integration, regression, documentation and delivery.
+```text
+first-party billing / generation-access evidence
+        ↓
+narrow pre-outcome infrastructure amendment
+        ↓
+new one-shot synthetic authorization, only if all provider-free gates PASS
+        ↓
+2 / 2 synthetic calls PASS
+        ↓
+full provider-free C4 activation
+        ↓
+live manifest freeze
+        ↓
+36 / 36 common parents
+        ↓
+local A00/A10/A01/A11 expansion
+        ↓
+144 / 144 packet freeze
+        ↓
+deterministic gates → 20k bootstrap → LOGO → slices/failure analysis
+        ↓
+semantic child gate for deterministic survivors only
+        ↓
+production-fit decision + generation freeze
+        ↓
+authorized FRESH_BLIND measurement
+        ↓
+architecture freeze → regression → final delivery
+```
 
-Full reviewed plan: [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md).
+The same failed synthetic authorization/run must **not** be rerun. No activation, EXPOSED_POOL generation, private scoring, FRESH_BLIND outcome access or architecture-freeze claim is allowed before its respective gate.
 
-## Main current risks
+## Parallel independent-evidence track
 
-1. **Provider capacity — CRITICAL:** P12-C2 failed at 31/36; P12-C3 became terminal at 3/36.
-2. **No FRESH_BLIND source — CRITICAL:** independent generalization evidence is not yet available.
-3. **No qualified current candidate — HIGH:** C1 failed scientifically; C2/C3 failed before complete scoring.
-4. **Schedule — HIGH:** final target remains **2026-09-08** and the next 72 hours are decision-critical.
-5. **Architecture decision debt — HIGH:** retrieval, reranking, multi-agent, memory, observability and final deployment/UI choices remain unfrozen.
+FRESH_BLIND preparation continues independently. Current state remains `NO_SOURCE_AUTHORIZED`; hidden cases, expected paths and outcomes must remain unavailable to candidate development until candidate/evaluator generation is frozen and a separate final authorization exists.
 
-## Frozen/retained foundations
+## Retained evidence-backed foundations
 
-Historical evidence supports several reusable foundations, including:
+Reusable foundations include:
 
 - ScenarioSchema / Canonical ToolSpec / TraceSchema / deterministic replay;
 - HarnessRunner / HttpxTransport boundary;
 - LangGraph runtime candidate;
 - native ToolSpec envelope / MCP-compatible adapter;
-- E9 v4.1 deterministic evaluator;
-- E9 v4.2 semantic protocol;
-- E14c/d/e public canonicalization/handoff semantics;
-- E14n v1.1 identifier-provenance guard;
-- E14p epistemic serializer;
-- E14q/E14q2 safety/action authorization guards.
+- E9 deterministic and semantic evaluator foundations;
+- public canonicalization/handoff, identifier-provenance, epistemic serialization and safety/action authorization guards.
 
-These are evidence-backed components, not an automatically frozen final architecture.
-
-## Frozen TRACTIAN facts
-
-- 17 agent-input cases and 16 narrative evaluation scenarios;
-- 10 primary asset/story groups, so random ticket splitting is unsafe;
-- evaluator-only gold separated from agent-visible input;
-- 18 operations across 17 path templates;
-- reference trajectories are not mandatory scripts;
-- actions are accepted events and do not persist mutation state in the supplied environment;
-- `x-user-id` and evaluation `seed` are runner-bound;
-- response modes are reproducible through deterministic seeds/overrides;
-- raw OpenAPI contains a duplicate `/assets/{assetId}` mapping;
-- raw action validation is permissive and backend company/resource isolation is coarse;
-- knowledge API exposes the supplied corpus directly.
+These are evidence-backed components, not an automatically frozen final production architecture.
 
 ## Project goal
 
@@ -178,11 +122,3 @@ The final project must address both:
 
 1. **Industrial Agent Engineering** — contextualize, investigate, execute and escalate against the supplied industrial API.
 2. **Agent Evaluation & Reliability** — quantitatively evaluate tool choice, arguments, trajectory, evidence, conclusion/response, safety, robustness, stability and action behavior.
-
-The evaluation framework is part of the engineering loop, not a disconnected QA layer.
-
-## Development rule
-
-No component remains because it looks sophisticated. RAG, reranking, multi-agent routing, persistent memory, prompt optimization, model selection, judge selection and similar techniques require an explicit hypothesis/requirement, credible alternatives and controlled evidence. Optional complexity remains removable until supported.
-
-Final delivery/presentation target: **2026-09-08**.

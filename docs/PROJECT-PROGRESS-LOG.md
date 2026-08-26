@@ -5,80 +5,49 @@
 **Active plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
 
-This file records how the project reached its current state. It does not override experiment manifests, frozen protocols or canonical result artifacts.
+This file records how the project reached its current state. It does not override frozen experiment manifests, protocols or canonical result artifacts.
 
-## Phase 1 — benchmark integrity and protocol governance
+## Phase 1 — benchmark integrity and protocol governance — COMPLETE
 
-### BIG-B0 — benchmark integrity audit — COMPLETE
+### BIG-B0 — benchmark integrity audit
 
-Reconstructed historical benchmark access and decision events, including adaptive use of validation-side information and later evaluator-structure access.
+Reconstructed historical benchmark access and decision events.
 
 Canonical artifacts:
 
 - `research/big-b0-benchmark-integrity-audit-2026-08-21.md`
 - `research/results/big-b0-benchmark-access-ledger-2026-08-21.json`
 
-### BIG-B1 — exposure / contamination ledger — COMPLETE
+### BIG-B1 — exposure / contamination ledger
 
-Reclassified historical DEV/VALIDATION/LOCKED_TEST evidence under a strict independence rule. Historical VALIDATION became exposed for future candidate-generalization claims; LOCKED_TEST retained candidate/task-quality blindness but not pristine evaluator-structure blindness.
+Reclassified historical DEV/VALIDATION/LOCKED_TEST evidence under strict independence rules.
 
-Canonical artifacts:
+### BIG-B2 — benchmark-design alternatives
 
-- `research/big-b1-exposure-contamination-ledger-2026-08-21.md`
-- `research/results/big-b1-exposure-contamination-ledger-2026-08-21.json`
+Compared balanced folds, LOGO, leave-two-out and fresh-blind designs using the known exposed geometry.
 
-### BIG-B2 — benchmark-design alternatives — COMPLETE
+### BIG-B3 — evaluation protocol selection
 
-Compared balanced folds, LOGO, leave-two-out and fresh-blind designs using the known seven-group exposed geometry.
+Selected `P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST` and established Tier A/Tier B source deadlines and breach semantics.
 
-Canonical artifacts:
-
-- `research/big-b2-benchmark-design-alternatives-2026-08-21.md`
-- `research/results/big-b2-benchmark-design-comparison-2026-08-21.json`
-
-### BIG-B3 — evaluation protocol selection — COMPLETE
-
-Selected `P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST` and established Tier A/Tier B blind-source deadlines and breach semantics.
-
-Canonical artifacts:
-
-- `research/big-b3-evaluation-protocol-selection-2026-08-21.md`
-- `research/results/big-b3-evaluation-protocol-selection-2026-08-21.json`
-
-### BIG-B4 — P12 protocol freeze — COMPLETE / FROZEN
+### BIG-B4 — P12 protocol freeze
 
 Frozen evidence roles:
 
-- `EXPOSED_POOL` for adaptive development/comparison;
-- `FRESH_BLIND` for primary independent real-domain evidence;
-- `LEGACY_LOCKED_TEST` for supplementary held-out characterization only;
-- `SYNTHETIC_ADVERSARIAL` for robustness/evaluator qualification.
+- `EXPOSED_POOL` — adaptive development/comparison;
+- `FRESH_BLIND` — primary independent real-domain evidence;
+- `LEGACY_LOCKED_TEST` — supplementary held-out characterization;
+- `SYNTHETIC_ADVERSARIAL` — robustness/evaluator qualification.
 
-Also froze repeated-run, group-cluster bootstrap, LOGO, failure/missingness and access-control semantics.
+Also froze repeated-run, group-cluster bootstrap, LOGO, missingness and access-control semantics.
 
-Canonical artifacts:
+## Phase 2 — historical implementation reinterpretation — COMPLETE
 
-- `research/big-b4-evaluation-protocol-freeze-2026-08-22.md`
-- `research/frozen/big-b4-evaluation-protocol-v1.json`
+Historical implementation evidence was reclassified under P12. No historical implementation remained `PREFERRED` at project level.
 
-## Phase 2 — historical implementation reinterpretation
+Retained evidence-backed foundations include ScenarioSchema, Canonical ToolSpec, TraceSchema, deterministic replay, HarnessRunner/HttpxTransport, LangGraph runtime candidate, native ToolSpec/MCP-compatible boundaries and the E9/E14 evaluator, provenance and safety foundations.
 
-Historical implementation evidence was reclassified under P12. No historical implementation candidate remained `PREFERRED` at project level. The evaluation protocol is the only project-level technical item frozen by governance at this stage.
-
-Reusable evidence-backed foundations include ScenarioSchema, Canonical ToolSpec, TraceSchema, deterministic replay, HarnessRunner/HttpxTransport, LangGraph runtime candidate, native ToolSpec/MCP-compatible boundaries, E9 v4.1/v4.2 and E14c/d/e/n/p/q/q2.
-
-Canonical artifacts:
-
-- `research/p12-historical-candidate-component-reinterpretation-2026-08-22.md`
-- `research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json`
-
-## Phase 3 — P12-C1 prospective evidence-route comparison
-
-### Preregistration and activation — COMPLETE
-
-Froze a paired EXPOSED_POOL comparison between C0 reference evidence restoration and C1 bounded canonical route selection using 36 common parents and three repetitions per visible ticket.
-
-### Live execution and deterministic scoring — COMPLETE
+## Phase 3 — P12-C1 prospective evidence-route comparison — COMPLETE / SCIENTIFIC FAIL
 
 Final packet:
 
@@ -88,19 +57,11 @@ Final packet:
 72/72 scoreable
 ```
 
-Key result:
-
-- C1 reduced extra public reads;
-- C1 materially worsened expected-read recall;
-- decision/action/escalation did not improve;
-- both arms retained hard-safety failures;
-- both arms failed frozen deterministic gates.
+C1 reduced extra public reads but materially worsened expected-read recall and did not improve decision/action/escalation. Both arms failed frozen deterministic gates.
 
 Decision:
 
 ```text
-C0  RESEARCHED_REFERENCE_FAILED_P12_C1_DETERMINISTIC_GATES
-C1  SUPERSEDED_REJECTED_FOR_THIS_CANDIDATE_DEFINITION
 QUALIFIED arms  none
 PREFERRED arm   none
 ```
@@ -108,13 +69,10 @@ PREFERRED arm   none
 Canonical result:
 
 - `research/results/p12-c1-deterministic-paired-result-2026-08-23.json`
-- `research/p12-c1-deterministic-paired-result-2026-08-23.md`
 
-## Phase 4 — P12-C2 factorial evidence/safety experiment
+## Phase 4 — P12-C2 factorial experiment — CONSUMED_OPERATIONAL_FAILURE
 
-### Design — COMPLETE / FROZEN
-
-Introduced 2×2 E0/E1 × S0/S1 arms:
+Frozen 2×2 arms:
 
 ```text
 A00 = E0 + S0
@@ -123,11 +81,7 @@ A01 = E0 + S1
 A11 = E1 + S1
 ```
 
-Activation passed provider-free.
-
-### Live execution — CONSUMED_OPERATIONAL_FAILURE
-
-Run `32663659575` attempted the complete 36-parent geometry but provider capacity prevented completion:
+Run `32663659575`:
 
 ```text
 31 successful parents
@@ -137,41 +91,15 @@ failure family: rate_limit_long_window
 private scoring: not executed
 ```
 
-No arm-level scientific conclusion is permitted from C2.
+No arm-level scientific conclusion is permitted.
 
-Canonical closure:
+## Phase 5 — P12-C3 capacity-controlled factorial experiment — CONSUMED_TERMINAL_OPERATIONAL_FAILURE
 
-- `research/results/p12-c2-live-cycle-closure-2026-08-23.json`
+C3 kept the same A00/A10/A01/A11 candidate definitions and added prospective capacity control.
 
-## Phase 5 — P12-C3 capacity-controlled factorial experiment
+Initial run `32671370930` stopped before provider access on an infrastructure compatibility assertion. A narrow pre-outcome infrastructure amendment was frozen without changing candidate/model/prompt/evaluator/seeds/metrics/gates.
 
-### Preregistration / activation / live preparation — COMPLETE
-
-Kept A00/A10/A01/A11 unchanged while prospectively adding:
-
-- six fixed batches × six parents;
-- reset-aware capacity control;
-- immutable checkpoints;
-- pending-only resume;
-- 72-hour collection horizon;
-- complete-packet-only scoring.
-
-Provider-free activation and live infrastructure qualification passed before provider access.
-
-### Initial B1 infrastructure failure — PRE-OUTCOME
-
-Run `32671370930` stopped before provider access on a retained E14l transport-invariant compatibility assertion.
-
-```text
-provider requests      0
-candidate outcomes     0
-```
-
-A narrow infrastructure amendment was frozen and provider-free qualified in runs `32671829920` and `32672049576` without changing model, prompt, candidates, evaluator, seeds, batch map, metrics or gates.
-
-### Continued B1 live execution — CONSUMED_TERMINAL_OPERATIONAL_FAILURE
-
-Run `32672167702` reached live provider execution and then entered the preregistered terminal state:
+Continued run `32672167702` reached live provider execution and then entered the preregistered terminal state:
 
 ```text
 completed cells         3
@@ -184,25 +112,130 @@ terminal failure      true
 private scoring       not executed
 ```
 
-No same-experiment resume, rerun, partial scoring or complete-case reinterpretation is allowed.
+C3 cannot be resumed, rerun, partially scored or reinterpreted as complete-case evidence.
 
 Canonical closure:
 
 - `research/results/p12-c3-live-cycle-closure-2026-08-23.json`
-- `research/p12-c3-live-cycle-closure-2026-08-23.md`
 
-## Phase 6 — canonical checkpoint and plan reset
+## Phase 6 — provider-capacity decision and P12-C4 qualification preparation
 
-After C3, the repository separated historical planning from current control documents:
+### Provider ADR — ACCEPTED / CONDITIONAL GO
 
-- `docs/CURRENT-PROJECT-STATUS.md` — canonical current evidence/status;
-- `docs/PROJECT-PLAN.md` — active reviewed action plan;
-- `docs/PROJECT-PROGRESS-LOG.md` — this chronological ledger;
-- `docs/archive/PROJECT-PLAN-2026-08-20.md` — archived historical plan;
-- `research/results/project-progress-checkpoint-2026-08-23.json` — preserved prior machine checkpoint;
-- `research/results/project-progress-checkpoint-2026-08-24.json` — current machine checkpoint.
+ADR-001 selected Cerebras Free Trial + `gpt-oss-120b` as the qualification path for P12-C4 while treating the serving-provider change as an explicit confound.
 
-## Current checkpoint — 2026-08-24 09:53 BRT
+The decision did **not** authorize EXPOSED_POOL generation and did not freeze Cerebras as the final production provider.
+
+### C4 serving contract and isolation
+
+Frozen:
+
+- provider: Cerebras;
+- model: `gpt-oss-120b`;
+- SDK: `cerebras_cloud_sdk==1.91.0`;
+- `temperature=0`;
+- `reasoning_effort=medium`;
+- hidden reasoning;
+- strict JSON schema;
+- `max_completion_tokens=4096`;
+- `warm_tcp_connection=false`;
+- retries = 0;
+- automatic failover = false;
+- 36 fresh common-parent seeds;
+- no C1/C2/C3 partial-output or live-seed reuse.
+
+### Prompt sizing and pacing — PASS / FROZEN
+
+Provider-free measurement:
+
+```text
+serialized request token range       2195..2217
+max system + user tokens              1691
+max conservative prompt bound         3284
+max reserved admission/request        7380
+36-request reserved upper bound     265002
+minimum request spacing                75 s
+```
+
+### Account capacity — NUMERIC PASS
+
+First-party organization/project limits recorded:
+
+```text
+RPM             5
+uncached TPM    30,000
+total TPM       90,000
+TPH             1,000,000
+TPD             1,000,000
+```
+
+Authenticated model-catalog access to `gpt-oss-120b` was also confirmed.
+
+### Synthetic authorization — ONE-SHOT FROZEN
+
+Authorization `p12-c4-cerebras-synthetic-probe-live-authorization-v1` allowed exactly one workflow attempt containing exactly the two preregistered synthetic requests, with no automatic retries or rerun.
+
+It did not authorize EXPOSED_POOL, scoring, FRESH_BLIND or LEGACY_LOCKED_TEST access.
+
+## Phase 7 — P12-C4 synthetic live qualification — CONSUMED_OPERATIONAL_FAILURE
+
+Live workflow:
+
+```text
+workflow        research-p12-c4-cerebras-synthetic-live-probe
+run             32901958789
+run attempt     1
+job             97977601612
+head            9e0a89e1959dcc4ffd659baef1a4f07e137a7245
+preflight       PASS
+SDK pin         PASS
+live step       FAIL
+```
+
+The first preregistered provider request failed with:
+
+```text
+HTTP 402
+payment_required_error
+code = payment_required
+param = quota
+```
+
+Observed consequences:
+
+```text
+provider request attempts          1
+successful generation calls        0
+model outputs                       0
+first synthetic complete       false
+second synthetic attempted     false
+benchmark inputs loaded             0
+private-oracle accesses             0
+FRESH_BLIND accesses                0
+LEGACY_LOCKED_TEST accesses         0
+```
+
+The one-shot authorization attempt is consumed and may not be rerun or reused.
+
+Canonical closure:
+
+- `research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json`
+
+Scientific state after closure:
+
+```text
+synthetic compatibility gate       FAIL / operational access
+P12-C4 activation                  BLOCKED
+P12-C4 live manifest               BLOCKED
+P12-C4 common parents              0 / 36
+P12-C4 fixed outputs               0 / 144
+private scoring                    BLOCKED
+semantic gate                      BLOCKED
+```
+
+The prior account attestation remains historical evidence for numeric capacity, authentication and model-catalog access, but it is insufficient to establish current generation access after the HTTP 402 result.
+
+## Current checkpoint — 2026-08-25 22:50 BRT
 
 ```text
 Benchmark Integrity Gate        CLOSED
@@ -210,6 +243,9 @@ P12 protocol                    FROZEN
 P12-C1                          CLOSED / deterministic fail
 P12-C2                          CONSUMED_OPERATIONAL_FAILURE
 P12-C3                          CONSUMED_TERMINAL_OPERATIONAL_FAILURE
+P12-C4                          BLOCKED / synthetic operational access failure / 0 of 36
+Cerebras numeric capacity       PASS
+Cerebras generation access      FAIL / payment required
 QUALIFIED current candidate     none
 PREFERRED current candidate     none
 FRESH_BLIND                     no source authorized
@@ -221,25 +257,31 @@ production-readiness            not authorized
 Current critical path:
 
 ```text
-provider-capacity alternatives ADR
-        +
-FRESH_BLIND readiness in parallel
-        +
-production-fit/architecture evidence in parallel
+first-party generation/billing activation evidence
         ↓
-conditional P12-C4 preregistration/activation
+narrow pre-outcome infrastructure amendment
         ↓
-complete prospective EXPOSED_POOL packet only
+new versioned one-shot synthetic authorization only after provider-free PASS
         ↓
-deterministic gate + bootstrap + LOGO
+2/2 synthetic PASS
+        ↓
+full provider-free P12-C4 activation
+        ↓
+live manifest freeze
+        ↓
+36/36 common parents
+        ↓
+144/144 fixed outputs
+        ↓
+deterministic gate + 20k bootstrap + LOGO + slices/failure analysis
         ↓
 semantic child gate for deterministic survivors only
         ↓
-production-fit decision + generation freeze
+production-fit decision + generation/evaluator freeze
         ↓
 authorized FRESH_BLIND measurement
         ↓
 architecture freeze / regression / final delivery
 ```
 
-The next material decision is the provider-capacity ADR. P12-C4 is conditional on that decision; it is not an automatic continuation label.
+FRESH_BLIND source preparation remains a parallel critical path with no outcome exposure. Tier A target remains 2026-08-25 23:59 BRT; Tier B fallback deadline remains 2026-08-28 23:59 BRT.

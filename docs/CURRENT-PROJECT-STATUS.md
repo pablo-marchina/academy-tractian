@@ -1,12 +1,12 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-24 09:53 BRT  
+**Canonical status checkpoint:** 2026-08-25 22:50 BRT  
 **Branch:** `research/systematic-foundation`  
 **PR:** #2 — draft research-governance PR  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`docs/PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Progress ledger:** [`docs/PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
-**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-24.json`](../research/results/project-progress-checkpoint-2026-08-24.json)
+**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-25.json`](../research/results/project-progress-checkpoint-2026-08-25.json)
 
 This document is the canonical human-readable status of the project. Historical plans, attempts and intermediate states remain preserved as evidence but do not override this checkpoint.
 
@@ -18,6 +18,9 @@ The Benchmark Integrity Gate is closed and the P12 evaluation protocol is `FROZE
 P12-C1   CLOSED / DETERMINISTIC FAIL / NO ARM QUALIFIED
 P12-C2   CONSUMED_OPERATIONAL_FAILURE / 31 OF 36 / NO SCORING
 P12-C3   CONSUMED_TERMINAL_OPERATIONAL_FAILURE / 3 OF 36 / NO SCORING
+P12-C4   PROVIDER QUALIFICATION BLOCKED / SYNTHETIC OPERATIONAL FAIL / 0 OF 36
+Cerebras numeric capacity            PASS
+Cerebras generation access           FAIL / HTTP 402 PAYMENT_REQUIRED
 current QUALIFIED implementation     NONE
 current PREFERRED implementation     NONE
 semantic v4.2                        NOT AUTHORIZED
@@ -27,11 +30,9 @@ final architecture                   UNFROZEN
 production-readiness claim           NOT AUTHORIZED
 ```
 
-P12-C1 produced the only complete prospective deterministic comparison so far; both arms failed the frozen gates. P12-C2 and P12-C3 failed operationally before a complete 36-parent packet could be frozen, so neither supports deterministic, semantic or arm-level scientific conclusions.
+The project is currently in **Phase 3: P12-C4 provider qualification / experiment readiness**. It has not yet entered C4 benchmark collection or candidate qualification.
 
-The project is now in a **capacity-decision + independent-evidence readiness** phase. The next valid prospective experiment must not simply repeat C2/C3. Provider-capacity feasibility must first be decided systematically, while FRESH_BLIND source preparation proceeds in parallel without outcome exposure.
-
-## Progress completed to date
+## Completed foundations
 
 ### Governance and benchmark integrity
 
@@ -43,210 +44,153 @@ The project is now in a **capacity-decision + independent-evidence readiness** p
 | BIG-B3 protocol selection | COMPLETE |
 | BIG-B4 protocol freeze | COMPLETE / `FROZEN` |
 | Historical candidate/component reinterpretation | COMPLETE |
-| Canonical current-status/action-plan split from historical plan | COMPLETE |
 
-### Prospective P12 experiments
+### Prospective P12 history
 
-| Experiment | State | Complete packet | Scoring | Scientific arm conclusion |
+| Experiment | State | Complete packet | Scoring | Scientific conclusion |
 |---|---|---:|---|---|
 | P12-C1 | CLOSED / deterministic fail | 36 parents / 72 outputs | COMPLETE | no arm qualified |
 | P12-C2 | CONSUMED_OPERATIONAL_FAILURE | 31/36 parents | BLOCKED | none |
 | P12-C3 | CONSUMED_TERMINAL_OPERATIONAL_FAILURE | 3/36 parents | BLOCKED | none |
+| P12-C4 | PROVIDER QUALIFICATION BLOCKED | 0/36 parents | BLOCKED | none |
 
-For the detailed chronology and canonical artifacts for each phase, see [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md).
+C1/C2/C3 remain consumed. Their partial outputs, scores and live seeds may not be reused to form a confirmatory C4 packet.
 
-## Evidence partitions under P12
+## P12-C4 preparation completed
 
-### EXPOSED_POOL
+The provider-capacity ADR is `ACCEPTED` with `CONDITIONAL_GO_TO_P12_C4_PREREGISTRATION`. Cerebras + `gpt-oss-120b` is a temporary experimental serving path, not a frozen production provider.
 
-Historical DEV + VALIDATION, seven independent asset/story groups. Allowed for adaptive development, ablation, evaluator qualification, failure analysis and candidate comparison. It cannot support an independent generalization claim.
+Completed provider-free / account-level work includes:
 
-### FRESH_BLIND
+- fresh C4 seed map frozen with no C1/C2/C3 live-seed reuse;
+- serving contract frozen: `cerebras_cloud_sdk==1.91.0`, no warming, retries or failover;
+- `temperature=0`, `reasoning_effort=medium`, hidden reasoning, strict JSON schema and 4096 completion budget frozen;
+- prompt sizing completed for all 36 parents;
+- maximum conservative prompt bound = 3,284 tokens;
+- maximum reserved admission/request = 7,380 tokens;
+- full 36-parent reserved upper bound = 265,002 tokens;
+- minimum pacing = 75 seconds between provider requests;
+- effective numeric account/project limits attested: 5 RPM, 30k uncached TPM, 90k total TPM, 1M TPH, 1M TPD;
+- authenticated model-catalog access to `gpt-oss-120b` confirmed;
+- one-shot synthetic authorization frozen.
 
-Primary independent real-domain evidence. Current state: `NO_BLIND_SOURCE_AUTHORIZED`.
+## P12-C4 synthetic live probe — operational failure
 
-This is a critical-path dependency. Source preparation and access control must progress in parallel with EXPOSED_POOL development, while expected paths/outcomes remain inaccessible to candidate development.
-
-### LEGACY_LOCKED_TEST
-
-Qualified supplementary held-out characterization only. Candidate execution remains blocked until separately authorized final access.
-
-### SYNTHETIC_ADVERSARIAL
-
-Evaluator/judge qualification, robustness and regression only.
-
-## Historical implementation evidence
-
-The only project-level `FROZEN` technical choice is the P12 evaluation protocol itself. Historical implementation components remain evidence-backed building blocks, not final architecture.
-
-Retained/qualified foundations include ScenarioSchema, Canonical ToolSpec, TraceSchema, deterministic replay, HarnessRunner/HttpxTransport, LangGraph runtime candidate, native ToolSpec envelope, MCP-compatible adapter, E9 v4.1, E9 v4.2, E14c/d/e, E14n v1.1, E14p and E14q/E14q2.
-
-No historical implementation is currently `PREFERRED` at project level.
-
-## P12-C1 — complete prospective deterministic comparison
-
-`P12-C1_EXPOSED_POOL_EVIDENCE_ROUTE_SELECTION` completed 36 common parents and 72 fixed outputs.
-
-| Metric | C0 | C1 | C1 − C0 |
-|---|---:|---:|---:|
-| Evidence correctness | 0.2619 | 0.0833 | -0.1786 |
-| Expected-read recall | 0.7322 | 0.6151 | -0.1171 |
-| Extra public reads | 3.9643 | 3.5714 | -0.3929 |
-| Decision correctness | 0.7857 | 0.7857 | 0 |
-| Action correctness | 0.7143 | 0.7143 | 0 |
-| Escalation correctness | 0.9286 | 0.9286 | 0 |
-| Confirmed hard-safety violations | 3 | 3 | 0 |
-
-Both arms failed deterministic gates. C1 reduced read count but worsened recall without improving decision/action/escalation quality.
-
-Canonical evidence: `research/results/p12-c1-deterministic-paired-result-2026-08-23.json`.
-
-## P12-C2 — provider-capacity operational failure
-
-`P12-C2_EXPOSED_POOL_FACTORIAL_EVIDENCE_SAFETY` required 36 common parents and 144 fixed factorial outputs.
-
-Live run `32663659575`:
+The one-shot live workflow was:
 
 ```text
-common parents attempted            36
-common parents successful           31
-common parents failed                5
-failure family       rate_limit_long_window
-36/36 freeze                       FAIL
-144-output packet             NOT CREATED
-private scoring                NOT EXECUTED
-bootstrap / LOGO               NOT EXECUTED
+workflow        research-p12-c4-cerebras-synthetic-live-probe
+run             32901958789
+run attempt     1
+job             97977601612
+head            9e0a89e1959dcc4ffd659baef1a4f07e137a7245
+preflight       PASS
+SDK pin         PASS
+live execution  FAIL
 ```
 
-Decision: `CONSUMED_OPERATIONAL_FAILURE`.
-
-Canonical closure: `research/results/p12-c2-live-cycle-closure-2026-08-23.json`.
-
-## P12-C3 — capacity-controlled terminal operational failure
-
-`P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL` preserved A00/A10/A01/A11 and changed only the prospective operational collection protocol.
-
-Frozen collection contract:
+The first preregistered synthetic provider request reached Cerebras and failed with:
 
 ```text
-6 fixed batches × 6 parents
-30 s minimum request spacing
-30 s reset safety margin
-max 3 pre-output attempts/cell
-72 h horizon
-completed parents immutable
-resume = pending predeclared cells only
-private scoring blocked until 36/36 + 144/144
-partial/complete-case analysis forbidden
+HTTP 402
+error type: payment_required_error
+code:       payment_required
+param:      quota
+message:    Payment required to access this resource. Visit your billing tab.
 ```
 
-Provider-free activation and live-infrastructure qualification passed before live execution.
-
-### Initial B1 pre-provider failure
-
-Run `32671370930` made 0 provider requests and observed 0 candidate outcomes. It stopped on a retained E14l transport-invariant compatibility assertion. A narrow pre-outcome infrastructure amendment was frozen and provider-free qualified without changing candidate/model/prompt/evaluator/seeds/batch map/metrics/gates.
-
-Effective runner SHA-256:
-
-`07808b140d5f90211d5c3445988b46983754825303cbb66123255143094e08be`
-
-Qualification runs: `32671829920` and `32672049576`.
-
-### Continued B1 terminal failure
-
-Trigger head: `d952113ef96f668b5e2e5692607f189404eae126`  
-Run: `32672167702`
-
-Sanitized checkpoint:
+Consequences:
 
 ```text
-completed cells                 3
-pending cells                  33
-transport failures              1
-rate-limit events               1
-batch complete              false
-all 36 complete             false
-terminal failure             true
-horizon expired             false
-first live call       2026-08-23T23:00:30.073807Z
-horizon deadline      2026-08-26T23:00:30.073807Z
+provider request attempts observed   1
+successful generation calls          0
+model outputs observed                0
+first synthetic probe complete       false
+second synthetic request attempted   false
+benchmark inputs loaded               0
+private-oracle accesses               0
+FRESH_BLIND accesses                  0
+LEGACY_LOCKED_TEST accesses           0
 ```
 
-Artifacts:
-
-- sanitized handoff `9501780930`, digest `sha256:e876709f13f36f0df3202a1ebd0c2feb1452e8483963915e1c56945316ad247c`;
-- private checkpoint `9501780767`, digest `sha256:9189c8b840040b782b3e4ec8ef4dcc9450fa383d32804deb600b518c4df0d917` (raw checkpoint is not committed).
-
-Decision:
-
-```text
-P12-C3 state                CONSUMED_TERMINAL_OPERATIONAL_FAILURE
-36/36 freeze                NOT REACHED
-144/144 packet              NOT CREATED
-private scoring             NOT EXECUTED
-semantic v4.2               NOT AUTHORIZED
-qualified arms              NONE ESTABLISHED
-preferred arm               NONE
-same-experiment resume      FORBIDDEN
-```
+The authorization attempt is **consumed**. The same workflow run or authorization must not be rerun/reused.
 
 Canonical closure:
 
-- `research/results/p12-c3-live-cycle-closure-2026-08-23.json`
-- `research/p12-c3-live-cycle-closure-2026-08-23.md`
+- `research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json`
 
-## Current blockers and risks
+## Correct interpretation of the account attestation
 
-### CRITICAL — provider capacity
+The previous account attestation remains valid historical evidence for:
 
-Two consecutive prospective experiments failed operationally during provider collection: C2 at 31/36 and C3 at 3/36. A new experiment must not simply repeat C3. Provider capacity is now a material decision requiring alternative comparison and an explicit ADR before P12-C4 preregistration.
+- first-party organization/project numeric limits;
+- API-key authentication;
+- model catalog accessibility.
 
-### CRITICAL — no authorized FRESH_BLIND source
+It is **not sufficient evidence of active generation access** after the live endpoint returned HTTP 402.
 
-P12 requires fresh independent real-domain evidence for the primary generalization claim. Preparation must progress in parallel while preserving strict outcome blindness.
+Before any new synthetic attempt or benchmark generation, new first-party evidence must establish that billing/trial/developer generation access is active. No secret or payment credential may be committed.
+
+## Current blockers
+
+### CRITICAL — Cerebras generation/billing access
+
+Numeric quota is sufficient, but live Chat Completions generation is not currently available to this account/key context. This blocks the synthetic compatibility gate and therefore all P12-C4 activation and EXPOSED_POOL generation.
+
+### CRITICAL — FRESH_BLIND source not authorized
+
+Current state: `NO_SOURCE_AUTHORIZED`. Tier A target remains 2026-08-25 23:59 BRT. If not operational by the frozen cutoff, planning transitions to the Tier B independently authored fallback, with 2026-08-28 23:59 BRT as the fallback deadline.
 
 ### HIGH — no qualified current candidate
 
-C1 failed scientifically. C2/C3 failed operationally before complete measurement.
+C1 failed scientifically. C2/C3 failed operationally before complete measurement. C4 has not begun benchmark generation.
 
-### HIGH — schedule
+### HIGH — architecture remains unfrozen
 
-Final delivery is 2026-09-08. The next 72 hours determine whether a complete new prospective comparison remains feasible without compromising the integration/regression/documentation buffer.
+Retrieval/RAG, reranking, multi-agent decomposition, persistent memory, observability, final provider, deployment and UI remain open. This is intentional until candidate evidence supports a freeze.
 
-### HIGH — architecture decision debt
+## Immediate critical path
 
-Retrieval/RAG, reranking, multi-agent decomposition, persistent memory, observability backend, provider serving, deployment and UI choices remain unfrozen.
+The next valid sequence is:
 
-## Plan review — 2026-08-24
+```text
+1. first-party generation/billing activation evidence
+2. narrow pre-outcome infrastructure amendment
+3. provider-free validation of the amended one-shot path
+4. new one-shot synthetic authorization only if all gates PASS
+5. exactly 2 preregistered synthetic calls → PASS required
+6. full provider-free C4 activation
+7. C4 live manifest freeze
+8. exactly 36/36 common parents
+9. local A00/A10/A01/A11 expansion → exactly 144/144 outputs
+10. packet freeze
+11. deterministic gates → 20k bootstrap → LOGO → slices/failure analysis
+12. semantic child gate for deterministic survivors only
+13. production-fit decision + generation freeze
+14. separately authorized FRESH_BLIND measurement
+15. architecture freeze → regression → documentation → delivery
+```
 
-The existing action plan remains scientifically valid, but its execution order is tightened into three parallel workstreams:
+Hard rules:
 
-1. **Provider-capacity / candidate evidence:** complete a provider-capacity alternatives ADR first; only then preregister and activate a new EXPOSED_POOL experiment.
-2. **Independent evidence:** prepare/authorize FRESH_BLIND Tier A now, with Tier B fallback by the frozen deadline, while outcomes remain inaccessible.
-3. **Production-fit / architecture:** compare open architecture and serving alternatives in parallel, but do not freeze architecture before candidate evidence supports it.
+- same failed synthetic authorization/run: **no rerun**;
+- no EXPOSED_POOL call before synthetic PASS + activation PASS + live manifest freeze;
+- no partial scoring;
+- no semantic evaluation before deterministic survival;
+- no FRESH_BLIND outcome access before candidate/evaluator generation freeze and separate authorization;
+- no production-readiness or final-architecture claim before evidence supports it.
 
-### Hard go/no-go checkpoints
+## Parallel work allowed now
 
-- **Before P12-C4:** provider-capacity ADR complete, feasibility argument defensible, scientific confounds characterized, fresh seeds, no C2/C3 partial-parent reuse, provider-free activation path defined.
-- **Before private scoring:** complete prospective packet only; no partial/complete-case reinterpretation; all operational missingness classified; private/blind/locked access remains zero.
-- **By end of 2026-08-27:** if no complete prospective EXPOSED_POOL packet exists, reassess scope and prioritize an evidence-honest final delivery instead of repeated low-feasibility attempts.
-- **By 2026-08-28 23:59 BRT:** if Tier A FRESH_BLIND is unavailable, Tier B independently authored fallback must be ready or the final generalization claim must be downgraded explicitly.
+Only work that cannot contaminate or bypass the experimental path should proceed in parallel:
 
-## Immediate priorities — next 24 hours
-
-1. Complete the systematic provider-capacity alternatives comparison and freeze a decision ADR with Pareto tradeoffs, feasibility evidence and reversal triggers.
-2. Begin/continue FRESH_BLIND Tier A authorization and access-control preparation without outcome exposure.
-3. Continue production-fit research on provider/model serving and major architecture alternatives, recording evidence states but making no premature freeze.
-4. Only if the capacity ADR identifies a viable path, preregister P12-C4 with fresh seeds, frozen complete-packet requirements and evaluator/statistical contract before any outcome.
+1. FRESH_BLIND source/custody/authorization preparation without outcome exposure;
+2. canonical documentation and reproducibility maintenance;
+3. provider-free preparation for a narrow access-remediation amendment;
+4. production-fit research that does not freeze final architecture prematurely.
 
 ## Explicit non-claims
 
-The project does not currently have a qualified/preferred final candidate, a successful C2/C3 factorial comparison, a current semantic v4.2 pass, an authorized FRESH_BLIND source, final LOCKED_TEST authorization, a frozen production architecture or production-readiness evidence.
+The project currently has **no** qualified/preferred candidate, successful C2/C3/C4 factorial comparison, semantic-v4.2 pass, authorized FRESH_BLIND source, final LOCKED_TEST authorization, frozen production architecture or production-readiness evidence.
 
-Infrastructure gates and dry runs validate plumbing only.
-
-## Canonical next step
-
-See [`docs/PROJECT-PLAN.md`](PROJECT-PLAN.md).
-
-The prior E14v-era plan is preserved at `docs/archive/PROJECT-PLAN-2026-08-20.md`. The prior machine checkpoint remains preserved at `research/results/project-progress-checkpoint-2026-08-23.json`.
+Infrastructure and access checks validate only what they explicitly test.
