@@ -5,6 +5,7 @@ on:
     branches:
       - research/systematic-foundation
     paths:
+      - research/frozen/p12-c4-nvidia-one-shot-live-manifest-gate-trigger-v1.json
       - research/experiments/p12-c4-nvidia-one-shot-live-manifest-v1.json
       - scripts/research/p12_c4_nvidia_one_shot_live_manifest_self_check.py
       - .github/workflows/research-p12-c4-nvidia-one-shot-live-manifest-provider-free.yml
@@ -79,5 +80,3 @@ jobs:
           path: research/results/p12-c4-nvidia-one-shot-live-manifest-self-check-ci.json
           if-no-files-found: error
           retention-days: 30
-
-# Push trigger after workflow registration; no live-provider semantics changed.
