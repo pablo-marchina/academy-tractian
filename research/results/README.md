@@ -14,12 +14,18 @@ This directory contains canonical machine-readable results, closures, gate recor
 
 Project checkpoints are snapshots at a timestamp, not mutable global truth. Older snapshots remain valid descriptions of the project at their recorded time even after later evidence supersedes their current-state conclusions.
 
-The latest checkpoint is linked from `docs/CURRENT-PROJECT-STATUS.md`.
+The latest canonical human state and the current machine-readable checkpoint are linked from `docs/CURRENT-PROJECT-STATUS.md`.
 
-Current C4 packet freeze:
+This README intentionally does **not** restate the latest experiment status, packet identity or next gate.
 
-- `p12-c4-complete-packet-freeze-2026-08-26.json`
-- status `FROZEN_COMPLETE_C4_PACKET`
-- next gate `DETERMINISTIC_SCORING`.
+## Using result files safely
 
-See `docs/REPOSITORY-GUIDE.md` for the full source-of-truth hierarchy.
+Before treating a result as current or executable authorization:
+
+1. verify its timestamp/version and lifecycle state;
+2. check whether a later closure/freeze supersedes its current-state implication;
+3. consult `docs/CURRENT-PROJECT-STATUS.md` for current authorization;
+4. preserve the old result even when superseded;
+5. never infer authorization from a filename alone.
+
+See `docs/REPOSITORY-GUIDE.md` for the full source-of-truth hierarchy and cleanup rules.
