@@ -1,0 +1,44 @@
+name: research-p12-c4-bootstrap-source-check
+
+on:
+  push:
+    branches: [eval/c4-bootstrap-20000]
+    paths:
+      - '.github/workflows/research-p12-c4-bootstrap-source-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  source-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Assert provider-free boundary
+        run: |
+          test -z "${NVIDIA_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test -z "${OPENAI_API_KEY:-}"
+          test -z "${ANTHROPIC_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Verify and compile exact bootstrap sources
+        run: |
+          test "$(git hash-object scripts/research/p12_c4_bootstrap_20000.py)" = '1ab8bf1069f5fdaeb361f8e066b8ac5231ace7a7'
+          python -m py_compile scripts/research/p12_c4_bootstrap_20000.py scripts/research/p12_c4_validate_bootstrap_20000.py
+          mkdir -p "$RUNNER_TEMP/bootstrap-source"
+          cp scripts/research/p12_c4_bootstrap_20000.py "$RUNNER_TEMP/bootstrap-source/"
+          cp scripts/research/p12_c4_validate_bootstrap_20000.py "$RUNNER_TEMP/bootstrap-source/"
+          cp research/frozen/p12-c4-bootstrap-20000-authorization-v1.json "$RUNNER_TEMP/bootstrap-source/"
+          sha256sum "$RUNNER_TEMP/bootstrap-source"/* > "$RUNNER_TEMP/bootstrap-source/SHA256SUMS.txt"
+          git hash-object scripts/research/p12_c4_validate_bootstrap_20000.py > "$RUNNER_TEMP/bootstrap-source/VALIDATOR_GIT_BLOB.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/bootstrap-source/SOURCE_COMMIT.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-bootstrap-source-bundle
+          path: ${{ runner.temp }}/bootstrap-source
+          retention-days: 7
+          if-no-files-found: error
