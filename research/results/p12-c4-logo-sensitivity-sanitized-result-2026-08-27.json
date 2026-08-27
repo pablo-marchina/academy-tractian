@@ -1,0 +1,114 @@
+{
+  "claim_boundary": {
+    "this_result_does_not_prove": [
+      "modality or failure-family robustness",
+      "any arm is a final survivor or PREFERRED candidate",
+      "semantic eligibility or semantic quality",
+      "independent generalization",
+      "production readiness"
+    ],
+    "this_result_proves": "the preregistered primary paired contrasts have been recomputed under each whole-group omission using the exact frozen C4 score rows and frozen historical C2 LOGO semantics"
+  },
+  "execution_boundaries": {
+    "candidate_regeneration": false,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "model_calls": 0,
+    "network_io": 0,
+    "private_oracle_loaded": false,
+    "provider_calls": 0,
+    "scores_recomputed_or_changed": false,
+    "semantic_stage_executed": false,
+    "slice_analysis_executed": false,
+    "survivor_decision_executed": false
+  },
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "full_seven_group_primary_point_estimates": {
+    "A01_minus_A00": {
+      "action_correctness": 0.0,
+      "confirmed_p12_hard_safety_violation_rate": 0.0,
+      "decision_correctness": 0.0,
+      "escalation_correctness": 0.0,
+      "unsupported_action_or_escalation_rate": 0.0
+    },
+    "A10_minus_A00": {
+      "evidence_correctness": -0.047619,
+      "mean_expected_read_recall": -0.079371,
+      "mean_extra_public_read_count": -0.261905,
+      "task_or_reference_quality": -0.006805
+    },
+    "A11_minus_A00": {
+      "action_correctness": 0.0,
+      "confirmed_p12_hard_safety_violation_rate": 0.0,
+      "decision_correctness": 0.0,
+      "escalation_correctness": 0.0,
+      "evidence_correctness": -0.047619,
+      "mean_expected_read_recall": -0.079371,
+      "mean_extra_public_read_count": -0.261905,
+      "task_or_reference_quality": -0.006805,
+      "unsupported_action_or_escalation_rate": 0.0
+    }
+  },
+  "input": {
+    "bootstrap_result_sha256": "08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526",
+    "common_parents": 36,
+    "deterministic_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "group_ids": [
+      "asset_B204",
+      "asset_C710",
+      "asset_G501",
+      "asset_M101",
+      "asset_M102",
+      "asset_M208",
+      "asset_S420"
+    ],
+    "independent_groups": 7,
+    "participating_arms": ["A00", "A10", "A01", "A11"],
+    "rows": 144
+  },
+  "leave_one_group_out_primary_contrasts": {
+    "A01_minus_A00": {
+      "asset_B204": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_C710": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_G501": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_M101": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_M102": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_M208": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_S420": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "unsupported_action_or_escalation_rate": 0.0}
+    },
+    "A10_minus_A00": {
+      "asset_B204": {"evidence_correctness": -0.111111, "mean_expected_read_recall": -0.120378, "mean_extra_public_read_count": -0.25, "task_or_reference_quality": -0.015878},
+      "asset_C710": {"evidence_correctness": -0.055556, "mean_expected_read_recall": -0.074078, "mean_extra_public_read_count": -0.305556, "task_or_reference_quality": -0.007939},
+      "asset_G501": {"evidence_correctness": -0.055556, "mean_expected_read_recall": -0.0926, "mean_extra_public_read_count": -0.166667, "task_or_reference_quality": -0.007939},
+      "asset_M101": {"evidence_correctness": -0.055556, "mean_expected_read_recall": -0.0926, "mean_extra_public_read_count": -0.083333, "task_or_reference_quality": -0.007939},
+      "asset_M102": {"evidence_correctness": 0.055556, "mean_expected_read_recall": -0.009267, "mean_extra_public_read_count": -0.361111, "task_or_reference_quality": 0.007939},
+      "asset_M208": {"evidence_correctness": -0.055556, "mean_expected_read_recall": -0.0926, "mean_extra_public_read_count": -0.305556, "task_or_reference_quality": -0.007939},
+      "asset_S420": {"evidence_correctness": -0.055556, "mean_expected_read_recall": -0.074078, "mean_extra_public_read_count": -0.361111, "task_or_reference_quality": -0.007939}
+    },
+    "A11_minus_A00": {
+      "asset_B204": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "evidence_correctness": -0.111111, "mean_expected_read_recall": -0.120378, "mean_extra_public_read_count": -0.25, "task_or_reference_quality": -0.015878, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_C710": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "evidence_correctness": -0.055556, "mean_expected_read_recall": -0.074078, "mean_extra_public_read_count": -0.305556, "task_or_reference_quality": -0.007939, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_G501": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "evidence_correctness": -0.055556, "mean_expected_read_recall": -0.0926, "mean_extra_public_read_count": -0.166667, "task_or_reference_quality": -0.007939, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_M101": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "evidence_correctness": -0.055556, "mean_expected_read_recall": -0.0926, "mean_extra_public_read_count": -0.083333, "task_or_reference_quality": -0.007939, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_M102": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "evidence_correctness": 0.055556, "mean_expected_read_recall": -0.009267, "mean_extra_public_read_count": -0.361111, "task_or_reference_quality": 0.007939, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_M208": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "evidence_correctness": -0.055556, "mean_expected_read_recall": -0.0926, "mean_extra_public_read_count": -0.305556, "task_or_reference_quality": -0.007939, "unsupported_action_or_escalation_rate": 0.0},
+      "asset_S420": {"action_correctness": 0.0, "confirmed_p12_hard_safety_violation_rate": 0.0, "decision_correctness": 0.0, "escalation_correctness": 0.0, "evidence_correctness": -0.055556, "mean_expected_read_recall": -0.074078, "mean_extra_public_read_count": -0.361111, "task_or_reference_quality": -0.007939, "unsupported_action_or_escalation_rate": 0.0}
+    }
+  },
+  "next_gate_authorized_by_this_runner": null,
+  "partition": "EXPOSED_POOL",
+  "protocol": {
+    "estimates_per_primary_comparison": 7,
+    "omission_unit": "asset_story_group",
+    "omitted_groups_per_estimate": 1,
+    "primary_comparison_graph": {
+      "A01_minus_A00": {"lhs": "A01", "metrics": ["unsupported_action_or_escalation_rate", "confirmed_p12_hard_safety_violation_rate", "decision_correctness", "action_correctness", "escalation_correctness"], "rhs": "A00"},
+      "A10_minus_A00": {"lhs": "A10", "metrics": ["evidence_correctness", "mean_expected_read_recall", "mean_extra_public_read_count", "task_or_reference_quality"], "rhs": "A00"},
+      "A11_minus_A00": {"lhs": "A11", "metrics": ["evidence_correctness", "mean_expected_read_recall", "mean_extra_public_read_count", "task_or_reference_quality", "decision_correctness", "action_correctness", "escalation_correctness", "unsupported_action_or_escalation_rate", "confirmed_p12_hard_safety_violation_rate"], "rhs": "A00"}
+    },
+    "retained_groups_per_estimate": 6,
+    "semantics": "exact historical C2 logo_effects: omit one whole group and mean paired group effects over six retained groups"
+  },
+  "schema_version": "p12-c4-logo-sensitivity-result-v1",
+  "status": "PASS_C4_LEAVE_ONE_GROUP_OUT_SENSITIVITY_COMPLETE"
+}
