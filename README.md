@@ -2,6 +2,16 @@
 
 Repository central do TAPI individual **Engenharia e Avaliação de Agentes Industriais** (Inteli × TRACTIAN).
 
+## Project North Star
+
+The repository has one fixed objective:
+
+> **Deliver the strongest defensible version of the actual TRACTIAN × Inteli project by maximizing requested-scope coverage, academic evidence quality, scientific validity and production-path quality — following the repository development principles.**
+
+The project is not optimized for number of experiments, framework novelty or architecture complexity. Optional components only earn a place when they measurably improve a requested capability, official evaluation criterion or material production risk.
+
+The exact reviewed assignment/package/kickoff baseline and source discrepancies are recorded in [`research/tractian-source-baseline-2026-08-27.md`](research/tractian-source-baseline-2026-08-27.md).
+
 ## Start here
 
 The repository is governed by four non-negotiable principles:
@@ -17,28 +27,31 @@ Canonical navigation:
 
 - [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — sole human-readable source for current evidence-backed state and authorization;
 - [`docs/NEXT-STEPS.md`](docs/NEXT-STEPS.md) — current short-horizon execution plan;
-- [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) — requested requirements mapped to final capabilities and evidence;
-- [`docs/ARCHITECTURE-ROADMAP.md`](docs/ARCHITECTURE-ROADMAP.md) — general research-to-production/system architecture roadmap;
-- [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md) — master phase and milestone map;
-- [`docs/PROJECT-PROGRESS-LOG.md`](docs/PROJECT-PROGRESS-LOG.md) — chronological evidence ledger;
-- [`docs/REPOSITORY-GUIDE.md`](docs/REPOSITORY-GUIDE.md) — repository structure, source-of-truth and maintenance rules;
+- [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) — formal requirements/rubric mapped to final capabilities and evidence;
+- [`docs/ARCHITECTURE-ROADMAP.md`](docs/ARCHITECTURE-ROADMAP.md) — integrated agent/evaluator research-to-production architecture roadmap;
+- [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md) — master phase/deadline-protection map;
+- [`docs/PROJECT-PROGRESS-LOG.md`](docs/PROJECT-PROGRESS-LOG.md) — chronological evidence/governance ledger;
+- [`docs/REPOSITORY-GUIDE.md`](docs/REPOSITORY-GUIDE.md) — repository structure, source reconciliation and maintenance rules;
 - [`docs/adr/`](docs/adr/) — material decision records;
+- [`research/01-requirements-matrix.md`](research/01-requirements-matrix.md) — reconciled TAPI/package/kickoff requirement map;
 - [`research/README.md`](research/README.md) — research evidence map;
 - [`scripts/research/README.md`](scripts/research/README.md) — research executable lifecycle.
 
-The root README intentionally does **not** duplicate the current gate, experiment counts or project checkpoint. Use `CURRENT-PROJECT-STATUS.md` for all current-state claims.
+The root README intentionally does **not** duplicate the current experiment gate or checkpoint. Use `CURRENT-PROJECT-STATUS.md` for current-state claims.
 
 ## Project target
 
-The updated TAPI requires an integrated solution with both:
+The official project requires one integrated delivery with both:
 
-1. **Industrial Agent Engineering** — contextualize, investigate, request clarification when needed, execute justified actions, escalate safely and handle incomplete/conflicting/unavailable information against the supplied industrial API.
-2. **Agent Evaluation & Reliability** — quantitatively evaluate tool choice, arguments, trajectory, evidence, decision/response, actions, escalation, safety, robustness and stability while preserving evaluation-only gold isolation.
+1. **Industrial Agent Engineering** — contextualize, investigate, request clarification when needed, execute justified actions, escalate safely and handle degraded/conflicting/unavailable information against the supplied industrial API.
+2. **Agent Evaluation & Reliability** — evaluate tool choice, arguments, trajectory, evidence, operational conclusion, actions, escalation, safety, robustness and stability while preserving evaluation-only gold isolation.
 
-The final demonstration must exercise the real integrated production path and its evaluation framework rather than a benchmark-only artifact or scripted mock-only demo. Final delivery remains targeted for **2026-09-08**.
+Partner-quality guidance additionally emphasizes useful operational conclusions over exact wording, inspectable execution paths, safe human fallback, useful escalation handoffs, customer-safe communication and evidence-backed architecture trade-offs.
+
+The final demonstration must exercise the real integrated agent + evaluator path rather than a benchmark-only artifact or scripted mock-only demo. Final delivery remains targeted for **2026-09-08**.
 
 ## Repository model
 
 The repository intentionally preserves both active and historical scientific evidence. A file, script or workflow being present does not imply it is currently authorized to run or that its conclusion is current.
 
-Use the source-of-truth hierarchy and safe-cleanup rules in [`docs/REPOSITORY-GUIDE.md`](docs/REPOSITORY-GUIDE.md) before deleting, moving, rerunning or reinterpreting historical material.
+Use [`docs/REPOSITORY-GUIDE.md`](docs/REPOSITORY-GUIDE.md) before deleting, moving, rerunning or reinterpreting historical material.
