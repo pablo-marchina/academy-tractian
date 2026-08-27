@@ -3,6 +3,7 @@
 **Purpose:** chronological evidence ledger.  
 **Current snapshot:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Immediate plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
+**Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
@@ -157,18 +158,39 @@ The first cleanup pass:
 
 ## 10. Documentation responsibility split and scoring-gate isolation — 2026-08-26
 
-A second repository-wide review found that mutable state was still duplicated in root/research/script/workflow/results README files and that `PROJECT-PLAN.md` mixed three different responsibilities: current execution, macro project phases and architecture direction.
+A second repository-wide review found that mutable state was still duplicated in root/research/script/workflow/results README files and that `PROJECT-PLAN.md` mixed current execution, macro project phases and architecture direction.
 
-The repository was therefore updated to:
+The repository was updated to:
 
 - make `CURRENT-PROJECT-STATUS.md` the sole human-readable current-state/authorization source;
 - add `NEXT-STEPS.md` as the canonical short-horizon execution plan;
 - add `ARCHITECTURE-ROADMAP.md` as the canonical general research-to-production/system architecture roadmap;
 - reduce `PROJECT-PLAN.md` to the macro phase/milestone map;
 - remove mutable current-gate snapshots from root/research/script/workflow/results indexes;
-- remove the mutable current-checkpoint/critical-path tail from this historical ledger;
 - formalize five manual repository maintenance gates in `REPOSITORY-GUIDE.md` without adding governance CI;
-- allow a future non-secret `.env.example` while continuing to ignore real `.env*` configuration;
 - add `scripts/research/p12_c4_deterministic_private_scoring.py` as a gate-isolated deterministic-scoring runner.
 
-The new C4 scorer is **prepared only**. It performs deterministic scoring semantics only and explicitly excludes provider calls, bootstrap, LOGO, slices, semantic evaluation and independent/blind access. No private oracle was provisioned, no scoring workflow/trigger was created and no deterministic C4 score was executed as part of this repository-maintenance change.
+The new C4 scorer is **prepared only**. No private oracle was provisioned, no scoring workflow/trigger was created and no deterministic C4 score was executed as part of repository maintenance.
+
+## 11. Main reconciliation and requirements-to-delivery review — 2026-08-27
+
+PR #2 was marked ready and merged into `main` with merge commit:
+
+`9b5a6671176a1635676556ff1b48b4044b897a76`
+
+The merge reconciled the research/governance foundation into the canonical branch while preserving frozen/consumed provenance. It did **not** advance the scientific gate; `DETERMINISTIC_SCORING` remains the authorized next gate.
+
+A post-merge review then compared the active plans against `research/01-requirements-matrix.md`, which records the updated TAPI/package requirements. The review found that the research protocol was well represented, but final-delivery planning benefited from making product acceptance explicit.
+
+The plan was therefore strengthened to:
+
+- add `DELIVERY-ACCEPTANCE.md` as the requirement → final capability → evidence crosswalk;
+- make both **agent construction** and the **evaluation framework** explicit final P0 deliverables;
+- explicitly protect contextualize, investigate, execute, clarify/abstain, escalate, robustness and inspectable-trace coverage;
+- require real API integration and per-run evaluation in the final demonstration;
+- classify work as P0 required, P1 material production or P2 conditional enhancement;
+- forbid P2 complexity from displacing P0/P1 acceptance work;
+- revise `ARCHITECTURE-ROADMAP.md` into two coupled logical planes: Agent Runtime and Evaluation & Reliability, separated by the gold/private boundary;
+- protect the final project window for integration, regression, robustness, documentation, reproducibility and real-path demonstration.
+
+Machine checkpoint: `research/results/project-progress-checkpoint-2026-08-27-0027-brt.json`.
