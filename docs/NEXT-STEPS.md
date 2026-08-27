@@ -32,9 +32,13 @@ Verify and record before any private scoring execution:
 
 Do not infer or reconstruct the private oracle from public fixtures.
 
-### Step 2 — Use a scoring-only C4 runner
+### Step 2 — Use the prepared scoring-only C4 runner
 
-The C4 deterministic-scoring runner must:
+Prepared runner: `scripts/research/p12_c4_deterministic_private_scoring.py`.
+
+Its presence in the repository is **not execution authorization**. The private-oracle custody/handoff still has to be explicitly resolved and frozen before this runner may be used.
+
+The runner is required to:
 
 - consume exactly the frozen 144 outputs;
 - use the frozen deterministic evaluator semantics only;
@@ -53,7 +57,7 @@ Historical monolithic scorers may be used as frozen semantic references, but mus
 
 Only after the private-oracle provenance/custody route is explicit:
 
-1. freeze the scorer source pins and exact input hashes;
+1. verify/freeze the prepared scorer source blob and exact input hashes;
 2. freeze the evaluator-side execution/authorization contract;
 3. ensure provider credentials are absent;
 4. ensure the private oracle remains evaluator-side;
