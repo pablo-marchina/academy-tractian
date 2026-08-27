@@ -21,10 +21,11 @@ The repository is governed by four non-negotiable principles:
 3. **quantitative/adaptive by default with deterministic safety boundaries**;
 4. **eval-driven engineering end to end**.
 
-Read [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) before making a material project decision.
+Read [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) before making a material project decision, then follow [`CONTRIBUTING.md`](CONTRIBUTING.md) as the normal development operating contract.
 
 Canonical navigation:
 
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — mandatory development entry/exit procedure for tasks and PRs;
 - [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — sole human-readable source for current evidence-backed state and authorization;
 - [`docs/NEXT-STEPS.md`](docs/NEXT-STEPS.md) — current short-horizon execution plan;
 - [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) — formal requirements/rubric mapped to final capabilities and evidence;
@@ -38,6 +39,21 @@ Canonical navigation:
 - [`scripts/research/README.md`](scripts/research/README.md) — research executable lifecycle.
 
 The root README intentionally does **not** duplicate the current experiment gate or checkpoint. Use `CURRENT-PROJECT-STATUS.md` for current-state claims.
+
+## Development rule
+
+New material work should start from current canonical `main`, use a focused branch/PR when practical and declare before implementation:
+
+```text
+requested requirement / rubric / material risk
+→ P0 / P1 / justified P2 priority
+→ current gate and authorization
+→ change class
+→ success/failure evidence
+→ baseline/alternatives when material
+```
+
+The repository issue and PR templates mirror this contract. Their purpose is to keep development aligned with the plans and principles without adding governance CI.
 
 ## Project target
 
