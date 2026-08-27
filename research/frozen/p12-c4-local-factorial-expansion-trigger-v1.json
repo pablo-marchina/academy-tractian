@@ -25,8 +25,20 @@
   "partial_expansion_scoring_allowed": false,
   "private_scoring_authorized": false,
   "provider_calls_authorized": 0,
-  "replacement_of_pre_materialization_run_id": 33028318700,
-  "replacement_reason": "CORRECT_RUNNER_GIT_BLOB_PIN_ONLY_NO_SCIENTIFIC_OUTPUT_OBSERVED",
+  "replacement_chain": [
+    {
+      "run_id": 33028318700,
+      "state": "PRE_MATERIALIZATION_INFRA_FAILURE_NO_SCIENTIFIC_OUTPUT",
+      "reason": "CORRECT_RUNNER_GIT_BLOB_PIN_ONLY"
+    },
+    {
+      "run_id": 33028430280,
+      "state": "PRE_TRANSFORM_INFRA_FAILURE_NO_ARM_OUTPUTS",
+      "reason": "ADD_REPOSITORY_ROOT_TO_PYTHONPATH_ONLY"
+    }
+  ],
+  "replacement_of_pre_transform_run_id": 33028430280,
+  "replacement_reason": "PYTHONPATH_ENVIRONMENT_FIX_ONLY_NO_ARM_OUTPUTS_OBSERVED",
   "required_common_parents": 36,
   "required_fixed_arm_outputs": 144,
   "schema_version": "p12-c4-local-factorial-expansion-trigger-v1",
