@@ -318,3 +318,67 @@ resampling unit  asset_story_group
 ```
 
 LOGO, slices, semantic evaluation, FRESH_BLIND, LEGACY_LOCKED_TEST, new provider calls and candidate regeneration remain unauthorized.
+
+## 15. P12-C4 group-cluster bootstrap 20k — FROZEN — 2026-08-27
+
+Task #5 isolated the statistical uncertainty gate on `eval/c4-bootstrap-20000`. The gate consumed only the exact frozen deterministic score-row artifact and never loaded the private oracle.
+
+Frozen inputs and protocol:
+
+```text
+deterministic score rows SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
+rows                              144
+parents                            36
+arms                                4
+groups                              7
+resamples                       20,000
+seed                         20260822
+confidence                         95%
+resampling unit      asset_story_group
+```
+
+The bootstrap-only runner reproduced the historical C2 nested aggregation and paired-factorial comparison semantics without executing LOGO, slices or semantic evaluation. The full evaluator-side bootstrap artifact remains uncommitted and is frozen by SHA-256:
+
+`08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526`
+
+A separate validator recomputed the aggregate arm metrics, primary paired contrasts and factorial main effects/interactions using the frozen historical C2 statistical helpers and found **0 mismatch sections**. The exact branch source stack also passed provider-free compile/source verification in GitHub Actions run `33077803636`; artifact `9648626660`; digest `sha256:88580339838aec30ac38111717b82c6b2ef83d57bd84c287cecc03f89b07fccd`.
+
+Measured C4 bootstrap evidence includes:
+
+- `A10 − A00` evidence correctness effect `-0.047619`, CI95 `[-0.285714, 0.142857]`;
+- `A10 − A00` expected-read recall effect `-0.079371`, CI95 `[-0.238105, 0.039875]`;
+- `A10 − A00` extra-public-read effect `-0.261905`, CI95 `[-0.714286, 0.142857]`;
+- `A10 − A00` task/reference quality effect `-0.006805`, CI95 `[-0.040829, 0.020414]`;
+- all preregistered `A01 − A00` primary effects are exactly zero;
+- the frozen safety main effect is zero on all report metrics;
+- preregistered interaction metrics are zero.
+
+All reported E1 confidence intervals above include zero. These measurements do not constitute a survivor/PREFERRED decision. All four frozen arm aggregates also retain nonzero confirmed hard-safety violations; formal candidate selection remains deferred until the required robustness/reporting gates close.
+
+Privacy/boundary validation:
+
+```text
+provider calls                     0
+model calls                        0
+private oracle loaded          false
+score recomputation/change     false
+LOGO executed                  false
+slice analysis executed        false
+semantic stage executed        false
+FRESH_BLIND accesses               0
+LEGACY_LOCKED_TEST accesses        0
+```
+
+Canonical closure:
+
+`research/results/p12-c4-bootstrap-20000-freeze-2026-08-27.json`
+
+Status:
+
+`FROZEN_C4_BOOTSTRAP_20000`
+
+The closure opens only:
+
+`LEAVE_ONE_GROUP_OUT_SENSITIVITY`
+
+Slices, semantic evaluation, FRESH_BLIND, LEGACY_LOCKED_TEST, candidate regeneration, survivor/PREFERRED decision, final architecture freeze and production-readiness claims remain unauthorized until explicitly opened by a later frozen gate.

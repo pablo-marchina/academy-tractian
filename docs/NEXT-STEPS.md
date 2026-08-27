@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE / canonical short-horizon execution plan  
-**Planning checkpoint:** 2026-08-27 10:20 BRT  
+**Planning checkpoint:** 2026-08-27 10:41 BRT  
 **Current state source:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Macro plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
@@ -12,110 +12,100 @@ This file answers only: **what should be done next from the current evidence-bac
 
 ## 1. Current execution objective
 
-C4 deterministic scoring is now frozen as `FROZEN_C4_DETERMINISTIC_SCORING` with 144/144 scoreable outputs and 0 independent recomputation mismatches.
-
-The only newly authorized scientific gate is:
+C4 deterministic scoring and the preregistered 20,000-resample group-cluster bootstrap are frozen. The only currently authorized scientific gate is:
 
 ```text
-BOOTSTRAP_20000
+LEAVE_ONE_GROUP_OUT_SENSITIVITY
 ```
 
-Frozen parameters:
+The LOGO gate must consume the same frozen deterministic score-row artifact:
 
-- resamples: **20,000**;
-- seed: **20260822**;
-- confidence level: **95%**;
-- resampling unit: **asset_story_group**;
-- input: the exact evaluator-side deterministic row artifact with SHA-256 `b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`.
+`b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`
+
+and the frozen bootstrap result:
+
+`08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526`
+
+The omission unit is the preregistered independent `asset_story_group`. There are exactly seven independent groups.
 
 Still forbidden:
 
 - new provider/model generation;
-- score alteration or recomputation in response to statistical outcomes;
-- LOGO;
-- modality/failure slices;
+- deterministic score alteration or regeneration in response to outcomes;
+- modality/failure-family slices;
 - semantic evaluation;
 - FRESH_BLIND;
 - LEGACY_LOCKED_TEST;
 - candidate regeneration;
+- survivor/PREFERRED decision before required robustness/reporting gates close;
 - final architecture freeze.
 
 ## 2. Immediate scientific sequence
 
-### Step 1 — Create a bootstrap-only planning record and focused branch
+### Step 1 — Open a focused LOGO planning record and branch
 
-Treat the statistical gate as a separate Class C task.
+Treat LOGO as a separate Class C statistical gate. Pin:
 
-The task must pin:
+- bootstrap freeze Git blob;
+- deterministic score-row SHA-256;
+- bootstrap-result SHA-256;
+- frozen C2 statistical scorer blob;
+- exact `logo_effects(...)` semantics;
+- seven-group geometry;
+- explicit denial of slices/semantic/blind/provider work.
 
-- deterministic-scoring freeze and Git blob;
-- exact deterministic row-artifact SHA-256;
-- C2 factorial preregistration blob;
-- bootstrap count, seed, confidence level and group resampling unit;
-- exact aggregation hierarchy;
-- primary comparison graph;
-- explicit denial of LOGO/slices/semantic/blind/provider work.
-
-### Step 2 — Build/verify a bootstrap-only runner
+### Step 2 — Build a LOGO-only runner
 
 Do **not** execute the historical monolithic `p12_c2_factorial_score.py` wholesale.
 
-The bootstrap runner may consume the frozen deterministic rows and implement only the preregistered statistical operations needed for the `BOOTSTRAP_20000` gate. It must stop before LOGO and slices.
+The runner may perform only the frozen leave-one-group-out calculations required by the preregistration. It must fail closed if:
 
-Required fail-closed checks:
+- deterministic input SHA changes;
+- bootstrap freeze/result hashes do not match;
+- row count differs from 144;
+- geometry differs from 36 parents × 4 arms × 7 groups;
+- primary comparison graph changes;
+- any score is recomputed or changed;
+- provider/model/private-oracle access occurs;
+- LOGO code crosses into slices, semantic or blind evaluation.
 
-- deterministic input SHA mismatch;
-- anything other than 144 scoreable rows;
-- incomplete 36 × 4 factorial geometry;
-- group/scenario/ticket/repetition aggregation mismatch;
-- changed arm semantics;
-- changed bootstrap parameters;
-- provider/model/private-oracle access during the bootstrap process;
-- invocation of LOGO/slice/semantic code.
+### Step 3 — Execute the seven leave-one-group-out estimates
 
-### Step 3 — Execute exactly the frozen bootstrap
+For each preregistered primary comparison and metric, omit exactly one `asset_story_group` at a time and average the paired group effects over the six retained groups, reproducing the frozen historical C2 `logo_effects(...)` semantics exactly.
 
-Required outputs are the preregistered paired effects / confidence intervals and any deterministic aggregate quantities strictly necessary to interpret that gate.
+No new metric, comparison, threshold or post-result hypothesis may be added.
 
-Do not add new post-result hypotheses or alternate resampling choices.
-
-### Step 4 — Independently validate and freeze the bootstrap result
+### Step 4 — Independently validate and freeze LOGO
 
 Validate at minimum:
 
-- 20,000 resamples actually used;
-- seed `20260822`;
-- cluster resampling by whole `asset_story_group`;
-- aggregation hierarchy unchanged;
-- expected comparison graph unchanged;
+- seven unique omitted groups;
+- six retained groups per omission;
+- exact primary comparison graph;
+- exact equality to independent recomputation using frozen historical helper semantics;
 - deterministic-input SHA unchanged;
-- provider/model/private/blind accesses remain 0;
-- no LOGO/slices/semantic stage executed.
+- bootstrap-result SHA unchanged;
+- provider/model/private/blind accesses remain zero;
+- slices/semantic remain unexecuted.
 
-Freeze the result before opening any later analysis gate.
+Freeze LOGO before opening any later reporting gate.
 
-### Step 5 — Advance only the gate explicitly opened by the bootstrap freeze
+### Step 5 — Advance only the gate explicitly opened by the LOGO freeze
 
-Do not assume LOGO, slices or semantic evaluation become authorized automatically.
+Do not assume slices, survivor selection or semantic evaluation become authorized automatically.
 
-After closure, update:
+After closure update:
 
 - `CURRENT-PROJECT-STATUS.md`;
-- machine checkpoint;
+- machine-readable checkpoint;
 - `PROJECT-PROGRESS-LOG.md`;
 - this file.
 
 ## 3. Parallel P0/P1 work allowed
 
-Work that cannot contaminate the frozen C4 statistical path may continue in parallel:
+Only work that cannot contaminate the frozen C4 path may continue in parallel, including delivery-gap inventory, real API/tool-contract conformance, demonstration coverage, production decision questions, and reproducibility/documentation preparation.
 
-1. final delivery-gap inventory against `DELIVERY-ACCEPTANCE.md`;
-2. real supplied-API/tool contract analysis and conformance preparation;
-3. final demonstration coverage design for contextualize / investigate / execute / clarify-or-abstain / escalate / conflict / failure;
-4. production decision questions, baselines and metrics for model/provider, runtime/controller, tool contract, evaluator stack, fallback policy, observability and deployment;
-5. reproducibility/documentation preparation that does not make unearned claims.
-
-All such work remains subject to P1–P4 and the P0 → P1 → justified-P2 priority rule.
+All parallel work remains subject to P1–P4 and the P0 → P1 → justified-P2 priority rule.
 
 ## 4. Work intentionally deferred
 
@@ -130,16 +120,16 @@ Do not select or implement as final merely because it is available:
 - final provider/model/runtime;
 - final production packaging/deployment topology.
 
-Each must earn its place through a requirement/risk mapping and controlled comparison against a simpler baseline.
-
 ## 5. Critical path to final delivery
 
 ```text
 FROZEN_C4_DETERMINISTIC_SCORING
         ↓
-BOOTSTRAP_20000                  ← CURRENT
+FROZEN_C4_BOOTSTRAP_20000
         ↓
-newly authorized robustness/reporting gates
+LEAVE_ONE_GROUP_OUT_SENSITIVITY   ← CURRENT
+        ↓
+newly authorized reporting/robustness gate(s)
         ↓
 C4 survivor / no-survivor decision
         ↓
@@ -163,8 +153,6 @@ P0/P1 regression + real-path demo
 ## 6. Deadline protection
 
 The final delivery target remains 2026-09-08. Do not spend the protected integration/documentation window on speculative P2 complexity.
-
-If a later optional feature cannot be compared, integrated and regression-tested without endangering P0/P1 closure, defer it.
 
 ## 7. Update rule
 

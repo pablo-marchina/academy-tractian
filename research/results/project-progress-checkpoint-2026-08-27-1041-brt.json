@@ -1,0 +1,74 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "timestamp": "2026-08-27T10:41:00-03:00",
+  "canonical_branch_after_merge": "main",
+  "working_branch": "eval/c4-bootstrap-20000",
+  "project_north_star": "maximize the strongest defensible TRACTIAN x Inteli delivery while following P1-P4",
+  "scientific_state": {
+    "p12_c4_packet": "FROZEN_COMPLETE_C4_PACKET",
+    "deterministic_scoring": "FROZEN_C4_DETERMINISTIC_SCORING",
+    "bootstrap_20000": "FROZEN_C4_BOOTSTRAP_20000",
+    "bootstrap_independent_validation": "PASS_INDEPENDENT_BOOTSTRAP_RECOMPUTATION",
+    "current_authorized_gate": "LEAVE_ONE_GROUP_OUT_SENSITIVITY",
+    "logo_executed": false,
+    "slice_analysis_executed": false,
+    "semantic_stage_executed": false,
+    "fresh_blind_access": false,
+    "legacy_locked_test_access": false,
+    "provider_calls_authorized_now": 0,
+    "project_level_preferred": null,
+    "final_architecture": "UNFROZEN",
+    "production_readiness_claim": false
+  },
+  "bootstrap_freeze": {
+    "path": "research/results/p12-c4-bootstrap-20000-freeze-2026-08-27.json",
+    "git_blob_sha": "65332e227b950bc599ac6080f019c5563562af11",
+    "status": "FROZEN_C4_BOOTSTRAP_20000",
+    "deterministic_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "full_evaluator_side_bootstrap_result_sha256": "08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526",
+    "resamples": 20000,
+    "seed": 20260822,
+    "confidence_level": 0.95,
+    "resampling_unit": "asset_story_group",
+    "independent_validation_mismatch_sections": 0
+  },
+  "observed_bootstrap_evidence": {
+    "A10_minus_A00": {
+      "evidence_correctness_effect": -0.047619,
+      "mean_expected_read_recall_effect": -0.079371,
+      "mean_extra_public_read_count_effect": -0.261905,
+      "task_or_reference_quality_effect": -0.006805,
+      "all_reported_ci95_include_zero": true
+    },
+    "A01_minus_A00_all_preregistered_primary_effects_zero": true,
+    "A11_minus_A00_matches_A10_minus_A00_on_reported_E1_metrics": true,
+    "factorial_safety_main_effect": "ZERO_ON_ALL_FROZEN_REPORT_METRICS",
+    "preregistered_interactions": "ZERO_ON_ALL_FROZEN_INTERACTION_METRICS",
+    "formal_survivor_decision_executed": false
+  },
+  "next_gate": {
+    "id": "LEAVE_ONE_GROUP_OUT_SENSITIVITY",
+    "authorized": true,
+    "resampling_or_omission_unit": "asset_story_group",
+    "required_input_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "required_bootstrap_result_sha256": "08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526"
+  },
+  "still_forbidden": [
+    "new provider/model generation",
+    "deterministic score mutation or regeneration based on outcomes",
+    "modality/failure-family slice analysis",
+    "semantic evaluation",
+    "FRESH_BLIND",
+    "LEGACY_LOCKED_TEST",
+    "candidate regeneration",
+    "survivor/PREFERRED decision before applicable reporting gates close",
+    "final architecture freeze",
+    "production readiness claim"
+  ],
+  "claim_limits": [
+    "Bootstrap effect estimates and confidence intervals are measured C4 results.",
+    "No C4 arm is yet a final survivor or project-level PREFERRED candidate.",
+    "LOGO robustness and required slice reporting have not yet been executed.",
+    "No independent generalization or production-readiness claim is supported."
+  ]
+}
