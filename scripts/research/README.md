@@ -7,11 +7,14 @@ The existence of a script does **not** mean it is currently authorized to run.
 ## Before executing a script
 
 1. read `docs/CURRENT-PROJECT-STATUS.md` and identify the current authorized gate;
-2. locate the frozen manifest/result/authorization governing that execution;
-3. verify any required source Git blob/path pins;
-4. verify allowed data/evaluator/provider access boundaries;
-5. run provider-free/structural checks first where the protocol requires them;
-6. stop if the script would cross into a later gate.
+2. read `docs/NEXT-STEPS.md` for the allowed short-horizon execution sequence;
+3. locate the frozen manifest/result/authorization governing that execution;
+4. verify any required source Git blob/path pins;
+5. verify allowed data/evaluator/provider access boundaries;
+6. run provider-free/structural checks first where the protocol requires them;
+7. stop if the script would cross into a later gate.
+
+This README intentionally does **not** restate the current gate.
 
 ## Lifecycle
 
@@ -31,14 +34,22 @@ A material semantic change requires a new version/candidate and applicable prere
 
 Infrastructure-only fixes must remain distinguishable from candidate/semantic changes and must not be used to reinterpret an already consumed scientific attempt.
 
-## Current C4 boundary
+## Gate isolation
 
-The current canonical packet is `research/results/p12-c4-complete-packet-freeze-2026-08-26.json` and the next gate is `DETERMINISTIC_SCORING`.
+Research executables should be isolated by scientific gate whenever practical.
 
-The current scoring work must execute deterministic scoring only. A historical scorer that also invokes bootstrap, LOGO, slices or later evaluations must not be run monolithically before those gates are separately authorized.
+A historical runner/scorer that combines multiple stages may remain frozen for provenance, but it must not be executed wholesale when the current authorization permits only an earlier subset. Create a new gate-specific runner that reuses the exact frozen semantics without crossing later boundaries.
 
-No additional C4 provider generation is authorized by the current packet freeze.
+Examples of boundaries that should remain separable include:
+
+- provider generation;
+- local candidate transformation;
+- deterministic private scoring;
+- bootstrap/statistical analysis;
+- LOGO/slices;
+- semantic evaluation;
+- independent/blind measurement.
 
 ## Production code
 
-Research runners are not automatically production code. Validated behavior may later be translated into the production implementation only after the production-fit comparison and architecture-freeze process in `docs/PROJECT-PLAN.md`.
+Research runners are not automatically production code. Validated behavior may later be translated into a distinct production implementation only after the applicable production-fit comparison and architecture-freeze process in `docs/ARCHITECTURE-ROADMAP.md`.
