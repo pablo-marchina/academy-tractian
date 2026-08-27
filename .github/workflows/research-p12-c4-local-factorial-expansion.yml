@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/research/p12_c4_local_factorial_expansion.py \
+          PYTHONPATH="${GITHUB_WORKSPACE}" python scripts/research/p12_c4_local_factorial_expansion.py \
             --live-root live-evidence/live/p12-c4-nvidia-one-shot-v1 \
             --out-root c4-local-expansion
 
