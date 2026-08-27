@@ -1,6 +1,15 @@
 from __future__ import annotations
 from .models import ActionImpact, Permission, ToolKind, ToolParameter, ToolSpec
 
+# Source provenance for the delivered agent-facing contract. The OpenAPI YAML
+# repeats /assets/{assetId} as two mapping keys (GET and PATCH). Duplicate-aware
+# normalization plus executable implementation/tests confirm both operations.
+SOURCE_OPENAPI_SHA256 = "8b3fdc5da50a8fa2923928a2f5aebcfe5034c622dba222df84f56abcd0b4aabf"
+SOURCE_IMPLEMENTATION_SHA256 = "a9bdfb8a5fc85e8f169438984f787ad5fd0db95cdd2dc41a15e05ca363a3ca78"
+SOURCE_TESTS_SHA256 = "b50fbabe2f497290a01984ba0663bb0b787184f0bc1b367e90871d0912326443"
+NORMALIZED_OPERATION_COUNT = 18
+UNIQUE_PATH_TEMPLATE_COUNT = 17
+
 def p(name: str, location: str, required: bool = False, schema: dict | None = None) -> ToolParameter:
     return ToolParameter(name=name, location=location, required=required, schema=schema or {})  # type: ignore[arg-type]
 
@@ -38,9 +47,23 @@ def get_tool(name: str) -> ToolSpec:
     raise KeyError(name)
 
 def validate_registry() -> None:
-    assert len(TOOLS) == 18
-    assert len({t.path_template for t in TOOLS}) == 17
-    assert len({t.name for t in TOOLS}) == 18
+    assert len(TOOLS) == NORMALIZED_OPERATION_COUNT
+    assert len({t.path_template for t in TOOLS}) == UNIQUE_PATH_TEMPLATE_COUNT
+    assert len({(t.method, t.path_template) for t in TOOLS}) == NORMALIZED_OPERATION_COUNT
+    assert len({t.operation_id for t in TOOLS}) == NORMALIZED_OPERATION_COUNT
+    assert len({t.name for t in TOOLS}) == NORMALIZED_OPERATION_COUNT
+
+    # Guard the duplicate-path normalization explicitly: the source YAML authors
+    # both operations under repeated /assets/{assetId} keys.
+    get_asset = get_tool("get_asset")
+    update_asset = get_tool("update_asset_config")
+    assert (get_asset.method, get_asset.path_template, get_asset.operation_id) == (
+        "GET", "/assets/{assetId}", "getAsset"
+    )
+    assert (update_asset.method, update_asset.path_template, update_asset.operation_id) == (
+        "PATCH", "/assets/{assetId}", "updateAssetConfig"
+    )
+
     actions = [t for t in TOOLS if t.kind is ToolKind.ACTION]
     assert len(actions) == 5
     assert all(t.justification_required and t.minimum_justification_length == 20 for t in actions)
