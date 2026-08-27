@@ -221,3 +221,34 @@ The repository was updated to:
 - protect the final calendar window from speculative P2 complexity.
 
 This was a requirements/governance/planning reconciliation only. It did **not** execute deterministic scoring, authorize new provider calls, access FRESH_BLIND/LEGACY_LOCKED_TEST or freeze a final architecture.
+
+## 13. Development operating contract and review gates — 2026-08-27
+
+The repository had strong project principles and planning documents, but development compliance still depended on developers remembering to reconstruct the correct process manually before every task.
+
+A lightweight development-governance layer was added without introducing governance CI/workflows:
+
+- root `CONTRIBUTING.md` now defines the mandatory development operating contract from task entry through post-merge reconciliation;
+- changes are classified as A documentation-only, B non-semantic engineering or C material semantic/experimental/product work;
+- every material task must map to a P0/P1 acceptance row, official rubric criterion, material delivery risk or required comparison before implementation;
+- `.github/ISSUE_TEMPLATE/development-task.md` prompts requirement mapping, gate/authorization, baseline/alternatives, evidence, custody boundaries and Definition of Ready/Done;
+- `.github/pull_request_template.md` prompts the same governance at review time and requires explicit canonical-document impact analysis;
+- `REPOSITORY-GUIDE.md` now contains a Development Entry Gate and identifies `CONTRIBUTING.md` as the canonical answer to how work should start/review/merge;
+- `README.md` exposes the development contract directly from the repository entrypoint.
+
+The intended normal loop is now:
+
+```text
+current main + current canonical docs
+→ requirement/rubric/risk mapping
+→ gate/authorization check
+→ change classification
+→ evidence/baseline plan
+→ focused implementation
+→ regression/evaluation
+→ PR governance checklist
+→ merge to main
+→ status/next-step/acceptance/architecture reconciliation when applicable
+```
+
+This governance hardening did not change C4 artifacts, execute scoring, authorize provider calls, open hidden-data gates or alter the current scientific state.
