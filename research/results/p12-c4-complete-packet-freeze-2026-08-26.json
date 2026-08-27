@@ -1,0 +1,153 @@
+{
+  "schema_version": "p12-c4-complete-packet-freeze-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "date": "2026-08-26",
+  "status": "FROZEN_COMPLETE_C4_PACKET",
+  "scientific_state": {
+    "fresh_common_parents_complete": true,
+    "fresh_common_parent_count": 36,
+    "local_factorial_expansion_complete": true,
+    "fixed_arm_output_count": 144,
+    "complete_packet_frozen": true,
+    "partial_packet": false
+  },
+  "live_parent_source": {
+    "workflow_run_id": 33020748838,
+    "workflow_job_id": 98350245931,
+    "head_sha": "041bf4c25e344f042b137479b2a5835bb27ef270",
+    "artifact_id": 9627504808,
+    "artifact_name": "p12-c4-nvidia-one-shot-live-evidence",
+    "artifact_digest": "sha256:f6c7e7c0673cc3030cb83efc2b7acb0f319634aa5cb1ab0ccf2244824c26986e",
+    "common_parents_sha256": "9495480b7d1dd8f1339d3fe4cf30fb365964b4bf14991dd32f6c91b2feb47827",
+    "request_ledger_sha256": "4564c4204a72668e7accec163579c28aa9ea410e52d9425a24eb4646c5299e03",
+    "execution_result_sha256": "81efae2c2010e3c152891a461931d73b6ef25e100b7216e72eb51b21c7718866",
+    "status": "PASS_36_OF_36_FRESH_COMMON_PARENTS"
+  },
+  "local_factorial_expansion": {
+    "workflow_run_id": 33028989704,
+    "workflow_job_id": 98376848407,
+    "workflow_run_number": 4,
+    "workflow_run_attempt": 1,
+    "head_sha": "a6c72647e21bf784e65d191946d987f2caffd1c8",
+    "conclusion": "success",
+    "created_at_utc": "2026-08-27T01:05:40Z",
+    "completed_at_utc": "2026-08-27T01:07:03Z",
+    "artifact_id": 9629510247,
+    "artifact_name": "p12-c4-local-factorial-expansion-evidence",
+    "artifact_digest": "sha256:8b9a07355c96372ead4841ec6dc9b2338ba75a6455209fad1b97f621fbe31a58",
+    "artifact_files": {
+      "fixed-factorial-outputs.json": {
+        "sha256": "0d8df31e28e19ad3a23cf78c976daacdded4dbe995db3740d9126317182b9d37"
+      },
+      "local-expansion-result.json": {
+        "sha256": "8c389a4be9f5b773bf29c5c46c97ba9afe7c6aa59c6c794c986cad6583b7e4b5"
+      },
+      "complete-packet-prefreeze.json": {
+        "sha256": "c7fb457711ebbc4e5d3934e052a36210519e4719e3b9f22d81189f5826a2bb44"
+      }
+    },
+    "common_parent_freeze_hash": "45ae5ed8860721350db98457c44e41c587c23b710f917c9ceb66c69a901c123e",
+    "status": "PASS_144_OF_144_LOCAL_ARM_OUTPUTS"
+  },
+  "factorial_semantics": {
+    "A00": {"evidence": "E0", "safety": "S0", "role": "reference_baseline"},
+    "A10": {"evidence": "E1", "safety": "S0", "role": "evidence_only_intervention"},
+    "A01": {"evidence": "E0", "safety": "S1", "role": "safety_only_intervention"},
+    "A11": {"evidence": "E1", "safety": "S1", "role": "combined_candidate"}
+  },
+  "factor_ids": {
+    "E0": "E14T_REFERENCE_PORT_V1_RETAINED",
+    "E1": "BOUNDED_PUBLIC_INTENT_DEPENDENCY_CLOSURE_V1",
+    "S0": "RETAINED_E14Q_E14Q2",
+    "S1": "STRICT_PUBLIC_AUTHORIZATION_CERTIFICATE_V1"
+  },
+  "expansion_verification": {
+    "independently_recalculated_after_artifact_download": true,
+    "validation_errors": 0,
+    "parent_ids_exactly_p01_through_p36": true,
+    "unique_parent_count": 36,
+    "arm_output_count": 144,
+    "arm_counts": {"A00": 36, "A10": 36, "A01": 36, "A11": 36},
+    "exactly_four_arms_per_parent": true,
+    "same_common_parent_row_hash_across_four_arms": true,
+    "same_common_parent_output_hash_across_four_arms": true,
+    "every_output_sha256_recalculated_and_matched": true,
+    "fixed_factorial_outputs_sha256_recalculated_and_matched": true,
+    "common_parent_freeze_hash_recalculated_and_matched": true,
+    "e0_global_batch_size": 36,
+    "e0_global_addition_budget": 14,
+    "e0_additions_total": 14,
+    "e0_max_additional_reads_per_output": 1,
+    "e0_max_final_reads_per_output": 7,
+    "e1_output_count": 36,
+    "e1_added_reads_total": 3,
+    "e1_max_final_reads_per_output": 7,
+    "s1_certificate_failure_counts": {"A01": 0, "A11": 0},
+    "s1_certificate_failure_counts_are_transform_metadata_not_scores": true
+  },
+  "frozen_candidate_sources": {
+    "scripts/research/p12_c2_factorial_candidates.py": "33fbeec64d65ca666d30a14f9a3c196b6c607bec",
+    "research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json": "96c38036411365bb2f64c5df85f9eafc31c6901e",
+    "research/fixtures/p12-c1-exposed-agent-input-cases-v1.json": "f9fef316ab9245de1e36d1d6d787326cde2e27be",
+    "research/frozen/p12-c2-public-intent-map-v1.json": "26c666e335d8264fb913c5598cfa6d12b42c6798",
+    "scripts/research/p12_c1_evidence_route_candidates.py": "e5d0b3d005ffbd9068d32a094133c0cb7cd8a9f5",
+    "scripts/research/e14n_public_identifier_provenance_guard_v1_1.py": "c7c72aaf667debd294fd25fd63dd575467f75da7",
+    "scripts/research/e14q_full_dev_public_action_authorization_consistency_guard.py": "3c44e70429872825b1d21032d311137c9d428ebf",
+    "scripts/research/e14q2_full_dev_public_route_role_purpose_consistency_guard.py": "a54139f7188b83bb0046050e6f4a6c6372091980"
+  },
+  "local_runner": {
+    "path": "scripts/research/p12_c4_local_factorial_expansion.py",
+    "git_blob_sha": "856e0e26dac1e0e4b44746b65ed932234c6d913c",
+    "provider_free": true
+  },
+  "runtime": {
+    "derived_from_frozen_p12_c2_workflow": true,
+    "source_workflow_git_blob_sha": "dffd56e3cfa088e1efc11f8aeb5f7099941e839d",
+    "python_version": "3.13",
+    "pydantic_requirement": "pydantic>=2,<3"
+  },
+  "pre_transform_infrastructure_failures": [
+    {
+      "run_id": 33028318700,
+      "run_number": 1,
+      "state": "PRE_MATERIALIZATION_INFRA_FAILURE_NO_SCIENTIFIC_OUTPUT",
+      "arm_outputs_materialized": 0,
+      "provider_calls": 0,
+      "private_scoring_executed": false
+    },
+    {
+      "run_id": 33028430280,
+      "run_number": 2,
+      "state": "PRE_TRANSFORM_INFRA_FAILURE_NO_ARM_OUTPUTS",
+      "arm_outputs_materialized": 0,
+      "provider_calls": 0,
+      "private_scoring_executed": false
+    },
+    {
+      "run_id": 33028726884,
+      "run_number": 3,
+      "state": "PRE_TRANSFORM_INFRA_FAILURE_NO_ARM_OUTPUTS",
+      "arm_outputs_materialized": 0,
+      "provider_calls": 0,
+      "private_scoring_executed": false
+    }
+  ],
+  "access_and_execution_boundary_at_freeze": {
+    "provider_calls_during_local_expansion": 0,
+    "arm_specific_provider_calls": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "deterministic_private_scoring_executed": false,
+    "bootstrap_executed": false,
+    "partial_packet_scoring_executed": false
+  },
+  "post_freeze_authorization": {
+    "deterministic_private_scoring_authorized": true,
+    "bootstrap_authorized_before_deterministic_scoring_completes": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "provider_calls_authorized": 0
+  },
+  "next_gate": "DETERMINISTIC_SCORING"
+}
