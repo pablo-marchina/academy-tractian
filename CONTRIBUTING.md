@@ -33,6 +33,12 @@ For new development:
 4. do not continue new development on a stale historical branch merely because old research lives there;
 5. preserve frozen/source-pinned historical paths and intentionally historical branches instead of rewriting history to make the repository look cleaner.
 
+Branch/merge policy by change class:
+
+- **Class C — material semantic/experimental/product:** MUST use a focused branch + governed PR. Do not push Class C changes directly to `main`. A tracked task/issue or equivalent planning record must exist before implementation.
+- **Class B — non-semantic engineering:** use a focused branch + PR unless the change is truly trivial, isolated and demonstrably semantics-preserving; when in doubt, use a PR.
+- **Class A — navigation/documentation-only:** may be applied directly only when it cannot change semantics, authorization, requirement interpretation, architecture direction or current-state claims.
+
 A historical branch that is an ancestor of `main` may remain intentionally behind when its name/state is itself useful provenance. A long-lived working branch intended for continued work should instead be explicitly reconciled with current `main` before new development.
 
 Suggested prefixes are `research/`, `feature/`, `fix/`, `docs/`, `eval/`, `prod/` and `refactor/`, chosen by the actual work rather than by desired perception.
