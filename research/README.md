@@ -2,31 +2,26 @@
 
 This directory is the **research evidence/history surface**, not the canonical project-status page.
 
-For current state and authorization, always start with:
+For current state, authorization and execution order, always start with:
 
 - [`../docs/CURRENT-PROJECT-STATUS.md`](../docs/CURRENT-PROJECT-STATUS.md)
+- [`../docs/NEXT-STEPS.md`](../docs/NEXT-STEPS.md)
+- [`../docs/ARCHITECTURE-ROADMAP.md`](../docs/ARCHITECTURE-ROADMAP.md)
 - [`../docs/PROJECT-PLAN.md`](../docs/PROJECT-PLAN.md)
 - [`../docs/PROJECT-PRINCIPLES.md`](../docs/PROJECT-PRINCIPLES.md)
 - [`../docs/REPOSITORY-GUIDE.md`](../docs/REPOSITORY-GUIDE.md)
 
-## Current pointer
-
-The current C4 evidence transition is recorded by:
-
-- `results/p12-c4-complete-packet-freeze-2026-08-26.json`
-- status `FROZEN_COMPLETE_C4_PACKET`
-- next gate `DETERMINISTIC_SCORING`.
-
-Do not infer authorization from an older numbered research record, script or workflow.
+This README intentionally does **not** restate the current experiment gate or checkpoint. Do not infer authorization from an older numbered research record, script, workflow or filename.
 
 ## Directory semantics
 
 - numbered Markdown files at `research/` root: chronological/systematic research history, retained for provenance;
 - `experiments/`: preregistrations, experiment definitions and eligibility/design artifacts;
-- `frozen/`: immutable frozen contracts, maps, inputs and authorizations;
+- `frozen/`: immutable contracts, maps, inputs and authorizations;
 - `fixtures/`: allowed fixture/public test material;
 - `results/`: canonical machine-readable results, closures and time-specific checkpoints;
-- `live/`: intentionally committed live evidence, when present.
+- `live/`: intentionally committed live evidence, when present;
+- `execution-bundles/`: frozen/materialized execution code bundles used by historical or active experiments.
 
 Exact experiment semantics come from the relevant frozen artifact/result, not this README.
 
