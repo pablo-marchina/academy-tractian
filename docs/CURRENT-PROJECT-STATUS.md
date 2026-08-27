@@ -2,15 +2,17 @@
 
 **Canonical status checkpoint:** 2026-08-26 22:51 BRT  
 **Branch:** `research/systematic-foundation`  
-**PR:** #2 — draft research-governance PR  
+**PR:** #2 — draft research integration/governance PR  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
-**Active plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
+**Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
+**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
+**Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Progress ledger:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
 **Repository guide:** [`REPOSITORY-GUIDE.md`](REPOSITORY-GUIDE.md)  
 **Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-26-2251-brt.json`](../research/results/project-progress-checkpoint-2026-08-26-2251-brt.json)
 
-This document is the canonical human-readable project status. Exact experiment semantics remain governed by their frozen manifests/results. Historical failures remain evidence and do not authorize reuse or rerun.
+This document is the **sole canonical human-readable source for current project state and current authorization**. Exact experiment semantics remain governed by their frozen manifests/results. Historical failures remain evidence and do not authorize reuse or rerun.
 
 ## Executive state
 
@@ -37,8 +39,8 @@ production-readiness claim               NOT AUTHORIZED
 
 The authoritative packet freeze is:
 
-- `research/results/p12-c4-complete-packet-freeze-2026-08-26.json`
-- status: `FROZEN_COMPLETE_C4_PACKET`
+- `research/results/p12-c4-complete-packet-freeze-2026-08-26.json`;
+- status: `FROZEN_COMPLETE_C4_PACKET`;
 - 36/36 fresh common parents;
 - 144/144 fixed factorial outputs;
 - independent expansion validation errors: 0;
@@ -51,48 +53,22 @@ The authoritative packet freeze is:
 
 The NVIDIA serving-path ADR remains **qualification-only**, not a production-provider selection: `docs/adr/003-nvidia-nim-no-card-serving-amendment-2026-08-26.md`.
 
-## What is authorized now
+## Authorization boundary
 
-Only the deterministic-scoring gate may advance.
+The current freeze authorizes deterministic private scoring only.
 
-Required sequence:
+It does **not** authorize:
 
-```text
-verify frozen scorer + authorized private evaluator input provenance
-        ↓
-verify immutable 144-output packet and source pins
-        ↓
-execute deterministic scoring only
-        ↓
-validate completeness / determinism / access boundaries
-        ↓
-freeze deterministic scoring result
-        ↓
-only the resulting freeze may authorize the next statistical gate
-```
+- additional C4 provider generation;
+- bootstrap before deterministic-scoring closure;
+- LOGO or slice analysis before the applicable gate;
+- semantic evaluation;
+- FRESH_BLIND outcome access;
+- LEGACY_LOCKED_TEST access;
+- final architecture freeze;
+- production-readiness claims.
 
-The scoring implementation must not opportunistically cross into bootstrap, LOGO, slices, semantic evaluation, FRESH_BLIND or LEGACY_LOCKED_TEST.
-
-## Parallel work that is allowed
-
-Production-fit and architecture research may proceed **without freezing a final architecture**. Under `PROJECT-PRINCIPLES.md`, every material choice must go through:
-
-```text
-decision question
-→ requirements / hard constraints
-→ systematic research
-→ credible alternatives + simple/null baseline
-→ preregistered comparison
-→ quantitative evaluation
-→ robustness / sensitivity / failure analysis
-→ production-fit analysis
-→ ADR + reversal triggers
-→ PREFERRED
-→ confirmation
-→ FROZEN
-```
-
-Material choices include provider/model strategy, orchestration/runtime, agent topology, evidence/retrieval architecture, tool topology/protocol, memory/state, adaptive policies, evaluator/judge stack, observability, retry/idempotency/authorization boundaries, deployment topology and UI/integration architecture.
+The operational sequence for the currently authorized gate is maintained in [`NEXT-STEPS.md`](NEXT-STEPS.md). This file intentionally does not duplicate that execution plan.
 
 ## Current non-claims
 
@@ -108,30 +84,11 @@ The project does **not** currently claim that:
 - the final architecture is frozen;
 - the system is production-ready.
 
-## Current critical path
+## Planning pointers
 
-```text
-FROZEN_COMPLETE_C4_PACKET
-        ↓
-DETERMINISTIC_SCORING                 ← CURRENT
-        ↓
-freeze deterministic result
-        ↓
-remaining frozen statistical gates
-        ↓
-deterministic survivor decision
-        ↓
-semantic child gate for exact survivors only
-        ↓
-production-fit comparative decision + candidate/evaluator freeze
-        ↓
-authorized independent evidence
-        ↓
-architecture freeze from evidence
-        ↓
-production implementation + regression
-        ↓
-controlled production-path delivery
-```
+- **What happens next:** [`NEXT-STEPS.md`](NEXT-STEPS.md)
+- **How the project reaches production:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)
+- **Macro phases/milestones:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)
+- **How the project reached this state:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)
 
-See [`PROJECT-PLAN.md`](PROJECT-PLAN.md) for the complete governed plan through final delivery.
+When the current gate changes, update this status, the latest machine checkpoint and the progress ledger before treating any downstream plan as current.
