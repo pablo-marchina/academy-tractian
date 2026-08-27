@@ -1,0 +1,61 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "checkpoint_local": "2026-08-27T00:34:47-03:00",
+  "branch": "main",
+  "repository_state": {
+    "research_integration_pr": 2,
+    "research_integration_pr_state": "MERGED",
+    "research_integration_merge_commit_sha": "9b5a6671176a1635676556ff1b48b4044b897a76",
+    "planning_review_commit_sha": "0a5a5d71500c99afef4b9392e0dabdef33d9a062",
+    "scientific_gate_advanced_by_reconciliation": false,
+    "provenance_preserved": true
+  },
+  "scientific_state": {
+    "benchmark_integrity_gate": "CLOSED",
+    "p12_protocol": "FROZEN",
+    "p12_c1": "CLOSED_DETERMINISTIC_FAIL_NO_ARM_QUALIFIED",
+    "p12_c2": "CONSUMED_OPERATIONAL_FAILURE_31_OF_36_NO_SCORING",
+    "p12_c3": "CONSUMED_TERMINAL_OPERATIONAL_FAILURE_3_OF_36_NO_SCORING",
+    "p12_c4_common_parents": "PASS_36_OF_36",
+    "p12_c4_factorial_outputs": "PASS_144_OF_144",
+    "p12_c4_packet": "FROZEN_COMPLETE_C4_PACKET",
+    "current_authorized_gate": "DETERMINISTIC_SCORING",
+    "project_level_preferred": null,
+    "final_architecture": "UNFROZEN",
+    "production_readiness_claim": "NOT_AUTHORIZED"
+  },
+  "authorization": {
+    "provider_calls_authorized": 0,
+    "deterministic_private_scoring_authorized": true,
+    "bootstrap_authorized_before_deterministic_scoring_closure": false,
+    "fresh_blind_outcome_access_authorized": false,
+    "legacy_locked_test_access_authorized": false,
+    "semantic_evaluation_authorized": false,
+    "final_architecture_freeze_authorized": false
+  },
+  "delivery_review": {
+    "requirements_source": "research/01-requirements-matrix.md",
+    "delivery_acceptance": "docs/DELIVERY-ACCEPTANCE.md",
+    "master_plan": "docs/PROJECT-PLAN.md",
+    "next_steps": "docs/NEXT-STEPS.md",
+    "architecture_roadmap": "docs/ARCHITECTURE-ROADMAP.md",
+    "governance": "docs/PROJECT-PRINCIPLES.md",
+    "priority_model": ["P0_MUST", "P1_MATERIAL_PRODUCTION", "P2_CONDITIONAL_ENHANCEMENT"],
+    "mandatory_agent_and_evaluator_scope_explicit": true,
+    "real_api_integration_acceptance_explicit": true,
+    "contextualize_investigate_execute_clarify_escalate_acceptance_explicit": true,
+    "partial_inconclusive_conflicting_unavailable_robustness_explicit": true,
+    "inspectable_trace_acceptance_explicit": true,
+    "gold_runtime_isolation_explicit": true,
+    "live_agent_plus_per_run_evaluation_demo_explicit": true,
+    "optional_complexity_requires_simple_baseline_and_measured_benefit": true
+  },
+  "canonical_c4_freeze": {
+    "path": "research/results/p12-c4-complete-packet-freeze-2026-08-26.json",
+    "git_blob_sha": "03b7d5a27ffdec9173e25bdf47377858bf6aeb30",
+    "fixed_outputs": 144,
+    "common_parents": 36
+  },
+  "next_gate": "DETERMINISTIC_SCORING",
+  "note": "Post-merge delivery-plan reconciliation against the original TAPI requirement matrix. No provider call, scoring, statistical analysis, hidden-partition access, candidate change or scientific gate advancement occurred."
+}
