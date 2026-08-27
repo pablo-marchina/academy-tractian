@@ -1,43 +1,48 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-26 22:51 BRT  
-**Branch:** `research/systematic-foundation`  
-**PR:** #2 — draft research integration/governance PR  
+**Canonical status checkpoint:** 2026-08-27 00:27 BRT  
+**Canonical branch:** `main`  
+**Research integration:** PR #2 merged via `9b5a6671176a1635676556ff1b48b4044b897a76`  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
+**Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Progress ledger:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
 **Repository guide:** [`REPOSITORY-GUIDE.md`](REPOSITORY-GUIDE.md)  
-**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-26-2251-brt.json`](../research/results/project-progress-checkpoint-2026-08-26-2251-brt.json)
+**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-27-0027-brt.json`](../research/results/project-progress-checkpoint-2026-08-27-0027-brt.json)
 
 This document is the **sole canonical human-readable source for current project state and current authorization**. Exact experiment semantics remain governed by their frozen manifests/results. Historical failures remain evidence and do not authorize reuse or rerun.
 
 ## Executive state
 
 ```text
-Benchmark Integrity Gate                 CLOSED
-P12 evaluation protocol                  FROZEN
-P12-C1                                   CLOSED / DETERMINISTIC FAIL / NO ARM QUALIFIED
-P12-C2                                   CONSUMED_OPERATIONAL_FAILURE / 31 OF 36 / NO SCORING
-P12-C3                                   CONSUMED_TERMINAL_OPERATIONAL_FAILURE / 3 OF 36 / NO SCORING
-P12-C4 NVIDIA common-parent collection   PASS / 36 OF 36
-P12-C4 local factorial expansion         PASS / 144 OF 144
-P12-C4 packet                            FROZEN_COMPLETE_C4_PACKET
-current authorized gate                  DETERMINISTIC_SCORING
-bootstrap                                NOT YET AUTHORIZED BY CURRENT FREEZE
-FRESH_BLIND outcome access               NOT AUTHORIZED
-LEGACY_LOCKED_TEST                       NOT AUTHORIZED
-provider calls authorized now            0
-current project-level PREFERRED          NONE
-final architecture                       UNFROZEN
-production-readiness claim               NOT AUTHORIZED
+Repository canonical branch                 main
+Research integration PR #2                  MERGED
+Benchmark Integrity Gate                    CLOSED
+P12 evaluation protocol                     FROZEN
+P12-C1                                      CLOSED / DETERMINISTIC FAIL / NO ARM QUALIFIED
+P12-C2                                      CONSUMED_OPERATIONAL_FAILURE / 31 OF 36 / NO SCORING
+P12-C3                                      CONSUMED_TERMINAL_OPERATIONAL_FAILURE / 3 OF 36 / NO SCORING
+P12-C4 NVIDIA common-parent collection      PASS / 36 OF 36
+P12-C4 local factorial expansion            PASS / 144 OF 144
+P12-C4 packet                               FROZEN_COMPLETE_C4_PACKET
+current authorized gate                     DETERMINISTIC_SCORING
+bootstrap                                   NOT YET AUTHORIZED BY CURRENT FREEZE
+FRESH_BLIND outcome access                  NOT AUTHORIZED
+LEGACY_LOCKED_TEST                          NOT AUTHORIZED
+provider calls authorized now               0
+current project-level PREFERRED             NONE
+final architecture                          UNFROZEN
+production-readiness claim                  NOT AUTHORIZED
 ```
+
+The merge into `main` is a repository/governance reconciliation only. It **did not advance or reinterpret the scientific state**.
 
 ## Evidence for the current transition
 
-The authoritative packet freeze is:
+The authoritative packet freeze remains:
 
 - `research/results/p12-c4-complete-packet-freeze-2026-08-26.json`;
 - status: `FROZEN_COMPLETE_C4_PACKET`;
@@ -84,9 +89,16 @@ The project does **not** currently claim that:
 - the final architecture is frozen;
 - the system is production-ready.
 
+## Delivery coverage state
+
+The original requirement matrix requires both **agent construction** and an **agent evaluation framework**, including real API integration, contextualization/investigation/execution, clarification, escalation, robustness to incomplete/conflicting/unavailable data, inspectable traces and evaluator/runtime separation.
+
+`DELIVERY-ACCEPTANCE.md` is the active crosswalk from those requirements to final evidence. At the current stage, research/evaluation foundations are strong, but final integrated production-path acceptance remains pending and must not be inferred from C4 packet completion alone.
+
 ## Planning pointers
 
 - **What happens next:** [`NEXT-STEPS.md`](NEXT-STEPS.md)
+- **What must be true at final delivery:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)
 - **How the project reaches production:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)
 - **Macro phases/milestones:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)
 - **How the project reached this state:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)
