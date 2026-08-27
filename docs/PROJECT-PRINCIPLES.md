@@ -1,9 +1,68 @@
 # Academy × TRACTIAN — Non-Negotiable Project Principles
 
 **Status:** mandatory repository-wide governance  
-**Applies to:** research, architecture, models, prompts, evaluators, judges, tools, runtimes, retrieval, memory, orchestration, data, security, observability, deployment, UI/integration and any other material project decision.
+**Applies to:** research, architecture, models, prompts, evaluators, judges, tools, runtimes, retrieval, memory, orchestration, data, security, observability, deployment, UI/integration and any other material project decision.  
+**Formal project source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)
 
 These principles override convenience, novelty, implementation momentum and prior provisional choices. A component or decision is not final merely because it works, passes a minimum gate, is already implemented, is popular, or was previously selected.
+
+## Project North Star — maximize the actual requested delivery
+
+The fixed objective of this repository is:
+
+> **Deliver the strongest defensible individual TRACTIAN × Inteli project against the actual assignment, delivered package, partner-quality guidance and academic criteria, while following P1–P4 rigorously.**
+
+The project must optimize for the requested outcome, not for research volume, benchmark novelty, framework sophistication or the number of technologies used.
+
+Every material workstream must map to at least one of:
+
+1. a formal TAPI/delivered-package requirement;
+2. an academic evaluation criterion;
+3. a material security/reliability/production risk that could block the requested delivery; or
+4. an experiment required to select among credible alternatives for one of the above.
+
+If it maps to none, defer it.
+
+### Canonical source hierarchy
+
+When upstream sources differ, use:
+
+1. **[UPDATED] TAPI** — formal scope, deliverables and academic criteria;
+2. **delivered TRACTIAN project package** — Student Guide, agent input, evaluation material, contract/docs and synthetic environment as actually delivered;
+3. **executable supplied API behavior/tests** — operational truth for the simplified API when prose and implementation differ;
+4. **kickoff partner guidance** — product-quality guidance where compatible with the written sources;
+5. **project-generated research/assumptions** — hypotheses/extensions that must never overwrite upstream requirements.
+
+Record discrepancies instead of silently reconciling them. The current audited bundle and hashes are frozen in `research/tractian-source-baseline-2026-08-27.md`.
+
+### Acceptance-first priority
+
+Use this delivery priority throughout development:
+
+```text
+P0 — requested capabilities + trustworthy evaluation
+        ↓
+P1 — production/security/reliability needed to operate P0 well
+        ↓
+P2 — optional complexity only when measured benefit justifies it
+```
+
+P0 coverage and rubric quality must not be sacrificed to add RAG, vector DB, reranking, multi-agent decomposition, persistent memory, MCP, adaptive routing, a richer UI or any other optional component merely because it is interesting or fashionable.
+
+### Academic excellence target
+
+The final project should maximize evidence quality across the official evaluation dimensions:
+
+- API integration quality;
+- technical coherence;
+- hypothesis/experiment clarity;
+- quality of result analysis;
+- limitations and risk treatment;
+- reproducibility;
+- documentation;
+- demonstration quality.
+
+These dimensions are cross-cutting acceptance objectives, not end-of-project polish.
 
 ## P1 — Systematic research and comparative decision-making
 
@@ -25,6 +84,7 @@ Mandatory rules:
 8. Evaluate production-relevant trade-offs, including correctness, safety, reliability, latency, throughput, cost/resource use, scalability, portability, maintainability, observability and operational complexity.
 9. Use Pareto/frontier reasoning when objectives conflict; do not hide trade-offs in an arbitrary weighted score unless the utility function itself is justified and preregistered.
 10. Record evidence, alternatives, results, uncertainty, rejected options, reversal triggers and unresolved questions in an ADR or equivalent decision record.
+11. When an upstream project source is updated or newly delivered, reconcile the requirement/acceptance maps before allowing downstream architecture momentum to continue unchanged.
 
 ### Decision-state semantics
 
@@ -41,20 +101,25 @@ Every material choice should be understood as one of these states:
 
 ### Meaning of “best possible”
 
-The project does not claim mathematical global optimality. “Best possible” means the **best-supported known option after an explicit, sufficiently broad and reproducible search of the credible decision space**, with quantitative comparison and robustness/production confirmation. If a material alternative remains untested, the decision is not final.
+The project does not claim mathematical global optimality. “Best possible” means the **best-supported known option after an explicit, sufficiently broad and reproducible search of the credible decision space**, with quantitative comparison and robustness/production confirmation, while preserving full required-scope coverage. If a material alternative remains untested or a P0 delivery requirement remains uncovered, the decision/project is not final.
 
 ## P2 — Production-first, never demo-first
 
-The target is a real production-grade final system, not a presentation demo, scripted prototype or benchmark-only artifact.
+The target is a real production-path final system, not a presentation demo, scripted prototype or benchmark-only artifact.
 
 Therefore:
 
 - demos, mocks, fixtures, scripted paths and test doubles may validate infrastructure, but cannot establish production quality or agent capability;
 - architecture must be evaluated for real deployment constraints, failure recovery, security, authorization, privacy, observability, reproducibility, maintainability, scaling, latency, throughput and resource/cost behavior;
-- integrations must exercise real contracts and realistic failure modes before production readiness is claimed;
+- integrations must exercise real supplied contracts and realistic failure modes before production readiness is claimed;
 - state-changing behavior requires explicit authorization, idempotency/retry semantics where applicable, auditability and safe failure behavior;
 - production configuration, dependency/version control, secrets handling, environment setup, monitoring and rollback/reversal paths are part of the product, not post-demo cleanup;
-- a component that improves a benchmark but is operationally fragile, unsafe, unaffordable, unobservable or non-maintainable cannot be considered the final choice.
+- a component that improves a benchmark but is operationally fragile, unsafe, unaffordable, unobservable or non-maintainable cannot be considered the final choice;
+- introducing the agent must not make the underlying support workflow less available: provider/model/agent failure must have a safe fallback or human-handoff path;
+- customer-facing behavior must distinguish operationally useful conclusions from unnecessary disclosure of internal implementation details;
+- consequential action confirmation is a production-policy decision to evaluate explicitly; do not force it into benchmark semantics when the delivered scenario contract already treats a request as authorized execution;
+- use a stable agent-facing tool contract and isolate backend/protocol heterogeneity behind adapters when that improves maintainability and reliability;
+- for model/provider selection, do not prematurely cap capability merely for cost convenience: compare a strong quality frontier against feasible lower-cost/local options, prove value, then optimize the production Pareto frontier for latency/cost/reliability.
 
 No project milestone may be marked complete solely because the UI/demo works or because a happy-path scenario succeeds.
 
@@ -75,7 +140,8 @@ Examples include:
 - reliability and stability;
 - latency/throughput/resource budgets;
 - confidence, abstention and escalation;
-- production health and drift.
+- production health and drift;
+- customer-safe communication and escalation-handoff quality when reliable annotation/judging is available.
 
 Thresholds must be justified empirically or by hard requirements, not chosen only for convenience.
 
@@ -105,11 +171,14 @@ Mandatory implications:
 8. Require regression evaluation after material changes.
 9. Treat operational failures separately from scientific/task-quality failures.
 10. Production telemetry and post-deployment evaluation must eventually feed controlled adaptation/re-evaluation without bypassing frozen safety constraints.
+11. Evaluate both the final conclusion and the observable execution process: tool choice, arguments, evidence use, stopping, action/escalation decisions, robustness and safety.
+12. Exact wording must not become the primary correctness signal when the requested operational conclusion can be evaluated more directly.
 
 ## Repository-wide completion gate
 
 A material component, decision or workstream is **not complete** unless all applicable conditions are satisfied:
 
+- [ ] the work maps to an explicit delivery requirement, academic criterion, material risk or required comparison;
 - [ ] decision question and requirements are explicit;
 - [ ] systematic research is documented;
 - [ ] credible materially different alternatives were identified;
@@ -125,10 +194,11 @@ A material component, decision or workstream is **not complete** unless all appl
 - [ ] trade-offs and Pareto position are understood;
 - [ ] decision and reversal triggers are documented;
 - [ ] regression protection exists for the accepted behavior;
-- [ ] the evidence supports `PREFERRED`/`FROZEN`, not merely `QUALIFIED`.
+- [ ] the evidence supports `PREFERRED`/`FROZEN`, not merely `QUALIFIED`;
+- [ ] applicable P0 rows in `DELIVERY-ACCEPTANCE.md` remain covered or have an explicit evidence-honest limitation.
 
 If any applicable item is missing, the correct state is still research/experimental, not done.
 
 ## Consequence for existing provisional choices
 
-Existing choices remain valid as historical experimental evidence, but their status must be interpreted using this policy. A previously “qualified” component is not automatically the final project standard. Before final architecture freeze, major choices — including model, semantic judge, orchestration/runtime, retrieval strategy, tool topology, memory, adaptive policies and evaluation stack — must be checked against this repository-wide systematic-comparison rule.
+Existing choices remain valid as historical experimental evidence, but their status must be interpreted using this policy. A previously “qualified” component is not automatically the final project standard. Before final architecture freeze, major choices — including model, semantic judge, orchestration/runtime, retrieval strategy, tool topology, memory, adaptive policies and evaluation stack — must be checked against this repository-wide systematic-comparison rule and against the actual requested delivery.
