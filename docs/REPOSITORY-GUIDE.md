@@ -18,12 +18,13 @@ When documents appear to conflict, use this order:
 3. **`docs/CURRENT-PROJECT-STATUS.md`** — sole canonical human-readable current state and current authorization.
 4. **latest machine checkpoint linked by current status** — structured project snapshot.
 5. **`docs/NEXT-STEPS.md`** — canonical short-horizon execution plan from the current state.
-6. **`docs/ARCHITECTURE-ROADMAP.md`** — canonical general research-to-production/system architecture roadmap.
-7. **`docs/PROJECT-PLAN.md`** — macro phases and delivery milestones.
-8. **`docs/PROJECT-PROGRESS-LOG.md`** — chronological historical ledger.
-9. **ADRs** — material decision context/status for their stated scope.
-10. **README/index files** — navigation/lifecycle guidance only; they must not independently redefine current state or experiment semantics.
-11. **historical research narratives** — evidence/context, not current authorization.
+6. **`docs/DELIVERY-ACCEPTANCE.md`** — active requirements-to-final-evidence coverage map.
+7. **`docs/ARCHITECTURE-ROADMAP.md`** — canonical general research-to-production/system architecture roadmap.
+8. **`docs/PROJECT-PLAN.md`** — macro phases and delivery milestones.
+9. **`docs/PROJECT-PROGRESS-LOG.md`** — chronological historical ledger.
+10. **ADRs** — material decision context/status for their stated scope.
+11. **README/index files** — navigation/lifecycle guidance only; they must not independently redefine current state or experiment semantics.
+12. **historical research narratives** — evidence/context, not current authorization.
 
 A historical statement is not current state merely because the file still exists.
 
@@ -35,8 +36,9 @@ A historical statement is not current state merely because the file still exists
 | `docs/PROJECT-PRINCIPLES.md` | mandatory project-wide governance | change only through explicit governance decision |
 | `docs/CURRENT-PROJECT-STATUS.md` | sole current human state/authorization | update on evidence-backed gate/state change |
 | `docs/NEXT-STEPS.md` | short-horizon operational plan | update when gate/blocker changes; closed steps move to ledger |
+| `docs/DELIVERY-ACCEPTANCE.md` | requirement/capability/final-evidence crosswalk | update when requirement interpretation, intended final scope or evidence coverage changes |
 | `docs/ARCHITECTURE-ROADMAP.md` | macro research-to-production/system architecture | update only when durable architecture direction/decision scope changes |
-| `docs/PROJECT-PLAN.md` | macro phases and milestones | keep compact; link to status/next steps/architecture instead of duplicating them |
+| `docs/PROJECT-PLAN.md` | macro phases and milestones | keep compact; link to status/next steps/acceptance/architecture instead of duplicating them |
 | `docs/PROJECT-PROGRESS-LOG.md` | chronological evidence ledger | append/curate history; no mutable current-state section |
 | `docs/adr/` | material decision records and index | supersede with new ADR rather than silently rewriting historical conclusions |
 | `docs/archive/` | superseded non-binding narrative/planning docs | archive only when not needed as a stable frozen/source-pinned path |
@@ -57,13 +59,14 @@ A future production code boundary (`src/`, `tests/`, deployment/config surfaces,
 Use one document per question:
 
 ```text
-Where are we?                 CURRENT-PROJECT-STATUS.md
-What do we do next?           NEXT-STEPS.md
-Where must the system go?     ARCHITECTURE-ROADMAP.md
-What are the project phases?  PROJECT-PLAN.md
-How did we get here?          PROJECT-PROGRESS-LOG.md
-Why was a decision made?      docs/adr/*
-How is the repo maintained?   REPOSITORY-GUIDE.md
+Where are we?                     CURRENT-PROJECT-STATUS.md
+What do we do next?               NEXT-STEPS.md
+What must final delivery prove?   DELIVERY-ACCEPTANCE.md
+Where must the system go?         ARCHITECTURE-ROADMAP.md
+What are the project phases?      PROJECT-PLAN.md
+How did we get here?              PROJECT-PROGRESS-LOG.md
+Why was a decision made?          docs/adr/*
+How is the repo maintained?       REPOSITORY-GUIDE.md
 ```
 
 README/index files point to these documents and describe directory semantics. They should not carry mutable experiment snapshots.
@@ -105,6 +108,7 @@ Immediately after a status transition or material blocker change:
 - remove completed operational instructions from `NEXT-STEPS.md`;
 - replace them with the newly authorized short-horizon sequence;
 - ensure no step crosses a gate not opened by the new freeze;
+- re-check whether the next work prioritizes P0/P1 delivery acceptance rather than optional P2 complexity;
 - move historical details into the progress ledger instead of accumulating them in the plan.
 
 ### 5.4 Architecture Gate
@@ -114,9 +118,12 @@ Use when research changes a durable material architecture decision or decision s
 Update, as applicable:
 
 - `ARCHITECTURE-ROADMAP.md` for durable direction/decision register changes;
+- `DELIVERY-ACCEPTANCE.md` if requirement coverage/claim changes;
 - a new ADR for the actual material decision;
 - `PROJECT-PLAN.md` only if macro phases/milestones change;
 - `CURRENT-PROJECT-STATUS.md` only if the current project state/claims changed.
+
+Every final architecture component must map to a delivery requirement, a material risk or evidence showing it improves a required capability over a simpler baseline.
 
 Do not rewrite old ADRs to make history consistent with later evidence.
 
@@ -128,7 +135,9 @@ Before declaring a macro phase complete:
 - verify all applicable security/evaluator boundaries;
 - verify state terminology (`QUALIFIED`, `PREFERRED`, `FROZEN`, etc.) is used literally;
 - verify the next phase has explicit entry conditions;
-- update status, ledger, next steps and project plan coherently.
+- review `DELIVERY-ACCEPTANCE.md` for newly closed or still-open P0/P1 gaps;
+- before final delivery, require every applicable P0 row to have evidence or an explicit evidence-honest scope limitation;
+- update status, ledger, next steps, acceptance map and project plan coherently when affected.
 
 ## 6. What may be deleted or moved
 
@@ -163,7 +172,8 @@ Use these lifecycle labels in indexes/ADRs when useful:
 Any material change to architecture, model, prompt, evaluator, runtime, retrieval, memory, tools, safety, adaptive policy, deployment or integration follows:
 
 ```text
-question → requirements → research → alternatives → baseline
+acceptance requirement / material risk
+→ question → requirements → research → alternatives → simple baseline
 → preregistered comparison → quantitative eval → robustness
 → production-fit → ADR → state decision → regression
 ```
