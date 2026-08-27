@@ -1,0 +1,23 @@
+{
+  "arms": ["A00", "A10", "A01", "A11"],
+  "bootstrap_result_sha256": "08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526",
+  "deterministic_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+  "fresh_blind_accesses": 0,
+  "historical_factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22",
+  "historical_logo_effects_exact_match": true,
+  "independent_groups": 7,
+  "legacy_locked_test_accesses": 0,
+  "logo_result_sha256": "bc62cc45b4e3344861a152825096a8a1b28f41f2d831f86fd81de35964363f8c",
+  "mismatch_sections": [],
+  "omitted_group_estimates_per_comparison": 7,
+  "private_oracle_loaded": false,
+  "provider_calls": 0,
+  "retained_groups_per_estimate": 6,
+  "rows_per_arm": 36,
+  "rows_reused_without_rescoring": 144,
+  "schema_version": "p12-c4-logo-sensitivity-validation-v1",
+  "semantic_stage_executed": false,
+  "slice_analysis_executed": false,
+  "status": "PASS_INDEPENDENT_LOGO_RECOMPUTATION",
+  "survivor_decision_executed": false
+}
