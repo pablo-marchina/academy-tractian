@@ -1,0 +1,10 @@
+{
+  "status": "READY_FOR_INTEGRATION",
+  "task_issue": 5,
+  "gate_closed": "BOOTSTRAP_20000",
+  "freeze_status": "FROZEN_C4_BOOTSTRAP_20000",
+  "next_gate": "LEAVE_ONE_GROUP_OUT_SENSITIVITY",
+  "later_gates_executed": false,
+  "provider_calls": 0,
+  "private_oracle_loaded_by_bootstrap": false
+}
