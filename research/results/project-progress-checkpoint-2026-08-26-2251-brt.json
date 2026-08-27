@@ -1,0 +1,104 @@
+{
+  "schema_version": "project-progress-checkpoint-v2",
+  "project": "Academy x TRACTIAN - Industrial Agent Engineering & Evaluation",
+  "checkpoint_at": "2026-08-26T22:51:00-03:00",
+  "branch": "research/systematic-foundation",
+  "final_delivery_target": "2026-09-08",
+  "governance": {
+    "project_principles_path": "docs/PROJECT-PRINCIPLES.md",
+    "project_principles_git_blob_sha": "05e48137d2570411e1870309e3ba2af7810dbef2",
+    "benchmark_integrity_gate": "CLOSED",
+    "p12_protocol": "FROZEN",
+    "partial_packet_scoring_allowed": false,
+    "fresh_blind_outcome_access_authorized": false,
+    "legacy_locked_test_access_authorized": false
+  },
+  "prospective_history": {
+    "P12-C1": {
+      "status": "CLOSED_DETERMINISTIC_FAIL_NO_ARM_QUALIFIED",
+      "common_parents_completed": 36,
+      "fixed_outputs": 72,
+      "scoring": "COMPLETE"
+    },
+    "P12-C2": {
+      "status": "CONSUMED_OPERATIONAL_FAILURE",
+      "common_parents_completed": 31,
+      "common_parents_required": 36,
+      "scoring": "BLOCKED"
+    },
+    "P12-C3": {
+      "status": "CONSUMED_TERMINAL_OPERATIONAL_FAILURE",
+      "common_parents_completed": 3,
+      "common_parents_required": 36,
+      "scoring": "BLOCKED"
+    },
+    "P12-C4": {
+      "status": "FROZEN_COMPLETE_C4_PACKET",
+      "common_parents_completed": 36,
+      "common_parents_required": 36,
+      "fixed_outputs_created": 144,
+      "fixed_outputs_required": 144,
+      "deterministic_private_scoring": "AUTHORIZED_NOT_EXECUTED_AT_PACKET_FREEZE",
+      "bootstrap": "NOT_AUTHORIZED_BEFORE_DETERMINISTIC_SCORING_COMPLETES"
+    }
+  },
+  "c4_complete_packet": {
+    "canonical_freeze": "research/results/p12-c4-complete-packet-freeze-2026-08-26.json",
+    "freeze_commit": "4cb1d8069d5e55c0b38a11a4efac3b9476287611",
+    "freeze_blob": "03b7d5a27ffdec9173e25bdf47377858bf6aeb30",
+    "live_parent_source": {
+      "provider": "NVIDIA hosted NIM",
+      "model": "openai/gpt-oss-120b",
+      "workflow_run_id": 33020748838,
+      "workflow_job_id": 98350245931,
+      "artifact_id": 9627504808,
+      "artifact_digest": "sha256:f6c7e7c0673cc3030cb83efc2b7acb0f319634aa5cb1ab0ccf2244824c26986e",
+      "status": "PASS_36_OF_36_FRESH_COMMON_PARENTS"
+    },
+    "local_factorial_expansion": {
+      "workflow_run_id": 33028989704,
+      "workflow_job_id": 98376848407,
+      "artifact_id": 9629510247,
+      "artifact_digest": "sha256:8b9a07355c96372ead4841ec6dc9b2338ba75a6455209fad1b97f621fbe31a58",
+      "fixed_factorial_outputs_sha256": "0d8df31e28e19ad3a23cf78c976daacdded4dbe995db3740d9126317182b9d37",
+      "status": "PASS_144_OF_144_LOCAL_ARM_OUTPUTS",
+      "provider_calls": 0,
+      "validation_errors": 0
+    }
+  },
+  "access_boundary_at_current_gate": {
+    "provider_calls_authorized": 0,
+    "deterministic_private_scoring_authorized": true,
+    "bootstrap_authorized_before_scoring_freeze": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false
+  },
+  "project_decision_state": {
+    "qualified_project_candidate": null,
+    "preferred_project_candidate": null,
+    "frozen_project_candidate": null,
+    "final_architecture": "UNFROZEN",
+    "production_readiness": "NOT_AUTHORIZED",
+    "nvidia_production_provider_selected": false
+  },
+  "current_phase": {
+    "number": 4,
+    "name": "C4 deterministic/statistical/semantic evaluation",
+    "state": "DETERMINISTIC_SCORING_AUTHORIZED"
+  },
+  "next_valid_steps": [
+    "verify_exact_frozen_deterministic_scorer_and_authorized_private_evaluator_input_provenance",
+    "execute_deterministic_scoring_only_against_the_immutable_144_output_packet",
+    "validate_and_freeze_the_complete_deterministic_scoring_result",
+    "advance_to_only_the_statistical_gate_explicitly_authorized_by_that_freeze",
+    "freeze_exact_deterministic_survivors_before_any_semantic_child_gate",
+    "continue_systematic_production_fit_architecture_research_in_parallel_without_final_architecture_freeze"
+  ],
+  "repository_organization": {
+    "canonical_human_status": "docs/CURRENT-PROJECT-STATUS.md",
+    "canonical_active_plan": "docs/PROJECT-PLAN.md",
+    "chronological_ledger": "docs/PROJECT-PROGRESS-LOG.md",
+    "repository_guide": "docs/REPOSITORY-GUIDE.md",
+    "historical_checkpoint_preserved": "research/results/project-progress-checkpoint-2026-08-26.json"
+  }
+}
