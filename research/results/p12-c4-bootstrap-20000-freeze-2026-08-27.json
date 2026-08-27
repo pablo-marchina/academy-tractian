@@ -1,0 +1,143 @@
+{
+  "schema_version": "p12-c4-bootstrap-20000-freeze-v1",
+  "status": "FROZEN_C4_BOOTSTRAP_20000",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "partition": "EXPOSED_POOL",
+  "task_issue": 5,
+  "input": {
+    "deterministic_scoring_freeze_path": "research/results/p12-c4-deterministic-scoring-freeze-2026-08-27.json",
+    "deterministic_scoring_freeze_git_blob_sha": "9db9c14c38da0edc83dd69147fb5b884926fcbe9",
+    "deterministic_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "rows": 144,
+    "common_parents": 36,
+    "arms": ["A00", "A10", "A01", "A11"],
+    "independent_groups": 7
+  },
+  "execution_contract": {
+    "path": "research/frozen/p12-c4-bootstrap-20000-authorization-v1.json",
+    "git_blob_sha": "69f10546f1cafcb7ccaba8a12f5c54ef080ec126",
+    "status": "FROZEN_BOOTSTRAP_EXECUTION_CONTRACT",
+    "authorization_source": "FROZEN_C4_DETERMINISTIC_SCORING"
+  },
+  "runner": {
+    "path": "scripts/research/p12_c4_bootstrap_20000.py",
+    "git_blob_sha": "1ab8bf1069f5fdaeb361f8e066b8ac5231ace7a7",
+    "sha256": "297670d16c843b98a0da3370c7bf8f37949a5b0f6847db62d7771101fbafb628"
+  },
+  "validator": {
+    "path": "scripts/research/p12_c4_validate_bootstrap_20000.py",
+    "git_blob_sha": "9a6b26cc98001a2a11916d7c9e0123a4ac54266c",
+    "sha256": "23b10f9de196df9c8b788374ee70f974d861cedc25afe24117f73e909be82a09"
+  },
+  "source_transport": {
+    "workflow_run_id": 33077803636,
+    "workflow_head_sha": "2c6d4a66a06a558cd74876f67d91404ab7f43e31",
+    "artifact_id": 9648626660,
+    "artifact_name": "p12-c4-bootstrap-source-bundle",
+    "artifact_digest": "sha256:88580339838aec30ac38111717b82c6b2ef83d57bd84c287cecc03f89b07fccd",
+    "provider_credentials_present": false,
+    "private_oracle_in_bundle": false,
+    "source_compile_check": "PASS"
+  },
+  "statistical_protocol": {
+    "preregistration_path": "research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json",
+    "preregistration_git_blob_sha": "0d0637a954ef544824bc69df88e47d7c790f0714",
+    "historical_factorial_scorer_git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531",
+    "historical_factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22",
+    "primary_interval": "GROUP_CLUSTER_PERCENTILE_BOOTSTRAP",
+    "resampling_unit": "asset_story_group",
+    "resamples": 20000,
+    "seed": 20260822,
+    "confidence_level": 0.95,
+    "aggregation_hierarchy": "asset_story_group -> scenario -> ticket -> repeated_run",
+    "fresh_rng_with_same_seed_per_metric": true
+  },
+  "bootstrap_execution": {
+    "status": "PASS_C4_BOOTSTRAP_20000_COMPLETE",
+    "full_evaluator_side_result_committed": false,
+    "full_evaluator_side_result_sha256": "08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526",
+    "full_evaluator_side_result_bytes": 20435,
+    "exact_committed_runner_replay_byte_identical": true,
+    "sanitized_result_path": "research/results/p12-c4-bootstrap-20000-sanitized-result-2026-08-27.json",
+    "sanitized_result_git_blob_sha": "706b81db70aef47745231ee4d2b5793664c3069b"
+  },
+  "independent_validation": {
+    "path": "research/results/p12-c4-bootstrap-20000-validation-2026-08-27.json",
+    "git_blob_sha": "8dad35dbb4e65928dd006d3e31bb385cca11a1c4",
+    "status": "PASS_INDEPENDENT_BOOTSTRAP_RECOMPUTATION",
+    "validation_artifact_sha256": "22344065ff27eee890bc6dff5094c0f6347ba3f05c90b24d93fe860565fe8bbe",
+    "historical_arm_metrics_exact_match": true,
+    "historical_primary_contrasts_exact_match": true,
+    "historical_factorial_effects_exact_match": true,
+    "mismatch_sections": []
+  },
+  "privacy_validation": {
+    "private_oracle_loaded_by_bootstrap": false,
+    "private_expected_path_step_strings_checked": 41,
+    "exact_private_step_string_hits_in_full_bootstrap_result": 0,
+    "exact_private_step_string_hits_in_sanitized_summary": 0,
+    "private_oracle_committed": false
+  },
+  "observed_statistical_evidence": {
+    "A10_minus_A00": {
+      "evidence_correctness": {"effect": -0.047619, "ci95": [-0.285714, 0.142857]},
+      "mean_expected_read_recall": {"effect": -0.079371, "ci95": [-0.238105, 0.039875]},
+      "mean_extra_public_read_count": {"effect": -0.261905, "ci95": [-0.714286, 0.142857]},
+      "task_or_reference_quality": {"effect": -0.006805, "ci95": [-0.040829, 0.020414]}
+    },
+    "A01_minus_A00": {
+      "all_preregistered_primary_effects": 0.0,
+      "all_preregistered_primary_ci95": [0.0, 0.0]
+    },
+    "A11_minus_A00": {
+      "evidence_correctness": {"effect": -0.047619, "ci95": [-0.285714, 0.142857]},
+      "mean_expected_read_recall": {"effect": -0.079371, "ci95": [-0.238105, 0.039875]},
+      "mean_extra_public_read_count": {"effect": -0.261905, "ci95": [-0.714286, 0.142857]},
+      "task_or_reference_quality": {"effect": -0.006805, "ci95": [-0.040829, 0.020414]},
+      "decision_action_escalation_and_safety_primary_effects": 0.0
+    },
+    "factorial_safety_main_effect": "ZERO_ON_ALL_FROZEN_REPORT_METRICS",
+    "preregistered_interactions": "ZERO_ON_ALL_FROZEN_INTERACTION_METRICS"
+  },
+  "execution_boundaries": {
+    "provider_calls": 0,
+    "model_calls": 0,
+    "network_io_by_bootstrap_runner": 0,
+    "private_oracle_loaded": false,
+    "scores_recomputed_or_changed": false,
+    "candidate_regeneration": false,
+    "logo_executed": false,
+    "slice_analysis_executed": false,
+    "semantic_stage_executed": false,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0
+  },
+  "claim_boundary": {
+    "this_freeze_proves": "the exact frozen C4 deterministic-score rows were aggregated under the frozen factorial protocol and the preregistered paired effects received exact 20000-resample whole-group percentile bootstrap intervals",
+    "this_freeze_does_not_prove": [
+      "any C4 arm is a final survivor or PREFERRED candidate",
+      "LOGO robustness",
+      "modality or failure-family robustness",
+      "semantic eligibility or semantic quality",
+      "independent generalization",
+      "production readiness"
+    ]
+  },
+  "next_gate": "LEAVE_ONE_GROUP_OUT_SENSITIVITY",
+  "post_freeze_authorization": {
+    "leave_one_group_out_sensitivity_authorized": true,
+    "logo_authorized": true,
+    "slice_analysis_authorized": false,
+    "semantic_evaluation_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "provider_calls_authorized": 0,
+    "candidate_regeneration_authorized": false,
+    "survivor_decision_authorized": false
+  },
+  "notes": [
+    "Safety-factor arms A01 and A11 are statistically identical to their S0 counterparts on the frozen bootstrap report metrics; this is evidence, not a post-result redesign trigger.",
+    "All C4 arms have nonzero descriptive confirmed hard-safety violations in the frozen arm aggregates, but the formal survivor/no-survivor decision remains deferred until the required robustness/reporting gates close.",
+    "The next gate must consume the same frozen deterministic scores and the frozen bootstrap evidence; it must not regenerate candidates or alter scores."
+  ]
+}
