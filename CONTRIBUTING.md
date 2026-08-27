@@ -31,7 +31,9 @@ For new development:
 2. use a focused branch for material work;
 3. keep one primary decision/workstream per branch/PR when practical;
 4. do not continue new development on a stale historical branch merely because old research lives there;
-5. preserve frozen/source-pinned historical paths instead of rewriting history to make the branch look cleaner.
+5. preserve frozen/source-pinned historical paths and intentionally historical branches instead of rewriting history to make the repository look cleaner.
+
+A historical branch that is an ancestor of `main` may remain intentionally behind when its name/state is itself useful provenance. A long-lived working branch intended for continued work should instead be explicitly reconciled with current `main` before new development.
 
 Suggested prefixes are `research/`, `feature/`, `fix/`, `docs/`, `eval/`, `prod/` and `refactor/`, chosen by the actual work rather than by desired perception.
 
