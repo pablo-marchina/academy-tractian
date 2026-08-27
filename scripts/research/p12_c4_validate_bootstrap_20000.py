@@ -164,10 +164,10 @@ def main() -> int:
         "historical_factorial_effects_exact_match": "factorial_main_effects_and_interaction" not in mismatches,
         "mismatch_sections": mismatches,
         "provider_calls": 0,
-        "private_oracle_loaded": false,
-        "logo_executed": false,
-        "slice_analysis_executed": false,
-        "semantic_stage_executed": false,
+        "private_oracle_loaded": False,
+        "logo_executed": False,
+        "slice_analysis_executed": False,
+        "semantic_stage_executed": False,
         "fresh_blind_accesses": 0,
         "legacy_locked_test_accesses": 0
     }
