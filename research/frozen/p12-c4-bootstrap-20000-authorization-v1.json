@@ -1,12 +1,17 @@
 {
   "schema_version": "p12-c4-bootstrap-20000-authorization-v1",
-  "status": "AUTHORIZED_BOOTSTRAP_20000_ONLY",
+  "status": "FROZEN_BOOTSTRAP_EXECUTION_CONTRACT",
   "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
   "task_issue": 5,
-  "authorization_scope": "ONE_BOOTSTRAP_ONLY_EXECUTION_OVER_EXACT_FROZEN_DETERMINISTIC_SCORE_ROWS",
+  "authorization_source": {
+    "path": "research/results/p12-c4-deterministic-scoring-freeze-2026-08-27.json",
+    "git_blob_sha": "9db9c14c38da0edc83dd69147fb5b884926fcbe9",
+    "status": "FROZEN_C4_DETERMINISTIC_SCORING",
+    "authorized_gate": "BOOTSTRAP_20000",
+    "note": "The deterministic-scoring freeze is the pre-existing authorization. This file records and freezes the bootstrap execution contract; it does not retroactively create authorization."
+  },
+  "authorization_scope": "BOOTSTRAP_20000_ONLY_OVER_EXACT_FROZEN_DETERMINISTIC_SCORE_ROWS",
   "input": {
-    "deterministic_scoring_freeze_path": "research/results/p12-c4-deterministic-scoring-freeze-2026-08-27.json",
-    "deterministic_scoring_freeze_git_blob_sha": "9db9c14c38da0edc83dd69147fb5b884926fcbe9",
     "deterministic_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
     "deterministic_score_rows": 144,
     "common_parents": 36,
@@ -16,7 +21,8 @@
   "runner": {
     "path": "scripts/research/p12_c4_bootstrap_20000.py",
     "git_blob_sha": "1ab8bf1069f5fdaeb361f8e066b8ac5231ace7a7",
-    "local_source_git_blob_verified_equal": true
+    "local_source_git_blob_verified_equal": true,
+    "runner_bytes_fixed_before_bootstrap_outcome_inspection": true
   },
   "statistical_protocol": {
     "preregistration_path": "research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json",
