@@ -2,10 +2,12 @@
 
 **Purpose:** chronological evidence ledger.  
 **Current snapshot:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
-**Active plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
+**Immediate plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
+**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
+**Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
 
-This file explains how the project reached its current state. It does not override frozen experiment manifests, protocols or canonical result artifacts. Failed and consumed attempts remain evidence.
+This file explains how the project reached its current state. It does not override frozen experiment manifests, protocols or canonical result artifacts. Failed and consumed attempts remain evidence. It intentionally contains no mutable "current checkpoint" section; current state belongs in `CURRENT-PROJECT-STATUS.md`.
 
 ## 1. Benchmark integrity and protocol governance — COMPLETE
 
@@ -126,7 +128,7 @@ On 2026-08-26 the repository froze:
 
 `research/results/p12-c4-complete-packet-freeze-2026-08-26.json`
 
-Status:
+Status at closure:
 
 ```text
 FROZEN_COMPLETE_C4_PACKET
@@ -139,58 +141,34 @@ provider calls authorized after      0
 next gate          DETERMINISTIC_SCORING
 ```
 
-This supersedes the earlier project-status checkpoints that still described C4 as provider-blocked; those older snapshots remain historical evidence of the state at their timestamps.
+This superseded earlier project-status checkpoints that still described C4 as provider-blocked; those older snapshots remain historical evidence of the state at their timestamps.
 
 ## 9. Repository governance/organization refresh — 2026-08-26
 
-A repository audit found stale status duplication across `README.md`, `CURRENT-PROJECT-STATUS.md`, `PROJECT-PLAN.md`, `PROJECT-PROGRESS-LOG.md` and `research/README.md` after the successful C4 transition.
+A repository audit found stale status duplication across `README.md`, `CURRENT-PROJECT-STATUS.md`, `PROJECT-PLAN.md`, `PROJECT-PROGRESS-LOG.md` and research indexes after the successful C4 transition.
 
-The cleanup therefore:
+The first cleanup pass:
 
-- restored `CURRENT-PROJECT-STATUS.md` as the single detailed human current-status source;
+- restored `CURRENT-PROJECT-STATUS.md` as the detailed current human status source;
 - rewrote `PROJECT-PLAN.md` around the four non-negotiable project principles;
-- turned root/research/script/workflow READMEs into navigation/lifecycle indexes instead of competing status sources;
 - added `REPOSITORY-GUIDE.md` with source-of-truth and safe-cleanup rules;
 - retained all frozen/consumed/failed experiment evidence and stable paths;
-- added a new time-specific machine checkpoint rather than overwriting the earlier 2026-08-26 snapshot.
+- added a time-specific machine checkpoint rather than overwriting an earlier snapshot.
 
-## Current checkpoint — 2026-08-26 22:51 BRT
+## 10. Documentation responsibility split and scoring-gate isolation — 2026-08-26
 
-```text
-Benchmark Integrity Gate             CLOSED
-P12 protocol                         FROZEN
-P12-C1                               CLOSED / deterministic fail
-P12-C2                               CONSUMED_OPERATIONAL_FAILURE
-P12-C3                               CONSUMED_TERMINAL_OPERATIONAL_FAILURE
-P12-C4 common parents                PASS / 36 of 36
-P12-C4 factorial outputs             PASS / 144 of 144
-P12-C4 packet                        FROZEN_COMPLETE_C4_PACKET
-current gate                         DETERMINISTIC_SCORING
-project-level PREFERRED              none
-FRESH_BLIND outcome access           not authorized
-LEGACY_LOCKED_TEST                   not authorized
-architecture                         unfrozen
-production-readiness                 not authorized
-```
+A second repository-wide review found that mutable state was still duplicated in root/research/script/workflow/results README files and that `PROJECT-PLAN.md` mixed three different responsibilities: current execution, macro project phases and architecture direction.
 
-Current critical path:
+The repository was therefore updated to:
 
-```text
-deterministic scoring only
-        ↓
-freeze deterministic result
-        ↓
-remaining frozen statistical gates when separately authorized
-        ↓
-deterministic survivor decision
-        ↓
-semantic child gate for exact survivors only
-        ↓
-production-fit comparative decision + candidate/evaluator freeze
-        ↓
-authorized independent evidence
-        ↓
-final architecture freeze
-        ↓
-production integration / regression / controlled delivery
-```
+- make `CURRENT-PROJECT-STATUS.md` the sole human-readable current-state/authorization source;
+- add `NEXT-STEPS.md` as the canonical short-horizon execution plan;
+- add `ARCHITECTURE-ROADMAP.md` as the canonical general research-to-production/system architecture roadmap;
+- reduce `PROJECT-PLAN.md` to the macro phase/milestone map;
+- remove mutable current-gate snapshots from root/research/script/workflow/results indexes;
+- remove the mutable current-checkpoint/critical-path tail from this historical ledger;
+- formalize five manual repository maintenance gates in `REPOSITORY-GUIDE.md` without adding governance CI;
+- allow a future non-secret `.env.example` while continuing to ignore real `.env*` configuration;
+- add `scripts/research/p12_c4_deterministic_private_scoring.py` as a gate-isolated deterministic-scoring runner.
+
+The new C4 scorer is **prepared only**. It performs deterministic scoring semantics only and explicitly excludes provider calls, bootstrap, LOGO, slices, semantic evaluation and independent/blind access. No private oracle was provisioned, no scoring workflow/trigger was created and no deterministic C4 score was executed as part of this repository-maintenance change.
