@@ -1,19 +1,19 @@
 # Architecture Decision Records
 
-This directory contains material decision records governed by [`../PROJECT-PRINCIPLES.md`](../PROJECT-PRINCIPLES.md).
+This directory contains material decision records governed by [`../PROJECT-PRINCIPLES.md`](../PROJECT-PRINCIPLES.md) and organized against the material decision register in [`../ARCHITECTURE-ROADMAP.md`](../ARCHITECTURE-ROADMAP.md).
 
 An ADR records the evidence and decision **for its stated scope at that time**. Later evidence may supersede a route without erasing the original record.
 
-## Current index
+## Index
 
-| ADR | Scope | Current interpretation |
+| ADR | Scope | Interpretation |
 |---|---|---|
 | [`000-template.md`](000-template.md) | template | use for future material decisions |
 | [`001-provider-capacity-serving-path-2026-08-24.md`](001-provider-capacity-serving-path-2026-08-24.md) | Cerebras P12-C4 qualification path | historical/consumed route; not a production-provider selection |
 | [`002-openrouter-no-card-serving-amendment-2026-08-26.md`](002-openrouter-no-card-serving-amendment-2026-08-26.md) | OpenRouter/OpenInference P12-C4 amendment | historical/consumed route after live qualification failure; not production selection |
 | [`003-nvidia-nim-no-card-serving-amendment-2026-08-26.md`](003-nvidia-nim-no-card-serving-amendment-2026-08-26.md) | NVIDIA NIM P12-C4 qualification amendment | enabled the successful C4 serving path; remains qualification-only and does not freeze NVIDIA for production |
 
-Exact consumed/pass outcomes are recorded by the corresponding canonical result artifacts and `PROJECT-PROGRESS-LOG.md`.
+Exact consumed/pass outcomes are recorded by the corresponding canonical result artifacts and `PROJECT-PROGRESS-LOG.md`. Current project state/authorization is owned only by `CURRENT-PROJECT-STATUS.md`.
 
 ## Rule for future ADRs
 
