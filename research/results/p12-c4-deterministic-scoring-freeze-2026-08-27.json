@@ -1,0 +1,146 @@
+{
+  "schema_version": "p12-c4-deterministic-scoring-freeze-v1",
+  "status": "FROZEN_C4_DETERMINISTIC_SCORING",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "partition": "EXPOSED_POOL",
+  "closed_at": "2026-08-27T10:20:00-03:00",
+  "task_issue": 3,
+  "input_packet": {
+    "freeze_path": "research/results/p12-c4-complete-packet-freeze-2026-08-26.json",
+    "freeze_git_blob_sha": "03b7d5a27ffdec9173e25bdf47377858bf6aeb30",
+    "fixed_output_artifact_id": 9629510247,
+    "fixed_output_artifact_digest": "sha256:8b9a07355c96372ead4841ec6dc9b2338ba75a6455209fad1b97f621fbe31a58",
+    "fixed_output_file_sha256": "0d8df31e28e19ad3a23cf78c976daacdded4dbe995db3740d9126317182b9d37",
+    "common_parent_freeze_hash": "45ae5ed8860721350db98457c44e41c587c23b710f917c9ceb66c69a901c123e",
+    "common_parents": 36,
+    "fixed_outputs": 144,
+    "arms": ["A00", "A10", "A01", "A11"]
+  },
+  "evaluator_side_handoff": {
+    "path": "research/frozen/p12-c4-deterministic-private-scoring-handoff-v1.json",
+    "git_blob_sha": "0d7ad5b9a42cd485cf2705a7b35d9aed26d572b3",
+    "status": "FROZEN_EVALUATOR_SIDE_HANDOFF_READY"
+  },
+  "source_bundle_transport": {
+    "workflow_run_id": 33075507040,
+    "workflow_head_sha": "b9ffbc414516d087de9a80c30b5e853caec5d848",
+    "artifact_id": 9647662051,
+    "artifact_name": "p12-c4-deterministic-scorer-source-bundle",
+    "artifact_digest": "sha256:ee82917efa37859486b718ccb0617bb18ebe12bf740fa77be5ea40c411679284",
+    "private_oracle_in_bundle": false,
+    "provider_credentials_in_bundle_workflow": false
+  },
+  "scoring_sources": {
+    "runner_git_blob_sha": "936223e0ea1310662a316eb798eac2e9ac91c830",
+    "evaluator_v4_1_git_blob_sha": "b33afab0b3bfc9b81037a5391f49d286ef0d7c35",
+    "evaluator_v4_git_blob_sha": "63145e6fe14d7dd9b90d5567ffca6aa54ced933f",
+    "tool_registry_git_blob_sha": "97e15fa24bfe865a1cd3a7b9798365f1d3325c8b",
+    "models_git_blob_sha": "b4a17ab686d93f51d7055174c1bc688c0af58647",
+    "activation_git_blob_sha": "96c38036411365bb2f64c5df85f9eafc31c6901e",
+    "historical_factorial_scorer_git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531",
+    "historical_factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22"
+  },
+  "private_oracle_custody": {
+    "external_bundle_sha256": "37546f7abad4c573ab36384a171161f3ba6c7258024341cc42f0881d9606d134",
+    "source_relative_path": "inteli-tractian-project/eval/expected-paths.json",
+    "source_sha256": "d6fb6186e4c035effe7dafa44758eaf40948ac334f0a91f8634a5731b7e0cb38",
+    "source_rows": 17,
+    "historical_repo_provenance_commit": "38adcfa0ca81fec7b1e5a9fe1097441ae5208741",
+    "scorer_materialization": "EXPOSED_POOL_ONLY_EXACT_PUBLIC_TICKET_ID_SUBSET",
+    "scorer_subset_rows": 12,
+    "scorer_subset_sha256": "fcb7bb6a9b722d2f07e483407934d46d5402a372eb56f9a41cb6549e81e1b768",
+    "all_fixed_tickets_exact_unique": true,
+    "non_exposed_expected_path_content_loaded_by_scorer": false,
+    "private_oracle_committed": false,
+    "candidate_or_agent_oracle_access": false
+  },
+  "preflight": {
+    "status": "PASS",
+    "fixed_outputs_verified": 144,
+    "unique_exposed_tickets": 12,
+    "exact_unique_ticket_alignments": 12,
+    "expected_step_normalization_failures": 0,
+    "scores_computed_during_preflight": 0,
+    "provider_credentials_present": false,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0
+  },
+  "deterministic_scoring": {
+    "status": "PASS_144_OF_144_DETERMINISTIC_SCORES",
+    "fixed_outputs_scored": 144,
+    "scoreable_outputs": 144,
+    "full_evaluator_side_row_artifact_committed": false,
+    "full_evaluator_side_row_artifact_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "full_evaluator_side_row_artifact_bytes": 177350,
+    "private_expected_path_text_serialized": false,
+    "private_endpoint_lists_serialized": false,
+    "automatic_preferred_state": false,
+    "architecture_frozen": false,
+    "production_readiness_claim": false
+  },
+  "independent_validation": {
+    "status": "PASS",
+    "rows_recomputed": 144,
+    "score_mismatches": 0,
+    "parents": 36,
+    "arms_per_parent": 4,
+    "scoreable_rows": 144,
+    "exact_private_step_string_hits_in_result": 0,
+    "full_private_row_hits_in_result": 0
+  },
+  "execution_boundaries": {
+    "provider_credentials_present": false,
+    "provider_calls": 0,
+    "model_calls": 0,
+    "network_io_by_scorer": 0,
+    "candidate_private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "bootstrap_executed": false,
+    "logo_executed": false,
+    "slice_analysis_executed": false,
+    "semantic_stage_executed": false,
+    "independent_validation_stage_executed": false
+  },
+  "claim_boundary": {
+    "this_freeze_proves": "the exact frozen C4 144-output packet has a complete deterministic score row for every output under the frozen evaluator semantics and evaluator-side exposed-pool oracle custody",
+    "this_freeze_does_not_prove": [
+      "any arm passes the preregistered deterministic aggregate gates",
+      "any factorial effect or confidence interval",
+      "any arm is PREFERRED or FROZEN as final candidate",
+      "semantic-stage eligibility",
+      "independent generalization",
+      "production readiness"
+    ]
+  },
+  "next_gate": "BOOTSTRAP_20000",
+  "post_freeze_authorization": {
+    "bootstrap_20000_authorized": true,
+    "bootstrap_resamples": 20000,
+    "bootstrap_seed": 20260822,
+    "bootstrap_resampling_unit": "asset_story_group",
+    "bootstrap_confidence_level": 0.95,
+    "bootstrap_must_consume_exact_frozen_deterministic_row_artifact_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "logo_authorized": false,
+    "slice_analysis_authorized": false,
+    "semantic_evaluation_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "provider_calls_authorized": 0,
+    "candidate_regeneration_authorized": false
+  },
+  "statistical_protocol_source": {
+    "path": "research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json",
+    "git_blob_sha": "0d0637a954ef544824bc69df88e47d7c790f0714",
+    "primary_interval": "GROUP_CLUSTER_PERCENTILE_BOOTSTRAP",
+    "resampling_unit": "asset_story_group",
+    "resamples": 20000,
+    "seed": 20260822,
+    "effect_sizes_and_intervals_primary": true
+  },
+  "notes": [
+    "No arm-level aggregate metric, deterministic gate outcome, bootstrap interval, LOGO estimate or slice result is asserted by this freeze.",
+    "The complete deterministic row artifact remains evaluator-side and is frozen by SHA-256 for the next authorized statistical gate.",
+    "Later gates must consume the exact row-artifact hash above and must not reconstruct or alter scores based on observed statistical outcomes."
+  ]
+}
