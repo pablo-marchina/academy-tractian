@@ -5,9 +5,10 @@
 **Immediate execution:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
-**Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
+**Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
+**Source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)
 
-This document describes the **general project architecture and the path from controlled research to the integrated agent + evaluation production path requested by the project**. It is deliberately slower-changing than `NEXT-STEPS.md` and does not encode the current experiment gate.
+This document describes the **general project architecture and the path from controlled research to the integrated industrial agent + evaluation framework requested by TRACTIAN/Inteli**. It is deliberately slower-changing than `NEXT-STEPS.md` and does not encode the current experiment gate.
 
 A research implementation, provider, runtime or pattern is a candidate until the applicable comparison, robustness, production-fit and independent-evidence requirements justify a stronger state.
 
@@ -16,22 +17,24 @@ A research implementation, provider, runtime or pattern is a candidate until the
 The final requested solution contains both:
 
 1. **Agent Runtime Plane** — contextualize, investigate, clarify/abstain, execute and escalate against the supplied industrial API; and
-2. **Evaluation & Reliability Plane** — capture and evaluate tool use, arguments, trajectory, evidence, decision/response, actions, escalation, safety, robustness and stability.
+2. **Evaluation & Reliability Plane** — capture and evaluate tool use, arguments, trajectory, evidence, decisions/conclusions, actions, escalation, safety, robustness and stability.
 
-They must integrate through structured traces/artifacts while preserving the evaluation-only truth boundary.
+They integrate through structured traces/artifacts while preserving the evaluation-only truth boundary.
 
 ```text
                          AGENT RUNTIME PLANE
 
 User / case / request
         ↓
-Request + identity/context boundary
+Identity + authorization + request-context boundary
         ↓
 Agent decision/orchestration
         ↓
 Evidence / tool-selection / stopping logic
         ↓
-Typed industrial API tools
+Stable typed Tool Contract
+        ↓
+Adapter(s) to supplied TRACTIAN industrial API
         ↓
 ┌──────────────────────────────────────────────────────┐
 │ possible outcome                                     │
@@ -39,7 +42,7 @@ Typed industrial API tools
 │ execute authorized action | escalate with handoff    │
 └──────────────────────────────────────────────────────┘
         ↓
-Structured response + normalized execution trace
+Customer-safe response + normalized execution trace
         │
         │ sanitized runtime evidence only
         ▼
@@ -47,12 +50,12 @@ Structured response + normalized execution trace
 
 Scenario/requirement contract + evaluator-only references
         ↓
-Deterministic evaluators where ground truth is deterministic
+Deterministic evaluators where truth is deterministic
         ↓
-Validated semantic evaluation only where necessary
+Validated semantic/human evaluation only where necessary
         ↓
 Tool / argument / evidence / decision / action / escalation /
-safety / robustness / stability metrics
+communication / safety / robustness / stability metrics
         ↓
 Experiment/reliability report + trace inspection
 ```
@@ -63,9 +66,83 @@ Hard boundary:
 agent runtime ─X─> private oracle / evaluation-only gold / hidden outcomes
 ```
 
-The evaluation framework may inspect frozen/captured runtime traces; it must not leak its supervision into the agent context.
+The evaluation framework may inspect frozen/captured runtime traces; it must not leak supervision into the agent context.
 
-## 2. Research/control architecture
+## 2. Product-quality constraints from the actual TRACTIAN brief
+
+The final architecture must preserve these requirements/guidance unless later evidence explicitly supersedes a project-choice layer:
+
+### 2.1 Conclusion over wording
+
+Operational correctness is primarily about the decision/conclusion and evidence, not matching the engineer's prose exactly. The runtime may vary communication style while the evaluator separates:
+
+- conclusion/factual correctness;
+- evidence support;
+- action/escalation correctness;
+- customer-safe communication.
+
+Exact-string matching is not the primary quality signal.
+
+### 2.2 Process must be diagnosable
+
+The system must expose enough trace structure to answer:
+
+- which tool was selected and why;
+- which arguments were constructed;
+- what evidence returned;
+- how degraded/conflicting evidence changed behavior;
+- why the system stopped, clarified, acted or escalated;
+- where a failed run first diverged from an acceptable path.
+
+Hidden chain-of-thought is not required; observable decision/tool/evidence state is.
+
+### 2.3 Human fallback is a first-class outcome
+
+When evidence is insufficient, materially ambiguous or the agent/provider/tool path fails, the system must be able to preserve the support workflow through clarification, abstention or human handoff rather than inventing certainty or blocking the workflow.
+
+An escalation handoff should carry, where available:
+
+- evidence already collected;
+- relevant observations;
+- unresolved contradiction/uncertainty;
+- why the remote/automated path cannot safely conclude;
+- the next question a human needs to resolve.
+
+### 2.4 Customer-safe response boundary
+
+The system should give the customer the useful operational conclusion without unnecessarily exposing internal implementation details, backend failures or internal service structure unless that information is genuinely necessary for the requested resolution.
+
+### 2.5 Stable integration surface
+
+The agent should reason against a stable typed tool contract. HTTP/MCP/RPC/file/backend heterogeneity, if ever introduced, belongs behind adapters rather than becoming arbitrary protocol complexity in the model context.
+
+This does **not** require implementing multiple backend protocols for the assignment. Generalization beyond the supplied API is optional unless it earns its place quantitatively.
+
+### 2.6 Consequential actions
+
+The delivered benchmark treats an accepted action call as execution. Real interactive product policy may additionally require requester confirmation for consequential mutations. Keep those concepts separate:
+
+```text
+benchmark action semantics
+        !=
+future interactive confirmation UX policy
+```
+
+If confirmation is adopted for the final production-path interface, freeze/test the policy without corrupting official benchmark semantics.
+
+### 2.7 Quality-first model validation, then optimization
+
+Model/provider research must not prematurely optimize cost by excluding a materially stronger quality frontier. Compare:
+
+- a strong quality-frontier candidate/configuration;
+- a feasible lower-cost/local/open baseline where relevant;
+- any additional credible Pareto candidate.
+
+Then select based on measured correctness, robustness, latency, reliability, cost/resource use, portability and operational constraints.
+
+Experimental no-card/free provider history remains evidence about a specific research path; it is not automatically the final product-provider requirement.
+
+## 3. Research/control architecture
 
 The scientific path that selects and validates behavior remains:
 
@@ -97,149 +174,122 @@ frozen input
 
 Generation must not know private evaluator truth. Evaluation must not alter generated outputs. Statistical analysis must not alter deterministic scores. Independent validation must not become a tuning loop for the same candidate.
 
-### 2.1 Experiment definition layer
+### 3.1 Experiment definition layer
 
 Owns problem/decision question, cases/evidence roles, candidate definitions, seeds/repetitions, metrics/thresholds, failure policy, access boundaries, preregistration and source pins.
 
-Output: immutable experiment contracts/manifests.
+### 3.2 Input / case layer
 
-### 2.2 Input / case layer
+Owns allowed visible case material, exact selection, ticket/scenario grouping, identity binding, seed binding and request materialization. Private evaluator truth and independent hidden outcomes do not belong here.
 
-Owns allowed visible case material, exact selection, ticket/group/scenario binding, seed binding and request materialization. Private evaluator truth and independent hidden outcomes do not belong here.
+The delivered package has 17 case/gold rows but 16 narrative scenarios; grouped evidence must remain grouped where needed to prevent leakage.
 
-### 2.3 Common-parent generation layer
+### 3.3 Common-parent generation layer
 
 Owns controlled model/provider generation when required by a frozen experiment: exact request/model/transport contract, pacing/retry semantics, response schema, provenance and operational failure classification.
 
 Provider/model choice here is an experimental serving route unless a separate production decision freezes it.
 
-### 2.4 Local candidate transformation layer
+### 3.4 Local candidate transformation layer
 
 Owns provider-free interventions over frozen common parents, preserving preregistered candidate semantics and common-parent identity so intervention effects are not confounded by regeneration.
 
-### 2.5 Immutable evidence-store layer
+### 3.5 Immutable evidence-store layer
 
 Carries artifact identity, hashes, commits/blobs, run/job/artifact provenance, cardinality/schema, access counters, failure state and explicit next-gate authorization. Historical failures and consumed attempts remain evidence.
 
-### 2.6 Private deterministic evaluator layer
+### 3.6 Private deterministic evaluator layer
 
 Consumes frozen outputs plus authorized evaluator-side private truth. It must not regenerate candidates, call a provider or serialize private expected-path content into sanitized evidence.
 
-### 2.7 Statistical analysis layer
+### 3.7 Statistical analysis layer
 
 Consumes immutable deterministic scores and only runs analyses authorized by the preceding freeze: paired/factorial contrasts, uncertainty, bootstrap, LOGO, slices and missingness/denominator reporting when applicable.
 
-### 2.8 Decision / gate layer
+### 3.8 Decision / gate layer
 
-Combines quality, uncertainty, failures and production constraints to assign literal states such as `QUALIFIED`, `PREFERRED`, `FROZEN` or `SUPERSEDED`. Gate PASS is not automatic final selection.
+Combines evidence, failure policy, uncertainty, delivery requirements and production constraints to assign literal states: `QUALIFIED`, `PREFERRED`, `FROZEN`, `SUPERSEDED`.
 
-### 2.9 Independent validation layer
+Gate PASS is evidence, not automatic final selection.
 
-Measures generalization only after candidate/evaluator generation is appropriately frozen. Independent outcomes cannot become a silent retuning loop for the same claimed blind candidate.
+### 3.9 Independent validation layer
 
-## 3. Required production behavior contracts
+Measures generalization after candidate/evaluator generation is frozen and custody/access rules are satisfied. Independent outcomes cannot become a silent tuning loop for the same blind claim.
 
-Regardless of framework choice, the final production path must preserve the capabilities mapped in `DELIVERY-ACCEPTANCE.md`.
+## 4. Final production-path logical architecture
 
-### 3.1 Request/context contract
-
-- requester identity/auth context outside model control;
-- input/schema validation;
-- explicit case/request context;
-- clarification path when required information is missing;
-- no evaluator/private/blind material in context.
-
-### 3.2 Evidence/tool contract
-
-- canonical typed tool/API schemas;
-- correct function and argument selection;
-- evidence provenance;
-- bounded stopping/evidence sufficiency behavior;
-- handling of complete, partial, inconclusive, conflicting and unavailable results.
-
-### 3.3 Decision/outcome contract
-
-The runtime must be able to produce a justified one of the required outcomes:
+The architecture that reaches final delivery should be decomposed by responsibility rather than by framework brand:
 
 ```text
-contextualize
-investigate further
-request clarification / abstain safely
-execute an authorized justified action
-escalate to human analysis with useful handoff
+Client / demo / integration
+        ↓
+Request Context Boundary
+  - user/case identity
+  - authorization
+  - conversation/request state
+        ↓
+Agent Controller
+  - decision state
+  - evidence sufficiency
+  - stopping / clarification / escalation
+        ↓
+Stable Tool Contract
+        ↓
+TRACTIAN API Adapter
+        ↓
+Supplied Industrial API
+        ↓
+Normalized Tool Observations
+        ↘
+          Trace / Observability Stream
+        ↙
+Agent Controller
+        ↓
+Outcome
+  - answer/orient
+  - clarify/abstain
+  - action
+  - escalation handoff
+        ↓
+Customer-safe response
+
+Captured Trace ───────────────► Evaluation Runner
+                               ├─ deterministic evaluators
+Evaluation-only references ───►├─ validated semantic evaluator if needed
+                               ├─ robustness/reliability analysis
+                               └─ report / trace inspection
 ```
 
-No architecture is acceptable if it makes a required outcome materially harder to express, evaluate or audit.
-
-### 3.4 Action/safety contract
-
-- high-impact action parameters and justification validated;
-- system authorization boundary separate from model choice;
-- accepted action event interpreted according to supplied API semantics;
-- duplicate/unnecessary action risk controlled;
-- retry/idempotency policy explicit and production-tested;
-- failure is safe and inspectable.
-
-### 3.5 Trace/evaluation contract
-
-Every meaningful run should be capturable in a normalized trace sufficient to inspect:
-
-- input/context identifiers that are safe to expose;
-- decisions/state transitions;
-- tool choice and arguments;
-- tool result classifications;
-- evidence/provenance references;
-- action/escalation/clarification outcome;
-- final response;
-- operational errors/timing metadata where appropriate.
-
-The evaluation framework consumes this interface rather than coupling itself to hidden internal implementation details.
-
-## 4. Production engineering cross-cutting concerns
-
-The production implementation is a separate engineering surface derived from validated behavior and evidence-backed architecture decisions. It must explicitly address:
-
-- typed API/tool contracts;
-- authorization and auditability;
-- bounded retry/idempotency behavior;
-- state/context/persistence semantics;
-- provider/tool failure handling;
-- configuration/dependency pinning;
-- secrets management;
-- observability and trace inspection;
-- latency/throughput/resource/cost budgets;
-- security/privacy boundaries;
-- reproducible build/deployment;
-- rollback/reversal mechanisms.
-
-Research one-shot constraints do not automatically become production policy.
+A single-agent explicit controller is the default simple baseline. Multi-agent decomposition is only eligible if controlled evidence shows material benefit after coordination/latency/cost/debugging overhead.
 
 ## 5. Production architecture decision register
 
-The following choices must be compared before final architecture freeze. Existing implementations are candidates/evidence, not automatic standards.
+Existing code is candidate evidence, not an automatic standard.
 
-| Decision | Simple baseline / minimum comparison | Production evidence required |
+| Decision | Minimum comparison | Required evidence before freeze |
 |---|---|---|
-| Provider/model strategy | simplest viable serving route vs credible alternatives | correctness, availability, latency, throughput, cost/quota, portability, recovery |
-| Orchestration/runtime | explicit loop/state machine vs LangGraph/credible alternatives | correctness, determinism, observability, recovery, complexity, latency, maintainability |
-| Agent topology | single-agent baseline vs justified decomposition | quality, coordination errors, latency, cost/token overhead, debuggability |
-| Evidence/retrieval | direct API/evidence routing vs RAG/vector/reranking only if requirement/bottleneck exists | recall/precision, evidence correctness, latency, storage/ops cost, failure modes |
-| Tool protocol/topology | native typed tool contract vs adapters/protocols such as MCP if portability benefit exists | schema fidelity, portability, isolation, maintainability |
-| Memory/state | request-local/explicit conversation state vs persistence only if required | multi-turn/task benefit, contamination/privacy risk, storage cost, reproducibility |
-| Adaptive policies | static baseline vs adaptive routing/stopping/retrieval/model choice | quality, calibration, resource use, stability, safety compliance |
-| Safety/retry/idempotency | deterministic safe baseline vs bounded operational policies | unsafe action rate, duplicate-action risk, recovery, auditability |
-| Evaluator/judge stack | deterministic evaluator wherever possible vs validated semantic judges | agreement/calibration, variance, cost, leakage, failure behavior |
-| Observability | normalized trace + structured logs baseline vs richer backend | requirement coverage, debug time, overhead, privacy/retention, complexity |
-| Deployment topology | simplest viable deployment vs credible scaling patterns | availability, latency, cost, secrets/security, rollback, scalability |
-| UI/trace inspection | minimum usable production-path client/trace view vs richer interface | task completion, evaluator visibility, error transparency, authorization UX, maintainability |
+| Provider/model strategy | strong quality frontier vs feasible lower-cost/local baseline + credible alternatives | task quality, robustness, stability, availability, latency, cost/resource, portability, failure behavior |
+| Orchestration/runtime | explicit loop/state-machine baseline vs LangGraph/other credible runtime | correctness, determinism, observability, recovery, complexity, latency, maintainability |
+| Agent topology | single-agent baseline vs justified specialized/multi-agent decomposition | quality, coordination errors, latency, token/cost overhead, debugability, failure isolation |
+| Evidence/retrieval | direct API/tool/evidence routing baseline vs RAG/vector/reranking only if needed | evidence correctness/recall, latency, complexity, storage/ops burden, failure modes |
+| Tool protocol/topology | canonical native typed Tool Contract vs MCP/adapter options where useful | schema fidelity, portability, isolation, maintainability, model simplicity |
+| Memory/state | request-local/explicit state baseline vs persistent memory if actual scenarios need it | measurable task benefit, contamination/privacy risk, reproducibility, storage/ops cost |
+| Adaptive policies | static explicit baseline vs adaptive stopping/routing/model/retrieval | quality/calibration, resource use, stability, safety compliance, observability |
+| Safety/authorization | deterministic policy baseline vs additional guards/confirmation layers | unsafe-action rate, permission correctness, duplicate-action risk, auditability |
+| Failure continuity | simple human fallback baseline vs richer retry/fallback policies | workflow continuity, recovery time, duplicate/unsafe risk, operator clarity |
+| Evaluator/judge stack | deterministic evaluator wherever possible vs validated semantic/human judgment where needed | agreement/calibration, variance, leakage risk, cost, failure behavior |
+| Observability | normalized structured trace baseline vs richer OTel/inspection backend | coverage, diagnostic value, overhead, privacy/retention, demo value |
+| Deployment topology | simplest viable reproducible deployment vs scaling alternatives | availability, latency, cost/resource, secrets/security, rollback, setup reliability |
+| UI/integration | minimal real production-path interface vs richer interface | task completion, authorization/confirmation UX, trace/eval inspection, maintainability |
 
 For every material choice:
 
 ```text
-acceptance requirement / material risk
-→ decision question + hard constraints
+decision question
+→ official requirement / material risk
+→ hard constraints
 → primary-source research
-→ credible alternatives + simple/null baseline
+→ credible alternatives + simple baseline
 → preregistered comparison
 → quantitative evaluation
 → uncertainty/repeated behavior
@@ -252,41 +302,35 @@ acceptance requirement / material risk
 → FROZEN
 ```
 
-If a proposed component cannot identify the acceptance requirement/risk it improves, it should not be a final architecture component.
-
-## 6. Complexity and delivery priority
-
-Use the priority classes from `DELIVERY-ACCEPTANCE.md`:
-
-- **P0:** required agent + evaluator capabilities and integrity boundaries;
-- **P1:** production engineering required to safely/reliably operate P0;
-- **P2:** optional architectural sophistication.
-
-P2 candidates include RAG/vector DB/reranking, persistent memory, multi-agent decomposition, richer protocol adapters and adaptive routing/model selection unless a concrete P0/P1 requirement promotes them to a necessary decision.
-
-A P2 component must beat its simpler baseline on relevant quality/production metrics after accounting for complexity, failure surface, cost and maintainability.
-
-## 7. Productionization sequence
+## 6. Productionization sequence
 
 ### Stage A — validated behavior extraction
 
-Freeze the behavior the production implementation must preserve: decision classes, evidence policy, action/escalation/clarification semantics, tool contracts, safety boundaries and evaluator-visible trace semantics.
+Define exactly what behavior production must preserve from the accepted candidate without copying experiment-only plumbing blindly.
 
 ### Stage B — production contracts
 
-Freeze public/internal interfaces, tool schemas, trace schema, state/context boundaries, authorization semantics, error classes and operational budgets.
+Freeze, as applicable:
 
-### Stage C — production runtime + evaluator implementation
+- input/request schema;
+- user/authorization binding;
+- stable Tool Contract;
+- API adapter contract;
+- trace schema;
+- outcome schema;
+- action/escalation semantics;
+- failure classes;
+- latency/reliability/resource budgets;
+- evaluator interface.
 
-Create a distinct production code boundary rather than promoting `scripts/research/` into application code. The agent runtime and evaluation framework should share explicit contracts, not private evaluator truth.
+### Stage C — production runtime implementation
 
-A likely repository shape, only after architecture selection justifies it, is:
+Create a distinct production code boundary rather than promoting `scripts/research/` into application code.
+
+A likely repository shape, only after architecture selection justifies it:
 
 ```text
-src/                 production agent/runtime + shared public contracts
-  ...
-eval/ or equivalent production-compatible evaluation subsystem
-  ...
+src/                 production implementation
 tests/               unit/contract/integration/regression tests
 config/              non-secret configuration contracts
 docs/                architecture/runbooks/ADRs
@@ -294,24 +338,51 @@ research/            preserved scientific evidence
 scripts/research/    historical/active research runners
 ```
 
-Exact package/framework/deployment structure remains a decision output.
+The exact package/framework/deployment structure remains a decision output.
 
-### Stage D — production verification
+### Stage D — integrated evaluation implementation
 
-Verify all applicable P0/P1 acceptance rows through unit/regression, tool/API contracts, integration, end-to-end scenarios, failure/recovery, authorization/idempotency/security, latency/resource measurements, trace/observability validation, reproducible build and rollback.
+The final evaluator must be able to consume the same normalized production trace while keeping evaluator-only truth isolated.
 
-### Stage E — controlled delivery
+Preserve or implement:
 
-Deliver a versioned production path with frozen decisions, acceptance evidence, evaluation results, limitations, deployment/runbook instructions, monitoring and rollback behavior.
+- deterministic tool/argument/action/decision checks;
+- evidence and conclusion evaluation;
+- robustness/failure variants;
+- repeated-run reliability;
+- trace inspection/capture-replay;
+- evaluator/judge calibration evidence;
+- requirement/rubric coverage reporting.
 
-The demonstration must include real agent behavior plus per-run evaluation and reliability/robustness evidence.
+### Stage E — production verification
 
-## 8. Architecture freeze criteria
+Required evidence includes, as applicable:
+
+- unit tests;
+- deterministic behavior regression;
+- evaluator regression;
+- tool/API contract tests;
+- integration tests;
+- end-to-end production-path tests;
+- data/tool/provider failure and fallback tests;
+- authorization/idempotency/security tests;
+- escalation-handoff tests;
+- customer-safe communication checks;
+- latency/load/resource measurements;
+- observability validation;
+- reproducible environment/build;
+- rollback/fallback validation.
+
+### Stage F — controlled final delivery
+
+Deliver the versioned production path with frozen decisions, evidence, limitations, setup/runbook instructions, fallback/monitoring/rollback behavior and a demonstration that exercises the real integrated agent/evaluator path.
+
+## 7. Architecture freeze criteria
 
 Final architecture may be frozen only when applicable material choices have:
 
-1. a mapped P0/P1 acceptance requirement or material risk;
-2. explicit requirements and hard constraints;
+1. an explicit TAPI/package requirement or material risk rationale;
+2. explicit hard constraints;
 3. credible alternatives and a simple baseline;
 4. quantitative controlled evidence;
 5. uncertainty/repeated-run evidence where relevant;
@@ -320,13 +391,19 @@ Final architecture may be frozen only when applicable material choices have:
 8. understood trade-offs/Pareto position;
 9. ADR and reversal triggers;
 10. regression obligations;
-11. compatibility with the intended independent-evidence claim;
-12. no unresolved P0 architecture gap hidden behind optional complexity.
+11. compatibility with independent-evidence claims;
+12. no uncovered P0 acceptance row caused by the choice.
 
-Popularity, prior implementation effort or a benchmark-only win is insufficient.
+Popularity, prior implementation effort, framework novelty or a benchmark-only win is insufficient.
 
-## 9. Relationship to experimental cycles
+## 8. Relationship to experimental cycles
 
 P12-C1/C2/C3/C4 and similar cycles are **experimental instances inside this architecture**, not the architecture itself.
 
-They provide evidence for candidate behavior and decision gates. The final product must additionally prove the requested integrated agent/evaluator capabilities and production fitness defined in `DELIVERY-ACCEPTANCE.md`.
+They provide evidence for candidate behavior and decision gates. The final production architecture is selected from accumulated scientific, partner-quality and production-fit evidence.
+
+## 9. Architecture quality rule
+
+The best final architecture is the **simplest architecture on the best-supported quality/production Pareto frontier that fully covers the requested delivery**.
+
+More components are not inherently better. Fewer components are not inherently better. Evidence decides.
