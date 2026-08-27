@@ -36,7 +36,9 @@ Observed from the delivered ZIP:
 - `eval/expected-paths.json`: **17** evaluation rows;
 - `docs/test-scenarios.md`: **16** narrative scenarios;
 - `eval/test-scenarios.md`: identical to `docs/test-scenarios.md` in this package;
-- agent-facing OpenAPI contract: **17 operations across 17 paths**;
+- agent-facing OpenAPI authors **18 operations across 17 unique path templates**; the YAML repeats `/assets/{assetId}` as two mapping keys, one for `GET getAsset` and one for `PATCH updateAssetConfig`;
+- ordinary YAML mapping loaders may silently overwrite one duplicate path entry and expose an incorrect 17-operation view; duplicate-aware normalization is therefore required before generating the canonical Tool Contract;
+- the duplicate-aware normalized 18-operation contract matches the executable FastAPI routes and current `research/e2/tool_registry.py` with zero operation-route mismatches; see `results/tractian-api-contract-conformance-2026-08-27.json`;
 - provided API supports contextual/company/user access, asset/analysis/model/knowledge reads, technical data, four mutation/action families and explicit escalation;
 - API query behavior supports deterministic/reproducible seed control plus degraded response modes;
 - impact actions require authenticated `x-user-id`, permission checks and sufficiently long justification;
@@ -59,10 +61,12 @@ Representative source hashes:
 
 The package contains small documentation/implementation inconsistencies. Treat these as source-quality facts, not as permission to rewrite upstream evidence.
 
-1. Package `README.md` states **18 endpoints**, while the delivered agent-facing OpenAPI contains **17 concrete operations/paths**. For executable integration, the delivered OpenAPI/API implementation is authoritative.
+1. Package `README.md` states **18 endpoints**. A lossy YAML mapping parse of the delivered agent-facing OpenAPI appears to show **17 operations / 17 paths**, but this is caused by the duplicated `/assets/{assetId}` mapping key: the authored contract contains both `GET getAsset` and `PATCH updateAssetConfig`. The executable API and delivered tests also implement both. Canonical integration must therefore normalize the duplicate path key into one path item carrying both methods, yielding **18 operations across 17 unique path templates**. Never derive the Tool Contract from a duplicate-dropping parser result.
 2. `STUDENT-GUIDE.md` describes `eval/README-eval.md` and an example runner, but the reviewed ZIP contains only `eval/expected-paths.json` and `eval/test-scenarios.md` under `eval/`. Do not assume missing evaluation utilities were delivered.
 3. There are **17** case/gold rows but **16** narrative scenarios because at least one scenario couples investigation and execution ticket evidence (for example the stale-analysis/reprocess path). Evaluation splitting/grouping must avoid treating coupled evidence as independent merely because ticket IDs differ.
 4. The API envelope degradation modes are the technical response modes; `pending` and `stale` also appear as domain/scenario states. Evaluation should not conflate transport/response degradation with domain status.
+
+The duplicate-path correction is independently captured by the sanitized conformance artifact `research/results/tractian-api-contract-conformance-2026-08-27.json`. Raw partner source remains outside Git; the correction changes source interpretation only and does not alter any C4 scientific gate, score, candidate or frozen experimental result.
 
 ## 5. Agent/evaluator custody boundary
 
