@@ -1,0 +1,52 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "checkpoint_local": "2026-08-27T00:27:00-03:00",
+  "branch": "main",
+  "repository_reconciliation": {
+    "pr_number": 2,
+    "pr_state": "MERGED",
+    "research_head_sha": "94736187a579f08307066b3d15bd27f2351d9700",
+    "merge_commit_sha": "9b5a6671176a1635676556ff1b48b4044b897a76",
+    "scientific_gate_advanced_by_merge": false,
+    "provenance_preserved": true
+  },
+  "scientific_state": {
+    "benchmark_integrity_gate": "CLOSED",
+    "p12_protocol": "FROZEN",
+    "p12_c1": "CLOSED_DETERMINISTIC_FAIL_NO_ARM_QUALIFIED",
+    "p12_c2": "CONSUMED_OPERATIONAL_FAILURE_31_OF_36_NO_SCORING",
+    "p12_c3": "CONSUMED_TERMINAL_OPERATIONAL_FAILURE_3_OF_36_NO_SCORING",
+    "p12_c4_common_parents": "PASS_36_OF_36",
+    "p12_c4_factorial_outputs": "PASS_144_OF_144",
+    "p12_c4_packet": "FROZEN_COMPLETE_C4_PACKET",
+    "current_authorized_gate": "DETERMINISTIC_SCORING",
+    "project_level_preferred": null,
+    "final_architecture": "UNFROZEN",
+    "production_readiness_claim": "NOT_AUTHORIZED"
+  },
+  "authorization": {
+    "provider_calls_authorized": 0,
+    "deterministic_private_scoring_authorized": true,
+    "bootstrap_authorized_before_deterministic_scoring_closure": false,
+    "fresh_blind_outcome_access_authorized": false,
+    "legacy_locked_test_access_authorized": false,
+    "semantic_evaluation_authorized": false,
+    "final_architecture_freeze_authorized": false
+  },
+  "canonical_c4_freeze": {
+    "path": "research/results/p12-c4-complete-packet-freeze-2026-08-26.json",
+    "git_blob_sha": "03b7d5a27ffdec9173e25bdf47377858bf6aeb30",
+    "fixed_outputs": 144,
+    "common_parents": 36
+  },
+  "planning": {
+    "current_status": "docs/CURRENT-PROJECT-STATUS.md",
+    "next_steps": "docs/NEXT-STEPS.md",
+    "architecture_roadmap": "docs/ARCHITECTURE-ROADMAP.md",
+    "master_plan": "docs/PROJECT-PLAN.md",
+    "delivery_acceptance": "docs/DELIVERY-ACCEPTANCE.md",
+    "governance": "docs/PROJECT-PRINCIPLES.md"
+  },
+  "next_gate": "DETERMINISTIC_SCORING",
+  "note": "This checkpoint records repository reconciliation into main. It does not reinterpret, rerun, or advance any scientific experiment gate."
+}
