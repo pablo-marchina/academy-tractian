@@ -2,6 +2,7 @@
 
 **Status:** ACTIVE / canonical short-horizon execution plan  
 **Current state source:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
+**Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Macro plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
@@ -16,7 +17,17 @@ While `CURRENT-PROJECT-STATUS.md` reports `DETERMINISTIC_SCORING` as the current
 
 No additional provider generation is authorized for this C4 packet. Bootstrap, LOGO, slices, semantic evaluation, FRESH_BLIND and LEGACY_LOCKED_TEST remain later gates and must not be executed opportunistically.
 
-## 2. Immediate sequence
+At the project level, work should follow the priority order in `DELIVERY-ACCEPTANCE.md`:
+
+```text
+P0 requested capabilities + trustworthy evaluation
+        ↓
+P1 production/security/reliability required to operate P0
+        ↓
+P2 optional complexity only with measured need/benefit
+```
+
+## 2. Immediate scientific sequence
 
 ### Step 1 — Close deterministic-scoring provenance
 
@@ -92,7 +103,7 @@ After successful deterministic scoring:
 
 Do **not** assume that bootstrap becomes authorized merely because deterministic scoring ran. The deterministic-result freeze must explicitly open the next gate.
 
-## 3. Parallel work allowed now
+## 3. Parallel work allowed now — delivery-focused only
 
 Architecture and production-fit research may proceed in parallel provided it does not:
 
@@ -101,27 +112,54 @@ Architecture and production-fit research may proceed in parallel provided it doe
 - claim a final architecture before the applicable comparison/validation gates close;
 - silently translate a research implementation into a production standard.
 
-Parallel work should focus on decision questions, hard requirements, alternatives, baselines, measurable production criteria and ADR-ready evidence described in `ARCHITECTURE-ROADMAP.md`.
+Parallel work should prioritize **P0/P1 questions that can block final delivery**, especially:
+
+1. final real API/tool integration contract and traceability;
+2. coverage of contextualize / investigate / execute / clarify-or-abstain / escalate behaviors;
+3. incomplete/conflicting/unavailable-data failure behavior;
+4. integrated per-run evaluation without gold leakage;
+5. safe authorization/action/idempotency semantics;
+6. production observability and reproducible environment;
+7. provider/runtime choices only to the extent required to deliver the above reliably.
+
+For each material decision, start with the simplest viable baseline and follow `PROJECT-PRINCIPLES.md` before selecting a more complex option.
 
 ## 4. Work intentionally deferred
 
-The following should **not** be started merely for repository aesthetics or premature production-readiness signaling:
+The following should **not** be started merely for repository aesthetics, novelty or premature production-readiness signaling:
 
-- final production package/runtime structure;
-- final provider/model selection;
-- final orchestration/runtime selection;
-- final RAG/vector/memory/multi-agent architecture;
-- production deployment topology;
+- final production package/runtime structure before sufficient architecture evidence;
+- final provider/model selection without comparison;
+- final orchestration/runtime selection without comparison;
+- RAG/vector/reranking without a demonstrated retrieval requirement/bottleneck;
+- persistent memory without required multi-turn benefit;
+- multi-agent decomposition without measured advantage over single-agent baseline;
+- protocol/adaptor complexity without portability/integration benefit;
 - FRESH_BLIND outcome access;
 - LEGACY_LOCKED_TEST access.
 
 When a production architecture becomes evidence-backed and eligible to freeze, create the production code boundary explicitly instead of promoting `scripts/research/` into production code.
 
-## 5. Update rule
+## 5. Deadline protection rule
+
+The final delivery target is 2026-09-08. Preserve the final project window for:
+
+- P0 acceptance closure;
+- integrated agent + evaluator implementation;
+- real API/e2e regression;
+- robustness/failure scenarios;
+- documentation/reproducibility;
+- release/demo/runbook evidence.
+
+Do not consume that window with P2 enhancements unless P0/P1 coverage is already secure and quantitative evidence shows the enhancement materially improves the final solution.
+
+## 6. Update rule
 
 Update this file whenever either condition occurs:
 
 1. the current authorized gate changes; or
 2. a material blocker changes the short-horizon execution path.
+
+Also re-check `DELIVERY-ACCEPTANCE.md` whenever a planned feature, architecture decision or scope change could create or close a final-delivery gap.
 
 Do not use this document as a historical ledger. Closed steps belong in `PROJECT-PROGRESS-LOG.md`; durable architecture direction belongs in `ARCHITECTURE-ROADMAP.md`.
