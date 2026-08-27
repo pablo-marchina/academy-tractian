@@ -1,6 +1,6 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-27 00:27 BRT  
+**Canonical status checkpoint:** 2026-08-27 00:34 BRT  
 **Canonical branch:** `main`  
 **Research integration:** PR #2 merged via `9b5a6671176a1635676556ff1b48b4044b897a76`  
 **Final delivery target:** 2026-09-08  
@@ -11,7 +11,7 @@
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Progress ledger:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
 **Repository guide:** [`REPOSITORY-GUIDE.md`](REPOSITORY-GUIDE.md)  
-**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-27-0027-brt.json`](../research/results/project-progress-checkpoint-2026-08-27-0027-brt.json)
+**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-27-0034-brt.json`](../research/results/project-progress-checkpoint-2026-08-27-0034-brt.json)
 
 This document is the **sole canonical human-readable source for current project state and current authorization**. Exact experiment semantics remain governed by their frozen manifests/results. Historical failures remain evidence and do not authorize reuse or rerun.
 
@@ -38,7 +38,7 @@ final architecture                          UNFROZEN
 production-readiness claim                  NOT AUTHORIZED
 ```
 
-The merge into `main` is a repository/governance reconciliation only. It **did not advance or reinterpret the scientific state**.
+The merge into `main` and the delivery-plan reconciliation are repository/governance changes only. They **did not advance or reinterpret the scientific state**.
 
 ## Evidence for the current transition
 
@@ -93,7 +93,9 @@ The project does **not** currently claim that:
 
 The original requirement matrix requires both **agent construction** and an **agent evaluation framework**, including real API integration, contextualization/investigation/execution, clarification, escalation, robustness to incomplete/conflicting/unavailable data, inspectable traces and evaluator/runtime separation.
 
-`DELIVERY-ACCEPTANCE.md` is the active crosswalk from those requirements to final evidence. At the current stage, research/evaluation foundations are strong, but final integrated production-path acceptance remains pending and must not be inferred from C4 packet completion alone.
+`DELIVERY-ACCEPTANCE.md` is the active crosswalk from those requirements to final evidence. The 2026-08-27 review also makes REQ-001/003/004/017 explicit: individual delivery, technical experiment, documented results and integrated agent + evaluation framework are P0 obligations.
+
+At the current stage, research/evaluation foundations are strong, but final integrated production-path acceptance remains pending and must not be inferred from C4 packet completion alone.
 
 ## Planning pointers
 
