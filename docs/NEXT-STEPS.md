@@ -1,165 +1,233 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE / canonical short-horizon execution plan  
+**Planning checkpoint:** 2026-08-27 08:46 BRT  
 **Current state source:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Macro plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
-**Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
+**Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
+**Source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)
 
-This file answers only one question: **what should be done next from the current evidence-backed project state?**
+This file answers only one question: **what should be done next from the current evidence-backed project state to maximize the final TRACTIAN delivery?**
 
 It does not define experiment truth. Exact authorization and experiment semantics remain governed by `CURRENT-PROJECT-STATUS.md` and the applicable frozen artifacts/results.
 
 ## 1. Current execution objective
 
-While `CURRENT-PROJECT-STATUS.md` reports `DETERMINISTIC_SCORING` as the current authorized gate, the only scientific gate that may advance is deterministic private scoring over the already frozen C4 packet.
+While `CURRENT-PROJECT-STATUS.md` reports `DETERMINISTIC_SCORING` as the current authorized scientific gate, the only scientific gate that may advance is deterministic private scoring over the already frozen C4 packet.
 
 No additional provider generation is authorized for this C4 packet. Bootstrap, LOGO, slices, semantic evaluation, FRESH_BLIND and LEGACY_LOCKED_TEST remain later gates and must not be executed opportunistically.
 
-At the project level, work should follow the priority order in `DELIVERY-ACCEPTANCE.md`:
+The source/requirements reconciliation against the updated TAPI, delivered project package and kickoff is complete at the planning layer. It did **not** advance the scientific gate.
+
+At the project level, use this priority:
 
 ```text
 P0 requested capabilities + trustworthy evaluation
         ↓
-P1 production/security/reliability required to operate P0
+P1 production/partner-quality fitness needed to operate P0
         ↓
-P2 optional complexity only with measured need/benefit
+P2 optional complexity only with measured benefit
 ```
 
-## 2. Immediate scientific sequence
+## 2. Scientific critical path — execute in order
 
 ### Step 1 — Close deterministic-scoring provenance
 
 Verify and record before any private scoring execution:
 
-- the immutable C4 freeze artifact and its Git blob;
-- the exact 144-output artifact source, artifact ID/digest and file SHA-256;
+- immutable C4 freeze artifact and Git blob;
+- exact 144-output artifact source, artifact ID/digest and file SHA-256;
 - exact parent/arm cardinality and output hashes;
-- evaluator v4.1 and its required source/dependency blobs;
-- the exact evaluator-side private oracle source and custody mechanism;
+- evaluator v4.1 and required source/dependency blobs;
+- exact evaluator-side private-oracle source and custody mechanism;
 - absence of provider credentials from the scoring environment;
 - continued denial of FRESH_BLIND and LEGACY_LOCKED_TEST access.
 
-Do not infer or reconstruct the private oracle from public fixtures.
+Do not infer/reconstruct private truth from public fixtures or from the delivered `eval/` package.
 
-### Step 2 — Use the prepared scoring-only C4 runner
+### Step 2 — Freeze evaluator-side handoff
+
+Only after oracle provenance/custody is explicit:
+
+1. verify/freeze the prepared scorer source blob and exact input hashes;
+2. freeze evaluator-side execution/authorization contract;
+3. ensure provider credentials are absent;
+4. keep private oracle evaluator-side only;
+5. define fail-closed behavior for missing, duplicate, unscoreable or mismatched outputs;
+6. define the sanitized evidence artifact that may be retained.
+
+### Step 3 — Execute deterministic scoring only
 
 Prepared runner: `scripts/research/p12_c4_deterministic_private_scoring.py`.
 
-Its presence in the repository is **not execution authorization**. The private-oracle custody/handoff still has to be explicitly resolved and frozen before this runner may be used.
+Its presence is **not execution authorization**.
 
-The runner is required to:
+Execution is valid only if:
 
-- consume exactly the frozen 144 outputs;
-- use the frozen deterministic evaluator semantics only;
-- emit one score row per fixed output;
-- preserve parent/output identity and provenance;
-- serialize no private expected-path text or private endpoint lists;
-- perform zero provider/model/network calls;
-- perform zero bootstrap resamples;
-- perform zero LOGO analysis;
-- perform zero modality/failure slices beyond per-row deterministic scoring;
-- access neither FRESH_BLIND nor LEGACY_LOCKED_TEST.
+- exactly 144 frozen outputs are consumed;
+- all are scoreable under the frozen deterministic evaluator;
+- input/output hashes remain unchanged;
+- provider/model/network calls = 0;
+- bootstrap = 0;
+- LOGO = 0;
+- post-score slices = 0;
+- semantic evaluation = 0;
+- FRESH_BLIND/LEGACY_LOCKED_TEST access = 0.
 
-Historical monolithic scorers may be used as frozen semantic references, but must not be executed wholesale when they cross later gates.
+Any fail-closed outcome remains evidence and is not silently repaired.
 
-### Step 3 — Freeze the evaluator-side execution handoff
+### Step 4 — Independently validate and freeze deterministic result
 
-Only after the private-oracle provenance/custody route is explicit:
+Verify:
 
-1. verify/freeze the prepared scorer source blob and exact input hashes;
-2. freeze the evaluator-side execution/authorization contract;
-3. ensure provider credentials are absent;
-4. ensure the private oracle remains evaluator-side;
-5. define fail-closed behavior for any missing, duplicate, unscoreable or mismatched output;
-6. define the sanitized evidence artifact that may be retained.
+- 144 score rows and exact bindings;
+- scorer/oracle/input provenance;
+- deterministic recomputation where feasible;
+- no missing/duplicate cells;
+- access/provider counters;
+- sanitized artifact integrity.
 
-Do not create an execution route that guesses how private material should be provisioned.
+Freeze the deterministic result and stop.
 
-### Step 4 — Execute deterministic scoring exactly within the frozen authorization
+### Step 5 — Advance only if the new freeze explicitly opens the next gate
 
-The execution is complete only if:
+After deterministic closure:
 
-- all 144 outputs are present and immutable;
-- all 144 outputs are scoreable under the frozen evaluator;
-- no input/output hash changes;
-- no provider/model call occurs;
-- no later statistical/semantic gate executes;
-- no unauthorized partition is accessed;
-- the sanitized result is complete and independently verifiable.
+- append result to `PROJECT-PROGRESS-LOG.md`;
+- update `CURRENT-PROJECT-STATUS.md` and machine checkpoint;
+- replace this plan with the newly authorized statistical/semantic sequence;
+- do **not** assume bootstrap/LOGO/slices are automatically authorized.
 
-Any fail-closed result must remain evidence rather than being silently repaired or reinterpreted.
+## 3. Parallel delivery-quality work allowed now
 
-### Step 5 — Freeze deterministic result and stop
+The following may proceed because it does not require private outcomes or modification of the frozen C4 packet.
 
-After successful deterministic scoring:
+### Track A — P0/P1 delivery gap inventory
 
-- independently verify row count, hashes, scorer provenance and access counters;
-- freeze the deterministic result;
-- append the transition to `PROJECT-PROGRESS-LOG.md`;
-- update `CURRENT-PROJECT-STATUS.md` and the latest machine checkpoint;
-- replace this file's immediate sequence with the next newly authorized gate.
+Use `DELIVERY-ACCEPTANCE.md` and the audited partner package to classify each final acceptance row as:
 
-Do **not** assume that bootstrap becomes authorized merely because deterministic scoring ran. The deterministic-result freeze must explicitly open the next gate.
+```text
+PROVEN
+FOUNDATION_EXISTS_BUT_FINAL_PROOF_PENDING
+NOT_YET_IMPLEMENTED
+BLOCKED_BY_CURRENT_GATE
+OPTIONAL / NOT REQUIRED
+```
 
-## 3. Parallel work allowed now — delivery-focused only
+Prioritize gaps that can threaten the final deadline:
 
-Architecture and production-fit research may proceed in parallel provided it does not:
+- real supplied-API production-path integration;
+- contextualize/investigate/execute/clarify-or-abstain/escalate behavior;
+- degraded/conflicting/unavailable evidence handling;
+- stable typed tool contract;
+- normalized trace capture/inspection;
+- integrated evaluator over the same trace;
+- human fallback and escalation handoff;
+- action/permission safety;
+- customer-safe communication;
+- clean reproducible setup.
 
-- expose hidden evaluator/blind outcomes;
-- change the frozen C4 candidate outputs;
-- claim a final architecture before the applicable comparison/validation gates close;
-- silently translate a research implementation into a production standard.
+Do not use private/fresh/locked outcomes to populate this inventory.
 
-Parallel work should prioritize **P0/P1 questions that can block final delivery**, especially:
+### Track B — Material architecture decision preparation
 
-1. final real API/tool integration contract and traceability;
-2. coverage of contextualize / investigate / execute / clarify-or-abstain / escalate behaviors;
-3. incomplete/conflicting/unavailable-data failure behavior;
-4. integrated per-run evaluation without gold leakage;
-5. safe authorization/action/idempotency semantics;
-6. production observability and reproducible environment;
-7. provider/runtime choices only to the extent required to deliver the above reliably.
+For each decision in `ARCHITECTURE-ROADMAP.md`:
 
-For each material decision, start with the simplest viable baseline and follow `PROJECT-PRINCIPLES.md` before selecting a more complex option.
+1. state the formal requirement/rubric criterion/P1 risk it serves;
+2. define the simple baseline;
+3. identify credible alternatives;
+4. predefine quality/robustness/production metrics;
+5. identify what evidence already exists vs what still requires experiment;
+6. stop short of `PREFERRED/FROZEN` until comparison evidence is adequate.
+
+Highest-priority decisions after candidate evidence closes:
+
+1. final behavior/candidate;
+2. model/provider strategy — include a strong quality frontier and feasible lower-cost/local baseline;
+3. explicit controller/runtime;
+4. stable Tool Contract + TRACTIAN API adapter;
+5. single-agent baseline vs any justified decomposition;
+6. evaluator stack;
+7. failure/human-fallback policy;
+8. action/confirmation policy for interactive production without altering benchmark semantics;
+9. observability/trace inspection;
+10. deployment/interface sufficient for the real final demo.
+
+RAG/vector/reranking/persistent memory/MCP/multi-agent/richer UI are not priority by default.
+
+### Track C — Final demonstration/evidence design
+
+Prepare the final evidence matrix without fabricating results:
+
+- contextualization;
+- investigation;
+- justified action;
+- clarification/abstention;
+- escalation with useful handoff;
+- conflict/inconclusive handling;
+- data/tool/model/provider failure path;
+- customer-safe response;
+- per-run evaluation;
+- aggregate reliability view.
+
+For each item, specify the eventual trace/evaluator evidence needed. Do not hard-code a happy-path script as the proof itself.
+
+### Track D — Delivered-package contract coverage
+
+Use the actual delivered package, not narrative assumptions:
+
+- 17 agent-visible cases;
+- 17 expected-path evaluation rows;
+- 16 narrative scenario groups;
+- 17 concrete OpenAPI operations;
+- supplied permission/justification/action semantics;
+- deterministic degraded-response controls.
+
+Preserve scenario grouping where tickets share one narrative/causal path. Do not infer missing eval utilities that were referenced in prose but absent from the reviewed ZIP.
 
 ## 4. Work intentionally deferred
 
-The following should **not** be started merely for repository aesthetics, novelty or premature production-readiness signaling:
+Do not start merely for aesthetics, novelty or signaling maturity:
 
-- final production package/runtime structure before sufficient architecture evidence;
-- final provider/model selection without comparison;
-- final orchestration/runtime selection without comparison;
+- final production package structure before architecture evidence is sufficient;
+- final provider/model declaration before systematic comparison;
+- final runtime/orchestrator declaration;
 - RAG/vector/reranking without a demonstrated retrieval requirement/bottleneck;
-- persistent memory without required multi-turn benefit;
+- persistent memory without measured multi-turn need;
 - multi-agent decomposition without measured advantage over single-agent baseline;
-- protocol/adaptor complexity without portability/integration benefit;
+- generalization to additional backend protocols not required by the supplied package;
+- rich UI before real-path integration/evaluation is stable;
 - FRESH_BLIND outcome access;
 - LEGACY_LOCKED_TEST access.
 
-When a production architecture becomes evidence-backed and eligible to freeze, create the production code boundary explicitly instead of promoting `scripts/research/` into production code.
+## 5. Immediate priority order
 
-## 5. Deadline protection rule
+```text
+1. close deterministic-scoring provenance
+2. execute/freeze deterministic scoring only when custody is valid
+3. in parallel, close P0/P1 evidence gaps that do not depend on private outcomes
+4. advance only newly authorized evaluation gates
+5. freeze survivor/no-survivor evidence
+6. run production-fit comparisons for material choices
+7. freeze architecture
+8. implement integrated agent + evaluator production path
+9. reliability/security/reproducibility hardening
+10. final rubric-indexed demo + documentation
+```
 
-The final delivery target is 2026-09-08. Preserve the final project window for:
+## 6. Deadline protection rule
 
-- P0 acceptance closure;
-- integrated agent + evaluator implementation;
-- real API/e2e regression;
-- robustness/failure scenarios;
-- documentation/reproducibility;
-- release/demo/runbook evidence.
+Final delivery is 2026-09-08. Preserve the last project days for P0 acceptance closure, integrated regression, robustness/failure evidence, documentation/reproducibility and demo quality.
 
-Do not consume that window with P2 enhancements unless P0/P1 coverage is already secure and quantitative evidence shows the enhancement materially improves the final solution.
+After 2026-09-05, default against speculative P2 work unless it directly fixes a demonstrated blocker and can be re-evaluated safely.
 
-## 6. Update rule
+## 7. Update rule
 
 Update this file whenever either condition occurs:
 
 1. the current authorized gate changes; or
-2. a material blocker changes the short-horizon execution path.
+2. a material blocker/source/acceptance change alters the short-horizon path.
 
-Also re-check `DELIVERY-ACCEPTANCE.md` whenever a planned feature, architecture decision or scope change could create or close a final-delivery gap.
-
-Do not use this document as a historical ledger. Closed steps belong in `PROJECT-PROGRESS-LOG.md`; durable architecture direction belongs in `ARCHITECTURE-ROADMAP.md`.
+Do not use this document as a historical ledger. Closed steps belong in `PROJECT-PROGRESS-LOG.md`; durable architecture direction belongs in `ARCHITECTURE-ROADMAP.md`; final required evidence belongs in `DELIVERY-ACCEPTANCE.md`.
