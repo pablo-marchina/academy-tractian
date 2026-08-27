@@ -1,0 +1,67 @@
+name: research-p12-c4-logo-source-check
+
+on:
+  push:
+    branches: [eval/c4-logo-sensitivity]
+    paths:
+      - '.github/workflows/research-p12-c4-logo-source-check.yml'
+      - 'scripts/research/p12_c4_logo_sensitivity.py'
+      - 'scripts/research/p12_c4_validate_logo_sensitivity.py'
+      - 'research/results/p12-c4-bootstrap-20000-freeze-2026-08-27.json'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-logo-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Assert provider-free boundary
+        run: |
+          test -z "${NVIDIA_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test -z "${OPENAI_API_KEY:-}"
+          test -z "${ANTHROPIC_API_KEY:-}"
+          test -z "${CEREBRAS_API_KEY:-}"
+          test -z "${OPENROUTER_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+
+      - name: Verify frozen sources and exact local source bytes
+        run: |
+          test "$(git hash-object scripts/research/p12_c4_logo_sensitivity.py)" = 'f0b35c892fb3f0c3f3fdcce93d40656b1fb786f1'
+          test "$(git hash-object scripts/research/p12_c4_validate_logo_sensitivity.py)" = '3209e7577bbd2e5332bc81c2df8d5edbee4d962a'
+          test "$(git hash-object research/results/p12-c4-bootstrap-20000-freeze-2026-08-27.json)" = '65332e227b950bc599ac6080f019c5563562af11'
+          test "$(git hash-object scripts/research/p12_c2_factorial_score.py)" = 'dc20be4896ff023989ee6deb012ad440c39ec531'
+          test "$(sha256sum scripts/research/p12_c4_logo_sensitivity.py | cut -d' ' -f1)" = '3b32e516c14f880756a1e20d9818323d70ec24f5a11f641f64e47904f2c9207d'
+          test "$(sha256sum scripts/research/p12_c4_validate_logo_sensitivity.py | cut -d' ' -f1)" = 'e12eb6f950ffe9a9a21b5e56ef8b648077ef4d0a73554bea9e1d3c604788a79a'
+          test "$(sha256sum scripts/research/p12_c2_factorial_score.py | cut -d' ' -f1)" = 'f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22'
+
+      - name: Compile isolated LOGO sources
+        run: |
+          python -m py_compile scripts/research/p12_c4_logo_sensitivity.py
+          python -m py_compile scripts/research/p12_c4_validate_logo_sensitivity.py
+
+      - name: Materialize provider-free source bundle
+        run: |
+          ROOT="$RUNNER_TEMP/p12-c4-logo-source-bundle"
+          mkdir -p "$ROOT/scripts/research" "$ROOT/research/results"
+          cp scripts/research/p12_c4_logo_sensitivity.py "$ROOT/scripts/research/"
+          cp scripts/research/p12_c4_validate_logo_sensitivity.py "$ROOT/scripts/research/"
+          cp scripts/research/p12_c2_factorial_score.py "$ROOT/scripts/research/"
+          cp research/results/p12-c4-bootstrap-20000-freeze-2026-08-27.json "$ROOT/research/results/"
+          find "$ROOT" -type f -print0 | sort -z | xargs -0 sha256sum > "$ROOT/SHA256SUMS.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$ROOT/SOURCE_COMMIT.txt"
+          python --version > "$ROOT/BUILD_ENVIRONMENT.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-logo-source-bundle
+          path: ${{ runner.temp }}/p12-c4-logo-source-bundle
+          retention-days: 7
+          if-no-files-found: error

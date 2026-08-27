@@ -382,3 +382,39 @@ The closure opens only:
 `LEAVE_ONE_GROUP_OUT_SENSITIVITY`
 
 Slices, semantic evaluation, FRESH_BLIND, LEGACY_LOCKED_TEST, candidate regeneration, survivor/PREFERRED decision, final architecture freeze and production-readiness claims remain unauthorized until explicitly opened by a later frozen gate.
+
+## 16. P12-C4 leave-one-group-out sensitivity — FROZEN — 2026-08-27
+
+Task #7 opened `LEAVE_ONE_GROUP_OUT_SENSITIVITY` on `eval/c4-logo-sensitivity` from the post-bootstrap `main` commit. The execution reused the exact frozen score rows and exact frozen bootstrap result; it did not load private oracle content or alter scores.
+
+Exact LOGO semantics reproduce the historical C2 `logo_effects(...)`: omit one whole `asset_story_group` and average the paired group effects over the six retained groups. Seven groups were evaluated:
+
+`asset_B204`, `asset_C710`, `asset_G501`, `asset_M101`, `asset_M102`, `asset_M208`, `asset_S420`.
+
+Source verification passed in GitHub Actions run `33079763796`; artifact `9649478087`; digest `sha256:c4535c3b91c5a7af97a9eea9bafaa1f462963958c308cc92ad201462b2a85a59`.
+
+Exact evaluator-side LOGO result:
+
+`sha256:bc62cc45b4e3344861a152825096a8a1b28f41f2d831f86fd81de35964363f8c`
+
+Independent validation returned `PASS_INDEPENDENT_LOGO_RECOMPUTATION`, with 0 mismatch sections and validation SHA-256 `cb6ccce3cbdbffe61a01ade8e121d977b6f6ca7d9552684a311cf1ba59d8d3cb`.
+
+Robustness observations:
+
+- E1 expected-read recall remains negative under all seven omissions;
+- E1 extra-public-read count remains negative under all seven omissions;
+- E1 evidence correctness and task/reference quality are not sign-robust and become positive when `asset_M102` is omitted;
+- S1 remains exactly zero on every preregistered primary safety contrast under every omission;
+- A11 follows the E1 pattern on evidence metrics and stays zero on decision/action/escalation/safety contrast metrics.
+
+Privacy/boundary checks: 0 provider/model calls, private oracle not loaded, scores unchanged, 0 slice/semantic/FRESH_BLIND/LEGACY_LOCKED_TEST execution and no survivor/PREFERRED decision.
+
+Canonical closure:
+
+`research/results/p12-c4-logo-sensitivity-freeze-2026-08-27.json`
+
+Status:
+
+`FROZEN_C4_LEAVE_ONE_GROUP_OUT_SENSITIVITY`
+
+The closure opens only the staged `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` gate covering still-unexecuted preregistered reporting requirements: all per-group outcomes, `investigate`/`execute`/`contextualize` modality slices, safety/failure-family slices, and operational failure counts/denominators. Survivor selection, semantic evaluation and blind partitions remain blocked.

@@ -1,0 +1,157 @@
+{
+  "schema_version": "p12-c4-logo-sensitivity-freeze-v1",
+  "status": "FROZEN_C4_LEAVE_ONE_GROUP_OUT_SENSITIVITY",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "partition": "EXPOSED_POOL",
+  "task_issue": 7,
+  "input": {
+    "bootstrap_freeze_path": "research/results/p12-c4-bootstrap-20000-freeze-2026-08-27.json",
+    "bootstrap_freeze_git_blob_sha": "65332e227b950bc599ac6080f019c5563562af11",
+    "deterministic_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "bootstrap_result_sha256": "08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526",
+    "rows": 144,
+    "common_parents": 36,
+    "arms": ["A00", "A10", "A01", "A11"],
+    "independent_groups": 7,
+    "group_ids": ["asset_B204", "asset_C710", "asset_G501", "asset_M101", "asset_M102", "asset_M208", "asset_S420"]
+  },
+  "execution_contract": {
+    "path": "research/frozen/p12-c4-logo-sensitivity-execution-contract-v1.json",
+    "status": "FROZEN_LOGO_EXECUTION_CONTRACT",
+    "authorization_source": "FROZEN_C4_BOOTSTRAP_20000"
+  },
+  "sources": {
+    "runner_path": "scripts/research/p12_c4_logo_sensitivity.py",
+    "runner_git_blob_sha": "f0b35c892fb3f0c3f3fdcce93d40656b1fb786f1",
+    "runner_sha256": "3b32e516c14f880756a1e20d9818323d70ec24f5a11f641f64e47904f2c9207d",
+    "validator_path": "scripts/research/p12_c4_validate_logo_sensitivity.py",
+    "validator_git_blob_sha": "3209e7577bbd2e5332bc81c2df8d5edbee4d962a",
+    "validator_sha256": "e12eb6f950ffe9a9a21b5e56ef8b648077ef4d0a73554bea9e1d3c604788a79a",
+    "historical_factorial_scorer_git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531",
+    "historical_factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22",
+    "preregistration_git_blob_sha": "0d0637a954ef544824bc69df88e47d7c790f0714"
+  },
+  "source_transport": {
+    "workflow_run_id": 33079763796,
+    "workflow_head_sha": "4e022a369410bbaf98141c8581cf8f4380bce144",
+    "status": "PASS",
+    "artifact_id": 9649478087,
+    "artifact_name": "p12-c4-logo-source-bundle",
+    "artifact_digest": "sha256:c4535c3b91c5a7af97a9eea9bafaa1f462963958c308cc92ad201462b2a85a59",
+    "provider_credentials_present": false,
+    "private_oracle_in_bundle": false
+  },
+  "logo_execution": {
+    "status": "PASS_C4_LEAVE_ONE_GROUP_OUT_SENSITIVITY_COMPLETE",
+    "full_evaluator_side_result_committed": false,
+    "full_evaluator_side_result_sha256": "bc62cc45b4e3344861a152825096a8a1b28f41f2d831f86fd81de35964363f8c",
+    "full_evaluator_side_result_bytes": 10532,
+    "sanitized_result_path": "research/results/p12-c4-logo-sensitivity-sanitized-result-2026-08-27.json",
+    "sanitized_result_git_blob_sha": "4d1a7d5e7591c71b5a203d58831fffd82e8a4874",
+    "omitted_group_estimates_per_primary_comparison": 7,
+    "retained_groups_per_estimate": 6
+  },
+  "independent_validation": {
+    "path": "research/results/p12-c4-logo-sensitivity-validation-2026-08-27.json",
+    "git_blob_sha": "55e350446387a580d90d00a7d3e820a6acfe86ee",
+    "full_validation_sha256": "cb6ccce3cbdbffe61a01ade8e121d977b6f6ca7d9552684a311cf1ba59d8d3cb",
+    "status": "PASS_INDEPENDENT_LOGO_RECOMPUTATION",
+    "historical_logo_effects_exact_match": true,
+    "mismatch_sections": []
+  },
+  "privacy_validation": {
+    "private_oracle_loaded_by_logo": false,
+    "private_expected_path_strings_checked": 160,
+    "exact_private_string_hits_in_full_logo_result": 0,
+    "private_oracle_committed": false
+  },
+  "observed_robustness_evidence": {
+    "A10_minus_A00": {
+      "mean_expected_read_recall": {
+        "full_effect": -0.079371,
+        "direction_under_all_seven_omissions": "NEGATIVE",
+        "sign_robust": true
+      },
+      "mean_extra_public_read_count": {
+        "full_effect": -0.261905,
+        "direction_under_all_seven_omissions": "NEGATIVE",
+        "sign_robust": true
+      },
+      "evidence_correctness": {
+        "full_effect": -0.047619,
+        "sign_robust": false,
+        "positive_when_omitting": "asset_M102",
+        "omit_asset_M102_effect": 0.055556
+      },
+      "task_or_reference_quality": {
+        "full_effect": -0.006805,
+        "sign_robust": false,
+        "positive_when_omitting": "asset_M102",
+        "omit_asset_M102_effect": 0.007939
+      }
+    },
+    "A01_minus_A00": {
+      "all_preregistered_primary_effects_under_all_seven_omissions": 0.0
+    },
+    "A11_minus_A00": {
+      "E1_metric_logo_pattern": "IDENTICAL_TO_A10_MINUS_A00",
+      "decision_action_escalation_and_safety_primary_effects_under_all_omissions": 0.0
+    }
+  },
+  "execution_boundaries": {
+    "provider_calls": 0,
+    "model_calls": 0,
+    "network_io_by_logo_runner": 0,
+    "private_oracle_loaded": false,
+    "scores_recomputed_or_changed": false,
+    "candidate_regeneration": false,
+    "slice_analysis_executed": false,
+    "semantic_stage_executed": false,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "survivor_decision_executed": false
+  },
+  "claim_boundary": {
+    "this_freeze_proves": "the preregistered primary C4 paired contrasts were evaluated under each of the seven whole-asset_story_group omissions using exact frozen C2 LOGO semantics and independently reproduced without score changes",
+    "this_freeze_does_not_prove": [
+      "modality-slice robustness",
+      "safety/failure-family slice robustness",
+      "complete per-group reporting required by the preregistration",
+      "any arm is a final survivor or PREFERRED candidate",
+      "semantic eligibility or semantic quality",
+      "independent generalization",
+      "production readiness"
+    ]
+  },
+  "next_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+  "next_gate_basis": {
+    "source": "p12-c2 preregistration required_reporting",
+    "note": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING is a staged project gate label covering the still-unexecuted preregistered reporting requirements; it is not claimed to be a verbatim preregistration identifier",
+    "required_outputs": [
+      "all per-group outcomes",
+      "modality slices: investigate, execute, contextualize",
+      "safety and failure-family slices",
+      "operational failure counts and denominators"
+    ]
+  },
+  "post_freeze_authorization": {
+    "required_per_group_and_slice_reporting_authorized": true,
+    "all_per_group_outcomes_authorized": true,
+    "modality_slices_authorized": ["investigate", "execute", "contextualize"],
+    "safety_and_failure_family_slices_authorized": true,
+    "operational_failure_counts_and_denominators_authorized": true,
+    "survivor_decision_authorized": false,
+    "semantic_evaluation_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "provider_calls_authorized": 0,
+    "candidate_regeneration_authorized": false,
+    "architecture_freeze_authorized": false
+  },
+  "notes": [
+    "LOGO confirms directionally stable recall reduction and extra-read reduction for the E1 factor but not sign stability for evidence correctness or task/reference quality.",
+    "S1 remains measurement-identical to S0 on its preregistered primary contrast metrics under every whole-group omission.",
+    "These observations are robustness evidence only and cannot be used to alter the frozen C4 candidate packet.",
+    "No survivor/PREFERRED decision is authorized until the remaining required reporting gate is frozen."
+  ]
+}

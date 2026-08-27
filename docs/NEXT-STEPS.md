@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE / canonical short-horizon execution plan  
-**Planning checkpoint:** 2026-08-27 10:41 BRT  
+**Planning checkpoint:** 2026-08-27 11:02 BRT  
 **Current state source:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Macro plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
@@ -12,113 +12,86 @@ This file answers only: **what should be done next from the current evidence-bac
 
 ## 1. Current execution objective
 
-C4 deterministic scoring and the preregistered 20,000-resample group-cluster bootstrap are frozen. The only currently authorized scientific gate is:
+C4 deterministic scoring, group-cluster bootstrap and leave-one-group-out sensitivity are frozen. The only currently authorized scientific gate is the staged project gate:
 
 ```text
-LEAVE_ONE_GROUP_OUT_SENSITIVITY
+REQUIRED_PER_GROUP_AND_SLICE_REPORTING
 ```
 
-The LOGO gate must consume the same frozen deterministic score-row artifact:
+This gate covers the still-unexecuted requirements from the frozen C2 preregistration `required_reporting` section:
 
-`b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`
+- all per-group outcomes;
+- modality slices: `investigate`, `execute`, `contextualize`;
+- safety and failure-family slices;
+- operational failure counts and denominators.
 
-and the frozen bootstrap result:
-
-`08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526`
-
-The omission unit is the preregistered independent `asset_story_group`. There are exactly seven independent groups.
+The gate must consume the exact frozen deterministic score rows and cannot change the C4 candidates or scores.
 
 Still forbidden:
 
-- new provider/model generation;
-- deterministic score alteration or regeneration in response to outcomes;
-- modality/failure-family slices;
+- provider/model generation;
+- score mutation or rescoring;
+- candidate regeneration;
+- survivor/PREFERRED decision before this reporting gate freezes;
 - semantic evaluation;
 - FRESH_BLIND;
 - LEGACY_LOCKED_TEST;
-- candidate regeneration;
-- survivor/PREFERRED decision before required robustness/reporting gates close;
 - final architecture freeze.
 
 ## 2. Immediate scientific sequence
 
-### Step 1 — Open a focused LOGO planning record and branch
+### Step 1 — Open a focused reporting task and branch after LOGO integration
 
-Treat LOGO as a separate Class C statistical gate. Pin:
+Pin:
 
-- bootstrap freeze Git blob;
+- LOGO freeze Git blob;
 - deterministic score-row SHA-256;
-- bootstrap-result SHA-256;
-- frozen C2 statistical scorer blob;
-- exact `logo_effects(...)` semantics;
-- seven-group geometry;
-- explicit denial of slices/semantic/blind/provider work.
+- bootstrap and LOGO result SHA-256 values;
+- frozen preregistration blob;
+- exact modality labels and reporting requirements;
+- the source used to classify modality/failure families;
+- explicit denial of survivor/semantic/blind/provider operations.
 
-### Step 2 — Build a LOGO-only runner
+### Step 2 — Build a reporting-only runner
 
-Do **not** execute the historical monolithic `p12_c2_factorial_score.py` wholesale.
+The runner may compute only the preregistered reporting summaries from already-frozen deterministic rows and public/frozen case metadata. It must not call the deterministic scorer, private oracle, provider or model.
 
-The runner may perform only the frozen leave-one-group-out calculations required by the preregistration. It must fail closed if:
+Required fail-closed checks include:
 
-- deterministic input SHA changes;
-- bootstrap freeze/result hashes do not match;
-- row count differs from 144;
-- geometry differs from 36 parents × 4 arms × 7 groups;
-- primary comparison graph changes;
-- any score is recomputed or changed;
-- provider/model/private-oracle access occurs;
-- LOGO code crosses into slices, semantic or blind evaluation.
+- score-row SHA mismatch;
+- LOGO freeze/hash mismatch;
+- 144-row / 36×4 geometry mismatch;
+- group set mismatch;
+- unknown or ambiguous modality classification;
+- post-result addition/removal of slice categories;
+- missing denominators;
+- private-oracle, semantic, blind or provider access.
 
-### Step 3 — Execute the seven leave-one-group-out estimates
+### Step 3 — Produce required per-group and slice reporting
 
-For each preregistered primary comparison and metric, omit exactly one `asset_story_group` at a time and average the paired group effects over the six retained groups, reproducing the frozen historical C2 `logo_effects(...)` semantics exactly.
+Required outputs:
 
-No new metric, comparison, threshold or post-result hypothesis may be added.
+1. per-arm outcomes for each of the seven independent `asset_story_group` groups under the frozen aggregation hierarchy;
+2. `investigate`, `execute`, `contextualize` modality summaries with explicit denominators;
+3. frozen safety/failure-family summaries with explicit denominators;
+4. operational failure counts and denominators;
+5. no candidate promotion inference inside the reporting runner.
 
-### Step 4 — Independently validate and freeze LOGO
+### Step 4 — Independently validate and freeze
 
-Validate at minimum:
+Verify exact input hashes, classifications, denominators and aggregate reconstruction. Freeze the reporting result before considering the decision rules.
 
-- seven unique omitted groups;
-- six retained groups per omission;
-- exact primary comparison graph;
-- exact equality to independent recomputation using frozen historical helper semantics;
-- deterministic-input SHA unchanged;
-- bootstrap-result SHA unchanged;
-- provider/model/private/blind accesses remain zero;
-- slices/semantic remain unexecuted.
+### Step 5 — Advance only the decision gate explicitly opened by the reporting freeze
 
-Freeze LOGO before opening any later reporting gate.
-
-### Step 5 — Advance only the gate explicitly opened by the LOGO freeze
-
-Do not assume slices, survivor selection or semantic evaluation become authorized automatically.
-
-After closure update:
-
-- `CURRENT-PROJECT-STATUS.md`;
-- machine-readable checkpoint;
-- `PROJECT-PROGRESS-LOG.md`;
-- this file.
+A later closure may authorize a **survivor/no-survivor decision** based on the already-frozen deterministic hard gates, bootstrap, LOGO and reporting evidence. It must not automatically authorize semantic evaluation or blind data.
 
 ## 3. Parallel P0/P1 work allowed
 
-Only work that cannot contaminate the frozen C4 path may continue in parallel, including delivery-gap inventory, real API/tool-contract conformance, demonstration coverage, production decision questions, and reproducibility/documentation preparation.
-
-All parallel work remains subject to P1–P4 and the P0 → P1 → justified-P2 priority rule.
+Only work that cannot contaminate the frozen C4 path may continue in parallel, including delivery-gap inventory, real API/tool-contract conformance, demonstration coverage, production decision questions and reproducibility/documentation preparation.
 
 ## 4. Work intentionally deferred
 
-Do not select or implement as final merely because it is available:
-
-- RAG/vector DB/reranker;
-- multi-agent decomposition;
-- persistent memory;
-- MCP or another protocol layer;
-- adaptive routing;
-- rich UI;
-- final provider/model/runtime;
-- final production packaging/deployment topology.
+Do not select or implement as final merely because it is available: RAG/vector DB/reranker, multi-agent decomposition, persistent memory, MCP, adaptive routing, rich UI, final provider/model/runtime or final deployment topology.
 
 ## 5. Critical path to final delivery
 
@@ -127,13 +100,13 @@ FROZEN_C4_DETERMINISTIC_SCORING
         ↓
 FROZEN_C4_BOOTSTRAP_20000
         ↓
-LEAVE_ONE_GROUP_OUT_SENSITIVITY   ← CURRENT
+FROZEN_C4_LEAVE_ONE_GROUP_OUT_SENSITIVITY
         ↓
-newly authorized reporting/robustness gate(s)
+REQUIRED_PER_GROUP_AND_SLICE_REPORTING   ← CURRENT
         ↓
 C4 survivor / no-survivor decision
         ↓
-semantic child gate if eligible
+semantic child gate only if deterministically eligible
         ↓
 candidate/evaluator freeze
         ↓
