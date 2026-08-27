@@ -1,0 +1,77 @@
+{
+  "schema_version": "p12-c4-logo-sensitivity-execution-contract-v1",
+  "status": "FROZEN_LOGO_EXECUTION_CONTRACT",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "task_issue": 7,
+  "authorization_source": {
+    "path": "research/results/p12-c4-bootstrap-20000-freeze-2026-08-27.json",
+    "git_blob_sha": "65332e227b950bc599ac6080f019c5563562af11",
+    "status": "FROZEN_C4_BOOTSTRAP_20000",
+    "authorized_gate": "LEAVE_ONE_GROUP_OUT_SENSITIVITY"
+  },
+  "inputs": {
+    "deterministic_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "bootstrap_result_sha256": "08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526",
+    "rows": 144,
+    "common_parents": 36,
+    "arms": ["A00", "A10", "A01", "A11"],
+    "independent_groups": 7,
+    "group_ids": ["asset_B204", "asset_C710", "asset_G501", "asset_M101", "asset_M102", "asset_M208", "asset_S420"]
+  },
+  "sources": {
+    "runner_path": "scripts/research/p12_c4_logo_sensitivity.py",
+    "runner_git_blob_sha": "f0b35c892fb3f0c3f3fdcce93d40656b1fb786f1",
+    "runner_sha256": "3b32e516c14f880756a1e20d9818323d70ec24f5a11f641f64e47904f2c9207d",
+    "validator_path": "scripts/research/p12_c4_validate_logo_sensitivity.py",
+    "validator_git_blob_sha": "3209e7577bbd2e5332bc81c2df8d5edbee4d962a",
+    "validator_sha256": "e12eb6f950ffe9a9a21b5e56ef8b648077ef4d0a73554bea9e1d3c604788a79a",
+    "historical_factorial_scorer_path": "scripts/research/p12_c2_factorial_score.py",
+    "historical_factorial_scorer_git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531",
+    "historical_factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22",
+    "preregistration_path": "research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json",
+    "preregistration_git_blob_sha": "0d0637a954ef544824bc69df88e47d7c790f0714"
+  },
+  "source_check": {
+    "workflow_run_id": 33079763796,
+    "workflow_head_sha": "4e022a369410bbaf98141c8581cf8f4380bce144",
+    "status": "PASS",
+    "artifact_id": 9649478087,
+    "artifact_name": "p12-c4-logo-source-bundle",
+    "artifact_digest": "sha256:c4535c3b91c5a7af97a9eea9bafaa1f462963958c308cc92ad201462b2a85a59",
+    "provider_credentials_present": false,
+    "private_oracle_in_bundle": false
+  },
+  "logo_protocol": {
+    "omission_unit": "asset_story_group",
+    "omitted_groups_per_estimate": 1,
+    "retained_groups_per_estimate": 6,
+    "estimates_per_primary_comparison": 7,
+    "semantics": "exact historical C2 logo_effects: omit one whole group and mean paired group effects over the six retained groups",
+    "primary_comparison_graph_must_remain_frozen": true
+  },
+  "allowed_operations": [
+    "verify exact deterministic-score and bootstrap-result hashes",
+    "reuse frozen score values without rescoring",
+    "reconstruct frozen nested group aggregates",
+    "compute exactly seven leave-one-asset_story_group-out estimates for each preregistered primary contrast",
+    "independently validate against frozen historical C2 logo_effects semantics",
+    "serialize sanitized LOGO evidence",
+    "freeze the LOGO result"
+  ],
+  "forbidden_operations": {
+    "private_oracle_loading": true,
+    "score_recomputation_or_change": true,
+    "provider_calls": true,
+    "model_calls": true,
+    "candidate_regeneration": true,
+    "modality_or_failure_slice_analysis": true,
+    "semantic_evaluation": true,
+    "fresh_blind_access": true,
+    "legacy_locked_test_access": true,
+    "survivor_or_preferred_decision": true,
+    "architecture_freeze": true,
+    "production_readiness_claim": true
+  },
+  "failure_policy": "FAIL_CLOSED_ON_ANY_INPUT_HASH_SCHEMA_CARDINALITY_GROUP_OR_COMPARISON_MISMATCH",
+  "next_gate_must_be_opened_only_by_separate_frozen_closure": true
+}
