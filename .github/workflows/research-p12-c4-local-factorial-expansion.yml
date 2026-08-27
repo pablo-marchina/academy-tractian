@@ -17,13 +17,30 @@ concurrency:
 
 jobs:
   expand-local-factorial:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout exact trigger commit
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+
+      - name: Match frozen C2 public Python runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install frozen C2 public runtime dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'pydantic>=2,<3'
+          python - <<'PY'
+          import pydantic
+          major = int(pydantic.__version__.split('.', 1)[0])
+          assert major == 2, pydantic.__version__
+          print('P12_C4_PUBLIC_RUNTIME_PYDANTIC_V2_PASS', pydantic.__version__)
+          PY
 
       - name: Enforce provider-free and frozen runner boundary
         shell: bash
