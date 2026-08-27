@@ -170,7 +170,7 @@ The repository was updated to:
 - formalize five manual repository maintenance gates in `REPOSITORY-GUIDE.md` without adding governance CI;
 - add `scripts/research/p12_c4_deterministic_private_scoring.py` as a gate-isolated deterministic-scoring runner.
 
-The new C4 scorer is **prepared only**. No private oracle was provisioned, no scoring workflow/trigger was created and no deterministic C4 score was executed as part of repository maintenance.
+The new C4 scorer was prepared only at that point. No private oracle was provisioned and no deterministic C4 score was executed as part of repository maintenance.
 
 ## 11. Main reconciliation and requirements-to-delivery review — 2026-08-27
 
@@ -178,12 +178,12 @@ PR #2 was marked ready and merged into `main` with merge commit:
 
 `9b5a6671176a1635676556ff1b48b4044b897a76`
 
-The merge reconciled the research/governance foundation into the canonical branch while preserving frozen/consumed provenance. It did **not** advance the scientific gate; `DETERMINISTIC_SCORING` remains the authorized next gate.
+The merge reconciled the research/governance foundation into the canonical branch while preserving frozen/consumed provenance. It did not itself advance the scientific gate.
 
-A post-merge review compared the active plans against `research/01-requirements-matrix.md`. The review strengthened final-delivery planning by:
+A post-merge review strengthened final-delivery planning by:
 
 - adding `DELIVERY-ACCEPTANCE.md` as the requirement → final capability → evidence crosswalk;
-- making both **agent construction** and the **evaluation framework** explicit P0 deliverables;
+- making both agent construction and the evaluation framework explicit P0 deliverables;
 - protecting contextualize, investigate, execute, clarify/abstain, escalate, robustness and inspectable-trace coverage;
 - requiring real API integration and per-run evaluation in the final demonstration;
 - classifying work as P0 required, P1 material production or P2 conditional enhancement;
@@ -198,9 +198,7 @@ The actual project inputs were re-reviewed together:
 - `inteli-tractian-project.zip`;
 - `tractian-kickoff.md`.
 
-The exact reviewed files/hashes and package discrepancies were frozen in:
-
-`research/tractian-source-baseline-2026-08-27.md`.
+The exact reviewed files/hashes and package discrepancies were frozen in `research/tractian-source-baseline-2026-08-27.md`.
 
 Observed package facts include 17 agent-visible cases, 17 expected-path evaluation rows, 16 narrative scenarios and 17 concrete OpenAPI operations. The audit also records that narrative package documentation contains small mismatches with the actual delivered files/contract; executable package behavior is used where appropriate without rewriting upstream evidence.
 
@@ -220,26 +218,22 @@ The repository was updated to:
 - add a Source/Brief Reconciliation Gate to `REPOSITORY-GUIDE.md`;
 - protect the final calendar window from speculative P2 complexity.
 
-This was a requirements/governance/planning reconciliation only. It did **not** execute deterministic scoring, authorize new provider calls, access FRESH_BLIND/LEGACY_LOCKED_TEST or freeze a final architecture.
+This was a requirements/governance/planning reconciliation only. It did not execute deterministic scoring, authorize new provider calls, access FRESH_BLIND/LEGACY_LOCKED_TEST or freeze a final architecture.
 
 ## 13. Development operating contract and review gates — 2026-08-27
 
-The repository had strong project principles and planning documents, but development compliance still depended on developers remembering to reconstruct the correct process manually before every task.
+A lightweight development-governance layer was added without introducing governance CI:
 
-A lightweight development-governance layer was added without introducing governance CI/workflows:
+- `CONTRIBUTING.md` defines the development operating contract;
+- changes are classified A documentation-only, B non-semantic engineering or C material semantic/experimental/product work;
+- material work must map to P0/P1 acceptance, an official rubric criterion, a material delivery risk or a required comparison;
+- `.github/ISSUE_TEMPLATE/development-task.md` and `.github/pull_request_template.md` require gate, evidence, custody and canonical-document checks;
+- Class C work requires a focused branch + planning record + governed PR.
 
-- root `CONTRIBUTING.md` now defines the mandatory development operating contract from task entry through post-merge reconciliation;
-- changes are classified as A documentation-only, B non-semantic engineering or C material semantic/experimental/product work;
-- every material task must map to a P0/P1 acceptance row, official rubric criterion, material delivery risk or required comparison before implementation;
-- `.github/ISSUE_TEMPLATE/development-task.md` prompts requirement mapping, gate/authorization, baseline/alternatives, evidence, custody boundaries and Definition of Ready/Done;
-- `.github/pull_request_template.md` prompts the same governance at review time and requires explicit canonical-document impact analysis;
-- `REPOSITORY-GUIDE.md` now contains a Development Entry Gate and identifies `CONTRIBUTING.md` as the canonical answer to how work should start/review/merge;
-- `README.md` exposes the development contract directly from the repository entrypoint.
-
-The intended normal loop is now:
+The intended normal loop became:
 
 ```text
-current main + current canonical docs
+current main + canonical docs
 → requirement/rubric/risk mapping
 → gate/authorization check
 → change classification
@@ -248,7 +242,79 @@ current main + current canonical docs
 → regression/evaluation
 → PR governance checklist
 → merge to main
-→ status/next-step/acceptance/architecture reconciliation when applicable
+→ canonical reconciliation
 ```
 
-This governance hardening did not change C4 artifacts, execute scoring, authorize provider calls, open hidden-data gates or alter the current scientific state.
+## 14. P12-C4 deterministic private scoring — FROZEN — 2026-08-27
+
+Task #3 opened the scoring work as a P0/Class C gate-isolated task on `eval/c4-deterministic-scoring`.
+
+The evaluator-side oracle provenance was resolved from existing repository history rather than reconstructed from public fixtures:
+
+- historical commit `38adcfa0ca81fec7b1e5a9fe1097441ae5208741` identifies the TRACTIAN package `eval/expected-paths.json` as the evaluator-side oracle source;
+- audited external bundle SHA-256: `37546f7abad4c573ab36384a171161f3ba6c7258024341cc42f0881d9606d134`;
+- oracle source SHA-256: `d6fb6186e4c035effe7dafa44758eaf40948ac334f0a91f8634a5731b7e0cb38`.
+
+To harden custody, the scorer did not load the full 17-row private file. A temporary evaluator-side 12-row EXPOSED_POOL subset was derived solely by exact public ticket IDs from the frozen C4 packet. The derived subset was not committed and has SHA-256 `fcb7bb6a9b722d2f07e483407934d46d5402a372eb56f9a41cb6549e81e1b768`.
+
+The handoff was frozen in:
+
+`research/frozen/p12-c4-deterministic-private-scoring-handoff-v1.json`
+
+The exact source stack was exported provider-free by workflow run `33075507040`, artifact `9647662051`, digest `sha256:ee82917efa37859486b718ccb0617bb18ebe12bf740fa77be5ea40c411679284`.
+
+Preflight result:
+
+```text
+fixed outputs verified          144
+unique exposed tickets           12
+exact unique alignments          12
+normalization failures            0
+scores computed                   0
+provider credentials              0
+fresh blind accesses              0
+legacy locked accesses            0
+```
+
+The authorized deterministic scorer then produced:
+
+```text
+status                PASS_144_OF_144_DETERMINISTIC_SCORES
+scoreable outputs                                  144 / 144
+provider calls                                           0
+model calls                                              0
+bootstrap executed                                    false
+LOGO executed                                         false
+slice analysis executed                               false
+semantic stage executed                               false
+FRESH_BLIND accesses                                      0
+LEGACY_LOCKED_TEST accesses                               0
+```
+
+The full evaluator-side row artifact remains uncommitted and is frozen by SHA-256:
+
+`b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`
+
+Independent validation recomputed all 144 rows using the exact pinned scorer stack and found **0 score mismatches**. A privacy audit found 0 exact private expected-step strings and 0 complete private oracle rows serialized in the scoring result.
+
+Canonical closure:
+
+`research/results/p12-c4-deterministic-scoring-freeze-2026-08-27.json`
+
+Status:
+
+`FROZEN_C4_DETERMINISTIC_SCORING`
+
+This closure does **not** assert any arm-level aggregate gate result, factorial effect, confidence interval, semantic eligibility, PREFERRED state, independent generalization or production readiness.
+
+It opens only the preregistered next gate:
+
+```text
+BOOTSTRAP_20000
+resamples        20,000
+seed             20260822
+confidence       95%
+resampling unit  asset_story_group
+```
+
+LOGO, slices, semantic evaluation, FRESH_BLIND, LEGACY_LOCKED_TEST, new provider calls and candidate regeneration remain unauthorized.
