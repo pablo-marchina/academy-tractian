@@ -2,6 +2,7 @@
 
 **Status:** canonical repository organization guide  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
+**Development operating contract:** [`../CONTRIBUTING.md`](../CONTRIBUTING.md)  
 **Audited project source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)
 
 ## 1. Purpose
@@ -11,6 +12,8 @@ This repository contains both a scientific evidence trail and the code that exec
 The repository uses **logical cleanup before physical relocation**: index/classify evidence first; move/delete only files proven not to be frozen, referenced, source-pinned or required for reproduction.
 
 The repository must also remain aligned with the actual TRACTIAN/Inteli brief. New upstream project material triggers requirements/plan reconciliation before implementation momentum is allowed to continue unchanged.
+
+`CONTRIBUTING.md` is the normal entry/exit procedure for development. This guide defines repository/source-of-truth policy; the contribution contract defines what a developer must check before starting, merging and reconciling work.
 
 ## 2. Two source-of-truth hierarchies
 
@@ -45,6 +48,8 @@ For what is currently true/authorized inside this repository:
 11. **README/index files** — navigation/lifecycle guidance only.
 12. **historical research narratives** — evidence/context, not current authorization.
 
+`CONTRIBUTING.md` and GitHub templates are process controls. They do not override experiment truth or current authorization.
+
 A frozen experiment can govern its own semantics without redefining the external assignment. A historical statement is not current state merely because the file exists.
 
 ## 3. Repository layout
@@ -52,6 +57,9 @@ A frozen experiment can govern its own semantics without redefining the external
 | Path | Role | Mutation policy |
 |---|---|---|
 | `README.md` | concise entrypoint/navigation | do not duplicate current gate/checkpoint |
+| `CONTRIBUTING.md` | canonical development operating contract | update when normal development entry/exit policy changes; do not redefine experiment truth |
+| `.github/ISSUE_TEMPLATE/development-task.md` | governed task-planning prompt | keep aligned with `CONTRIBUTING.md` and P0/P1/P2 mapping |
+| `.github/pull_request_template.md` | governed review/merge prompt | keep aligned with `CONTRIBUTING.md`, canonical docs and authorization rules |
 | `docs/PROJECT-PRINCIPLES.md` | mandatory project-wide governance/North Star | change only through explicit governance decision/source reconciliation |
 | `docs/CURRENT-PROJECT-STATUS.md` | sole current human state/authorization | update on evidence-backed gate/state change |
 | `docs/NEXT-STEPS.md` | short-horizon operational plan | update when gate/blocker/source changes; closed steps move to ledger |
@@ -78,6 +86,7 @@ A future production code boundary (`src/`, `tests/`, deployment/config surfaces,
 Use one document per question:
 
 ```text
+How do I start/review/merge development?     CONTRIBUTING.md
 What did TRACTIAN/Inteli actually give/ask?  research/tractian-source-baseline-*.md + requirements matrix
 Where are we?                               CURRENT-PROJECT-STATUS.md
 What do we do next?                         NEXT-STEPS.md
@@ -91,11 +100,9 @@ How is the repo maintained?                 REPOSITORY-GUIDE.md
 
 README/index files point to these documents and describe directory semantics. They should not carry mutable experiment snapshots.
 
-## 5. Manual maintenance gates
+## 5. Manual maintenance and development gates
 
-Repository maintenance remains lightweight and does **not** require adding governance CI for ordinary documentation synchronization.
-
-Apply these gates manually when the corresponding event occurs.
+Repository governance remains lightweight and does **not** require adding governance CI for ordinary synchronization. The gates below are manual, but they are mandatory for the applicable event.
 
 ### 5.1 Source / Brief Reconciliation Gate
 
@@ -114,7 +121,27 @@ Required sequence:
 
 The source reconciliation itself does not advance scientific experiment gates unless a frozen protocol explicitly says otherwise.
 
-### 5.2 Structure Gate
+### 5.2 Development Entry Gate
+
+Use before every new material task or PR.
+
+Required sequence:
+
+1. start from/reconcile against current canonical `main`;
+2. read `PROJECT-PRINCIPLES.md`, `CURRENT-PROJECT-STATUS.md`, `NEXT-STEPS.md`, `DELIVERY-ACCEPTANCE.md`, `ARCHITECTURE-ROADMAP.md` and applicable frozen artifacts;
+3. classify the change as A documentation-only, B non-semantic engineering or C material semantic/experimental/product change;
+4. map it to a P0/P1 acceptance row, official rubric dimension, material risk or required comparison;
+5. verify current gate/authorization and forbidden downstream work;
+6. define success/failure evidence before implementation where feasible;
+7. for Class C, identify the simple/null baseline and credible alternatives before selecting a solution;
+8. identify canonical documents that would need updating if the work succeeds/fails;
+9. verify the deadline impact under `PROJECT-PLAN.md`.
+
+Use `.github/ISSUE_TEMPLATE/development-task.md` when planning a tracked task and `.github/pull_request_template.md` when reviewing/merging a change.
+
+If the task cannot answer the five questions in the final section of `CONTRIBUTING.md`, the next step is planning/research, not implementation.
+
+### 5.3 Structure Gate
 
 Use when introducing a new top-level category, durable artifact family or production code surface.
 
@@ -126,7 +153,7 @@ Check:
 - does the change preserve frozen/source-pinned paths?;
 - does it simplify navigation rather than add another competing source of truth?
 
-### 5.3 Status Gate
+### 5.4 Status Gate
 
 Use whenever an evidence-backed project gate/state changes.
 
@@ -139,7 +166,7 @@ Update together:
 
 Do not update README/index files with copied current-state snapshots.
 
-### 5.4 Next-Steps Gate
+### 5.5 Next-Steps Gate
 
 Immediately after a status transition, source reconciliation or material blocker change:
 
@@ -150,7 +177,7 @@ Immediately after a status transition, source reconciliation or material blocker
 - preserve deadline-protection windows;
 - move historical details to the progress ledger instead of accumulating them in the plan.
 
-### 5.5 Architecture Gate
+### 5.6 Architecture Gate
 
 Use when research/source evidence changes a durable material architecture decision or decision scope.
 
@@ -166,7 +193,7 @@ Every final architecture component must map to a delivery requirement, official 
 
 Do not rewrite old ADRs to make history consistent with later evidence.
 
-### 5.6 Phase Closure Gate
+### 5.7 Phase Closure Gate
 
 Before declaring a macro phase complete:
 
