@@ -1,0 +1,109 @@
+name: research-p12-c4-local-factorial-expansion
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+    paths:
+      - research/frozen/p12-c4-local-factorial-expansion-trigger-v1.json
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: p12-c4-local-factorial-expansion
+  cancel-in-progress: false
+
+jobs:
+  expand-local-factorial:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact trigger commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Enforce provider-free and frozen runner boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "research/systematic-foundation"
+          test "$(git hash-object scripts/research/p12_c4_local_factorial_expansion.py)" = "ea66845c7d85a4a3407fc5eafeaa4238a1e996aa"
+          if env | grep -Eq '^(NVIDIA_API_KEY|GROQ_API_KEY|OPENAI_API_KEY)='; then
+            echo "Provider credential unexpectedly present in local-expansion job" >&2
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('research/frozen/p12-c4-local-factorial-expansion-trigger-v1.json')
+          x = json.loads(p.read_text())
+          assert x['provider_calls_authorized'] == 0
+          assert x['private_scoring_authorized'] is False
+          assert x['fresh_blind_authorized'] is False
+          assert x['legacy_locked_test_authorized'] is False
+          assert x['required_common_parents'] == 36
+          assert x['required_fixed_arm_outputs'] == 144
+          assert x['next_gate_on_pass'] == 'FREEZE_COMPLETE_C4_PACKET'
+          PY
+
+      - name: Download frozen NVIDIA 36-parent evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: p12-c4-nvidia-one-shot-live-evidence
+          github-token: ${{ github.token }}
+          repository: pablo-marchina/academy-tractian
+          run-id: 33020748838
+          path: live-evidence
+
+      - name: Materialize exact local A00 A10 A01 A11 packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/research/p12_c4_local_factorial_expansion.py \
+            --live-root live-evidence/live/p12-c4-nvidia-one-shot-v1 \
+            --out-root c4-local-expansion
+
+      - name: Enforce 144 of 144 and no scoring
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('c4-local-expansion/local-expansion-result.json').read_text())
+          assert r['status'] == 'PASS_144_OF_144_LOCAL_ARM_OUTPUTS'
+          assert r['common_parent_count'] == 36
+          assert r['fixed_arm_output_count'] == 144
+          assert r['e0_global_batch_size'] == 36
+          assert r['e1_output_count'] == 36
+          assert r['provider_calls'] == 0
+          assert r['private_oracle_accesses'] == 0
+          assert r['fresh_blind_accesses'] == 0
+          assert r['legacy_locked_test_accesses'] == 0
+          assert r['private_scoring_authorized'] is False
+          assert r['deterministic_private_scoring_executed'] is False
+          assert r['bootstrap_authorized'] is False
+          assert r['bootstrap_executed'] is False
+          assert r['next_gate'] == 'FREEZE_COMPLETE_C4_PACKET'
+          p = json.loads(Path('c4-local-expansion/fixed-factorial-outputs.json').read_text())
+          assert len(p['calls']) == 144
+          assert {x['arm'] for x in p['calls']} == {'A00','A10','A01','A11'}
+          for parent in {x['parent_id'] for x in p['calls']}:
+              rows = [x for x in p['calls'] if x['parent_id'] == parent]
+              assert len(rows) == 4
+              assert {x['arm'] for x in rows} == {'A00','A10','A01','A11'}
+              assert len({x['common_parent_row_sha256'] for x in rows}) == 1
+              assert len({x['common_parent_output_sha256'] for x in rows}) == 1
+          print('P12_C4_144_OF_144_PROVIDER_FREE_PASS')
+          PY
+
+      - name: Upload complete local packet evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-local-factorial-expansion-evidence
+          path: c4-local-expansion/
+          if-no-files-found: error
+          retention-days: 90
