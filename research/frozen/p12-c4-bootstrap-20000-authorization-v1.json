@@ -1,0 +1,67 @@
+{
+  "schema_version": "p12-c4-bootstrap-20000-authorization-v1",
+  "status": "AUTHORIZED_BOOTSTRAP_20000_ONLY",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "task_issue": 5,
+  "authorization_scope": "ONE_BOOTSTRAP_ONLY_EXECUTION_OVER_EXACT_FROZEN_DETERMINISTIC_SCORE_ROWS",
+  "input": {
+    "deterministic_scoring_freeze_path": "research/results/p12-c4-deterministic-scoring-freeze-2026-08-27.json",
+    "deterministic_scoring_freeze_git_blob_sha": "9db9c14c38da0edc83dd69147fb5b884926fcbe9",
+    "deterministic_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "deterministic_score_rows": 144,
+    "common_parents": 36,
+    "arms": ["A00", "A10", "A01", "A11"],
+    "independent_groups": 7
+  },
+  "runner": {
+    "path": "scripts/research/p12_c4_bootstrap_20000.py",
+    "git_blob_sha": "1ab8bf1069f5fdaeb361f8e066b8ac5231ace7a7",
+    "local_source_git_blob_verified_equal": true
+  },
+  "statistical_protocol": {
+    "preregistration_path": "research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json",
+    "preregistration_git_blob_sha": "0d0637a954ef544824bc69df88e47d7c790f0714",
+    "historical_factorial_scorer_path": "scripts/research/p12_c2_factorial_score.py",
+    "historical_factorial_scorer_git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531",
+    "historical_factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22",
+    "primary_interval": "GROUP_CLUSTER_PERCENTILE_BOOTSTRAP",
+    "resampling_unit": "asset_story_group",
+    "resamples": 20000,
+    "seed": 20260822,
+    "confidence_level": 0.95,
+    "aggregation_hierarchy": "asset_story_group -> scenario -> ticket -> repeated_run",
+    "effect_sizes_and_intervals_primary": true,
+    "fresh_rng_with_same_seed_per_metric": true
+  },
+  "allowed_operations": [
+    "verify exact deterministic input bytes/hash and 36x4 geometry",
+    "compute frozen arm/group aggregate quantities necessary for the bootstrap",
+    "compute preregistered primary paired contrasts",
+    "compute preregistered factorial evidence and safety main effects",
+    "compute preregistered interaction metrics",
+    "perform exactly 20000 whole-group percentile bootstrap resamples per statistic",
+    "serialize sanitized bootstrap evidence",
+    "independently validate and freeze the bootstrap result"
+  ],
+  "forbidden_operations": {
+    "private_oracle_loading": true,
+    "deterministic_score_recomputation_or_change": true,
+    "provider_calls": true,
+    "model_calls": true,
+    "candidate_regeneration": true,
+    "logo": true,
+    "modality_or_failure_slices": true,
+    "semantic_evaluation": true,
+    "fresh_blind_access": true,
+    "legacy_locked_test_access": true,
+    "preferred_or_survivor_decision": true,
+    "architecture_freeze": true,
+    "production_readiness_claim": true
+  },
+  "failure_policy": "FAIL_CLOSED_ON_ANY_INPUT_HASH_SCHEMA_CARDINALITY_GROUP_GEOMETRY_OR_PROTOCOL_MISMATCH",
+  "post_execution": {
+    "bootstrap_result_must_be_independently_validated_before_freeze": true,
+    "runner_does_not_authorize_next_gate": true,
+    "later_gate_must_be_opened_only_by_separate_frozen_closure": true
+  }
+}
