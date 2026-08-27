@@ -1,0 +1,127 @@
+{
+  "schema_version": "p12-c4-deterministic-private-scoring-handoff-v1",
+  "status": "FROZEN_EVALUATOR_SIDE_HANDOFF_READY",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "task_issue": 3,
+  "purpose": "Materialize the already-authorized DETERMINISTIC_SCORING gate without opening any later statistical, semantic, provider, fresh-blind or locked-test gate.",
+  "authorization_source": {
+    "path": "research/results/p12-c4-complete-packet-freeze-2026-08-26.json",
+    "git_blob_sha": "03b7d5a27ffdec9173e25bdf47377858bf6aeb30",
+    "required_status": "FROZEN_COMPLETE_C4_PACKET",
+    "required_next_gate": "DETERMINISTIC_SCORING",
+    "deterministic_private_scoring_authorized": true,
+    "provider_calls_authorized": 0,
+    "bootstrap_authorized_before_deterministic_scoring_completes": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false
+  },
+  "fixed_packet": {
+    "workflow_run_id": 33028989704,
+    "artifact_id": 9629510247,
+    "artifact_name": "p12-c4-local-factorial-expansion-evidence",
+    "artifact_digest": "sha256:8b9a07355c96372ead4841ec6dc9b2338ba75a6455209fad1b97f621fbe31a58",
+    "file": "fixed-factorial-outputs.json",
+    "file_sha256": "0d8df31e28e19ad3a23cf78c976daacdded4dbe995db3740d9126317182b9d37",
+    "common_parent_freeze_hash": "45ae5ed8860721350db98457c44e41c587c23b710f917c9ceb66c69a901c123e",
+    "required_common_parents": 36,
+    "required_fixed_outputs": 144,
+    "required_arms": ["A00", "A10", "A01", "A11"]
+  },
+  "scoring_sources": {
+    "runner": {
+      "path": "scripts/research/p12_c4_deterministic_private_scoring.py",
+      "git_blob_sha": "936223e0ea1310662a316eb798eac2e9ac91c830"
+    },
+    "evaluator_v4_1": {
+      "path": "scripts/research/e9_evaluator_side_scorer_v4_1.py",
+      "git_blob_sha": "b33afab0b3bfc9b81037a5391f49d286ef0d7c35"
+    },
+    "evaluator_v4": {
+      "path": "scripts/research/e9_evaluator_side_scorer_v4.py",
+      "git_blob_sha": "63145e6fe14d7dd9b90d5567ffca6aa54ced933f"
+    },
+    "tool_registry": {
+      "path": "research/e2/tool_registry.py",
+      "git_blob_sha": "97e15fa24bfe865a1cd3a7b9798365f1d3325c8b"
+    },
+    "models": {
+      "path": "research/e2/models.py",
+      "git_blob_sha": "b4a17ab686d93f51d7055174c1bc688c0af58647"
+    },
+    "activation": {
+      "path": "research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json",
+      "git_blob_sha": "96c38036411365bb2f64c5df85f9eafc31c6901e"
+    },
+    "historical_factorial_scorer_semantic_reference": {
+      "path": "scripts/research/p12_c2_factorial_score.py",
+      "git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531"
+    }
+  },
+  "private_oracle_custody": {
+    "canonical_source_kind": "TRACTIAN_DELIVERED_PACKAGE_EVAL_EXPECTED_PATHS",
+    "historical_repo_provenance_commit": "38adcfa0ca81fec7b1e5a9fe1097441ae5208741",
+    "external_bundle_sha256": "37546f7abad4c573ab36384a171161f3ba6c7258024341cc42f0881d9606d134",
+    "relative_path_inside_bundle": "inteli-tractian-project/eval/expected-paths.json",
+    "full_source_sha256": "d6fb6186e4c035effe7dafa44758eaf40948ac334f0a91f8634a5731b7e0cb38",
+    "full_source_row_count": 17,
+    "committed_to_repository": false,
+    "agent_runtime_access": false,
+    "evaluator_side_only": true,
+    "materialization_policy": {
+      "method": "derive an EXPOSED_POOL-only temporary subset using only ticket IDs from the immutable fixed C4 packet",
+      "selected_row_count": 12,
+      "selected_unique_ticket_count": 12,
+      "selection_alignment": "EXACT_PUBLIC_TICKET_ID",
+      "all_fixed_ticket_ids_have_exactly_one_source_row": true,
+      "derived_subset_sha256": "fcb7bb6a9b722d2f07e483407934d46d5402a372eb56f9a41cb6549e81e1b768",
+      "derived_subset_committed": false,
+      "non_exposed_expected_path_content_loaded_by_scorer": false
+    }
+  },
+  "scoring_semantics": {
+    "deterministic_primitive": "E9 evaluator v4.1 score_call",
+    "oracle_alignment": "EXACT_UNIQUE_TICKET_ID",
+    "group_union_fallback": false,
+    "candidate_outputs_fixed_before_private_scoring": true,
+    "bootstrap": false,
+    "logo": false,
+    "post_score_slices": false,
+    "semantic_evaluation": false,
+    "fresh_blind": false,
+    "legacy_locked_test": false
+  },
+  "execution_environment": {
+    "provider_credentials_allowed": false,
+    "provider_calls_allowed": 0,
+    "model_calls_allowed": 0,
+    "network_io_required_by_scorer": false,
+    "private_oracle_rows_may_be_serialized": false,
+    "private_expected_path_text_may_be_serialized": false,
+    "private_endpoint_lists_may_be_serialized": false
+  },
+  "fail_closed_conditions": [
+    "any frozen source Git blob mismatch",
+    "fixed artifact or file hash mismatch",
+    "packet not exactly 36 parents x 4 arms = 144 outputs",
+    "any output hash mismatch",
+    "any fixed ticket without exactly one evaluator-side oracle row",
+    "any expected-step normalization failure",
+    "any unscoreable output",
+    "any provider credential present",
+    "any provider/model call or later-gate execution",
+    "any fresh-blind or legacy-locked-test supervision access"
+  ],
+  "allowed_output": {
+    "exact_score_rows": 144,
+    "private_source_content": false,
+    "private_expected_path_text": false,
+    "automatic_preferred_state": false,
+    "automatic_next_statistical_gate_authorization": false
+  },
+  "next_transition_if_successful": "INDEPENDENTLY_VALIDATE_AND_FREEZE_C4_DETERMINISTIC_SCORING_RESULT",
+  "notes": [
+    "This handoff does not create a new provider authorization.",
+    "This handoff does not authorize bootstrap, LOGO, slices, semantic evaluation, FRESH_BLIND or LEGACY_LOCKED_TEST.",
+    "The EXPOSED_POOL-only private subset is a custody hardening step; it does not change the exact-ticket scoring semantics because non-selected oracle rows are not used by the deterministic scorer."
+  ]
+}

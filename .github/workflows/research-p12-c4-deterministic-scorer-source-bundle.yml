@@ -1,0 +1,77 @@
+name: research-p12-c4-deterministic-scorer-source-bundle
+
+on:
+  push:
+    branches: [eval/c4-deterministic-scoring]
+    paths:
+      - '.github/workflows/research-p12-c4-deterministic-scorer-source-bundle.yml'
+      - 'research/frozen/p12-c4-deterministic-private-scoring-handoff-v1.json'
+
+permissions:
+  contents: read
+
+jobs:
+  export-source-bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Assert provider-free source export boundary
+        run: |
+          test -z "${NVIDIA_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test -z "${OPENAI_API_KEY:-}"
+          test -z "${ANTHROPIC_API_KEY:-}"
+          test -z "${CEREBRAS_API_KEY:-}"
+          test -z "${OPENROUTER_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+
+      - name: Verify exact frozen source blobs
+        run: |
+          test "$(git hash-object research/results/p12-c4-complete-packet-freeze-2026-08-26.json)" = '03b7d5a27ffdec9173e25bdf47377858bf6aeb30'
+          test "$(git hash-object research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json)" = '96c38036411365bb2f64c5df85f9eafc31c6901e'
+          test "$(git hash-object scripts/research/p12_c4_deterministic_private_scoring.py)" = '936223e0ea1310662a316eb798eac2e9ac91c830'
+          test "$(git hash-object scripts/research/e9_evaluator_side_scorer_v4_1.py)" = 'b33afab0b3bfc9b81037a5391f49d286ef0d7c35'
+          test "$(git hash-object scripts/research/e9_evaluator_side_scorer_v4.py)" = '63145e6fe14d7dd9b90d5567ffca6aa54ced933f'
+          test "$(git hash-object research/e2/tool_registry.py)" = '97e15fa24bfe865a1cd3a7b9798365f1d3325c8b'
+          test "$(git hash-object research/e2/models.py)" = 'b4a17ab686d93f51d7055174c1bc688c0af58647'
+          test "$(git hash-object scripts/research/p12_c2_factorial_score.py)" = 'dc20be4896ff023989ee6deb012ad440c39ec531'
+
+      - name: Materialize exact scorer stack
+        run: |
+          ROOT="$RUNNER_TEMP/p12-c4-deterministic-scorer-stack"
+          mkdir -p "$ROOT/scripts/research" "$ROOT/research/e2" "$ROOT/research/results" "$ROOT/research/experiments" "$ROOT/research/frozen"
+          cp scripts/research/p12_c4_deterministic_private_scoring.py "$ROOT/scripts/research/"
+          cp scripts/research/e9_evaluator_side_scorer_v4_1.py "$ROOT/scripts/research/"
+          cp scripts/research/e9_evaluator_side_scorer_v4.py "$ROOT/scripts/research/"
+          cp scripts/research/p12_c2_factorial_score.py "$ROOT/scripts/research/"
+          cp research/e2/tool_registry.py "$ROOT/research/e2/"
+          cp research/e2/models.py "$ROOT/research/e2/"
+          cp research/e2/__init__.py "$ROOT/research/e2/" 2>/dev/null || true
+          cp research/__init__.py "$ROOT/research/" 2>/dev/null || touch "$ROOT/research/__init__.py"
+          cp research/results/p12-c4-complete-packet-freeze-2026-08-26.json "$ROOT/research/results/"
+          cp research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json "$ROOT/research/experiments/"
+          cp research/frozen/p12-c4-deterministic-private-scoring-handoff-v1.json "$ROOT/research/frozen/"
+          cp research/frozen/benchmark-split-v1.json "$ROOT/research/frozen/"
+          find "$ROOT" -type f -print0 | sort -z | xargs -0 sha256sum > "$ROOT/SHA256SUMS.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$ROOT/SOURCE_COMMIT.txt"
+          git --version > "$ROOT/BUILD_ENVIRONMENT.txt"
+          python --version >> "$ROOT/BUILD_ENVIRONMENT.txt"
+
+      - name: Verify no private oracle material entered bundle
+        run: |
+          ROOT="$RUNNER_TEMP/p12-c4-deterministic-scorer-stack"
+          test ! -e "$ROOT/eval/expected-paths.json"
+          test ! -e "$ROOT/private-eval/expected-paths.json"
+          ! grep -RIl --exclude='*.md' 'expected_path' "$ROOT" | grep -E '/eval/expected-paths\.json$'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-deterministic-scorer-source-bundle
+          path: ${{ runner.temp }}/p12-c4-deterministic-scorer-stack
+          retention-days: 7
+          if-no-files-found: error

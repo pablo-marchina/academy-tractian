@@ -1,0 +1,68 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "timestamp": "2026-08-27T10:20:00-03:00",
+  "canonical_branch_after_merge": "main",
+  "working_branch": "eval/c4-deterministic-scoring",
+  "project_north_star": "maximize the strongest defensible TRACTIAN x Inteli delivery while following P1-P4",
+  "scientific_state": {
+    "p12_c4_packet": "FROZEN_COMPLETE_C4_PACKET",
+    "deterministic_scoring": "FROZEN_C4_DETERMINISTIC_SCORING",
+    "fixed_outputs_scored": 144,
+    "scoreable_outputs": 144,
+    "independent_score_recomputation_mismatches": 0,
+    "current_authorized_gate": "BOOTSTRAP_20000",
+    "bootstrap_executed": false,
+    "logo_executed": false,
+    "slice_analysis_executed": false,
+    "semantic_stage_executed": false,
+    "fresh_blind_access": false,
+    "legacy_locked_test_access": false,
+    "provider_calls_authorized_now": 0,
+    "project_level_preferred": null,
+    "final_architecture": "UNFROZEN",
+    "production_readiness_claim": false
+  },
+  "deterministic_scoring_freeze": {
+    "path": "research/results/p12-c4-deterministic-scoring-freeze-2026-08-27.json",
+    "git_blob_sha": "9db9c14c38da0edc83dd69147fb5b884926fcbe9",
+    "status": "FROZEN_C4_DETERMINISTIC_SCORING",
+    "full_evaluator_side_row_artifact_committed": false,
+    "full_evaluator_side_row_artifact_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c"
+  },
+  "private_oracle_boundary": {
+    "source_bundle_sha256": "37546f7abad4c573ab36384a171161f3ba6c7258024341cc42f0881d9606d134",
+    "source_relative_path": "inteli-tractian-project/eval/expected-paths.json",
+    "source_sha256": "d6fb6186e4c035effe7dafa44758eaf40948ac334f0a91f8634a5731b7e0cb38",
+    "scorer_subset_rows": 12,
+    "scorer_subset_sha256": "fcb7bb6a9b722d2f07e483407934d46d5402a372eb56f9a41cb6549e81e1b768",
+    "non_exposed_expected_path_content_loaded_by_scorer": false,
+    "candidate_or_agent_private_oracle_access": false
+  },
+  "next_gate": {
+    "id": "BOOTSTRAP_20000",
+    "authorized": true,
+    "resamples": 20000,
+    "seed": 20260822,
+    "confidence_level": 0.95,
+    "resampling_unit": "asset_story_group",
+    "required_input_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c"
+  },
+  "still_forbidden": [
+    "new provider/model generation",
+    "score mutation/regeneration based on statistical outcome",
+    "LOGO",
+    "slice analysis",
+    "semantic evaluation",
+    "FRESH_BLIND",
+    "LEGACY_LOCKED_TEST",
+    "candidate regeneration",
+    "final architecture freeze",
+    "production readiness claim"
+  ],
+  "claim_limits": [
+    "No C4 arm aggregate deterministic gate outcome is asserted by this checkpoint.",
+    "No factorial effect or confidence interval is asserted yet.",
+    "No arm is PREFERRED or FROZEN as final candidate.",
+    "No independent generalization or production-readiness claim is supported."
+  ]
+}

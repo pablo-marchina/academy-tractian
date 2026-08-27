@@ -1,233 +1,171 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE / canonical short-horizon execution plan  
-**Planning checkpoint:** 2026-08-27 08:46 BRT  
+**Planning checkpoint:** 2026-08-27 10:20 BRT  
 **Current state source:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Macro plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
-**Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
-**Source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)
+**Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
 
-This file answers only one question: **what should be done next from the current evidence-backed project state to maximize the final TRACTIAN delivery?**
-
-It does not define experiment truth. Exact authorization and experiment semantics remain governed by `CURRENT-PROJECT-STATUS.md` and the applicable frozen artifacts/results.
+This file answers only: **what should be done next from the current evidence-backed state?** Exact authorization remains governed by `CURRENT-PROJECT-STATUS.md` and the applicable frozen artifacts/results.
 
 ## 1. Current execution objective
 
-While `CURRENT-PROJECT-STATUS.md` reports `DETERMINISTIC_SCORING` as the current authorized scientific gate, the only scientific gate that may advance is deterministic private scoring over the already frozen C4 packet.
+C4 deterministic scoring is now frozen as `FROZEN_C4_DETERMINISTIC_SCORING` with 144/144 scoreable outputs and 0 independent recomputation mismatches.
 
-No additional provider generation is authorized for this C4 packet. Bootstrap, LOGO, slices, semantic evaluation, FRESH_BLIND and LEGACY_LOCKED_TEST remain later gates and must not be executed opportunistically.
-
-The source/requirements reconciliation against the updated TAPI, delivered project package and kickoff is complete at the planning layer. It did **not** advance the scientific gate.
-
-At the project level, use this priority:
+The only newly authorized scientific gate is:
 
 ```text
-P0 requested capabilities + trustworthy evaluation
-        ↓
-P1 production/partner-quality fitness needed to operate P0
-        ↓
-P2 optional complexity only with measured benefit
+BOOTSTRAP_20000
 ```
 
-## 2. Scientific critical path — execute in order
+Frozen parameters:
 
-### Step 1 — Close deterministic-scoring provenance
+- resamples: **20,000**;
+- seed: **20260822**;
+- confidence level: **95%**;
+- resampling unit: **asset_story_group**;
+- input: the exact evaluator-side deterministic row artifact with SHA-256 `b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`.
 
-Verify and record before any private scoring execution:
+Still forbidden:
 
-- immutable C4 freeze artifact and Git blob;
-- exact 144-output artifact source, artifact ID/digest and file SHA-256;
-- exact parent/arm cardinality and output hashes;
-- evaluator v4.1 and required source/dependency blobs;
-- exact evaluator-side private-oracle source and custody mechanism;
-- absence of provider credentials from the scoring environment;
-- continued denial of FRESH_BLIND and LEGACY_LOCKED_TEST access.
+- new provider/model generation;
+- score alteration or recomputation in response to statistical outcomes;
+- LOGO;
+- modality/failure slices;
+- semantic evaluation;
+- FRESH_BLIND;
+- LEGACY_LOCKED_TEST;
+- candidate regeneration;
+- final architecture freeze.
 
-Do not infer/reconstruct private truth from public fixtures or from the delivered `eval/` package.
+## 2. Immediate scientific sequence
 
-### Step 2 — Freeze evaluator-side handoff
+### Step 1 — Create a bootstrap-only planning record and focused branch
 
-Only after oracle provenance/custody is explicit:
+Treat the statistical gate as a separate Class C task.
 
-1. verify/freeze the prepared scorer source blob and exact input hashes;
-2. freeze evaluator-side execution/authorization contract;
-3. ensure provider credentials are absent;
-4. keep private oracle evaluator-side only;
-5. define fail-closed behavior for missing, duplicate, unscoreable or mismatched outputs;
-6. define the sanitized evidence artifact that may be retained.
+The task must pin:
 
-### Step 3 — Execute deterministic scoring only
+- deterministic-scoring freeze and Git blob;
+- exact deterministic row-artifact SHA-256;
+- C2 factorial preregistration blob;
+- bootstrap count, seed, confidence level and group resampling unit;
+- exact aggregation hierarchy;
+- primary comparison graph;
+- explicit denial of LOGO/slices/semantic/blind/provider work.
 
-Prepared runner: `scripts/research/p12_c4_deterministic_private_scoring.py`.
+### Step 2 — Build/verify a bootstrap-only runner
 
-Its presence is **not execution authorization**.
+Do **not** execute the historical monolithic `p12_c2_factorial_score.py` wholesale.
 
-Execution is valid only if:
+The bootstrap runner may consume the frozen deterministic rows and implement only the preregistered statistical operations needed for the `BOOTSTRAP_20000` gate. It must stop before LOGO and slices.
 
-- exactly 144 frozen outputs are consumed;
-- all are scoreable under the frozen deterministic evaluator;
-- input/output hashes remain unchanged;
-- provider/model/network calls = 0;
-- bootstrap = 0;
-- LOGO = 0;
-- post-score slices = 0;
-- semantic evaluation = 0;
-- FRESH_BLIND/LEGACY_LOCKED_TEST access = 0.
+Required fail-closed checks:
 
-Any fail-closed outcome remains evidence and is not silently repaired.
+- deterministic input SHA mismatch;
+- anything other than 144 scoreable rows;
+- incomplete 36 × 4 factorial geometry;
+- group/scenario/ticket/repetition aggregation mismatch;
+- changed arm semantics;
+- changed bootstrap parameters;
+- provider/model/private-oracle access during the bootstrap process;
+- invocation of LOGO/slice/semantic code.
 
-### Step 4 — Independently validate and freeze deterministic result
+### Step 3 — Execute exactly the frozen bootstrap
 
-Verify:
+Required outputs are the preregistered paired effects / confidence intervals and any deterministic aggregate quantities strictly necessary to interpret that gate.
 
-- 144 score rows and exact bindings;
-- scorer/oracle/input provenance;
-- deterministic recomputation where feasible;
-- no missing/duplicate cells;
-- access/provider counters;
-- sanitized artifact integrity.
+Do not add new post-result hypotheses or alternate resampling choices.
 
-Freeze the deterministic result and stop.
+### Step 4 — Independently validate and freeze the bootstrap result
 
-### Step 5 — Advance only if the new freeze explicitly opens the next gate
+Validate at minimum:
 
-After deterministic closure:
+- 20,000 resamples actually used;
+- seed `20260822`;
+- cluster resampling by whole `asset_story_group`;
+- aggregation hierarchy unchanged;
+- expected comparison graph unchanged;
+- deterministic-input SHA unchanged;
+- provider/model/private/blind accesses remain 0;
+- no LOGO/slices/semantic stage executed.
 
-- append result to `PROJECT-PROGRESS-LOG.md`;
-- update `CURRENT-PROJECT-STATUS.md` and machine checkpoint;
-- replace this plan with the newly authorized statistical/semantic sequence;
-- do **not** assume bootstrap/LOGO/slices are automatically authorized.
+Freeze the result before opening any later analysis gate.
 
-## 3. Parallel delivery-quality work allowed now
+### Step 5 — Advance only the gate explicitly opened by the bootstrap freeze
 
-The following may proceed because it does not require private outcomes or modification of the frozen C4 packet.
+Do not assume LOGO, slices or semantic evaluation become authorized automatically.
 
-### Track A — P0/P1 delivery gap inventory
+After closure, update:
 
-Use `DELIVERY-ACCEPTANCE.md` and the audited partner package to classify each final acceptance row as:
+- `CURRENT-PROJECT-STATUS.md`;
+- machine checkpoint;
+- `PROJECT-PROGRESS-LOG.md`;
+- this file.
 
-```text
-PROVEN
-FOUNDATION_EXISTS_BUT_FINAL_PROOF_PENDING
-NOT_YET_IMPLEMENTED
-BLOCKED_BY_CURRENT_GATE
-OPTIONAL / NOT REQUIRED
-```
+## 3. Parallel P0/P1 work allowed
 
-Prioritize gaps that can threaten the final deadline:
+Work that cannot contaminate the frozen C4 statistical path may continue in parallel:
 
-- real supplied-API production-path integration;
-- contextualize/investigate/execute/clarify-or-abstain/escalate behavior;
-- degraded/conflicting/unavailable evidence handling;
-- stable typed tool contract;
-- normalized trace capture/inspection;
-- integrated evaluator over the same trace;
-- human fallback and escalation handoff;
-- action/permission safety;
-- customer-safe communication;
-- clean reproducible setup.
+1. final delivery-gap inventory against `DELIVERY-ACCEPTANCE.md`;
+2. real supplied-API/tool contract analysis and conformance preparation;
+3. final demonstration coverage design for contextualize / investigate / execute / clarify-or-abstain / escalate / conflict / failure;
+4. production decision questions, baselines and metrics for model/provider, runtime/controller, tool contract, evaluator stack, fallback policy, observability and deployment;
+5. reproducibility/documentation preparation that does not make unearned claims.
 
-Do not use private/fresh/locked outcomes to populate this inventory.
-
-### Track B — Material architecture decision preparation
-
-For each decision in `ARCHITECTURE-ROADMAP.md`:
-
-1. state the formal requirement/rubric criterion/P1 risk it serves;
-2. define the simple baseline;
-3. identify credible alternatives;
-4. predefine quality/robustness/production metrics;
-5. identify what evidence already exists vs what still requires experiment;
-6. stop short of `PREFERRED/FROZEN` until comparison evidence is adequate.
-
-Highest-priority decisions after candidate evidence closes:
-
-1. final behavior/candidate;
-2. model/provider strategy — include a strong quality frontier and feasible lower-cost/local baseline;
-3. explicit controller/runtime;
-4. stable Tool Contract + TRACTIAN API adapter;
-5. single-agent baseline vs any justified decomposition;
-6. evaluator stack;
-7. failure/human-fallback policy;
-8. action/confirmation policy for interactive production without altering benchmark semantics;
-9. observability/trace inspection;
-10. deployment/interface sufficient for the real final demo.
-
-RAG/vector/reranking/persistent memory/MCP/multi-agent/richer UI are not priority by default.
-
-### Track C — Final demonstration/evidence design
-
-Prepare the final evidence matrix without fabricating results:
-
-- contextualization;
-- investigation;
-- justified action;
-- clarification/abstention;
-- escalation with useful handoff;
-- conflict/inconclusive handling;
-- data/tool/model/provider failure path;
-- customer-safe response;
-- per-run evaluation;
-- aggregate reliability view.
-
-For each item, specify the eventual trace/evaluator evidence needed. Do not hard-code a happy-path script as the proof itself.
-
-### Track D — Delivered-package contract coverage
-
-Use the actual delivered package, not narrative assumptions:
-
-- 17 agent-visible cases;
-- 17 expected-path evaluation rows;
-- 16 narrative scenario groups;
-- 17 concrete OpenAPI operations;
-- supplied permission/justification/action semantics;
-- deterministic degraded-response controls.
-
-Preserve scenario grouping where tickets share one narrative/causal path. Do not infer missing eval utilities that were referenced in prose but absent from the reviewed ZIP.
+All such work remains subject to P1–P4 and the P0 → P1 → justified-P2 priority rule.
 
 ## 4. Work intentionally deferred
 
-Do not start merely for aesthetics, novelty or signaling maturity:
+Do not select or implement as final merely because it is available:
 
-- final production package structure before architecture evidence is sufficient;
-- final provider/model declaration before systematic comparison;
-- final runtime/orchestrator declaration;
-- RAG/vector/reranking without a demonstrated retrieval requirement/bottleneck;
-- persistent memory without measured multi-turn need;
-- multi-agent decomposition without measured advantage over single-agent baseline;
-- generalization to additional backend protocols not required by the supplied package;
-- rich UI before real-path integration/evaluation is stable;
-- FRESH_BLIND outcome access;
-- LEGACY_LOCKED_TEST access.
+- RAG/vector DB/reranker;
+- multi-agent decomposition;
+- persistent memory;
+- MCP or another protocol layer;
+- adaptive routing;
+- rich UI;
+- final provider/model/runtime;
+- final production packaging/deployment topology.
 
-## 5. Immediate priority order
+Each must earn its place through a requirement/risk mapping and controlled comparison against a simpler baseline.
+
+## 5. Critical path to final delivery
 
 ```text
-1. close deterministic-scoring provenance
-2. execute/freeze deterministic scoring only when custody is valid
-3. in parallel, close P0/P1 evidence gaps that do not depend on private outcomes
-4. advance only newly authorized evaluation gates
-5. freeze survivor/no-survivor evidence
-6. run production-fit comparisons for material choices
-7. freeze architecture
-8. implement integrated agent + evaluator production path
-9. reliability/security/reproducibility hardening
-10. final rubric-indexed demo + documentation
+FROZEN_C4_DETERMINISTIC_SCORING
+        ↓
+BOOTSTRAP_20000                  ← CURRENT
+        ↓
+newly authorized robustness/reporting gates
+        ↓
+C4 survivor / no-survivor decision
+        ↓
+semantic child gate if eligible
+        ↓
+candidate/evaluator freeze
+        ↓
+independent validation
+        ↓
+production-fit decisions
+        ↓
+architecture freeze
+        ↓
+integrated Agent + Evaluator implementation
+        ↓
+P0/P1 regression + real-path demo
+        ↓
+2026-09-08 final delivery
 ```
 
-## 6. Deadline protection rule
+## 6. Deadline protection
 
-Final delivery is 2026-09-08. Preserve the last project days for P0 acceptance closure, integrated regression, robustness/failure evidence, documentation/reproducibility and demo quality.
+The final delivery target remains 2026-09-08. Do not spend the protected integration/documentation window on speculative P2 complexity.
 
-After 2026-09-05, default against speculative P2 work unless it directly fixes a demonstrated blocker and can be re-evaluated safely.
+If a later optional feature cannot be compared, integrated and regression-tested without endangering P0/P1 closure, defer it.
 
 ## 7. Update rule
 
-Update this file whenever either condition occurs:
-
-1. the current authorized gate changes; or
-2. a material blocker/source/acceptance change alters the short-horizon path.
-
-Do not use this document as a historical ledger. Closed steps belong in `PROJECT-PROGRESS-LOG.md`; durable architecture direction belongs in `ARCHITECTURE-ROADMAP.md`; final required evidence belongs in `DELIVERY-ACCEPTANCE.md`.
+Update this file when the current authorized gate or a material blocker changes. Closed work belongs in `PROJECT-PROGRESS-LOG.md`; durable architecture belongs in `ARCHITECTURE-ROADMAP.md`; final acceptance evidence belongs in `DELIVERY-ACCEPTANCE.md`.
