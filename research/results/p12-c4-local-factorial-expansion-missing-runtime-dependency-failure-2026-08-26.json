@@ -1,0 +1,53 @@
+{
+  "schema_version": "p12-c4-local-factorial-expansion-missing-runtime-dependency-failure-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "date": "2026-08-26",
+  "status": "PRE_TRANSFORM_INFRA_FAILURE_NO_ARM_OUTPUTS",
+  "workflow_run": {
+    "run_id": 33028726884,
+    "job_id": 98376031371,
+    "head_sha": "c8f2d79c89ee6e102689c5200247239a7c64769b",
+    "run_number": 3,
+    "run_attempt": 1,
+    "conclusion": "failure"
+  },
+  "failure": {
+    "step": "Materialize exact local A00 A10 A01 A11 packet",
+    "exception": "ModuleNotFoundError: No module named 'pydantic'",
+    "cause": "FROZEN_C2_PUBLIC_RUNTIME_DEPENDENCY_NOT_INSTALLED_IN_C4_LOCAL_JOB",
+    "reference_environment": {
+      "source_path": ".github/workflows/research-p12-c2-factorial-exposed-pool.yml",
+      "source_git_blob_sha": "dffd56e3cfa088e1efc11f8aeb5f7099941e839d",
+      "python_version": "3.13",
+      "public_runtime_dependency": "pydantic>=2,<3"
+    },
+    "allowed_fix_scope": "MATCH_FROZEN_C2_PUBLIC_PYTHON_RUNTIME_ONLY"
+  },
+  "scientific_boundary": {
+    "frozen_live_artifact_downloaded": true,
+    "live_artifact_digest_verified": "sha256:f6c7e7c0673cc3030cb83efc2b7acb0f319634aa5cb1ab0ccf2244824c26986e",
+    "common_parent_rows_loaded_and_verified": 36,
+    "candidate_module_import_completed": false,
+    "e0_batch_executed": false,
+    "e1_transforms_executed": 0,
+    "s0_or_s1_transforms_executed": 0,
+    "fixed_arm_outputs_materialized": 0,
+    "provider_calls": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "private_scoring_executed": false,
+    "bootstrap_executed": false
+  },
+  "replacement_policy": {
+    "provider_cycle_affected": false,
+    "candidate_outputs_observed": false,
+    "candidate_semantics_may_change": false,
+    "runner_source_may_change": false,
+    "workflow_environment_fix_only": true,
+    "install_only_frozen_c2_public_runtime": true,
+    "provider_free_replacement_trigger_allowed": true,
+    "github_rerun_of_failed_run": false
+  },
+  "next_step": "MATCH_C2_PYTHON_3_13_AND_PYDANTIC_2_RUNTIME_THEN_CREATE_NEW_PROVIDER_FREE_TRIGGER_REVISION"
+}
