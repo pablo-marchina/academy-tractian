@@ -28,7 +28,18 @@ Use three priority tiers:
 
 A workstream that maps to no acceptance requirement, no recognized material risk and no experiment needed to select among credible alternatives should be deferred.
 
-## 3. P0 — agent construction acceptance
+## 3. P0 — project-level mandatory acceptance
+
+| Requirement | Final acceptance condition | Required evidence |
+|---|---|---|
+| REQ-001 — Individual project | final repository/delivery is attributable and self-contained as the individual project | repository authorship + final handoff |
+| REQ-003 — Technical experiment | at least one technically coherent, reproducible experiment supports a material decision/claim | frozen protocol/manifest, baseline or comparison, quantitative results, uncertainty/analysis, reproducibility artifacts |
+| REQ-004 — Document results | results, methodology, decisions, limitations and evidence are understandable from the delivered repository | final README + experiment reports + ADRs + final evaluation/limitations documentation |
+| REQ-017 — Agent + evaluation framework | final delivery contains both an operational agent path and an integrated evaluation framework | integrated runtime/evaluator demonstration + source/eval suite |
+
+These are not optional packaging details. A strong agent without a trustworthy evaluator, or strong experiments without a usable integrated agent path, does not satisfy the complete requested scope.
+
+## 4. P0 — agent construction acceptance
 
 | Requirement coverage | Final capability | Required evidence before acceptance | Current state |
 |---|---|---|---|
@@ -44,7 +55,7 @@ A workstream that maps to no acceptance requirement, no recognized material risk
 | AG-009 | Decide orient/investigate/act/escalate/clarify/abstain appropriately | deterministic decision metrics and scenario coverage | Current confirmatory evaluation directly contributes |
 | REQ-016, AG-010 | Keep calls/results inspectable | normalized structured trace containing decisions, tools, arguments, results and final outcome | Trace foundations exist; final production-path inspection pending |
 
-## 4. P0 — evaluation framework acceptance
+## 5. P0 — evaluation framework acceptance
 
 The final delivery is incomplete if it contains only an agent. The updated TAPI explicitly requires both **agent construction** and an **agent evaluation framework**.
 
@@ -65,7 +76,7 @@ The final delivery is incomplete if it contains only an agent. The updated TAPI 
 
 The evaluator deliverable should expose, where useful for the final scope: scenario execution, metrics/evaluator library, trace inspection, controlled/adversarial variants, robustness/reliability analysis, capture/replay and reproducible experiment configuration.
 
-## 5. P0 — benchmark/security integrity acceptance
+## 6. P0 — benchmark/security integrity acceptance
 
 | Constraint | Final acceptance condition |
 |---|---|
@@ -78,7 +89,7 @@ The evaluator deliverable should expose, where useful for the final scope: scena
 
 Any violation of these boundaries blocks the corresponding scientific or production-readiness claim.
 
-## 6. P1 — production-path acceptance
+## 7. P1 — production-path acceptance
 
 Production-first means the selected behavior must be operable beyond a benchmark script. Before production readiness is claimed, the applicable final system must demonstrate:
 
@@ -96,7 +107,7 @@ Production-first means the selected behavior must be operable beyond a benchmark
 | Reproducibility | clean setup/build/run path from documented inputs |
 | Rollback | known reversal/rollback path for the selected release |
 
-## 7. Final demonstration acceptance
+## 8. Final demonstration acceptance
 
 The final demonstration must exercise the **real integrated path**, not a scripted mock-only path.
 
@@ -111,7 +122,7 @@ Minimum demonstration portfolio:
 7. **Per-run evaluation:** the resulting trace is evaluated by the integrated evaluation framework without exposing evaluation-only truth to the agent.
 8. **Reliability view:** show aggregate/repeated-run or robustness evidence rather than relying on a single happy path.
 
-## 8. Final documentation/package acceptance
+## 9. Final documentation/package acceptance
 
 Final handoff should include:
 
@@ -128,7 +139,9 @@ Final handoff should include:
 - reproducibility/provenance package;
 - real production-path demonstration instructions.
 
-## 9. Architecture complexity gate
+This section is the final closure evidence for REQ-003 and REQ-004, not a substitute for the underlying experiment/result artifacts.
+
+## 10. Architecture complexity gate
 
 No optional architecture component is a delivery requirement by itself.
 
@@ -146,14 +159,18 @@ Does controlled quantitative evidence show material benefit after production cos
 
 This is how the project maximizes quality: **complete mandatory behavior and evidence first; add complexity only when it earns its place quantitatively.**
 
-## 10. Final acceptance rule
+## 11. Final acceptance rule
 
 The project may be called complete only when:
 
 ```text
-requested P0 capabilities are demonstrably covered
+REQ-001/003/004/017 project-level obligations are closed
++
+requested P0 agent capabilities are demonstrably covered
 +
 evaluation framework is integrated and trustworthy
++
+benchmark/security integrity boundaries hold
 +
 applicable P1 production risks are closed or explicitly bounded
 +
