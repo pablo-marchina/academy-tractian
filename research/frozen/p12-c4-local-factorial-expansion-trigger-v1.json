@@ -20,11 +20,18 @@
   "fresh_blind_authorized": false,
   "legacy_locked_test_authorized": false,
   "local_expansion_runner_git_blob_sha": "856e0e26dac1e0e4b44746b65ed932234c6d913c",
+  "local_expansion_workflow_git_blob_sha": "57559bc78a84c122f1490343a9ad10095f856b71",
   "next_gate_on_pass": "FREEZE_COMPLETE_C4_PACKET",
   "on_incomplete_expansion": "FAIL_CLOSED_NO_SCORING",
   "partial_expansion_scoring_allowed": false,
   "private_scoring_authorized": false,
   "provider_calls_authorized": 0,
+  "public_runtime": {
+    "source": "FROZEN_P12_C2_WORKFLOW",
+    "source_workflow_git_blob_sha": "dffd56e3cfa088e1efc11f8aeb5f7099941e839d",
+    "python_version": "3.13",
+    "pydantic_requirement": "pydantic>=2,<3"
+  },
   "replacement_chain": [
     {
       "run_id": 33028318700,
@@ -35,10 +42,15 @@
       "run_id": 33028430280,
       "state": "PRE_TRANSFORM_INFRA_FAILURE_NO_ARM_OUTPUTS",
       "reason": "ADD_REPOSITORY_ROOT_TO_PYTHONPATH_ONLY"
+    },
+    {
+      "run_id": 33028726884,
+      "state": "PRE_TRANSFORM_INFRA_FAILURE_NO_ARM_OUTPUTS",
+      "reason": "MATCH_FROZEN_C2_PYTHON_3_13_AND_PYDANTIC_V2_RUNTIME_ONLY"
     }
   ],
-  "replacement_of_pre_transform_run_id": 33028430280,
-  "replacement_reason": "PYTHONPATH_ENVIRONMENT_FIX_ONLY_NO_ARM_OUTPUTS_OBSERVED",
+  "replacement_of_pre_transform_run_id": 33028726884,
+  "replacement_reason": "FROZEN_C2_PUBLIC_RUNTIME_ENVIRONMENT_FIX_ONLY_NO_ARM_OUTPUTS_OBSERVED",
   "required_common_parents": 36,
   "required_fixed_arm_outputs": 144,
   "schema_version": "p12-c4-local-factorial-expansion-trigger-v1",
