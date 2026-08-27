@@ -1,0 +1,85 @@
+{
+  "authored_openapi": {
+    "duplicate_path_keys": [
+      "/assets/{assetId}"
+    ],
+    "duplicate_path_occurrences": [
+      {
+        "line": 331,
+        "path": "/assets/{assetId}"
+      },
+      {
+        "line": 348,
+        "path": "/assets/{assetId}"
+      }
+    ],
+    "duplicate_path_operations": [
+      {
+        "method": "GET",
+        "operation_id": "getAsset",
+        "operation_id_line": 334,
+        "path": "/assets/{assetId}"
+      },
+      {
+        "method": "PATCH",
+        "operation_id": "updateAssetConfig",
+        "operation_id_line": 351,
+        "path": "/assets/{assetId}"
+      }
+    ],
+    "lossy_mapping_parser_risk": true,
+    "operation_count": 18,
+    "path_key_occurrence_count": 18,
+    "unique_path_count": 17
+  },
+  "conformance": {
+    "authored_openapi_equals_tool_registry": true,
+    "authored_openapi_routes_equal_implementation_routes": true,
+    "mismatches": {
+      "implementation_routes_missing_from_openapi": [],
+      "implementation_routes_missing_from_registry": [],
+      "openapi_missing_from_registry": [],
+      "openapi_routes_missing_from_implementation": [],
+      "registry_missing_from_openapi": [],
+      "registry_routes_missing_from_implementation": []
+    },
+    "tool_registry_routes_equal_implementation_routes": true
+  },
+  "custody_boundaries": {
+    "evaluation_or_gold_material_accessed": false,
+    "model_calls": 0,
+    "provider_calls": 0,
+    "raw_partner_source_committed": false,
+    "scientific_gate_state_changed": false
+  },
+  "delivered_tests": {
+    "get_asset_route_tested": true
+  },
+  "executable_implementation": {
+    "get_asset_route_present": true,
+    "route_count": 18,
+    "unique_normalized_method_path_count": 18
+  },
+  "interpretation": {
+    "intended_operation_count": 18,
+    "normalization_rule": "merge duplicate path-key method blocks into one normalized path item; preserve both operations and validate against executable implementation/tests",
+    "root_cause_of_prior_17_operation_parse": "duplicate YAML mapping key /assets/{assetId}; ordinary mapping loaders may retain only one of GET getAsset or PATCH updateAssetConfig",
+    "unique_path_template_count": 17
+  },
+  "schema_version": "tractian-api-contract-conformance-v1",
+  "source_identity": {
+    "implementation_sha256": "a9bdfb8a5fc85e8f169438984f787ad5fd0db95cdd2dc41a15e05ca363a3ca78",
+    "openapi_sha256": "8b3fdc5da50a8fa2923928a2f5aebcfe5034c622dba222df84f56abcd0b4aabf",
+    "tests_sha256": "b50fbabe2f497290a01984ba0663bb0b787184f0bc1b367e90871d0912326443",
+    "tool_registry_git_blob": "85b0cefe5fb207518feb264b0c765c9267760c75"
+  },
+  "status": "PASS_NORMALIZED_18_OPERATIONS_17_UNIQUE_PATHS",
+  "task_issue": 11,
+  "tool_registry": {
+    "get_asset_present": true,
+    "tool_count": 18,
+    "unique_method_path_count": 18,
+    "unique_path_count": 17,
+    "update_asset_config_present": true
+  }
+}

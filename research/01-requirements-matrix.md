@@ -28,12 +28,14 @@ The reviewed package contains:
 - 17 agent-visible case rows in `agent-input/cases.json`;
 - 17 evaluation rows in `eval/expected-paths.json`;
 - 16 narrative scenarios in `docs/test-scenarios.md` / `eval/test-scenarios.md`;
-- 17 concrete operations in the delivered agent-facing OpenAPI;
+- **18 authored operations across 17 unique path templates** in the delivered agent-facing OpenAPI after duplicate-aware normalization;
+- the source YAML repeats `/assets/{assetId}` for `GET getAsset` and `PATCH updateAssetConfig`; ordinary mapping loaders can silently expose only 17 operations by overwriting one duplicate path key;
+- the normalized 18-operation contract matches the executable FastAPI implementation and the canonical Tool Registry with zero operation/route mismatches;
 - deterministic seed control plus degraded query behavior;
 - authenticated/permission-checked impact actions with justification validation;
 - accepted action semantics (`accepted=true`) without a required asynchronous status cycle.
 
-Known source-quality discrepancies are recorded rather than silently corrected in `tractian-source-baseline-2026-08-27.md`. In particular, the package README's endpoint count and the Student Guide's reference to missing eval helper files must not be treated as executable facts when the delivered contract/files differ.
+Known source-quality discrepancies are recorded rather than silently corrected in `tractian-source-baseline-2026-08-27.md`. The API contract's duplicate YAML path key must be normalized before contract interpretation; the package README's 18-endpoint count is consistent with the intended executable operation count, while a lossy 17-operation mapping parse is not authoritative. The Student Guide's references to missing eval helper files remain a separate source discrepancy. The duplicate-path conformance evidence is recorded in `research/results/tractian-api-contract-conformance-2026-08-27.json`.
 
 ## Core project requirements
 

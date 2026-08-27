@@ -200,7 +200,7 @@ The actual project inputs were re-reviewed together:
 
 The exact reviewed files/hashes and package discrepancies were frozen in `research/tractian-source-baseline-2026-08-27.md`.
 
-Observed package facts include 17 agent-visible cases, 17 expected-path evaluation rows, 16 narrative scenarios and 17 concrete OpenAPI operations. The audit also records that narrative package documentation contains small mismatches with the actual delivered files/contract; executable package behavior is used where appropriate without rewriting upstream evidence.
+Observed package facts include 17 agent-visible cases, 17 expected-path evaluation rows, 16 narrative scenarios and the then-observed 17-operation lossy OpenAPI parse. A later duplicate-aware conformance audit (section 17) corrected the API interpretation to 18 authored operations across 17 unique path templates without rewriting the upstream source. The audit also records that narrative package documentation contains small mismatches with the actual delivered files/contract; executable package behavior is used where appropriate without rewriting upstream evidence.
 
 This reconciliation established a fixed repository North Star:
 
@@ -418,3 +418,53 @@ Status:
 `FROZEN_C4_LEAVE_ONE_GROUP_OUT_SENSITIVITY`
 
 The closure opens only the staged `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` gate covering still-unexecuted preregistered reporting requirements: all per-group outcomes, `investigate`/`execute`/`contextualize` modality slices, safety/failure-family slices, and operational failure counts/denominators. Survivor selection, semantic evaluation and blind partitions remain blocked.
+
+## 17. Duplicate-aware TRACTIAN API contract conformance — COMPLETE — 2026-08-27
+
+Task #11 re-audited the exact delivered agent-facing API source because the canonical baseline had interpreted the OpenAPI as 17 operations / 17 paths while the historical Tool Registry contained 18 tools.
+
+The exact source identities were re-verified without committing raw partner material:
+
+```text
+package ZIP SHA-256       37546f7abad4c573ab36384a171161f3ba6c7258024341cc42f0881d9606d134
+OpenAPI SHA-256           8b3fdc5da50a8fa2923928a2f5aebcfe5034c622dba222df84f56abcd0b4aabf
+api/app/main.py SHA-256   a9bdfb8a5fc85e8f169438984f787ad5fd0db95cdd2dc41a15e05ca363a3ca78
+api/tests/test_api.py     b50fbabe2f497290a01984ba0663bb0b787184f0bc1b367e90871d0912326443
+```
+
+A duplicate-aware audit found that `agent-input/api-contract.openapi.yaml` authors the YAML mapping key `/assets/{assetId}` twice:
+
+- first occurrence: `GET` / `getAsset`;
+- second occurrence: `PATCH` / `updateAssetConfig`.
+
+Ordinary YAML mapping loaders can overwrite the first occurrence and incorrectly expose only 17 operations. The source-authored contract actually contains **18 operations across 17 unique path templates**.
+
+The correction was validated against two independent operational sources:
+
+- executable FastAPI implementation: 18 matching method/path routes;
+- delivered API tests: explicit `GET /assets/asset_M101` success and 404 coverage.
+
+The canonical `research/e2/tool_registry.py` already represented both operations. Its invariants were hardened to require 18 unique method/path signatures, 18 operation IDs, 17 unique path templates and the exact GET/PATCH duplicate-path pair.
+
+Sanitized conformance result:
+
+`research/results/tractian-api-contract-conformance-2026-08-27.json`
+
+Status:
+
+`PASS_NORMALIZED_18_OPERATIONS_17_UNIQUE_PATHS`
+
+Conformance result:
+
+```text
+authored OpenAPI ↔ Tool Registry        exact match
+OpenAPI routes ↔ FastAPI implementation exact match
+Tool Registry ↔ FastAPI implementation  exact match
+mismatch sections                       0
+raw partner source committed            false
+evaluation/gold material accessed        false
+provider/model calls                     0
+C4 scientific state changed              false
+```
+
+`research/tractian-source-baseline-2026-08-27.md` and `research/01-requirements-matrix.md` were reconciled to preserve the upstream duplicate-key defect as evidence while using duplicate-aware normalization for the canonical Tool Contract. This work changes source interpretation only; it does not mutate frozen C4 artifacts, scores, candidates, authorization or the current `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` gate.
