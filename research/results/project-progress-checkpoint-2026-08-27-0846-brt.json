@@ -1,0 +1,88 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "project": "academy-tractian",
+  "timestamp_brt": "2026-08-27T08:46:00-03:00",
+  "canonical_branch": "main",
+  "source_reconciliation": {
+    "status": "COMPLETE_PLANNING_LAYER_ONLY",
+    "source_audit": "research/tractian-source-baseline-2026-08-27.md",
+    "sources": {
+      "updated_tapi_pdf_sha256": "3e7048bcdf52da8dda699cc6f68808dea6a37d45c0c7eb531c9d72d6f79500d1",
+      "delivered_project_zip_sha256": "37546f7abad4c573ab36384a171161f3ba6c7258024341cc42f0881d9606d134",
+      "kickoff_md_sha256": "1735c73959bf6f6e2fbe672aaca759a494b73fbc3843ab35e526b7a8ecd4b78c"
+    },
+    "package_observations": {
+      "agent_visible_cases": 17,
+      "expected_path_rows": 17,
+      "narrative_scenarios": 16,
+      "openapi_operations": 17,
+      "gold_runtime_separation_required": true
+    }
+  },
+  "scientific_state": {
+    "benchmark_integrity_gate": "CLOSED",
+    "p12_protocol": "FROZEN",
+    "p12_c1": "CLOSED_DETERMINISTIC_FAIL_NO_ARM_QUALIFIED",
+    "p12_c2": "CONSUMED_OPERATIONAL_FAILURE_31_OF_36_NO_SCORING",
+    "p12_c3": "CONSUMED_TERMINAL_OPERATIONAL_FAILURE_3_OF_36_NO_SCORING",
+    "p12_c4_common_parents": "PASS_36_OF_36",
+    "p12_c4_factorial_outputs": "PASS_144_OF_144",
+    "p12_c4_packet": "FROZEN_COMPLETE_C4_PACKET",
+    "current_authorized_gate": "DETERMINISTIC_SCORING",
+    "provider_calls_authorized_now": 0,
+    "bootstrap_authorized": false,
+    "fresh_blind_outcome_access_authorized": false,
+    "legacy_locked_test_access_authorized": false,
+    "project_level_preferred": null,
+    "final_architecture": "UNFROZEN",
+    "production_readiness_claim_authorized": false
+  },
+  "delivery_governance": {
+    "project_north_star": "maximize_actual_tractian_inteli_delivery_quality_under_project_principles",
+    "priority_order": [
+      "P0_REQUESTED_CAPABILITIES_AND_TRUSTWORTHY_EVALUATION",
+      "P1_PRODUCTION_PARTNER_QUALITY_FITNESS",
+      "P2_OPTIONAL_COMPLEXITY_ONLY_WITH_MEASURED_BENEFIT"
+    ],
+    "official_rubric_dimensions_explicit": [
+      "api_integration_quality",
+      "technical_coherence",
+      "hypothesis_experiment_clarity",
+      "result_analysis_quality",
+      "limitations_and_risks",
+      "reproducibility",
+      "documentation",
+      "demonstration_quality"
+    ],
+    "partner_quality_guidance_reconciled": [
+      "operational_conclusion_over_exact_wording",
+      "observable_process_evaluation",
+      "safe_human_fallback",
+      "useful_escalation_handoff",
+      "customer_safe_communication",
+      "stable_agent_facing_tool_contract",
+      "quality_frontier_before_cost_only_optimization"
+    ]
+  },
+  "canonical_docs": {
+    "principles": "docs/PROJECT-PRINCIPLES.md",
+    "current_status": "docs/CURRENT-PROJECT-STATUS.md",
+    "next_steps": "docs/NEXT-STEPS.md",
+    "delivery_acceptance": "docs/DELIVERY-ACCEPTANCE.md",
+    "architecture_roadmap": "docs/ARCHITECTURE-ROADMAP.md",
+    "project_plan": "docs/PROJECT-PLAN.md",
+    "progress_log": "docs/PROJECT-PROGRESS-LOG.md",
+    "repository_guide": "docs/REPOSITORY-GUIDE.md",
+    "requirements_matrix": "research/01-requirements-matrix.md",
+    "source_baseline": "research/tractian-source-baseline-2026-08-27.md"
+  },
+  "execution_counters_during_reconciliation": {
+    "provider_calls": 0,
+    "deterministic_scoring_runs": 0,
+    "bootstrap_runs": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_accesses": 0,
+    "candidate_outputs_changed": false
+  },
+  "next_gate": "DETERMINISTIC_SCORING"
+}
