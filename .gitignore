@@ -8,6 +8,7 @@ venv/
 # Local configuration
 .env
 .env.*
+!.env.example
 
 # Partner package / evaluator-only material must not be published until policy is clarified
 inteli-tractian-project.zip
