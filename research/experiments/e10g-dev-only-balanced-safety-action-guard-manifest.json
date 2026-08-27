@@ -1,0 +1,60 @@
+{
+  "manifest_version": "e10g-dev-only-balanced-safety-action-guard-v1",
+  "date": "2026-08-16",
+  "status": "READY_FOR_LOCAL_DEV_ONLY_CAPTURE",
+  "purpose": "Recover DEV action quality after E10f overblocking while preserving the safety constraints learned from E10d/E10e full remeasurement.",
+  "scope": {
+    "allowed_splits": ["DEV"],
+    "validation_ran": false,
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false,
+    "forbidden_splits": ["VALIDATION_TUNING", "LOCKED_TEST"]
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+  },
+  "repeats": {
+    "DEV": 2
+  },
+  "candidate_policy_changes": {
+    "inherits_e10e_visible_premature_action_guard": true,
+    "does_not_inherit_e10f_overblocking_thresholds": true,
+    "balanced_guard_uses_only_visible_output": true,
+    "preserve_action_when_endpoint_and_evidence_are_visible_supported": true,
+    "block_state_changing_action_when_visible_safety_invariants_fail": true,
+    "human_handoff_endpoints_treated_as_review_not_autonomous_change": true
+  },
+  "guard_must_not_use": [
+    "private_expected_paths",
+    "evaluator_labels",
+    "reference_trajectories",
+    "validation_rows",
+    "validation_feedback",
+    "locked_test_material"
+  ],
+  "acceptance_target_before_full_remeasurement": {
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "evidence_correctness_min": 1.0,
+    "action_correctness_min": 1.0,
+    "escalation_correctness_min": 1.0,
+    "decision_correctness_min": 1.0,
+    "real_task_quality_min": 0.8571,
+    "locked_test_accessed": false
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  }
+}

@@ -1,0 +1,140 @@
+name: research-p12-c3-b1-preprovider-amendment-self-check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/research/p12_c3_checkpointed_runner_fixup.py'
+      - 'scripts/research/p12_c3_checkpointed_runner_fixup_v1_frozen.py'
+      - 'scripts/research/p12_c3_checkpointed_runner_preprovider_amendment.py'
+      - 'research/experiments/p12-c3-b1-pre-provider-pacing-validation-amendment-v1.json'
+      - '.github/workflows/research-p12-c3-b1-preprovider-amendment-self-check.yml'
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  PYTHONPATH: .
+  EXECUTION_ID: P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23
+  ACTIVATION: research/experiments/p12-c3-capacity-controlled-activation-eligibility-v1.json
+  BATCH_MAP: research/frozen/p12-c3-capacity-batch-map-v1.json
+  CAPACITY_CONTROL: scripts/research/p12_c3_capacity_control.py
+  CHECKPOINT_BASE: scripts/research/p12_c3_checkpointed_batch_runner.py
+  CHECKPOINT_FIXUP: scripts/research/p12_c3_checkpointed_runner_fixup.py
+  PARENT_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
+
+jobs:
+  provider-free-preprovider-amendment-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public runtime dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Assert provider/private boundary
+        run: |
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Re-run frozen P12 and C3 activation guards
+        run: |
+          python scripts/research/big_b4_protocol_guard.py
+          python scripts/research/p12_c3_capacity_activation_self_check.py >/tmp/p12-c3-activation.json
+      - name: Derive parent runner and amended checkpoint runner through canonical path
+        run: |
+          git hash-object "$PARENT_BUNDLE" | grep -Fx 'a5c27394014bac656faa0a2f923a5c5da72d66f5'
+          git hash-object scripts/research/p12_c3_checkpointed_runner_fixup_v1_frozen.py | grep -Fx 'edf38534ee6cede336432c644e01fda2b49944c3'
+          git hash-object scripts/research/p12_c3_checkpointed_runner_preprovider_amendment.py | grep -Fx '6058c28ab84b3041c7d757532579d9086e40a413'
+          git hash-object "$CHECKPOINT_FIXUP" | grep -Fx '8e5ee853577ac68eaa37480564eee1401e9095d8'
+          python scripts/research/p12_c2_execution_derivation.py --parent-gz "$PARENT_BUNDLE" --out scripts/research/p12_c3_runtime_parent_execution.py
+          echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  scripts/research/p12_c3_runtime_parent_execution.py' | sha256sum -c -
+          python "$CHECKPOINT_FIXUP" --base "$CHECKPOINT_BASE" --out /tmp/p12_c3_checkpointed_batch_runner_amended.py | tee /tmp/amended-runner.sha256
+          echo '07808b140d5f90211d5c3445988b46983754825303cbb66123255143094e08be  /tmp/p12_c3_checkpointed_batch_runner_amended.py' | sha256sum -c -
+          python -m py_compile scripts/research/p12_c3_runtime_parent_execution.py /tmp/p12_c3_checkpointed_batch_runner_amended.py
+      - name: Prove E14l validation bridge restores frozen C3 transport ownership
+        env:
+          E8_ENABLE_GROQ: '1'
+          E8_CONFIRM_ZERO_COST: '1'
+          E8_GROQ_MODEL: openai/gpt-oss-120b
+          E8_MODEL_TEMPERATURE: '0'
+          E14_REASONING_EFFORT: medium
+          E14_REASONING_FORMAT: hidden
+          E14_RESPONSE_FORMAT_MODE: json_schema_strict
+          E14_MAX_COMPLETION_TOKENS: '4096'
+          E8_BETWEEN_CALL_DELAY_SECONDS: '0'
+          E14F_REPAIR_DELAY_SECONDS: '0'
+          E14_MAX_RETRIES: '0'
+        run: |
+          python - <<'PY'
+          import importlib.util, os
+          from pathlib import Path
+          def load(name,path):
+              s=importlib.util.spec_from_file_location(name,path); assert s and s.loader
+              m=importlib.util.module_from_spec(s); s.loader.exec_module(m); return m
+          c3=load('c3amended',Path('/tmp/p12_c3_checkpointed_batch_runner_amended.py'))
+          parent=c3.base_mod('c3parent',Path('scripts/research/p12_c3_runtime_parent_execution.py'))
+          before={k:os.environ[k] for k in ('E8_BETWEEN_CALL_DELAY_SECONDS','E14F_REPAIR_DELAY_SECONDS','E14_MAX_RETRIES')}
+          assert before=={'E8_BETWEEN_CALL_DELAY_SECONDS':'0','E14F_REPAIR_DELAY_SECONDS':'0','E14_MAX_RETRIES':'0'}
+          c3.assert_parent_config_with_c3_transport_override(parent)
+          after={k:os.environ[k] for k in before}
+          assert after==before
+          parent.e14o.e14l.schema.run_self_checks()
+          print('P12_C3_PREPROVIDER_E14L_BRIDGE_PASS')
+          PY
+      - name: Download exact failed B1 checkpoint and prove pending-only resume is accepted
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/prior /tmp/resume
+          gh run download 32671370930 --repo "$GITHUB_REPOSITORY" --name p12-c3-private-checkpoint-latest --dir /tmp/prior
+          test -s /tmp/prior/checkpoint.json
+          python /tmp/p12_c3_checkpointed_batch_runner_amended.py prepare \
+            --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+            --batch-id B1 --checkpoint-in /tmp/prior/checkpoint.json --checkpoint-out /tmp/resume/checkpoint.json --public-out /tmp/resume/public.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/resume/public.json'))
+          assert p['completed_cell_count']==0
+          assert p['pending_cell_count']==36
+          assert p['first_live_call_at'] is None
+          assert p['horizon_deadline'] is None
+          assert p['terminal_failure_present'] is False
+          assert p['raw_outputs_present'] is False
+          assert p['private_oracle_present'] is False
+          print('P12_C3_EXACT_B1_CHECKPOINT_RESUME_PASS')
+          PY
+      - name: Emit sanitized canonical amendment qualification
+        run: |
+          python - <<'PY'
+          import json
+          sha=open('/tmp/amended-runner.sha256').read().strip().splitlines()[-1]
+          out={
+            'status':'PASS',
+            'failed_live_run_id':32671370930,
+            'provider_requests_in_failed_run':0,
+            'candidate_outcomes_observed':0,
+            'completed_cells_before_amendment':0,
+            'pending_cells':36,
+            'amended_effective_runner_sha256':sha,
+            'canonical_fixup_path':'scripts/research/p12_c3_checkpointed_runner_fixup.py',
+            'e14l_validation_bridge':'PASS',
+            'frozen_c3_transport_overrides_restored':'PASS',
+            'exact_failed_checkpoint_resume':'PASS',
+            'provider_calls_in_qualification':0,
+            'private_oracle_access':0,
+            'fresh_blind_access':0,
+            'legacy_locked_test_access':0
+          }
+          open('/tmp/p12-c3-b1-preprovider-amendment-self-check.json','w').write(json.dumps(out,indent=2))
+          print(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c3-b1-preprovider-amendment-self-check
+          path: /tmp/p12-c3-b1-preprovider-amendment-self-check.json
+          retention-days: 90
+          if-no-files-found: error

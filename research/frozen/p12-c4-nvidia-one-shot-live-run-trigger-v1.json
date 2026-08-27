@@ -1,0 +1,19 @@
+{
+  "schema_version": "p12-c4-nvidia-one-shot-live-run-trigger-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "manifest_id": "P12-C4-NVIDIA-ONE-SHOT-LIVE-V1",
+  "authorization_id": "P12-C4-NVIDIA-ONE-SHOT-LIVE-EXECUTION-AUTH-V1",
+  "status": "FROZEN_TRIGGER_SOLE_LIVE_EXECUTION",
+  "date": "2026-08-26",
+  "manifest_git_blob_sha": "28971da8c4c20dad9b73b909997b6e486a420cd5",
+  "authorization_git_blob_sha": "f177dd6f12fdf3b097c3e964ddda2f6ef9251edd",
+  "runner_git_blob_sha": "7f83f0143046208e5c37da4dbd3a57156d5a0a78",
+  "maximum_live_executions": 1,
+  "maximum_provider_request_attempts": 36,
+  "maximum_attempts_per_parent": 1,
+  "minimum_seconds_between_request_starts": 75,
+  "rerun_allowed": false,
+  "resume_allowed": false,
+  "private_scoring_authorized": false,
+  "terminal_rule": "36_OF_36_OR_CONSUMED_TERMINAL_INCOMPLETE_NO_SCORING"
+}

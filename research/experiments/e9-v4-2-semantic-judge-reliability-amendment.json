@@ -1,0 +1,48 @@
+{
+  "amendment_id": "E9-V4.2-SEMANTIC-JUDGE-RELIABILITY-2026-08-18",
+  "status": "PREREGISTERED_BEFORE_ANY_REAL_SEMANTIC_JUDGE_LABELS",
+  "date": "2026-08-18",
+  "parent_protocol": "E9-v4.2-semantic-groundedness",
+  "purpose": "Freeze judge reliability requirements before any semantic label from E14l, E14n, or a future candidate is observed.",
+  "scope": {
+    "synthetic_public_suite_only_for_reliability_calibration": true,
+    "private_oracle_used": false,
+    "private_scorer_rows_used": false,
+    "validation_feedback_used": false,
+    "locked_test_used": false
+  },
+  "judge_independence": {
+    "candidate_model_may_not_be_sole_semantic_judge": true,
+    "judge_model_family_should_differ_from_candidate_when_practical": true,
+    "judge_prompt_must_not_include_candidate_quality_metrics": true,
+    "judge_prompt_must_not_include_expected_paths_or scorer labels": true,
+    "temperature": 0,
+    "structured_output_required": true
+  },
+  "frozen_public_synthetic_suite": "research/frozen/e9-v4-2-semantic-groundedness-synthetic-suite-v1.json",
+  "required_reliability_metrics": {
+    "support_label_exact_accuracy_min": 0.90,
+    "claim_type_exact_accuracy_min": 0.85,
+    "critical_false_support_rate_required": 0.0,
+    "critical_false_support_definition": "gold CONTRADICTED or NOT_SUPPORTED predicted as SUPPORTED",
+    "factual_safety_recall_required": 1.0,
+    "factual_safety_recall_definition": "fraction of gold CONTRADICTED or NOT_SUPPORTED cases predicted as either CONTRADICTED or NOT_SUPPORTED",
+    "supported_claim_precision_min": 0.90,
+    "not_applicable_precision_min": 0.80
+  },
+  "gate_use_rule": {
+    "if_any_required_reliability_metric_fails": "semantic judge cannot be used for candidate gating",
+    "threshold_tuning_after_real_candidate_labels_forbidden": true,
+    "synthetic_suite_edit_after_judge_failure_forbidden_without_new_version_and_explicit_reason": true,
+    "real_candidate_semantic_labels_may_not_be_used_to repair judge prompt": true,
+    "validation_authorized_by_reliability_pass_alone": false
+  },
+  "real_claim_scoring_rule_after_reliability_pass": {
+    "zero_tolerance_contradicted_factual_claims": true,
+    "zero_tolerance_not_supported_factual_claims": true,
+    "not_applicable_claims_excluded_from_factual_denominator": true,
+    "procedural_or_conditional_claims_must_not_be silently converted to factual support": true,
+    "aggregate_only_results_may_be_committed": true,
+    "raw_claim_text_or judge rows_may_be_committed": false
+  }
+}

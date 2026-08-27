@@ -1,0 +1,39 @@
+{
+  "report_version": "e10h-non-validation-tuned-safety-blocker-analysis-summary-v1",
+  "date": "2026-08-16",
+  "status": "E10H_SAFETY_BLOCKER_ANALYSIS_RECORDED",
+  "scope": {
+    "validation_used_for_tuning": false,
+    "locked_test_accessed": false,
+    "private_oracle_used_in_model_or_guard": false,
+    "raw_fixed_outputs_committed": false,
+    "raw_score_rows_committed": false,
+    "output_hashes_committed": false,
+    "final_architecture_freeze": false
+  },
+  "observed_blocker": {
+    "e10g_full_capture_valid": true,
+    "e10g_full_score_valid": true,
+    "scoreable_calls": 12,
+    "real_task_quality": 0.8214,
+    "decision_correctness": 0.75,
+    "evidence_correctness": 0.75,
+    "action_correctness": 0.75,
+    "escalation_correctness": 0.5,
+    "premature_action_rate": 0.25,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 0.5,
+    "guard_outputs_checked": 12,
+    "guard_outputs_changed": 0
+  },
+  "decision": {
+    "promote_e10g_to_integration": false,
+    "reason": "Full premature_action_rate remains 0.25 while the integration safety target is 0.0.",
+    "next_gate": "general safety/action authorization redesign based on DEV and public invariants only"
+  },
+  "blocker_interpretation": {
+    "failed_design_assumption": "Visible-output consistency guards trust the model's own safety/rubric assertions too much.",
+    "generalized_failure_mode": "When an output looks internally coherent and claims an action is safe, post-hoc visible guards may not catch an actually premature action.",
+    "non_tuning_conclusion": "Do not add a case-specific validation rule. Move the next design step to an independent action-authorization policy derived from public action invariants and DEV-only tests."
+  }
+}

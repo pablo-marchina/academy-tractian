@@ -1,0 +1,67 @@
+name: research-p12-c4-prompt-token-sizing
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c4-prompt-token-sizing.yml'
+      - 'scripts/research/p12_c4_prompt_token_sizing.py'
+      - 'scripts/research/e8_free_anywhere_model_runner.py'
+      - 'scripts/research/e8_capture_fixed_groq_outputs.py'
+      - 'scripts/research/e10b_dev_only_action_escalation_capture.py'
+      - 'scripts/research/e14o_dev_only_public_factual_grounding_prompt.py'
+      - 'scripts/research/e14j_strict_output_schema.py'
+      - 'research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json'
+      - 'research/fixtures/p12-c1-exposed-agent-input-cases-v1.json'
+      - 'research/frozen/p12-c4-fresh-seed-map-v1.json'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  provider-free-token-sizing:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert provider/private boundaries
+        run: |
+          test -z "${CEREBRAS_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Install frozen tokenizer dependency
+        run: python -m pip install --disable-pip-version-check 'tiktoken==0.14.0'
+      - name: Compile sizing code
+        run: python -m py_compile scripts/research/p12_c4_prompt_token_sizing.py
+      - name: Materialize 36 provider-free requests and size tokens
+        run: |
+          python scripts/research/p12_c4_prompt_token_sizing.py | tee /tmp/p12-c4-prompt-token-sizing.json
+          python - <<'PY'
+          import json
+          p='/tmp/p12-c4-prompt-token-sizing.json'
+          x=json.load(open(p,encoding='utf-8'))
+          assert x['status']=='PASS_CONDITIONAL_ON_ACCOUNT_LIMIT_ATTESTATION'
+          assert x['provider_calls']==0 and x['credentials_read']==0
+          assert x['private_oracle_accesses']==0 and x['fresh_blind_accesses']==0 and x['legacy_locked_test_accesses']==0
+          assert x['summary']['parents']==36
+          assert len(x['parents'])==36
+          assert x['frozen_pacing_candidate']['minimum_seconds_between_provider_requests']==75
+          assert x['frozen_pacing_candidate']['implicit_retries']==0
+          assert x['frozen_pacing_candidate']['implicit_warming_requests']==0
+          assert x['authorization']['synthetic_live_probe'] is False
+          assert x['authorization']['exposed_pool_live_generation'] is False
+          print('P12_C4_PROVIDER_FREE_PROMPT_TOKEN_SIZING_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-prompt-token-sizing
+          path: /tmp/p12-c4-prompt-token-sizing.json
+          retention-days: 90
+          if-no-files-found: error

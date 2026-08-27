@@ -1,0 +1,83 @@
+{
+  "report_version": "e6-runtime-spike-summary-v1",
+  "date": "2026-08-16",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "tool_spec_constant": true,
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "ui_freeze": false
+  },
+  "ci_run_id": 31947896733,
+  "ci_artifact_id": 9263812747,
+  "ci_job_status": "success",
+  "locked_test_accessed": false,
+  "runtime_candidate_selected": "langgraph",
+  "runtime_candidate_display_name": "LangGraph",
+  "runtime_model_mcp_ui_freeze": false,
+  "ranking": [
+    {
+      "rank": 1,
+      "candidate_id": "langgraph",
+      "display_name": "LangGraph",
+      "weighted_score": 4.404,
+      "scores": {
+        "trace_completeness": 4.2,
+        "guard_integration": 4.4,
+        "replay_determinism": 5.0,
+        "pause_resume_hitl": 5.0,
+        "lower_complexity": 3.2,
+        "portability": 4.2,
+        "lower_overhead": 3.6
+      }
+    },
+    {
+      "rank": 2,
+      "candidate_id": "pydantic_ai_graph",
+      "display_name": "Pydantic AI/Graph",
+      "weighted_score": 4.328,
+      "scores": {
+        "trace_completeness": 4.6,
+        "guard_integration": 4.7,
+        "replay_determinism": 4.1,
+        "pause_resume_hitl": 4.0,
+        "lower_complexity": 4.2,
+        "portability": 4.5,
+        "lower_overhead": 4.1
+      }
+    },
+    {
+      "rank": 3,
+      "candidate_id": "openai_agents_sdk",
+      "display_name": "OpenAI Agents SDK",
+      "weighted_score": 4.188,
+      "scores": {
+        "trace_completeness": 4.7,
+        "guard_integration": 4.2,
+        "replay_determinism": 3.9,
+        "pause_resume_hitl": 4.5,
+        "lower_complexity": 4.3,
+        "portability": 3.4,
+        "lower_overhead": 4.2
+      }
+    }
+  ],
+  "decision": {
+    "langgraph": "promote as current runtime candidate for the next integration stage",
+    "pydantic_ai_graph": "retain as typed/schema-native fallback and design comparator",
+    "openai_agents_sdk": "retain as provider-native comparator; revisit if model/provider later becomes OpenAI-centered"
+  },
+  "interpretation": [
+    "LangGraph ranks first because replay/checkpointing, pause/resume and HITL are the strongest discriminators for the current B3 + evidence-sufficiency bundle.",
+    "Pydantic AI/Graph remains close and valuable because typed validation, graph support and OpenTelemetry/eval alignment match the existing Pydantic-heavy harness.",
+    "OpenAI Agents SDK is attractive for low ceremony, built-in tracing, guardrails, HITL and MCP, but provider portability is weaker while model/provider remains intentionally unfrozen.",
+    "This selects a current runtime candidate only; it does not freeze model, MCP topology, RAG/vector DB, multi-agent design, observability backend or UI.",
+    "LOCKED_TEST remains blocked."
+  ]
+}

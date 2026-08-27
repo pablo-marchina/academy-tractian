@@ -1,0 +1,36 @@
+{
+  "schema_version": "p12-c2-public-factorial-activation-synthetic-v1",
+  "status": "PUBLIC_SYNTHETIC_PROVIDER_FREE",
+  "contains_private_oracle": false,
+  "e1_route_family_cases": [
+    {"target_route": "GET /users/me", "message": "usuário", "required_placeholders": []},
+    {"target_route": "GET /companies/{companyId}", "message": "empresa", "required_placeholders": ["{companyId}"]},
+    {"target_route": "GET /companies/{companyId}/assets", "message": "ativos", "required_placeholders": ["{companyId}"]},
+    {"target_route": "GET /assets/{assetId}", "message": "ativo", "required_placeholders": ["{assetId}"]},
+    {"target_route": "GET /assets/{assetId}/analyses", "message": "análise", "required_placeholders": ["{assetId}"]},
+    {"target_route": "GET /analyses/{analysisId}", "message": "análise", "required_placeholders": ["{analysisId}"]},
+    {"target_route": "GET /assets/{assetId}/baseline", "message": "baseline", "required_placeholders": ["{assetId}"]},
+    {"target_route": "GET /assets/{assetId}/data-quality", "message": "qualidade", "required_placeholders": ["{assetId}"]},
+    {"target_route": "GET /assets/{assetId}/rms", "message": "rms", "required_placeholders": ["{assetId}"]},
+    {"target_route": "GET /assets/{assetId}/spectrum", "message": "espectro", "required_placeholders": ["{assetId}"]},
+    {"target_route": "GET /models/{modelId}", "message": "modelo", "required_placeholders": ["{modelId}"]},
+    {"target_route": "GET /knowledge/search", "message": "procedimento", "required_placeholders": []},
+    {"target_route": "GET /knowledge/{docId}", "message": "documento", "required_placeholders": ["{docId}"]}
+  ],
+  "e1_action_dependency_cases": [
+    {"action_endpoint": "POST /analyses/{analysisId}/reprocess", "expected_dependencies": ["GET /users/me", "GET /analyses/{analysisId}"]},
+    {"action_endpoint": "POST /analyses/{analysisId}/request-specialist", "expected_dependencies": ["GET /users/me", "GET /analyses/{analysisId}"]},
+    {"action_endpoint": "POST /models/{modelId}/request-retraining", "expected_dependencies": ["GET /users/me", "GET /models/{modelId}"]},
+    {"action_endpoint": "PATCH /assets/{assetId}", "expected_dependencies": ["GET /users/me", "GET /assets/{assetId}"]},
+    {"action_endpoint": "POST /cases/{caseId}/escalate", "expected_dependencies": ["GET /users/me"]}
+  ],
+  "s1_cases": [
+    {"id": "authorized_reprocess", "variant": "authorized_reprocess", "expected_certificate_pass": true},
+    {"id": "missing_identity", "variant": "missing_identity", "expected_certificate_pass": false},
+    {"id": "missing_target", "variant": "missing_target", "expected_certificate_pass": false},
+    {"id": "bad_identifier_provenance", "variant": "bad_identifier_provenance", "expected_certificate_pass": false},
+    {"id": "role_purpose_inconsistent", "variant": "role_purpose_inconsistent", "expected_certificate_pass": false},
+    {"id": "handoff_missing_reason", "variant": "handoff_missing_reason", "expected_certificate_pass": false},
+    {"id": "inactive_no_promotion", "variant": "inactive_no_promotion", "expected_certificate_pass": true}
+  ]
+}

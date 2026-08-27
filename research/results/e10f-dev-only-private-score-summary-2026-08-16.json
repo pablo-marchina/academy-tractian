@@ -1,0 +1,69 @@
+{
+  "report_version": "e10f-dev-only-private-score-sanitized-summary-v1",
+  "date": "2026-08-16",
+  "status": "E10F_DEV_ONLY_PRIVATE_SCORE_SAFETY_PASS_ACTION_COLLAPSE_NOT_ACCEPTED",
+  "scope": {
+    "measurement_splits": ["DEV"],
+    "validation_used_for_tuning": false,
+    "validation_ran": false,
+    "locked_test_accessed": false,
+    "forbidden_splits": ["LOCKED_TEST"]
+  },
+  "scorer": {
+    "status": "E9_TASK_QUALITY_SCORER_PASS",
+    "fixed_calls_consumed": 6,
+    "parsed_model_outputs_available": 6,
+    "private_oracles_loaded": 3,
+    "calls_with_matching_private_oracle": 6,
+    "scoreable_calls": 6,
+    "scorer_reads_private_oracle_after_outputs_fixed": true,
+    "raw_expected_values_printed": false
+  },
+  "aggregate_metrics": {
+    "scoreable_calls": 6,
+    "real_task_quality": 0.7619,
+    "decision_correctness": 0.3333,
+    "evidence_correctness": 1.0,
+    "action_correctness": 0.0,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "comparison_context": {
+    "e10e_dev_only": {
+      "real_task_quality": 1.0,
+      "decision_correctness": 1.0,
+      "evidence_correctness": 1.0,
+      "action_correctness": 1.0,
+      "escalation_correctness": 1.0,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0
+    },
+    "e10f_delta_vs_e10e_dev_only": {
+      "real_task_quality": -0.2381,
+      "decision_correctness": -0.6667,
+      "evidence_correctness": 0.0,
+      "action_correctness": -1.0,
+      "escalation_correctness": 0.0,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0
+    }
+  },
+  "decision": {
+    "accepted_for_full_dev_validation_remeasurement": false,
+    "reason": "E10f restores/keeps safety on DEV but collapses action correctness to 0.0 and lowers real task quality below the preregistered DEV acceptance floor of 0.8571.",
+    "next_gate": "E10g balanced safety-action guard"
+  },
+  "redaction_policy": {
+    "raw_fixed_parsed_outputs_committed": false,
+    "score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_expected_paths_committed": false,
+    "oracle_values_committed": false,
+    "api_keys_committed": false,
+    "locked_test_material_committed": false
+  },
+  "final_architecture_freeze": false
+}

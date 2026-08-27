@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "p12-c4-cerebras-account-capacity-attestation-schema-v1",
+  "title": "P12-C4 Cerebras account capacity attestation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "observed_at_utc",
+    "evidence_source",
+    "provider",
+    "model_id",
+    "account_access",
+    "limits",
+    "attestation"
+  ],
+  "properties": {
+    "schema_version": {"const": "p12-c4-cerebras-account-capacity-attestation-v1"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "observed_at_utc": {"type": "string", "format": "date-time"},
+    "evidence_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "first_party", "contains_secret"],
+      "properties": {
+        "type": {"enum": ["cerebras_account_limits_page", "cerebras_first_party_account_export"]},
+        "first_party": {"const": true},
+        "contains_secret": {"const": false},
+        "artifact_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "provider": {"const": "cerebras"},
+    "model_id": {"const": "gpt-oss-120b"},
+    "account_access": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["api_access_active", "tier", "zero_cash_spend_claim_allowed"],
+      "properties": {
+        "api_access_active": {"type": "boolean"},
+        "tier": {"enum": ["free_trial", "developer", "enterprise"]},
+        "zero_cash_spend_claim_allowed": {"type": "boolean"},
+        "trial_credit_active": {"type": ["boolean", "null"]},
+        "trial_credit_expiry_utc": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rpm", "tpm", "tph", "tpd"],
+      "properties": {
+        "rpm": {"type": "integer", "minimum": 0},
+        "tpm": {"type": "integer", "minimum": 0},
+        "tph": {"type": "integer", "minimum": 0},
+        "tpd": {"type": "integer", "minimum": 0}
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_rpm_met",
+        "minimum_tpm_met",
+        "minimum_tph_met",
+        "minimum_tpd_met",
+        "active_access_met",
+        "secrets_excluded"
+      ],
+      "properties": {
+        "minimum_rpm_met": {"type": "boolean"},
+        "minimum_tpm_met": {"type": "boolean"},
+        "minimum_tph_met": {"type": "boolean"},
+        "minimum_tpd_met": {"type": "boolean"},
+        "active_access_met": {"type": "boolean"},
+        "secrets_excluded": {"const": true}
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+name: research-e10b-dev-only-action-escalation
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/76-e10b-dev-only-action-escalation-calibration.md'
+      - 'research/experiments/e10b-*.json'
+      - 'scripts/research/e10b_*.py'
+      - '.github/workflows/research-e10b.yml'
+  pull_request:
+    paths:
+      - 'research/76-e10b-dev-only-action-escalation-calibration.md'
+      - 'research/experiments/e10b-*.json'
+      - 'scripts/research/e10b_*.py'
+      - '.github/workflows/research-e10b.yml'
+
+jobs:
+  e10b-dev-only-action-escalation-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E10b DEV-only action/escalation capture dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e10b_dev_only_action_escalation_capture.py
+          --manifest research/experiments/e10b-dev-only-action-escalation-calibration-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e10b-dev-only-action-escalation-capture-dry-run.json
+          --dry-run
+      - name: Upload E10b DEV-only capture dry-run
+        uses: actions/upload-artifact@v4
+        with:
+          name: e10b-dev-only-action-escalation-capture-dry-run
+          path: /tmp/e10b-dev-only-action-escalation-capture-dry-run.json

@@ -1,0 +1,46 @@
+{
+  "schema_version": "p12-c4-local-factorial-expansion-import-path-failure-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "date": "2026-08-26",
+  "status": "PRE_TRANSFORM_INFRA_FAILURE_NO_ARM_OUTPUTS",
+  "workflow_run": {
+    "run_id": 33028430280,
+    "job_id": 98375103201,
+    "head_sha": "f2dbcefb666d9a40deef3d354d13eebcd2e2de32",
+    "run_number": 2,
+    "run_attempt": 1,
+    "conclusion": "failure"
+  },
+  "failure": {
+    "step": "Materialize exact local A00 A10 A01 A11 packet",
+    "exception": "ModuleNotFoundError: No module named 'research'",
+    "cause": "REPOSITORY_ROOT_NOT_ON_PYTHONPATH_FOR_TRANSITIVE_E9_V4_IMPORT",
+    "allowed_fix_scope": "SET_REPOSITORY_ROOT_ON_PYTHONPATH_ONLY"
+  },
+  "scientific_boundary": {
+    "frozen_live_artifact_downloaded": true,
+    "live_artifact_digest_verified_by_download_action": "sha256:f6c7e7c0673cc3030cb83efc2b7acb0f319634aa5cb1ab0ccf2244824c26986e",
+    "live_packet_verification_completed_before_import": true,
+    "common_parent_rows_loaded_and_verified": 36,
+    "e0_batch_executed": false,
+    "e1_transforms_executed": 0,
+    "s0_or_s1_transforms_executed": 0,
+    "fixed_arm_outputs_materialized": 0,
+    "provider_calls": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "private_scoring_executed": false,
+    "bootstrap_executed": false
+  },
+  "replacement_policy": {
+    "provider_cycle_affected": false,
+    "new_candidate_outputs_observed": false,
+    "candidate_semantics_may_change": false,
+    "runner_source_may_change": false,
+    "workflow_environment_fix_only": true,
+    "provider_free_replacement_trigger_allowed": true,
+    "github_rerun_of_failed_run": false
+  },
+  "next_step": "ADD_REPOSITORY_ROOT_TO_PYTHONPATH_AND_CREATE_NEW_PROVIDER_FREE_TRIGGER_REVISION"
+}

@@ -1,0 +1,22 @@
+{
+  "status": "E14H_OPERATIONAL_FAIL_NO_QUALITY_MEASUREMENT",
+  "scope": "DEV_ONLY",
+  "model": "openai/gpt-oss-120b",
+  "reasoning_effort": "high",
+  "max_completion_tokens": 1600,
+  "total_calls": 6,
+  "parsed_calls": 0,
+  "schema_valid_calls": 0,
+  "scoreable_calls": 0,
+  "attempt_count_histogram": {"3": 6},
+  "retry_count_histogram": {"2": 6},
+  "sanitized_attempt_failure_counts": {"model_call_failed": 18},
+  "sanitized_provider_failure_category_counts": {"json_generation_validation_failure": 18},
+  "calls_with_provider_failure_category": 6,
+  "completion_token_usage_observed_calls": 0,
+  "completion_budget_exhaustion_supported": false,
+  "interpretation": "provider_failure_present_budget_exhaustion_not_isolated",
+  "e9_quality_measurement_valid": false,
+  "validation_ran": false,
+  "locked_test_accessed": false
+}

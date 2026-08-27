@@ -1,0 +1,56 @@
+{
+  "schema_version": "e6-real-toolspec-langgraph-spike-v1",
+  "date": "2026-08-16",
+  "status": "PREREGISTERED",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false
+  },
+  "constants": {
+    "tool_spec_constant": true,
+    "execution_boundary": "HarnessRunner",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "runtime_candidate": "langgraph",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "observability_backend_freeze": false,
+    "ui_freeze": false
+  },
+  "adaptivity": {
+    "adaptive_evidence_planner": true,
+    "adaptivity_scope": "evidence acquisition order and tool selection only",
+    "deterministic_safety_controls": ["runner_bound_identity_seed", "B1_argument_validation", "B2_resource_permission_guard", "B3_evidence_aware_action_gate", "locked_test_block"]
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710"],
+    "VALIDATION": ["asset_B204", "asset_M102"]
+  },
+  "comparators_retained": ["pydantic_ai_graph", "openai_agents_sdk"],
+  "metrics": [
+    "tool_spec_registry_wired",
+    "harness_runner_used",
+    "runtrace_compatible_output",
+    "b3_external_guard_preserved",
+    "evidence_sufficiency_policy_explicit",
+    "adaptive_path_count",
+    "required_evidence_coverage",
+    "deterministic_replay_equal",
+    "checkpoint_pause_resume_roundtrip",
+    "direct_harness_avg_ms",
+    "langgraph_avg_ms",
+    "overhead_ratio"
+  ],
+  "non_decisions": [
+    "final_model_provider",
+    "mcp_topology",
+    "rag_vector_db",
+    "multi_agent_decomposition",
+    "persistent_memory",
+    "observability_backend",
+    "ui_demo_flow"
+  ]
+}

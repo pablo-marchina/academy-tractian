@@ -1,0 +1,51 @@
+name: research-p12-c3-live-manifest-freeze-self-check
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/p12-c3-capacity-controlled-live-execution-v1.json'
+      - 'scripts/research/p12_c3_live_manifest_freeze_self_check.py'
+      - '.github/workflows/research-p12-c3-live-manifest-freeze-self-check.yml'
+  pull_request:
+    paths:
+      - 'research/experiments/p12-c3-capacity-controlled-live-execution-v1.json'
+      - 'scripts/research/p12_c3_live_manifest_freeze_self_check.py'
+      - '.github/workflows/research-p12-c3-live-manifest-freeze-self-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  provider-free-freeze-self-check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert provider and private boundaries
+        shell: bash
+        run: |
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e research/experiments/p12-c3-live-batch-trigger-v1.json
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Re-run frozen protocol and activation guards
+        shell: bash
+        run: |
+          PYTHONPATH=. python scripts/research/big_b4_protocol_guard.py
+          PYTHONPATH=. python scripts/research/p12_c3_capacity_activation_self_check.py >/tmp/p12-c3-activation-self-check.json
+      - name: Validate frozen live execution manifest
+        shell: bash
+        run: >-
+          PYTHONPATH=. python scripts/research/p12_c3_live_manifest_freeze_self_check.py
+          --manifest research/experiments/p12-c3-capacity-controlled-live-execution-v1.json
+          --out /tmp/p12-c3-live-manifest-freeze-self-check.json
+      - name: Upload sanitized freeze evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c3-live-manifest-freeze-self-check
+          path: /tmp/p12-c3-live-manifest-freeze-self-check.json
+          retention-days: 90
+          if-no-files-found: error

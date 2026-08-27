@@ -1,0 +1,98 @@
+{
+  "report_version": "e10g-full-dev-validation-private-score-sanitized-summary-v1",
+  "date": "2026-08-16",
+  "status": "E10G_FULL_DEV_VALIDATION_PRIVATE_SCORE_SAFETY_REGRESSION_PERSISTS",
+  "scope": {
+    "measurement_splits": ["DEV", "VALIDATION"],
+    "validation_used_for_tuning": false,
+    "validation_ran": true,
+    "locked_test_accessed": false,
+    "forbidden_splits": ["LOCKED_TEST"],
+    "known_allowed_oracle_groups": [
+      "asset_B204",
+      "asset_C710",
+      "asset_G501",
+      "asset_M102",
+      "asset_S420"
+    ],
+    "locked_test_oracle_groups_detected": [],
+    "outside_known_allowed_asset_groups": []
+  },
+  "capture_summary": {
+    "status": "E10G_FULL_DEV_VALIDATION_CAPTURE_PASS",
+    "total_calls": 12,
+    "parsed_model_outputs_available": 12,
+    "dry_run": false,
+    "guard_outputs_checked": 12,
+    "guard_outputs_changed": 0
+  },
+  "scorer_summary": {
+    "status": "E9_TASK_QUALITY_SCORER_PASS",
+    "fixed_calls_consumed": 12,
+    "private_oracles_loaded": 5,
+    "calls_with_matching_private_oracle": 12,
+    "scoreable_calls": 12
+  },
+  "aggregate_metrics": {
+    "scoreable_calls": 12,
+    "real_task_quality": 0.8214,
+    "decision_correctness": 0.75,
+    "evidence_correctness": 0.75,
+    "action_correctness": 0.75,
+    "escalation_correctness": 0.5,
+    "premature_action_rate": 0.25,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_success_rate": 1.0,
+    "proxy_vs_real_disagreement_rate": 0.5
+  },
+  "comparison": {
+    "e9_full_baseline": {
+      "real_task_quality": 0.631,
+      "premature_action_rate": 0.0,
+      "unsupported_final_claim_rate": 0.0
+    },
+    "e10d_full": {
+      "real_task_quality": 0.8214,
+      "premature_action_rate": 0.25,
+      "unsupported_final_claim_rate": 0.0
+    },
+    "e10e_full": {
+      "real_task_quality": 0.8214,
+      "premature_action_rate": 0.25,
+      "unsupported_final_claim_rate": 0.0
+    },
+    "e10g_full": {
+      "real_task_quality": 0.8214,
+      "premature_action_rate": 0.25,
+      "unsupported_final_claim_rate": 0.0
+    }
+  },
+  "gate_decision": {
+    "passes_full_quality_floor": true,
+    "passes_premature_action_gate": false,
+    "passes_unsupported_claim_gate": true,
+    "promote_to_integration": false,
+    "reason": "E10g full matches E10d/E10e full aggregate quality but premature_action_rate remains 0.25. Full safety gate requires 0.0."
+  },
+  "sanitization": {
+    "raw_fixed_outputs_committed": false,
+    "score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_expected_paths_committed": false,
+    "private_oracle_values_committed": false,
+    "api_keys_committed": false,
+    "validation_feedback_committed": false,
+    "reference_trajectories_committed": false,
+    "evaluator_labels_committed": false,
+    "locked_test_material_committed": false
+  },
+  "gold_leakage_controls": {
+    "model_prompt_receives_oracle": false,
+    "scorer_reads_oracle_after_outputs_fixed": true,
+    "outputs_hashed_before_scoring": true,
+    "evaluator_only_paths_blocked_from_model": true,
+    "locked_test_oracle_groups_rejected": true,
+    "raw_expected_values_printed": false
+  },
+  "final_architecture_freeze": false
+}

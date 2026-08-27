@@ -1,0 +1,141 @@
+{
+  "schema_version": "p12-c2-factorial-exposed-pool-execution-v1",
+  "execution_id": "P12-C2-LIVE-EXPOSED-POOL-2026-08-23",
+  "experiment_id": "P12-C2_EXPOSED_POOL_FACTORIAL_EVIDENCE_SAFETY",
+  "date": "2026-08-23",
+  "status": "AUTHORIZED_CONSUMABLE_ONCE",
+  "authorized_scope": "ONE_P12_C2_FACTORIAL_A00_A10_A01_A11_EXPOSED_POOL_COMMON_PARENT_GENERATION_EVALUATION_CYCLE",
+  "protocol_id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
+  "protocol_state": "FROZEN",
+  "activation_state_required": "ACTIVATION_ELIGIBILITY_PASS",
+  "factorial_arms": ["A00", "A10", "A01", "A11"],
+  "corpus": {
+    "independent_groups": 7,
+    "scenario_families": 11,
+    "agent_visible_tickets": 12,
+    "repetitions_per_ticket": 3,
+    "common_parent_generations": 36,
+    "fixed_factorial_outputs": 144
+  },
+  "seeds": [2026082304, 2026082305, 2026082306],
+  "source_pins": {
+    "p12_c2_preregistration": {"path": "research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json", "git_blob_sha": "0d0637a954ef544824bc69df88e47d7c790f0714"},
+    "p12_c2_activation": {"path": "research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json", "git_blob_sha": "96c38036411365bb2f64c5df85f9eafc31c6901e"},
+    "p12_protocol": {"path": "research/frozen/big-b4-evaluation-protocol-v1.json", "git_blob_sha": "910b9c8368ee37b5bf5c144413a57b683dc8e8b9"},
+    "benchmark_split": {"path": "research/frozen/benchmark-split-v1.json", "git_blob_sha": "12ec4bca4ffbac72ad457cc9c47f02e210e126c1"},
+    "agent_visible_cases": {"path": "research/fixtures/p12-c1-exposed-agent-input-cases-v1.json", "git_blob_sha": "f9fef316ab9245de1e36d1d6d787326cde2e27be", "content_sha256": "a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef"},
+    "qualified_parent_runner_bundle": {"path": "research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz", "git_blob_sha": "a5c27394014bac656faa0a2f923a5c5da72d66f5", "uncompressed_source_sha256": "be16ec6d2c33ad68134a0fbf7aa280b4103ee411b01233b6de7a76668e899a50"},
+    "p12_c2_runner_derivation": {"path": "scripts/research/p12_c2_execution_derivation.py", "git_blob_sha": "3fad678c60c99d50925360f12332a98386b8b400", "derived_runner_source_sha256": "f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59"},
+    "p12_c2_factorial_candidates": {"path": "scripts/research/p12_c2_factorial_candidates.py", "git_blob_sha": "33fbeec64d65ca666d30a14f9a3c196b6c607bec"},
+    "factorial_scorer": {"path": "scripts/research/p12_c2_factorial_score.py", "git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531", "source_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22"},
+    "live_workflow": {"path": ".github/workflows/research-p12-c2-factorial-exposed-pool.yml", "git_blob_sha": "dffd56e3cfa088e1efc11f8aeb5f7099941e839d"},
+    "evaluator_v4_1": {"path": "scripts/research/e9_evaluator_side_scorer_v4_1.py", "git_blob_sha": "b33afab0b3bfc9b81037a5391f49d286ef0d7c35"},
+    "exact_ticket_alignment_amendment": {"path": "research/experiments/p12-c1-exact-ticket-evaluator-alignment-amendment-v1.json", "git_blob_sha": "87c6ce56d7bd90ca866ad31721365e70f70d2e6c", "derived_scorer_sha256": "e12d603edd14b00edd76b65fdbe54b0f0534b3478a9c94c192a82b67080fd233"},
+    "pre_outcome_failure_record": {"path": "research/results/p12-c2-live-preflight-failure-2026-08-23.json"}
+  },
+  "common_parent": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "reasoning_effort": "medium",
+    "reasoning_format": "hidden",
+    "response_format_mode": "json_schema_strict",
+    "strict": true,
+    "max_completion_tokens": 4096,
+    "temperature": 0,
+    "between_call_delay_seconds": 25,
+    "semantic_repair_delay_seconds": 25,
+    "max_retries": 2,
+    "configuration_sha256": "9033a78a5bab46e4c48ebfc0ec70b6476570519fa62f0526625916d0cd3d3b89",
+    "one_new_parent_per_ticket_repetition": true,
+    "same_fixed_parent_shared_by_all_four_arms": true,
+    "arm_specific_provider_regeneration": false,
+    "reuse_p12_c1_fixed_outputs_as_measurement": false
+  },
+  "candidate_private_oracle_access": "DENY_ALWAYS",
+  "candidate_side_boundary": {
+    "private_oracle_present": false,
+    "fresh_blind_semantics_present": false,
+    "legacy_locked_test_semantics_present": false,
+    "provider_receives_private_oracle": false,
+    "outputs_fixed_before_private_scoring": true
+  },
+  "scoring": {
+    "deterministic_evaluator": "P12 exact-ticket-aligned v4.1",
+    "factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22",
+    "private_oracle_provisioning": "evaluator-side authorized local package only; path and rows are not committed",
+    "private_oracle_loaded_only_after_144_outputs_fixed": true,
+    "exact_unique_ticket_alignment": true,
+    "group_union_fallback": false,
+    "metric_definitions_changed_from_p12_c1": false,
+    "aggregation": "group -> scenario -> visible ticket -> 3 repetitions; equal scenario/group weighting",
+    "bootstrap": {"confidence_level": 0.95, "resamples": 20000, "seed": 20260822, "unit": "asset_story_group"},
+    "logo_estimates_per_primary_contrast": 7,
+    "formal_p_values_required_for_primary_decision": false,
+    "weighted_utility_score_allowed": false
+  },
+  "primary_comparisons": {
+    "A10_minus_A00": "isolated evidence effect under S0",
+    "A01_minus_A00": "isolated safety effect under E0",
+    "A11_minus_A00": "combined candidate effect",
+    "factor_interaction": "(A11-A10)-(A01-A00); secondary"
+  },
+  "attempt_policy": {
+    "new_provider_cycle_authorized": 1,
+    "provider_cycles_consumed_before_replacement": 0,
+    "pre_outcome_infrastructure_failures": 1,
+    "failed_preflight_run_id": 32663288072,
+    "failed_preflight_generate_job_skipped": true,
+    "failed_preflight_provider_or_model_calls": 0,
+    "failed_preflight_candidate_outcomes_observed": 0,
+    "replacement_attempt_authorized": true,
+    "replacement_attempt_index": 1,
+    "generation_job_consumes_cycle_when_live_provider_execution_begins": true,
+    "github_rerun_of_generation_job_allowed": false,
+    "silent_rerun_allowed": false,
+    "maximum_replacement_attempts": 1,
+    "replacement_allowed_only_for": [
+      "pre-model provider transport failure with no outcome exposure",
+      "repository or runner infrastructure failure with no outcome exposure",
+      "evaluator crash with no candidate outcome exposure"
+    ],
+    "replacement_for_task_quality_or_safety_failure": false
+  },
+  "remediation_qualification": {
+    "provider_free_workflow_run_id": 32663466000,
+    "provider_free_job_id": 97253055678,
+    "conclusion": "success",
+    "dry_common_parent_generations": 36,
+    "dry_fixed_factorial_outputs": 144,
+    "provider_calls": 0,
+    "private_oracle_accesses": 0
+  },
+  "artifacts": {
+    "fixed_private_scoring_intermediate": {"name": "p12-c2-fixed-factorial-outputs-private-intermediate", "retention_days": 1},
+    "sanitized_generation_summary": {"name": "p12-c2-generation-summary", "retention_days": 90},
+    "private_scoring_handoff_hash": {"name": "p12-c2-private-scoring-handoff", "retention_days": 90}
+  },
+  "publication_plan": {
+    "commit_raw_fixed_outputs": false,
+    "commit_private_oracle": false,
+    "commit_private_scorer_rows": false,
+    "commit_expected_paths": false,
+    "commit_output_hashes_per_private_row": false,
+    "commit_sanitized_generation_summary": true,
+    "commit_sanitized_factorial_result": true,
+    "commit_human_result_note": true
+  },
+  "semantic_stage_authorized": false,
+  "fresh_blind_authorized": false,
+  "legacy_locked_test_authorized": false,
+  "architecture_freeze_authorized": false,
+  "production_readiness_claim_authorized": false,
+  "pre_live_preparation": {
+    "factorial_scorer_commit": "ca2ac3a2c2770ef34036f8ac89a7676bc9df78cf",
+    "initial_live_workflow_commit": "ca483cc8a00f2865f5da9cc432ecae92979cd842",
+    "remediated_live_workflow_commit": "c554051f1e35817223cbe4db8a6fedaa75aa835e",
+    "remediation_self_check_commit": "81f11af1551428b92dfbf540f5dd0cf47170e5ce",
+    "provider_outcomes_observed_before_replacement_manifest_freeze": 0,
+    "private_oracle_rows_read_before_replacement_manifest_freeze": 0
+  },
+  "next_step": "CREATE_REPLACEMENT_LIVE_TRIGGER_V2_ONCE_AND_OBSERVE_NON_RERUNNABLE_PROVIDER_CYCLE"
+}

@@ -1,0 +1,101 @@
+{
+  "schema_version": "p12-fresh-blind-tier-a-readiness-packet-v1",
+  "protocol_id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
+  "status": "READY_FOR_EXTERNAL_ATTESTATION_NO_SOURCE_AUTHORIZED",
+  "date": "2026-08-24",
+  "planning_tier": "TIER_A_PARTNER_HELD_EXTERNAL_BLIND",
+  "tier_a_cutoff": "2026-08-25T23:59:00-03:00",
+  "tier_b_cutoff": "2026-08-28T23:59:00-03:00",
+  "source_authorization_state": "NO_BLIND_SOURCE_AUTHORIZED",
+  "source_id": null,
+  "hidden_case_content_committed": false,
+  "expected_outcomes_committed": false,
+  "developer_hidden_semantic_access": false,
+  "candidate_generation_frozen": false,
+  "final_measurement_authorized": false,
+  "purpose": "Prepare an auditable external-blind custody and authorization handoff without exposing hidden cases, expected paths, outcomes, or adaptive feedback to candidate development.",
+  "external_attestation_required": {
+    "source_identity": {
+      "source_id": "REQUIRED_EXTERNALLY",
+      "tier": "TIER_A_PARTNER_HELD_EXTERNAL_BLIND",
+      "custodian_identity_or_role": "REQUIRED_EXTERNALLY",
+      "author_identity_or_role": "REQUIRED_EXTERNALLY",
+      "adjudicator_identity_or_role": "REQUIRED_EXTERNALLY"
+    },
+    "independence": {
+      "author_isolated_from_candidate_development": true,
+      "adjudicator_isolated_from_candidate_development": true,
+      "developer_cannot_access_hidden_semantics_before_freeze": true,
+      "no_iterative_partial_feedback": true,
+      "asset_story_group_independence_confirmed": true
+    },
+    "coverage_metadata_only": {
+      "group_count": "REQUIRED_EXTERNALLY_AS_NON_SEMANTIC_METADATA",
+      "modality_coverage": "REQUIRED_EXTERNALLY_AS_NON_SEMANTIC_METADATA",
+      "safety_critical_coverage": "REQUIRED_EXTERNALLY_AS_NON_SEMANTIC_METADATA"
+    },
+    "custody_and_provenance": {
+      "provenance_record": "REQUIRED_EXTERNALLY_WITHOUT_HIDDEN_CASE_CONTENT",
+      "custody_start": "REQUIRED_EXTERNALLY",
+      "expected_measurement_window": "REQUIRED_EXTERNALLY",
+      "breach_state": "MUST_BE_UNBREACHED"
+    }
+  },
+  "custodian_handoff_contract": {
+    "hidden_case_content_location": "EXTERNAL_TO_CANDIDATE_DEVELOPMENT_REPOSITORY",
+    "expected_paths_and_outcomes_location": "EXTERNAL_TO_CANDIDATE_DEVELOPMENT_REPOSITORY",
+    "developer_may_receive_before_generation_freeze": [
+      "source_id",
+      "custodian_role",
+      "author_role",
+      "adjudicator_role",
+      "group_count",
+      "modality_coverage_summary",
+      "safety_critical_coverage_summary",
+      "provenance_without_hidden_semantics",
+      "custody_start",
+      "expected_measurement_window",
+      "breach_state"
+    ],
+    "developer_must_not_receive_before_generation_freeze": [
+      "hidden_case_content",
+      "hidden_ticket_text",
+      "expected_paths",
+      "expected_tool_calls",
+      "expected_decisions",
+      "expected_actions",
+      "expected_escalations",
+      "labels",
+      "scores",
+      "partial_results",
+      "candidate_specific_feedback"
+    ],
+    "results_release_policy": "ONE_SHOT_AFTER_GENERATION_FREEZE_AND_SEPARATE_FINAL_AUTHORIZATION",
+    "iterative_partial_feedback_allowed": false
+  },
+  "readiness_gates": [
+    "external_source_owner_distinct_from_candidate_development",
+    "author_and_adjudicator_independence_attested",
+    "hidden_semantics_unavailable_to_developer_before_generation_freeze",
+    "source_provenance_and_custody_auditable",
+    "group_independence_attested",
+    "coverage_metadata_recorded_without_hidden_semantics",
+    "breach_state_unbreached",
+    "source_record_matches_big_b4_registry_required_fields",
+    "candidate_generation_frozen_before_final_measurement",
+    "separate_final_access_authorization_passes_before_measurement"
+  ],
+  "transition_rules": {
+    "tier_a_ready_before_cutoff": "REGISTER_SOURCE_ONLY_AFTER_EXTERNAL_ATTESTATION_VALIDATES",
+    "tier_a_not_operational_by_cutoff": "MOVE_PLANNING_TO_TIER_B_WITHOUT_REOPENING_BIG_B2",
+    "tier_a_and_tier_b_not_operational_by_tier_b_cutoff": "REQUIRE_BIG_B3_AMENDMENT_BEFORE_P3",
+    "any_breach": "SOURCE_BECOMES_EXPOSED_FOR_AFFECTED_GENERATION_AND_FINAL_AUTHORIZATION_DENIED"
+  },
+  "authorization": {
+    "source_registration": false,
+    "hidden_content_access": false,
+    "fresh_blind_candidate_execution": false,
+    "fresh_blind_private_scoring": false,
+    "adaptive_feedback": false
+  }
+}

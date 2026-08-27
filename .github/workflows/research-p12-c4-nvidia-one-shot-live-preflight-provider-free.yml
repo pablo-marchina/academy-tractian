@@ -1,0 +1,73 @@
+name: research-p12-c4-nvidia-one-shot-live-preflight-provider-free
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+    paths:
+      - research/frozen/p12-c4-nvidia-one-shot-live-preflight-trigger-v1.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-p12-c4-nvidia-one-shot-live-preflight-provider-free
+  cancel-in-progress: false
+
+jobs:
+  provider-free-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Assert NVIDIA secret is not injected
+        shell: bash
+        run: |
+          if [[ -n "${NVIDIA_API_KEY:-}" ]]; then
+            echo "NVIDIA_API_KEY must not be present in provider-free preflight" >&2
+            exit 1
+          fi
+
+      - name: Run provider-free exact-materialization preflight
+        run: |
+          python scripts/research/p12_c4_nvidia_one_shot_live.py --provider-free-check \
+            > research/results/p12-c4-nvidia-one-shot-live-preflight-ci.json
+
+      - name: Require provider-free PASS and exact 36-parent geometry
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('research/results/p12-c4-nvidia-one-shot-live-preflight-ci.json').read_text())
+          assert d['status'] == 'PASS_PROVIDER_FREE_LIVE_NOT_STARTED', d
+          assert d['materialized_common_parents'] == 36, d
+          assert d['unique_parent_ids'] == 36, d
+          assert d['unique_seeds'] == 36, d
+          assert d['unique_requests'] == 36, d
+          assert d['provider_calls'] == 0, d
+          assert d['network_io'] == 0, d
+          assert d['private_oracle_accesses'] == 0, d
+          assert d['fresh_blind_accesses'] == 0, d
+          assert d['legacy_locked_test_accesses'] == 0, d
+          assert d['authorized_live_execution_attempts'] == 1, d
+          assert d['next_gate'] == 'ONE_NVIDIA_LIVE_EXECUTION_36_OF_36_OR_TERMINAL_INCOMPLETE', d
+          print('P12_C4_NVIDIA_ONE_SHOT_PROVIDER_FREE_PREFLIGHT_PASS')
+          PY
+
+      - name: Upload provider-free preflight evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-nvidia-one-shot-live-preflight-provider-free
+          path: research/results/p12-c4-nvidia-one-shot-live-preflight-ci.json
+          if-no-files-found: error
+          retention-days: 90

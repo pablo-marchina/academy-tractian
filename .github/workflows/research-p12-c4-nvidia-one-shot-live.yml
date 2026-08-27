@@ -1,0 +1,136 @@
+name: research-p12-c4-nvidia-one-shot-live
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+    paths:
+      - research/frozen/p12-c4-nvidia-one-shot-live-execution-trigger-v2.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-p12-c4-nvidia-one-shot-live
+  cancel-in-progress: false
+
+jobs:
+  one-shot-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Enforce one-shot workflow identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF}" = "refs/heads/research/systematic-foundation"
+          test "${GITHUB_RUN_ATTEMPT}" = "1"
+          test "${GITHUB_RUN_NUMBER}" = "1"
+
+      - name: Checkout exact trigger commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Verify sole live trigger pins
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path('.')
+          t = json.loads((root/'research/frozen/p12-c4-nvidia-one-shot-live-execution-trigger-v2.json').read_text())
+          assert t['schema_version'] == 'p12-c4-nvidia-one-shot-live-execution-trigger-v2'
+          assert t['status'] == 'FROZEN_TRIGGER_SOLE_LIVE_EXECUTION'
+          assert t['manifest_git_blob_sha'] == '28971da8c4c20dad9b73b909997b6e486a420cd5'
+          assert t['authorization_git_blob_sha'] == 'f177dd6f12fdf3b097c3e964ddda2f6ef9251edd'
+          assert t['runner_git_blob_sha'] == '7f83f0143046208e5c37da4dbd3a57156d5a0a78'
+          assert t['maximum_live_executions'] == 1
+          assert t['maximum_provider_request_attempts'] == 36
+          assert t['maximum_attempts_per_parent'] == 1
+          assert t['minimum_seconds_between_request_starts'] == 75
+          assert t['rerun_allowed'] is False and t['resume_allowed'] is False
+          assert t['terminal_rule'] == '36_OF_36_OR_CONSUMED_TERMINAL_INCOMPLETE_NO_SCORING'
+          print('P12_C4_LIVE_TRIGGER_PINS_PASS')
+          PY
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install exact transport
+        run: python -m pip install --disable-pip-version-check httpx==0.28.1
+
+      - name: Provider-free exact-materialization preflight
+        run: |
+          python scripts/research/p12_c4_nvidia_one_shot_live.py --provider-free-check \
+            > research/results/p12-c4-nvidia-one-shot-live-preflight-ci.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('research/results/p12-c4-nvidia-one-shot-live-preflight-ci.json').read_text())
+          assert d['status'] == 'PASS_PROVIDER_FREE_LIVE_NOT_STARTED', d
+          assert d['materialized_common_parents'] == 36, d
+          assert d['unique_parent_ids'] == 36, d
+          assert d['unique_seeds'] == 36, d
+          assert d['unique_requests'] == 36, d
+          assert d['provider_calls'] == 0 and d['network_io'] == 0, d
+          PY
+
+      - name: Execute sole NVIDIA C4 attempt
+        id: live
+        shell: bash
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          set +e
+          python scripts/research/p12_c4_nvidia_one_shot_live.py \
+            > research/results/p12-c4-nvidia-one-shot-live-console-ci.json
+          code=$?
+          echo "exit_code=${code}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload complete one-shot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-nvidia-one-shot-live-evidence
+          path: |
+            research/results/p12-c4-nvidia-one-shot-live-preflight-ci.json
+            research/results/p12-c4-nvidia-one-shot-live-console-ci.json
+            research/live/p12-c4-nvidia-one-shot-v1/
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Enforce 36 of 36 or terminal failure
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result = Path('research/live/p12-c4-nvidia-one-shot-v1/execution-result.json')
+          if not result.is_file():
+              raise SystemExit('NO_LIVE_RESULT: provider execution did not produce a consumable result')
+          d = json.loads(result.read_text())
+          status = d.get('status')
+          if status == 'PASS_36_OF_36_FRESH_COMMON_PARENTS':
+              assert d['provider_request_attempts'] == 36
+              assert d['valid_common_parents'] == 36
+              assert d['local_arm_expansion_authorized'] is True
+              assert d['private_scoring_authorized'] is False
+              assert d['next_gate'] == 'C4_144_OF_144_LOCAL_ARM_OUTPUTS'
+              print('P12_C4_NVIDIA_36_OF_36_PASS')
+          elif status == 'CONSUMED_TERMINAL_INCOMPLETE_NO_SCORING':
+              assert d['valid_common_parents'] < 36
+              assert d['local_arm_expansion_authorized'] is False
+              assert d['private_scoring_authorized'] is False
+              assert d['rerun_allowed'] is False
+              assert d['resume_allowed'] is False
+              print('P12_C4_NVIDIA_TERMINAL_INCOMPLETE_NO_SCORING')
+              raise SystemExit(1)
+          else:
+              raise SystemExit(f'UNAUTHORIZED_RESULT_STATE: {status}')
+          PY

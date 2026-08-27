@@ -1,0 +1,69 @@
+{
+  "schema_version": "p12-c1-runner-contract-remediation-v1",
+  "experiment_id": "P12-C1_EXPOSED_POOL_EVIDENCE_ROUTE_SELECTION",
+  "date": "2026-08-23",
+  "status": "PROVIDER_FREE_RUNNER_CONTRACT_REMEDIATION_AUTHORIZED",
+  "amendment_class": "pre_outcome_structural_runner_bugfix_only",
+  "scientific_candidate_changed": false,
+  "candidate_policy_changed": false,
+  "provider_model_configuration_changed": false,
+  "repetition_or_seed_schedule_changed": false,
+  "evaluation_metrics_or_thresholds_changed": false,
+  "comparison_graph_changed": false,
+  "second_failed_run": {
+    "run_id": 32654720202,
+    "head_sha": "d3901bad501bb7682ef3da15b130a088f8ef5e43",
+    "preflight_job_id": 97231578807,
+    "failure_stage": "preflight",
+    "failure_step": "Candidate-side privacy boundary and 36-cell dry preflight",
+    "failure_reason": "custom P12 runner compared the entire action_escalation_rubric before/after E14p and therefore incorrectly treated E14p's preregistered calibration_reason free-text rewrite as a decision/action/escalation semantic change",
+    "generate_freeze_job": "SKIPPED",
+    "private_scoring_handoff_job": "SKIPPED",
+    "provider_calls_made": 0,
+    "common_parent_generations_observed": 0,
+    "c0_or_c1_outcomes_observed": 0,
+    "scientific_cycle_consumed": false
+  },
+  "frozen_e14p_contract": {
+    "source": "scripts/research/e14p_public_epistemic_serialization_guard.py",
+    "semantic_signature_function": "_decision_signature",
+    "semantic_signature_fields": [
+      "decision_class",
+      "should_take_action_now",
+      "requires_human_escalation",
+      "action_escalation_rubric.needs_more_evidence",
+      "action_escalation_rubric.safe_to_act",
+      "action_escalation_rubric.action_endpoint",
+      "action_escalation_rubric.needs_human_escalation",
+      "trace_quality_self_check.uses_only_visible_packet",
+      "trace_quality_self_check.no_locked_test",
+      "trace_quality_self_check.no_gold_claim"
+    ],
+    "calibration_reason_is_free_text_and_not_part_of_semantic_signature": true,
+    "evidence_signature_preservation_still_required": true
+  },
+  "bugfix": {
+    "target": "P12-C1 execution bundle apply_upstream_deterministic_stack",
+    "old_check": "tuple including a deepcopy of the complete action_escalation_rubric",
+    "new_check": "call frozen e14p._decision_signature(current) before and after e14p.serialize_output",
+    "e14p_transform_changed": false,
+    "guard_stack_changed": false,
+    "candidate_transform_changed": false,
+    "private_oracle_access_changed": false
+  },
+  "retry_authorization": {
+    "authorized_after_provider_free_validation_pass": true,
+    "provider_cycle_remaining": 1,
+    "basis": "both failed runs stopped in preflight; generate-freeze never started and no candidate outcome was observed",
+    "new_scientific_attempt_created": false,
+    "github_rerun_of_prior_workflow_job_allowed": false,
+    "new_push_after_corrected_bundle_and provider_free_dry_run": true
+  },
+  "still_forbidden": [
+    "C2",
+    "FRESH_BLIND",
+    "LEGACY_LOCKED_TEST candidate execution",
+    "semantic v4.2 measurement",
+    "adaptive candidate changes based on C0/C1 outcomes"
+  ]
+}

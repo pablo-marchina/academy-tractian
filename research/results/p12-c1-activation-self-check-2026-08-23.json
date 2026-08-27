@@ -1,0 +1,52 @@
+{
+  "schema_version": "p12-c1-activation-self-check-result-v1",
+  "activation_id": "P12-C1-ACTIVATION-2026-08-23",
+  "experiment_id": "P12-C1_EXPOSED_POOL_EVIDENCE_ROUTE_SELECTION",
+  "status": "PASS",
+  "executed_at": "2026-08-23T13:01:24-03:00",
+  "workflow_run_id": 32650350294,
+  "workflow_job_id": 97220825977,
+  "verified_commit_sha": "53cf64afc1a7c5737650ba0eed401f3cd1b58a68",
+  "workflow_name": "research-p12-c1-activation-self-check",
+  "workflow_conclusion": "success",
+  "checks_passed": 108,
+  "checks_total": 108,
+  "all_passed": true,
+  "live_p12_protocol_checks_passed": 27,
+  "live_p12_protocol_checks_total": 27,
+  "live_p12_protocol_all_passed": true,
+  "provider_inference_calls": 0,
+  "private_benchmark_semantics_read": false,
+  "fresh_blind_access": false,
+  "legacy_locked_test_access": false,
+  "candidate_public_synthetic": {
+    "c1_added_reads": 0,
+    "c1_final_reads": 7,
+    "c0_global_budget": 14,
+    "c0_additions_total": 14,
+    "c0_output_count": 36
+  },
+  "eligibility": {
+    "C0": "ELIGIBLE",
+    "C1": "ELIGIBLE",
+    "C2": "INELIGIBLE_NO_FRESH_SYNTHETIC_QUALIFICATION_PASS"
+  },
+  "participating_arms": ["C0", "C1"],
+  "confirmatory_comparison": "C1-C0",
+  "artifact": {
+    "artifact_id": 9495997835,
+    "name": "p12-c1-activation-self-check",
+    "digest": "sha256:63d686a8da7223bf04c5146e10b0ea08a686ed8601e91a3ae08fedc485d9e30f",
+    "contains": ["p12-c1-activation-self-check.json", "p12-protocol-self-check-live.json"]
+  },
+  "authorized_scope_after_manifest_finalization": "ONE_DETERMINISTIC_PAIRED_C0_VS_C1_EXPOSED_POOL_COMMON_PARENT_GENERATION_EVALUATION_CYCLE",
+  "not_authorized": [
+    "C2 provider or EXPOSED_POOL execution",
+    "semantic v4.2 candidate measurement",
+    "FRESH_BLIND access",
+    "LEGACY_LOCKED_TEST access",
+    "final measurement",
+    "architecture freeze",
+    "production-readiness claim"
+  ]
+}

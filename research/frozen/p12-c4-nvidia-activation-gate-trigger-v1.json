@@ -1,0 +1,8 @@
+{
+  "schema_version": "p12-c4-nvidia-activation-gate-trigger-v1",
+  "gate_id": "P12-C4-NVIDIA-FULL-PACKET-ACTIVATION-CAPACITY-V1",
+  "authorized_provider_calls": 0,
+  "purpose": "TRIGGER_PROVIDER_FREE_ACTIVATION_CAPACITY_SELF_CHECK_ONLY",
+  "live_manifest_authorized": false,
+  "private_scoring_authorized": false
+}

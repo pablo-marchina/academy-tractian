@@ -1,0 +1,49 @@
+name: research-e14m-dev-only-public-decision-adjudication
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e14m-dev-only-public-decision-adjudication-dry-run:
+    runs-on: ubuntu-24.04
+    env:
+      E8_GROQ_MODEL: openai/gpt-oss-120b
+      E8_MODEL_TEMPERATURE: "0"
+      E14_REASONING_EFFORT: medium
+      E14_REASONING_FORMAT: hidden
+      E14_RESPONSE_FORMAT_MODE: json_schema_strict
+      E14_MAX_COMPLETION_TOKENS: "4096"
+      E8_BETWEEN_CALL_DELAY_SECONDS: "0"
+      E14M_ADJUDICATION_DELAY_SECONDS: "0"
+      E14F_REPAIR_DELAY_SECONDS: "0"
+      E14_MAX_RETRIES: "2"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate E14m public adjudication semantics
+        run: PYTHONPATH=. python scripts/research/e14m_public_decision_adjudication.py
+      - name: Validate frozen strict public schema
+        run: PYTHONPATH=. python scripts/research/e14j_strict_output_schema.py
+      - name: Execute E14m DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14m_dev_only_public_decision_adjudication.py
+          --manifest research/experiments/e14m-dev-only-public-decision-adjudication-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14m-dev-only-public-decision-adjudication-dry-run.json
+          --dry-run
+      - name: Upload E14m dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14m-dev-only-public-decision-adjudication-dry-run
+          path: /tmp/e14m-dev-only-public-decision-adjudication-dry-run.json

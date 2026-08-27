@@ -1,0 +1,85 @@
+{
+  "schema_version": "p12-c4-nvidia-one-shot-live-execution-authorization-v1",
+  "authorization_id": "P12-C4-NVIDIA-ONE-SHOT-LIVE-EXECUTION-AUTH-V1",
+  "manifest_id": "P12-C4-NVIDIA-ONE-SHOT-LIVE-V1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "date": "2026-08-26",
+  "status": "AUTHORIZED_ONE_C4_NVIDIA_LIVE_EXECUTION_ATTEMPT",
+  "provider": "NVIDIA",
+  "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+  "model_id": "openai/gpt-oss-120b",
+  "credential_env": "NVIDIA_API_KEY",
+  "manifest_git_blob_sha": "28971da8c4c20dad9b73b909997b6e486a420cd5",
+  "runner_path": "scripts/research/p12_c4_nvidia_one_shot_live.py",
+  "runner_git_blob_sha": "7f83f0143046208e5c37da4dbd3a57156d5a0a78",
+  "request_materialization_source_pins": {
+    "activation_mapping": {
+      "path": "research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json",
+      "git_blob_sha": "96c38036411365bb2f64c5df85f9eafc31c6901e"
+    },
+    "exposed_agent_input_cases": {
+      "path": "research/fixtures/p12-c1-exposed-agent-input-cases-v1.json",
+      "git_blob_sha": "f9fef316ab9245de1e36d1d6d787326cde2e27be"
+    },
+    "fresh_seed_map": {
+      "path": "research/frozen/p12-c4-fresh-seed-map-v1.json",
+      "git_blob_sha": "2e5429c5175afd52584d282ee536a8d4f722a953"
+    },
+    "e10b_prompt_and_packet_builder": {
+      "path": "scripts/research/e10b_dev_only_action_escalation_capture.py",
+      "git_blob_sha": "80170d52235006ebccc440ebf6b2be776e9dfc5a"
+    },
+    "e10b_capture_dependency": {
+      "path": "scripts/research/e8_capture_fixed_groq_outputs.py",
+      "git_blob_sha": "76789c4904844023c6c584f65ffb967a668b825f"
+    },
+    "e10b_base_dependency": {
+      "path": "scripts/research/e8_free_anywhere_model_runner.py",
+      "git_blob_sha": "1fc8b7f5625300cea40bcdd78cd0fb0c4c326976"
+    },
+    "e14o_public_factual_grounding_prompt": {
+      "path": "scripts/research/e14o_dev_only_public_factual_grounding_prompt.py",
+      "git_blob_sha": "caebdec2989beb4699efa01e5f5dc79134837307"
+    },
+    "e14j_strict_output_schema": {
+      "path": "scripts/research/e14j_strict_output_schema.py",
+      "git_blob_sha": "24e362d6ca0fbe3f2dbbd7e37b32dc437261fd60"
+    }
+  },
+  "authorized_live_execution_attempts": 1,
+  "maximum_provider_request_attempts": 36,
+  "maximum_attempts_per_parent": 1,
+  "minimum_seconds_between_request_starts": 75,
+  "automatic_retries": 0,
+  "provider_fallbacks": 0,
+  "model_fallbacks": 0,
+  "warming_requests": 0,
+  "rerun_allowed": false,
+  "resume_allowed": false,
+  "completed_parent_regeneration_allowed": false,
+  "failure_policy": {
+    "non_2xx": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+    "invalid_or_unparseable_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+    "missing_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+    "duplicate_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+    "seed_or_parent_mismatch": "ABORT_PACKET_INCOMPLETE_NO_SCORING"
+  },
+  "github_actions": {
+    "run_attempt_required": 1,
+    "run_number_required": 1,
+    "automatic_trigger": false,
+    "authorized_trigger_comment": "/p12-c4-nvidia-one-shot-live 20260826-9e7a4d1c",
+    "authorized_pull_request": 2,
+    "authorized_head_branch": "research/systematic-foundation"
+  },
+  "outcome_boundary": {
+    "required_valid_common_parents": "36/36",
+    "on_36_of_36": "AUTHORIZE_LOCAL_144_ARM_EXPANSION_ONLY",
+    "on_any_incomplete_packet": "CONSUMED_TERMINAL_INCOMPLETE_NO_SCORING",
+    "partial_packet_scoring": false,
+    "complete_case_reinterpretation": false
+  },
+  "private_scoring_authorized": false,
+  "fresh_blind_authorized": false,
+  "legacy_locked_test_authorized": false
+}

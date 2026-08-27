@@ -1,0 +1,125 @@
+name: research-p12-c1-runner-contract-remediation-validation
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - '.github/workflows/research-p12-c1-runner-contract-remediation-validation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c1-runner-contract-remediation-validation.yml'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+  ACTIVATION: research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json
+  EXPOSED_CASES_FIXTURE: research/fixtures/p12-c1-exposed-agent-input-cases-v1.json
+  EXEC_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
+
+jobs:
+  provider-free-remediation-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public evaluator dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Materialize and patch only the invalid E14p semantic assertion
+        run: |
+          gzip -dc "$EXEC_BUNDLE" > /tmp/p12_exec_old.py
+          echo '2d25485b353c0c6ad63d6acb143abff0c16aeb8f8841861b990e2d28a1a7cb4e  /tmp/p12_exec_old.py' | sha256sum -c -
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/p12_exec_old.py')
+          text=p.read_text()
+          old='''    before_semantics = (\n        current.get("decision_class"),\n        current.get("should_take_action_now"),\n        current.get("requires_human_escalation"),\n        copy.deepcopy(current.get("action_escalation_rubric")),\n    )\n    current, mp = e14p.serialize_output(current)\n    after_semantics = (\n        current.get("decision_class"),\n        current.get("should_take_action_now"),\n        current.get("requires_human_escalation"),\n        copy.deepcopy(current.get("action_escalation_rubric")),\n    )\n    if before_semantics != after_semantics:\n        raise AssertionError("E14p changed decision/action/escalation semantics")\n'''
+          new='''    before_semantics = e14p._decision_signature(current)\n    current, mp = e14p.serialize_output(current)\n    after_semantics = e14p._decision_signature(current)\n    if before_semantics != after_semantics:\n        raise AssertionError("E14p changed frozen decision/action/escalation semantics")\n'''
+          assert text.count(old)==1, text.count(old)
+          patched=text.replace(old,new)
+          assert patched.count('e14p._decision_signature(current)')==2
+          assert 'copy.deepcopy(current.get("action_escalation_rubric"))' not in patched
+          Path('/tmp/p12_exec_patched.py').write_text(patched)
+          PY
+          python -m py_compile /tmp/p12_exec_patched.py
+          diff -u /tmp/p12_exec_old.py /tmp/p12_exec_patched.py || true
+      - name: Assert patch is contract-only
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          old=Path('/tmp/p12_exec_old.py').read_text().splitlines()
+          new=Path('/tmp/p12_exec_patched.py').read_text().splitlines()
+          # The only intended change is inside apply_upstream_deterministic_stack.
+          def func(text,name):
+              src='\n'.join(text)
+              tree=ast.parse(src)
+              for node in tree.body:
+                  if isinstance(node,ast.FunctionDef) and node.name==name:
+                      return '\n'.join(text[node.lineno-1:node.end_lineno])
+              raise AssertionError(name)
+          old_fn=func(old,'apply_upstream_deterministic_stack')
+          new_fn=func(new,'apply_upstream_deterministic_stack')
+          old_rest='\n'.join(old).replace(old_fn,'<TARGET>')
+          new_rest='\n'.join(new).replace(new_fn,'<TARGET>')
+          assert old_rest==new_rest
+          assert 'e14p._decision_signature(current)' in new_fn
+          assert 'copy.deepcopy(current.get("action_escalation_rubric"))' not in new_fn
+          print('P12_C1_CONTRACT_ONLY_PATCH_PASS')
+          PY
+      - name: Materialize exact EXPOSED_POOL agent inputs
+        run: |
+          echo 'a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef  research/fixtures/p12-c1-exposed-agent-input-cases-v1.json' | sha256sum -c -
+          mkdir -p agent-input
+          cp "$EXPOSED_CASES_FIXTURE" agent-input/cases.json
+          cp /tmp/p12_exec_patched.py scripts/research/p12_c1_paired_exposed_pool_execution.py
+      - name: Run corrected 36-cell provider-free preflight with private surfaces absent
+        env:
+          E8_GROQ_MODEL: openai/gpt-oss-120b
+          E8_MODEL_TEMPERATURE: '0'
+          E14_REASONING_EFFORT: medium
+          E14_REASONING_FORMAT: hidden
+          E14_RESPONSE_FORMAT_MODE: json_schema_strict
+          E14_MAX_COMPLETION_TOKENS: '4096'
+          E14_MAX_RETRIES: '2'
+          E8_BETWEEN_CALL_DELAY_SECONDS: '0'
+          E14F_REPAIR_DELAY_SECONDS: '0'
+        run: |
+          rm -f eval/expected-paths.json private-eval/expected-paths.json docs/test-scenarios.md eval/test-scenarios.md
+          python scripts/research/p12_c1_paired_exposed_pool_execution.py \
+            --activation "$ACTIVATION" \
+            --fixed-outputs /tmp/p12-fixed-dry.json \
+            --generation-summary /tmp/p12-generation-dry.json \
+            --dry-run
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/p12-generation-dry.json'))
+          assert x['status']=='PASS'
+          assert x['successful_common_parent_generations']==36
+          assert x['fixed_candidate_outputs']==72
+          assert x['candidate_private_oracle_accesses']==0
+          assert x['fresh_blind_accesses']==0
+          assert x['legacy_locked_test_accesses']==0
+          print('P12_C1_CORRECTED_36_CELL_DRY_PREFLIGHT_PASS')
+          PY
+      - name: Build deterministic corrected bundle
+        run: |
+          cp /tmp/p12_exec_patched.py /tmp/p12_c1_paired_exposed_pool_execution.py
+          gzip -n -9 -c /tmp/p12_c1_paired_exposed_pool_execution.py > /tmp/p12_c1_paired_exposed_pool_execution.py.gz
+          sha256sum /tmp/p12_c1_paired_exposed_pool_execution.py | tee /tmp/p12-c1-corrected-source-sha256.txt
+          sha256sum /tmp/p12_c1_paired_exposed_pool_execution.py.gz | tee /tmp/p12-c1-corrected-bundle-sha256.txt
+      - name: Upload corrected provider-free validated bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c1-corrected-execution-bundle
+          path: |
+            /tmp/p12_c1_paired_exposed_pool_execution.py.gz
+            /tmp/p12-c1-corrected-source-sha256.txt
+            /tmp/p12-c1-corrected-bundle-sha256.txt
+          retention-days: 7
+          if-no-files-found: error

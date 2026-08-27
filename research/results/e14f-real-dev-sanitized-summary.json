@@ -1,0 +1,86 @@
+{
+  "experiment_id": "E14f",
+  "status": "REAL_DEV_GATE_FAIL",
+  "capture_status": "E14F_DEV_ONLY_PUBLIC_SEMANTIC_REPAIR_CAPTURE_PASS",
+  "scorer_status": "E9_TASK_QUALITY_SCORER_PASS",
+  "scope": {
+    "DEV_only": true,
+    "validation_ran": false,
+    "locked_test_accessed": false
+  },
+  "completeness": {
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "scoreable_calls": 6,
+    "retry_count": 0,
+    "syntax_repair_count": 0
+  },
+  "aggregate_metrics": {
+    "real_task_quality": 0.6429,
+    "decision_correctness": 0.5,
+    "evidence_correctness": 0.1667,
+    "action_correctness": 0.3333,
+    "escalation_correctness": 0.5,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 0.8333
+  },
+  "semantic_repair": {
+    "triggered_calls": 1,
+    "repair_calls": 1,
+    "trigger_violation_code_counts": {
+      "immediate_action_while_needs_more_evidence": 1
+    },
+    "parseable_repair_responses": 1,
+    "calls_with_residual_public_violations": 0,
+    "residual_violation_code_counts": {}
+  },
+  "boundary_effects": {
+    "e10d_outputs_changed": 1,
+    "e10d_reason_counts": {
+      "explicit_current_handoff_phrase": 1,
+      "none": 5
+    },
+    "e10e_outputs_changed": 0,
+    "e10g_outputs_changed": 0,
+    "e11_outputs_changed": 0,
+    "e14_target_reprocess_outputs_checked": 0,
+    "e14_authorized_target_reprocess_outputs": 0,
+    "e14_blocked_target_reprocess_outputs": 0
+  },
+  "public_evidence_representation": {
+    "historical_template_marker_count_histogram": {
+      "0": 5,
+      "7": 1
+    },
+    "normalized_public_evidence_family_count_histogram": {
+      "1": 1,
+      "2": 2,
+      "3": 1,
+      "4": 1,
+      "8": 1
+    },
+    "calls_with_concrete_public_read_equivalent": 6
+  },
+  "gate": {
+    "parsed_outputs": "PASS",
+    "scoreable_calls": "PASS",
+    "real_task_quality": "FAIL",
+    "decision_correctness": "FAIL",
+    "evidence_correctness": "FAIL",
+    "action_correctness": "FAIL",
+    "escalation_correctness": "FAIL",
+    "premature_action_rate": "PASS",
+    "unsupported_final_claim_rate": "PASS",
+    "locked_test_accessed": "PASS",
+    "overall": "FAIL"
+  },
+  "privacy": {
+    "contains_raw_model_outputs": false,
+    "contains_private_scorer_rows": false,
+    "contains_output_hashes": false,
+    "contains_private_paths": false,
+    "contains_oracle_values": false,
+    "contains_evaluator_labels": false
+  }
+}

@@ -1,0 +1,282 @@
+name: research-p12-c3-checkpointed-six-batch-live-v2
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/p12-c3-live-batch-trigger-v1.json'
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: p12-c3-live-capacity-controlled-experiment
+  cancel-in-progress: false
+
+env:
+  PYTHONPATH: .
+  EXECUTION_ID: P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23
+  ACTIVATION: research/experiments/p12-c3-capacity-controlled-activation-eligibility-v1.json
+  BATCH_MAP: research/frozen/p12-c3-capacity-batch-map-v1.json
+  CAPACITY_CONTROL: scripts/research/p12_c3_capacity_control.py
+  CHECKPOINT_BASE: scripts/research/p12_c3_checkpointed_batch_runner.py
+  CHECKPOINT_FIXUP: scripts/research/p12_c3_checkpointed_runner_fixup.py
+  PARENT_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
+  EXPOSED_CASES: research/fixtures/p12-c1-exposed-agent-input-cases-v1.json
+  TRIGGER: research/experiments/p12-c3-live-batch-trigger-v1.json
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      batch_id: ${{ steps.trigger.outputs.batch_id }}
+      source_run_id: ${{ steps.trigger.outputs.source_run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install 'pydantic>=2,<3'
+      - name: Fail closed before provider job
+        run: |
+          test "$GITHUB_RUN_ATTEMPT" = '1'
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+          python scripts/research/big_b4_protocol_guard.py
+          python scripts/research/p12_c3_capacity_activation_self_check.py >/tmp/p12-c3-activation.json
+      - name: Validate explicit trigger
+        id: trigger
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          x=json.load(open(os.environ['TRIGGER']))
+          assert x['schema_version']=='p12-c3-live-batch-trigger-v1'
+          assert x['execution_id']==os.environ['EXECUTION_ID']
+          assert x['experiment_id']=='P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL'
+          assert x['consume_authorized_experiment'] is True
+          assert x['github_rerun_allowed'] is False
+          assert x['candidate_or_evaluator_change'] is False
+          assert int(x['trigger_index']) >= 1
+          batch=str(x['batch_id']); assert batch in {'B1','B2','B3','B4','B5','B6'}
+          source=x.get('checkpoint_source_run_id')
+          assert source is None or isinstance(source,int) and source>0
+          if batch!='B1': assert source is not None
+          print(f'batch_id={batch}')
+          print(f'source_run_id={source or 0}')
+          PY
+      - name: Validate prior checkpoint run metadata
+        if: ${{ steps.trigger.outputs.source_run_id != '0' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ steps.trigger.outputs.source_run_id }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > /tmp/source-run.json
+          python - <<'PY'
+          import json, os
+          x=json.load(open('/tmp/source-run.json'))
+          assert x['status']=='completed'
+          assert x['event']=='push'
+          assert x['head_branch']=='research/systematic-foundation'
+          assert x['name']=='research-p12-c3-checkpointed-six-batch-live-v2'
+          assert int(x['id'])==int(os.environ['SOURCE_RUN_ID'])
+          PY
+      - name: Derive and compile exact runners
+        run: |
+          git hash-object "$PARENT_BUNDLE" | grep -Fx 'a5c27394014bac656faa0a2f923a5c5da72d66f5'
+          python scripts/research/p12_c2_execution_derivation.py --parent-gz "$PARENT_BUNDLE" --out /tmp/p12_c2_factorial_execution.py
+          echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  /tmp/p12_c2_factorial_execution.py' | sha256sum -c -
+          python "$CHECKPOINT_FIXUP" --base "$CHECKPOINT_BASE" --out /tmp/p12_c3_checkpointed_batch_runner.py | tee /tmp/p12-c3-effective-runner.sha256
+          python -m py_compile /tmp/p12_c2_factorial_execution.py /tmp/p12_c3_checkpointed_batch_runner.py
+      - name: Validate public corpus and candidate boundary
+        run: |
+          echo 'a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef  research/fixtures/p12-c1-exposed-agent-input-cases-v1.json' | sha256sum -c -
+          mkdir -p agent-input
+          cp "$EXPOSED_CASES" agent-input/cases.json
+          rm -f eval/expected-paths.json private-eval/expected-paths.json docs/test-scenarios.md eval/test-scenarios.md
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+          test ! -e docs/test-scenarios.md
+          test ! -e eval/test-scenarios.md
+      - name: Provider-free checkpoint preflight
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BATCH_ID: ${{ steps.trigger.outputs.batch_id }}
+          SOURCE_RUN_ID: ${{ steps.trigger.outputs.source_run_id }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/preflight"
+          if [ "$SOURCE_RUN_ID" != '0' ]; then
+            gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name p12-c3-private-checkpoint-latest --dir "$RUNNER_TEMP/preflight/prior"
+            test -s "$RUNNER_TEMP/preflight/prior/checkpoint.json"
+            python /tmp/p12_c3_checkpointed_batch_runner.py prepare \
+              --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+              --batch-id "$BATCH_ID" --checkpoint-in "$RUNNER_TEMP/preflight/prior/checkpoint.json" \
+              --checkpoint-out "$RUNNER_TEMP/preflight/checkpoint.json" --public-out "$RUNNER_TEMP/preflight/public.json"
+          else
+            test "$BATCH_ID" = 'B1'
+            python /tmp/p12_c3_checkpointed_batch_runner.py prepare \
+              --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+              --batch-id B1 --checkpoint-out "$RUNNER_TEMP/preflight/checkpoint.json" --public-out "$RUNNER_TEMP/preflight/public.json" --allow-initialize
+          fi
+          python - <<'PY'
+          import json, os
+          x=json.load(open(os.environ['RUNNER_TEMP']+'/preflight/public.json'))
+          assert x['raw_outputs_present'] is False
+          assert x['private_oracle_present'] is False
+          assert x['terminal_failure_present'] is False
+          PY
+
+  collect-batch:
+    needs: preflight
+    if: ${{ github.run_attempt == 1 }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      E8_ENABLE_GROQ: '1'
+      E8_CONFIRM_ZERO_COST: '1'
+      E8_GROQ_MODEL: openai/gpt-oss-120b
+      E8_MODEL_TEMPERATURE: '0'
+      E14_REASONING_EFFORT: medium
+      E14_REASONING_FORMAT: hidden
+      E14_RESPONSE_FORMAT_MODE: json_schema_strict
+      E14_MAX_COMPLETION_TOKENS: '4096'
+      E14_MAX_RETRIES: '0'
+      E8_PROVIDER_MAX_ATTEMPTS: '1'
+      E8_BETWEEN_CALL_DELAY_SECONDS: '0'
+      E14F_REPAIR_DELAY_SECONDS: '0'
+      BATCH_ID: ${{ needs.preflight.outputs.batch_id }}
+      SOURCE_RUN_ID: ${{ needs.preflight.outputs.source_run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install 'pydantic>=2,<3'
+      - name: Derive exact runners and remove all private evaluator material
+        run: |
+          test "$GITHUB_RUN_ATTEMPT" = '1'
+          test -n "$GROQ_API_KEY"
+          python scripts/research/p12_c2_execution_derivation.py --parent-gz "$PARENT_BUNDLE" --out "$RUNNER_TEMP/p12_c2_factorial_execution.py"
+          echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  '"$RUNNER_TEMP"'/p12_c2_factorial_execution.py' | sha256sum -c -
+          python "$CHECKPOINT_FIXUP" --base "$CHECKPOINT_BASE" --out "$RUNNER_TEMP/p12_c3_checkpointed_batch_runner.py" | tee "$RUNNER_TEMP/p12-c3-effective-runner.sha256"
+          python -m py_compile "$RUNNER_TEMP/p12_c2_factorial_execution.py" "$RUNNER_TEMP/p12_c3_checkpointed_batch_runner.py"
+          mkdir -p agent-input
+          cp "$EXPOSED_CASES" agent-input/cases.json
+          rm -f eval/expected-paths.json private-eval/expected-paths.json docs/test-scenarios.md eval/test-scenarios.md
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Restore or initialize private checkpoint
+        run: |
+          mkdir -p "$RUNNER_TEMP/state" "$RUNNER_TEMP/public" "$RUNNER_TEMP/cells"
+          if [ "$SOURCE_RUN_ID" != '0' ]; then
+            gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name p12-c3-private-checkpoint-latest --dir "$RUNNER_TEMP/prior"
+            test -s "$RUNNER_TEMP/prior/checkpoint.json"
+            python "$RUNNER_TEMP/p12_c3_checkpointed_batch_runner.py" prepare \
+              --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+              --batch-id "$BATCH_ID" --checkpoint-in "$RUNNER_TEMP/prior/checkpoint.json" \
+              --checkpoint-out "$RUNNER_TEMP/state/checkpoint.json" --public-out "$RUNNER_TEMP/public/checkpoint.json"
+          else
+            test "$BATCH_ID" = 'B1'
+            python "$RUNNER_TEMP/p12_c3_checkpointed_batch_runner.py" prepare \
+              --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+              --batch-id B1 --checkpoint-out "$RUNNER_TEMP/state/checkpoint.json" --public-out "$RUNNER_TEMP/public/checkpoint.json" --allow-initialize
+          fi
+      - name: Execute pending prefix of the selected frozen batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          for ordinal in 1 2 3 4 5 6; do
+            python "$RUNNER_TEMP/p12_c3_checkpointed_batch_runner.py" run-cell \
+              --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+              --batch-id "$BATCH_ID" --cell-ordinal "$ordinal" --base-runner "$RUNNER_TEMP/p12_c2_factorial_execution.py" \
+              --checkpoint-in "$RUNNER_TEMP/state/checkpoint.json" --checkpoint-out "$RUNNER_TEMP/state/checkpoint.next.json" \
+              --public-out "$RUNNER_TEMP/public/checkpoint.json" --cell-summary "$RUNNER_TEMP/cells/cell-$ordinal.json" \
+              --agent-input-cases agent-input/cases.json --timeout-seconds 90
+            mv "$RUNNER_TEMP/state/checkpoint.next.json" "$RUNNER_TEMP/state/checkpoint.json"
+            cont=$(python - <<PY
+          import json
+          x=json.load(open('$RUNNER_TEMP/cells/cell-$ordinal.json'))
+          print('true' if x.get('continue_with_batch') is True else 'false')
+          PY
+            )
+            if [ "$cont" != 'true' ]; then break; fi
+          done
+      - name: Emit sanitized checkpoint handoff state
+        if: always()
+        run: |
+          set +e
+          python "$RUNNER_TEMP/p12_c3_checkpointed_batch_runner.py" summarize \
+            --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+            --batch-id "$BATCH_ID" --checkpoint-in "$RUNNER_TEMP/state/checkpoint.json" --summary-out "$RUNNER_TEMP/public/batch-summary.json"
+          echo $? > "$RUNNER_TEMP/public/summary-exit-code.txt"
+          exit 0
+      - name: Freeze 144 arms only after 36/36 parents
+        if: always()
+        run: |
+          all36=$(python - <<'PY'
+          import json, os
+          try:
+            x=json.load(open(os.environ['RUNNER_TEMP']+'/public/batch-summary.json'))
+            print('true' if x.get('all_36_complete') is True and not x.get('terminal_failure') and not x.get('horizon_expired') else 'false')
+          except Exception: print('false')
+          PY
+          )
+          if [ "$all36" = 'true' ]; then
+            unset GROQ_API_KEY
+            python "$RUNNER_TEMP/p12_c3_checkpointed_batch_runner.py" finalize \
+              --execution-id "$EXECUTION_ID" --activation "$ACTIVATION" --batch-map "$BATCH_MAP" --capacity-control "$CAPACITY_CONTROL" \
+              --base-runner "$RUNNER_TEMP/p12_c2_factorial_execution.py" --checkpoint-in "$RUNNER_TEMP/state/checkpoint.json" \
+              --fixed-outputs "$RUNNER_TEMP/p12-c3-fixed-factorial-outputs.json" --generation-summary "$RUNNER_TEMP/public/generation-summary.json"
+          fi
+      - name: Upload private checkpoint for exact next-run resume
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c3-private-checkpoint-latest
+          path: ${{ runner.temp }}/state/checkpoint.json
+          retention-days: 5
+          if-no-files-found: error
+      - name: Upload sanitized batch evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c3-sanitized-batch-handoff
+          path: |
+            ${{ runner.temp }}/public/checkpoint.json
+            ${{ runner.temp }}/public/batch-summary.json
+            ${{ runner.temp }}/cells/*.json
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload complete fixed factorial packet when present
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c3-fixed-factorial-outputs-private-intermediate
+          path: ${{ runner.temp }}/p12-c3-fixed-factorial-outputs.json
+          retention-days: 1
+          if-no-files-found: ignore
+      - name: Upload sanitized full-generation summary when present
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c3-generation-summary
+          path: ${{ runner.temp }}/public/generation-summary.json
+          retention-days: 90
+          if-no-files-found: ignore
+      - name: Fail closed only on terminal experiment state or expired horizon
+        if: always()
+        run: |
+          terminal=$(python - <<'PY'
+          import json, os
+          try:
+            x=json.load(open(os.environ['RUNNER_TEMP']+'/public/batch-summary.json'))
+            print('true' if x.get('terminal_failure') or x.get('horizon_expired') else 'false')
+          except Exception: print('true')
+          PY
+          )
+          if [ "$terminal" = 'true' ]; then exit 1; fi
+          echo 'P12_C3_CHECKPOINT_HANDOFF_VALID'

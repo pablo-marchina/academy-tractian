@@ -1,0 +1,85 @@
+{
+  "report_version": "e5-evidence-stopping-summary-v1",
+  "date": "2026-08-16",
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "boundary_candidate": "B3",
+    "baseline_boundary": "B0",
+    "runtime_model_mcp_ui_freeze": false
+  },
+  "locked_test_accessed": false,
+  "runtime_model_mcp_ui_freeze": false,
+  "ci_run_id": 31947620763,
+  "ci_job_status": "success",
+  "aggregate_by_strategy": {
+    "fixed_reference_like": {
+      "strategy_role": "infrastructure upper-bound/reference-like anchor; not a model-quality claim",
+      "source_class": "scripted_reference_anchor",
+      "agent_quality_evidence": false,
+      "scenarios": 11,
+      "splits": ["DEV", "VALIDATION"],
+      "task_success": 11,
+      "task_fail": 0,
+      "premature_stopping_count": 0,
+      "unnecessary_tool_calls": 0,
+      "total_tool_calls": 36,
+      "avg_tool_calls": 3.273,
+      "required_evidence_coverage": 1.0,
+      "action_or_escalation_ok": 11,
+      "action_or_escalation_total": 11
+    },
+    "free_tool_loop": {
+      "strategy_role": "model proposal sequence without explicit evidence-sufficiency stopping policy",
+      "source_class": "model_agent_free_loop",
+      "agent_quality_evidence": true,
+      "scenarios": 11,
+      "splits": ["DEV", "VALIDATION"],
+      "task_success": 7,
+      "task_fail": 4,
+      "premature_stopping_count": 4,
+      "unnecessary_tool_calls": 9,
+      "total_tool_calls": 36,
+      "avg_tool_calls": 3.273,
+      "required_evidence_coverage": 0.786,
+      "action_or_escalation_ok": 8,
+      "action_or_escalation_total": 11
+    },
+    "evidence_sufficiency_policy": {
+      "strategy_role": "model proposal sequence constrained by evidence sufficiency and stop rules",
+      "source_class": "model_agent_with_stopping_policy",
+      "agent_quality_evidence": true,
+      "scenarios": 11,
+      "splits": ["DEV", "VALIDATION"],
+      "task_success": 10,
+      "task_fail": 1,
+      "premature_stopping_count": 1,
+      "unnecessary_tool_calls": 2,
+      "total_tool_calls": 35,
+      "avg_tool_calls": 3.182,
+      "required_evidence_coverage": 0.964,
+      "action_or_escalation_ok": 11,
+      "action_or_escalation_total": 11
+    }
+  },
+  "delta_evidence_sufficiency_vs_free_loop": {
+    "task_success_delta_vs_free_loop": 3,
+    "premature_stopping_delta_vs_free_loop": -3,
+    "unnecessary_call_delta_vs_free_loop": -7,
+    "tool_call_delta_vs_free_loop": -1
+  },
+  "preferred_strategy_for_next_stage": "evidence_sufficiency_policy",
+  "decision": {
+    "fixed_reference_like": "retain as infrastructure/reference anchor only; not agent-quality evidence",
+    "free_tool_loop": "retain as behavioral baseline; not preferred due premature stopping and unnecessary calls",
+    "evidence_sufficiency_policy": "promote as the current evidence-acquisition/stopping candidate for the next experimental stage"
+  },
+  "interpretation": [
+    "E5 used DEV+VALIDATION only and did not access LOCKED_TEST.",
+    "B3 remains the current guarded-boundary candidate; B0 remains useful as an E4 safety baseline, not the E5 preferred boundary.",
+    "Evidence-sufficiency/stopping improves task success and reduces premature stopping versus a free tool loop in this recorded comparison.",
+    "The fixed/reference-like strategy is an infrastructure anchor and must not be treated as model-quality evidence.",
+    "This does not freeze runtime, model/provider, prompt, MCP, RAG, multi-agent design, memory, observability backend or UI."
+  ]
+}

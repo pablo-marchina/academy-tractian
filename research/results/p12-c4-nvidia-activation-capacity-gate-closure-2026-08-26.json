@@ -1,0 +1,47 @@
+{
+  "schema_version": "p12-c4-nvidia-activation-capacity-gate-closure-v1",
+  "gate_id": "P12-C4-NVIDIA-FULL-PACKET-ACTIVATION-CAPACITY-V1",
+  "status": "PASS_PROVIDER_FREE_ACTIVATION_CAPACITY",
+  "closed_at_utc": "2026-08-26T17:25:30Z",
+  "github_actions": {
+    "workflow": "research-p12-c4-nvidia-activation-capacity-provider-free",
+    "run_id": 32993930833,
+    "run_attempt": 1,
+    "job_id": 98258147778,
+    "head_sha": "dccb4f1aa59fccd4c7c485bd9064173ceb06d193",
+    "conclusion": "success"
+  },
+  "evidence": {
+    "path": "research/results/p12-c4-nvidia-activation-capacity-self-check-2026-08-26.json",
+    "git_blob_sha": "250902bde99f69c24df28506110abbd72ed56528",
+    "sha256": "017c684f51a226dfc2e7f9c9e9f788332a0269778f689f48ced1ce23dece3ca2",
+    "artifact_id": 9615695861,
+    "artifact_zip_digest": "sha256:47f07a60ff515c6ec1e9dc581558a04fa8d6b3846aaf993f52715d008b7a94ef"
+  },
+  "audit": {
+    "checks_passed": 73,
+    "checks_total": 73,
+    "provider_calls": 0,
+    "credentials_read": 0,
+    "benchmark_inputs_loaded": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "capacity_basis": "BOUNDED_EXECUTION_PLAN_WITHOUT_QUOTA_GUARANTEE",
+    "provider_quota_guarantee": "UNKNOWN_NOT_CLAIMED"
+  },
+  "authorization_boundary": {
+    "one_live_manifest_may_be_frozen": true,
+    "maximum_provider_request_attempts_under_that_manifest": 36,
+    "maximum_attempts_per_parent": 1,
+    "minimum_seconds_between_request_starts": 75,
+    "automatic_retries": 0,
+    "provider_fallbacks": 0,
+    "model_fallbacks": 0,
+    "resume_after_incomplete_packet": false,
+    "workflow_rerun_allowed": false,
+    "private_scoring_authorized": false,
+    "fresh_blind_authorized": false
+  },
+  "next_gate": "FREEZE_ONE_SHOT_C4_LIVE_MANIFEST"
+}

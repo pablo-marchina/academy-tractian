@@ -1,0 +1,43 @@
+name: research-e14j-dev-only-strict-json-schema-output
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e14j-dev-only-strict-schema-dry-run:
+    runs-on: ubuntu-24.04
+    env:
+      E8_GROQ_MODEL: openai/gpt-oss-120b
+      E8_MODEL_TEMPERATURE: "0"
+      E14_REASONING_EFFORT: high
+      E14_REASONING_FORMAT: hidden
+      E14_RESPONSE_FORMAT_MODE: json_schema_strict
+      E14_MAX_COMPLETION_TOKENS: "1600"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate strict public schema
+        run: PYTHONPATH=. python scripts/research/e14j_strict_output_schema.py
+      - name: Execute E14j DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14j_dev_only_strict_json_schema_output.py
+          --manifest research/experiments/e14j-dev-only-strict-json-schema-output-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14j-dev-only-strict-schema-dry-run.json
+          --dry-run
+      - name: Upload E14j dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14j-dev-only-strict-schema-dry-run
+          path: /tmp/e14j-dev-only-strict-schema-dry-run.json

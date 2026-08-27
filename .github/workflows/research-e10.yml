@@ -1,0 +1,37 @@
+name: research-e10-dev-only-quality-loop
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/74-e10-dev-only-quality-improvement-loop.md'
+      - 'research/experiments/e10-*.json'
+      - 'scripts/research/e10_*.py'
+      - '.github/workflows/research-e10.yml'
+  pull_request:
+    paths:
+      - 'research/74-e10-dev-only-quality-improvement-loop.md'
+      - 'research/experiments/e10-*.json'
+      - 'scripts/research/e10_*.py'
+      - '.github/workflows/research-e10.yml'
+
+jobs:
+  e10-dev-only-quality-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E10 DEV-only Groq quality capture dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e10_dev_only_groq_quality_capture_v2.py
+          --manifest research/experiments/e10-dev-only-quality-improvement-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e10-dev-only-groq-quality-capture-dry-run.json
+          --dry-run
+      - name: Upload E10 DEV-only capture dry-run
+        uses: actions/upload-artifact@v4
+        with:
+          name: e10-dev-only-groq-quality-capture-dry-run
+          path: /tmp/e10-dev-only-groq-quality-capture-dry-run.json

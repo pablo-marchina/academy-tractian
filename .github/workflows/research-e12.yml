@@ -1,0 +1,26 @@
+name: research-e12
+
+on:
+  push:
+    paths:
+      - scripts/research/e12_hard_gate_root_cause_audit.py
+      - research/experiments/e12-hard-gate-root-cause-audit-manifest.json
+      - research/99-e12-hard-gate-root-cause-audit.md
+      - .github/workflows/research-e12.yml
+  pull_request:
+    paths:
+      - scripts/research/e12_hard_gate_root_cause_audit.py
+      - research/experiments/e12-hard-gate-root-cause-audit-manifest.json
+      - research/99-e12-hard-gate-root-cause-audit.md
+      - .github/workflows/research-e12.yml
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: E12 dry-run
+        run: python scripts/research/e12_hard_gate_root_cause_audit.py --manifest research/experiments/e12-hard-gate-root-cause-audit-manifest.json --dry-run --out /tmp/e12-hard-gate-root-cause-audit-dry-run.json

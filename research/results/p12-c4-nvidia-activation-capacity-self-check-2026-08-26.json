@@ -1,0 +1,93 @@
+{
+  "all_passed": true,
+  "benchmark_inputs_loaded": 0,
+  "bounded_execution": {
+    "automatic_retries": 0,
+    "bursting_forbidden": true,
+    "common_parent_count": 36,
+    "completed_parent_regeneration_allowed": false,
+    "github_workflow_rerun_allowed": false,
+    "implicit_retries_allowed": false,
+    "maximum_provider_request_attempts": 36,
+    "maximum_provider_request_attempts_per_parent": 1,
+    "minimum_seconds_between_provider_request_starts": 75,
+    "model_fallbacks": 0,
+    "on_any_invalid_or_unparseable_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+    "on_any_missing_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+    "on_any_non_2xx": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+    "provider_fallbacks": 0,
+    "resume_after_incomplete_packet": false,
+    "warming_requests": 0
+  },
+  "capacity_basis": {
+    "mode": "BOUNDED_EXECUTION_PLAN_WITHOUT_QUOTA_GUARANTEE",
+    "provider_quota_guarantee": "UNKNOWN_NOT_CLAIMED",
+    "published_free_endpoint_is_capacity_proof": false,
+    "rationale": "Authorize one bounded full-packet attempt without asserting an unpublished account quota. Operational incompleteness blocks the experiment rather than changing pacing, retrying, resuming, or scoring partial data.",
+    "synthetic_success_is_capacity_proof_for_36_calls": false
+  },
+  "checks": [
+    {
+      "name": "provider_free_no_nvidia_secret_in_environment",
+      "passed": true
+    },
+    {
+      "name": "schema",
+      "passed": true
+    },
+    {
+      "name": "gate_id",
+      "passed": true
+    },
+    {
+      "name": "experiment_id",
+      "passed": true
+    },
+    {
+      "name": "frozen_gate",
+      "passed": true
+    },
+    {
+      "name": "source_pins_present",
+      "passed": true
+    },
+    {
+      "name": "pin_shape:fresh_seed_map",
+      "passed": true
+    },
+    {
+      "detail": "/home/runner/work/academy-tractian/academy-tractian/research/frozen/p12-c4-fresh-seed-map-v1.json",
+      "name": "pin_exists:fresh_seed_map",
+      "passed": true
+    },
+    {
+      "detail": "/home/runner/work/academy-tractian/academy-tractian/research/frozen/p12-c4-fresh-seed-map-v1.json",
+      "name": "pin_blob:fresh_seed_map",
+      "passed": true
+    },
+    {
+      "name": "pin_shape:nvidia_pacing",
+      "passed": true
+    },
+    {
+      "detail": "/home/runner/work/academy-tractian/academy-tractian/research/frozen/p12-c4-nvidia-request-budget-and-pacing-v1.json",
+      "name": "pin_exists:nvidia_pacing",
+      "passed": true
+    },
+    {
+      "detail": "/home/runner/work/academy-tractian/academy-tractian/research/frozen/p12-c4-nvidia-request-budget-and-pacing-v1.json",
+      "name": "pin_blob:nvidia_pacing",
+      "passed": true
+    },
+    {
+      "name": "pin_shape:nvidia_synthetic_preregistration",
+      "passed": true
+    },
+    {
+      "detail": "/home/runner/work/academy-tractian/academy-tractian/research/experiments/p12-c4-nvidia-synthetic-compatibility-probe-preregistration-v1.json",
+      "name": "pin_exists:nvidia_synthetic_preregistration",
+      "passed": true
+    },
+    {
+      "detail": "/home/runner/work/academy-tractian/academy-tractian/research/experiments/p12-c4-nvidia-synthetic-compatibility-probe-preregistration-v1.json",
+      "name": "pinWØ›Ø›šYXWÜŞ[]X×Ü™\™YÚ\İ˜][Ûˆ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ[—ÜÚ\Nœ›Û\ØYÙ]ÛYX\İ\™[Y[‹ˆœ\ÜÙYˆYBˆKˆÂˆ™]Z[ˆ‹ÚÛYKÜ[›™\‹İÛÜšËØXØY[^K]˜XİX[‹ØXØY[^K]˜XİX[‹Ü™\ÙX\˜ÚÙœ›Ş™[‹ÜL‹XÍ\›Û\XYÙ]X[™\XÚ[™Ë]ŒKšœÛÛˆ‹ˆ›˜[YHˆœ[—Ù^\İÎœ›Û\ØYÙ]ÛYX\İ\™[Y[‹ˆœ\ÜÙYˆYBˆKˆÂˆ™]Z[ˆ‹ÚÛYKÜ[›™\‹İÛÜšËØXØY[^K]˜XİX[‹ØXØY[^K]˜XİX[‹Ü™\ÙX\˜ÚÙœ›Ş™[‹ÜL‹XÍ\›Û\XYÙ]X[™\XÚ[™Ë]ŒKšœÛÛˆ‹ˆ›˜[YHˆœ[—Ø›Øœ›Û\ØYÙ]ÛYX\İ\™[Y[‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ[—ÜÚ\NœÙ\š[™×ØÛÛ˜Xİ‹ˆœ\ÜÙYˆYBˆKˆÂˆ™]Z[ˆ‹ÚÛYKÜ[›™\‹İÛÜšËØXØY[^K]˜XİX[‹ØXØY[^K]˜XİX[‹Ü™\ÙX\˜ÚÙ^\š[Y[ËÜL‹XÍ[šYXK\›İšY\‹\Ù\š[™ËXÛÛ˜Xİ]ŒKšœÛÛˆ‹ˆ›˜[YHˆœ[—Ù^\İÎœÙ\š[™×ØÛÛ˜Xİ‹ˆœ\ÜÙYˆˆYBˆKˆÂˆ™]Z[ˆ‹ÚÛYKÜ[›™\‹İÛÜšËØXØY[^K]˜XİX[‹ØXØY[^K]˜XİX[‹Ü™\ÙX\˜ÚÙ^\š[Y[ËÜL‹XÍ[šYXK\›İšY\‹\Ù\š[™ËXÛÛ˜Xİ]ŒKšœÛÛˆ‹ˆ›˜[YHˆœ[—Ø›ØœÙ\š[™×ØÛÛ˜Xİ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ[—ÜÚ\NœŞ[]X×ØÛÜİ\™H‹ˆœ\ÜÙYˆYBˆKˆÂˆ™]Z[ˆ‹ÚÛYKÜ[›™\‹İÛÜšËØXØY[^K]˜XİX[‹ØXØY[^K]˜XİX[‹Ü™\ÙX\˜ÚÜ™\İ[ËÜL‹XÍ[šYXK\Ş[]XË[]™K\›Ø™KXÛÜİ\™KLŒ‹LL‹šœÛÛˆ‹ˆ›˜[YHˆœ[—Ù^\İÎœŞ[]X×ØÛÜİ\™H‹ˆœ\ÜÙYˆYBˆKˆÂˆ™]Z[ˆ‹ÚÛYKÜ[›™\‹İÛÜšËØXØY[^K]˜XİX[‹ØXØY[^K]˜XİX[‹Ü™\ÙX\˜ÚÜ™\İ[ËÜL‹XÍ[šYXK\Ş[]XË[]™K\›Ø™KXÛÜİ\™KLŒ‹LL‹šœÛÛˆ‹ˆ›˜[YHˆœ[—Ø›ØœŞ[]X×ØÛÜİ\™H‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ[—ÜÚ\NœŞ[]X×Ü\Ü×Ø\Y˜Xİ‹ˆœ\ÜÙYˆYBˆKˆÂˆ™]Z[ˆ‹ÚÛYKÜ[›™\‹İÛÜšËØXØY[^K]˜XİX[‹ØXØY[^K]˜XİX[‹Ü™\ÙX\˜ÚÜ™\İ[ËÜL‹XÍ[šYXK\Ş[]XËXÛÛ\]Xš[]K\›Ø™K\™\İ[LŒ‹LL‹šœÛÛˆ‹ˆ›˜[YHˆœ[—Ù^\İÎœŞ[]X×Ü\Ü×Ø\Y˜Xİ‹ˆœ\ÜÙYˆYBˆKˆÂˆ™]Z[ˆ‹ÚÛYKÜ[›™\‹İÛÜšËØXØY[^K]˜XİX[‹ØXØY[^K]˜XİX[‹Ü™\ÙX\˜ÚÜ™\İ[ËÜL‹XÍ[šYXK\Ş[]XËXÛÛ\]Xš[]K\›Ø™K\™\İ[LŒ‹LL‹šœÛÛˆ‹ˆ›˜[YHˆœ[—Ø›ØœŞ[]X×Ü\Ü×Ø\Y˜Xİ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×Ü\Ü×ÜÚLMˆ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×Üİ]\×Ü\ÜÈ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×Ù^XİİÛ×ØØ[È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×İÛ×Ûİ]]È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×Û›×Ü™]šY\×Ù˜[˜XÚÜÈ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×ÜÜXÚ[™È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×Ü™\İšXİYØXØÙ\Ü×Ş™\›È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×ÙÙ\×Û›İØ]]Üš^™WÙ[ÜXÚÙ]‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×Û™^ÙØ]WÙ^Xİ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜ÛÜİ\™WÜİ]\È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœŞ[]X×Ø]]Üš^˜][Û—ØÛÛœİ[YY‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜ÛÜİ\™WÙ^XİİÛÈ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜ÛÜİ\™WÜÜXÚ[™È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜ÛÜİ\™WÜ™\İšXİYŞ™\›È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœÙ\š[™×ØÛÛ˜XİÙœ›Ş™[ˆ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ›İšY\—Ù^Xİ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜[œÜÜÛ›×Ü™]šY\È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœÙ\š[™×ÙÙ[ÛY]H‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœÙ\š[™×ØÛÛ\]WØ™Y›Ü™WÜØÛÜš[™È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ›šYXWÜXÚ[™×ÙÙ[ÛY]H‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ›šYXWÜXÚ[™×ÍÍWÜÙXÛÛ™È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ›šYXWÜXÚ[™×Ş™\›×Ü™]WİØ\›WÙ˜[˜XÚÈ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ›šYXWÜXÚ[™×Ú\İÜšXØ[ØØ\XÚ]WÙ˜[ÙH‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ™œ™\ÚÜÙYYÛX\Ùœ›Ş™[ˆ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ™œ™\ÚÌÍ—Ü\™[È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ™œ™\ÚÌÍ—İ[š\]YWÜÙYYÈ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ™œ™\ÚÜÙYYÚ[˜\šX[È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœÙYYÜ[—Û›İÛ]™WØ]]Üš^˜][Ûˆ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ›Û\ÛYX\İ\™[Y[ÌÍ—Ü›İšY\—Ùœ™YH‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ›Û\Ø›İ[™ÜÜÚ]]™H‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ›Û\ÜXÚ[™×ÍÍH‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ›Û\ÜØÛÜWÙœ™\Ú‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜›İ[™YÛ[ÙH‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ][İWÛ›İØÛZ[YY‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜›İ[™YÙ^XİÌÍ—Ø][\È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜›İ[™YÜXÚ[™È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜›İ[™YŞ™\›×Ü™]WÙ˜[˜XÚÈ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜›İ[™YÛ›×Ü™\İ[YWÛÜ—Ü™\[ˆ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜›İ[™YÙ˜Z[ØÛÜÙY‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜Xİ]˜][Û—ÌÍ—İ[—ÌM‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ˜Xİ]˜][Û—ÜØÛÜš[™×Ù[šYYİ[[Ùœ™Y^™H‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ™Ø]WÚ]Ù[—Ü›İšY\—Ùœ™YH‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ™Ø]WÜ™\İšXİYŞ™\›È‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœ™WÜÙ[˜ÚXÚ×Û›İÛ]™H‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆ›Û™WÛX[šY™\İÛÛ›WÚY—Ü\ÜÈ‹ˆœ\ÜÙYˆYBˆKˆÂˆ›˜[YHˆœØÛÜš[™×Ø[™Ø›[™Üİ[Ù[šYY‹ˆœ\ÜÙYˆYBˆBˆKˆ˜ÚXÚÜ×Ü\ÜÙYˆÌËˆ˜ÚXÚÜ×İİ[ˆÌËˆ˜ÛÛ[[Û—Ü\™[×Ø]]Üš^™YÚY—Û]™WÛX[šY™\İÙœ›Ş™[ˆˆÍ‹ˆ˜Ü™Y[X[×Ü™XYˆˆ™^Xİ][Û—Ø]]Üš^™YØWİ\×ÙØ]HˆYKˆ™š^YØ\›WÛİ]]×Ü™\]Z\™YØ™Y›Ü™WÜØÛÜš[™ÈˆMˆ™œ™\ÚØ›[™ØXØÙ\ÜÙ\Èˆˆ™Ø]WÚYˆ”L‹PÍS•’QPKQ•STPÒÑUPPÕUUSÓ‹PĞTPÒUKUŒH‹ˆ›YØXŞWÛØÚÙYİ\İØXØÙ\ÜÙ\Èˆˆ›]™WÛX[šY™\İÙœ›Ş™[—ØWİ\×ÙØ]Hˆ˜[ÙKˆ›X^[][WÜ›İšY\—Ü™\]Y\İØ][\×ÚY—Û]™WÛX[šY™\İÙœ›Ş™[ˆˆÍ‹ˆ›™^ÙØ]Hˆ‘”‘QV‘WÓÓ‘WÔÒÕĞÍÓU‘WÓPS’Q‘TÕ‹ˆœš]˜]WÛÜ˜XÛWØXØÙ\ÜÙ\Èˆˆœš]˜]WÜØÛÜš[™×Ø]]Üš^™YØWİ\×ÙØ]Hˆ˜[ÙKˆœ›İšY\—ØØ[ÈˆˆœØÚ[XWİ™\œÚ[ÛˆˆœL‹XÍ[šYXKY[XXİ]˜][Û‹X[™XØ\XÚ]K\Ù[‹XÚXÚË]ŒH‹ˆœİ]\Èˆ”TÔÈ‚ŸB

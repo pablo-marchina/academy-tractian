@@ -1,0 +1,99 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "checkpoint_at": "2026-08-23T23:50:00-03:00",
+  "branch": "research/systematic-foundation",
+  "pull_request": 2,
+  "final_delivery_target": "2026-09-08",
+  "governance": {
+    "project_principles": "MANDATORY",
+    "benchmark_integrity_gate": "CLOSED",
+    "p12_protocol": "FROZEN",
+    "fresh_blind_source": "NO_BLIND_SOURCE_AUTHORIZED",
+    "legacy_locked_test_access": "BLOCKED",
+    "architecture": "UNFROZEN",
+    "production_readiness_claim": "NOT_AUTHORIZED"
+  },
+  "experiments": {
+    "P12-C1": {
+      "state": "CLOSED",
+      "common_parents": 36,
+      "fixed_outputs_scored": 72,
+      "deterministic_result_available": true,
+      "qualified_arms": [],
+      "preferred_arm": null,
+      "key_result": "Both C0 and C1 failed deterministic gates; C1 reduced read count but worsened expected-read recall without improving decision/action/escalation quality."
+    },
+    "P12-C2": {
+      "state": "CONSUMED_OPERATIONAL_FAILURE",
+      "common_parents_expected": 36,
+      "common_parents_successful": 31,
+      "common_parents_failed": 5,
+      "failure_family": "rate_limit_long_window",
+      "fixed_factorial_packet_created": false,
+      "deterministic_scoring_executed": false,
+      "qualified_arms": [],
+      "preferred_arm": null
+    },
+    "P12-C3": {
+      "state": "CONSUMED_TERMINAL_OPERATIONAL_FAILURE",
+      "initial_preprovider_run_id": 32671370930,
+      "initial_preprovider_provider_requests": 0,
+      "pre_outcome_amendment_qualification_runs": [32671829920, 32672049576],
+      "continued_live_run_id": 32672167702,
+      "completed_cells": 3,
+      "pending_cells": 33,
+      "transport_failure_count": 1,
+      "rate_limit_event_count": 1,
+      "terminal_failure": true,
+      "horizon_expired": false,
+      "first_live_call_at": "2026-08-23T23:00:30.073807+00:00",
+      "fixed_factorial_packet_created": false,
+      "deterministic_scoring_executed": false,
+      "same_experiment_resume_authorized": false,
+      "qualified_arms": [],
+      "preferred_arm": null
+    }
+  },
+  "current_candidate_state": {
+    "qualified_implementation_candidates": [],
+    "preferred_implementation_candidate": null,
+    "semantic_v4_2_current_candidate_authorized": false
+  },
+  "critical_risks": [
+    {
+      "id": "R-PROVIDER-CAPACITY",
+      "severity": "CRITICAL",
+      "evidence": "P12-C2 failed at 31/36 and P12-C3 became terminal at 3/36 before a complete prospective packet could be frozen."
+    },
+    {
+      "id": "R-FRESH-BLIND",
+      "severity": "CRITICAL",
+      "evidence": "P12 primary independent generalization evidence requires FRESH_BLIND, but no source is authorized."
+    },
+    {
+      "id": "R-NO-QUALIFIED-CANDIDATE",
+      "severity": "HIGH",
+      "evidence": "P12-C1 failed scientifically; P12-C2/C3 failed operationally before measurement."
+    },
+    {
+      "id": "R-ARCHITECTURE-DEBT",
+      "severity": "HIGH",
+      "evidence": "Major production choices remain researched/unassessed and cannot be frozen from benchmark plumbing alone."
+    },
+    {
+      "id": "R-SCHEDULE",
+      "severity": "HIGH",
+      "evidence": "Final delivery target is 2026-09-08 and time must remain for blind evidence, production-fit validation, regression and documentation."
+    }
+  ],
+  "next_actions": [
+    "Formally close P12-C3 and forbid resume/rerun/partial scoring.",
+    "Run a systematic provider-capacity alternatives decision before any new prospective EXPOSED_POOL experiment.",
+    "Prepare/authorize a FRESH_BLIND source in parallel without outcome exposure.",
+    "Preregister and provider-free qualify the next EXPOSED_POOL experiment only after the capacity decision.",
+    "Score only a complete frozen packet; advance only deterministic survivors to semantic v4.2.",
+    "Continue production-fit/architecture comparison in parallel, but do not freeze architecture before candidate evidence and independent validation."
+  ],
+  "canonical_human_status": "docs/CURRENT-PROJECT-STATUS.md",
+  "canonical_action_plan": "docs/PROJECT-PLAN.md"
+}

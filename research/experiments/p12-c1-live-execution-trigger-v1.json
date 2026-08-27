@@ -1,0 +1,38 @@
+{
+  "schema_version": "p12-c1-live-execution-trigger-v1",
+  "execution_id": "P12-C1-PAIR-C0-C1-2026-08-23",
+  "activation_id": "P12-C1-ACTIVATION-2026-08-23",
+  "status": "AUTHORIZED_LIVE_EXECUTION_TRIGGER_AFTER_CREDENTIAL_RESTORATION",
+  "created_at": "2026-08-23T15:09:00-03:00",
+  "scope": "ONE_DETERMINISTIC_PAIRED_C0_VS_C1_EXPOSED_POOL_COMMON_PARENT_GENERATION_EVALUATION_CYCLE",
+  "branch": "research/systematic-foundation",
+  "pre_trigger_head_sha": "16067ebea0dc1f5feb1bab6895009500ea3ed225",
+  "previous_pre_provider_blocker": {
+    "record": "research/experiments/p12-c1-live-credential-blocker-v1.json",
+    "workflow_run_id": 32656268540,
+    "generation_job_id": 97235410317,
+    "failure": "GROQ_API_KEY_EMPTY",
+    "provider_calls": 0,
+    "common_parent_generations": 0,
+    "candidate_outputs": 0,
+    "scientific_cycle_consumed": false,
+    "rerun_forbidden": true
+  },
+  "credential_restoration_basis": "USER_CONFIRMED_GROQ_API_KEY_ADDED_TO_REPOSITORY_ACTIONS_SECRETS",
+  "candidate_execution_bundle": {
+    "git_blob_sha": "a5c27394014bac656faa0a2f923a5c5da72d66f5",
+    "gzip_sha256": "aaede3965177b80d8d9d389b340d572ee05c786f2fd5ae4470329cb82c5806ca",
+    "decompressed_sha256": "be16ec6d2c33ad68134a0fbf7aa280b4103ee411b01233b6de7a76668e899a50"
+  },
+  "agent_input_fixture_sha256": "a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef",
+  "provider": "groq",
+  "model": "openai/gpt-oss-120b",
+  "seeds": [2026082301, 2026082302, 2026082303],
+  "provider_cycle_remaining_before_trigger": 1,
+  "github_rerun_of_generation_job_allowed": false,
+  "scientific_candidate_or_protocol_changed": false,
+  "c2_authorized": false,
+  "semantic_stage_authorized": false,
+  "fresh_blind_authorized": false,
+  "legacy_locked_test_authorized": false
+}

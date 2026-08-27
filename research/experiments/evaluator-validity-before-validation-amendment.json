@@ -1,0 +1,51 @@
+{
+  "amendment_id": "EVALUATOR-VALIDITY-BEFORE-VALIDATION-2026-08-18",
+  "status": "REGISTERED_BEFORE_E14M_R1_REAL_REPLACEMENT_RESULT",
+  "date": "2026-08-18",
+  "trigger": {
+    "source": "oracle-free synthetic source-level audit of frozen E9 v3 semantics",
+    "private_oracle_used": false,
+    "fixed_model_outputs_used": false,
+    "validation_used": false,
+    "locked_test_used": false,
+    "synthetic_findings": 6
+  },
+  "e14m_r1_rule": {
+    "e9_v3_remains_frozen": true,
+    "if_r1_complete_run_e9_v3_exactly_once": true,
+    "do_not_change_e14m_candidate": true,
+    "do_not_change_r1_replacement_rule": true,
+    "historical_e9_v3_result_remains_reportable": true
+  },
+  "new_validation_gate": {
+    "e9_v3_dev_gate_alone_can_unlock_validation": false,
+    "evaluator_validity_review_required_before_validation": true,
+    "evaluator_validity_review_must_be_designed_without_model_specific_private_row_feedback": true,
+    "public_task_contract_may_be_used": true,
+    "private_oracle_shape_only_diagnostic_may_be_used": true,
+    "private_oracle_values_must_not_be_printed": true,
+    "validation_feedback_for_evaluator_design": false,
+    "locked_test_for_evaluator_design": false
+  },
+  "known_e9_v3_risks_from_synthetic_audit": {
+    "negation_can_trigger_action_or_escalation_markers": true,
+    "conditional_language_can_trigger_current_escalation_marker": true,
+    "root_question_lexical_markers_can_affect_expected_action": true,
+    "evidence_terms_anywhere_in_output_can_satisfy_evidence_correctness": true,
+    "unsupported_final_claim_metric_is_leakage_phrase_oriented_not_general_groundedness": true,
+    "metric_names_may_overstate_semantic_strength": true
+  },
+  "future_evaluator_rule": {
+    "freeze_evaluator_before_inspecting_model_specific_private_per_row_outcomes": true,
+    "historical_fixed_outputs_may_be_rescored_after_new_evaluator_is_frozen": true,
+    "new_model_generation_not_required_for_rescoring": true,
+    "do_not_tune_evaluator_to_make_a_specific_candidate_pass": true
+  },
+  "unchanged_rules": {
+    "dev_only_tuning": true,
+    "validation_measurement_only": true,
+    "locked_test_final_only": true,
+    "no_private_oracle_in_model_prompt": true,
+    "no_private_scorer_rows_in_model_prompt": true
+  }
+}

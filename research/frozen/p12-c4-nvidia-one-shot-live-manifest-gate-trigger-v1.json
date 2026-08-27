@@ -1,0 +1,32 @@
+{
+  "schema_version": "p12-c4-nvidia-one-shot-live-manifest-gate-trigger-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "manifest_id": "P12-C4-NVIDIA-ONE-SHOT-LIVE-V1",
+  "date": "2026-08-26",
+  "status": "FROZEN_PROVIDER_FREE_GATE_TRIGGER",
+  "manifest": {
+    "path": "research/experiments/p12-c4-nvidia-one-shot-live-manifest-v1.json",
+    "git_blob_sha": "28971da8c4c20dad9b73b909997b6e486a420cd5"
+  },
+  "activation_gate_closure": {
+    "path": "research/results/p12-c4-nvidia-activation-capacity-gate-closure-2026-08-26.json",
+    "git_blob_sha": "66a5720dfeb4d5108aaf804bd3be0f58f8815bc5",
+    "required_status": "PASS_PROVIDER_FREE_ACTIVATION_CAPACITY"
+  },
+  "workflow": {
+    "path": ".github/workflows/research-p12-c4-nvidia-one-shot-live-manifest-provider-free.yml",
+    "git_blob_sha_before_trigger": "2bd1f5ac2bdbdd74101af05e4c097a7337e0dc14"
+  },
+  "authorization_boundary": {
+    "provider_calls": 0,
+    "credentials_read": 0,
+    "live_execution_performed": false,
+    "manifest_freeze_self_check_only": true,
+    "maximum_live_manifests_after_pass": 1,
+    "maximum_provider_request_attempts_after_pass": 36,
+    "maximum_attempts_per_parent_after_pass": 1,
+    "minimum_seconds_between_request_starts": 75,
+    "private_scoring": false
+  },
+  "expected_next_gate_if_pass": "C4_36_OF_36_FRESH_COMMON_PARENTS"
+}

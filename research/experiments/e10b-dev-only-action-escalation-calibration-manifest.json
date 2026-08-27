@@ -1,0 +1,66 @@
+{
+  "report_version": "e10b-dev-only-action-escalation-calibration-manifest-v1",
+  "date": "2026-08-16",
+  "status": "E10B_DEV_ONLY_ACTION_ESCALATION_CALIBRATION_PREREGISTERED",
+  "purpose": "Improve action/escalation calibration on DEV only while preserving E10 evidence-correctness gains.",
+  "scope": {
+    "tuning_splits": ["DEV"],
+    "protected_splits": ["VALIDATION", "LOCKED_TEST"],
+    "forbidden_splits": ["VALIDATION", "LOCKED_TEST"],
+    "validation_used_for_tuning": false,
+    "validation_ran": false,
+    "locked_test_accessed": false,
+    "private_oracles_model_visible": false
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+  },
+  "repeats": {
+    "DEV_ACTION_ESCALATION_CALIBRATION": 2
+  },
+  "baseline": {
+    "e9_dev_only_real_task_quality": 0.4762,
+    "e9_dev_only_evidence_correctness": 0.0,
+    "e9_dev_only_action_correctness": 0.0,
+    "e9_dev_only_escalation_correctness": 0.0,
+    "e10_dev_only_real_task_quality": 0.619,
+    "e10_dev_only_evidence_correctness": 1.0,
+    "e10_dev_only_action_correctness": 0.0,
+    "e10_dev_only_escalation_correctness": 0.0
+  },
+  "candidate_policy_changes": {
+    "keep_evidence_first": true,
+    "add_action_gate": true,
+    "add_escalation_gate": true,
+    "require_endpoint_when_acting": true,
+    "distinguish_action_vs_escalation": true,
+    "avoid_generic_uncertainty_escalation": true,
+    "keep_premature_action_block": true,
+    "keep_unsupported_claim_block": true
+  },
+  "acceptance_target_before_full_remeasurement": {
+    "evidence_correctness_above_e9_dev_baseline": true,
+    "action_correctness_gt": 0.0,
+    "escalation_correctness_gt": 0.0,
+    "premature_action_rate_eq": 0.0,
+    "unsupported_final_claim_rate_eq": 0.0,
+    "locked_test_accessed": false,
+    "validation_used_for_tuning": false,
+    "commit_private_oracles_or_fixed_outputs": false
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  }
+}

@@ -1,0 +1,37 @@
+name: research-e14d-dev-only-public-evidence-resource-canonicalization
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/117-e14d-dev-only-public-evidence-resource-canonicalization.md'
+      - 'research/experiments/e14d-*.json'
+      - 'scripts/research/e14d_*.py'
+      - '.github/workflows/research-e14d.yml'
+  pull_request:
+    paths:
+      - 'research/117-e14d-dev-only-public-evidence-resource-canonicalization.md'
+      - 'research/experiments/e14d-*.json'
+      - 'scripts/research/e14d_*.py'
+      - '.github/workflows/research-e14d.yml'
+
+jobs:
+  e14d-dev-only-public-evidence-resource-canonicalization-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute E14d DEV-only structural dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e14d_dev_only_public_evidence_resource_canonicalization.py
+          --manifest research/experiments/e14d-dev-only-public-evidence-resource-canonicalization-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e14d-dev-only-public-evidence-resource-canonicalization-dry-run.json
+          --dry-run
+      - name: Upload E14d dry-run summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: e14d-dev-only-public-evidence-resource-canonicalization-dry-run
+          path: /tmp/e14d-dev-only-public-evidence-resource-canonicalization-dry-run.json

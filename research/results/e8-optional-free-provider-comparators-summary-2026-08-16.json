@@ -1,0 +1,59 @@
+{
+  "report_version": "e8-optional-free-provider-comparators-summary-v1",
+  "date": "2026-08-16",
+  "status": "E8_OPTIONAL_FREE_PROVIDER_COMPARATORS_REGISTERED",
+  "leading_free_provider_candidate": {
+    "provider": "groq",
+    "model": "llama-3.1-8b-instant",
+    "e8_status": "E8_FREE_ANYWHERE_MODEL_RUN_PASS",
+    "dev_passed": true,
+    "validation_passed": true,
+    "cost_usd": 0.0,
+    "locked_test_accessed": false
+  },
+  "optional_comparators": [
+    {
+      "provider": "openrouter",
+      "priority": 1,
+      "enabled_by_default": false,
+      "supported_by_runner": "scripts/research/e8_free_anywhere_model_runner_v3.py",
+      "allowed_models": ["openrouter/free", "*:free"],
+      "blocked_models": ["openrouter/auto", "openrouter/auto:free", "non-free models"],
+      "required_env": ["OPENROUTER_API_KEY", "E8_ENABLE_OPENROUTER_FREE=1", "E8_CONFIRM_ZERO_COST=1"],
+      "blocks_e9": false
+    },
+    {
+      "provider": "gemini",
+      "priority": 2,
+      "enabled_by_default": false,
+      "condition": "only after models.list returns a key-visible generateContent-capable free model",
+      "blocks_e9": false
+    },
+    {
+      "provider": "huggingface",
+      "priority": 3,
+      "enabled_by_default": false,
+      "condition": "only if free-credit state can be bounded to USD 0 with no paid spillover",
+      "blocks_e9": false
+    },
+    {
+      "provider": "ollama",
+      "priority": 4,
+      "enabled_by_default": false,
+      "condition": "optional local fallback only; locality is not required",
+      "blocks_e9": false
+    }
+  ],
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false
+  },
+  "budget_policy": {
+    "project_cost_limit_usd": 0,
+    "paid_models_enabled": false,
+    "openai_anthropic_blocked": true
+  },
+  "next_gate": "E9 evaluator-side task-quality scorer",
+  "final_architecture_freeze": false
+}

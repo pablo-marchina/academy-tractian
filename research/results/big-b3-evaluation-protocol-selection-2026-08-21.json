@@ -1,0 +1,135 @@
+{
+  "schema_version": "big-b3-evaluation-protocol-selection-v1",
+  "date": "2026-08-21",
+  "status": "BIG_B3_COMPLETE",
+  "decision_state": "PREFERRED",
+  "selected_protocol": {
+    "id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
+    "name": "Fresh-Blind Hybrid with External-First Source Hierarchy",
+    "derived_from_frontier": ["P1", "P2"],
+    "not_selected_as_default": "P3",
+    "core_flow": [
+      "historical DEV + historical VALIDATION => one exposed 7-group adaptive development/selection pool",
+      "prospective group-aware paired comparison and sensitivity analysis on exposed pool",
+      "candidate/evaluator/judge/seed/outcome freeze",
+      "fresh blind real-domain measurement using Tier A partner-held source when operationally available",
+      "Tier B independently authored and independently adjudicated hidden real-domain source when Tier A is unavailable",
+      "qualified legacy LOCKED_TEST supplementary characterization",
+      "synthetic/adversarial robustness and regression evidence"
+    ]
+  },
+  "existing_split_roles": {
+    "DEV_plus_historical_VALIDATION": {
+      "role": "EXPOSED_ADAPTIVE_DEVELOPMENT_SELECTION_POOL",
+      "independent_groups": 7,
+      "scenarios": 11,
+      "tickets": 12,
+      "blind_generalization_allowed": false
+    },
+    "legacy_LOCKED_TEST": {
+      "role": "QUALIFIED_SUPPLEMENTARY_HELD_OUT_DOMAIN_CHARACTERIZATION",
+      "independent_groups": 3,
+      "candidate_execution_pre_freeze": false,
+      "pristine_claim_allowed": false,
+      "structural_evaluator_exposure_must_be_disclosed": true
+    }
+  },
+  "selection_layer": {
+    "unit": "asset_story_group",
+    "paired_candidate_comparison": true,
+    "matched_seeds_where_applicable": true,
+    "full_exposed_pool_result_required": true,
+    "leave_one_group_out_sensitivity_required": true,
+    "modality_slices_required": true,
+    "contextualize_slice_required": true,
+    "failure_family_and_safety_slices_required": true,
+    "naive_fold_standard_error_as_universal_unbiased_estimator": false,
+    "nested_grouped_cv": "ONLY_FOR_FULLY_AUTOMATED_REPEATABLE_SUBSELECTION"
+  },
+  "candidate_freeze": {
+    "required_before_fresh_blind_measurement": true,
+    "freeze_items": [
+      "candidate code/configuration/prompt/model/provider/runtime/retrieval/guard",
+      "evaluator versions",
+      "semantic judge and qualification state",
+      "seed/randomness policy",
+      "primary outcomes",
+      "hard safety constraints",
+      "uncertainty method"
+    ],
+    "blind_feedback_reuse_rule": "If blind results are viewed and a later candidate is created, a new independent blind source/generation is required for an independent generalization claim."
+  },
+  "fresh_blind_source_hierarchy": {
+    "tier_A": {
+      "type": "PARTNER_HELD_EXTERNAL_BLIND",
+      "priority": 1,
+      "requirements": [
+        "source owner/custodian outside agent-development loop",
+        "hidden case semantics and expected outcomes unavailable before candidate freeze",
+        "no iterative partial feedback",
+        "asset/story-group independence",
+        "auditable provenance/adjudication",
+        "domain/risk coverage consistent with final claims"
+      ]
+    },
+    "tier_B": {
+      "type": "INDEPENDENTLY_AUTHORED_AND_INDEPENDENTLY_ADJUDICATED_HIDDEN_REAL_DOMAIN",
+      "priority": 2,
+      "requirements": [
+        "case author insulated from current candidate behavior",
+        "independent adjudication of expected outcomes/reference supervision",
+        "hidden semantics unavailable to developer before freeze",
+        "no iterative feedback",
+        "authorship/adjudication/custody provenance recorded"
+      ]
+    }
+  },
+  "fresh_blind_claim_rule": {
+    "primary_independent_generalization_evidence": true,
+    "claim_strength_tied_to": ["independent fresh group count", "group diversity", "modality coverage", "risk/safety coverage"],
+    "raw_call_count_as_independent_sample_size": false,
+    "desired_coverage": ["investigate", "execute", "contextualize", "safety-critical/high-impact behavior"]
+  },
+  "synthetic_adversarial_role": {
+    "role": "SUPPLEMENTARY_ROBUSTNESS_AND_REGRESSION",
+    "standalone_real_domain_final_evidence": false
+  },
+  "reversal_triggers": [
+    {
+      "id": "R1_TIER_A_AVAILABILITY",
+      "deadline": "2026-08-25T23:59:00-03:00",
+      "condition": "Tier A lacks named source owner/custodian, blind-custody rule, expected delivery window, or no-adaptive-feedback confirmation.",
+      "action": "Move B4 planning to Tier B."
+    },
+    {
+      "id": "R2_TIER_B_INSULATION",
+      "deadline": "2026-08-28T23:59:00-03:00",
+      "condition": "Neither Tier A nor Tier B has an auditable feasible hidden real-domain source path.",
+      "action": "Require explicit BIG-B3 amendment before activating degraded P3; do not silently weaken P12."
+    },
+    {
+      "id": "R3_P3_DEGRADED_MODE",
+      "condition": "Explicit amendment activates P3 because no fresh blind source is feasible.",
+      "action": "Downgrade final claim to qualified benchmark performance under a structurally exposed legacy final set; no strong independent production-domain generalization claim."
+    },
+    {
+      "id": "R4_BLIND_SOURCE_BREACH",
+      "condition": "Semantic leak, iterative partial feedback, hidden-label access, or pre-freeze adaptation to candidate outputs occurs.",
+      "action": "Reclassify source as exposed; require new independent blind source/generation."
+    },
+    {
+      "id": "R5_EVALUATOR_JUDGE_ADAPTATION_AFTER_BLIND",
+      "condition": "Material evaluator/judge change is made in response to blind outcomes.",
+      "action": "Consume blind measurement for that evaluation-stack generation; require new final source for fresh independent claim."
+    }
+  ],
+  "rejected_as_default": [
+    {"id": "P3", "reason": "Dominated by P1/P2 on independence and evidential strength; retained only as explicit degraded contingency."},
+    {"id": "P1_ONLY", "reason": "Unnecessarily brittle to external availability despite P2 being architecturally compatible and non-dominated."},
+    {"id": "P2_ONLY", "reason": "Would discard stronger organizational blindness from P1 before availability is tested."},
+    {"id": "NESTED_CV_WHOLE_SYSTEM", "reason": "Cannot retroactively nest historical human adaptive engineering."}
+  ],
+  "next_gate": "BIG-B4",
+  "agent_optimization_allowed": false,
+  "freeze_status": "NOT_FROZEN"
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "p12-c4-local-factorial-expansion-pre-materialization-failure-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "date": "2026-08-26",
+  "status": "PRE_MATERIALIZATION_INFRA_FAILURE_NO_SCIENTIFIC_OUTPUT",
+  "workflow_run": {
+    "run_id": 33028318700,
+    "job_id": 98374760532,
+    "head_sha": "e61f3bba526af1e1f1c83f42fabc7094ab820b1c",
+    "run_number": 1,
+    "run_attempt": 1,
+    "conclusion": "failure"
+  },
+  "failure": {
+    "step": "Enforce provider-free and frozen runner boundary",
+    "cause": "INCORRECT_RUNNER_GIT_BLOB_PIN_IN_WORKFLOW_AND_TRIGGER",
+    "pinned_runner_git_blob_sha": "ea66845c7d85a4a3407fc5eafeaa4238a1e996aa",
+    "actual_runner_git_blob_sha": "856e0e26dac1e0e4b44746b65ed932234c6d913c"
+  },
+  "scientific_boundary": {
+    "live_artifact_download_started": false,
+    "common_parent_rows_loaded": 0,
+    "e0_batch_executed": false,
+    "e1_transforms_executed": 0,
+    "s0_or_s1_transforms_executed": 0,
+    "fixed_arm_outputs_materialized": 0,
+    "provider_calls": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "private_scoring_executed": false,
+    "bootstrap_executed": false
+  },
+  "replacement_policy": {
+    "provider_cycle_affected": false,
+    "candidate_outcomes_observed": false,
+    "candidate_semantics_may_change": false,
+    "allowed_fix_scope": "CORRECT_RUNNER_BLOB_PIN_ONLY",
+    "provider_free_replacement_trigger_allowed": true,
+    "github_rerun_of_failed_run": false
+  },
+  "next_step": "CORRECT_RUNNER_BLOB_PIN_AND_CREATE_NEW_PROVIDER_FREE_TRIGGER_REVISION"
+}

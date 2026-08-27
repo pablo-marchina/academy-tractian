@@ -1,0 +1,54 @@
+{
+  "schema_version": "p12-c3-capacity-batch-map-v1",
+  "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
+  "status": "FROZEN",
+  "batch_count": 6,
+  "parents_per_batch": 6,
+  "expected_cells": 36,
+  "seed_schedule": [2026082307, 2026082308, 2026082309],
+  "ticket_order": ["TKT-INV-04","TKT-EXE-16","TKT-INV-05","TKT-EXE-13","TKT-INV-06","TKT-EXE-15","TKT-INV-11b","TKT-CTX-01","TKT-INV-09","TKT-EXE-12","TKT-CTX-02","TKT-INV-11"],
+  "batches": [
+    {"batch_id":"B1","ordinal":1,"cells":[
+      {"cell_id":"2026082307:TKT-INV-04","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-INV-04","group_id":"asset_G501","scenario_id":"CEN-01","modality":"investigate"},
+      {"cell_id":"2026082307:TKT-EXE-16","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-EXE-16","group_id":"asset_G501","scenario_id":"CEN-10","modality":"execute"},
+      {"cell_id":"2026082307:TKT-INV-05","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-INV-05","group_id":"asset_C710","scenario_id":"CEN-02","modality":"investigate"},
+      {"cell_id":"2026082307:TKT-EXE-13","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-EXE-13","group_id":"asset_C710","scenario_id":"CEN-14","modality":"execute"},
+      {"cell_id":"2026082307:TKT-INV-06","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-INV-06","group_id":"asset_S420","scenario_id":"CEN-03","modality":"investigate"},
+      {"cell_id":"2026082307:TKT-EXE-15","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-EXE-15","group_id":"asset_S420","scenario_id":"CEN-16","modality":"execute"}]},
+    {"batch_id":"B2","ordinal":2,"cells":[
+      {"cell_id":"2026082307:TKT-INV-11b","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-INV-11b","group_id":"asset_M208","scenario_id":"CEN-04","modality":"investigate"},
+      {"cell_id":"2026082307:TKT-CTX-01","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-CTX-01","group_id":"asset_M101","scenario_id":"CEN-11","modality":"contextualize"},
+      {"cell_id":"2026082307:TKT-INV-09","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-INV-09","group_id":"asset_B204","scenario_id":"CEN-07","modality":"investigate"},
+      {"cell_id":"2026082307:TKT-EXE-12","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-EXE-12","group_id":"asset_B204","scenario_id":"CEN-07","modality":"execute"},
+      {"cell_id":"2026082307:TKT-CTX-02","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-CTX-02","group_id":"asset_B204","scenario_id":"CEN-12","modality":"contextualize"},
+      {"cell_id":"2026082307:TKT-INV-11","seed":2026082307,"repeat_index":0,"ticket_id":"TKT-INV-11","group_id":"asset_M102","scenario_id":"CEN-09","modality":"investigate"}]},
+    {"batch_id":"B3","ordinal":3,"cells":[
+      {"cell_id":"2026082308:TKT-INV-04","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-INV-04","group_id":"asset_G501","scenario_id":"CEN-01","modality":"investigate"},
+      {"cell_id":"2026082308:TKT-EXE-16","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-EXE-16","group_id":"asset_G501","scenario_id":"CEN-10","modality":"execute"},
+      {"cell_id":"2026082308:TKT-INV-05","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-INV-05","group_id":"asset_C710","scenario_id":"CEN-02","modality":"investigate"},
+      {"cell_id":"2026082308:TKT-EXE-13","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-EXE-13","group_id":"asset_C710","scenario_id":"CEN-14","modality":"execute"},
+      {"cell_id":"2026082308:TKT-INV-06","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-INV-06","group_id":"asset_S420","scenario_id":"CEN-03","modality":"investigate"},
+      {"cell_id":"2026082308:TKT-EXE-15","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-EXE-15","group_id":"asset_S420","scenario_id":"CEN-16","modality":"execute"}]},
+    {"batch_id":"B4","ordinal":4,"cells":[
+      {"cell_id":"2026082308:TKT-INV-11b","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-INV-11b","group_id":"asset_M208","scenario_id":"CEN-04","modality":"investigate"},
+      {"cell_id":"2026082308:TKT-CTX-01","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-CTX-01","group_id":"asset_M101","scenario_id":"CEN-11","modality":"contextualize"},
+      {"cell_id":"2026082308:TKT-INV-09","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-INV-09","group_id":"asset_B204","scenario_id":"CEN-07","modality":"investigate"},
+      {"cell_id":"2026082308:TKT-EXE-12","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-EXE-12","group_id":"asset_B204","scenario_id":"CEN-07","modality":"execute"},
+      {"cell_id":"2026082308:TKT-CTX-02","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-CTX-02","group_id":"asset_B204","scenario_id":"CEN-12","modality":"contextualize"},
+      {"cell_id":"2026082308:TKT-INV-11","seed":2026082308,"repeat_index":1,"ticket_id":"TKT-INV-11","group_id":"asset_M102","scenario_id":"CEN-09","modality":"investigate"}]},
+    {"batch_id":"B5","ordinal":5,"cells":[
+      {"cell_id":"2026082309:TKT-INV-04","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-INV-04","group_id":"asset_G501","scenario_id":"CEN-01","modality":"investigate"},
+      {"cell_id":"2026082309:TKT-EXE-16","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-EXE-16","group_id":"asset_G501","scenario_id":"CEN-10","modality":"execute"},
+      {"cell_id":"2026082309:TKT-INV-05","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-INV-05","group_id":"asset_C710","scenario_id":"CEN-02","modality":"investigate"},
+      {"cell_id":"2026082309:TKT-EXE-13","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-EXE-13","group_id":"asset_C710","scenario_id":"CEN-14","modality":"execute"},
+      {"cell_id":"2026082309:TKT-INV-06","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-INV-06","group_id":"asset_S420","scenario_id":"CEN-03","modality":"investigate"},
+      {"cell_id":"2026082309:TKT-EXE-15","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-EXE-15","group_id":"asset_S420","scenario_id":"CEN-16","modality":"execute"}]},
+    {"batch_id":"B6","ordinal":6,"cells":[
+      {"cell_id":"2026082309:TKT-INV-11b","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-INV-11b","group_id":"asset_M208","scenario_id":"CEN-04","modality":"investigate"},
+      {"cell_id":"2026082309:TKT-CTX-01","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-CTX-01","group_id":"asset_M101","scenario_id":"CEN-11","modality":"contextualize"},
+      {"cell_id":"2026082309:TKT-INV-09","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-INV-09","group_id":"asset_B204","scenario_id":"CEN-07","modality":"investigate"},
+      {"cell_id":"2026082309:TKT-EXE-12","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-EXE-12","group_id":"asset_B204","scenario_id":"CEN-07","modality":"execute"},
+      {"cell_id":"2026082309:TKT-CTX-02","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-CTX-02","group_id":"asset_B204","scenario_id":"CEN-12","modality":"contextualize"},
+      {"cell_id":"2026082309:TKT-INV-11","seed":2026082309,"repeat_index":2,"ticket_id":"TKT-INV-11","group_id":"asset_M102","scenario_id":"CEN-09","modality":"investigate"}]}
+  ]
+}

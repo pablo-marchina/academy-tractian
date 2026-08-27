@@ -1,0 +1,41 @@
+{
+  "assumptions": {
+    "complete_c4_packet_must_fit_remaining_daily_allowance_before_activation": true,
+    "failed_requests_may_consume_daily_allowance": true,
+    "no_unrelated_free_model_calls_same_account_same_day": true
+  },
+  "date": "2026-08-26",
+  "decision_source": "docs/adr/002-openrouter-no-card-serving-amendment-2026-08-26.md",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "frozen_pacing": {
+    "automatic_fallbacks": false,
+    "automatic_retries": 0,
+    "bursting_forbidden": true,
+    "maximum_requests_in_any_60_seconds": 1,
+    "minimum_seconds_between_any_provider_requests": 75,
+    "nominal_requests_per_minute": 0.8
+  },
+  "isolation": {
+    "benchmark_inputs_loaded": 0,
+    "credentials_read": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "private_oracle_accesses": 0,
+    "provider_calls": 0
+  },
+  "model_id": "openai/gpt-oss-120b:free",
+  "planned_provider_generation_calls": {
+    "c4_common_parents": 36,
+    "nominal_daily_headroom": 12,
+    "synthetic_probe": 2,
+    "total": 38
+  },
+  "provider": "openrouter",
+  "published_free_limits": {
+    "requests_per_day": 50,
+    "requests_per_minute": 20
+  },
+  "schema_version": "p12-c4-openrouter-request-budget-and-pacing-v1",
+  "status": "FROZEN_PROVIDER_FREE",
+  "upstream_provider_slug": "open-inference"
+}

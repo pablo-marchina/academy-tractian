@@ -1,0 +1,22 @@
+{
+  "attestation_schema_version": "p12-c4-cerebras-account-capacity-attestation-v2",
+  "attestation_sha256": "80f20b5087eceec05a1d8a9d11bcc676c718bc579ff80fc289261d7e001b0e69",
+  "authorization_scope": "EXACTLY_TWO_PREREGISTERED_SYNTHETIC_CEREBRAS_CALLS_ONLY",
+  "authorized_attempts": 1,
+  "automatic_retry_allowed": false,
+  "created_at_utc": "2026-08-25T21:36:41.867007+00:00",
+  "exposed_pool_live_generation_authorized": false,
+  "fresh_blind_access_authorized": false,
+  "github_actions_run_attempt_required": 1,
+  "legacy_locked_test_access_authorized": false,
+  "minimum_seconds_between_any_provider_requests": 75,
+  "private_scoring_authorized": false,
+  "probe_id": "P12-C4-CEREBRAS-SYNTHETIC-COMPATIBILITY-V1",
+  "probe_request_sha256": [
+    "39fcfe0688952141da30dd79b0a2b279720e2a184de2e641c88a1f8cc6dc3b5c",
+    "59e7358d7fe64ecfb47f376fa5c86de3c3d23a539c356358d8dacbbc9dc93720"
+  ],
+  "rerun_allowed": false,
+  "schema_version": "p12-c4-cerebras-synthetic-probe-live-authorization-v1",
+  "status": "AUTHORIZED_ONE_SYNTHETIC_PROBE_ATTEMPT"
+}

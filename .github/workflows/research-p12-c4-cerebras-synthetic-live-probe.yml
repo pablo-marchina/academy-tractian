@@ -1,0 +1,84 @@
+name: research-p12-c4-cerebras-synthetic-live-probe
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/frozen/p12-c4-cerebras-synthetic-probe-live-authorization-v1.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-p12-c4-cerebras-synthetic-live-probe
+  cancel-in-progress: false
+
+jobs:
+  exactly-one-synthetic-probe-attempt:
+    if: ${{ github.run_attempt == 1 }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+      PYTHONPATH: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert one-shot trigger and frozen artifacts
+        run: |
+          test "${{ github.run_attempt }}" = "1"
+          test -f research/experiments/p12-c4-cerebras-account-capacity-attestation-v2.json
+          test -f research/frozen/p12-c4-cerebras-synthetic-probe-live-authorization-v1.json
+          test -f research/frozen/p12-c4-prompt-budget-and-pacing-v1.json
+          test -n "${CEREBRAS_API_KEY:-}"
+      - name: Install exact frozen SDK
+        run: |
+          python -m pip install --disable-pip-version-check 'cerebras_cloud_sdk==1.91.0'
+          python - <<'PY'
+          import importlib.metadata
+          assert importlib.metadata.version('cerebras_cloud_sdk') == '1.91.0'
+          print('CEREBRAS_SDK_PIN_PASS')
+          PY
+      - name: Compile live runner
+        run: python -m py_compile scripts/research/p12_c4_cerebras_synthetic_probe.py
+      - name: Validate attestation and authorization without provider call
+        run: |
+          python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          p=Path('scripts/research/p12_c4_cerebras_synthetic_probe.py')
+          spec=importlib.util.spec_from_file_location('probe',p)
+          m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+          a=m.validate_account_attestation(Path('research/experiments/p12-c4-cerebras-account-capacity-attestation-v2.json'))
+          z=m.validate_live_authorization(Path('research/frozen/p12-c4-cerebras-synthetic-probe-live-authorization-v1.json'),a)
+          assert z['authorized_attempts']==1 and z['rerun_allowed'] is False
+          assert z['github_actions_run_attempt_required']==1
+          assert z['exposed_pool_live_generation_authorized'] is False
+          print('P12_C4_SYNTHETIC_LIVE_PREFLIGHT_PASS')
+          PY
+      - name: Execute exactly two preregistered synthetic calls
+        run: |
+          python scripts/research/p12_c4_cerebras_synthetic_probe.py \
+            --attestation research/experiments/p12-c4-cerebras-account-capacity-attestation-v2.json \
+            --authorization research/frozen/p12-c4-cerebras-synthetic-probe-live-authorization-v1.json \
+            --output /tmp/p12-c4-cerebras-synthetic-compatibility-probe-result.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/p12-c4-cerebras-synthetic-compatibility-probe-result.json',encoding='utf-8'))
+          assert x['status']=='PASS'
+          assert x['provider_calls']==2
+          assert x['benchmark_inputs_loaded']==0
+          assert x['private_oracle_accesses']==0
+          assert x['fresh_blind_accesses']==0
+          assert x['legacy_locked_test_accesses']==0
+          assert x['exposed_pool_live_generation_authorized_by_this_result'] is False
+          print('P12_C4_CEREBRAS_SYNTHETIC_COMPATIBILITY_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-cerebras-synthetic-compatibility-probe-result
+          path: /tmp/p12-c4-cerebras-synthetic-compatibility-probe-result.json
+          retention-days: 90
+          if-no-files-found: error

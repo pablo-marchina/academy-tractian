@@ -1,0 +1,107 @@
+name: research-p12-c4-nvidia-synthetic-provider-free-qualification
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+    paths:
+      - "docs/adr/003-nvidia-nim-no-card-serving-amendment-2026-08-26.md"
+      - "research/experiments/p12-c4-nvidia-provider-serving-contract-v1.json"
+      - "research/experiments/p12-c4-nvidia-synthetic-compatibility-probe-preregistration-v1.json"
+      - "research/frozen/p12-c4-nvidia-request-budget-and-pacing-v1.json"
+      - "scripts/research/p12_c4_nvidia_synthetic_probe.py"
+      - ".github/workflows/research-p12-c4-nvidia-synthetic-provider-free-qualification.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  provider-free-self-check:
+    runs-on: ubuntu-24.04
+    env:
+      PYTHONPATH: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Assert provider secret is not exposed to provider-free job
+        run: |
+          test -z "${NVIDIA_API_KEY:-}"
+      - name: Compile runner and parse frozen JSON
+        run: |
+          python -m py_compile scripts/research/p12_c4_nvidia_synthetic_probe.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for p in [
+            "research/experiments/p12-c4-nvidia-provider-serving-contract-v1.json",
+            "research/experiments/p12-c4-nvidia-synthetic-compatibility-probe-preregistration-v1.json",
+            "research/frozen/p12-c4-nvidia-request-budget-and-pacing-v1.json",
+            "research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json",
+            "research/results/p12-c4-openrouter-synthetic-live-probe-closure-2026-08-26.json",
+          ]:
+            x=json.loads(Path(p).read_text())
+            assert isinstance(x,dict)
+          print("NVIDIA_FROZEN_JSON_PARSE_PASS")
+          PY
+      - name: Run provider-free contract check
+        run: |
+          python scripts/research/p12_c4_nvidia_synthetic_probe.py --provider-free-contract-check > /tmp/nvidia-self-check.json
+          python - <<'PY'
+          import json
+          x=json.load(open("/tmp/nvidia-self-check.json"))
+          assert x["status"]=="PASS_PROVIDER_FREE_LIVE_STILL_BLOCKED"
+          assert x["provider_calls"]==x["credentials_read"]==x["network_io"]==0
+          assert x["benchmark_inputs_loaded"]==0
+          assert x["private_oracle_accesses"]==x["fresh_blind_accesses"]==x["legacy_locked_test_accesses"]==0
+          assert x["exact_frozen_probe_calls"]==2
+          assert x["prior_cerebras_authorization_reuse_allowed"] is False
+          assert x["prior_openrouter_authorization_reuse_allowed"] is False
+          assert x["full_packet_capacity_authorized"] is False
+          print("P12_C4_NVIDIA_PROVIDER_FREE_SELF_CHECK_PASS")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-nvidia-provider-free-self-check-v1
+          path: /tmp/nvidia-self-check.json
+          retention-days: 90
+
+  emit-one-shot-authorization:
+    needs: provider-free-self-check
+    runs-on: ubuntu-24.04
+    env:
+      PYTHONPATH: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Assert authorization generation remains provider-free
+        run: |
+          test -z "${NVIDIA_API_KEY:-}"
+          test ! -e /tmp/p12-c4-nvidia-synthetic-probe-live-authorization-v1.json
+      - name: Emit separate NVIDIA one-shot authorization
+        run: |
+          python scripts/research/p12_c4_nvidia_synthetic_probe.py \
+            --emit-authorization /tmp/p12-c4-nvidia-synthetic-probe-live-authorization-v1.json
+          python - <<'PY'
+          import json
+          x=json.load(open("/tmp/p12-c4-nvidia-synthetic-probe-live-authorization-v1.json"))
+          assert x["status"]=="AUTHORIZED_ONE_NVIDIA_SYNTHETIC_PROBE_ATTEMPT"
+          assert x["authorized_attempts"]==1
+          assert x["maximum_provider_request_attempts"]==2
+          assert x["github_actions_run_attempt_required"]==1
+          assert x["rerun_allowed"] is False
+          assert x["automatic_retry_allowed"] is False
+          assert x["provider_fallback_allowed"] is False
+          assert x["model_fallback_allowed"] is False
+          assert x["exposed_pool_live_generation_authorized"] is False
+          assert x["full_packet_capacity_authorized"] is False
+          print("P12_C4_NVIDIA_ONE_SHOT_AUTHORIZATION_EMITTED_PROVIDER_FREE")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-nvidia-synthetic-probe-live-authorization-v1
+          path: /tmp/p12-c4-nvidia-synthetic-probe-live-authorization-v1.json
+          retention-days: 90

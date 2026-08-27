@@ -1,0 +1,57 @@
+{
+  "schema_version": "p12-c3-live-manifest-freeze-result-v1",
+  "date": "2026-08-23",
+  "status": "PASS",
+  "execution_id": "P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23",
+  "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
+  "manifest": {
+    "path": "research/experiments/p12-c3-capacity-controlled-live-execution-v1.json",
+    "git_blob_sha": "864f1d1ce3eae1c7f5a4cb327f5fdb18f38fa379",
+    "status": "FROZEN_READY_NOT_STARTED",
+    "decision_state": "EXPERIMENT_EXECUTION_FROZEN"
+  },
+  "workflow_evidence": {
+    "workflow": "research-p12-c3-live-manifest-freeze-self-check",
+    "run_id": 32671038513,
+    "job_id": 97271812949,
+    "tested_head_sha": "ddf3a2874549d6064aff372f886218d5f058fa1f",
+    "conclusion": "success",
+    "artifact_id": 9501381401,
+    "artifact_name": "p12-c3-live-manifest-freeze-self-check",
+    "artifact_digest": "sha256:3befe6fd9c9bf00b5665d6cceba8ff36f6277bfb562a5401427364c622055a7c"
+  },
+  "self_check": {
+    "checks_passed": 113,
+    "checks_total": 113,
+    "provider_calls": 0,
+    "private_oracle_access": 0,
+    "fresh_blind_access": 0,
+    "legacy_locked_test_access": 0,
+    "live_trigger_present": false,
+    "first_provider_call_occurred": false
+  },
+  "frozen_execution_pins": {
+    "effective_checkpoint_runner_sha256": "00cdf340714449bc0424777ec73598f5d8f172436c543918fc9e3ef383fc806e",
+    "live_workflow_sha256": "48e4bfdf5de0e624ec2e1d8feadf4ed5d3d6a7ead245875b15b641d4c486168d"
+  },
+  "validated_contracts": [
+    "all manifest source blob pins resolve and match",
+    "live workflow is trigger-file-only with no workflow_dispatch, schedule, or pull_request live trigger",
+    "live trigger file is absent",
+    "effective checkpoint runner derivation matches the frozen SHA-256",
+    "six batches contain exactly six parents each and 36 unique predeclared cells",
+    "A00/A10/A01/A11 definitions remain unchanged from P12-C2",
+    "30-second request spacing and reset margin remain frozen",
+    "maximum three pre-output transport attempts per cell remains frozen",
+    "72-hour collection horizon remains frozen",
+    "completed parents are immutable and resume is pending-only",
+    "later batches require all prior batches complete",
+    "GitHub live-workflow reruns remain forbidden",
+    "public checkpoints contain neither raw outputs nor private oracle material",
+    "private scoring remains blocked until 36/36 parents and 144/144 factorial outputs",
+    "partial and complete-case-only factorial reinterpretation remain forbidden",
+    "semantic v4.2, FRESH_BLIND, LEGACY_LOCKED_TEST, final measurement, architecture freeze, and production-readiness claims remain unauthorized"
+  ],
+  "scientific_interpretation": "The P12-C3 live execution infrastructure and manifest are frozen and provider-free verified before the first live provider call. This PASS validates execution plumbing and governance only; it does not qualify, prefer, freeze, or establish production readiness for any factorial arm.",
+  "next_authorized_action": "CREATE_THE_SEPARATE_FROZEN_BATCH_TRIGGER_ONLY_WHEN_INTENTIONALLY_STARTING_THE_ONE_AUTHORIZED_P12_C3_LIVE_EXPERIMENT"
+}

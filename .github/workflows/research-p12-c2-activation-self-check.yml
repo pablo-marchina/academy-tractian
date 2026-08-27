@@ -1,0 +1,130 @@
+name: research-p12-c2-activation-self-check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c2-activation-self-check.yml'
+      - 'research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json'
+      - 'scripts/research/p12_c2_factorial_candidates.py'
+      - 'scripts/research/p12_c2_execution_derivation.py'
+      - 'scripts/research/p12_c2_activation_self_check.py'
+      - 'research/frozen/p12-c2-public-intent-map-v1.json'
+      - 'research/fixtures/p12-c2-public-factorial-activation-synthetic-v1.json'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+  ACTIVATION: research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json
+  PARENT_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
+  EXPOSED_CASES: research/fixtures/p12-c1-exposed-agent-input-cases-v1.json
+
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public runtime dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Assert provider-free and private-free activation boundary
+        run: |
+          test -z "${GROQ_API_KEY:-}"
+          rm -f eval/expected-paths.json private-eval/expected-paths.json docs/test-scenarios.md eval/test-scenarios.md
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+          test ! -e docs/test-scenarios.md
+          test ! -e eval/test-scenarios.md
+      - name: Re-run frozen P12 guard
+        run: python scripts/research/big_b4_protocol_guard.py
+      - name: Materialize exact derived P12-C2 runner
+        run: |
+          git hash-object "$PARENT_BUNDLE" | grep -Fx 'a5c27394014bac656faa0a2f923a5c5da72d66f5'
+          python scripts/research/p12_c2_execution_derivation.py \
+            --parent-gz "$PARENT_BUNDLE" \
+            --out scripts/research/p12_c2_factorial_execution.py
+          echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  scripts/research/p12_c2_factorial_execution.py' | sha256sum -c -
+          python -m py_compile scripts/research/p12_c2_factorial_execution.py scripts/research/p12_c2_factorial_candidates.py scripts/research/p12_c2_activation_self_check.py
+      - name: Materialize exact EXPOSED_POOL agent inputs
+        run: |
+          echo 'a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef  research/fixtures/p12-c1-exposed-agent-input-cases-v1.json' | sha256sum -c -
+          mkdir -p agent-input
+          cp "$EXPOSED_CASES" agent-input/cases.json
+      - name: Build dry-only authorization view
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          src=Path('research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json')
+          x=json.loads(src.read_text())
+          assert x['status'] in {'PENDING_PROVIDER_FREE_QUALIFICATION','ACTIVATION_ELIGIBILITY_PASS'}
+          assert x['provider_or_model_calls_during_activation']==0
+          assert x['private_oracle_access_during_activation'] is False
+          x['status']='ACTIVATION_ELIGIBILITY_PASS'
+          x['activation_decision']='PASS'
+          x['execution_authorized']=True
+          x['authorization']['provider_free_qualification_pass']=True
+          x['authorization']['authorized_live_cycles']=1
+          Path('/tmp/p12-c2-dry-authorization-view.json').write_text(json.dumps(x,indent=2))
+          PY
+      - name: Execute 36-parent / 144-output provider-free dry cycle
+        env:
+          E8_GROQ_MODEL: openai/gpt-oss-120b
+          E8_MODEL_TEMPERATURE: '0'
+          E14_REASONING_EFFORT: medium
+          E14_REASONING_FORMAT: hidden
+          E14_RESPONSE_FORMAT_MODE: json_schema_strict
+          E14_MAX_COMPLETION_TOKENS: '4096'
+          E14_MAX_RETRIES: '2'
+          E8_BETWEEN_CALL_DELAY_SECONDS: '0'
+          E14F_REPAIR_DELAY_SECONDS: '0'
+        run: |
+          python scripts/research/p12_c2_factorial_execution.py \
+            --activation /tmp/p12-c2-dry-authorization-view.json \
+            --fixed-outputs /tmp/p12-c2-fixed-dry.json \
+            --generation-summary /tmp/p12-c2-generation-dry.json \
+            --dry-run
+          python - <<'PY'
+          import json
+          g=json.load(open('/tmp/p12-c2-generation-dry.json'))
+          f=json.load(open('/tmp/p12-c2-fixed-dry.json'))
+          assert g['status']=='PASS'
+          assert g['successful_common_parent_generations']==36
+          assert g['fixed_arm_outputs']==144
+          assert g['same_parent_hash_for_all_four_arms'] is True
+          assert g['candidate_private_oracle_accesses']==0
+          assert g['fresh_blind_accesses']==0 and g['legacy_locked_test_accesses']==0
+          assert g['arm_specific_provider_calls']==0
+          assert f['status']=='P12_C2_FIXED_FACTORIAL_OUTPUTS_PASS'
+          assert f['common_parent_count']==36 and f['fixed_arm_output_count']==144
+          assert set(f['participating_arms'])=={'A00','A10','A01','A11'}
+          assert len(f['calls'])==144
+          print('P12_C2_DRY_FACTORIAL_EXECUTION_PASS')
+          PY
+      - name: Run provider-free activation eligibility self-check
+        run: python scripts/research/p12_c2_activation_self_check.py
+      - name: Freeze sanitized activation evidence
+        run: |
+          cp research/results/p12-c2-activation-self-check-latest.json /tmp/p12-c2-activation-self-check.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/p12-c2-activation-self-check.json'))
+          assert x['status']=='PASS' and x['all_passed'] is True
+          assert x['provider_or_model_calls']==0
+          assert x['private_oracle_access'] is False
+          assert x['fresh_blind_access'] is False and x['legacy_locked_test_access'] is False
+          print(x['checks_passed'], x['checks_total'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c2-activation-provider-free-qualification
+          path: |
+            /tmp/p12-c2-activation-self-check.json
+            /tmp/p12-c2-generation-dry.json
+          retention-days: 90
+          if-no-files-found: error

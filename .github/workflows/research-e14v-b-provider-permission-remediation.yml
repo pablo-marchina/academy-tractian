@@ -1,0 +1,109 @@
+name: research-e14v-b-provider-permission-remediation
+
+on:
+  push:
+    paths:
+      - 'research/experiments/e14v-b-provider-permission-remediation-amendment.json'
+      - 'scripts/research/e14v_b_provider_permission_remediation_synthetic.py'
+      - '.github/workflows/research-e14v-b-provider-permission-remediation.yml'
+  pull_request:
+    paths:
+      - 'research/experiments/e14v-b-provider-permission-remediation-amendment.json'
+      - 'scripts/research/e14v_b_provider_permission_remediation_synthetic.py'
+      - '.github/workflows/research-e14v-b-provider-permission-remediation.yml'
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install public registry dependency
+        run: python -m pip install 'pydantic>=2,<3'
+
+      - name: Compile E14v-B
+        run: python -m py_compile scripts/research/e14v_b_provider_permission_remediation_synthetic.py
+
+      - name: Run E14v-B self-check
+        run: |
+          python scripts/research/e14v_b_provider_permission_remediation_synthetic.py \
+            --out /tmp/e14v-b-unused.json \
+            --self-check
+
+      - name: Run zero-provider E14v-B synthetic dry-run
+        run: |
+          python scripts/research/e14v_b_provider_permission_remediation_synthetic.py \
+            --mode synthetic \
+            --out /tmp/e14v-b-synthetic-dry.json \
+            --dry-run
+
+      - name: Verify E14v-B amendment boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('research/experiments/e14v-b-provider-permission-remediation-amendment.json')
+          m = json.loads(p.read_text())
+          assert m['experiment_id'] == 'E14v-B-public-synthetic-provider-permission-remediation-amendment'
+          assert m['status'] == 'ACTIVE_PERMISSION_REMEDIATED_SYNTHETIC_ATTEMPT_AUTHORIZED'
+          assert m['amendment_class'] == 'external_provider_permission_remediation_only'
+          u = m['unchanged_scientific_candidate']
+          assert u['planner_model'] == 'openai/gpt-oss-120b'
+          assert u['reasoning_effort'] == 'medium'
+          assert u['temperature'] == 0
+          assert u['synthetic_case_count'] == 14
+          assert u['synthetic_fixture_changed'] is False
+          assert u['synthetic_thresholds_changed'] is False
+          assert u['transport_contract_changed_from_e14v_a'] is False
+          assert u['response_format'] == 'json_schema_strict'
+          assert u['include_reasoning'] is False
+          assert u['reasoning_format_sent'] is False
+          r = m['external_remediation_precondition']
+          assert r['manual_confirmation_received'] is True
+          assert r['required_model'] == 'openai/gpt-oss-120b'
+          ci = m['structural_ci']
+          assert ci['run_id'] == 32373085817
+          assert ci['job_id'] == 96437951199
+          assert ci['conclusion'] == 'success'
+          assert ci['e14v_a_transport_reuse_pass'] is True
+          assert m['corrected_attempt_policy']['corrected_real_provider_attempts_allowed'] == 1
+          a = m['authorization_boundary']
+          assert a['corrected_synthetic_attempt_authorized_now'] is True
+          assert a['structural_ci_requirement_satisfied'] is True
+          assert a['activation_condition_satisfied'] is True
+          assert a['real_dev_authorized'] is False
+          assert a['validation_authorized'] is False
+          assert a['locked_test_authorized'] is False
+          print('E14V_B_AMENDMENT_BOUNDARY_PASS')
+          PY
+
+      - name: Verify E14v-A transport is reused
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('scripts/research/e14v_b_provider_permission_remediation_synthetic.py').read_text()
+          assert 'parent._provider_call = e14va._provider_call_amended' in text
+          assert 'def _provider_call' not in text
+          assert 'def _schema_response_format' not in text
+          assert 'https://api.groq.com' not in text
+          print('E14V_B_TRANSPORT_REUSE_PASS')
+          PY
+
+      - name: Reject private selectors in E14v-B source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('scripts/research/e14v_b_provider_permission_remediation_synthetic.py').read_text()
+          literal_forbidden = ['expected-paths.json', 'oracle-file', 'LOCKED_TEST_CASE']
+          semantic_forbidden = [
+              '.get("coverage_tags")', ".get('coverage_tags')",
+              '["coverage_tags"]', "['coverage_tags']",
+              '.get("ticket_id")', ".get('ticket_id')",
+              '["ticket_id"]', "['ticket_id']",
+          ]
+          for needle in literal_forbidden + semantic_forbidden:
+              assert needle not in text, f'forbidden selector access found: {needle}'
+          print('E14V_B_FORBIDDEN_SELECTOR_SCAN_PASS')
+          PY

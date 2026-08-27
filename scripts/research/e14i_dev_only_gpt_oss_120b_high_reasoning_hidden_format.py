@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+"""E14i DEV-only GPT-OSS 120B high-reasoning JSON-mode compatibility candidate.
+
+E14i inherits the complete E14f stack and preserves the E14h model/reasoning
+configuration. Relative to E14h it changes exactly one provider configuration
+field: `E14_REASONING_FORMAT=hidden`.
+
+Groq documents that reasoning_format must be `parsed` or `hidden` when JSON mode
+is used with reasoning models. E14i chooses `hidden` so reasoning is not added to
+the capture or final output schema. Model, reasoning effort, completion budget,
+temperature, prompts, semantic repair, post-model guards, scorer and gate remain
+unchanged.
+"""
+
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import json
+import os
+from pathlib import Path
+from typing import Any
+
+HERE = Path(__file__).parent
+E14F_PATH = HERE / "e14f_dev_only_public_semantic_repair.py"
+
+
+def load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"failed to load {path.name}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+e14f = load_module("e14f_parent_for_e14i", E14F_PATH)
+
+E14I_MANIFEST = Path("research/experiments/e14i-dev-only-gpt-oss-120b-high-reasoning-hidden-format-manifest.json")
+REQUIRED_MODEL = "openai/gpt-oss-120b"
+REQUIRED_REASONING_EFFORT = "high"
+REQUIRED_REASONING_FORMAT = "hidden"
+REQUIRED_MAX_COMPLETION_TOKENS = 1600
+REQUIRED_TEMPERATURE = 0.0
+
+
+def _float_env(name: str, default: float) -> float:
+    value = os.getenv(name)
+    return default if value is None else float(value)
+
+
+def assert_frozen_configuration(*, dry_run: bool) -> None:
+    model = os.getenv("E8_GROQ_MODEL", REQUIRED_MODEL if dry_run else "")
+    if model != REQUIRED_MODEL:
+        raise AssertionError(f"E14i requires E8_GROQ_MODEL={REQUIRED_MODEL}")
+
+    reasoning = os.getenv("E14_REASONING_EFFORT", REQUIRED_REASONING_EFFORT if dry_run else "")
+    if reasoning != REQUIRED_REASONING_EFFORT:
+        raise AssertionError("E14i requires E14_REASONING_EFFORT=high")
+
+    reasoning_format = os.getenv("E14_REASONING_FORMAT", REQUIRED_REASONING_FORMAT if dry_run else "")
+    if reasoning_format != REQUIRED_REASONING_FORMAT:
+        raise AssertionError("E14i requires E14_REASONING_FORMAT=hidden")
+
+    max_tokens = int(os.getenv("E14_MAX_COMPLETION_TOKENS", str(REQUIRED_MAX_COMPLETION_TOKENS)))
+    if max_tokens != REQUIRED_MAX_COMPLETION_TOKENS:
+        raise AssertionError("E14i requires unchanged E14_MAX_COMPLETION_TOKENS=1600")
+
+    temperature = _float_env("E8_MODEL_TEMPERATURE", REQUIRED_TEMPERATURE)
+    if temperature != REQUIRED_TEMPERATURE:
+        raise AssertionError("E14i requires unchanged E8_MODEL_TEMPERATURE=0")
+
+    if not dry_run and os.getenv("E8_CONFIRM_ZERO_COST") != "1":
+        raise AssertionError("E14i real measurement requires E8_CONFIRM_ZERO_COST=1")
+
+
+def run(args: argparse.Namespace) -> dict[str, Any]:
+    assert_frozen_configuration(dry_run=args.dry_run)
+    summary = e14f.run(args)
+    parent_status = summary.get("status")
+    capture_pass = parent_status == "E14F_DEV_ONLY_PUBLIC_SEMANTIC_REPAIR_CAPTURE_PASS"
+    summary["report_version"] = "e14i-dev-only-gpt-oss-120b-high-reasoning-hidden-format-v1"
+    summary["status"] = (
+        "E14I_DEV_ONLY_GPT_OSS_120B_HIGH_REASONING_HIDDEN_FORMAT_CAPTURE_PASS"
+        if capture_pass
+        else "E14I_DEV_ONLY_GPT_OSS_120B_HIGH_REASONING_HIDDEN_FORMAT_CAPTURE_NEEDS_REVIEW"
+    )
+    summary["parent_e14f_capture_status"] = parent_status
+    summary["e14i_provider_compatibility_configuration"] = {
+        "change_class": "reasoning_format_only_for_json_mode_provider_compatibility",
+        "provider": "groq",
+        "model": REQUIRED_MODEL,
+        "reasoning_effort": REQUIRED_REASONING_EFFORT,
+        "reasoning_format": REQUIRED_REASONING_FORMAT,
+        "parent_reasoning_format": "unset_provider_default",
+        "max_completion_tokens": REQUIRED_MAX_COMPLETION_TOKENS,
+        "temperature": REQUIRED_TEMPERATURE,
+        "response_format": "json_object",
+        "model_changed": False,
+        "reasoning_effort_changed": False,
+        "reasoning_format_changed": True,
+        "completion_budget_changed": False,
+        "temperature_changed": False,
+        "prompt_changed": False,
+        "semantic_repair_changed": False,
+        "post_model_policy_changed": False,
+        "scorer_changed": False,
+        "acceptance_thresholds_changed": False,
+        "validation_feedback_used": False,
+        "locked_test_used": False,
+        "private_oracle_used_by_model_or_repair": False,
+        "reasoning_hidden_from_capture": True,
+        "completion_budget_rescue_allowed_inside_candidate": False
+    }
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    return summary
+
+
+def run_self_checks() -> None:
+    e14f.run_self_checks()
+    assert_frozen_configuration(dry_run=True)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest", type=Path, default=E14I_MANIFEST)
+    parser.add_argument("--split-manifest", type=Path, default=Path("research/frozen/benchmark-split-v1.json"))
+    parser.add_argument("--agent-input-cases", type=Path, default=None)
+    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--timeout-seconds", type=int, default=90)
+    parser.add_argument("--dev-repeats", type=int, default=None)
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+
+    if args.dry_run:
+        run_self_checks()
+    summary = run(args)
+    completeness = summary.get("e14_completeness", {})
+    repair = summary.get("e14f_public_semantic_repair", {})
+    boundary = summary.get("selective_reprocess_authorization_boundary", {})
+    config = summary.get("e14i_provider_compatibility_configuration", {})
+    print(json.dumps({
+        "status": summary["status"],
+        "model": config.get("model"),
+        "reasoning_effort": config.get("reasoning_effort"),
+        "reasoning_format": config.get("reasoning_format"),
+        "max_completion_tokens": config.get("max_completion_tokens"),
+        "total_calls": summary.get("aggregate_metrics", {}).get("total_calls"),
+        "parsed_model_outputs_available": summary.get("aggregate_metrics", {}).get("parsed_model_outputs_available"),
+        "scoreable_calls": summary.get("aggregate_metrics", {}).get("scoreable_calls"),
+        "validation_ran": summary.get("scope", {}).get("validation_ran"),
+        "dry_run": summary.get("dry_run"),
+        "completeness_pass": completeness.get("passed"),
+        "retry_count": completeness.get("retry_count"),
+        "repair_count": completeness.get("repair_count"),
+        "semantic_repair_triggered_calls": repair.get("triggered_calls"),
+        "semantic_repair_calls": repair.get("repair_calls"),
+        "semantic_repair_residual_violation_calls": repair.get("calls_with_residual_public_violations"),
+        "target_reprocess_outputs_checked": boundary.get("target_reprocess_outputs_checked"),
+        "authorized_target_reprocess_outputs": boundary.get("authorized_target_reprocess_outputs"),
+        "blocked_target_reprocess_outputs": boundary.get("blocked_target_reprocess_outputs")
+    }, indent=2))
+    return 0 if summary["status"] == "E14I_DEV_ONLY_GPT_OSS_120B_HIGH_REASONING_HIDDEN_FORMAT_CAPTURE_PASS" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

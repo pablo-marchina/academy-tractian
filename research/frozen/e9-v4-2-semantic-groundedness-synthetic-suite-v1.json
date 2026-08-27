@@ -1,0 +1,178 @@
+{
+  "suite_version": "e9-v4.2-semantic-groundedness-synthetic-v1",
+  "status": "FROZEN_BEFORE_ANY_REAL_SEMANTIC_JUDGE_LABELS",
+  "purpose": "Public oracle-free reliability suite for semantic groundedness judge calibration.",
+  "labels": ["SUPPORTED", "CONTRADICTED", "NOT_SUPPORTED", "NOT_APPLICABLE"],
+  "claim_types": ["factual_assertion", "conditional_or_hypothetical", "procedural_recommendation", "uncertainty_or_epistemic_statement", "non_world_metadata"],
+  "cases": [
+    {
+      "case_id": "S01",
+      "visible_case": {"asset": {"status": "active"}},
+      "claim": "The asset is active.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "SUPPORTED"
+    },
+    {
+      "case_id": "S02",
+      "visible_case": {"asset": {"status": "inactive"}},
+      "claim": "The asset is active.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "CONTRADICTED"
+    },
+    {
+      "case_id": "S03",
+      "visible_case": {"asset": {"status": "active"}},
+      "claim": "A severe mechanical fault is present.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "NOT_SUPPORTED"
+    },
+    {
+      "case_id": "S04",
+      "visible_case": {"asset": {"status": "active"}},
+      "claim": "If RMS exceeds the baseline, request additional review.",
+      "expected_claim_type": "conditional_or_hypothetical",
+      "expected_support_label": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "S05",
+      "visible_case": {"asset": {"status": "active"}},
+      "claim": "GET /assets/{assetId}/rms before deciding whether to act.",
+      "expected_claim_type": "procedural_recommendation",
+      "expected_support_label": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "S06",
+      "visible_case": {"asset": {"status": "active"}},
+      "claim": "Uncertainty remains about the bearing condition.",
+      "expected_claim_type": "uncertainty_or_epistemic_statement",
+      "expected_support_label": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "S07",
+      "visible_case": {"data_quality": {"status": "poor"}},
+      "claim": "The visible data-quality status is poor.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "SUPPORTED"
+    },
+    {
+      "case_id": "S08",
+      "visible_case": {"data_quality": {"status": "good"}},
+      "claim": "The visible data-quality status is poor.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "CONTRADICTED"
+    },
+    {
+      "case_id": "S09",
+      "visible_case": {"analysis": {"state": "failed"}},
+      "claim": "The visible analysis state is failed.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "SUPPORTED"
+    },
+    {
+      "case_id": "S10",
+      "visible_case": {"analysis": {"state": "complete"}},
+      "claim": "The visible analysis state is failed.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "CONTRADICTED"
+    },
+    {
+      "case_id": "S11",
+      "visible_case": {"model": {"status": "deployed"}},
+      "claim": "Model drift has been detected.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "NOT_SUPPORTED"
+    },
+    {
+      "case_id": "S12",
+      "visible_case": {"model": {"status": "deployed"}},
+      "claim": "If drift is later confirmed, retraining may be appropriate.",
+      "expected_claim_type": "conditional_or_hypothetical",
+      "expected_support_label": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "S13",
+      "visible_case": {"analysis": {"created_at": "2026-08-18T10:00:00Z"}},
+      "claim": "The analysis was created yesterday.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "NOT_SUPPORTED"
+    },
+    {
+      "case_id": "S14",
+      "visible_case": {"knowledge": {"summary": "Possible bearing looseness is discussed as one diagnostic hypothesis."}},
+      "claim": "The visible knowledge text discusses bearing looseness as a possible hypothesis.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "SUPPORTED"
+    },
+    {
+      "case_id": "S15",
+      "visible_case": {"knowledge": {"summary": "No diagnosis has been confirmed."}},
+      "claim": "Bearing looseness has been confirmed.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "NOT_SUPPORTED"
+    },
+    {
+      "case_id": "S16",
+      "visible_case": {"signal": {"temperature_c": 85}},
+      "claim": "The visible temperature is 85 C.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "SUPPORTED"
+    },
+    {
+      "case_id": "S17",
+      "visible_case": {"signal": {"temperature_c": 85}},
+      "claim": "The visible temperature is 95 C.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "CONTRADICTED"
+    },
+    {
+      "case_id": "S18",
+      "visible_case": {"asset": {"status": "active"}},
+      "claim": "The asset is definitely safe to operate.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "NOT_SUPPORTED"
+    },
+    {
+      "case_id": "S19",
+      "visible_case": {"asset": {"status": "active"}},
+      "claim": "Request specialist review if the diagnosis remains materially ambiguous.",
+      "expected_claim_type": "conditional_or_hypothetical",
+      "expected_support_label": "NOT_APPLICABLE"
+    },
+    {
+      "case_id": "S20",
+      "visible_case": {"asset": {"model_id": "model-001"}},
+      "claim": "The visible asset is assigned to model-001.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "SUPPORTED"
+    },
+    {
+      "case_id": "S21",
+      "visible_case": {"asset": {"model_id": "model-001"}},
+      "claim": "The visible asset is assigned to model-002.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "CONTRADICTED"
+    },
+    {
+      "case_id": "S22",
+      "visible_case": {"permissions": {"can_patch_asset": false}},
+      "claim": "The current requester can patch the asset.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "CONTRADICTED"
+    },
+    {
+      "case_id": "S23",
+      "visible_case": {"permissions": {}},
+      "claim": "The current requester can patch the asset.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "NOT_SUPPORTED"
+    },
+    {
+      "case_id": "S24",
+      "visible_case": {"asset": {"status": "active"}},
+      "public_contract_fact": "POST /analyses/{analysisId}/request-specialist is a registered public action endpoint.",
+      "claim": "POST /analyses/{analysisId}/request-specialist is available in the public tool contract.",
+      "expected_claim_type": "factual_assertion",
+      "expected_support_label": "SUPPORTED"
+    }
+  ]
+}

@@ -1,0 +1,263 @@
+name: research-p12-c2-factorial-exposed-pool
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/p12-c2-live-execution-trigger-v2.json'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+  ACTIVATION: research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json
+  PREREG: research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json
+  EXECUTION_MANIFEST: research/experiments/p12-c2-factorial-exposed-pool-execution-v1.json
+  EXPOSED_CASES: research/fixtures/p12-c1-exposed-agent-input-cases-v1.json
+  PARENT_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
+  FACTORIAL_SCORER: scripts/research/p12_c2_factorial_score.py
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public runtime dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Re-run frozen P12 and P12-C2 activation guards
+        run: |
+          test -z "${GROQ_API_KEY:-}"
+          python scripts/research/big_b4_protocol_guard.py
+          python scripts/research/p12_c2_activation_self_check.py >/tmp/p12-c2-activation-preflight.json
+      - name: Validate one-cycle execution manifest before any provider outcome
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          m=json.loads(Path('research/experiments/p12-c2-factorial-exposed-pool-execution-v1.json').read_text())
+          a=json.loads(Path('research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json').read_text())
+          p=json.loads(Path('research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json').read_text())
+          assert m['status']=='AUTHORIZED_CONSUMABLE_ONCE'
+          assert m['experiment_id']=='P12-C2_EXPOSED_POOL_FACTORIAL_EVIDENCE_SAFETY'
+          assert a['status']=='ACTIVATION_ELIGIBILITY_PASS' and a['execution_authorized'] is True
+          assert p['decision_state']=='EXPERIMENT_FROZEN'
+          assert m['authorized_scope']=='ONE_P12_C2_FACTORIAL_A00_A10_A01_A11_EXPOSED_POOL_COMMON_PARENT_GENERATION_EVALUATION_CYCLE'
+          assert m['factorial_arms']==['A00','A10','A01','A11']
+          assert m['corpus']=={'independent_groups':7,'scenario_families':11,'agent_visible_tickets':12,'repetitions_per_ticket':3,'common_parent_generations':36,'fixed_factorial_outputs':144}
+          assert m['seeds']==[2026082304,2026082305,2026082306]
+          assert m['attempt_policy']['new_provider_cycle_authorized']==1
+          assert m['attempt_policy']['github_rerun_of_generation_job_allowed'] is False
+          assert m['attempt_policy']['pre_outcome_infrastructure_failures']==1
+          assert m['attempt_policy']['replacement_attempt_authorized'] is True
+          assert m['candidate_private_oracle_access']=='DENY_ALWAYS'
+          assert m['semantic_stage_authorized'] is False
+          assert m['fresh_blind_authorized'] is False and m['legacy_locked_test_authorized'] is False
+          assert m['scoring']['factorial_scorer_sha256']=='f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22'
+          data=Path('scripts/research/p12_c2_factorial_score.py').read_bytes()
+          assert hashlib.sha256(data).hexdigest()==m['scoring']['factorial_scorer_sha256']
+          print('P12_C2_ONE_CYCLE_REPLACEMENT_MANIFEST_PASS')
+          PY
+      - name: Materialize exact derived P12-C2 runner
+        run: |
+          git hash-object "$PARENT_BUNDLE" | grep -Fx 'a5c27394014bac656faa0a2f923a5c5da72d66f5'
+          python scripts/research/p12_c2_execution_derivation.py \
+            --parent-gz "$PARENT_BUNDLE" \
+            --out scripts/research/p12_c2_factorial_execution.py
+          echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  scripts/research/p12_c2_factorial_execution.py' | sha256sum -c -
+          echo 'f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22  scripts/research/p12_c2_factorial_score.py' | sha256sum -c -
+          python -m py_compile scripts/research/p12_c2_factorial_execution.py "$FACTORIAL_SCORER"
+      - name: Materialize exact EXPOSED_POOL agent inputs
+        run: |
+          echo 'a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef  research/fixtures/p12-c1-exposed-agent-input-cases-v1.json' | sha256sum -c -
+          mkdir -p agent-input
+          cp "$EXPOSED_CASES" agent-input/cases.json
+          python - <<'PY'
+          import json
+          x=json.load(open('agent-input/cases.json'))
+          assert len(x)==12 and len({r['asset_id'] for r in x})==7
+          assert not ({r['asset_id'] for r in x} & {'asset_M605','asset_M205','asset_V301'})
+          PY
+      - name: Enforce candidate-side private and blind boundary
+        run: |
+          rm -f eval/expected-paths.json private-eval/expected-paths.json docs/test-scenarios.md eval/test-scenarios.md
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+          test ! -e docs/test-scenarios.md
+          test ! -e eval/test-scenarios.md
+      - name: Execute complete provider-free 36-parent / 144-output dry preflight
+        env:
+          E8_GROQ_MODEL: openai/gpt-oss-120b
+          E8_MODEL_TEMPERATURE: '0'
+          E14_REASONING_EFFORT: medium
+          E14_REASONING_FORMAT: hidden
+          E14_RESPONSE_FORMAT_MODE: json_schema_strict
+          E14_MAX_COMPLETION_TOKENS: '4096'
+          E14_MAX_RETRIES: '2'
+          E8_BETWEEN_CALL_DELAY_SECONDS: '0'
+          E14F_REPAIR_DELAY_SECONDS: '0'
+        run: |
+          python scripts/research/p12_c2_factorial_execution.py \
+            --activation "$ACTIVATION" \
+            --fixed-outputs /tmp/p12-c2-fixed-dry.json \
+            --generation-summary /tmp/p12-c2-generation-dry.json \
+            --dry-run
+          python - <<'PY'
+          import json
+          g=json.load(open('/tmp/p12-c2-generation-dry.json'))
+          f=json.load(open('/tmp/p12-c2-fixed-dry.json'))
+          assert g['status']=='PASS'
+          assert g['successful_common_parent_generations']==36
+          assert g['fixed_arm_outputs']==144
+          assert g['same_parent_hash_for_all_four_arms'] is True
+          assert g['candidate_private_oracle_accesses']==0
+          assert g['fresh_blind_accesses']==0 and g['legacy_locked_test_accesses']==0
+          assert g['arm_specific_provider_calls']==0
+          assert f['status']=='P12_C2_FIXED_FACTORIAL_OUTPUTS_PASS'
+          assert f['common_parent_count']==36 and f['fixed_arm_output_count']==144
+          assert f['participating_arms']==['A00','A10','A01','A11']
+          assert len(f['calls'])==144
+          print('P12_C2_LIVE_DRY_PREFLIGHT_PASS')
+          PY
+
+  generate-freeze:
+    needs: preflight
+    if: ${{ github.run_attempt == 1 }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      E8_ENABLE_GROQ: '1'
+      E8_CONFIRM_ZERO_COST: '1'
+      E8_GROQ_MODEL: openai/gpt-oss-120b
+      E8_MODEL_TEMPERATURE: '0'
+      E14_REASONING_EFFORT: medium
+      E14_REASONING_FORMAT: hidden
+      E14_RESPONSE_FORMAT_MODE: json_schema_strict
+      E14_MAX_COMPLETION_TOKENS: '4096'
+      E8_BETWEEN_CALL_DELAY_SECONDS: '25'
+      E14F_REPAIR_DELAY_SECONDS: '25'
+      E14_MAX_RETRIES: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public runtime dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Consume the single replacement provider attempt
+        run: |
+          test "$GITHUB_RUN_ATTEMPT" = '1'
+          test -n "$GROQ_API_KEY"
+          python - <<'PY'
+          import json
+          x=json.load(open('research/experiments/p12-c2-live-execution-trigger-v2.json'))
+          assert x['consume_authorized_live_cycle'] is True
+          assert x['authorized_cycle_index']==1
+          assert x['replacement_attempt_index']==1
+          assert x['replaces_pre_outcome_failed_run_id']==32663288072
+          assert x['previous_provider_outcomes_observed']==0
+          PY
+      - name: Materialize exact derived P12-C2 runner and public cases
+        run: |
+          git hash-object "$PARENT_BUNDLE" | grep -Fx 'a5c27394014bac656faa0a2f923a5c5da72d66f5'
+          python scripts/research/p12_c2_execution_derivation.py --parent-gz "$PARENT_BUNDLE" --out scripts/research/p12_c2_factorial_execution.py
+          echo 'f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59  scripts/research/p12_c2_factorial_execution.py' | sha256sum -c -
+          mkdir -p agent-input
+          cp "$EXPOSED_CASES" agent-input/cases.json
+          echo 'a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef  agent-input/cases.json' | sha256sum -c -
+      - name: Physically remove candidate-side private and held-out semantic files
+        run: |
+          rm -f eval/expected-paths.json private-eval/expected-paths.json docs/test-scenarios.md eval/test-scenarios.md
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+          test ! -e docs/test-scenarios.md
+          test ! -e eval/test-scenarios.md
+      - name: Execute exactly 36 new common parents and freeze 144 factorial outputs
+        run: |
+          python scripts/research/p12_c2_factorial_execution.py \
+            --activation "$ACTIVATION" \
+            --fixed-outputs "$RUNNER_TEMP/p12-c2-fixed-factorial-outputs.json" \
+            --generation-summary "$RUNNER_TEMP/p12-c2-generation-summary.json" \
+            --timeout-seconds 90
+      - name: Validate immutable live freeze geometry
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          g=json.loads((root/'p12-c2-generation-summary.json').read_text())
+          f=json.loads((root/'p12-c2-fixed-factorial-outputs.json').read_text())
+          assert g['status']=='PASS'
+          assert g['successful_common_parent_generations']==36
+          assert g['fixed_arm_outputs']==144
+          assert g['same_parent_hash_for_all_four_arms'] is True
+          assert g['candidate_outputs_fixed_before_private_scoring'] is True
+          assert g['candidate_private_oracle_accesses']==0
+          assert g['fresh_blind_accesses']==0 and g['legacy_locked_test_accesses']==0
+          assert f['status']=='P12_C2_FIXED_FACTORIAL_OUTPUTS_PASS'
+          assert f['common_parent_count']==36 and f['fixed_arm_output_count']==144
+          assert len(f['calls'])==144
+          assert f['fixed_before_private_scoring'] is True
+          assert f['candidate_private_oracle_accesses']==0
+          assert f['fresh_blind_accesses']==0 and f['legacy_locked_test_accesses']==0
+          assert f['arm_specific_provider_calls']==0
+          print('P12_C2_LIVE_FREEZE_PASS')
+          PY
+      - name: Upload fixed private-scoring intermediate
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c2-fixed-factorial-outputs-private-intermediate
+          path: ${{ runner.temp }}/p12-c2-fixed-factorial-outputs.json
+          retention-days: 1
+          if-no-files-found: error
+      - name: Upload sanitized generation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c2-generation-summary
+          path: ${{ runner.temp }}/p12-c2-generation-summary.json
+          retention-days: 90
+          if-no-files-found: warn
+
+  private-scoring-handoff:
+    needs: generate-freeze
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert scorer handoff has no provider credential and no committed oracle
+        run: |
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: p12-c2-fixed-factorial-outputs-private-intermediate
+          path: ${{ runner.temp }}/fixed
+      - name: Validate freeze and emit hash only
+        run: |
+          test -s "$RUNNER_TEMP/fixed/p12-c2-fixed-factorial-outputs.json"
+          sha256sum "$RUNNER_TEMP/fixed/p12-c2-fixed-factorial-outputs.json" > "$RUNNER_TEMP/p12-c2-fixed-output-hash.txt"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'fixed/p12-c2-fixed-factorial-outputs.json'
+          x=json.loads(p.read_text())
+          assert x['status']=='P12_C2_FIXED_FACTORIAL_OUTPUTS_PASS'
+          assert x['common_parent_count']==36
+          assert x['fixed_arm_output_count']==144
+          assert len(x['calls'])==144
+          assert x['fixed_before_private_scoring'] is True
+          print('P12_C2_PRIVATE_SCORING_HANDOFF_READY')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c2-private-scoring-handoff
+          path: ${{ runner.temp }}/p12-c2-fixed-output-hash.txt
+          retention-days: 90
+          if-no-files-found: error

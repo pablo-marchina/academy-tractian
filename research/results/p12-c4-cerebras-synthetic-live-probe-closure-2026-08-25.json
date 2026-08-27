@@ -1,0 +1,90 @@
+{
+  "schema_version": "p12-c4-cerebras-synthetic-live-probe-closure-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "probe_id": "P12-C4-CEREBRAS-SYNTHETIC-COMPATIBILITY-V1",
+  "date": "2026-08-25",
+  "status": "CONSUMED_OPERATIONAL_FAILURE_NO_MODEL_OUTPUT",
+  "authorization": {
+    "schema_version": "p12-c4-cerebras-synthetic-probe-live-authorization-v1",
+    "authorization_scope": "EXACTLY_TWO_PREREGISTERED_SYNTHETIC_CEREBRAS_CALLS_ONLY",
+    "authorized_attempts": 1,
+    "github_actions_run_attempt_required": 1,
+    "automatic_retry_allowed": false,
+    "rerun_allowed": false,
+    "authorization_attempt_consumed": true,
+    "same_authorization_rerun_forbidden": true,
+    "attestation_sha256": "80f20b5087eceec05a1d8a9d11bcc676c718bc579ff80fc289261d7e001b0e69",
+    "authorization_blob_sha": "109d58421736ffac6e6fb75444c0477703a4e86e"
+  },
+  "github_actions_evidence": {
+    "workflow": "research-p12-c4-cerebras-synthetic-live-probe",
+    "workflow_run_id": 32901958789,
+    "workflow_run_number": 1,
+    "workflow_run_attempt": 1,
+    "workflow_conclusion": "failure",
+    "job_id": 97977601612,
+    "head_sha": "9e0a89e1959dcc4ffd659baef1a4f07e137a7245",
+    "preflight_validation": "PASS",
+    "sdk_pin_validation": "PASS",
+    "live_execution_step": "FAIL"
+  },
+  "provider_failure": {
+    "provider": "cerebras",
+    "model_id": "gpt-oss-120b",
+    "sdk_package": "cerebras_cloud_sdk",
+    "sdk_version": "1.91.0",
+    "http_status": 402,
+    "error_type": "payment_required_error",
+    "error_code": "payment_required",
+    "error_param": "quota",
+    "sanitized_message": "Payment required to access this resource. Visit your billing tab.",
+    "classification": "GENERATION_ACCESS_OR_BILLING_NOT_ACTIVE"
+  },
+  "execution_accounting": {
+    "preregistered_synthetic_calls": 2,
+    "provider_request_attempts_observed": 1,
+    "successful_generation_calls": 0,
+    "model_outputs_observed": 0,
+    "first_synthetic_probe_completed": false,
+    "second_synthetic_probe_attempted": false,
+    "second_synthetic_probe_completed": false,
+    "complete_two_call_probe_reached": false,
+    "automatic_retries_observed": 0,
+    "automatic_failover_observed": false
+  },
+  "isolation_evidence": {
+    "benchmark_inputs_loaded": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "candidate_or_benchmark_outputs_observed": 0,
+    "adaptive_feedback_created": false
+  },
+  "attestation_interpretation": {
+    "effective_numeric_capacity_boundary_passed": true,
+    "authenticated_model_catalog_access_had_passed": true,
+    "effective_generation_access_proven_before_live_probe": false,
+    "live_generation_access_result": "FAIL_HTTP_402_PAYMENT_REQUIRED",
+    "prior_capacity_attestation_remains_historical_evidence": true,
+    "prior_capacity_attestation_is_sufficient_for_new_live_generation": false,
+    "required_new_evidence": "FIRST_PARTY_BILLING_OR_GENERATION_ACCESS_ACTIVATION_EVIDENCE"
+  },
+  "scientific_state": {
+    "synthetic_compatibility_gate_passed": false,
+    "synthetic_probe_result": "FAIL_OPERATIONAL_ACCESS",
+    "exposed_pool_live_generation_authorized": false,
+    "p12_c4_activation_authorized": false,
+    "p12_c4_live_manifest_authorized": false,
+    "p12_c4_common_parent_generation_started": false,
+    "p12_c4_common_parents_completed": 0,
+    "p12_c4_fixed_arm_outputs_created": 0,
+    "private_scoring_authorized": false,
+    "partial_scoring_allowed": false
+  },
+  "transition_rule": {
+    "same_workflow_rerun": "FORBIDDEN",
+    "same_authorization_reuse": "FORBIDDEN",
+    "activation_or_exposed_pool_generation": "BLOCKED",
+    "next_valid_step": "OBTAIN_FIRST_PARTY_GENERATION_ACCESS_OR_BILLING_ACTIVATION_EVIDENCE_THEN_FREEZE_A_NARROW_PRE_OUTCOME_PROTOCOL_AMENDMENT_BEFORE_ANY_NEW_ONE_SHOT_SYNTHETIC_AUTHORIZATION"
+  }
+}

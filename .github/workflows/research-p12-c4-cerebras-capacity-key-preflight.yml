@@ -1,0 +1,180 @@
+name: research-p12-c4-cerebras-capacity-key-preflight
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c4-cerebras-capacity-key-preflight.yml'
+
+permissions:
+  contents: read
+
+env:
+  MODEL_ID: gpt-oss-120b
+
+jobs:
+  authenticated-no-inference-preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert credential is available
+        env:
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        run: |
+          test -n "${CEREBRAS_API_KEY:-}"
+
+      - name: Authenticated GET models only
+        env:
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        run: |
+          set -euo pipefail
+          status="$(curl --silent --show-error \
+            --dump-header /tmp/cerebras-models-headers.txt \
+            --output /tmp/cerebras-models.json \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${CEREBRAS_API_KEY}" \
+            --header 'Accept: application/json' \
+            https://api.cerebras.ai/v1/models)"
+          printf '%s' "$status" > /tmp/cerebras-models-status.txt
+          test "$status" = "200"
+
+      - name: Probe chat endpoint headers without inference
+        env:
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        run: |
+          set -euo pipefail
+          for method in HEAD OPTIONS GET; do
+            lower="$(printf '%s' "$method" | tr '[:upper:]' '[:lower:]')"
+            if [ "$method" = "HEAD" ]; then
+              status="$(curl --silent --show-error --head \
+                --dump-header "/tmp/cerebras-${lower}-headers.txt" \
+                --output /dev/null \
+                --write-out '%{http_code}' \
+                --header "Authorization: Bearer ${CEREBRAS_API_KEY}" \
+                --header 'Accept: application/json' \
+                https://api.cerebras.ai/v1/chat/completions)"
+            else
+              status="$(curl --silent --show-error \
+                --request "$method" \
+                --dump-header "/tmp/cerebras-${lower}-headers.txt" \
+                --output "/tmp/cerebras-${lower}-body.txt" \
+                --write-out '%{http_code}' \
+                --header "Authorization: Bearer ${CEREBRAS_API_KEY}" \
+                --header 'Accept: application/json' \
+                https://api.cerebras.ai/v1/chat/completions)"
+            fi
+            printf '%s' "$status" > "/tmp/cerebras-${lower}-status.txt"
+          done
+
+          # Empty JSON is intentionally invalid: no model and no messages exist,
+          # so this request cannot reach model inference. It exists only to test
+          # whether rate-limit middleware exposes effective quota headers on POST.
+          invalid_status="$(curl --silent --show-error \
+            --request POST \
+            --dump-header /tmp/cerebras-invalid-post-headers.txt \
+            --output /tmp/cerebras-invalid-post-body.txt \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${CEREBRAS_API_KEY}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data '{}' \
+            https://api.cerebras.ai/v1/chat/completions)"
+          printf '%s' "$invalid_status" > /tmp/cerebras-invalid-post-status.txt
+          case "$invalid_status" in
+            400|404|405|409|415|422) ;;
+            *) echo "unexpected invalid POST status: $invalid_status" >&2; exit 1 ;;
+          esac
+
+      - name: Build sanitized first-party evidence
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          models_status = Path('/tmp/cerebras-models-status.txt').read_text().strip()
+          body = json.loads(Path('/tmp/cerebras-models.json').read_text(encoding='utf-8'))
+          models = body.get('data') or []
+          model_ids = sorted(str(x.get('id')) for x in models if isinstance(x, dict) and x.get('id'))
+          if 'gpt-oss-120b' not in model_ids:
+              raise SystemExit('gpt-oss-120b is not accessible to this API key')
+
+          def sanitized(path):
+              out = {}
+              for line in Path(path).read_text(encoding='utf-8', errors='replace').splitlines():
+                  if ':' not in line:
+                      continue
+                  key, value = line.split(':', 1)
+                  key = key.strip().lower()
+                  if key.startswith('x-ratelimit-') or key in {'date', 'x-request-id', 'request-id'}:
+                      out[key] = value.strip()
+              return out
+
+          probes = {
+              'GET_v1_models': {
+                  'method': 'GET',
+                  'http_status': int(models_status),
+                  'headers': sanitized('/tmp/cerebras-models-headers.txt'),
+                  'inference_possible': False,
+              }
+          }
+          for method in ('HEAD', 'OPTIONS', 'GET'):
+              lower = method.lower()
+              probes[f'{method}_v1_chat_completions'] = {
+                  'method': method,
+                  'http_status': int(Path(f'/tmp/cerebras-{lower}-status.txt').read_text().strip()),
+                  'headers': sanitized(f'/tmp/cerebras-{lower}-headers.txt'),
+                  'inference_possible': False,
+              }
+          invalid_status = int(Path('/tmp/cerebras-invalid-post-status.txt').read_text().strip())
+          probes['POST_v1_chat_completions_invalid_empty_object'] = {
+              'method': 'POST',
+              'http_status': invalid_status,
+              'headers': sanitized('/tmp/cerebras-invalid-post-headers.txt'),
+              'request_has_model': False,
+              'request_has_messages': False,
+              'validation_failure_required': True,
+              'inference_possible': False,
+          }
+
+          aggregate = {}
+          for probe in probes.values():
+              for key, value in probe['headers'].items():
+                  if key.startswith('x-ratelimit-'):
+                      aggregate[key] = value
+
+          evidence = {
+              'schema_version': 'p12-c4-cerebras-authenticated-capacity-key-preflight-v3',
+              'status': 'PASS_AUTHENTICATED_NO_INFERENCE',
+              'observed_at_utc': datetime.now(timezone.utc).isoformat(),
+              'evidence_source': 'cerebras_authenticated_no_inference_rate_limit_middleware_probe',
+              'credential_present': True,
+              'credential_value_persisted': False,
+              'model_id': 'gpt-oss-120b',
+              'model_accessible': True,
+              'accessible_model_ids': model_ids,
+              'authenticated_api_requests': 5,
+              'valid_generation_requests': 0,
+              'invalid_validation_probe_requests': 1,
+              'benchmark_inputs_loaded': 0,
+              'synthetic_probe_requests': 0,
+              'inference_requests': 0,
+              'generation_tokens_consumed': 0,
+              'probes': probes,
+              'observed_rate_limit_headers': aggregate,
+              'attestation_pass_claimed': False,
+              'reason_attestation_not_auto_claimed': 'effective quota PASS requires sufficient first-party quota dimensions; absent dimensions are never inferred',
+          }
+          Path('/tmp/p12-c4-cerebras-capacity-key-preflight.json').write_text(
+              json.dumps(evidence, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(evidence, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c4-cerebras-capacity-key-preflight
+          path: /tmp/p12-c4-cerebras-capacity-key-preflight.json
+          retention-days: 90
+          if-no-files-found: error

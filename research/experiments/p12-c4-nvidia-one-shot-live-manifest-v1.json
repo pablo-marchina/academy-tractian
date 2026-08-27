@@ -1,0 +1,177 @@
+{
+  "schema_version": "p12-c4-nvidia-one-shot-live-manifest-v1",
+  "manifest_id": "P12-C4-NVIDIA-ONE-SHOT-LIVE-V1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "date": "2026-08-26",
+  "status": "FROZEN_PROVIDER_FREE_PENDING_LIVE_EXECUTION",
+  "scientific_boundary": {
+    "manifest_count_authorized": 1,
+    "live_execution_attempts_authorized": 1,
+    "provider_quota_guarantee": "UNKNOWN_NOT_CLAIMED",
+    "no_post_outcome_manifest_mutation": true,
+    "no_partial_packet_reinterpretation": true
+  },
+  "source_pins": {
+    "activation_gate_spec": {
+      "path": "research/experiments/p12-c4-nvidia-full-activation-and-capacity-gate-v1.json",
+      "git_blob_sha": "d56a1e5a35e1b7b995a1c730cd8e0f71809216b8"
+    },
+    "activation_gate_evidence": {
+      "path": "research/results/p12-c4-nvidia-activation-capacity-self-check-2026-08-26.json",
+      "git_blob_sha": "250902bde99f69c24df28506110abbd72ed56528"
+    },
+    "activation_gate_closure": {
+      "path": "research/results/p12-c4-nvidia-activation-capacity-gate-closure-2026-08-26.json",
+      "git_blob_sha": "66a5720dfeb4d5108aaf804bd3be0f58f8815bc5"
+    },
+    "serving_contract": {
+      "path": "research/experiments/p12-c4-nvidia-provider-serving-contract-v1.json",
+      "git_blob_sha": "851ed2f680f743da84d826bfc161139719bc1355"
+    },
+    "request_budget_and_pacing": {
+      "path": "research/frozen/p12-c4-nvidia-request-budget-and-pacing-v1.json",
+      "git_blob_sha": "e276d19ef95c38cfdd0354b43ae24d3eee3d30c8"
+    },
+    "fresh_seed_map": {
+      "path": "research/frozen/p12-c4-fresh-seed-map-v1.json",
+      "git_blob_sha": "2e5429c5175afd52584d282ee536a8d4f722a953"
+    },
+    "prompt_budget_and_pacing": {
+      "path": "research/frozen/p12-c4-prompt-budget-and-pacing-v1.json",
+      "git_blob_sha": "a351afdc1f015e3065a57b053848a2cdfae428a2"
+    }
+  },
+  "provider": {
+    "name": "NVIDIA",
+    "hosting_path": "nvidia_hosted_nim",
+    "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+    "model_id": "openai/gpt-oss-120b",
+    "credential_env": "NVIDIA_API_KEY",
+    "fallback_provider": null,
+    "model_fallbacks": [],
+    "automatic_failover": false
+  },
+  "request_semantics": {
+    "api_family": "openai_compatible_chat_completions",
+    "temperature": 0,
+    "max_tokens": 4096,
+    "reasoning_effort": "medium",
+    "stream": false,
+    "response_format": "json_schema_strict",
+    "seed_required_per_request": true,
+    "parallel_tool_calls": false,
+    "drop_reasoning_content_before_persistence": true
+  },
+  "transport": {
+    "client": "httpx",
+    "version": "0.28.1",
+    "connect_timeout_seconds": 10,
+    "read_timeout_seconds": 180,
+    "write_timeout_seconds": 30,
+    "pool_timeout_seconds": 10,
+    "follow_redirects": false,
+    "application_retries": 0,
+    "implicit_retries_allowed": false
+  },
+  "one_shot_execution": {
+    "common_parent_count": 36,
+    "maximum_provider_request_attempts": 36,
+    "maximum_attempts_per_parent": 1,
+    "minimum_seconds_between_request_starts": 75,
+    "warming_requests": 0,
+    "automatic_retries": 0,
+    "resume_after_incomplete_packet": false,
+    "workflow_rerun_allowed": false,
+    "completed_parent_regeneration_allowed": false,
+    "bursting_forbidden": true,
+    "provider_fallbacks": 0,
+    "model_fallbacks": 0,
+    "failure_policy": {
+      "non_2xx": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+      "invalid_or_unparseable_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+      "missing_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+      "duplicate_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+      "seed_or_parent_mismatch": "ABORT_PACKET_INCOMPLETE_NO_SCORING"
+    }
+  },
+  "ordered_requests": [
+    {"ordinal": 1, "parent_id": "P01", "seed": 1970375110, "maximum_attempts": 1},
+    {"ordinal": 2, "parent_id": "P02", "seed": 52162545, "maximum_attempts": 1},
+    {"ordinal": 3, "parent_id": "P03", "seed": 867616638, "maximum_attempts": 1},
+    {"ordinal": 4, "parent_id": "P04", "seed": 1957211195, "maximum_attempts": 1},
+    {"ordinal": 5, "parent_id": "P05", "seed": 917921070, "maximum_attempts": 1},
+    {"ordinal": 6, "parent_id": "P06", "seed": 180852822, "maximum_attempts": 1},
+    {"ordinal": 7, "parent_id": "P07", "seed": 783216952, "maximum_attempts": 1},
+    {"ordinal": 8, "parent_id": "P08", "seed": 691318119, "maximum_attempts": 1},
+    {"ordinal": 9, "parent_id": "P09", "seed": 1012728005, "maximum_attempts": 1},
+    {"ordinal": 10, "parent_id": "P10", "seed": 1043722437, "maximum_attempts": 1},
+    {"ordinal": 11, "parent_id": "P11", "seed": 1493448619, "maximum_attempts": 1},
+    {"ordinal": 12, "parent_id": "P12", "seed": 1127643615, "maximum_attempts": 1},
+    {"ordinal": 13, "parent_id": "P13", "seed": 1123202920, "maximum_attempts": 1},
+    {"ordinal": 14, "parent_id": "P14", "seed": 473913945, "maximum_attempts": 1},
+    {"ordinal": 15, "parent_id": "P15", "seed": 1024677533, "maximum_attempts": 1},
+    {"ordinal": 16, "parent_id": "P16", "seed": 1640785564, "maximum_attempts": 1},
+    {"ordinal": 17, "parent_id": "P17", "seed": 1441071815, "maximum_attempts": 1},
+    {"ordinal": 18, "parent_id": "P18", "seed": 1920230932, "maximum_attempts": 1},
+    {"ordinal": 19, "parent_id": "P19", "seed": 652956124, "maximum_attempts": 1},
+    {"ordinal": 20, "parent_id": "P20", "seed": 1382206793, "maximum_attempts": 1},
+    {"ordinal": 21, "parent_id": "P21", "seed": 138546064, "maximum_attempts": 1},
+    {"ordinal": 22, "parent_id": "P22", "seed": 224466630, "maximum_attempts": 1},
+    {"ordinal": 23, "parent_id": "P23", "seed": 752271634, "maximum_attempts": 1},
+    {"ordinal": 24, "parent_id": "P24", "seed": 893781877, "maximum_attempts": 1},
+    {"ordinal": 25, "parent_id": "P25", "seed": 2138514102, "maximum_attempts": 1},
+    {"ordinal": 26, "parent_id": "P26", "seed": 426092288, "maximum_attempts": 1},
+    {"ordinal": 27, "parent_id": "P27", "seed": 1424080231, "maximum_attempts": 1},
+    {"ordinal": 28, "parent_id": "P28", "seed": 237443324, "maximum_attempts": 1},
+    {"ordinal": 29, "parent_id": "P29", "seed": 820883719, "maximum_attempts": 1},
+    {"ordinal": 30, "parent_id": "P30", "seed": 78106625, "maximum_attempts": 1},
+    {"ordinal": 31, "parent_id": "P31", "seed": 756643393, "maximum_attempts": 1},
+    {"ordinal": 32, "parent_id": "P32", "seed": 1412125503, "maximum_attempts": 1},
+    {"ordinal": 33, "parent_id": "P33", "seed": 1423482367, "maximum_attempts": 1},
+    {"ordinal": 34, "parent_id": "P34", "seed": 884342637, "maximum_attempts": 1},
+    {"ordinal": 35, "parent_id": "P35", "seed": 658120647, "maximum_attempts": 1},
+    {"ordinal": 36, "parent_id": "P36", "seed": 223446480, "maximum_attempts": 1}
+  ],
+  "live_output_contract": {
+    "namespace": "research/live/p12-c4-nvidia-one-shot-v1",
+    "common_parent_output": "research/live/p12-c4-nvidia-one-shot-v1/common-parents.jsonl",
+    "request_ledger": "research/live/p12-c4-nvidia-one-shot-v1/request-ledger.jsonl",
+    "provider_calls_write_only_common_parents": true,
+    "required_valid_common_parents": "36/36",
+    "partial_live_packet_is_terminal_incomplete": true
+  },
+  "local_arm_expansion": {
+    "authorized_only_after_valid_common_parents": "36/36",
+    "provider_calls": 0,
+    "arms": ["A00", "A10", "A01", "A11"],
+    "same_common_parent_for_all_four_arms": true,
+    "expected_outputs_per_parent": 4,
+    "required_fixed_arm_outputs": "144/144",
+    "partial_expansion_blocks_packet_freeze": true
+  },
+  "packet_freeze_and_scoring_boundary": {
+    "complete_packet_freeze_requires": "144/144",
+    "deterministic_private_scoring_before_packet_freeze": "FORBIDDEN",
+    "partial_packet_scoring": "FORBIDDEN",
+    "bootstrap_before_deterministic_scoring": "FORBIDDEN",
+    "next_gate_after_manifest_freeze": "C4_36_OF_36_FRESH_COMMON_PARENTS",
+    "next_gate_after_36_of_36": "C4_144_OF_144_LOCAL_ARM_OUTPUTS",
+    "next_gate_after_144_of_144": "FREEZE_COMPLETE_C4_PACKET",
+    "next_gate_after_packet_freeze": "DETERMINISTIC_SCORING"
+  },
+  "restricted_access": {
+    "provider_free_self_check_reads_credentials": false,
+    "provider_free_self_check_network_calls": 0,
+    "provider_free_self_check_loads_benchmark_inputs": false,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0
+  },
+  "authorization": {
+    "manifest_freeze_authorized_by_activation_gate": true,
+    "live_provider_execution_permitted_only_under_this_exact_manifest": true,
+    "private_scoring": false,
+    "fresh_blind": false,
+    "legacy_locked_test": false
+  }
+}

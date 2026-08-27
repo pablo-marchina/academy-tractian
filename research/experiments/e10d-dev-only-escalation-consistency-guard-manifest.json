@@ -1,0 +1,70 @@
+{
+  "report_version": "e10d-dev-only-escalation-consistency-guard-manifest-v1",
+  "date": "2026-08-16",
+  "status": "E10D_DEV_ONLY_ESCALATION_CONSISTENCY_GUARD_PREREGISTERED",
+  "purpose": "Apply a visible-output-only consistency guard after model generation to correct internal escalation-field inconsistency without using private oracles, VALIDATION, or LOCKED_TEST.",
+  "scope": {
+    "tuning_splits": ["DEV"],
+    "protected_splits": ["VALIDATION", "LOCKED_TEST"],
+    "forbidden_splits": ["VALIDATION", "LOCKED_TEST"],
+    "validation_used_for_tuning": false,
+    "validation_ran": false,
+    "locked_test_accessed": false,
+    "private_oracles_model_visible": false,
+    "private_oracles_guard_visible": false
+  },
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"]
+  },
+  "repeats": {
+    "DEV_ESCALATION_CONSISTENCY_GUARD": 2
+  },
+  "baseline": {
+    "e9_dev_only_real_task_quality": 0.4762,
+    "e10_dev_only_real_task_quality": 0.619,
+    "e10b_dev_only_real_task_quality": 0.8571,
+    "e10c_dev_only_real_task_quality": 0.8571,
+    "e10b_dev_only_decision_correctness": 1.0,
+    "e10b_dev_only_evidence_correctness": 1.0,
+    "e10b_dev_only_action_correctness": 1.0,
+    "e10b_dev_only_escalation_correctness": 0.0,
+    "e10c_dev_only_escalation_correctness": 0.0
+  },
+  "candidate_policy_changes": {
+    "post_model_visible_output_guard": true,
+    "no_private_oracle_access": true,
+    "guard_operates_only_on_parsed_model_output": true,
+    "set_requires_human_escalation_when_output_mentions_specialist_or_escalate_endpoint": true,
+    "set_requires_human_escalation_when_output_marks_human_escalation_in_rubric": true,
+    "set_requires_human_escalation_when_visible_output_selects_state_changing_action_requiring_human_loop": true,
+    "preserve_decision_evidence_action_fields": true,
+    "do_not_change_should_take_action_now": true,
+    "do_not_change_decision_class": true,
+    "do_not_change_evidence_plan": true
+  },
+  "acceptance_target_before_full_remeasurement": {
+    "evidence_correctness_above_e9_dev_baseline": true,
+    "action_correctness_gt": 0.0,
+    "escalation_correctness_gt": 0.0,
+    "premature_action_rate_eq": 0.0,
+    "unsupported_final_claim_rate_eq": 0.0,
+    "locked_test_accessed": false,
+    "validation_used_for_tuning": false,
+    "commit_private_oracles_or_fixed_outputs": false
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "leading_free_provider_candidate": "groq_llama_3_1_8b_instant",
+    "paid_models_enabled": false,
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  }
+}

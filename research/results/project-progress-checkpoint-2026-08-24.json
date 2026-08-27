@@ -1,0 +1,141 @@
+{
+  "schema_version": "project-progress-checkpoint-v2",
+  "checkpoint_at": "2026-08-24T09:53:00-03:00",
+  "branch": "research/systematic-foundation",
+  "pull_request": 2,
+  "final_delivery_target": "2026-09-08",
+  "governance": {
+    "project_principles": "MANDATORY",
+    "benchmark_integrity_gate": "CLOSED",
+    "p12_protocol": "FROZEN",
+    "fresh_blind_source": "NO_BLIND_SOURCE_AUTHORIZED",
+    "legacy_locked_test_access": "BLOCKED",
+    "architecture": "UNFROZEN",
+    "production_readiness_claim": "NOT_AUTHORIZED"
+  },
+  "completed_progress": [
+    "BIG-B0 benchmark integrity audit complete",
+    "BIG-B1 exposure/contamination ledger complete",
+    "BIG-B2 benchmark-design alternatives complete",
+    "BIG-B3 evaluation protocol selected",
+    "BIG-B4 P12 protocol frozen",
+    "historical candidate/component reinterpretation complete",
+    "P12-C1 prospective deterministic comparison completed and closed",
+    "P12-C2 prospective factorial cycle consumed as provider-capacity operational failure",
+    "P12-C3 capacity-controlled preregistration, activation, live infrastructure qualification, live execution, and terminal closure completed",
+    "canonical current-status, progress-ledger and current-action-plan documents established",
+    "historical E14v-era project plan archived"
+  ],
+  "experiments": {
+    "P12-C1": {
+      "state": "CLOSED_DETERMINISTIC_FAIL",
+      "common_parents": 36,
+      "fixed_outputs_scored": 72,
+      "deterministic_result_available": true,
+      "qualified_arms": [],
+      "preferred_arm": null,
+      "key_result": "Both C0 and C1 failed deterministic gates; C1 reduced extra public reads but worsened expected-read recall without improving decision/action/escalation quality."
+    },
+    "P12-C2": {
+      "state": "CONSUMED_OPERATIONAL_FAILURE",
+      "common_parents_expected": 36,
+      "common_parents_successful": 31,
+      "common_parents_failed": 5,
+      "failure_family": "rate_limit_long_window",
+      "fixed_factorial_packet_created": false,
+      "deterministic_scoring_executed": false,
+      "qualified_arms": [],
+      "preferred_arm": null
+    },
+    "P12-C3": {
+      "state": "CONSUMED_TERMINAL_OPERATIONAL_FAILURE",
+      "initial_preprovider_run_id": 32671370930,
+      "initial_preprovider_provider_requests": 0,
+      "pre_outcome_amendment_qualification_runs": [32671829920, 32672049576],
+      "continued_live_run_id": 32672167702,
+      "completed_cells": 3,
+      "pending_cells": 33,
+      "transport_failure_count": 1,
+      "rate_limit_event_count": 1,
+      "terminal_failure": true,
+      "horizon_expired": false,
+      "fixed_factorial_packet_created": false,
+      "deterministic_scoring_executed": false,
+      "same_experiment_resume_authorized": false,
+      "qualified_arms": [],
+      "preferred_arm": null
+    }
+  },
+  "current_candidate_state": {
+    "qualified_implementation_candidates": [],
+    "preferred_implementation_candidate": null,
+    "semantic_v4_2_current_candidate_authorized": false
+  },
+  "critical_risks": [
+    {
+      "id": "R-PROVIDER-CAPACITY",
+      "severity": "CRITICAL",
+      "evidence": "Two consecutive prospective cycles failed during provider collection: P12-C2 completed 31/36 parents and P12-C3 became terminal after 3/36."
+    },
+    {
+      "id": "R-FRESH-BLIND",
+      "severity": "CRITICAL",
+      "evidence": "P12 requires fresh independent real-domain evidence for the primary generalization claim and no source is currently authorized."
+    },
+    {
+      "id": "R-NO-QUALIFIED-CANDIDATE",
+      "severity": "HIGH",
+      "evidence": "P12-C1 failed deterministic gates while C2/C3 did not reach complete scoring."
+    },
+    {
+      "id": "R-SCHEDULE",
+      "severity": "HIGH",
+      "evidence": "Final delivery is 2026-09-08, leaving limited time for another prospective comparison, semantic qualification, blind evidence, production-fit validation and regression."
+    },
+    {
+      "id": "R-ARCHITECTURE-DEBT",
+      "severity": "HIGH",
+      "evidence": "Retrieval/RAG, reranking, multi-agent decomposition, memory, observability, provider serving, deployment and UI choices remain unfrozen."
+    }
+  ],
+  "plan_review": {
+    "reviewed_at": "2026-08-24T09:53:00-03:00",
+    "conclusion": "The plan remains scientifically valid but is now explicitly organized as three parallel tracks with go/no-go gates: provider-capacity/candidate evidence; FRESH_BLIND source readiness without outcome access; production-fit/architecture evidence gathering without freeze.",
+    "changes": [
+      "Remove completed P12-C3 closure from future actions.",
+      "Make provider-capacity ADR a hard prerequisite for any P12-C4 preregistration or live generation.",
+      "Treat FRESH_BLIND authorization as a parallel schedule-critical dependency rather than a post-selection task.",
+      "Treat serving/provider production fit as overlapping evidence with the provider-capacity decision.",
+      "Add explicit next-24h, next-48h, next-72h and 2026-08-27 go/no-go checkpoints.",
+      "Reserve 2026-09-03 onward primarily for regression, documentation and delivery rather than repeated scientific retries."
+    ]
+  },
+  "next_24_hours": [
+    "Complete provider-capacity alternatives comparison and freeze an ADR with Pareto tradeoffs, feasibility evidence and reversal triggers.",
+    "Begin/continue FRESH_BLIND Tier A source authorization and access-control preparation without exposing outcomes.",
+    "Continue production-fit research for provider/model serving and major architecture alternatives, recording evidence states without freezing architecture.",
+    "Only if the capacity ADR returns GO, preregister P12-C4 with fresh seeds, complete-packet requirement, deterministic scorer, bootstrap and LOGO frozen before outcomes."
+  ],
+  "go_no_go": {
+    "before_p12_c4": [
+      "provider-capacity ADR complete",
+      "selected path has a defensible feasibility argument materially stronger than C2/C3",
+      "scientific confounds from provider/model changes explicitly characterized",
+      "fresh seeds and no C2/C3 partial-parent reuse",
+      "provider-free activation/eligibility plan defined"
+    ],
+    "before_private_scoring": [
+      "complete prospective packet only",
+      "all operational missingness classified",
+      "candidate private-oracle accesses = 0",
+      "FRESH_BLIND accesses = 0",
+      "LEGACY_LOCKED_TEST accesses = 0"
+    ],
+    "by_2026_08_27_end": "If no complete prospective EXPOSED_POOL packet exists, reassess scope and prioritize an evidence-honest delivery instead of repeated low-feasibility attempts.",
+    "by_2026_08_28_2359_brt": "If Tier A FRESH_BLIND is unavailable, Tier B independently authored fallback must be ready or the final generalization claim must be explicitly downgraded."
+  },
+  "canonical_human_status": "docs/CURRENT-PROJECT-STATUS.md",
+  "canonical_progress_ledger": "docs/PROJECT-PROGRESS-LOG.md",
+  "canonical_action_plan": "docs/PROJECT-PLAN.md",
+  "previous_checkpoint": "research/results/project-progress-checkpoint-2026-08-23.json"
+}

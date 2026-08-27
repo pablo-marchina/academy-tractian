@@ -1,0 +1,30 @@
+{
+  "authorization_scope": "AT_MOST_TWO_PREREGISTERED_SYNTHETIC_OPENROUTER_CALLS_ONLY_2_OF_2_REQUIRED_FOR_PASS",
+  "authorized_attempts": 1,
+  "automatic_retry_allowed": false,
+  "created_at_utc": "2026-08-26T14:00:04.271206+00:00",
+  "exposed_pool_live_generation_authorized": false,
+  "fresh_blind_access_authorized": false,
+  "gateway": "openrouter",
+  "github_actions_run_attempt_required": 1,
+  "legacy_locked_test_access_authorized": false,
+  "minimum_seconds_between_any_provider_requests": 75,
+  "model_fallback_allowed": false,
+  "model_id": "openai/gpt-oss-120b:free",
+  "preregistration_sha256": "ebda9934ba585dd2604c6e523f795f9c05fb4a6ec09cd001937b70157764562b",
+  "prior_cerebras_authorization_reuse_allowed": false,
+  "prior_cerebras_closure_sha256": "7a22157117285aed99b0da8a1072b8ededa4e563fb48ff37803184feca5b83fc",
+  "private_scoring_authorized": false,
+  "probe_id": "P12-C4-OPENROUTER-SYNTHETIC-COMPATIBILITY-V1",
+  "probe_request_sha256": [
+    "b77a29b04925b776fb8eb8308bf5172c03705bebfa3c1698a929ce0fe4469d51",
+    "a64a5d0f2091637d8a529ca26245557048fdeea192f84de5128b971dccb4d896"
+  ],
+  "provider_fallback_allowed": false,
+  "provider_free_self_check_sha256": "8188d8ed604560bed7fb51cccf4d2d9b610a7dd6966443d9ad900231d43f8af6",
+  "rerun_allowed": false,
+  "schema_version": "p12-c4-openrouter-synthetic-probe-live-authorization-v1",
+  "serving_contract_sha256": "228dc8fd3a2c4c148fe82284a5731d2404a7304c1cf4ec0e28edf160f2a0d5f2",
+  "status": "AUTHORIZED_ONE_OPENROUTER_SYNTHETIC_PROBE_ATTEMPT",
+  "upstream_provider_slug": "open-inference"
+}

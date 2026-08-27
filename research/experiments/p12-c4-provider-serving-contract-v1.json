@@ -1,0 +1,112 @@
+{
+  "schema_version": "p12-c4-provider-serving-contract-v1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "status": "PROVIDER_CONTRACT_FROZEN_LIVE_NOT_AUTHORIZED",
+  "date": "2026-08-24",
+  "decision_source": "docs/adr/001-provider-capacity-serving-path-2026-08-24.md",
+  "consumed_predecessors": ["P12-C1", "P12-C2", "P12-C3"],
+  "predecessor_reuse_policy": {
+    "rerun_consumed_experiments": false,
+    "reuse_partial_parent_outputs": false,
+    "reuse_partial_scores": false,
+    "reuse_live_seeds": false
+  },
+  "provider": {
+    "name": "cerebras",
+    "tier": "free_trial",
+    "api_family": "openai_compatible_chat_completions",
+    "model_id": "gpt-oss-120b",
+    "underlying_model_family": "openai/gpt-oss-120b",
+    "credential_env": "CEREBRAS_API_KEY",
+    "automatic_failover": false,
+    "fallback_provider": null,
+    "serving_path_change_is_explicit_confound": true,
+    "permanently_free_tier": false,
+    "free_trial_requires_verified_payment_method": true,
+    "free_trial_credit_usd": 5,
+    "free_trial_credit_expiry_days": 30,
+    "zero_cash_spend_is_conditional_on_active_trial_credit": true
+  },
+  "transport_contract": {
+    "sdk_package": "cerebras_cloud_sdk",
+    "sdk_version": "1.91.0",
+    "client_warm_tcp_connection": false,
+    "client_max_retries": 0,
+    "implicit_warming_requests_allowed": false,
+    "implicit_retry_requests_allowed": false,
+    "exact_sdk_version_must_be_reported_in_probe_evidence": true
+  },
+  "published_capacity_feasibility_boundary": {
+    "source_review_date": "2026-08-24",
+    "minimum_tpm": 30000,
+    "minimum_tph": 1000000,
+    "minimum_tpd": 1000000,
+    "minimum_rpm": 5,
+    "required_common_parent_generations": 36,
+    "maximum_completion_tokens_per_parent": 4096,
+    "maximum_completion_token_budget": 147456,
+    "maximum_completion_budget_share_of_tpd": 0.147456,
+    "rate_limit_estimation_includes_prompt_plus_max_completion_tokens": true,
+    "pre_live_prompt_token_estimate_required": true,
+    "pacing_must_be_derived_from_verified_limits_and_measured_prompt_size": true,
+    "account_level_limits_verified": false,
+    "account_level_verification_required_before_any_live_probe": true
+  },
+  "frozen_request_contract": {
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "reasoning_format": "hidden",
+    "max_completion_tokens": 4096,
+    "seed_binding": "required_per_common_parent",
+    "seed_determinism_guarantee": "best_effort_only",
+    "structured_output": {"type": "json_schema", "strict": true},
+    "tool_semantics": {"support_required": true, "tool_choice_support_required": true}
+  },
+  "packet_contract": {
+    "common_parent_generations": 36,
+    "participating_arms": ["A00", "A10", "A01", "A11"],
+    "fixed_arm_outputs": 144,
+    "same_parent_for_all_four_arms": true,
+    "complete_packet_required_before_scoring": true,
+    "partial_packet_scoring_forbidden": true,
+    "arm_specific_provider_calls_forbidden": true
+  },
+  "isolation_contract": {
+    "private_oracle_accesses_during_generation": 0,
+    "fresh_blind_accesses_during_generation": 0,
+    "legacy_locked_test_accesses_during_generation": 0,
+    "provider_contract_self_check_must_be_provider_free": true,
+    "provider_contract_self_check_must_not_read_credentials": true,
+    "provider_contract_self_check_must_not_load_benchmark_inputs": true
+  },
+  "authorization": {
+    "provider_free_contract_checks": true,
+    "synthetic_live_provider_probe": false,
+    "exposed_pool_live_generation": false,
+    "private_scoring": false,
+    "fresh_blind_measurement": false,
+    "legacy_locked_test_measurement": false
+  },
+  "remaining_pre_live_gates": [
+    "freeze_fresh_seed_map_and_prove_no_c1_c2_c3_seed_reuse",
+    "verify_actual_cerebras_account_limits_and_active_trial_or_developer_access",
+    "measure_or_upper_bound_prompt_tokens_per_parent",
+    "derive_safe_request_pacing_from_verified_rpm_tpm_and_prompt_plus_4096_reservation",
+    "pass_provider_free_request_contract_self_check",
+    "preregister_synthetic_non_benchmark_provider_compatibility_probe",
+    "pass_synthetic_provider_compatibility_probe",
+    "freeze_complete_packet_missingness_and_failure_semantics",
+    "pass_full_provider_free_activation_and_benchmark_integrity_checks",
+    "freeze_p12_c4_live_manifest_before_any_exposed_pool_provider_call"
+  ],
+  "stop_rules": [
+    "if_account_limits_are_below_the_preregistered_capacity_boundary_reopen_adr_before_any_live_probe",
+    "if_free_trial_is_inactive_or_expired_do_not_claim_zero_cash_spend",
+    "if_measured_prompt_plus_4096_reservation_lacks_safe_tpm_margin_reopen_capacity_plan",
+    "if_sdk_version_warming_or_retry_behavior_differs_from_frozen_transport_contract_stop_before_probe",
+    "if_required_request_semantics_need_candidate_visible_workarounds_reopen_adr",
+    "if_provider_model_or_serving_contract_changes_after_freeze_do_not_silently_continue",
+    "if_any_benchmark_or_private_input_is_loaded_by_provider_qualification_stop",
+    "if_any_partial_packet_exists_never_score_it"
+  ]
+}

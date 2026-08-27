@@ -1,0 +1,145 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "project": "Academy x TRACTIAN - Industrial Agent Engineering & Evaluation",
+  "checkpoint_at": "2026-08-25T22:50:00-03:00",
+  "branch": "research/systematic-foundation",
+  "final_delivery_target": "2026-09-08",
+  "governance": {
+    "benchmark_integrity_gate": "CLOSED",
+    "p12_protocol": "FROZEN",
+    "partial_packet_scoring_allowed": false,
+    "fresh_blind_outcome_access_before_generation_freeze_allowed": false,
+    "legacy_locked_test_access": "BLOCKED"
+  },
+  "prospective_history": {
+    "P12-C1": {
+      "status": "CLOSED_DETERMINISTIC_FAIL_NO_ARM_QUALIFIED",
+      "common_parents_completed": 36,
+      "fixed_outputs": 72,
+      "scoring": "COMPLETE"
+    },
+    "P12-C2": {
+      "status": "CONSUMED_OPERATIONAL_FAILURE",
+      "common_parents_completed": 31,
+      "common_parents_required": 36,
+      "fixed_outputs_created": 0,
+      "scoring": "BLOCKED"
+    },
+    "P12-C3": {
+      "status": "CONSUMED_TERMINAL_OPERATIONAL_FAILURE",
+      "common_parents_completed": 3,
+      "common_parents_required": 36,
+      "fixed_outputs_created": 0,
+      "scoring": "BLOCKED"
+    },
+    "P12-C4": {
+      "status": "PROVIDER_QUALIFICATION_BLOCKED_SYNTHETIC_OPERATIONAL_ACCESS_FAILURE",
+      "common_parents_completed": 0,
+      "common_parents_required": 36,
+      "fixed_outputs_created": 0,
+      "fixed_outputs_required": 144,
+      "scoring": "BLOCKED"
+    }
+  },
+  "p12_c4_provider_qualification": {
+    "provider": "cerebras",
+    "model_id": "gpt-oss-120b",
+    "provider_adr": "ACCEPTED_CONDITIONAL_GO_TO_PREREGISTRATION",
+    "serving_contract_frozen": true,
+    "sdk_package": "cerebras_cloud_sdk",
+    "sdk_version": "1.91.0",
+    "automatic_retries": 0,
+    "automatic_failover": false,
+    "warm_tcp_connection": false,
+    "fresh_seed_map_frozen": true,
+    "prompt_budget_and_pacing_frozen": true,
+    "minimum_seconds_between_provider_requests": 75,
+    "max_reserved_admission_tokens_per_request": 7380,
+    "full_36_parent_reserved_upper_bound_tokens": 265002,
+    "numeric_capacity": {
+      "status": "PASS",
+      "rpm": 5,
+      "uncached_tpm": 30000,
+      "total_tpm": 90000,
+      "tph": 1000000,
+      "tpd": 1000000
+    },
+    "authenticated_model_catalog_access": "PASS",
+    "generation_access": "FAIL_HTTP_402_PAYMENT_REQUIRED"
+  },
+  "synthetic_probe": {
+    "probe_id": "P12-C4-CEREBRAS-SYNTHETIC-COMPATIBILITY-V1",
+    "preregistered_calls": 2,
+    "one_shot_authorization_status": "CONSUMED",
+    "same_authorization_rerun_allowed": false,
+    "workflow_run_id": 32901958789,
+    "workflow_run_attempt": 1,
+    "job_id": 97977601612,
+    "head_sha": "9e0a89e1959dcc4ffd659baef1a4f07e137a7245",
+    "preflight": "PASS",
+    "sdk_pin": "PASS",
+    "live_execution": "FAIL",
+    "http_status": 402,
+    "provider_error_code": "payment_required",
+    "provider_error_type": "payment_required_error",
+    "provider_request_attempts_observed": 1,
+    "successful_generation_calls": 0,
+    "model_outputs_observed": 0,
+    "first_probe_completed": false,
+    "second_probe_attempted": false,
+    "benchmark_inputs_loaded": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "compatibility_gate": "FAIL_OPERATIONAL_ACCESS",
+    "canonical_closure": "research/results/p12-c4-cerebras-synthetic-live-probe-closure-2026-08-25.json"
+  },
+  "current_candidate_state": {
+    "qualified": null,
+    "preferred": null,
+    "semantic_v4_2": "NOT_AUTHORIZED",
+    "final_architecture": "UNFROZEN",
+    "production_readiness": "NOT_AUTHORIZED"
+  },
+  "fresh_blind": {
+    "status": "NO_SOURCE_AUTHORIZED",
+    "tier_a_target": "2026-08-25T23:59:00-03:00",
+    "tier_b_fallback_deadline": "2026-08-28T23:59:00-03:00",
+    "hidden_content_access": false,
+    "expected_outcome_access": false,
+    "final_measurement_authorized": false
+  },
+  "current_phase": {
+    "number": 3,
+    "name": "P12-C4 provider qualification and readiness",
+    "state": "BLOCKED_ON_GENERATION_OR_BILLING_ACCESS"
+  },
+  "next_valid_steps": [
+    "obtain_first_party_billing_or_generation_access_activation_evidence",
+    "freeze_narrow_pre_outcome_infrastructure_amendment_without_reusing_the_consumed_authorization",
+    "pass_all_amended_provider_free_checks",
+    "create_new_versioned_one_shot_synthetic_authorization_only_after_all_gates_pass",
+    "complete_exactly_two_preregistered_synthetic_calls_and_require_pass",
+    "freeze_full_p12_c4_activation_and_live_manifest",
+    "complete_36_of_36_common_parents",
+    "expand_locally_to_144_of_144_fixed_outputs",
+    "score_only_after_complete_packet_freeze",
+    "advance_only_deterministic_survivors_to_semantic_gate"
+  ],
+  "parallel_allowed_work": [
+    "fresh_blind_source_and_custody_preparation_without_outcome_exposure",
+    "canonical_documentation_and_reproducibility_maintenance",
+    "provider_free_access_remediation_preparation",
+    "production_fit_research_without_final_architecture_freeze"
+  ],
+  "explicit_non_claims": [
+    "no_current_qualified_candidate",
+    "no_current_preferred_candidate",
+    "no_successful_p12_c4_factorial_packet",
+    "no_semantic_v4_2_pass",
+    "no_authorized_fresh_blind_source",
+    "no_final_locked_test_authorization",
+    "no_frozen_production_architecture",
+    "no_production_readiness_evidence"
+  ]
+}

@@ -1,0 +1,334 @@
+{
+  "schema_version": "p12-c3-capacity-controlled-live-execution-v1",
+  "execution_id": "P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23",
+  "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
+  "date": "2026-08-23",
+  "status": "FROZEN_READY_NOT_STARTED",
+  "decision_state": "EXPERIMENT_EXECUTION_FROZEN",
+  "protocol_id": "P12_FRESH_BLIND_HYBRID_EXTERNAL_FIRST",
+  "protocol_state": "FROZEN",
+  "activation_state": "ACTIVATION_ELIGIBILITY_PASS",
+  "execution_authorized_by_activation": true,
+  "authorized_live_experiments": 1,
+  "authorized_scope": "ONE_P12_C3_CAPACITY_CONTROLLED_A00_A10_A01_A11_EXPOSED_POOL_EXPERIMENT_WITH_SIX_FIXED_BATCHES",
+  "live_trigger_path": "research/experiments/p12-c3-live-batch-trigger-v1.json",
+  "live_trigger_present_at_freeze": false,
+  "first_provider_call_occurred_at_freeze": false,
+  "p12_c3_candidate_outcomes_observed_at_freeze": 0,
+  "private_oracle_rows_read_at_freeze": 0,
+  "fresh_blind_accesses_at_freeze": 0,
+  "legacy_locked_test_accesses_at_freeze": 0,
+  "source_pins": {
+    "preregistration": {
+      "path": "research/experiments/p12-c3-exposed-pool-capacity-controlled-factorial-preregistration-v1.json",
+      "git_blob_sha": "9efa9cba6857b33089415901576164a86a5f2473"
+    },
+    "activation": {
+      "path": "research/experiments/p12-c3-capacity-controlled-activation-eligibility-v1.json",
+      "git_blob_sha": "50e9cfa196c424ff5b8cd67ef37434b00f2808ef"
+    },
+    "e14f_transaction_clarification": {
+      "path": "research/experiments/p12-c3-e14f-transaction-semantics-clarification-v1.json",
+      "git_blob_sha": "c47cb75d7347fc6fccfa67825d952320304f55fe"
+    },
+    "batch_map": {
+      "path": "research/frozen/p12-c3-capacity-batch-map-v1.json",
+      "git_blob_sha": "bd7691073387ae957557d6fd1bcdb0f385849643"
+    },
+    "capacity_control": {
+      "path": "scripts/research/p12_c3_capacity_control.py",
+      "git_blob_sha": "bd249107ef7814ea0c3b7b14aae3afd3ce256349"
+    },
+    "checkpoint_runner_base": {
+      "path": "scripts/research/p12_c3_checkpointed_batch_runner.py",
+      "git_blob_sha": "2dd70d4b121a4ad98944d50c2e7fc3381f520b41"
+    },
+    "checkpoint_runner_fixup": {
+      "path": "scripts/research/p12_c3_checkpointed_runner_fixup.py",
+      "git_blob_sha": "edf38534ee6cede336432c644e01fda2b49944c3"
+    },
+    "effective_checkpoint_runner": {
+      "derivation": "checkpoint_runner_base + checkpoint_runner_fixup",
+      "source_sha256": "00cdf340714449bc0424777ec73598f5d8f172436c543918fc9e3ef383fc806e"
+    },
+    "live_workflow": {
+      "path": ".github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml",
+      "git_blob_sha": "b17bf5a88cbb2b06f52ae9b0bde3ed12a56a40c4",
+      "source_sha256": "48e4bfdf5de0e624ec2e1d8feadf4ed5d3d6a7ead245875b15b641d4c486168d"
+    },
+    "live_infrastructure_self_check": {
+      "path": ".github/workflows/research-p12-c3-live-infra-self-check.yml",
+      "git_blob_sha": "a59b72db0276a6d8302bf58788f02fc1f1de098f"
+    },
+    "p12_c2_candidate_factorial_code": {
+      "path": "scripts/research/p12_c2_factorial_candidates.py",
+      "git_blob_sha": "33fbeec64d65ca666d30a14f9a3c196b6c607bec"
+    },
+    "p12_c2_public_intent_map": {
+      "path": "research/frozen/p12-c2-public-intent-map-v1.json",
+      "git_blob_sha": "26c666e335d8264fb913c5598cfa6d12b42c6798"
+    },
+    "p12_c1_e0_reference": {
+      "path": "scripts/research/p12_c1_evidence_route_candidates.py",
+      "git_blob_sha": "e5d0b3d005ffbd9068d32a094133c0cb7cd8a9f5"
+    },
+    "qualified_parent_runner_bundle": {
+      "path": "research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz",
+      "git_blob_sha": "a5c27394014bac656faa0a2f923a5c5da72d66f5",
+      "uncompressed_source_sha256": "be16ec6d2c33ad68134a0fbf7aa280b4103ee411b01233b6de7a76668e899a50"
+    },
+    "p12_c2_parent_runner_derivation": {
+      "path": "scripts/research/p12_c2_execution_derivation.py",
+      "git_blob_sha": "3fad678c60c99d50925360f12332a98386b8b400",
+      "derived_source_sha256": "f494eeac56d69cee85609e79d383b150ccc9e1a51a6e2bf61913bf07cef84d59"
+    },
+    "exposed_cases": {
+      "path": "research/fixtures/p12-c1-exposed-agent-input-cases-v1.json",
+      "git_blob_sha": "f9fef316ab9245de1e36d1d6d787326cde2e27be",
+      "content_sha256": "a7f9bdf909820d1a3c42c85bc1b659b6708ee74980958b5d8d738395a636f9ef"
+    },
+    "factorial_scorer": {
+      "path": "scripts/research/p12_c2_factorial_score.py",
+      "git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531",
+      "source_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22"
+    },
+    "evaluator_v4_1": {
+      "path": "scripts/research/e9_evaluator_side_scorer_v4_1.py",
+      "git_blob_sha": "b33afab0b3bfc9b81037a5391f49d286ef0d7c35"
+    },
+    "exact_ticket_alignment": {
+      "path": "research/experiments/p12-c1-exact-ticket-evaluator-alignment-amendment-v1.json",
+      "git_blob_sha": "87c6ce56d7bd90ca866ad31721365e70f70d2e6c"
+    },
+    "p12_protocol": {
+      "path": "research/frozen/big-b4-evaluation-protocol-v1.json",
+      "git_blob_sha": "910b9c8368ee37b5bf5c144413a57b683dc8e8b9"
+    },
+    "blind_registry": {
+      "path": "research/frozen/big-b4-blind-source-registry-v1.json",
+      "git_blob_sha": "c135f426f39e11347e7c38fd2c06a4191a63b145"
+    }
+  },
+  "factorial_candidate_lock": {
+    "definitions_changed_from_p12_c2": false,
+    "A00": {"evidence": "E0", "safety": "S0"},
+    "A10": {"evidence": "E1", "safety": "S0"},
+    "A01": {"evidence": "E0", "safety": "S1"},
+    "A11": {"evidence": "E1", "safety": "S1"},
+    "group_specific_logic": false,
+    "ticket_specific_logic": false,
+    "p12_c2_partial_parents_reused": false
+  },
+  "scientific_geometry": {
+    "partition": "EXPOSED_POOL",
+    "independent_groups": 7,
+    "scenario_families": 11,
+    "agent_visible_tickets": 12,
+    "repetitions_per_ticket": 3,
+    "seeds": [2026082307, 2026082308, 2026082309],
+    "new_common_parent_cells": 36,
+    "fixed_factorial_outputs_after_completeness": 144,
+    "batch_count": 6,
+    "parents_per_batch": 6,
+    "batch_order": ["B1", "B2", "B3", "B4", "B5", "B6"],
+    "batch_map_may_change_after_first_provider_call": false
+  },
+  "common_parent_generation": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0,
+    "reasoning_effort": "medium",
+    "reasoning_format": "hidden",
+    "response_format_mode": "json_schema_strict",
+    "strict": true,
+    "max_completion_tokens": 4096,
+    "configuration_sha256": "9033a78a5bab46e4c48ebfc0ec70b6476570519fa62f0526625916d0cd3d3b89",
+    "one_new_parent_per_predeclared_ticket_seed_cell": true,
+    "same_parent_shared_by_all_four_arms": true,
+    "arm_specific_provider_calls": false,
+    "completed_parent_regeneration": "FORBIDDEN"
+  },
+  "e14f_transaction_semantics": {
+    "clarification_pinned": true,
+    "transaction": "initial common-parent request plus at most one conditional E14f public semantic-repair request",
+    "initial_draft_if_repair_needed": "internal transaction intermediate only; unavailable to candidate selection, scoring, cross-batch inspection, or capacity decisions",
+    "cross_run_resume_allowed": "only before response content is returned for the initial request",
+    "after_initial_response": "no regeneration; conditional E14f repair may execute once inside the same frozen transaction",
+    "post_initial_response_repair_transport_failure": "terminal cell/experiment failure; no cross-run resume",
+    "final_parse_proxy_schema_or_quality_failure": "cell consumed; no replacement"
+  },
+  "capacity_control": {
+    "protocol": "P12_C3_FIXED_BATCH_RESET_AWARE_COLLECTION_V1",
+    "minimum_inter_request_delay_seconds": 30,
+    "reset_safety_margin_seconds": 30,
+    "max_pre_output_transport_attempts_per_cell": 3,
+    "collection_horizon_hours": 72,
+    "inline_wait_max_seconds": 1800,
+    "provider_headers_only": [
+      "retry-after",
+      "x-ratelimit-reset-requests",
+      "x-ratelimit-reset-tokens",
+      "x-ratelimit-remaining-requests",
+      "x-ratelimit-remaining-tokens"
+    ],
+    "capacity_control_may_use_candidate_content": false,
+    "capacity_control_may_use_evaluator_feedback": false,
+    "capacity_control_may_use_private_oracle": false,
+    "if_reset_metadata_required_but_missing": "FAIL_CLOSED_NO_SHORT_WAIT_GUESS",
+    "if_retry_after_and_reset_disagree": "USE_LATER_PLUS_30_SECOND_MARGIN",
+    "pre_output_429": "same cell remains pending; exact cell may resume within frozen attempt ceiling",
+    "pre_output_transient_transport_failure": "same cell remains pending within frozen attempt ceiling",
+    "token_headroom_estimator": "ceil(len(json.dumps(messages).encode('utf-8'))/4) + max_completion_tokens",
+    "headroom_estimator_inputs": "public request payload size, frozen max completion tokens, provider transport metadata only",
+    "headroom_estimator_scientific_role": "conservative operational nuisance control; not candidate logic"
+  },
+  "transport_override_relative_to_p12_c2": {
+    "scientific_scope": "operational capacity collection only",
+    "E14_MAX_RETRIES": 0,
+    "E8_PROVIDER_MAX_ATTEMPTS": 1,
+    "legacy_parent_runner_outer_retry_disabled": true,
+    "replacement_retry_owner": "P12-C3 checkpoint-aware controller",
+    "checkpoint_controller_attempt_ceiling": 3,
+    "E8_BETWEEN_CALL_DELAY_SECONDS": 0,
+    "E14F_REPAIR_DELAY_SECONDS": 0,
+    "why_delay_envs_are_zero": "the P12-C3 transport controller enforces the frozen 30-second minimum across every actual provider request, including a conditional E14f repair request",
+    "candidate_model_prompt_or_evaluator_changed": false
+  },
+  "checkpoint_contract": {
+    "private_schema": "p12-c3-private-checkpoint-v1",
+    "private_checkpoint_contains_raw_parent_outputs": true,
+    "private_checkpoint_committed_to_git": false,
+    "private_checkpoint_artifact_name": "p12-c3-private-checkpoint-latest",
+    "private_checkpoint_retention_days": 5,
+    "public_checkpoint_contains_raw_outputs": false,
+    "public_checkpoint_contains_private_oracle": false,
+    "public_cross_batch_fields": [
+      "completed_cell_count",
+      "pending_cell_count",
+      "transport_failure_count",
+      "rate_limit_event_count",
+      "provider_reset_timestamp_or_duration",
+      "checkpoint_hash",
+      "first_live_call_at",
+      "horizon_deadline",
+      "terminal_failure_present"
+    ],
+    "resume_source": "explicit prior workflow run id carrying p12-c3-private-checkpoint-latest",
+    "resume_only_pending_predeclared_cells": true,
+    "completed_cells_immutable": true,
+    "later_batch_requires_all_prior_batches_complete": true,
+    "same_batch_resume_requires_completed_prefix_only": true,
+    "simultaneous_live_batches_allowed": false,
+    "concurrency_group": "p12-c3-live-capacity-controlled-experiment",
+    "github_workflow_rerun_allowed": false
+  },
+  "multi_run_single_experiment_semantics": {
+    "one_p12_c3_experiment_may_span_multiple_checkpoint_workflow_runs": true,
+    "a_checkpoint_resume_or_next_batch_is_a_new_scientific_experiment": false,
+    "required_invariants_across_runs": [
+      "same execution_id",
+      "same frozen trigger schema",
+      "same activation and manifest pins",
+      "same exact checkpoint chain",
+      "same seeds/model/prompt/candidates/evaluator",
+      "completed parents are never regenerated",
+      "only pending cells are executed",
+      "72-hour deadline remains anchored to first actual provider request"
+    ],
+    "github_rerun_of_any_live_workflow_run": "FORBIDDEN"
+  },
+  "live_workflow_activation_boundary": {
+    "selected_workflow": ".github/workflows/research-p12-c3-checkpointed-six-batch-live-v2.yml",
+    "only_trigger": "push of research/experiments/p12-c3-live-batch-trigger-v1.json on research/systematic-foundation",
+    "workflow_dispatch_enabled": false,
+    "schedule_enabled": false,
+    "pull_request_trigger_enabled": false,
+    "trigger_file_exists_at_manifest_freeze": false,
+    "therefore_provider_execution_possible_at_manifest_freeze": false
+  },
+  "future_trigger_contract": {
+    "schema_version": "p12-c3-live-batch-trigger-v1",
+    "execution_id": "P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23",
+    "required_fields": [
+      "schema_version",
+      "execution_id",
+      "experiment_id",
+      "consume_authorized_experiment",
+      "trigger_index",
+      "batch_id",
+      "checkpoint_source_run_id",
+      "github_rerun_allowed",
+      "candidate_or_evaluator_change"
+    ],
+    "first_trigger": {"batch_id": "B1", "checkpoint_source_run_id": null},
+    "later_batch_or_resume": "must explicitly point to the immediately selected prior checkpoint-producing workflow run",
+    "github_rerun_allowed_required": false,
+    "candidate_or_evaluator_change_required": false,
+    "trigger_creation_authorized_by_this_freeze": true,
+    "trigger_created_by_this_freeze": false
+  },
+  "completeness_gate_before_private_scoring": {
+    "common_parents_required": "36/36",
+    "fixed_factorial_outputs_required": "144/144",
+    "same_parent_across_four_arms_per_cell": true,
+    "candidate_private_oracle_accesses_required": 0,
+    "fresh_blind_accesses_required": 0,
+    "legacy_locked_test_accesses_required": 0,
+    "arm_specific_provider_calls_required": 0,
+    "partial_factorial_analysis": "FORBIDDEN",
+    "complete_case_only_reinterpretation": "FORBIDDEN",
+    "private_scoring_between_batches": "FORBIDDEN",
+    "if_not_complete_by_72h": "CLOSE_AS_OPERATIONAL_FAILURE_WITHOUT_DETERMINISTIC_ARM_SCORING"
+  },
+  "deterministic_scoring_after_complete_freeze": {
+    "evaluator": "P12 exact-ticket-aligned v4.1",
+    "factorial_scorer_sha256": "f3500751448c3b52bf361f4d565ba940c8e9e62e8ab197bb1206fdb7d89a7d22",
+    "metric_definitions_changed": false,
+    "aggregation": "group -> scenario -> visible ticket -> 3 repetitions; equal scenario/group weighting",
+    "bootstrap": {"confidence_level": 0.95, "resamples": 20000, "seed": 20260822, "unit": "asset_story_group"},
+    "logo_per_primary_contrast": 7,
+    "primary_contrasts": ["A10_minus_A00", "A01_minus_A00", "A11_minus_A00"],
+    "private_oracle_candidate_access": "DENY_ALWAYS"
+  },
+  "qualification_evidence": {
+    "provider_free_live_infrastructure_run_id": 32668588503,
+    "provider_free_live_infrastructure_job_id": 97265789373,
+    "conclusion": "success",
+    "artifact_id": 9500742627,
+    "artifact_digest": "sha256:ac8986c2c655835c11d8bc31b31f30eab765a109c043d909ab83a9925c3a7a72",
+    "effective_checkpoint_runner_sha256": "00cdf340714449bc0424777ec73598f5d8f172436c543918fc9e3ef383fc806e",
+    "live_workflow_sha256": "48e4bfdf5de0e624ec2e1d8feadf4ed5d3d6a7ead245875b15b641d4c486168d",
+    "provider_calls": 0,
+    "private_oracle_access": 0,
+    "fresh_blind_access": 0,
+    "legacy_locked_test_access": 0,
+    "dry_common_parents": 36,
+    "dry_fixed_arm_outputs": 144,
+    "resume_test": "PASS",
+    "premature_batch_test": "PASS",
+    "terminal_summary_test": "PASS",
+    "live_trigger_present": false,
+    "earlier_provider_free_plumbing_failures": [32668440617, 32668514239],
+    "earlier_plumbing_failures_had_provider_calls": 0,
+    "earlier_plumbing_failures_had_candidate_outcomes": 0
+  },
+  "publication_and_privacy": {
+    "commit_private_checkpoint": false,
+    "commit_raw_parent_outputs": false,
+    "commit_fixed_144_output_packet": false,
+    "commit_private_oracle": false,
+    "commit_private_scorer_rows": false,
+    "commit_sanitized_batch_handoff": true,
+    "commit_sanitized_generation_summary_after_complete_freeze": true,
+    "commit_sanitized_deterministic_result_after_private_scoring": true
+  },
+  "not_authorized": {
+    "semantic_v4_2": true,
+    "fresh_blind": true,
+    "legacy_locked_test": true,
+    "final_measurement": true,
+    "architecture_freeze": true,
+    "production_readiness_claim": true
+  },
+  "next_step": "RUN_PROVIDER_FREE_MANIFEST_FREEZE_SELF_CHECK; DO_NOT_CREATE_LIVE_TRIGGER_IN_THIS_PREPARATION_STEP"
+}

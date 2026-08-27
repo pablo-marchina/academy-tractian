@@ -1,0 +1,86 @@
+name: research-p12-c1-activation-self-check
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json'
+      - 'research/experiments/p12-c1-exposed-pool-candidate-comparison-preregistration-v1.json'
+      - 'scripts/research/p12_c1_evidence_route_candidates.py'
+      - 'scripts/research/p12_c1_activation_self_check.py'
+      - '.github/workflows/research-p12-c1-activation-self-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json'
+      - 'research/experiments/p12-c1-exposed-pool-candidate-comparison-preregistration-v1.json'
+      - 'scripts/research/p12_c1_evidence_route_candidates.py'
+      - 'scripts/research/p12_c1_activation_self_check.py'
+      - '.github/workflows/research-p12-c1-activation-self-check.yml'
+  workflow_dispatch:
+
+jobs:
+  activation-eligibility:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public evaluator dependency
+        run: python -m pip install 'pydantic>=2,<3'
+      - name: Compile activation code
+        run: |
+          python -m py_compile scripts/research/p12_c1_evidence_route_candidates.py
+          python -m py_compile scripts/research/p12_c1_activation_self_check.py
+      - name: Re-run frozen P12 fail-closed protocol guard
+        run: |
+          PYTHONPATH=. python scripts/research/big_b4_protocol_guard.py
+          PYTHONPATH=. python scripts/research/big_b4_protocol_self_check.py > p12-protocol-self-check-live.json
+      - name: Verify candidate policy hashes and frozen constants
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          x = json.loads(Path('research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json').read_text())
+          def h(v):
+              return hashlib.sha256(json.dumps(v, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()).hexdigest()
+          c0 = x['candidate_eligibility']['C0']
+          c1 = x['candidate_eligibility']['C1']
+          c0_policy = {
+              'candidate_id': c0['candidate_id'],
+              'implementation_git_blob_sha': c0['implementation_git_blob_sha'],
+              'base_selection': c0['base_selection'],
+              'global_addition_rate': c0['global_addition_rate'],
+              'global_addition_budget_for_36': c0['global_addition_budget_for_36'],
+              'max_additional_reads_per_output': c0['max_additional_reads_per_output'],
+              'max_final_reads_per_output': c0['max_final_reads_per_output'],
+              'restoration_candidate': c0['restoration_candidate'],
+              'ranking': c0['ranking'],
+              'only_evidence_plan_may_change': c0['only_evidence_plan_may_change'],
+          }
+          c1_policy = {
+              'candidate_id': c1['candidate_id'],
+              'implementation_git_blob_sha': c1['implementation_git_blob_sha'],
+              'selection': c1['selection'],
+              'may_add_routes': c1['may_add_routes'],
+              'max_final_reads_per_output': c1['max_final_reads_per_output'],
+              'only_evidence_plan_may_change': c1['only_evidence_plan_may_change'],
+          }
+          assert h(c0_policy) == c0['policy_sha256'] == 'f62ecc5e01bf8310e6a387a773c46ebddba13ae1f3fab2f091471f031c6c19b0'
+          assert h(c1_policy) == c1['policy_sha256'] == '0a3399fb79e573caba43f40ee004068f0900d3c84261db6e63811246ccbd270e'
+          assert c0['global_addition_budget_for_36'] == 14
+          assert x['participating_arms'] == ['C0', 'C1']
+          assert x['candidate_eligibility']['C2']['eligible'] is False
+          PY
+      - name: Run P12-C1 activation eligibility self-check
+        env:
+          PYTHONPATH: .
+        run: python scripts/research/p12_c1_activation_self_check.py | tee p12-c1-activation-self-check.json
+      - name: Upload activation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: p12-c1-activation-self-check
+          path: |
+            p12-c1-activation-self-check.json
+            p12-protocol-self-check-live.json

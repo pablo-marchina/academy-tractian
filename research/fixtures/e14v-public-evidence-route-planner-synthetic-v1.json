@@ -1,0 +1,93 @@
+{
+  "fixture_version": "e14v-public-evidence-route-planner-synthetic-v1",
+  "source": "public tool/action contract only",
+  "contains_private_oracle": false,
+  "contains_validation": false,
+  "contains_locked_test": false,
+  "cases": [
+    {
+      "id": "asset_state",
+      "visible_case": {"task": "Inspect the current asset state before summarizing its status."},
+      "action_state": {"decision_class": "investigate_only", "should_take_action_now": false, "requires_human_escalation": false, "action_endpoint": "none"},
+      "expected_reads": ["GET /assets/{assetId}"]
+    },
+    {
+      "id": "analysis_detail",
+      "visible_case": {"task": "Inspect the latest analysis and its detailed status for the asset."},
+      "action_state": {"decision_class": "investigate_only", "should_take_action_now": false, "requires_human_escalation": false, "action_endpoint": "none"},
+      "expected_reads": ["GET /assets/{assetId}/analyses", "GET /analyses/{analysisId}"]
+    },
+    {
+      "id": "baseline_reference",
+      "visible_case": {"task": "Verify whether the asset baseline and threshold reference are appropriate."},
+      "action_state": {"decision_class": "investigate_only", "should_take_action_now": false, "requires_human_escalation": false, "action_endpoint": "none"},
+      "expected_reads": ["GET /assets/{assetId}/baseline"]
+    },
+    {
+      "id": "data_quality",
+      "visible_case": {"task": "Determine whether missing or unreliable sensor data could explain the result."},
+      "action_state": {"decision_class": "investigate_only", "should_take_action_now": false, "requires_human_escalation": false, "action_endpoint": "none"},
+      "expected_reads": ["GET /assets/{assetId}/data-quality"]
+    },
+    {
+      "id": "rms_trend",
+      "visible_case": {"task": "Inspect the RMS vibration trend and amplitude evolution."},
+      "action_state": {"decision_class": "investigate_only", "should_take_action_now": false, "requires_human_escalation": false, "action_endpoint": "none"},
+      "expected_reads": ["GET /assets/{assetId}/rms"]
+    },
+    {
+      "id": "spectrum_fault_signature",
+      "visible_case": {"task": "Inspect frequency-domain harmonics and the spectrum for a possible fault signature."},
+      "action_state": {"decision_class": "investigate_only", "should_take_action_now": false, "requires_human_escalation": false, "action_endpoint": "none"},
+      "expected_reads": ["GET /assets/{assetId}/spectrum"]
+    },
+    {
+      "id": "model_state",
+      "visible_case": {"task": "Check whether model drift or model coverage could explain the prediction behavior."},
+      "action_state": {"decision_class": "investigate_only", "should_take_action_now": false, "requires_human_escalation": false, "action_endpoint": "none"},
+      "expected_reads": ["GET /models/{modelId}"]
+    },
+    {
+      "id": "knowledge_context",
+      "visible_case": {"task": "Find and inspect public procedural guidance needed to contextualize the analysis."},
+      "action_state": {"decision_class": "investigate_only", "should_take_action_now": false, "requires_human_escalation": false, "action_endpoint": "none"},
+      "expected_reads": ["GET /knowledge/search", "GET /knowledge/{docId}"]
+    },
+    {
+      "id": "active_reprocess",
+      "visible_case": {"task": "Reprocess the current analysis after verifying the target analysis and authorization context."},
+      "action_state": {"decision_class": "action_candidate", "should_take_action_now": true, "requires_human_escalation": false, "action_endpoint": "POST /analyses/{analysisId}/reprocess"},
+      "expected_reads": ["GET /users/me", "GET /analyses/{analysisId}"]
+    },
+    {
+      "id": "active_specialist",
+      "visible_case": {"task": "Request a specialist review for the current analysis after verifying target state and authorization."},
+      "action_state": {"decision_class": "escalation_candidate", "should_take_action_now": true, "requires_human_escalation": true, "action_endpoint": "POST /analyses/{analysisId}/request-specialist"},
+      "expected_reads": ["GET /users/me", "GET /analyses/{analysisId}"]
+    },
+    {
+      "id": "active_retraining",
+      "visible_case": {"task": "Request model retraining after checking the affected model and the current user's authorization context."},
+      "action_state": {"decision_class": "action_candidate", "should_take_action_now": true, "requires_human_escalation": false, "action_endpoint": "POST /models/{modelId}/request-retraining"},
+      "expected_reads": ["GET /users/me", "GET /models/{modelId}"]
+    },
+    {
+      "id": "active_asset_patch",
+      "visible_case": {"task": "Update the asset only after checking current asset state and authorization context."},
+      "action_state": {"decision_class": "action_candidate", "should_take_action_now": true, "requires_human_escalation": false, "action_endpoint": "PATCH /assets/{assetId}"},
+      "expected_reads": ["GET /users/me", "GET /assets/{assetId}"]
+    },
+    {
+      "id": "active_case_escalation",
+      "visible_case": {"task": "Escalate the case after reviewing the relevant analysis and verifying authorization context."},
+      "action_state": {"decision_class": "escalation_candidate", "should_take_action_now": true, "requires_human_escalation": true, "action_endpoint": "POST /cases/{caseId}/escalate"},
+      "expected_reads": ["GET /users/me", "GET /analyses/{analysisId}"]
+    },
+    {
+      "id": "composed_baseline_rms_reprocess",
+      "visible_case": {"task": "Determine whether an RMS increase relative to baseline warrants reprocessing the current analysis; inspect the signal, reference state, target analysis and authorization context."},
+      "action_state": {"decision_class": "action_candidate", "should_take_action_now": true, "requires_human_escalation": false, "action_endpoint": "POST /analyses/{analysisId}/reprocess"},
+      "expected_reads": ["GET /users/me", "GET /analyses/{analysisId}", "GET /assets/{assetId}/baseline", "GET /assets/{assetId}/rms"]
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "measurement_id": "E14p-FULL-DEV-5-GROUP-PREVALIDATION",
+  "status": "PREREGISTERED_AFTER_TARGETED_E14P_PASS_AND_BEFORE_ANY_FULL_DEV_GENERATION",
+  "date": "2026-08-19",
+  "candidate_stack": {
+    "generation": "E14o public factual-grounding prompt over E14l GPT-OSS 120B medium strict 4096 stack",
+    "identifier_guard": "E14n v1.1 placeholder-preserving public identifier provenance guard",
+    "epistemic_serializer": "E14p deterministic public epistemic serialization guard",
+    "candidate_frozen_before_full_dev_generation": true,
+    "model": "openai/gpt-oss-120b",
+    "reasoning_effort": "medium",
+    "response_format_mode": "json_schema_strict",
+    "max_completion_tokens": 4096,
+    "temperature": 0,
+    "prompt_changed_from_targeted_E14o": false,
+    "post_model_policy_changed_from_targeted_E14o": false,
+    "E14n_v1_1_changed": false,
+    "E14p_serializer_changed": false
+  },
+  "scope": {
+    "split": "DEV",
+    "required_groups": ["asset_G501", "asset_C710", "asset_S420", "asset_M208", "asset_M101"],
+    "required_group_count": 5,
+    "repeats_per_group": 2,
+    "expected_fixed_calls": 10,
+    "contextualize_group_required": "asset_M101",
+    "no_candidate_tuning_between_groups": true,
+    "validation_ran": false,
+    "locked_test_used": false
+  },
+  "infrastructure_amendment": {
+    "reason": "Historical E14 completeness logic is cardinality-specific to six representative calls. Full DEV requires ten calls from five groups x two repeats.",
+    "allowed_change": "cardinality and full-DEV manifest plumbing only",
+    "historical_quality_policy_changes_allowed": false,
+    "prompt_or_model_change_allowed": false,
+    "guard_threshold_change_allowed": false,
+    "evaluator_change_allowed": false,
+    "private_oracle_used_for_infrastructure_design": false
+  },
+  "generation_attempt_policy": {
+    "real_runner_invocations_allowed": 1,
+    "sanitized_attempt_lock_before_first_provider_call": true,
+    "existing_frozen_provider_retry_behavior_preserved": true,
+    "quality_selection_across_reruns_allowed": false,
+    "automatic_replacement_run_allowed": false,
+    "incomplete_capture_authorizes_quality_scoring": false,
+    "replacement_after_operational_failure_requires_new_explicit_amendment": true
+  },
+  "post_generation_order": [
+    "complete 10-call fixed full-DEV E14o generation",
+    "apply E14n v1.1 provider-free identifier guard",
+    "apply E14p provider-free epistemic serializer",
+    "run public one-sided groundedness surface audit",
+    "run frozen E9 v4.1 measurement-only over all 10 calls",
+    "build E9 v4.2 semantic claim packet",
+    "observe aggregate semantic claim count only",
+    "preregister semantic judge transport for the observed full-DEV packet shape before any full-DEV semantic label",
+    "run the already reliability-qualified independent Qwen judge once",
+    "aggregate semantic groundedness",
+    "authorize VALIDATION measurement-only only if all full-DEV gates pass"
+  ],
+  "v4_1_full_dev_acceptance": {
+    "fixed_calls_required": 10,
+    "parsed_model_outputs_required": 10,
+    "scoreable_calls_required": 10,
+    "all_five_dev_groups_structurally_present": true,
+    "each_dev_group_call_count_required": 2,
+    "alignment_resolved_required": true,
+    "normalization_resolved_required": true,
+    "complete_fixed_measurement_required": true,
+    "decision_correctness_min": 0.6667,
+    "evidence_correctness_min": 0.5,
+    "mean_expected_read_recall_min": 0.8333,
+    "mean_extra_public_read_count_max": 3.5,
+    "action_correctness_min": 0.6667,
+    "escalation_correctness_min": 0.6667,
+    "premature_action_rate_required": 0.0,
+    "unsupported_action_or_escalation_rate_required": 0.0,
+    "locked_test_or_gold_leakage_rate_required": 0.0,
+    "reference_quality": "reported_but_not_a_new_threshold",
+    "threshold_source": "unchanged E14p targeted acceptance thresholds frozen before full-DEV generation"
+  },
+  "surface_acceptance": {
+    "complete_surface_coverage_required": true,
+    "unsupported_id_mentions_required": 0,
+    "unrecognized_method_path_mentions_required": 0,
+    "unsupported_unit_numeric_mentions_required": 0,
+    "false_trace_self_check_flags_required": 0,
+    "concrete_provenance_violation_count_required": 0
+  },
+  "semantic_acceptance": {
+    "transport_preregistered_after_claim_count_and_before_labels": true,
+    "full_coverage_required": true,
+    "factual_contradicted_required": 0,
+    "factual_not_supported_required": 0,
+    "factual_not_applicable_required": 0,
+    "nonfactual_non_not_applicable_required": 0,
+    "factual_groundedness_rate_required": 1.0,
+    "zero_factual_assertions_rate_definition": "1.0_vacuously",
+    "judge_model_or_prompt_tuning_allowed": false
+  },
+  "validation_transition": {
+    "validation_gate_authorized_initially": false,
+    "requires_v4_1_full_dev_pass": true,
+    "requires_surface_pass": true,
+    "requires_semantic_full_dev_pass": true,
+    "validation_usage_if_authorized": "measurement_only",
+    "validation_feedback_for_candidate_tuning": false,
+    "locked_test_remains_final_only": true
+  },
+  "privacy": {
+    "commit_raw_full_dev_outputs": false,
+    "commit_transformed_outputs": false,
+    "commit_private_scorer_rows": false,
+    "commit_semantic_judge_rows": false,
+    "commit_claim_text": false,
+    "commit_expected_paths": false,
+    "private_oracle_in_model_prompt": false
+  }
+}

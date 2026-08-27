@@ -1,0 +1,33 @@
+name: research-e10e-full
+
+on:
+  push:
+    paths:
+      - "scripts/research/e10e_full_dev_validation_capture.py"
+      - "scripts/research/e10e_dev_only_premature_action_guard.py"
+      - "scripts/research/e10d_full_dev_validation_capture.py"
+      - "research/experiments/e10e-full-dev-validation-remeasurement-manifest.json"
+      - ".github/workflows/research-e10e-full.yml"
+  pull_request:
+    paths:
+      - "scripts/research/e10e_full_dev_validation_capture.py"
+      - "scripts/research/e10e_dev_only_premature_action_guard.py"
+      - "scripts/research/e10d_full_dev_validation_capture.py"
+      - "research/experiments/e10e-full-dev-validation-remeasurement-manifest.json"
+      - ".github/workflows/research-e10e-full.yml"
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: E10e full dry-run
+        run: |
+          PYTHONPATH=. python scripts/research/e10e_full_dev_validation_capture.py \
+            --manifest research/experiments/e10e-full-dev-validation-remeasurement-manifest.json \
+            --split-manifest research/frozen/benchmark-split-v1.json \
+            --out /tmp/e10e-full-dev-validation-dry-run.json \
+            --dry-run

@@ -1,0 +1,44 @@
+{
+  "account_access": {
+    "api_access_active": true,
+    "tier": "free_trial",
+    "trial_credit_active": null,
+    "trial_credit_expiry_utc": null,
+    "zero_cash_spend_claim_allowed": false
+  },
+  "attestation": {
+    "active_access_met": true,
+    "effective_project_and_org_context_checked": true,
+    "hourly_daily_capacity_met_or_not_applicable": true,
+    "minimum_rpm_met": true,
+    "minimum_total_tpm_met": true,
+    "minimum_uncached_tpm_met": true,
+    "secrets_excluded": true
+  },
+  "effective_limits": {
+    "rpm": 5,
+    "total_tpm": 90000,
+    "tpd": 1000000,
+    "tph": 1000000,
+    "uncached_tpm": 30000
+  },
+  "evidence_source": {
+    "artifact_sha256": null,
+    "contains_secret": false,
+    "first_party": true,
+    "org_limits_observed": true,
+    "project_limits_observed_or_inherited": true,
+    "type": "cerebras_account_limits_page"
+  },
+  "model_id": "gpt-oss-120b",
+  "observed_at_utc": "2026-08-25T21:33:18.937378+00:00",
+  "provider": "cerebras",
+  "quota_context": {
+    "api_key_scope": "project",
+    "org_and_project_both_enforced": true,
+    "project_identifier_committed": false,
+    "project_quota_applies": true
+  },
+  "schema_version": "p12-c4-cerebras-account-capacity-attestation-v2",
+  "status": "PASS"
+}

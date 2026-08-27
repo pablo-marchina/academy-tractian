@@ -1,0 +1,78 @@
+{
+  "id": "e14c-real-dev-sanitized-summary",
+  "date": "2026-08-17",
+  "status": "E14C_REAL_DEV_GATE_FAIL",
+  "scope": {
+    "measurement_split": "DEV",
+    "total_calls": 6,
+    "parsed_outputs": 6,
+    "scoreable_calls": 6,
+    "validation_ran": false,
+    "locked_test_accessed": false
+  },
+  "capture": {
+    "status": "E14C_DEV_ONLY_PUBLIC_ENDPOINT_CANONICALIZATION_CAPTURE_PASS",
+    "completeness_pass": true,
+    "retry_count": 0,
+    "repair_count": 0,
+    "concrete_public_action_endpoints_seen": 4,
+    "target_reprocess_outputs_checked": 0,
+    "authorized_target_reprocess_outputs": 0,
+    "blocked_target_reprocess_outputs": 0
+  },
+  "aggregate_metrics": {
+    "real_task_quality": 0.8333,
+    "decision_correctness": 0.6667,
+    "evidence_correctness": 1.0,
+    "action_correctness": 0.1667,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 0.8333
+  },
+  "public_endpoint_aggregates": {
+    "endpoint_shape_counts": {
+      "already_canonical_public_action_endpoint": 1,
+      "concrete_public_action_endpoint": 4,
+      "none_or_empty": 1
+    },
+    "canonical_public_endpoint_view_counts": {
+      "post /cases/{case_id}/escalate": 5
+    }
+  },
+  "boundary_effects": {
+    "e10d_outputs_changed": 0,
+    "e10e_outputs_changed": 2,
+    "e10g_outputs_changed": 3,
+    "e11_outputs_changed": 0,
+    "e14_target_reprocess_outputs_checked": 0
+  },
+  "gate": {
+    "minimum_real_task_quality": 0.8571,
+    "minimum_decision_correctness": 0.75,
+    "minimum_action_correctness": 0.75,
+    "required_evidence_correctness": 1.0,
+    "required_escalation_correctness": 1.0,
+    "required_premature_action_rate": 0.0,
+    "required_unsupported_final_claim_rate": 0.0,
+    "passed": false
+  },
+  "interpretation": {
+    "endpoint_canonicalization_hypothesis_supported": true,
+    "evidence_and_escalation_gates_recovered": true,
+    "remaining_blockers": [
+      "decision_correctness_below_gate",
+      "action_correctness_below_gate",
+      "e10g_changed_three_outputs_after_e10e"
+    ],
+    "next_model_call_blocked_pending_local_boundary_reason_diagnostic": true
+  },
+  "privacy": {
+    "raw_fixed_outputs_committed": false,
+    "score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_paths_committed": false,
+    "oracle_values_committed": false,
+    "evaluator_labels_committed": false
+  }
+}

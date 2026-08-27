@@ -1,0 +1,85 @@
+{
+  "schema_version": "p12-c4-nvidia-full-activation-and-capacity-gate-v1",
+  "gate_id": "P12-C4-NVIDIA-FULL-PACKET-ACTIVATION-CAPACITY-V1",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "date": "2026-08-26",
+  "decision_state": "FROZEN_PROVIDER_FREE_GATE",
+  "status": "READY_FOR_PROVIDER_FREE_SELF_CHECK",
+  "provider": {
+    "provider": "NVIDIA",
+    "hosting_path": "nvidia_hosted_nim",
+    "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+    "model_id": "openai/gpt-oss-120b",
+    "credential_env": "NVIDIA_API_KEY"
+  },
+  "capacity_basis": {
+    "mode": "BOUNDED_EXECUTION_PLAN_WITHOUT_QUOTA_GUARANTEE",
+    "provider_quota_guarantee": "UNKNOWN_NOT_CLAIMED",
+    "published_free_endpoint_is_capacity_proof": false,
+    "synthetic_success_is_capacity_proof_for_36_calls": false,
+    "rationale": "Authorize one bounded full-packet attempt without asserting an unpublished account quota. Operational incompleteness blocks the experiment rather than changing pacing, retrying, resuming, or scoring partial data."
+  },
+  "bounded_execution": {
+    "common_parent_count": 36,
+    "maximum_provider_request_attempts": 36,
+    "maximum_provider_request_attempts_per_parent": 1,
+    "minimum_seconds_between_provider_request_starts": 75,
+    "automatic_retries": 0,
+    "implicit_retries_allowed": false,
+    "warming_requests": 0,
+    "provider_fallbacks": 0,
+    "model_fallbacks": 0,
+    "bursting_forbidden": true,
+    "resume_after_incomplete_packet": false,
+    "github_workflow_rerun_allowed": false,
+    "completed_parent_regeneration_allowed": false,
+    "on_any_non_2xx": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+    "on_any_invalid_or_unparseable_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING",
+    "on_any_missing_parent": "ABORT_PACKET_INCOMPLETE_NO_SCORING"
+  },
+  "packet_and_scoring_boundary": {
+    "required_common_parents_before_local_expansion": "36/36",
+    "local_expansion_provider_calls": 0,
+    "participating_arms": ["A00", "A10", "A01", "A11"],
+    "required_fixed_arm_outputs_before_packet_freeze": "144/144",
+    "private_deterministic_scoring_before_complete_packet_freeze": "FORBIDDEN",
+    "partial_packet_scoring": "FORBIDDEN",
+    "complete_case_only_reinterpretation": "FORBIDDEN"
+  },
+  "restricted_access": {
+    "provider_free_gate_loads_benchmark_inputs": false,
+    "provider_free_gate_reads_nvidia_api_key": false,
+    "provider_free_gate_network_calls_to_provider": 0,
+    "private_oracle_accesses": 0,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0
+  },
+  "synthetic_prerequisite": {
+    "required_status": "PASS_SYNTHETIC_COMPATIBILITY_2_OF_2",
+    "canonical_pass_artifact_sha256": "9017129b9bb6e6db8bc25e04a2cb18e9c808a38d8c59e8b1f188a024dbbebd8f",
+    "successful_http_responses_required": 2,
+    "model_outputs_required": 2,
+    "authorization_consumed_required": true,
+    "synthetic_rerun_allowed": false
+  },
+  "source_pins": {
+    "synthetic_pass_artifact": {"path": "research/results/p12-c4-nvidia-synthetic-compatibility-probe-result-2026-08-26.json", "git_blob_sha": "a22858c9a122323b8f58dfd1a2df73413db3aa9b"},
+    "synthetic_closure": {"path": "research/results/p12-c4-nvidia-synthetic-live-probe-closure-2026-08-26.json", "git_blob_sha": "8698c0b0ec7b24768de9434c89b81d63a308fd09"},
+    "serving_contract": {"path": "research/experiments/p12-c4-nvidia-provider-serving-contract-v1.json", "git_blob_sha": "851ed2f680f743da84d826bfc161139719bc1355"},
+    "nvidia_pacing": {"path": "research/frozen/p12-c4-nvidia-request-budget-and-pacing-v1.json", "git_blob_sha": "e276d19ef95c38cfdd0354b43ae24d3eee3d30c8"},
+    "fresh_seed_map": {"path": "research/frozen/p12-c4-fresh-seed-map-v1.json", "git_blob_sha": "2e5429c5175afd52584d282ee536a8d4f722a953"},
+    "prompt_budget_measurement": {"path": "research/frozen/p12-c4-prompt-budget-and-pacing-v1.json", "git_blob_sha": "a351afdc1f015e3065a57b053848a2cdfae428a2"},
+    "nvidia_synthetic_preregistration": {"path": "research/experiments/p12-c4-nvidia-synthetic-compatibility-probe-preregistration-v1.json", "git_blob_sha": "80bbaecafc00f2007e9ec003ca635d2d2eb74e1c"}
+  },
+  "authorization": {
+    "provider_free_self_check": true,
+    "full_packet_execution_authorized_before_self_check_pass": false,
+    "full_packet_execution_authorized_if_self_check_passes_and_live_manifest_is_frozen": true,
+    "authorized_live_manifests_if_passed": 1,
+    "private_scoring": false,
+    "fresh_blind": false,
+    "legacy_locked_test": false
+  },
+  "next_gate_if_pass": "FREEZE_ONE_SHOT_C4_LIVE_MANIFEST",
+  "next_state_if_fail": "STOP_C4_NO_LIVE_MANIFEST"
+}

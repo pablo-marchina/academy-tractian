@@ -1,0 +1,97 @@
+name: research-p12-c1-promote-validated-runner
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - '.github/workflows/research-p12-c1-promote-validated-runner.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  VALIDATION_RUN_ID: '32654928709'
+  VALIDATION_ARTIFACT: p12-c1-corrected-execution-bundle
+  TARGET_BUNDLE: research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz
+  TARGET_WORKFLOW: .github/workflows/research-p12-c1-paired-exposed-pool.yml
+  EXECUTION_MANIFEST: research/experiments/p12-c1-paired-exposed-pool-execution-v1.json
+  REMEDIATION_MANIFEST: research/experiments/p12-c1-runner-contract-remediation-v1.json
+  CORRECTED_SOURCE_SHA256: be16ec6d2c33ad68134a0fbf7aa280b4103ee411b01233b6de7a76668e899a50
+  CORRECTED_GZIP_SHA256: aaede3965177b80d8d9d389b340d572ee05c786f2fd5ae4470329cb82c5806ca
+  CORRECTED_GIT_BLOB_SHA: a5c27394014bac656faa0a2f923a5c5da72d66f5
+
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/systematic-foundation
+          fetch-depth: 1
+      - name: Download provider-free validated corrected bundle
+        run: |
+          mkdir -p /tmp/p12-corrected
+          gh run download "$VALIDATION_RUN_ID" -n "$VALIDATION_ARTIFACT" -D /tmp/p12-corrected
+          test -s /tmp/p12-corrected/p12_c1_paired_exposed_pool_execution.py.gz
+          echo "$CORRECTED_GZIP_SHA256  /tmp/p12-corrected/p12_c1_paired_exposed_pool_execution.py.gz" | sha256sum -c -
+          gzip -dc /tmp/p12-corrected/p12_c1_paired_exposed_pool_execution.py.gz > /tmp/p12-corrected/source.py
+          echo "$CORRECTED_SOURCE_SHA256  /tmp/p12-corrected/source.py" | sha256sum -c -
+      - name: Promote corrected bundle and pins atomically
+        run: |
+          cp /tmp/p12-corrected/p12_c1_paired_exposed_pool_execution.py.gz "$TARGET_BUNDLE"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          workflow=Path(os.environ['TARGET_WORKFLOW'])
+          text=workflow.read_text()
+          old='2d25485b353c0c6ad63d6acb143abff0c16aeb8f8841861b990e2d28a1a7cb4e'
+          new=os.environ['CORRECTED_SOURCE_SHA256']
+          assert text.count(old)==2, text.count(old)
+          text=text.replace(old,new)
+          anchor="      - 'research/experiments/p12-c1-preflight-materialization-remediation-v1.json'\n"
+          runner_remediation="      - 'research/experiments/p12-c1-runner-contract-remediation-v1.json'\n"
+          trigger="      - 'research/experiments/p12-c1-live-execution-trigger-v1.json'\n"
+          assert anchor in text
+          if runner_remediation not in text:
+              text=text.replace(anchor, anchor+runner_remediation)
+          if trigger not in text:
+              text=text.replace(runner_remediation, runner_remediation+trigger)
+          assert runner_remediation in text and trigger in text
+          workflow.write_text(text)
+
+          p=Path(os.environ['EXECUTION_MANIFEST'])
+          m=json.loads(p.read_text())
+          c=m['runner_source_bundles']['candidate_execution']
+          assert c['decompressed_sha256']==old
+          c['git_blob_sha']=os.environ['CORRECTED_GIT_BLOB_SHA']
+          c['gzip_sha256']=os.environ['CORRECTED_GZIP_SHA256']
+          c['decompressed_sha256']=new
+          m['pre_outcome_runner_contract_remediation']={
+            'manifest_path': os.environ['REMEDIATION_MANIFEST'],
+            'validation_run_id': 32654928709,
+            'validation_job_id': 97232078560,
+            'validation_conclusion': 'success',
+            'validation_artifact_id': 9497192914,
+            'contract_only_patch_pass': True,
+            'corrected_36_cell_provider_free_preflight_pass': True,
+            'provider_calls_before_promotion': 0,
+            'c0_or_c1_outcomes_before_promotion': 0,
+            'provider_cycle_remaining': 1
+          }
+          p.write_text(json.dumps(m,indent=2,ensure_ascii=False)+'\n')
+          PY
+          echo "$CORRECTED_GZIP_SHA256  $TARGET_BUNDLE" | sha256sum -c -
+          gzip -dc "$TARGET_BUNDLE" | sha256sum | grep -F "$CORRECTED_SOURCE_SHA256"
+          git diff --check
+          git diff --name-only
+          test "$(git diff --name-only | sort | tr '\n' ' ')" = ".github/workflows/research-p12-c1-paired-exposed-pool.yml research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_execution.py.gz research/experiments/p12-c1-paired-exposed-pool-execution-v1.json "
+      - name: Commit validated runner promotion
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$TARGET_BUNDLE" "$TARGET_WORKFLOW" "$EXECUTION_MANIFEST"
+          git commit -m 'research: promote validated P12-C1 runner remediation'
+          git push origin HEAD:research/systematic-foundation

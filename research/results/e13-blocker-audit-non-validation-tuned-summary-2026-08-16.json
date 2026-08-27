@@ -1,0 +1,115 @@
+{
+  "report_version": "e13-blocker-audit-non-validation-tuned-summary-v1",
+  "date": "2026-08-16",
+  "status": "E13_BLOCKER_AUDIT_PASS",
+  "is_demo": false,
+  "is_integration": false,
+  "is_new_product": false,
+  "is_new_guard": false,
+  "is_next_candidate": false,
+  "scope": {
+    "allowed_splits": [
+      "DEV"
+    ],
+    "validation_used_for_tuning": false,
+    "validation_calls_read": 0,
+    "locked_test_accessed": false,
+    "locked_test_calls_read": 0,
+    "final_architecture_freeze": false
+  },
+  "capture_audit": {
+    "dev_calls_observed": 6,
+    "expected_dev_calls": 6,
+    "parsed_dev_outputs_available": 5,
+    "missing_parsed_output_count": 1,
+    "missing_parsed_output_call_ids": [
+      {
+        "group_id": "asset_S420",
+        "split": "DEV",
+        "repeat_index": 0
+      }
+    ],
+    "boundary_rows_available": 5,
+    "target_reprocess_rows": 5,
+    "authorized_rows": 0,
+    "blocked_rows": 5,
+    "changed_rows": 5,
+    "unchanged_rows": 0,
+    "reason_counts": {
+      "missing_endpoint_specific_reprocess_defect_evidence": 5
+    },
+    "endpoint_counts": {
+      "post /analyses/{analysis_id}/reprocess": 5
+    },
+    "defect_category_counts": {},
+    "applied_counts_by_group": {
+      "asset_G501": {
+        "applied": 2
+      },
+      "asset_C710": {
+        "applied": 2
+      },
+      "asset_S420": {
+        "applied": 1
+      }
+    },
+    "trace_event_counts": {
+      "prompt_built": 6,
+      "model_called": 5,
+      "output_parsed": 5,
+      "output_scored": 6,
+      "visible_escalation_consistency_guard_applied": 5,
+      "visible_premature_action_safety_guard_checked": 5,
+      "visible_balanced_safety_action_guard_checked": 5,
+      "independent_action_authorization_checked": 5,
+      "reprocess_specific_authorization_boundary_blocked": 5,
+      "model_call_failed": 1
+    }
+  },
+  "sanitized_score_context": {
+    "provided": true,
+    "scoreable_calls": 5,
+    "real_task_quality": 0.7714,
+    "decision_correctness": 0.4,
+    "evidence_correctness": 1.0,
+    "action_correctness": 0.0,
+    "escalation_correctness": 1.0,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 1.0
+  },
+  "root_cause": {
+    "root_cause_classes": [
+      "parsed_output_missing_in_dev_capture",
+      "boundary_changed_all_target_reprocess_actions",
+      "action_collapse_consistent_with_overblocking_reprocess_boundary",
+      "decision_regression_after_reprocess_downgrade"
+    ],
+    "findings": [
+      "DEV calls observed: 6; parsed DEV outputs: 5.",
+      "At least one DEV call has no parsed output, so E13 failed the completeness prerequisite before quality metrics are considered.",
+      "Boundary rows present: 5; target reprocess rows: 5; changed rows: 5.",
+      "The boundary appears to have downgraded every detected target reprocess action, which is consistent with action collapse.",
+      "Dominant public/sanitized boundary reason: missing_endpoint_specific_reprocess_defect_evidence=5.",
+      "Sanitized score context reports action_correctness = 0.0, so E13 overcorrected on DEV and cannot advance to full measurement."
+    ],
+    "next_candidate_allowed_now": false,
+    "next_candidate_condition": "Only after this audit is reviewed and a later change is preregistered without VALIDATION tuning."
+  },
+  "sanitization": {
+    "raw_fixed_outputs_committed": false,
+    "score_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_paths_committed": false,
+    "private_oracle_values_committed": false,
+    "validation_feedback_used_for_tuning": false,
+    "locked_test_material_used": false
+  },
+  "gate_decision": {
+    "integration_allowed": false,
+    "demo_allowed": false,
+    "full_rerun_allowed": false,
+    "next_candidate_allowed_now": false,
+    "reason": "E13 DEV-only failed; this audit is diagnostic only and does not authorize a next candidate."
+  }
+}

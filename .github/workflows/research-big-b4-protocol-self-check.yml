@@ -1,0 +1,26 @@
+name: research-big-b4-protocol-self-check
+
+on:
+  push:
+    branches:
+      - research/systematic-foundation
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  big-b4-protocol-self-check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate frozen protocol guard
+        run: PYTHONPATH=. python scripts/research/big_b4_protocol_guard.py
+      - name: Run provider-free fail-closed self-checks
+        run: PYTHONPATH=. python scripts/research/big_b4_protocol_self_check.py | tee big-b4-protocol-self-check.json
+      - name: Upload self-check evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: big-b4-protocol-self-check
+          path: big-b4-protocol-self-check.json

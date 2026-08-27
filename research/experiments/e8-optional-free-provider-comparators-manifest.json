@@ -1,0 +1,86 @@
+{
+  "schema": "e8-optional-free-provider-comparators-v1",
+  "status": "PREREGISTERED_AFTER_GROQ_PASS",
+  "date": "2026-08-16",
+  "budget_policy": {
+    "project_cost_limit_usd": 0,
+    "free_only": true,
+    "paid_models_enabled": false,
+    "paid_reference_candidates_blocked": [
+      "openai_reference_optional",
+      "anthropic_reference_optional"
+    ]
+  },
+  "leading_candidate": {
+    "provider": "groq",
+    "model": "llama-3.1-8b-instant",
+    "status": "E8_FREE_ANYWHERE_MODEL_RUN_PASS",
+    "rationale": "passed DEV smoke and VALIDATION under USD 0 with LOCKED_TEST blocked"
+  },
+  "optional_comparator_priority": [
+    {
+      "slot_id": "openrouter_free_comparator",
+      "provider": "openrouter",
+      "enabled_by_default": false,
+      "required_env": [
+        "OPENROUTER_API_KEY",
+        "E8_ENABLE_OPENROUTER_FREE=1",
+        "E8_CONFIRM_ZERO_COST=1"
+      ],
+      "allowed_model_patterns": [
+        "openrouter/free",
+        "*:free"
+      ],
+      "blocked_model_patterns": [
+        "openrouter/auto",
+        "openrouter/auto:free",
+        "any non-free model id"
+      ],
+      "purpose": "optional free remote-provider comparator after Groq pass"
+    },
+    {
+      "slot_id": "gemini_key_visible_model_comparator",
+      "provider": "gemini",
+      "enabled_by_default": false,
+      "required_env": [
+        "GEMINI_API_KEY or GOOGLE_API_KEY",
+        "E8_ENABLE_GEMINI=1",
+        "E8_CONFIRM_ZERO_COST=1",
+        "E8_GEMINI_MODEL=<model returned by models.list>"
+      ],
+      "purpose": "optional comparator only after finding a generateContent-capable model visible to the key"
+    },
+    {
+      "slot_id": "huggingface_free_credit_low_priority",
+      "provider": "huggingface",
+      "enabled_by_default": false,
+      "required_env": [
+        "HF_TOKEN",
+        "E8_ENABLE_HUGGINGFACE=1",
+        "E8_CONFIRM_ZERO_COST=1"
+      ],
+      "purpose": "low-priority comparator because free credits can be exhausted and must not become paid"
+    }
+  ],
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false,
+    "dev_smoke_before_validation": true
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "execution_boundary": "HarnessRunner",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "model_provider_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "does_not_block_next_gate": true,
+  "next_gate": "E9 evaluator-side task-quality scorer with private oracles outside model prompts"
+}

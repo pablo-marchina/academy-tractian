@@ -1,0 +1,74 @@
+{
+  "experiment": "E14e",
+  "scope": "DEV only",
+  "status": "valid_complete_measurement_gate_failed",
+  "capture": {
+    "total_calls": 6,
+    "parsed_model_outputs_available": 6,
+    "scoreable_calls": 6,
+    "validation_ran": false,
+    "completeness_pass": true,
+    "retry_count": 0,
+    "repair_count": 0
+  },
+  "aggregate_metrics": {
+    "real_task_quality": 0.7619,
+    "decision_correctness": 0.6667,
+    "evidence_correctness": 0.5,
+    "action_correctness": 0.3333,
+    "escalation_correctness": 0.8333,
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "proxy_vs_real_disagreement_rate": 0.8333,
+    "locked_test_accessed": false
+  },
+  "boundary_summary": {
+    "e10d_outputs_changed": 2,
+    "e10d_reason_counts": {
+      "explicit_current_handoff_phrase": 1,
+      "none": 4,
+      "state_changing_action_requires_visible_human_loop_guard": 1
+    },
+    "e10e_outputs_changed": 2,
+    "e10g_outputs_changed": 0,
+    "e11_outputs_changed": 0,
+    "e14_reprocess_checked": 0,
+    "e14_reprocess_authorized": 0,
+    "e14_reprocess_blocked": 0
+  },
+  "public_evidence_summary": {
+    "historical_template_marker_count_histogram": {
+      "0": 1,
+      "1": 2,
+      "2": 1,
+      "6": 1,
+      "9": 1
+    },
+    "normalized_public_evidence_family_count_histogram": {
+      "2": 1,
+      "6": 2,
+      "7": 1,
+      "9": 2
+    },
+    "calls_with_concrete_public_read_equivalent": 4
+  },
+  "gate": {
+    "real_task_quality": false,
+    "decision_correctness": false,
+    "evidence_correctness": false,
+    "action_correctness": false,
+    "escalation_correctness": false,
+    "premature_action_rate": true,
+    "unsupported_final_claim_rate": true,
+    "completeness": true,
+    "locked_test": true
+  },
+  "privacy": {
+    "raw_fixed_outputs_committed": false,
+    "private_scorer_rows_committed": false,
+    "output_hashes_committed": false,
+    "private_paths_committed": false,
+    "evaluator_labels_committed": false,
+    "oracle_data_committed": false
+  }
+}

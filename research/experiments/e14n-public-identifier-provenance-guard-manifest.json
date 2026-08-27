@@ -1,0 +1,72 @@
+{
+  "experiment_id": "E14n",
+  "title": "Deterministic public identifier provenance canonicalization",
+  "status": "PREREGISTERED_BEFORE_OFFLINE_GUARD_APPLICATION",
+  "date": "2026-08-18",
+  "parent_candidate": "E14l fixed historical DEV capture",
+  "motivation": {
+    "source": "public-only one-sided groundedness surface audit",
+    "private_oracle_used": false,
+    "private_scorer_rows_used": false,
+    "validation_feedback_used": false,
+    "locked_test_used": false,
+    "aggregate_finding": {
+      "fixed_calls_assessed": 6,
+      "calls_with_concrete_provenance_violation": 2,
+      "unsupported_identifier_mentions": 2,
+      "unrecognized_method_path_mentions": 0,
+      "unsupported_unit_numeric_mentions": 0
+    },
+    "per_call_violation_identity_used_for_design": false,
+    "raw_identifier_values_used_for_design": false
+  },
+  "intervention": {
+    "change_class": "deterministic_public_identifier_provenance_canonicalization_only",
+    "single_intervention": true,
+    "provider_call_required": false,
+    "model_output_regenerated": false,
+    "decision_fields_changed": false,
+    "action_escalation_boolean_fields_changed": false,
+    "schema_changed": false,
+    "private_oracle_used": false,
+    "rule": [
+      "Inspect only public free-text output fields and the exact runner-selected visible case.",
+      "Concrete namespaced identifiers or UUIDs already present in the visible case remain unchanged.",
+      "Public placeholders such as {assetId} or {analysisId} remain unchanged.",
+      "A concrete identifier absent from the visible case is replaced deterministically with a typed public placeholder based only on its public namespace prefix; an otherwise untyped UUID becomes {id}.",
+      "No other text is rewritten and no decision/action/escalation boolean is changed."
+    ],
+    "typed_placeholder_map": {
+      "asset": "{assetId}",
+      "analysis": "{analysisId}",
+      "model": "{modelId}",
+      "case": "{caseId}",
+      "ticket": "{ticketId}",
+      "uuid_without_public_namespace": "{id}"
+    }
+  },
+  "paired_offline_evaluation": {
+    "same_fixed_E14l_outputs_before_guard": true,
+    "same_selected_visible_cases": true,
+    "no_provider_calls": true,
+    "before_metric_source": "preregistered public groundedness-surface audit",
+    "after_metric_source": "same public groundedness-surface audit applied to deterministic transformed capture",
+    "primary_expected_effect": "unsupported identifier mentions become zero without changing call count or parseability",
+    "must_not_claim_general_semantic_groundedness": true,
+    "may_not_authorize_validation": true
+  },
+  "safety_and_scope": {
+    "DEV_only": true,
+    "validation_allowed": false,
+    "locked_test_allowed": false,
+    "raw_transformed_capture_may_be_committed": false,
+    "private_rows_may_be_committed": false,
+    "guard_failure_fallback": "leave original fixed output unchanged and mark transform NEEDS_REVIEW; do not silently drop a call"
+  },
+  "interpretation": {
+    "zero_surface_violations_after_guard_proves_only_this_concrete_provenance_surface": true,
+    "general_free_text_groundedness_remains_separate": true,
+    "v4_1_reference_quality_threshold_not_changed": true,
+    "future_real_candidate_requires_separate_preregistration": true
+  }
+}

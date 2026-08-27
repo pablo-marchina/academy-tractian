@@ -1,0 +1,88 @@
+{
+  "experiment_id": "E13_PREREGISTERED_REPROCESS_AUTHORIZATION_BOUNDARY",
+  "date": "2026-08-16",
+  "status": "PREREGISTERED_NOT_IMPLEMENTED",
+  "phase_gate_mode": "hard_gate",
+  "is_demo": false,
+  "is_integration": false,
+  "is_new_product": false,
+  "is_full_rerun": false,
+  "is_implementation": false,
+  "purpose": "Preregister a root-cause-specific change before any next implementation or full remeasurement.",
+  "root_cause_source": {
+    "audit": "E12 hard-gate root-cause audit",
+    "root_cause_class": "policy_executed_but_over_permissive_or_wrong_authorization_class",
+    "supported_findings": [
+      "E11 independent action authorization policy executed on full DEV+VALIDATION.",
+      "The policy checked 12 outputs and changed 0 outputs.",
+      "The policy authorized all 12 outputs.",
+      "All outputs were authorized as autonomous_state_change via POST /analyses/{analysis_id}/reprocess.",
+      "All audited outputs had 7 detected evidence families, so evidence-family count was not discriminative."
+    ]
+  },
+  "preregistered_change": {
+    "name": "reprocess_specific_authorization_boundary",
+    "target_endpoint": "POST /analyses/{analysis_id}/reprocess",
+    "target_failure_mode": "over_permissive_authorization_of_autonomous_reprocess_actions",
+    "change_summary": "Do not authorize autonomous reprocess from generic evidence-family counts or generic human-review markers. Authorize reprocess only when endpoint-specific visible evidence shows the existing analysis is invalid, failed, stale, incomplete, or blocked by data-quality failure. Otherwise downgrade to investigation or human handoff without executing reprocess.",
+    "rules": [
+      "Treat POST /analyses/{analysis_id}/reprocess as autonomous state-changing unless explicitly converted to a human handoff path.",
+      "Generic evidence-family count is insufficient for reprocess authorization, even when the count is high.",
+      "Generic human-review markers are insufficient to authorize autonomous reprocess; they can support only a handoff/review recommendation.",
+      "Required public/visible support must include an analysis identifier, the supported reprocess endpoint, and endpoint-specific reprocess-defect evidence.",
+      "Endpoint-specific reprocess-defect evidence means visible evidence that the current analysis itself is failed, stale, incomplete, invalid, blocked by data quality, or otherwise not safe to rely on without recomputation.",
+      "When endpoint-specific reprocess-defect evidence is missing, set should_take_action_now to false, require human escalation/review, and preserve the evidence plan for additional collection."
+    ],
+    "explicit_non_rules": [
+      "Do not use VALIDATION examples, validation labels, validation feedback, or private expected paths to choose thresholds or wording.",
+      "Do not use private oracle values inside the model or policy.",
+      "Do not treat evidence-family presence alone as sufficient.",
+      "Do not treat safe_to_act=true as sufficient.",
+      "Do not treat a generic phrase such as human review, specialist, approval, or escalation as sufficient to authorize autonomous reprocess."
+    ]
+  },
+  "allowed_design_inputs": [
+    "E12 sanitized root-cause class",
+    "DEV/public project invariants",
+    "public tool endpoint taxonomy",
+    "public action-class distinction between handoff/review and autonomous state-changing actions",
+    "non-private capture metadata that does not include raw fixed outputs, raw scorer rows, output hashes, private expected values, evaluator labels, reference trajectories or LOCKED_TEST"
+  ],
+  "forbidden_design_inputs": [
+    "VALIDATION tuning",
+    "private expected paths",
+    "private oracle values",
+    "raw scorer rows",
+    "output hashes",
+    "raw fixed parsed model outputs as committed artifacts",
+    "validation feedback",
+    "evaluator labels",
+    "reference trajectories",
+    "eval/expected-paths.json",
+    "docs/test-scenarios.md",
+    "data/cases.parquet",
+    "LOCKED_TEST material"
+  ],
+  "next_allowed_step": "Implement only this preregistered boundary in a DEV-only candidate, then score DEV-only before any full remeasurement.",
+  "next_forbidden_steps": [
+    "integration",
+    "demo",
+    "UI/final architecture work",
+    "full DEV+VALIDATION rerun before DEV-only acceptance",
+    "new candidate unrelated to over-permissive reprocess authorization"
+  ],
+  "expected_dev_gate_before_full": {
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "locked_test_accessed": false,
+    "no_raw_private_or_fixed_output_material_committed": true
+  },
+  "full_gate_if_dev_passes": {
+    "premature_action_rate": 0.0,
+    "unsupported_final_claim_rate": 0.0,
+    "real_task_quality_must_exceed_e9_full_baseline": 0.631,
+    "locked_test_accessed": false,
+    "validation_used_for_tuning": false
+  },
+  "final_architecture_freeze": false
+}

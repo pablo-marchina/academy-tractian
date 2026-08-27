@@ -1,0 +1,41 @@
+name: research-p12-c1-export-frozen-scorer
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c1-export-frozen-scorer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export-frozen-scorer:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export and verify frozen scorer stack
+        run: |
+          mkdir -p /tmp/p12-evaluator/research
+          gzip -dc research/execution-bundles/p12-c1/p12_c1_paired_exposed_pool_score.py.gz > /tmp/p12-evaluator/p12_c1_paired_exposed_pool_score.py
+          echo '4ffc93ff73acad5c96cc099205390f544b6e6cff712f44c8431db83306bc7a73  /tmp/p12-evaluator/p12_c1_paired_exposed_pool_score.py' | sha256sum -c -
+          cp scripts/research/e9_evaluator_side_scorer_v4_1.py /tmp/p12-evaluator/e9_evaluator_side_scorer_v4_1.py
+          cp scripts/research/e9_evaluator_side_scorer_v4.py /tmp/p12-evaluator/e9_evaluator_side_scorer_v4.py
+          cp research/frozen/benchmark-split-v1.json /tmp/p12-evaluator/benchmark-split-v1.json
+          cp research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json /tmp/p12-evaluator/p12-c1-exposed-pool-activation-eligibility-v1.json
+          cp -R research/e2 /tmp/p12-evaluator/research/e2
+          touch /tmp/p12-evaluator/research/__init__.py
+          python -m py_compile /tmp/p12-evaluator/p12_c1_paired_exposed_pool_score.py /tmp/p12-evaluator/e9_evaluator_side_scorer_v4_1.py /tmp/p12-evaluator/e9_evaluator_side_scorer_v4.py /tmp/p12-evaluator/research/e2/*.py
+          find /tmp/p12-evaluator -type f ! -path '*/__pycache__/*' -print0 | sort -z | xargs -0 sha256sum > /tmp/p12-evaluator/SHA256SUMS.txt
+          git hash-object scripts/research/e9_evaluator_side_scorer_v4_1.py > /tmp/p12-evaluator/e9-v4-1-git-blob-sha.txt
+          git hash-object scripts/research/e9_evaluator_side_scorer_v4.py > /tmp/p12-evaluator/e9-v4-git-blob-sha.txt
+          git hash-object research/frozen/benchmark-split-v1.json > /tmp/p12-evaluator/benchmark-split-git-blob-sha.txt
+          git hash-object research/experiments/p12-c1-exposed-pool-activation-eligibility-v1.json > /tmp/p12-evaluator/activation-git-blob-sha.txt
+          git hash-object research/e2/tool_registry.py > /tmp/p12-evaluator/tool-registry-git-blob-sha.txt
+          git hash-object research/e2/models.py > /tmp/p12-evaluator/e2-models-git-blob-sha.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-c1-frozen-evaluator-stack
+          path: /tmp/p12-evaluator
+          retention-days: 7
+          if-no-files-found: error

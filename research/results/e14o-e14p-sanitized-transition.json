@@ -1,0 +1,36 @@
+{
+  "date": "2026-08-19",
+  "e14o_targeted_status": "REJECTED_SEMANTIC_GROUNDEDNESS_FAIL",
+  "e14o_semantic": {
+    "claim_units": 66,
+    "factual_assertions": 4,
+    "factual_supported": 2,
+    "factual_not_supported": 2,
+    "factual_contradicted": 0,
+    "factual_groundedness_rate": 0.5,
+    "nonfactual_claims": 62,
+    "nonfactual_type_support_consistent": 62
+  },
+  "e14o_v4_1": {
+    "reference_quality": 0.7857,
+    "decision_correctness": 0.6667,
+    "evidence_correctness": 0.5,
+    "mean_expected_read_recall": 0.8333,
+    "mean_extra_public_read_count": 3.5,
+    "action_correctness": 0.6667,
+    "escalation_correctness": 0.6667,
+    "premature_action_rate": 0.0,
+    "unsupported_action_or_escalation_rate": 0.0,
+    "locked_test_or_gold_leakage_rate": 0.0
+  },
+  "next_candidate": "E14p",
+  "e14p_change_class": "deterministic_public_epistemic_serialization_only",
+  "e14p_provider_calls": 0,
+  "e14p_structural_ci_run": 32264286810,
+  "e14p_structural_ci_passed": true,
+  "validation_gate_authorized": false,
+  "validation_feedback_used": false,
+  "locked_test_used": false,
+  "private_oracle_used_for_candidate_design": false,
+  "per_claim_labels_or_text_used_for_candidate_design": false
+}

@@ -1,0 +1,32 @@
+name: research-e10d-full
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - 'research/82-e10d-full-dev-validation-remeasurement.md'
+      - 'research/experiments/e10d-full-*.json'
+      - 'scripts/research/e10d_full_*.py'
+      - '.github/workflows/research-e10d-full.yml'
+  pull_request:
+    paths:
+      - 'research/82-e10d-full-dev-validation-remeasurement.md'
+      - 'research/experiments/e10d-full-*.json'
+      - 'scripts/research/e10d_full_*.py'
+      - '.github/workflows/research-e10d-full.yml'
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: E10d full dry-run
+        run: >-
+          PYTHONPATH=. python scripts/research/e10d_full_dev_validation_capture.py
+          --manifest research/experiments/e10d-full-dev-validation-remeasurement-manifest.json
+          --split-manifest research/frozen/benchmark-split-v1.json
+          --out /tmp/e10d-full-dev-validation-capture-dry-run.json
+          --dry-run

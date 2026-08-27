@@ -1,0 +1,68 @@
+name: research-p12-c3-live-run-observer
+
+on:
+  push:
+    branches: [research/systematic-foundation]
+    paths:
+      - '.github/workflows/research-p12-c3-live-run-observer.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-c3-live-run-observer.yml'
+
+permissions:
+  actions: read
+  contents: read
+  statuses: write
+
+jobs:
+  publish-target-run-status:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_HEAD_SHA: d952113ef96f668b5e2e5692607f189404eae126
+      TARGET_WORKFLOW_NAME: research-p12-c3-checkpointed-six-batch-live-v2
+    steps:
+      - name: Locate and observe frozen P12-C3 B1 continuation run
+        id: locate
+        shell: bash
+        run: |
+          set -euo pipefail
+          row=''
+          for _ in $(seq 1 48); do
+            data=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs" -f branch=research/systematic-foundation -f event=push -f per_page=100)
+            row=$(printf '%s' "$data" | jq -c --arg sha "$TARGET_HEAD_SHA" --arg name "$TARGET_WORKFLOW_NAME" '.workflow_runs[] | select(.head_sha==$sha and .name==$name)' | head -n 1 || true)
+            [ -n "$row" ] && break
+            sleep 5
+          done
+          [ -n "$row" ] || { echo 'P12-C3 B1 continuation target push run not found' >&2; exit 1; }
+          run_id=$(printf '%s' "$row" | jq -r '.id')
+          html_url=$(printf '%s' "$row" | jq -r '.html_url')
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$TARGET_HEAD_SHA" \
+            -f state='pending' -f context='p12-c3-target-run' \
+            -f description="target_run=$run_id status=observing" -f target_url="$html_url" >/dev/null
+          echo "P12_C3_TARGET_RUN_ID=$run_id"
+          for _ in $(seq 1 1080); do
+            current=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")
+            status=$(printf '%s' "$current" | jq -r '.status')
+            conclusion=$(printf '%s' "$current" | jq -r '.conclusion // ""')
+            echo "P12_C3_TARGET_STATUS=$status conclusion=$conclusion"
+            [ "$status" = completed ] && break
+            sleep 5
+          done
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "conclusion=$conclusion" >> "$GITHUB_OUTPUT"
+          echo "html_url=$html_url" >> "$GITHUB_OUTPUT"
+      - name: Publish final target status
+        shell: bash
+        run: |
+          set -euo pipefail
+          state=pending
+          if [ '${{ steps.locate.outputs.status }}' = completed ]; then
+            if [ '${{ steps.locate.outputs.conclusion }}' = success ]; then state=success; else state=failure; fi
+          fi
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$TARGET_HEAD_SHA" \
+            -f state="$state" -f context='p12-c3-target-run' \
+            -f description="target_run=${{ steps.locate.outputs.run_id }} status=${{ steps.locate.outputs.status }} conclusion=${{ steps.locate.outputs.conclusion }}" \
+            -f target_url='${{ steps.locate.outputs.html_url }}' >/dev/null

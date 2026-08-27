@@ -1,0 +1,56 @@
+name: research-p12-fresh-blind-tier-a-readiness-self-check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/research-p12-fresh-blind-tier-a-readiness-self-check.yml'
+      - 'research/frozen/big-b4-blind-source-registry-v1.json'
+      - 'research/experiments/p12-fresh-blind-tier-a-readiness-packet-v1.json'
+      - 'scripts/research/p12_fresh_blind_tier_a_readiness_self_check.py'
+      - 'scripts/research/big_b4_protocol_guard.py'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: .
+
+jobs:
+  tier-a-readiness-provider-free:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Assert no provider/private/blind credentials or outcomes
+        run: |
+          test -z "${CEREBRAS_API_KEY:-}"
+          test -z "${GROQ_API_KEY:-}"
+          test ! -e eval/expected-paths.json
+          test ! -e private-eval/expected-paths.json
+      - name: Compile and validate frozen BIG-B4 protocol
+        run: |
+          python -m py_compile scripts/research/p12_fresh_blind_tier_a_readiness_self_check.py scripts/research/big_b4_protocol_guard.py
+          python scripts/research/big_b4_protocol_guard.py >/tmp/big-b4.json
+      - name: Validate Tier A readiness handoff
+        run: |
+          python scripts/research/p12_fresh_blind_tier_a_readiness_self_check.py | tee /tmp/p12-fresh-blind-tier-a-readiness.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/p12-fresh-blind-tier-a-readiness.json'))
+          assert x['status']=='PASS'
+          assert x['source_authorized'] is False
+          assert x['hidden_content_accesses']==0 and x['expected_outcome_accesses']==0
+          assert x['candidate_outputs_read']==0 and x['adaptive_feedback_events']==0
+          assert x['tier_a_handoff_ready_for_external_attestation'] is True
+          print('P12_FRESH_BLIND_TIER_A_READINESS_PROVIDER_FREE_PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p12-fresh-blind-tier-a-readiness
+          path: /tmp/p12-fresh-blind-tier-a-readiness.json
+          retention-days: 90
+          if-no-files-found: error

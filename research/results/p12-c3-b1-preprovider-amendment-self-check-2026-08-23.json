@@ -1,0 +1,54 @@
+{
+  "schema_version": "p12-c3-b1-preprovider-amendment-self-check-v1",
+  "date": "2026-08-23",
+  "status": "PASS",
+  "experiment_id": "P12-C3_EXPOSED_POOL_CAPACITY_CONTROLLED_FACTORIAL",
+  "execution_id": "P12-C3-LIVE-CAPACITY-CONTROLLED-2026-08-23",
+  "failed_b1_run": {
+    "run_id": 32671370930,
+    "failure_stage": "BEFORE_FIRST_PROVIDER_REQUEST",
+    "provider_requests_sent": 0,
+    "candidate_outcomes_observed": 0,
+    "completed_cells": 0,
+    "pending_cells": 36,
+    "first_live_call_at": null,
+    "horizon_deadline": null,
+    "sanitized_handoff_artifact_id": 9501474531,
+    "private_checkpoint_artifact_id": 9501474395
+  },
+  "qualified_amendment": {
+    "effective_runner_sha256": "07808b140d5f90211d5c3445988b46983754825303cbb66123255143094e08be",
+    "candidate_or_evaluator_changed": false,
+    "scientific_geometry_changed": false,
+    "capacity_policy_changed": false,
+    "checkpoint_semantics_changed": false,
+    "e14l_validation_bridge": "PASS",
+    "frozen_c3_transport_overrides_restored": "PASS",
+    "exact_failed_checkpoint_resume": "PASS"
+  },
+  "direct_qualification": {
+    "run_id": 32671829920,
+    "job_id": 97273721703,
+    "conclusion": "success",
+    "artifact_id": 9501584749,
+    "artifact_digest": "sha256:bb2c0aaa15fe246371d9e5db24ee6130e602a54d75bb09aea34e2b6bd53e5312"
+  },
+  "canonical_path_qualification": {
+    "run_id": 32672049576,
+    "job_id": 97274245263,
+    "conclusion": "success",
+    "artifact_id": 9501655501,
+    "artifact_digest": "sha256:c90b999cddad46acbb160406870dfea9b6e8191d574bc4226d4cec7b066b0b9d",
+    "canonical_fixup_path": "scripts/research/p12_c3_checkpointed_runner_fixup.py"
+  },
+  "qualification_boundaries": {
+    "provider_calls": 0,
+    "private_oracle_access": 0,
+    "fresh_blind_access": 0,
+    "legacy_locked_test_access": 0,
+    "github_rerun_allowed": false,
+    "continuation_batch": "B1",
+    "continuation_checkpoint_source_run_id": 32671370930
+  },
+  "scientific_interpretation": "The initial B1 workflow failed before any provider request and produced no candidate outcome. The qualified amendment changes only compatibility validation for the prospectively frozen P12-C3 transport override. The same experiment may continue from the exact checkpoint chain; this is not a GitHub rerun or a new scientific experiment."
+}

@@ -1,0 +1,57 @@
+{
+  "experiment_id": "E9-v4.1",
+  "title": "Structural bugfix amendment for visible-ticket-aligned evaluator v4",
+  "status": "PREREGISTERED_AFTER_STRUCTURAL_DIAGNOSTIC_BEFORE_V4_1_RESCORE",
+  "scope": "DEV measurement-only evaluator correction",
+  "parent": "E9-v4",
+  "trigger": {
+    "historical_capture": "E14l fixed 6/6 capture",
+    "v4_observation": {
+      "fixed_calls_consumed": 6,
+      "parsed_model_outputs_available": 6,
+      "calls_with_matching_private_oracle": 6,
+      "scoreable_calls": 4,
+      "expected_step_normalization_resolved_for_aligned_rows": false,
+      "locked_test_or_gold_leakage_rate": 1.0
+    },
+    "quality_metrics_may_not_motivate_bugfix": true,
+    "candidate_specific_private_rows_used": false
+  },
+  "structural_bugs": [
+    {
+      "id": "path_matcher_inconsistency",
+      "evidence": "The earlier aggregate-only oracle diagnostic recognized 57/57 expected steps as public METHOD+path signatures, while v4 marked at least one selected aligned expected row as incompletely normalized. The diagnostic and scorer use different path-boundary matchers.",
+      "fix": "Replace loose registry-wide path searching with deterministic METHOD+path token extraction, exact path-segment matching to the public registry, and literal-route specificity tie-breaking. Preserve method identity and extract every signature mentioned in one evidence item."
+    },
+    {
+      "id": "locked_test_key_false_positive",
+      "evidence": "The public output schema requires the key trace_quality_self_check.no_locked_test. V4 serialized the whole output including keys and then searched for the substring locked_test, making a valid schema key itself count as leakage.",
+      "fix": "Search only string values recursively, never object key names, for locked-test/gold leakage terms."
+    },
+    {
+      "id": "partial_scoreability_pass_status",
+      "evidence": "V4 emitted E9_V4_MEASUREMENT_ONLY_PASS whenever at least one call was scoreable, including the observed 4/6 result.",
+      "fix": "Emit PASS only when every fixed call is parsed, uniquely ticket-aligned, fully normalized, and scoreable. Otherwise emit NEEDS_REVIEW (or NO_SCOREABLE_CALLS when zero are scoreable)."
+    }
+  ],
+  "frozen_semantics": {
+    "runner_selection_rule": "first_agent_input_case_per_asset",
+    "oracle_alignment": "group_or_asset_plus_exact_ticket_id",
+    "group_union_fallback": false,
+    "root_question_used_for_labels": false,
+    "mode_used_for_action_escalation_labels": false,
+    "evidence_credit_source": "evidence_plan_only",
+    "action_and_escalation_supervision_source": "deterministic public tool signatures in aligned expected_path.step only",
+    "general_free_text_groundedness": "UNMEASURED",
+    "validation_gate_authorized": false,
+    "locked_test_fixed_outputs_allowed": false
+  },
+  "rescore_policy": {
+    "same_historical_E14l_fixed_outputs": true,
+    "no_provider_calls": true,
+    "no_candidate_change": true,
+    "no_new_private_label_inspection": true,
+    "v4_result_not_used_as_quality_evidence": true,
+    "v4_1_result_is_measurement_only": true
+  }
+}

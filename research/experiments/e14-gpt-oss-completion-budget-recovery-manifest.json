@@ -1,0 +1,41 @@
+{
+  "id": "e14-gpt-oss-completion-budget-recovery",
+  "date": "2026-08-17",
+  "status": "E14_GPT_OSS_COMPLETION_BUDGET_RECOVERY_PREREGISTERED",
+  "scope": "DEV_ONLY",
+  "provider": "groq",
+  "model": "openai/gpt-oss-20b",
+  "observed_invalid_run": {
+    "total_calls": 6,
+    "parsed_calls": 1,
+    "scoreable_calls": 1,
+    "model_call_failures": 16,
+    "parse_failures": 0,
+    "provider_failure_category": "non_retryable_request_failure",
+    "successful_prompt_tokens": 1481,
+    "successful_completion_tokens": 754,
+    "successful_reasoning_tokens": 553,
+    "successful_total_tokens": 2235,
+    "prior_max_completion_tokens": 800
+  },
+  "candidate_operational_change": {
+    "reasoning_effort": "medium",
+    "reasoning_effort_change_from_provider_default": false,
+    "max_completion_tokens": 1600,
+    "between_call_delay_seconds": 25,
+    "response_format": "json_object",
+    "prompt_changed": false,
+    "e14_policy_changed": false,
+    "scorer_changed": false,
+    "acceptance_thresholds_changed": false,
+    "dev_groups_changed": false,
+    "repeats_changed": false
+  },
+  "rationale": "The only successful GPT-OSS call consumed 754 of the 800 allowed completion tokens, including 553 reasoning tokens, while all failed attempts were provider-side non-retryable request failures and there were no parser failures. The least behavior-changing recovery is to preserve medium reasoning and JSON Object Mode while removing the prior harness completion-budget bottleneck.",
+  "fallback_not_part_of_this_run": "Do not switch to reasoning_effort=low or JSON Schema strict in the same rerun. If this isolated completion-budget recovery still fails, preregister the next compatibility experiment separately.",
+  "validation_ran": false,
+  "validation_used_for_tuning": false,
+  "locked_test_accessed": false,
+  "final_architecture_freeze": false,
+  "raw_private_material_committed": false
+}

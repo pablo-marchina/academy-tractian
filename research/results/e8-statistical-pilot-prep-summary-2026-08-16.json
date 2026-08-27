@@ -1,0 +1,86 @@
+{
+  "report_version": "e8-statistical-pilot-prep-summary-v1",
+  "date": "2026-08-16",
+  "status": "E8_PREP_PASS",
+  "failures": [],
+  "scope": {
+    "allowed_splits": ["DEV", "VALIDATION"],
+    "forbidden_splits": ["LOCKED_TEST"],
+    "locked_test_accessed": false
+  },
+  "constants_preserved": {
+    "runtime_candidate": "LangGraph",
+    "tool_contract_source": "research.e2.tool_registry.TOOLS",
+    "execution_boundary": "HarnessRunner",
+    "boundary_candidate": "B3",
+    "stopping_policy_candidate": "evidence_sufficiency_policy",
+    "evidence_planning": "adaptive_from_missing_evidence_requirements",
+    "transport_path": "HttpxTransport",
+    "internal_tool_surface_candidate": "native_tools",
+    "external_interoperability_surface_candidate": "mcp_compatible_adapter",
+    "identity_binding": "runner",
+    "seed_binding": "runner",
+    "model_provider_freeze": false,
+    "mcp_topology_freeze": false,
+    "rag_freeze": false,
+    "multi_agent_freeze": false,
+    "observability_freeze": false,
+    "ui_freeze": false,
+    "final_architecture_freeze": false
+  },
+  "candidate_slots_defined": 6,
+  "candidate_slot_ids": [
+    "no_model_policy_baseline",
+    "groq_openai_compatible_free_first",
+    "google_gemini_free_or_low_cost",
+    "openai_reference_optional",
+    "anthropic_reference_optional",
+    "local_ollama_optional"
+  ],
+  "paid_models_enabled_by_default": false,
+  "budget_policy": {
+    "default_mode": "free_first",
+    "paid_models_enabled_by_default": false,
+    "paid_model_run_requires_explicit_budget_approval": true,
+    "secrets_committed": false,
+    "ci_makes_model_calls": false
+  },
+  "representative_case_groups": 5,
+  "representative_groups": {
+    "DEV": ["asset_G501", "asset_C710", "asset_S420"],
+    "VALIDATION": ["asset_B204", "asset_M102"]
+  },
+  "design_axes": [
+    "model_stochasticity_fixed_observations",
+    "environment_robustness_deterministic_modes"
+  ],
+  "max_validation_repeats_per_candidate_case": 5,
+  "primary_metrics": [
+    "task_success",
+    "action_escalation_correctness",
+    "premature_action_rate",
+    "premature_stop_rate",
+    "unsupported_final_claim_rate",
+    "evidence_coverage",
+    "b3_guard_fidelity",
+    "evidence_sufficiency_compliance",
+    "runtrace_completeness",
+    "locked_test_access_flag"
+  ],
+  "secondary_metrics": [
+    "request_count",
+    "unnecessary_calls",
+    "http_4xx_5xx_rate",
+    "policy_block_count_and_type",
+    "latency_avg_ms",
+    "latency_p95_ms",
+    "token_cost_estimate",
+    "output_variance_across_repeats",
+    "cross_provider_disagreement_patterns"
+  ],
+  "leakage_controls_defined": true,
+  "ci_model_calls": false,
+  "locked_test_accessed": false,
+  "final_architecture_freeze": false,
+  "next_gate": "E8 pilot execution once local credentials/budget are confirmed"
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": "p12-c2-live-execution-trigger-v1",
+  "execution_id": "P12-C2-LIVE-EXPOSED-POOL-2026-08-23",
+  "experiment_id": "P12-C2_EXPOSED_POOL_FACTORIAL_EVIDENCE_SAFETY",
+  "execution_manifest_git_blob_sha": "5ff63073e282749e1ec01080094ee976dba0deb4",
+  "consume_authorized_live_cycle": true,
+  "authorized_cycle_index": 1,
+  "expected_common_parent_generations": 36,
+  "expected_fixed_factorial_outputs": 144,
+  "github_generation_rerun_allowed": false,
+  "semantic_stage_authorized": false,
+  "fresh_blind_authorized": false,
+  "legacy_locked_test_authorized": false,
+  "created_before_any_p12_c2_live_provider_outcome": true
+}

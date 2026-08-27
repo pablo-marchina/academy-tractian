@@ -1,0 +1,45 @@
+{
+  "schema_version": "big-b2-benchmark-design-comparison-v1",
+  "date": "2026-08-21",
+  "status": "BIG_B2_COMPLETE_SELECTION_DEFERRED",
+  "preregistration": "research/experiments/big-b2-benchmark-design-comparison-preregistration.json",
+  "geometry_result": "research/results/big-b2-public-benchmark-geometry-2026-08-21.json",
+  "selection_authority": "BIG-B3",
+  "alternatives": [
+    {"id":"A","name":"retain-current-roles-baseline","hard_constraint_status":"FAIL_IF_VALIDATION_CLAIMED_INDEPENDENT","independence":"LOW","development_group_efficiency":"LOW","fresh_blind_evidence":"NONE","feasibility":"VERY_HIGH","whole_system_assessment":"DOMINATED_BY_B_FOR_FUTURE_ACCOUNTING"},
+    {"id":"B","name":"reclassify-exposed-validation-into-development-pool","hard_constraint_status":"PASS_WITH_QUALIFIED_FINAL_PATH","independence":"HONEST_EXPOSED_POOL","development_group_efficiency":"HIGH_7_GROUPS","fresh_blind_evidence":"NONE","feasibility":"VERY_HIGH","whole_system_assessment":"STRONG_BUILDING_BLOCK_NOT_SUFFICIENT_ALONE_FOR_STRONGEST_FINAL_CLAIM"},
+    {"id":"C","name":"grouped-repeated-cv-on-seven-exposed-groups","hard_constraint_status":"PASS_AS_SELECTION_LAYER_ONLY","independence":"DOES_NOT_RESTORE_BLINDNESS","development_group_efficiency":"HIGH","fresh_blind_evidence":"REQUIRES_SEPARATE_PATH","feasibility":"HIGH","whole_system_assessment":"STRONG_PROSPECTIVE_PAIRED_COMPARISON_AND_GROUP_SENSITIVITY_LAYER"},
+    {"id":"D","name":"nested-grouped-cv-on-seven-exposed-groups","hard_constraint_status":"PASS_ONLY_WHEN_FULL_SELECTION_PROCEDURE_IS_NESTED","independence":"DOES_NOT_ERASE_HISTORICAL_HUMAN_EXPOSURE","development_group_efficiency":"LOW_TO_MEDIUM_WITH_7_GROUPS","fresh_blind_evidence":"REQUIRES_SEPARATE_PATH","feasibility":"MEDIUM_LOW_FOR_WHOLE_SYSTEM","whole_system_assessment":"SUBCOMPONENT_TECHNIQUE_NOT_WHOLE_PROJECT_INDEPENDENCE_SOLUTION"},
+    {"id":"E","name":"new-blind-validation-set","hard_constraint_status":"PASS_IF_GENUINELY_UNSEEN_AND_LABELS_HIDDEN","independence":"HIGH","development_group_efficiency":"HIGH_7_EXPOSED_GROUPS_RETAINED","fresh_blind_evidence":"YES","feasibility":"MEDIUM","whole_system_assessment":"NON_DOMINATED_FRESH_EVIDENCE_FAMILY"},
+    {"id":"F","name":"partner-held-blind-evaluation","hard_constraint_status":"PASS_IF_NO_ADAPTIVE_FEEDBACK","independence":"VERY_HIGH","development_group_efficiency":"HIGH","fresh_blind_evidence":"YES_EXTERNAL","feasibility":"DEPENDENT_ON_PARTNER","whole_system_assessment":"NON_DOMINATED_WHEN_AVAILABLE"},
+    {"id":"G","name":"independently-authored-adjudicated-new-cases","hard_constraint_status":"PASS_IF_AUTHORING_ADJUDICATION_INSULATED","independence":"MEDIUM_HIGH_TO_HIGH","development_group_efficiency":"HIGH","fresh_blind_evidence":"YES","feasibility":"MEDIUM_HIGH","whole_system_assessment":"NON_DOMINATED_SELF_CONTAINED_FRESH_EVIDENCE_FAMILY"},
+    {"id":"H","name":"synthetic-adversarial-supplement","hard_constraint_status":"FAIL_AS_STANDALONE_REAL_DOMAIN_REPLACEMENT","independence":"HIGH_SYNTHETIC","development_group_efficiency":"N_A","fresh_blind_evidence":"SYNTHETIC_ONLY","feasibility":"VERY_HIGH","whole_system_assessment":"VALUABLE_SUPPLEMENT_NOT_STANDALONE_FINAL_EVIDENCE"},
+    {"id":"I","name":"hybrid-development-cv-plus-fresh-blind-final","hard_constraint_status":"PASS_IF_FRESH_SOURCE_PROTECTED","independence":"HIGH_TO_VERY_HIGH_DEPENDING_FRESH_SOURCE","development_group_efficiency":"HIGH","fresh_blind_evidence":"YES","feasibility":"MEDIUM","whole_system_assessment":"NON_DOMINATED_HYBRID_FAMILY_EXACT_VARIANT_DEFERRED_TO_BIG_B3"}
+  ],
+  "pareto_frontier": [
+    {"id":"P1","name":"external-blind-hybrid","components":["B","C","F","H","qualified_legacy_LOCKED_TEST"],"strength":"strongest organizational blindness and auditability","tradeoff":"external dependency and unknown availability"},
+    {"id":"P2","name":"independently-authored-blind-hybrid","components":["B","C","G","H","qualified_legacy_LOCKED_TEST"],"strength":"fresh evidence without requiring partner infrastructure","tradeoff":"independence and representativeness depend on author/adjudicator insulation"},
+    {"id":"P3","name":"deadline-minimal-qualified-legacy-path","components":["B","C","H","qualified_legacy_LOCKED_TEST"],"strength":"maximum immediate feasibility","tradeoff":"weaker final claim; legacy locked is structurally exposed and only three independent groups"}
+  ],
+  "dominance_findings": [
+    "A is dominated by B for truthful future development accounting.",
+    "H cannot replace E/F/G as real-domain blind evidence under production-first governance.",
+    "D does not dominate C for whole-system engineering because it cannot retrospectively nest human adaptive hypothesis generation.",
+    "P1 and P2 are non-dominated because organizational blindness trades off against external dependency/feasibility.",
+    "P3 remains only on a feasibility frontier and is not evidentially equivalent to P1/P2."
+  ],
+  "mandatory_invariants_for_BIG_B3": [
+    "historical DEV plus VALIDATION treated as exposed data",
+    "asset/story-group split unit",
+    "paired prospective comparisons where possible",
+    "group-level and modality-sliced distributions retained",
+    "contextualize tracked separately",
+    "no naive fold standard error as universal unbiased uncertainty",
+    "nested CV only for fully repeatable nested selection procedures",
+    "fresh final/blind data return no adaptive feedback before candidate freeze",
+    "synthetic/adversarial evidence supplementary only",
+    "legacy LOCKED_TEST structural exposure disclosed",
+    "final claim strength tied to independent blind group count/diversity rather than raw calls"
+  ],
+  "selection": null
+}
