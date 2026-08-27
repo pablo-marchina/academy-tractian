@@ -17,6 +17,7 @@ Canonical navigation:
 
 - [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — sole human-readable source for current evidence-backed state and authorization;
 - [`docs/NEXT-STEPS.md`](docs/NEXT-STEPS.md) — current short-horizon execution plan;
+- [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) — requested requirements mapped to final capabilities and evidence;
 - [`docs/ARCHITECTURE-ROADMAP.md`](docs/ARCHITECTURE-ROADMAP.md) — general research-to-production/system architecture roadmap;
 - [`docs/PROJECT-PLAN.md`](docs/PROJECT-PLAN.md) — master phase and milestone map;
 - [`docs/PROJECT-PROGRESS-LOG.md`](docs/PROJECT-PROGRESS-LOG.md) — chronological evidence ledger;
@@ -29,12 +30,12 @@ The root README intentionally does **not** duplicate the current gate, experimen
 
 ## Project target
 
-The final system must address both:
+The updated TAPI requires an integrated solution with both:
 
-1. **Industrial Agent Engineering** — contextualize, investigate, execute and escalate against the supplied industrial API.
-2. **Agent Evaluation & Reliability** — quantitatively evaluate tool choice, arguments, trajectory, evidence, conclusion/response, safety, robustness, stability and action behavior.
+1. **Industrial Agent Engineering** — contextualize, investigate, request clarification when needed, execute justified actions, escalate safely and handle incomplete/conflicting/unavailable information against the supplied industrial API.
+2. **Agent Evaluation & Reliability** — quantitatively evaluate tool choice, arguments, trajectory, evidence, decision/response, actions, escalation, safety, robustness and stability while preserving evaluation-only gold isolation.
 
-The target is a real production-path delivery, not a benchmark-only artifact or scripted demo. Final delivery remains targeted for **2026-09-08**.
+The final demonstration must exercise the real integrated production path and its evaluation framework rather than a benchmark-only artifact or scripted mock-only demo. Final delivery remains targeted for **2026-09-08**.
 
 ## Repository model
 
