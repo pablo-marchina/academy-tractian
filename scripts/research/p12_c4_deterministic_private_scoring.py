@@ -20,17 +20,17 @@ import hashlib
 import importlib.util
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 FREEZE = ROOT / "research/results/p12-c4-complete-packet-freeze-2026-08-26.json"
 ACTIVATION = ROOT / "research/experiments/p12-c2-exposed-pool-activation-eligibility-v1.json"
 EVALUATOR_V41 = ROOT / "scripts/research/e9_evaluator_side_scorer_v4_1.py"
-EVALUATOR_V4 = ROOT / "scripts/research/e9_evaluator_side_scorer_v4.py"
-TOOL_REGISTRY = ROOT / "research/e2/tool_registry.py"
-E2_MODELS = ROOT / "research/e2/models.py"
-C2_SCORER_REFERENCE = ROOT / "scripts/research/p12_c2_factorial_score.py"
 
 EXPECTED_BLOBS = {
     "research/results/p12-c4-complete-packet-freeze-2026-08-26.json": "03b7d5a27ffdec9173e25bdf47377858bf6aeb30",
@@ -307,7 +307,7 @@ def main() -> int:
     if activation.get("factorial_arms") != EXPECTED_FACTORS:
         raise AssertionError("frozen factorial arm semantics changed")
 
-    fixed, calls = verify_fixed_packet(args.fixed_outputs, activation)
+    _fixed, calls = verify_fixed_packet(args.fixed_outputs, activation)
     if not args.oracle_file.is_file():
         raise AssertionError("authorized evaluator-side oracle file is missing")
 
