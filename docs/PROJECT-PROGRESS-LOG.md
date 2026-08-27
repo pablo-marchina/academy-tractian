@@ -180,17 +180,44 @@ PR #2 was marked ready and merged into `main` with merge commit:
 
 The merge reconciled the research/governance foundation into the canonical branch while preserving frozen/consumed provenance. It did **not** advance the scientific gate; `DETERMINISTIC_SCORING` remains the authorized next gate.
 
-A post-merge review then compared the active plans against `research/01-requirements-matrix.md`, which records the updated TAPI/package requirements. The review found that the research protocol was well represented, but final-delivery planning benefited from making product acceptance explicit.
+A post-merge review compared the active plans against `research/01-requirements-matrix.md`. The review strengthened final-delivery planning by:
 
-The plan was therefore strengthened to:
+- adding `DELIVERY-ACCEPTANCE.md` as the requirement → final capability → evidence crosswalk;
+- making both **agent construction** and the **evaluation framework** explicit P0 deliverables;
+- protecting contextualize, investigate, execute, clarify/abstain, escalate, robustness and inspectable-trace coverage;
+- requiring real API integration and per-run evaluation in the final demonstration;
+- classifying work as P0 required, P1 material production or P2 conditional enhancement;
+- forbidding P2 complexity from displacing P0/P1 acceptance work;
+- revising `ARCHITECTURE-ROADMAP.md` into coupled Agent Runtime and Evaluation & Reliability planes separated by the gold/private boundary.
 
-- add `DELIVERY-ACCEPTANCE.md` as the requirement → final capability → evidence crosswalk;
-- make both **agent construction** and the **evaluation framework** explicit final P0 deliverables;
-- explicitly protect contextualize, investigate, execute, clarify/abstain, escalate, robustness and inspectable-trace coverage;
-- require real API integration and per-run evaluation in the final demonstration;
-- classify work as P0 required, P1 material production or P2 conditional enhancement;
-- forbid P2 complexity from displacing P0/P1 acceptance work;
-- revise `ARCHITECTURE-ROADMAP.md` into two coupled logical planes: Agent Runtime and Evaluation & Reliability, separated by the gold/private boundary;
-- protect the final project window for integration, regression, robustness, documentation, reproducibility and real-path demonstration.
+## 12. Audited TAPI + delivered-package + kickoff reconciliation — 2026-08-27
 
-Machine checkpoint: `research/results/project-progress-checkpoint-2026-08-27-0027-brt.json`.
+The actual project inputs were re-reviewed together:
+
+- `[UPDATED] Tapi Inteli  Tractian.pdf`;
+- `inteli-tractian-project.zip`;
+- `tractian-kickoff.md`.
+
+The exact reviewed files/hashes and package discrepancies were frozen in:
+
+`research/tractian-source-baseline-2026-08-27.md`.
+
+Observed package facts include 17 agent-visible cases, 17 expected-path evaluation rows, 16 narrative scenarios and 17 concrete OpenAPI operations. The audit also records that narrative package documentation contains small mismatches with the actual delivered files/contract; executable package behavior is used where appropriate without rewriting upstream evidence.
+
+This reconciliation established a fixed repository North Star:
+
+> maximize the quality of the **actual requested TRACTIAN × Inteli delivery** using P1–P4, rather than maximizing research volume or architecture complexity.
+
+The repository was updated to:
+
+- embed the North Star and upstream source hierarchy in `PROJECT-PRINCIPLES.md`;
+- reconcile `research/01-requirements-matrix.md` against the actual package and kickoff;
+- strengthen `DELIVERY-ACCEPTANCE.md` around the eight official academic criteria;
+- encode partner-quality targets: operational conclusion over exact wording, inspectable process, safe human fallback, useful escalation handoff, customer-safe communication and stable tool contract;
+- separate official benchmark action semantics from a possible real-product requester-confirmation policy;
+- update model/provider strategy so a strong quality frontier is evaluated before premature cost-only optimization;
+- revise `ARCHITECTURE-ROADMAP.md` and `PROJECT-PLAN.md` around the integrated agent + evaluator product actually requested;
+- add a Source/Brief Reconciliation Gate to `REPOSITORY-GUIDE.md`;
+- protect the final calendar window from speculative P2 complexity.
+
+This was a requirements/governance/planning reconciliation only. It did **not** execute deterministic scoring, authorize new provider calls, access FRESH_BLIND/LEGACY_LOCKED_TEST or freeze a final architecture.
