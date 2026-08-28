@@ -1,0 +1,96 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "timestamp_brt": "2026-08-28T02:00:00-03:00",
+  "canonical_branch": "main",
+  "canonical_main_head": "903b977928ff19bc63c6ff35acd92f233af813be",
+  "reconciliation_branch": "docs/reconcile-provider-comparison-executor",
+  "final_delivery_target": "2026-09-08",
+  "north_star": "maximize actual TRACTIAN/Inteli delivery under P1-P4",
+  "scientific": {
+    "gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+    "state_changed_by_adr_010": false,
+    "provider_model_calls_authorized": 0,
+    "missing_exact_score_row_artifact": {
+      "sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+      "bytes": 177350,
+      "rows": 144,
+      "parents": 36,
+      "arms": 4,
+      "reconstruction_forbidden": true,
+      "rescoring_forbidden": true
+    },
+    "survivor_selection_authorized": false,
+    "semantic_evaluation_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "project_preferred": null
+  },
+  "production": {
+    "controller": "FROZEN_FOR_P0_CONTROLLER_SCOPE_ADR_004",
+    "action_safety": "FROZEN_ADR_005_ACTIONS_DISABLED",
+    "provider_neutral_decision_source": "FROZEN_ADR_006",
+    "model_call_provenance": "FROZEN_ADR_007",
+    "provider_comparison_design": "FROZEN_ADR_008",
+    "provider_http_clients_and_live_authorization": "FROZEN_ADR_009",
+    "provider_comparison_executor": "FROZEN_ADR_010_PROVIDER_FREE_PASS",
+    "comparison_plan_sha256": "69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f",
+    "live_call_envelope_max": 32,
+    "live_calls_consumed": 0,
+    "provider_model_selected": false,
+    "credentials_probed": false,
+    "mutating_actions_enabled": false,
+    "production_readiness_claimed": false
+  },
+  "adr_010": {
+    "issue": 38,
+    "pr": 39,
+    "final_head": "dd15ce32362247066edf0a476f8a9e93eb6cdbe8",
+    "merge_commit": "903b977928ff19bc63c6ff35acd92f233af813be",
+    "decision_state": "FROZEN_FOR_PROVIDER_COMPARISON_EXECUTOR",
+    "executor_source_git_blob": "4357aa101f5a15d5fc8376b17fa38ca51ea72ae3",
+    "executor_tests_git_blob": "6663177bb96a8fdffd15fa64c9cc7e5a92edf2e3",
+    "fixture_validator_git_blob": "563b47e14dbf6119deef167ae8926261c38ed07a",
+    "provider_free_fixture_git_blob": "7c3972b2e467de4a21c6ef353f5427bf7651b4d9",
+    "executor_freeze_path": "research/frozen/provider-comparison-executor-freeze-v1.json",
+    "fixture_status": "PASS_PROVIDER_FREE_FIXTURE_NO_SELECTION",
+    "fixture_simulated_attempts": 32,
+    "fixture_live_calls": 0,
+    "fixture_selection": "NO_SELECTION",
+    "fixture_production_selection_claim": false,
+    "final_validation": {
+      "triggered_workflows": "14/14 success",
+      "provider_comparison_executor_run_id": 33143341273,
+      "provider_comparison_executor_run_number": 3,
+      "production_runtime_run_id": 33143341274,
+      "production_runtime_run_number": 31,
+      "provider_model_comparison_design_run_id": 33143341229,
+      "provider_model_comparison_design_run_number": 6,
+      "provider_live_authorization_run_id": 33143341282,
+      "provider_live_authorization_run_number": 3
+    },
+    "preserved_failures": [
+      {
+        "head": "c2f5f11ec3fa5030b5422cceceba1de1e839b3b4",
+        "run_id": 33142884381,
+        "run_number": 27,
+        "summary": "130 passed / 1 failed: ADR-009 frozen package export blob was modified; restored exact frozen blob rather than weakening validator",
+        "live_provider_calls": 0
+      },
+      {
+        "head": "3c16171528449e5fca9bc4a80555eca1be2432b5",
+        "run_id": 33143114620,
+        "run_number": 1,
+        "summary": "dedicated fixture validator failed before fixture evaluation because standalone script lacked repository-root import bootstrap",
+        "live_provider_calls": 0
+      }
+    ]
+  },
+  "next_product_step": {
+    "task": "separate ADR-009/ADR-010 live comparison execution wrapper",
+    "provider_free_preparation_first": true,
+    "credential_probe_forbidden": true,
+    "missing_secrets_behavior": "stop before attempt 0 with sanitized operational blocker",
+    "candidate_or_threshold_changes_allowed": false,
+    "live_execution_authorized_only_with_explicitly_provisioned_secrets": true
+  }
+}
