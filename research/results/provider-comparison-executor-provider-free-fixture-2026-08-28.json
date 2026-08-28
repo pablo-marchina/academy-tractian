@@ -1,0 +1,91 @@
+{
+  "schema_version": "provider-comparison-executor-provider-free-fixture-v1",
+  "status": "PASS_PROVIDER_FREE_FIXTURE_NO_SELECTION",
+  "date": "2026-08-28",
+  "issue": 38,
+  "executor_version": "provider-comparison-executor-v1",
+  "fixture_result": true,
+  "frozen_inputs": {
+    "design_manifest_git_blob": "9c3d0901414445bd4de557d5ef1d2f68a15c883b",
+    "population_git_blob": "abd6a7d973a8779f425c3607d963e29f15db09e5",
+    "population_sha256": "561d252d06a3be30e7d631053906e2e29fbcdd151f05b03b56cbf5ead024c251",
+    "authorization_git_blob": "5690414564ccddb07184c333fdf79f4ee2fb7788",
+    "provider_clients_git_blob": "e78807bdfd4fd0ca9840fa2d9e6c62474237ee45"
+  },
+  "plan": {
+    "sha256": "69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f",
+    "attempts": 32,
+    "attempts_per_live_candidate": 16,
+    "units": 8,
+    "repeats": 2,
+    "warmup_calls": 0,
+    "automatic_retries": 0,
+    "fallbacks": 0,
+    "parallel_live_calls": false
+  },
+  "baseline_quality_rate": 0.25,
+  "candidates": {
+    "openai_gpt_5_6_sol_responses_standard": {
+      "attempts": 16,
+      "complete": true,
+      "M1_structured_decision_adherence": 1.0,
+      "M2_known_tool_selection_validity": 1.0,
+      "M3_b1_argument_validity": 1.0,
+      "M3_identity_seed_attempts": 0,
+      "M4_public_task_quality": 1.0,
+      "M5_safe_failure_behavior": 1.0,
+      "M6_latency_count": 16,
+      "M6_values_frozen": false,
+      "M7_success_rate": 1.0,
+      "M7_signature_stability": 1.0,
+      "M8_usage_records": 16,
+      "M8_normalized_cost_usd": null,
+      "M9_portability": {
+        "provider_sdk_or_http_dependency": "stdlib_http_no_provider_sdk",
+        "credential_account_requirements": "UNVERIFIED_NO_CREDENTIAL_PROBE",
+        "hosting_requirements": "hosted_api",
+        "observed_rate_capacity_constraints": "NOT_OBSERVED_FIXTURE",
+        "reproducibility_limitations": "provider_seed_not_forwarded",
+        "local_hardware_burden": "none_for_hosted_api"
+      },
+      "M10_trace_integrity": 1.0,
+      "hard_gate_pass": true,
+      "hard_gate_failures": []
+    },
+    "google_gemini_3_7_flash_interactions_stateless": {
+      "attempts": 16,
+      "complete": true,
+      "M1_structured_decision_adherence": 1.0,
+      "M2_known_tool_selection_validity": 1.0,
+      "M3_b1_argument_validity": 1.0,
+      "M3_identity_seed_attempts": 0,
+      "M4_public_task_quality": 1.0,
+      "M5_safe_failure_behavior": 1.0,
+      "M6_latency_count": 16,
+      "M6_values_frozen": false,
+      "M7_success_rate": 1.0,
+      "M7_signature_stability": 1.0,
+      "M8_usage_records": 16,
+      "M8_normalized_cost_usd": 0.0024,
+      "M9_portability": {
+        "provider_sdk_or_http_dependency": "stdlib_http_no_provider_sdk",
+        "credential_account_requirements": "UNVERIFIED_NO_CREDENTIAL_PROBE",
+        "hosting_requirements": "hosted_api",
+        "observed_rate_capacity_constraints": "NOT_OBSERVED_FIXTURE",
+        "reproducibility_limitations": "provider_seed_not_forwarded",
+        "local_hardware_burden": "none_for_hosted_api"
+      },
+      "M10_trace_integrity": 1.0,
+      "hard_gate_pass": true,
+      "hard_gate_failures": []
+    }
+  },
+  "selection": "NO_SELECTION",
+  "production_selection_claim": false,
+  "production_live_calls_consumed": 0,
+  "production_actions_executed": 0,
+  "raw_provider_material_recorded": false,
+  "semantic_private_blind_access": false,
+  "scientific_gate_changed": false,
+  "note": "M6 latency is exercised and checked nonnegative for all 16 attempts per candidate, but provider-free wall-clock values are intentionally excluded from frozen fixture identity."
+}
