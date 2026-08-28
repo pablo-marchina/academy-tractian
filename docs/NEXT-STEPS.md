@@ -1,152 +1,144 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-08-28 09:17 BRT  
+**Checkpoint:** 2026-08-28 — post historical-evidence audit  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
-**Mandatory decision-revalidation plan:** [`DECISION-REVALIDATION-MASTER-PLAN.md`](DECISION-REVALIDATION-MASTER-PLAN.md)
+**Historical evidence audit:** [`MATERIAL-DECISION-HISTORICAL-EVIDENCE-AUDIT-2026-08-28.md`](MATERIAL-DECISION-HISTORICAL-EVIDENCE-AUDIT-2026-08-28.md)  
+**Evidence-first gate:** [`EVIDENCE-AUDIT-BEFORE-EXPERIMENTS.md`](EVIDENCE-AUDIT-BEFORE-EXPERIMENTS.md)
 
-This file is the short-horizon execution plan. It does not itself authorize a scientific gate, live provider call, real customer mutation or provider selection.
+This file is the short-horizon execution plan. It authorizes no scientific gate, provider call, credential probe, real-customer mutation or new experiment by itself.
 
-## 1. Immediate rule — plan before implementation
+## 1. Immediate rule
 
-From this checkpoint forward, **do not start material implementation before the applicable decision is documented and preregistered**.
-
-Required order:
-
-```text
-update plan / decision inventory
-→ define decision question + requirement/risk
-→ freeze hard constraints
-→ research credible materially different alternatives
-→ preregister comparison / metrics / hard gates / repetitions / robustness
-→ only then implement or execute the experiment
-```
-
-This applies to provider/model, topology, runtime, retrieval, memory, routing, tools/protocols, evaluators, observability, deployment, UI and any other material decision.
-
-Historical freezes remain immutable evidence; they do not exempt a decision from revalidation if a hard assumption changed or a credible alternative was omitted.
-
-## 2. Permanent production/service hard constraint — USD 0
+The historical evidence audit is complete. Therefore the next step is **not** broad new experimentation.
 
 ```text
-external API / hosted-service project charge    USD 0
-paid subscription required                      NO
-purchased credits                               NO
-unbounded billable spillover                    FORBIDDEN
+existing evidence audit          DONE
+material decision matrix         DONE
+new experiments authorized       0
 ```
 
-Within that feasible set, select the strongest evidence-backed quality/production Pareto configuration rather than the first free option.
-
-## 3. Current active workstream — global decision revalidation
-
-The previous instruction to perform “submission/review hygiene only” is superseded by this prospective planning checkpoint because the project principles require proof of best-supported choices, not only acceptance coverage.
-
-Immediate sequence:
-
-1. freeze this governance/planning update before new development;
-2. complete the material-decision inventory and current primary-source research;
-3. prospectively amend the provider/model comparison around the USD 0 feasible set;
-4. preregister controlled topology/runtime experiments before implementation;
-5. continue exact C4 artifact recovery in parallel without changing scientific semantics;
-6. only after each comparison is preregistered, execute the corresponding implementation/experiment;
-7. select by hard gates + quantitative evidence + robustness + production fit + Pareto reasoning;
-8. integrate the best-supported configuration and rerun full regression before any final architecture freeze.
-
-## 4. Provider/model comparison — old live packet suspended
-
-Current historical packet:
+For every future decision:
 
 ```text
-ADR-008 historical design                   PRESERVED
-old candidates                              OpenAI GPT-5.6 Sol / Gemini 3.7 Flash
-old max calls                               32
-calls consumed                               0
-production provider selected                 NO
+decision question
+→ existing repository evidence
+→ sufficiency/gap classification
+→ current external fact refresh only where needed
+→ minimum preregistration only if a material gap still requires an experiment
+→ implementation / experiment only after that
 ```
 
-The old packet must **not execute** because OpenAI GPT-5.6 Sol is outside the project's USD 0 production feasible set.
+## 2. NOW — reconcile provider/model facts against existing evidence
 
-Issue #44 must remain suspended pending a prospective amendment. Do not spend any of the old 32-call budget.
+Provider/model quality is `PARTIALLY_ASSESSED`, not unresearched.
 
-### Connection state
+Reuse before any new call:
 
-User-reported only; do not probe secrets/accounts:
+- E8 zero-cost candidate discovery;
+- real E8 Groq operational evidence;
+- E14g→E14l Groq GPT-OSS operational + negative task-quality evidence;
+- P12-C2/C3 capacity failures;
+- ADR-001 serving-capacity analysis;
+- ADR-002/003 and C4 provider-serving probes;
+- ADR-006→011 provider-neutral production comparison infrastructure.
+
+The only immediate provider work is **current first-party fact refresh** for potentially eligible USD-0 candidates:
+
+- current free-tier/route eligibility and billable-spillover behavior;
+- current model identities relevant to the task;
+- structured-output/tool-use contract compatibility;
+- current quotas/capacity only for candidates that survive eligibility screening;
+- operational constraints that materially affect this project.
+
+Do not make inference calls during this refresh. Do not probe credentials/accounts merely to verify user-reported connection state.
+
+After the fact refresh, reconcile each candidate as:
 
 ```text
-Groq API     connected
-Gemini API   pending user connection
+covered by historical evidence
+needs only factual update
+has a precise missing quality/production measurement
+not currently eligible/material
 ```
 
-A connected credential does not authorize provider calls by itself.
+Only then decide whether a new provider comparison is needed and what the minimum prospective packet would be.
 
-### Candidate discovery before amendment
+## 3. Agent topology — gap recorded, implementation not yet authorized
 
-At minimum screen current zero-cost candidates from:
-
-- Gemini free-tier models;
-- Groq free-tier models;
-- OpenRouter explicitly free routes/models if identity and cost containment are adequate;
-- Cloudflare Workers AI free-tier models if contract fit is adequate;
-- feasible local/open-weight baseline;
-- any other materially distinct zero-cost candidate found by primary-source research.
-
-Prospective exclusions must be documented before live results are observed.
-
-## 5. Agent-topology decision — revalidate before final selection
-
-Current single-agent explicit controller remains the simple `QUALIFIED_BASELINE`, not the proven final topology.
-
-Preregister a controlled comparison with at least:
+Current state:
 
 ```text
-A  current single-agent / explicit-controller baseline
-B  planner → executor
-C  agent → critic/reviewer
+single-agent explicit controller     strong QUALIFIED baseline
+controlled single-vs-multi result    absent
+multi-agent incremental benefit      unresolved
+topology implementation now          NOT AUTHORIZED
 ```
 
-Hold provider/model, task distribution, ToolSpecs, HarnessRunner, authorization/safety and evaluator definitions constant where possible.
+The missing comparison is real, but topology must be isolated from provider/model effects. Do not implement planner→executor or agent→critic/reviewer until:
 
-Measure quality, tool/argument correctness, evidence quality, action/escalation/clarification/abstention correctness, safety, stability, latency, quota/token use, coordination failures, unnecessary handoffs, loop amplification, trace clarity, debugging and operational complexity.
+1. the provider/model basis is controlled enough for a fair architecture comparison;
+2. the topology alternative remains materially credible for the assignment after screening;
+3. the exact task population, metrics, hard gates, repetitions, cost/quota and complexity measures are prospectively preregistered.
 
-Do not implement B/C until their exact comparison protocol is preregistered.
+## 4. Runtime/orchestration — preserve existing evidence, do not restart research
 
-## 6. Runtime/orchestration and other decisions
+Current classification: `PARTIALLY_ASSESSED`.
 
-After provider and topology comparisons are preregistered/executed, review the remaining decision register in this order unless new evidence changes priority:
+Already known:
 
-1. orchestration/runtime;
-2. adaptive stopping/planning;
-3. model routing;
-4. retrieval/evidence routing;
-5. memory/state;
-6. evaluator/judge scope;
-7. observability;
-8. deployment;
-9. UI/integration.
+- E6 scorecard considered LangGraph, Pydantic AI/Graph and OpenAI Agents SDK;
+- LangGraph was implemented and validated for trace, deterministic replay, checkpoint/pause-resume and supplied-API integration;
+- ADR-004 later implemented a smaller explicit controller and froze it for the P0 controller scope;
+- LangGraph remains the first qualified upgrade path under ADR-004 reversal triggers.
 
-Tool topology/native tools vs MCP already has comparatively strong historical evidence; retain it provisionally unless current research finds a material new requirement or alternative.
+Do not create a fresh runtime survey or experiment now. Revisit only if provider/topology resolution or an ADR-004 reversal trigger makes the asymmetry material.
 
-RAG/vector DB/reranking/persistent memory/multi-agent/richer UI are neither automatically required nor automatically deferred. They must be screened under the same rule: implement only when a credible expected benefit maps to a requirement/risk and the comparison can be measured.
+## 5. Decisions explicitly closed to new experiments in the current scope
 
-## 7. C4 scientific critical path — exact recovery first
+No new experiment is authorized for these unless a documented reversal trigger appears:
 
-Current scientific gate remains `REQUIRED_PER_GROUP_AND_SLICE_REPORTING`.
+- historical Groq/GPT-OSS reasoning-budget/response-format tuning family;
+- native ToolSpec vs MCP adapter;
+- evidence-sufficiency stopping;
+- RAG/vector DB/reranking;
+- persistent memory;
+- deterministic safety/authorization/action custody;
+- provider-free failure/stability/communication campaigns;
+- operational deterministic evaluator stack;
+- normalized RunTrace observability;
+- hosted deployment topology;
+- richer UI.
 
-Exact missing evaluator-side deterministic score-row artifact:
+The reason is not that these technologies are universally bad or globally solved. The repository already has sufficient evidence for the **current inclusion decision** or no material current requirement/gap that would justify a new experiment.
+
+## 6. Adaptive model routing — unassessed but not current work
+
+Adaptive routing is `UNASSESSED`, but it is not experiment-ready.
+
+It becomes material only if the provider work leaves multiple viable, characterized provider/model candidates and there is a concrete context-sensitive reason to route among them. Until then, creating a routing experiment would test a hypothetical problem.
+
+## 7. C4 — exact recovery in parallel
+
+Scientific gate remains:
+
+`REQUIRED_PER_GROUP_AND_SLICE_REPORTING`
+
+Required missing artifact:
 
 ```text
 SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
 bytes    177350
 rows     144
-geometry 36 common parents × 4 arms
+geometry 36 parents × 4 arms
 ```
 
 Authorized now:
 
-- search local/historical/temporary/artifact storage for the exact bytes;
-- verify SHA-256, byte count and geometry if found.
+- search local/historical/temporary/workflow storage for the exact bytes;
+- verify hash, byte count, row count and geometry if a candidate is found.
 
-Not authorized by this plan:
+Not authorized:
 
 - reconstruction;
 - rescoring;
@@ -156,72 +148,47 @@ Not authorized by this plan:
 - LEGACY_LOCKED_TEST;
 - downstream survivor/preferred inference.
 
-If exact bytes cannot be recovered, first create a separate prospective scientific amendment defining whether a byte-identical reproduction attempt is admissible. Any produced file must match the exact frozen SHA-256 and byte count or be rejected.
-
-## 8. Development authorization checklist
-
-Before starting each material implementation, confirm:
-
-- [ ] requirement/risk mapping exists;
-- [ ] decision question is explicit;
-- [ ] hard constraints are frozen;
-- [ ] credible alternatives and simple baseline are documented;
-- [ ] exclusions are documented prospectively;
-- [ ] metrics/hard gates are preregistered;
-- [ ] task population and controls are pinned;
-- [ ] repetitions/uncertainty plan exists where needed;
-- [ ] robustness/failure tests are defined;
-- [ ] production-fit measurements are defined;
-- [ ] stopping and decision semantics are defined;
-- [ ] regression obligations and reversal triggers are defined;
-- [ ] provider/service path is guaranteed USD 0 where applicable.
-
-If any applicable box is missing, remain in planning/research.
-
-## 9. Deadline sequence
+## 8. Ordered work queue
 
 ```text
-NOW        merge/freeze governance + revalidation planning update
-NEXT       systematic current research + complete decision inventory
-NEXT       preregister zero-cost provider amendment
-NEXT       preregister topology comparison
-PARALLEL   search exact C4 score-row bytes
-THEN       execute provider comparison only under amended frozen protocol
-THEN       execute topology/runtime comparisons one dimension at a time
-THEN       select best-supported zero-cost Pareto configuration
-THEN       integrate + full regression + reliability/security validation
-FINAL      evidence-honest architecture freeze and submission before 2026-09-08
+NOW       merge/freeze material-decision historical evidence audit
+NEXT      current first-party USD-0 provider/model fact refresh only
+NEXT      reconcile current facts with existing E8/E14/P12/ADR evidence
+DECIDE    whether a minimal provider comparison is still necessary
+IF YES    preregister that minimum provider comparison before any calls
+PARALLEL  exact C4 artifact recovery
+LATER     topology preregistration only after controlled provider/model basis
+LATER     runtime/adaptive-planning only if still material
+FINAL     integrate best-supported configuration + full regression + evidence-honest architecture freeze
 ```
 
-## 10. Preserved provider-free handoff evidence
+## 9. Development authorization checklist
 
-ADR-017 remains valid within its original scope:
+Before a new experiment or material candidate implementation:
 
-```text
-acceptance rows                         83
-PASS_EVIDENCED                          41
-PASS_BOUNDED                            40
-EXTERNALLY_BLOCKED                       1   C4 / EV-012
-UNEXECUTED_GATED                         1   live provider quality
-GAP_ACTION_REQUIRED                      0
-clean-checkout production tests        251 passed
-ADR-004 regression                      12 passed
-EV-007 / EV-008 / EV-011               PASS / exact frozen SHAs
-ADR-016 demo                             5 / 5 / exact 43903731…
-evidence index                          30 / 30 resident blobs / 0 violations
-```
+- [ ] exact decision question exists;
+- [ ] repository-wide evidence audit for that question is recorded;
+- [ ] existing evidence classification is explicit;
+- [ ] a material remaining gap is demonstrated;
+- [ ] current external assumptions were refreshed only where necessary;
+- [ ] existing negative/failed evidence is preserved and incorporated;
+- [ ] no existing artifact adequately answers the gap;
+- [ ] the proposed experiment is the minimum controlled work needed;
+- [ ] hard constraints, especially USD 0 and safety/evaluation boundaries, are preserved;
+- [ ] task population, metrics, hard gates, repetitions and robustness are preregistered;
+- [ ] regression and reversal obligations are defined.
 
-These facts prove reviewer-ready provider-free acceptance evidence, not global architecture optimality. The new revalidation program builds prospectively on this baseline without rewriting it.
+If any applicable box is false, do not create the experiment.
 
-## 11. Still forbidden
+## 10. Still forbidden
 
-- executing the old ADR-008/#44 live provider packet as-is;
-- using a paid provider/service in the production feasible set;
-- credential/account probing merely to verify connection state;
-- hidden provider retries/fallbacks/warm-ups or uncontrolled provider-side state in controlled comparisons;
-- reconstructing/rescoring/substituting C4 without a separate prospective scientific amendment;
-- semantic/FRESH_BLIND/LEGACY_LOCKED_TEST access without explicit authorization;
-- provider-native TRACTIAN tool execution that bypasses the governed tool boundary;
-- weakening deterministic safety/authorization/idempotency boundaries;
-- treating a historical gate PASS or freeze as proof of global optimality;
-- claiming global architecture freeze or production readiness before revalidation closes.
+- executing ADR-008/#44 as currently frozen;
+- treating a connected API key as evaluation evidence or call authorization;
+- paid provider/service production usage;
+- credential/account probing merely to confirm connection state;
+- redundant reruns of historical negative/failed experiments;
+- multi-agent implementation before topology preregistration and controlled basis;
+- RAG/memory/routing/deployment/UI experiments without a new material trigger;
+- reconstructing/rescoring/substituting C4 without a separately authorized scientific amendment;
+- weakening `HarnessRunner`/authorization/idempotency/private-truth boundaries;
+- claiming provider selection, C4 completion, global architecture freeze or unconditional production readiness before the evidence supports them.
