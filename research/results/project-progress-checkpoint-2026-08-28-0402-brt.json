@@ -1,0 +1,96 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "timestamp_brt": "2026-08-28T04:02:00-03:00",
+  "canonical_branch": "main",
+  "canonical_main_head": "f45c568c24217b54ead8be01c7ac7e0cca2dea7e",
+  "reconciliation_branch": "docs/reconcile-adr-012-controlled-actions",
+  "final_delivery_target": "2026-09-08",
+  "north_star": "maximize actual TRACTIAN/Inteli delivery under P1-P4",
+  "scientific": {
+    "gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+    "state_changed_by_adr_012": false,
+    "provider_model_calls_authorized": 0,
+    "missing_exact_score_row_artifact": {
+      "sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+      "bytes": 177350,
+      "rows": 144,
+      "parents": 36,
+      "arms": 4,
+      "reconstruction_forbidden": true,
+      "rescoring_forbidden": true
+    },
+    "survivor_selection_authorized": false,
+    "semantic_evaluation_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "project_preferred": null
+  },
+  "production": {
+    "controller": "FROZEN_FOR_P0_CONTROLLER_SCOPE_ADR_004",
+    "action_safety": "FROZEN_ADR_005",
+    "default_runtime_actions_enabled": false,
+    "controlled_action_execution": "FROZEN_ADR_012_PROVIDER_FREE_PASS",
+    "blanket_real_customer_mutations_authorized": false,
+    "real_customer_mutations_performed": 0,
+    "provider_neutral_decision_source": "FROZEN_ADR_006",
+    "model_call_provenance": "FROZEN_ADR_007",
+    "provider_comparison_design": "FROZEN_ADR_008",
+    "provider_http_clients_and_live_authorization": "FROZEN_ADR_009",
+    "provider_comparison_executor": "FROZEN_ADR_010_PROVIDER_FREE_PASS",
+    "governed_live_execution": "FROZEN_ADR_011_PROVIDER_FREE_PASS",
+    "comparison_plan_sha256": "69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f",
+    "live_call_envelope_max": 32,
+    "live_calls_consumed": 0,
+    "provider_model_selected": false,
+    "credentials_probed": false,
+    "production_readiness_claimed": false
+  },
+  "adr_012": {
+    "issue": 45,
+    "pr": 46,
+    "final_head": "d60fdd46dee3735bd4a49a85df3eedc7b5e799d7",
+    "merge_commit": "f45c568c24217b54ead8be01c7ac7e0cca2dea7e",
+    "decision_state": "FROZEN_FOR_CONTROLLED_ACTION_EXECUTION_PROFILE",
+    "controlled_actions_git_blob": "9e5f2d49ebc82303423f81ec8916b02c511f2a1e",
+    "controlled_action_evaluation_git_blob": "ae5f1a7777893941882196c8c2f3810676eba0a4",
+    "controlled_actions_tests_git_blob": "357cc503d0b329d025abe004a2c780f6ee5ea2fa",
+    "controlled_action_evaluation_tests_git_blob": "4b65fd911539092bb1126cc4e6db5dc985dad76b",
+    "freeze_path": "research/frozen/controlled-action-execution-profile-freeze-v1.json",
+    "canonical_actions_covered": 5,
+    "durable_claim_before_transport": true,
+    "raw_idempotency_key_persisted": false,
+    "automatic_replay_after_uncertain_claim": false,
+    "final_validation": {
+      "production_runtime_run_id": 33149898961,
+      "production_runtime_run_number": 49,
+      "production_tests": "170 passed",
+      "adr_004_regression": "12 passed",
+      "triggered_workflows": "11/11 success",
+      "freeze_self_check": "PASS",
+      "provider_calls": 0,
+      "real_customer_mutations": 0
+    },
+    "preserved_failure": {
+      "head": "02a7a95765075df08cb10ccd5f89482a813f3fa0",
+      "production_tests": "165 passed / 3 failed",
+      "policy_or_runtime_safety_relaxed_to_fix": false
+    }
+  },
+  "provider_live_execution": {
+    "issue": 44,
+    "state": "OPEN_BLOCKED_ON_EXECUTION_PREREQUISITES",
+    "canonical_custody_root_required": true,
+    "both_secrets_required": true,
+    "credential_probe_forbidden": true,
+    "live_calls_consumed": 0
+  },
+  "next_product_step": {
+    "task": "EV-007 provider-free failure-performance campaign",
+    "provider_calls_required": false,
+    "real_customer_mutations_required": false,
+    "followed_by": [
+      "EV-008 repeated-run stability",
+      "EV-011 customer-safe communication"
+    ]
+  }
+}

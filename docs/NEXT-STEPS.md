@@ -1,10 +1,10 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-08-28 03:25 BRT  
+**Checkpoint:** 2026-08-28 04:02 BRT  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)
 
-This file is the short-horizon execution plan. It does not itself authorize a scientific gate, provider call, production mutation or provider selection.
+This file is the short-horizon execution plan. It does not itself authorize a scientific gate, provider call, real customer mutation or provider selection.
 
 ## 1. Scientific critical path — unchanged and parallel
 
@@ -32,155 +32,172 @@ If recovered exactly:
 
 Do not let this external artifact blocker stop provider-free P0/P1 production work.
 
-## 2. Production P0 — live provider execution is now operationally ready
+## 2. Production P0 — execute the frozen live provider comparison only when prerequisites exist
 
-ADR-010 freezes the exact provider comparison executor. ADR-011 now freezes the governed live execution/custody layer around it.
-
-Canonical identity:
+Provider implementation is complete through ADR-011:
 
 ```text
-executor freeze                     ADR-010
-live execution/custody freeze       ADR-011
+comparison design                   ADR-008 / FROZEN
+live clients + authorization        ADR-009 / FROZEN
+executor                            ADR-010 / FROZEN
+live execution/custody wrapper      ADR-011 / FROZEN
 plan SHA-256                        69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f
-units                               8
-repeats                             2
-live candidates                     2
 max calls                           32
 calls consumed                      0
+provider selected                   NO
 ```
 
-Do **not** build another executor or wrapper.
+Issue #44 is the actual execution task. Do not build another executor/wrapper.
 
-The next Class C provider task is the actual separately governed invocation surface. Before attempt 0 it must:
+Before attempt 0, #44 must have:
 
-1. start from the exact merged ADR-011 implementation/freeze;
-2. designate one canonical durable execution custody root and preserve it as evidence;
-3. receive OpenAI and Google secrets explicitly from the execution environment;
-4. check secret presence only — no account/capability request;
-5. enter only through `GovernedProviderLiveTask`;
-6. verify production actions remain disabled;
-7. if either secret is absent, stop before custody reservation/attempt 0 with a sanitized operational blocker;
-8. if the canonical custody root already contains ADR-009 custody evidence, refuse a second run;
-9. never switch to another custody root after a reserved/consumed run without prospective governance.
+1. canonical `main` with ADR-011 merged;
+2. one canonical durable custody root;
+3. both OpenAI and Google secret values explicitly provisioned;
+4. no existing ADR-009 custody marker for a prior reserved/consumed run;
+5. exact ADR-009/010/011 identity validation;
+6. no credential/account capability probe;
+7. default production mutating actions disabled.
 
-## 3. Execute ADR-009 exactly once only when the preconditions are met
+If either secret is absent, stop before attempt 0. Do not consume a provider call merely to test availability.
 
-If both secrets are explicitly provisioned, the governed live task may consume at most:
+If execution occurs, preserve exact frozen geometry: 16 OpenAI + 16 Google attempts maximum, zero warm-ups/retries/fallbacks/parallel provider calls/provider seed, and no replay of claimed/uncertain attempts.
+
+## 3. Controlled consequential actions — capability complete / ADR-012
+
+The provider-free controlled action execution track is now frozen:
 
 ```text
-OpenAI attempts                   16
-Google attempts                   16
-total attempts                    32
-warm-up calls                      0
-automatic retries                  0
-fallbacks                          0
-parallel provider calls            0
-provider seed                      none
-provider-side conversation state   none
-production actions                 disabled
+controlled runtime                    ADR-012 / FROZEN
+controlled evaluator                  ADR-012 / FROZEN
+default ProductionRuntime actions     DISABLED
+canonical actions proven              5 / 5
+provider calls                        0
+real customer mutations               0
 ```
 
-Every attempted provider invocation is consumed evidence, including operational failures.
+Do not create another action execution path.
 
-The execution must stop on:
+For controlled supplied/test scenarios, use exactly:
 
-- frozen input/blob mismatch;
-- route/model drift;
-- raw/custody/provenance violation;
-- hidden retry/fallback behavior;
-- attempt-order/budget mismatch;
-- authorization-custody mismatch;
-- unauthorized action/tool transport behavior.
+```text
+trusted exact grant
+→ ControlledActionRuntime
+→ AgentController
+→ HarnessRunner.execute_tool()
+→ B1
+→ ADR-005
+→ durable exclusive-create idempotency claim
+→ supplied transport
+→ RunTrace
+→ ControlledActionEvaluator
+```
 
-A `CLAIMED`/`uncertain` attempt is never automatically replayed. Do not replace a failed candidate/route in place. Any material amendment must be prospective and preserve already-consumed evidence.
+ADR-012 does not authorize blanket real-customer mutation. A later real environment still needs trusted identity/permissions, resource/company scope, exact requester confirmation, durable idempotency custody and explicit target transport/environment authorization.
 
-## 4. Freeze the live comparison result
+## 4. NEXT provider-free P0/P1 — EV-007 failure performance
 
-After a live task ends, preserve the ADR-011 custody marker, attempt ledger and sanitized result. Freeze one result containing:
+This is now the highest-value implementation task that is not blocked on secrets or the missing C4 artifact.
 
-- exact frozen design/executor/wrapper identities;
+Build one deterministic provider-neutral failure campaign over the production path. It should exercise at minimum:
+
+- decision-source/client exception;
+- malformed/invalid provider decision payload through the ADR-006 path;
+- invalid/unknown tool proposal containment;
+- tool transport exception after a valid read call;
+- controlled action authorization denial;
+- controlled action transport failure after durable claim;
+- unavailable/partial evidence leading to clarification, abstention or escalation;
+- model-call provenance failure where applicable.
+
+For each case record explicit expected safety properties rather than a weighted score:
+
+- process does not crash out of the controller boundary;
+- unsafe transport count;
+- safe terminal decision/reason code;
+- denied-policy containment;
+- raw exception/provider material leakage = zero;
+- duplicate/replay behavior where consequential actions are involved;
+- trace lifecycle/evaluator pass for the expected failure mode.
+
+Use scripted/provider-free sources first. No ADR-009 calls are required for this task.
+
+## 5. THEN — EV-008 repeated-run stability
+
+After EV-007 is frozen, add a repeated-run report over controlled deterministic request/context inputs.
+
+Provider-free baseline should report explicit denominators for:
+
+- terminal decision-kind stability;
+- tool-selection stability;
+- canonical argument/fingerprint stability;
+- controlled action choice stability where applicable;
+- final conclusion signature stability;
+- trace/evaluation structural-pass rate;
+- failure-family consistency.
+
+Do not interpret deterministic scripted stability as live-model quality. The same runner should later be reusable against the selected provider.
+
+## 6. THEN — EV-011 customer-safe communication
+
+Add deterministic leakage/safety checks over terminal responses and traces:
+
+- no credentials/tokens/authorization headers;
+- no raw backend/provider exceptions;
+- no unnecessary provider/model/internal service disclosure;
+- no private evaluator/gold material;
+- safe language for unavailable/partial/failure states;
+- useful clarification/escalation handoff where applicable.
+
+Use human/semantic review only for communication qualities that cannot be reliably established deterministically, and only under a separately authorized evaluation gate if private/semantic access would be required.
+
+## 7. Freeze provider result when #44 runs
+
+After the live comparison ends, freeze one sanitized result containing:
+
+- exact ADR-008/009/010/011 identities;
 - canonical custody identity;
 - attempted/unattempted indexes;
 - candidate/unit/repeat mapping;
 - sanitized ADR-007 provenance;
-- M1–M10 with exact preregistered denominators;
+- M1–M10 with frozen denominators;
 - hard-gate status;
 - operational failure families;
-- exact provider usage where reported;
-- latency distribution;
-- normalized cost only where exact accounting inputs exist;
-- deterministic final outcome: candidate ID or `NO_SELECTION`.
+- latency/usage/cost evidence where exact;
+- deterministic final candidate ID or `NO_SELECTION`.
 
-Incomplete or custody-compromised evidence cannot become a winner.
+Incomplete/custody-compromised evidence cannot become a winner.
 
-If a candidate is selected, bind it behind ADR-006 only after the result is frozen and status is reconciled.
+If `NO_SELECTION`, diagnose prospectively; do not choose a provider by intuition or historical C4 evidence.
 
-If the result is `NO_SELECTION`, treat this as a P0 blocker to diagnose immediately. Do not select a provider by intuition or historical C4 evidence. Any repair/candidate change requires prospective design/governance.
+## 8. Integrated final path after provider evidence
 
-## 5. P0 action-enablement work — start provider-free in parallel
+Once provider evidence exists and EV-007/008/011 foundations are ready:
 
-The final acceptance requires justified execution requests, while current production actions remain disabled. Start a separate Class C action-enablement track without waiting for provider selection.
+- bind only a governed selected provider behind ADR-006, or preserve the safe baseline after `NO_SELECTION`;
+- run contextualize/investigate/clarify/abstain/escalate against the supplied API path;
+- use ADR-012 only for explicitly controlled execute scenarios;
+- rerun failure/stability/communication evidence with the selected provider;
+- evaluate the exact production `RunTrace` from the integrated run;
+- record end-to-end latency/reliability/resource/cost behavior;
+- preserve reproducible manifests and sanitized traces.
 
-Reuse ADR-005 rather than redesigning action safety. The provider-free task should establish trusted runtime-owned sources for:
-
-- permissions;
-- user/company identity and resource/company scope;
-- exact action/requester confirmation policy;
-- action fingerprint binding;
-- durable idempotency keys and consumed-key state;
-- accepted-action semantics against the supplied synthetic TRACTIAN API;
-- retry/failure/audit behavior.
-
-First prove the enabled path using scripted/deterministic `DecisionSource` inputs. Do not enable arbitrary production mutations and do not couple action enablement to provider-comparison calls.
-
-## 6. EV-007 / EV-008 / EV-011 — start provider-free in parallel
-
-Implement the remaining high-value evaluation/reliability gaps before waiting for the live provider result.
-
-### EV-007 — failure performance
-
-Add deterministic fault-injection coverage for provider/client failure, malformed provider output, tool/transport failure and partial/unavailable evidence. Measure whether the controller produces a safe fallback, clarification, abstention or escalation rather than crashing or acting unsafely.
-
-### EV-008 — repeated-run stability
-
-Add a repeated-run runner/report over controlled request/context inputs. Report explicit denominators and stability for decision kind, tool choice, action choice where applicable and final conclusion signature.
-
-### EV-011 — customer-safe communication
-
-Add deterministic checks for unnecessary provider/backend/service disclosure, credentials/raw exception detail and other forbidden internal material. Use semantic/human assessment only for communication qualities that cannot be evaluated reliably with deterministic rules.
-
-These paths should be provider-neutral first, then rerun against the selected live provider.
-
-## 7. Integrated final path after provider evidence
-
-Once a provider result exists and the action/evaluation foundations above are ready:
-
-- bind selected provider behind ADR-006, or explicitly preserve the safe baseline if a governed follow-up is required after `NO_SELECTION`;
-- integrate contextualize/investigate/clarify/abstain/escalate behavior through real supplied API reads;
-- integrate the controlled action-enabled profile for the required `execute` scenario only after its own evidence/decision;
-- run EV-007 failure injection and EV-008 repeated stability using the selected provider;
-- verify EV-011 customer-safe terminal communication;
-- evaluate the same production `RunTrace` through the integrated evaluator;
-- measure end-to-end latency/reliability/resource/cost behavior;
-- preserve real-path traces and reproducible run manifests.
-
-## 8. Final-delivery protection
+## 9. Final-delivery protection
 
 Continue deferring RAG/vector DB/reranking, persistent memory, MCP, multi-agent orchestration, adaptive routing and rich UI unless a measured P0/P1 gap requires them.
 
-Do not perform a large `research/e2` shared-core refactor before the final evidence path is stable. Close reproducibility through a documented clean install/run/evaluate path first.
+Do not perform a large shared-core refactor before the final evidence path is stable. Close reproducibility through a documented clean install/run/evaluate path first.
 
-## 9. Deadline sequence
+## 10. Deadline sequence
 
 ```text
-NOW        reconcile ADR-011 wrapper/custody freeze
-NEXT       open actual live-execution task; provision canonical custody + secrets or stop at attempt 0
-PARALLEL   controlled action-enablement task using scripted DecisionSource
-PARALLEL   EV-007 failure + EV-008 stability + EV-011 communication evaluators
+NOW        reconcile ADR-012 controlled action freeze
+NEXT       implement EV-007 provider-free failure-performance campaign
+THEN       implement EV-008 repeated-run stability
+THEN       implement EV-011 customer-safe communication checks
+PARALLEL   issue #44: provision canonical custody + both secrets or remain at 0/32 calls
 PARALLEL   recover exact C4 score-row artifact only
-THEN       execute exact ADR-009 envelope once when prerequisites are satisfied
-THEN       freeze candidate_id or NO_SELECTION and reconcile status
-THEN       integrate selected provider + controlled action path + real Agent/Evaluator scenarios
-AFTER      full reliability/security/observability/performance regressions
-FINAL      clean reproduction + README/evidence index + real-path demo
+WHEN READY execute exact ADR-009 envelope once and freeze candidate_id or NO_SELECTION
+AFTER      integrate selected provider + ADR-012 controlled execute path
+FINAL      full regression + clean reproduction + evidence index + real-path demo
 ```

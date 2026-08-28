@@ -1,17 +1,17 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-28 03:25 BRT  
+**Canonical status checkpoint:** 2026-08-28 04:02 BRT  
 **Canonical branch after merge:** `main`  
-**Canonical main head at this checkpoint:** `7e8cbacf4f704bb1ec6a81b627c18cf7c595d703`  
-**Current reconciliation branch:** `docs/reconcile-adr-011-live-wrapper`  
+**Canonical main head at this checkpoint:** `f45c568c24217b54ead8be01c7ac7e0cca2dea7e`  
+**Current reconciliation branch:** `docs/reconcile-adr-012-controlled-actions`  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
 **Historical ledger:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
-**Latest chronological entry:** [`progress/027-governed-live-provider-wrapper-freeze-2026-08-28.md`](progress/027-governed-live-provider-wrapper-freeze-2026-08-28.md)  
-**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0325-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0325-brt.json)
+**Latest chronological entry:** [`progress/028-controlled-action-execution-freeze-2026-08-28.md`](progress/028-controlled-action-execution-freeze-2026-08-28.md)  
+**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0402-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0402-brt.json)
 
 This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts, ADRs and production authorization packets remain authoritative for their exact semantics. Production work does not alter the C4 scientific gate.
 
@@ -38,7 +38,11 @@ P0 Agent Controller                          FROZEN_FOR_P0_CONTROLLER_SCOPE / AD
 production runtime slice                     MERGED / VALIDATED / PROVIDER_FREE BASELINE
 production deterministic evaluator           MERGED / VALIDATED / SAME RunTrace
 production action-safety policy              FROZEN / ADR-005
-production mutating actions                  DISABLED
+default production mutating actions          DISABLED
+controlled action execution profile          FROZEN / ADR-012 / PROVIDER-FREE PASS
+controlled action evaluator                  FROZEN / ADR-012 / SAME RunTrace
+controlled durable idempotency claim         FROZEN / PRE-TRANSPORT / AT-MOST-ONCE ATTEMPT
+blanket real-customer mutations              NOT AUTHORIZED
 provider-neutral DecisionSource              FROZEN / ADR-006
 model-call trace/provenance                   FROZEN / ADR-007
 exact provider comparison design             FROZEN / ADR-008
@@ -76,7 +80,7 @@ C4 recovery remains a parallel scientific track and must not block provider-free
 
 ## Production architecture state
 
-The application-owned production path remains:
+The default application-owned production path remains:
 
 ```text
 request
@@ -91,7 +95,25 @@ request
 → deterministic ProductionEvaluator
 ```
 
-Identity, seed, action authorization state and evaluator-private truth remain outside provider control. All canonical mutating actions remain disabled in the current production runtime.
+The default `ProductionRuntime` remains read-only for mutating actions. Identity, seed, action authorization state and evaluator-private truth remain outside provider control.
+
+ADR-012 now adds a separate explicit controlled-action profile without changing that default:
+
+```text
+trusted exact action grant
++ runtime-owned permission / scope / confirmation / idempotency
+→ ControlledActionRuntime
+→ AgentController                         same ADR-004 ownership
+→ HarnessRunner.execute_tool()            same exclusive tool boundary
+→ B1 canonical argument validation
+→ ADR-005 ProductionActionSafetyPolicy
+→ durable exclusive-create idempotency claim
+→ supplied transport
+→ RunTrace
+→ ControlledActionEvaluator
+```
+
+The profile is capability evidence, not blanket authorization to mutate real customer environments.
 
 ## ADR-008 through ADR-010 — frozen comparison semantics
 
@@ -129,57 +151,69 @@ ADR                                   docs/adr/011-governed-live-provider-execut
 PR #42 merge                          7e8cbacf4f704bb1ec6a81b627c18cf7c595d703
 ```
 
-Final provider-free validation before merge:
+The governed entrypoint is `GovernedProviderLiveTask`, not direct lower-level wrapper invocation. A future live task must receive both required secrets explicitly, use one canonical durable custody root, persist `CLAIMED` before each network-capable invocation, never replay claimed/uncertain attempts automatically and write only sanitized evidence.
+
+Calls consumed remain 0/32 and no credential/account probe has occurred.
+
+## ADR-012 — controlled action execution capability
+
+Issue #45 / PR #46 froze the provider-free controlled action profile after falsification and full regression validation.
+
+Frozen implementation:
 
 ```text
-production-runtime #41                success
-production tests                      146 passed
-ADR-004 controller regression         12 passed
-triggered workflows                   11 / 11 success
-real provider calls                   0
-credential/account probes             0
+controlled_actions.py blob                 9e5f2d49ebc82303423f81ec8916b02c511f2a1e
+controlled_action_evaluation.py blob       ae5f1a7777893941882196c8c2f3810676eba0a4
+test_controlled_actions.py blob            357cc503d0b329d025abe004a2c780f6ee5ea2fa
+test_controlled_action_evaluation.py blob  4b65fd911539092bb1126cc4e6db5dc985dad76b
+freeze                                     research/frozen/controlled-action-execution-profile-freeze-v1.json
+ADR                                        docs/adr/012-controlled-action-execution-profile-2026-08-28.md
+PR #46 merge                               f45c568c24217b54ead8be01c7ac7e0cca2dea7e
 ```
 
-The governed entrypoint is `GovernedProviderLiveTask`, not direct lower-level wrapper invocation. A future live task must:
+Final exact-head validation:
 
-1. receive both required secret values explicitly;
-2. use one canonical durable custody root;
-3. reserve an exclusive sanitized ADR-009 custody marker before run preparation;
-4. use only the fixed `<custody_root>/run` path;
-5. persist `CLAIMED` before each network-capable executor invocation;
-6. never automatically retry/resume a claimed or uncertain attempt;
-7. preserve all operational failures in the frozen denominators;
-8. write only sanitized custody/ledger/result evidence.
+```text
+production-runtime #49                success
+production tests                      170 passed
+ADR-004 controller regression         12 passed
+triggered workflows                   11 / 11 success
+freeze self-check                     PASS
+provider calls                        0
+real customer mutations               0
+```
 
-If a secret is absent, preparation fails before custody creation/attempt 0. No account/capability probe is permitted.
+All five canonical mutating ToolSpecs were exercised through deterministic supplied/test transport with explicit trusted authorization and `accepted=true` semantics. Unauthorized, unconfirmed, unknown-scope, cross-company and duplicate attempts remain contained before unsafe transport. A transport failure after durable claim remains consumed/uncertain and is not automatically replayed.
 
-If preparation fails after authorization custody is reserved, the custody marker remains and blocks normal restart/reset. Switching to another custody root is not implicitly authorized and would require a new prospective custody decision.
+The default `ProductionRuntime` remains action-disabled and the default `ProductionEvaluator` remains read-only. `ControlledActionEvaluator` is separate and requires a matching B2 `ALLOWED` event plus `accepted=true` for executed actions.
 
 ## Current production execution state
 
 ```text
-live authorization                    EFFECTIVE / BOUNDED / ADR-009
-executor                              FROZEN / ADR-010
-live operational wrapper              FROZEN / ADR-011
-maximum live calls                    32
-calls consumed                         0
-first live attempt executed           NO
-credentials/account probed            NO
-provider selected                     NO
-NO_SELECTION remains valid            YES
-production actions enabled            NO
+live provider authorization             EFFECTIVE / BOUNDED / ADR-009
+provider executor                       FROZEN / ADR-010
+live operational wrapper                FROZEN / ADR-011
+maximum live provider calls             32
+provider calls consumed                  0
+first live provider attempt             NO
+credentials/account probed              NO
+provider selected                       NO
+controlled action capability            FROZEN / ADR-012
+controlled action proof                 5 / 5 CANONICAL ACTIONS / SYNTHETIC TRANSPORT
+default runtime real actions            DISABLED
+blanket real-customer mutations         NOT AUTHORIZED
 ```
 
-The implementation needed for safe live execution is now complete. The next provider step is a **separate governed live execution task**, not additional wrapper development.
+The two largest provider/action implementation foundations are now complete. The live provider comparison is blocked only on its separately governed execution prerequisites; the next provider-free development priority is reliability/evaluation evidence.
 
 ## Immediate blockers and priorities
 
-1. **Provider execution:** create the separate ADR-009/010/011 live task. It may proceed only with one canonical durable custody root and both explicitly provisioned secrets; otherwise stop before attempt 0.
-2. **Provider result:** if execution occurs, consume the exact envelope once and freeze the resulting candidate ID or `NO_SELECTION` without changing the frozen design after the fact.
-3. **Action P0 in parallel:** develop/validate the controlled action-authorization source/profile provider-free, reusing ADR-005. Do not enable real production mutations yet.
-4. **Evaluation P0/P1 in parallel:** implement EV-007 failure performance, EV-008 repeated-run stability and EV-011 customer-safe communication using provider-free/scripted paths first.
-5. **Scientific in parallel:** recover the exact original C4 score-row artifact only; do not reconstruct or rescore it.
-6. **After provider evidence:** bind the selected provider, or explicitly handle `NO_SELECTION`, then run the integrated real Agent + Evaluator regression/demo path.
+1. **Provider execution:** issue #44 may proceed only with one canonical durable custody root and both explicitly provisioned secrets; otherwise stop before attempt 0.
+2. **Reliability/evaluation P0/P1:** implement EV-007 failure performance first, then EV-008 repeated-run stability and EV-011 customer-safe communication using provider-free/scripted paths.
+3. **Integrated action evidence:** reuse ADR-012 for supplied/test action scenarios; do not create another action execution path or globally enable the default runtime.
+4. **Scientific in parallel:** recover the exact original C4 score-row artifact only; do not reconstruct or rescore it.
+5. **After provider evidence:** freeze candidate ID or `NO_SELECTION`, bind only an authorized selected provider behind ADR-006, then rerun reliability/stability/communication and integrated real Agent + Evaluator scenarios.
+6. **Final delivery:** close reproducibility, evidence index, end-to-end demonstration and handoff before speculative P2 architecture work.
 
 ## Still forbidden
 
@@ -192,6 +226,8 @@ The implementation needed for safe live execution is now complete. The next prov
 - credential/account probing merely to test availability;
 - restarting through a new custody root after a reserved/consumed live run without prospective governance;
 - provider-native TRACTIAN tool execution;
-- production mutating actions before separate action-enablement evidence/decision;
+- weakening ADR-005 or bypassing `HarnessRunner.execute_tool()` for actions;
+- deleting/releasing a durable action claim after uncertain transport failure to permit replay;
+- treating ADR-012 as blanket authorization for real customer mutations;
 - claiming a provider/model winner from fixture evidence;
 - global architecture or production-readiness claims beyond current evidence.
