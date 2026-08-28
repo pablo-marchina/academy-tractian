@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Literal, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .binding import validate_model_arguments
 from .models import Decision, ResponseMode, RunTrace, TraceEvent
@@ -78,17 +78,57 @@ class DecisionSource(Protocol):
     def decide(self, context: ControllerContext) -> ControllerDecision: ...
 
 
-class DecisionSourceAuditRecord(_FrozenModel):
-    """Sanitized additive trace record emitted by an auditable DecisionSource.
+_MODEL_CALL_AUDIT_METADATA_KEYS = frozenset(
+    {
+        "schema_version",
+        "adapter_version",
+        "provider_id",
+        "model_id",
+        "route_id",
+        "live_call",
+        "request_sha256",
+        "response_sha256",
+        "turn_index",
+        "tool_call_count",
+        "outcome",
+        "decision_kind",
+        "failure_code",
+        "latency_ms",
+        "adapter_client_invocations",
+        "adapter_retry_count",
+        "adapter_fallback_used",
+        "raw_request_recorded",
+        "raw_response_recorded",
+        "exception_text_recorded",
+    }
+)
 
-    The controller owns sequence assignment and trace mutation. The DecisionSource may only
-    supply a model-call identifier and metadata; it cannot emit tool events or bypass the
-    execution boundary.
+
+class DecisionSourceAuditRecord(_FrozenModel):
+    """Sanitized additive model-call trace record emitted by an auditable DecisionSource.
+
+    The controller owns sequence assignment and trace mutation. Audit metadata is deliberately
+    restricted to a flat scalar allowlist so raw prompts, responses, credentials, nested payloads,
+    runtime identity/seed and evaluator-private state cannot enter the canonical trace through the
+    audit hook.
     """
 
     event_type: Literal["model_call"] = "model_call"
-    call_id: str = Field(min_length=1)
+    call_id: str = Field(pattern=r"^[0-9a-f]{64}$")
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("metadata")
+    @classmethod
+    def validate_sanitized_metadata(cls, metadata: dict[str, Any]) -> dict[str, Any]:
+        unknown = sorted(set(metadata) - _MODEL_CALL_AUDIT_METADATA_KEYS)
+        if unknown:
+            raise ValueError(f"unsupported model-call audit metadata keys: {unknown}")
+        for key, value in metadata.items():
+            if value is not None and not isinstance(value, (str, int, bool)):
+                raise ValueError(f"model-call audit metadata must be scalar: {key}")
+            if isinstance(value, str) and len(value) > 512:
+                raise ValueError(f"model-call audit metadata string too long: {key}")
+        return dict(metadata)
 
 
 class ControllerLimits(_FrozenModel):
