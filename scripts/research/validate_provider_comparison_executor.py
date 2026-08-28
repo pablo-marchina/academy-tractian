@@ -2,7 +2,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[2]
+for import_root in (ROOT, ROOT / "src"):
+    value = str(import_root)
+    if value not in sys.path:
+        sys.path.insert(0, value)
 
 from academy_tractian.decision_source import ProviderDecisionRequest
 from academy_tractian.provider_clients import ProviderUsageRecord
@@ -18,7 +26,6 @@ from academy_tractian.provider_comparison import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_PATH = ROOT / "research/results/provider-comparison-executor-provider-free-fixture-2026-08-28.json"
 OPENAI_ID = "openai_gpt_5_6_sol_responses_standard"
 GOOGLE_ID = "google_gemini_3_7_flash_interactions_stateless"
