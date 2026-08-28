@@ -4,6 +4,10 @@ from pathlib import Path
 
 import pytest
 
+from academy_tractian.delivery_evidence import (
+    CANONICAL_ADR_PATHS,
+    validate_delivery_evidence_index,
+)
 from academy_tractian.delivery_reproduction import (
     EXPECTED_C4_ARTIFACT_BYTES,
     EXPECTED_C4_ARTIFACT_ROWS,
@@ -18,26 +22,11 @@ from academy_tractian.delivery_reproduction import (
     demo_population,
     git_blob_sha1,
     run_provider_free_delivery_demo,
-    validate_evidence_index,
 )
 
 
 ROOT = Path(__file__).resolve().parents[1]
-
-ADR_PATHS = {
-    4: "docs/adr/004-p0-agent-controller-2026-08-27.md",
-    5: "docs/adr/005-p0-action-safety-2026-08-27.md",
-    6: "docs/adr/006-provider-neutral-decision-source-2026-08-27.md",
-    7: "docs/adr/007-model-call-provenance-2026-08-27.md",
-    8: "docs/adr/008-production-provider-model-comparison-design-2026-08-28.md",
-    9: "docs/adr/009-production-provider-client-identity-and-authorization-2026-08-28.md",
-    10: "docs/adr/010-provider-comparison-executor-2026-08-28.md",
-    11: "docs/adr/011-governed-live-provider-comparison-execution-2026-08-28.md",
-    12: "docs/adr/012-controlled-action-execution-profile-2026-08-28.md",
-    13: "docs/adr/013-provider-free-failure-performance-campaign-2026-08-28.md",
-    14: "docs/adr/014-provider-free-repeated-run-stability-2026-08-28.md",
-    15: "docs/adr/015-provider-free-customer-safe-communication-2026-08-28.md",
-}
+ADR_PATHS = CANONICAL_ADR_PATHS
 
 
 def _resident(
@@ -270,7 +259,7 @@ def test_empty_action_fingerprint_signature_is_canonical_for_non_action_scenario
 
 
 def test_valid_evidence_index_resolves_repository_items_and_preserves_blockers() -> None:
-    validation = validate_evidence_index(_valid_index(), ROOT)
+    validation = validate_delivery_evidence_index(_valid_index(), ROOT)
     assert validation.passed, validation.violations
     assert validation.repository_resident_count == validation.resolved_repository_entries
     assert validation.repository_resident_count == validation.entry_count - 1
@@ -278,26 +267,26 @@ def test_valid_evidence_index_resolves_repository_items_and_preserves_blockers()
 
 def test_wrong_repository_blob_is_rejected() -> None:
     index = _replace(_valid_index(), "EV007-RESULT", git_blob_sha1="0" * 40)
-    validation = validate_evidence_index(index, ROOT)
+    validation = validate_delivery_evidence_index(index, ROOT)
     assert not validation.passed
     assert "EV007-RESULT: Git blob SHA-1 mismatch" in validation.violations
 
 
-def test_missing_repository_path_is_rejected(tmp_path: Path) -> None:
+def test_missing_repository_path_is_rejected() -> None:
     index = _replace(
         _valid_index(),
         "EV008-VALIDATOR",
         repository_path="scripts/definitely-missing-delivery-validator.py",
         git_blob_sha1="0" * 40,
     )
-    validation = validate_evidence_index(index, ROOT)
+    validation = validate_delivery_evidence_index(index, ROOT)
     assert not validation.passed
     assert "EV008-VALIDATOR: repository path missing" in validation.violations
 
 
 def test_wrong_frozen_report_sha_is_rejected() -> None:
     index = _replace(_valid_index(), "EV011-RESULT", canonical_sha256="0" * 64)
-    validation = validate_evidence_index(index, ROOT)
+    validation = validate_delivery_evidence_index(index, ROOT)
     assert not validation.passed
     assert "EV011-RESULT: canonical report SHA-256 mismatch" in validation.violations
 
@@ -308,7 +297,7 @@ def test_c4_cannot_be_relabelled_as_provider_free_reproducible() -> None:
         "C4-SCORE-ROW-ARTIFACT",
         reproduction_status="PROVIDER_FREE_REPRODUCIBLE",
     )
-    validation = validate_evidence_index(index, ROOT)
+    validation = validate_delivery_evidence_index(index, ROOT)
     assert not validation.passed
     assert "C4-SCORE-ROW-ARTIFACT: must remain EXTERNALLY_BLOCKED" in validation.violations
 
@@ -319,7 +308,7 @@ def test_live_provider_plan_cannot_be_relabelled_as_reproduced() -> None:
         "PROVIDER-COMPARISON-PLAN",
         reproduction_status="PROVIDER_FREE_REPRODUCIBLE",
     )
-    validation = validate_evidence_index(index, ROOT)
+    validation = validate_delivery_evidence_index(index, ROOT)
     assert not validation.passed
     assert "PROVIDER-COMPARISON-PLAN: live execution must remain UNEXECUTED_GATED" in validation.violations
 
@@ -331,7 +320,7 @@ def test_wrong_adr_path_is_rejected() -> None:
         repository_path=ADR_PATHS[14],
         git_blob_sha1=git_blob_sha1(ROOT / ADR_PATHS[14]),
     )
-    validation = validate_evidence_index(index, ROOT)
+    validation = validate_delivery_evidence_index(index, ROOT)
     assert not validation.passed
     assert "ADR-015: canonical ADR path mismatch" in validation.violations
 
