@@ -1,0 +1,262 @@
+{
+  "schema_version": "material-decision-historical-evidence-audit-v1",
+  "date": "2026-08-28",
+  "status": "COMPLETE",
+  "audit_baseline": "main@60d1da6d3ef1153d142ea261111300333eff0061",
+  "new_experiments_created": 0,
+  "provider_model_calls": 0,
+  "credential_account_probes": 0,
+  "real_customer_mutations": 0,
+  "scientific_gate_changed": false,
+  "method": {
+    "historical_baseline": "research/results/p12-historical-candidate-component-reinterpretation-2026-08-22.json",
+    "delta_scope": [
+      "P12/C4 evidence after 2026-08-22",
+      "ADR-001 through ADR-017",
+      "production controller/action/evaluator evidence",
+      "EV-007/EV-008/EV-011",
+      "final delivery reproduction and 83-row handoff audit",
+      "2026-08-28 USD-0 and evidence-first governance"
+    ],
+    "classification_set": [
+      "EVIDENCE_SUFFICIENT",
+      "EVIDENCE_EXISTS_NEEDS_UPDATE",
+      "PARTIALLY_ASSESSED",
+      "UNASSESSED",
+      "INVALIDATED_EVIDENCE_FOR_CURRENT_SCOPE"
+    ]
+  },
+  "summary": {
+    "material_decision_rows": 20,
+    "EVIDENCE_SUFFICIENT": 11,
+    "EVIDENCE_EXISTS_NEEDS_UPDATE": 1,
+    "PARTIALLY_ASSESSED": 6,
+    "UNASSESSED": 1,
+    "INVALIDATED_EVIDENCE_FOR_CURRENT_SCOPE": 1,
+    "new_experiments_authorized_now": 0
+  },
+  "decisions": [
+    {
+      "id": "D01",
+      "area": "production_provider_model_quality",
+      "classification": "PARTIALLY_ASSESSED",
+      "evidence": ["E8 free candidate discovery", "E8 Groq live operational run", "E14g-E14l Groq GPT-OSS quality line", "P12 provider serving/probe history", "ADR-006 through ADR-011"],
+      "proves": "Broad zero-cost discovery, real Groq operability, preserved negative quality evidence, serving compatibility history, and a provider-neutral production boundary.",
+      "does_not_prove": "Current fair production-quality ranking across the presently eligible USD-0 provider/model set.",
+      "next_action": "Refresh current first-party zero-cost eligibility/capability facts and reconcile them with consumed evidence before deciding whether a new comparison is required.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D02",
+      "area": "provider_serving_capacity_quota",
+      "classification": "EVIDENCE_EXISTS_NEEDS_UPDATE",
+      "evidence": ["P12-C2/C3 consumed rate-limit failures", "ADR-001 serving capacity comparison", "ADR-002/003 and C4 serving probes"],
+      "proves": "Historical quota/capacity constraints and serving-path tradeoffs were directly investigated and failures preserved.",
+      "does_not_prove": "Current provider/account-specific quotas for future candidate routes.",
+      "next_action": "Recheck only current first-party limits for candidates that survive D01 screening; do not repeat historical failures.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D03",
+      "area": "historical_groq_gpt_oss_reasoning_budget_structured_output_tuning",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["E14g through E14l", "E14l sanitized real DEV result"],
+      "proves": "Operational feasibility was recovered but real task-quality/decision/action/escalation gates still failed; the historical reasoning-budget/response-format family was explicitly closed.",
+      "does_not_prove": "Optimal configuration for a future different selected provider/model.",
+      "next_action": "Do not rerun this closed historical tuning family.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D04",
+      "area": "agent_topology_single_vs_multi_agent",
+      "classification": "PARTIALLY_ASSESSED",
+      "evidence": ["ADR-004 single-agent controller", "EV-007", "EV-008", "EV-011", "ADR-016 integrated demo", "historical multi_agent_freeze=false records"],
+      "proves": "The single-agent explicit controller is a strong qualified baseline across required P0 behaviors and provider-free reliability/safety.",
+      "does_not_prove": "Incremental benefit or cost of planner-executor or critic/reviewer decomposition.",
+      "next_action": "Keep the gap recorded, but do not run a topology experiment until a controlled provider/model basis exists and topology remains material after screening.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D05",
+      "area": "runtime_orchestration",
+      "classification": "PARTIALLY_ASSESSED",
+      "evidence": ["E6 runtime scorecard", "E6 LangGraph integration", "E6 live API integration", "ADR-004 explicit AgentController"],
+      "proves": "LangGraph is repository-qualified for replay/checkpoint/HITL/guard integration and the explicit controller is a heavily regressed smaller P0 runtime.",
+      "does_not_prove": "Implementation-symmetric final comparison across all retained runtimes under the current production task/provider basis.",
+      "next_action": "Revisit only after higher-priority provider/topology choices or an ADR-004 reversal trigger makes the runtime gap material.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D06",
+      "area": "tool_protocol_topology_native_vs_mcp",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["E7 native-tools-vs-MCP", "E7 topology decision", "DELIVERY-ACCEPTANCE"],
+      "proves": "18/18 schema/invocation coverage with equivalent guard/trace behavior; native is lower-complexity internally and MCP is higher-portability as an adapter; core MCP is not required by current delivery.",
+      "does_not_prove": "That MCP can never become required by a future partner/deployment interoperability constraint.",
+      "next_action": "Keep native typed tools internally and MCP-compatible adapter conditional; reopen only on a concrete requirement.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D07",
+      "area": "evidence_sufficiency_stopping",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["E5 evidence stopping comparison", "later controller/regression evidence"],
+      "proves": "Versus the free loop, evidence-sufficiency improved task success 7 to 10/11, reduced premature stops 4 to 1 and unnecessary calls 9 to 2, and increased required evidence coverage from 0.786 to 0.964.",
+      "does_not_prove": "Universal optimality under every future task distribution.",
+      "next_action": "No new stopping experiment unless task/policy materially changes or a regression is observed.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D08",
+      "area": "adaptive_evidence_planning",
+      "classification": "PARTIALLY_ASSESSED",
+      "evidence": ["adaptive_from_missing_evidence_requirements preserved as constant in E7/E8 and related history"],
+      "proves": "Adaptive evidence planning was integrated into later successful experimental paths.",
+      "does_not_prove": "Its isolated incremental benefit over a simple fixed evidence plan.",
+      "next_action": "Queue behind provider/topology/runtime; only preregister an ablation if the component remains material.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D09",
+      "area": "retrieval_rag_vector_reranking",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["DELIVERY-ACCEPTANCE P2 conditional complexity rule", "typed supplied API/tool evidence path", "ADR-017 zero unblocked handoff gaps"],
+      "proves": "Direct typed API/tool evidence covers the current required delivery without a measured retrieval gap; RAG/vector/reranking are conditional enhancements, not requirements.",
+      "does_not_prove": "That retrieval augmentation would never help a future broadened knowledge corpus.",
+      "next_action": "Do not add retrieval infrastructure without a measured evidence recall/correctness gap that direct tools cannot address.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D10",
+      "area": "persistent_memory_state",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["request-local explicit state runtime", "DELIVERY-ACCEPTANCE state/context requirement", "ADR-016/017 delivery evidence"],
+      "proves": "Explicit request state is sufficient for the current accepted scenarios; persistent memory is required only if cases/evidence justify it.",
+      "does_not_prove": "Cross-session memory value for future scenarios not in the delivered scope.",
+      "next_action": "Keep explicit request state; reopen only on a demonstrated cross-turn/cross-process state gap.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D11",
+      "area": "adaptive_model_routing",
+      "classification": "UNASSESSED",
+      "evidence": [],
+      "proves": "No adequate controlled routing comparison was found.",
+      "does_not_prove": "That routing is beneficial or necessary.",
+      "next_action": "Do nothing until D01 establishes multiple viable characterized provider/model candidates and a real context-sensitive routing trade-off.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D12",
+      "area": "safety_authorization_consequential_actions",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["ADR-005", "ADR-012", "ADR-004", "EV-007", "EV-008", "EV-011", "ADR-016"],
+      "proves": "Deterministic authorization, exact action binding, durable idempotency, replay containment and default action-disabled production behavior for the bounded supplied/test scope.",
+      "does_not_prove": "Blanket real-customer mutation authorization.",
+      "next_action": "Preserve and regress the hard boundary; real-customer mutation remains a separate non-claim.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D13",
+      "area": "failure_continuity_provider_free_reliability",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["EV-007 11-family campaign", "EV-008 30-run stability", "EV-011 communication campaign", "ADR-016 demo"],
+      "proves": "Provider-free runtime/harness/evaluator failure containment, stability and objective communication safety are reproducible within frozen scopes.",
+      "does_not_prove": "Live-provider behavioral stability/quality.",
+      "next_action": "Do not rerun provider-free campaigns; reuse their metric definitions later if a governed live provider comparison is authorized.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D14",
+      "area": "operational_deterministic_evaluator_stack",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["ProductionEvaluator", "ControlledActionEvaluator", "EV-007", "EV-008", "EV-011", "ADR-017 acceptance audit"],
+      "proves": "The operational deterministic evaluator stack consumes production traces and repeatedly validates required observable behavior without private truth leakage.",
+      "does_not_prove": "Scientific semantic/private/blind evaluation completeness.",
+      "next_action": "Preserve/regress deterministic evaluators and avoid LLM judging where deterministic truth exists.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D15",
+      "area": "scientific_evaluator_semantic_judge_ev012_integrity",
+      "classification": "PARTIALLY_ASSESSED",
+      "evidence": ["E9 v4.1/v4.2", "Qwen synthetic semantic judge qualification", "C4 deterministic scoring/bootstrap/LOGO", "ADR-017 C-13 disposition"],
+      "proves": "Qualified deterministic/semantic measurement components exist in bounded historical scopes and C4 deterministic/statistical evidence is strong.",
+      "does_not_prove": "Completed per-group/slice EV-012 continuation or fresh independent semantic/blind evidence.",
+      "next_action": "Resolve C4 exact artifact path first; no new judge experiment is authorized.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D16",
+      "area": "observability_trace_surface",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["RunTrace", "E6/E7 trace compatibility", "ADR-004 through ADR-017 provenance/evaluation evidence"],
+      "proves": "Normalized traces make decisions, tools, arguments, observations, terminal outcomes, failures and evaluator results inspectable within current delivery.",
+      "does_not_prove": "Need for or value of an external OTel/observability backend.",
+      "next_action": "Do not add richer telemetry unless a concrete diagnostic/operations requirement is not representable by RunTrace.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D17",
+      "area": "deployment_topology",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["clean-checkout reproduction", "ADR-016", "ADR-017", "DELIVERY-ACCEPTANCE"],
+      "proves": "The current delivery is reproducible on the documented local/supplied path with runbook/fallback/reversal controls appropriate to the implemented scope.",
+      "does_not_prove": "Hosted production deployment or exercised infrastructure rollback.",
+      "next_action": "Do not create hosted-deployment experiments unless deployment becomes a formal/demo requirement.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D18",
+      "area": "ui_integration_richness",
+      "classification": "EVIDENCE_SUFFICIENT",
+      "evidence": ["ADR-016 integrated real-path demo", "ADR-017 handoff audit", "DELIVERY-ACCEPTANCE P2 UI rule"],
+      "proves": "The current real integrated path is demonstrable/reviewer-ready without a richer UI requirement.",
+      "does_not_prove": "That a richer interface could never improve a different product context.",
+      "next_action": "No UI experiment unless reviewer/demo task completion is measurably limited by the current interface.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D19",
+      "area": "c4_per_group_slice_reporting",
+      "classification": "PARTIALLY_ASSESSED",
+      "evidence": ["144/144 deterministic scoring", "20k bootstrap PASS", "7/7 LOGO sensitivity PASS", "independent recomputations", "sanitized aggregate artifacts"],
+      "proves": "Strong deterministic/statistical aggregate and group-sensitivity evidence exists.",
+      "does_not_prove": "Required modality/failure-family reporting without the exact 144-row evaluator-side artifact.",
+      "next_action": "Continue exact-byte recovery only for SHA b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c, 177350 bytes, 144 rows; no reconstruction/rescoring.",
+      "new_experiment_authorized": false
+    },
+    {
+      "id": "D20",
+      "area": "historical_adr008_openai_sol_gemini_live_packet",
+      "classification": "INVALIDATED_EVIDENCE_FOR_CURRENT_SCOPE",
+      "evidence": ["ADR-008 through ADR-011", "zero live attempts consumed"],
+      "proves": "The historical live-comparison protocol/executor/custody engineering remains valid as historical evidence.",
+      "does_not_prove": "Eligibility of its candidate set under the current permanent USD-0 production constraint.",
+      "next_action": "Preserve historically and do not execute issue #44 as frozen; any future packet must be prospective and derive from D01's feasible set.",
+      "new_experiment_authorized": false
+    }
+  ],
+  "c4": {
+    "current_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+    "required_artifact_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "required_bytes": 177350,
+    "required_rows": 144,
+    "geometry": "36 parents x 4 arms",
+    "authorized_action": "exact_byte_recovery_only"
+  },
+  "immediate_sequence": [
+    "freeze and merge this evidence audit",
+    "reconcile canonical decision inventory from audit findings",
+    "refresh current first-party USD-0 provider/model eligibility and capability facts only",
+    "reconcile current facts with E8/E14/P12/ADR provider evidence",
+    "decide whether a minimal prospective provider comparison remains required",
+    "keep single-agent as qualified topology baseline and defer multi-agent implementation until controlled basis/protocol exists",
+    "continue exact C4 artifact recovery in parallel",
+    "queue runtime and adaptive-planning gaps behind higher-priority unresolved dimensions",
+    "do not create RAG/memory/routing/deployment/UI experiments absent a new material trigger"
+  ],
+  "global_final_architecture_frozen": false,
+  "production_provider_model_selected": false,
+  "production_readiness_claim_authorized": false
+}
