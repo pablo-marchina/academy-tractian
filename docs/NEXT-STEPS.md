@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE / canonical short-horizon execution plan  
-**Planning checkpoint:** 2026-08-27 22:29 BRT  
+**Planning checkpoint:** 2026-08-27 22:47 BRT  
 **Current state source:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Macro plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
@@ -12,17 +12,17 @@ This file answers only: **what should be done next from the current evidence-bac
 
 ## 1. Current execution objective
 
-The project now has two deliberately isolated short-horizon tracks:
+The project has two deliberately isolated short-horizon tracks:
 
 ```text
 SCIENTIFIC TRACK                              DELIVERY TRACK
 REQUIRED_PER_GROUP_AND_SLICE_REPORTING        runtime + deterministic evaluator integrated
         ↓                                             ↓
-reporting freeze                              production action-safety decision
+reporting freeze                              ADR-005 action-safety policy frozen
         ↓                                             ↓
-survivor/no-survivor if authorized            model/provider production-fit decision
+survivor/no-survivor if authorized            model/provider DecisionSource comparison ← NEXT
         ↓                                             ↓
-later child gates only if opened              real-path reliability/security integration
+later child gates only if opened              trusted auth/idempotency + real-path evidence
 ```
 
 Neither track may silently authorize the other.
@@ -33,7 +33,7 @@ The current scientific gate remains:
 REQUIRED_PER_GROUP_AND_SLICE_REPORTING
 ```
 
-The production runtime/evaluator path is provider-free and read-only. All five mutating canonical actions remain fail-closed before transport, and the integrated evaluator establishes deterministic trace/safety properties only — not semantic task correctness.
+The production path remains provider-free and all five mutating canonical actions remain fail-closed before transport. ADR-005 freezes the required action-safety protocol but **does not authorize action execution**.
 
 ## 2. Immediate scientific sequence — highest scientific priority
 
@@ -76,42 +76,69 @@ A reporting closure may authorize a **survivor/no-survivor decision** using the 
 
 ## 3. Immediate delivery sequence — can run in parallel without C4 contamination
 
-ADR-004, PR #18 and PR #21 now provide a provider-free read-only Agent Runtime Plane plus deterministic trace evaluation on the exact same run. The next P0/P1 work must address consequential actions and the missing model/provider decision rather than optional orchestration complexity.
+ADR-004, the production runtime, deterministic evaluator and ADR-005 now provide a stable provider-free skeleton. The next P0 decision is the missing production `DecisionSource` adapter/model-provider boundary.
 
-### Step D1 — Govern production action safety before enabling any mutating tool — NEXT
+### Step D1 — Production action-safety policy — COMPLETE / FROZEN
 
-Current production config intentionally fixes `actions_enabled = false` and grants zero action permissions.
+ADR-005 freezes a layered runtime-owned action policy covering:
 
-Open a focused material decision comparing the simplest safe production-action policy against credible alternatives. Freeze at minimum:
+- declared permission;
+- global execution switch;
+- runtime/model authorization-state isolation;
+- canonical argument and justification requirements;
+- fail-closed known/same-company resource scope;
+- requester confirmation bound to the exact action fingerprint;
+- idempotency key bound to that exact fingerprint;
+- duplicate-action rejection before transport.
 
-- explicit permission mapping per canonical action;
-- resource/company scope validation;
-- requester-confirmation policy for consequential actions, explicitly separated from benchmark accepted-action semantics;
-- idempotency / duplicate-action protection;
-- justification requirements and audit evidence;
-- human fallback/escalation when authorization/evidence is insufficient;
-- retry/failure semantics that cannot duplicate or ambiguously execute actions;
-- trace/evaluator obligations proving allowed, denied and repeated action behavior.
+The real runtime still fixes `actions_enabled = false`, grants zero action permissions, provisions no action confirmations/idempotency keys/resource mappings and performs zero action transport calls.
 
-The null baseline remains **all actions disabled**. No action may reach production transport until controlled evidence justifies a change from that baseline.
+Actual action enablement requires a **separate future governed decision** backed by trusted real authorization/scope/confirmation state, durable idempotency semantics and failure/retry evidence.
 
-### Step D2 — Define and compare the production model/provider adapter
+### Step D2 — Define and compare the production model/provider `DecisionSource` adapter — NEXT
 
-The controller protocol is frozen; the model/provider is not.
+Start provider-free. Freeze the adapter contract and comparison protocol before any live provider call.
 
-The model/provider decision must compare:
+Required baseline invariants:
 
-- a strong quality-frontier candidate/configuration;
-- a feasible lower-cost/local/open baseline;
-- any additional credible Pareto candidate.
+- implementation plugs into ADR-004 `DecisionSource` and cannot bypass `AgentController` or `HarnessRunner`;
+- output is strictly one typed `ControllerDecision` per turn;
+- provider/model never receives runtime identity, seed, action authorization, idempotency state or evaluator-private truth;
+- tool arguments remain constrained by canonical ToolSpec/B1;
+- model failure, malformed output and timeout/error paths fail closed through the existing controller boundary;
+- provider-specific code stays behind a replaceable adapter interface;
+- provider/model selection is distinct from historical C4 serving-route qualification.
 
-Measure task quality, structured-decision adherence, robustness, latency, reliability, resource/cost, portability and failure behavior. Historical C4 serving-route qualification is not production-provider evidence by itself.
+Compare at minimum:
 
-Provider calls remain unauthorized until a separately governed execution explicitly opens them.
+1. a **null/provider-free scripted adapter** for deterministic contract testing;
+2. a strong quality-frontier provider/model candidate;
+3. a feasible lower-cost/local/open candidate;
+4. any additional candidate only if it represents a credible Pareto trade-off.
 
-### Step D3 — Extend real-path Agent + Evaluator coverage
+Before authorizing live calls, preregister measurements for structured-decision adherence, tool-selection/argument validity, task quality on allowed development material, failure behavior, latency, reliability, resource/cost, portability and trace integrity.
 
-After the applicable action/model decisions are frozen, build toward:
+**Provider calls remain unauthorized now.** The first implementation step should therefore be adapter interfaces, deterministic fake-provider tests, comparison matrix/protocol and fail-closed conformance checks. Any live comparison needs its own explicit authorization.
+
+### Step D3 — Prepare trusted production action authorization/idempotency integration
+
+This can proceed separately from model/provider comparison, but must not enable actions yet.
+
+Define the production source of truth for:
+
+- user permissions;
+- user/company identity binding;
+- resource → company ownership;
+- requester confirmation lifecycle;
+- durable idempotency key reservation/consumption;
+- retry, timeout and ambiguous-result handling;
+- audit retention.
+
+ADR-005 is the contract these sources must satisfy. Do not weaken the policy to match an easier persistence implementation.
+
+### Step D4 — Extend real-path Agent + Evaluator coverage after D2/D3 evidence
+
+Build toward:
 
 ```text
 request
@@ -131,13 +158,13 @@ Required real-path coverage should include:
 - investigate;
 - clarify / abstain;
 - escalate with useful handoff;
-- execute only after action safety is authorized;
+- execute only after a separate action-enablement decision;
 - partial/unavailable tools or data;
 - conflicting/inconclusive evidence;
 - model/provider failure fallback;
 - per-run deterministic evaluation.
 
-### Step D4 — Reliability, security and observability evidence
+### Step D5 — Reliability, security and observability evidence
 
 Once a real DecisionSource/provider path exists, run repeated/fault-injected tests for:
 
@@ -157,7 +184,7 @@ Do not implement or freeze merely because available:
 
 - RAG/vector DB/reranking;
 - multi-agent decomposition;
-- persistent memory;
+- persistent agent memory;
 - MCP as an additional agent-facing topology;
 - adaptive routing/model selection;
 - rich UI;
@@ -192,11 +219,15 @@ The non-contaminating product path now progresses in parallel:
 ```text
 ADR-004 P0 CONTROLLER FROZEN
         ↓
-FIRST PRODUCTION RUNTIME SLICE MERGED
+PRODUCTION RUNTIME + DETERMINISTIC EVALUATOR MERGED
         ↓
-DETERMINISTIC PRODUCTION EVALUATOR MERGED   ← DELIVERY CURRENT
+ADR-005 ACTION-SAFETY POLICY FROZEN / ACTIONS STILL OFF
         ↓
-ACTION-SAFETY + MODEL/PROVIDER DECISIONS
+MODEL/PROVIDER DECISIONSOURCE COMPARISON       ← DELIVERY CURRENT
+        ↓
+TRUSTED AUTH/SCOPE/CONFIRMATION/IDEMPOTENCY INTEGRATION
+        ↓
+SEPARATE ACTION-ENABLEMENT DECISION IF JUSTIFIED
         ↓
 INTEGRATED REAL AGENT + EVALUATOR PATH
         ↓
@@ -213,7 +244,7 @@ real-path demo + reproducible handoff
 
 The final delivery target remains 2026-09-08. The scientific artifact blocker must not idle non-contaminating P0/P1 delivery work. Product progress must not be used to bypass the frozen scientific gate.
 
-Prioritize action safety, production model/provider fit, real-path reliability/security and demonstration evidence before any speculative P2 component.
+Prioritize the provider/model DecisionSource contract and comparison, trusted action-state integration, real-path reliability/security and demonstration evidence before speculative P2 components.
 
 ## 7. Update rule
 
