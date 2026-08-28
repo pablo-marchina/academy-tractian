@@ -1,19 +1,16 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-28 04:20 BRT  
+**Canonical status checkpoint:** 2026-08-28 05:07 BRT  
 **Canonical branch after merge:** `main`  
-**Canonical main head at this checkpoint:** `403316bf615a463de70741d41cbed32fea5dc34c`  
-**Current reconciliation branch:** `docs/reconcile-adr-013-ev007`  
+**Canonical main head at this checkpoint:** `d8c08ae532b11a5b7cecd4be08f8740c66905657`  
+**Current reconciliation branch:** `docs/reconcile-adr-014-ev008`  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
-**Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
-**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
-**Historical ledger:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
-**Latest chronological entry:** [`progress/029-ev007-failure-performance-freeze-2026-08-28.md`](progress/029-ev007-failure-performance-freeze-2026-08-28.md)  
-**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0420-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0420-brt.json)
+**Latest chronological entry:** [`progress/030-ev008-repeated-run-stability-freeze-2026-08-28.md`](progress/030-ev008-repeated-run-stability-freeze-2026-08-28.md)  
+**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0507-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0507-brt.json)
 
-This document is the **sole canonical human-readable source for current project state and authorization**. Frozen ADRs, scientific artifacts and authorization packets remain authoritative for their exact semantics. Production work does not alter the C4 scientific gate.
+This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts, ADRs and authorization packets remain authoritative for exact semantics. Production work does not advance the C4 scientific gate.
 
 ## Executive state
 
@@ -26,48 +23,40 @@ P12-C4 deterministic scoring                 FROZEN / 144 OF 144 / 0 RECOMPUTATI
 P12-C4 bootstrap 20k                         FROZEN / PASS / INDEPENDENT RECOMPUTATION PASS
 P12-C4 LOGO sensitivity                      FROZEN / 7 OF 7 / INDEPENDENT RECOMPUTATION PASS
 current authorized scientific gate           REQUIRED_PER_GROUP_AND_SLICE_REPORTING
-scientific provider/model calls authorized   0
 per-group/slice reporting                    AUTHORIZED / BLOCKED ON EXACT SCORE-ROW ARTIFACT
-survivor/no-survivor decision                NOT AUTHORIZED
-semantic evaluation                          NOT AUTHORIZED
-FRESH_BLIND                                  NOT AUTHORIZED
-LEGACY_LOCKED_TEST                           NOT AUTHORIZED
+semantic / FRESH_BLIND / LEGACY_LOCKED_TEST  NOT AUTHORIZED
 project-level PREFERRED                      NONE
 
-P0 Agent Controller                          FROZEN_FOR_P0_CONTROLLER_SCOPE / ADR-004
-production runtime slice                     MERGED / VALIDATED / PROVIDER_FREE BASELINE
-production deterministic evaluator           MERGED / VALIDATED / SAME RunTrace
-production action-safety policy              FROZEN / ADR-005
-default production mutating actions          DISABLED
+P0 Agent Controller                          FROZEN / ADR-004
+production action safety                     FROZEN / ADR-005
+default ProductionRuntime actions            DISABLED
 provider-neutral DecisionSource              FROZEN / ADR-006
-model-call trace/provenance                   FROZEN / ADR-007
-exact provider comparison design             FROZEN / ADR-008
-concrete OpenAI/Gemini HTTP clients          FROZEN / ADR-009
-provider comparison executor                 FROZEN / ADR-010 / PROVIDER-FREE PASS
-governed live execution wrapper              FROZEN / ADR-011 / PROVIDER-FREE PASS
-controlled action execution profile          FROZEN / ADR-012 / PROVIDER-FREE PASS
-controlled durable idempotency claim         FROZEN / PRE-TRANSPORT / AT-MOST-ONCE ATTEMPT
+model-call provenance                        FROZEN / ADR-007
+provider comparison design                   FROZEN / ADR-008
+OpenAI/Gemini concrete clients               FROZEN / ADR-009
+provider comparison executor                 FROZEN / ADR-010
+live execution/custody wrapper               FROZEN / ADR-011
+controlled action execution/evaluator        FROZEN / ADR-012
 EV-007 failure performance                   FROZEN / ADR-013 / 11 OF 11 SAFETY EXPECTATIONS
-EV-007 expected evaluator classifications    8 PASS / 3 FAIL / EXACTLY AS PREREGISTERED
-EV-007 raw sensitive leaks                   0
-EV-007 automatic retries                     0
-EV-008 repeated-run stability                NEXT / NOT YET FROZEN
-EV-011 customer-safe communication           PLANNED AFTER EV-008
+EV-008 repeated-run stability                FROZEN / ADR-014 / 30 OF 30 RUNS
+EV-008 stable units                          6 OF 6
+EV-008 stable dimension checks               66 OF 66
+EV-011 customer-safe communication           NEXT PROVIDER-FREE PRIORITY
 
-canonical comparison plan                    32 ATTEMPTS / SHA-256 69691adf…
+canonical provider comparison plan           32 ATTEMPTS / SHA-256 69691adf…
 production live provider calls consumed      0 / 32
 first live attempt executed                  NO
 production provider/model selected           NO
-production credentials/account probed        NO
-blanket real-customer mutations              NOT AUTHORIZED
+credential/account probes                    0
 real customer mutations performed            0
+blanket real-customer mutations              NOT AUTHORIZED
 global final architecture                    UNFROZEN
 production-readiness claim                   NOT AUTHORIZED
 ```
 
 ## Scientific critical path — unchanged and parallel
 
-The scientific path remains blocked at `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` on the exact original evaluator-side deterministic score-row artifact:
+The scientific path remains blocked at `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` on the exact original evaluator-side score-row artifact:
 
 ```text
 SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
@@ -76,35 +65,31 @@ rows     144
 geometry 36 common parents × 4 arms
 ```
 
-The artifact must be recovered/provisioned exactly. Reconstruction, rescoring or substitution remain forbidden. Production provider/reliability work does not authorize C4 generation, semantic judging, survivor selection or blind-partition access.
-
-C4 recovery remains a parallel external-artifact track and must not block provider-free P0/P1 production development.
+Only exact artifact recovery/provisioning is authorized. Reconstruction, rescoring or substitution remain forbidden. Production reliability/provider work does not authorize C4 semantic judging, survivor selection or blind-partition access.
 
 ## Production architecture state
 
-The application-owned default path remains:
+The default application-owned path remains:
 
 ```text
 request
 → AgentController                         ADR-004
-→ ProviderDecisionSource                  ADR-006
-→ concrete provider client                ADR-009 when separately executed
+→ DecisionSource                         ADR-006
+→ governed provider client               ADR-009 only when separately executed
 → ControllerDecision / ToolProposal
-→ HarnessRunner.execute_tool()            exclusive real TRACTIAN tool boundary
+→ HarnessRunner.execute_tool()           exclusive tool boundary
 → B1 canonical argument validation
 → ADR-005/B2 action safety
-→ normalized RunTrace
-→ ProductionEvaluator
+→ RunTrace
+→ deterministic ProductionEvaluator
 ```
 
-Identity, seed, action authorization state and evaluator-private truth remain outside provider control. The default `ProductionRuntime` remains read-only for mutating actions.
+Identity, seed, action authorization and evaluator-private truth remain outside provider control. The default `ProductionRuntime` remains read-only for mutating actions.
 
-### Controlled consequential actions — ADR-012
-
-A separate explicit provider-free capability exists for supplied/controlled action scenarios:
+A separate controlled action profile exists under ADR-012:
 
 ```text
-trusted exact action grant
+trusted exact grant
 → ControlledActionRuntime
 → AgentController
 → HarnessRunner.execute_tool()
@@ -116,9 +101,7 @@ trusted exact action grant
 → ControlledActionEvaluator
 ```
 
-All five canonical action ToolSpecs have provider-free accepted-action proof. Unauthorized, unknown-scope, cross-company, unconfirmed and duplicate attempts remain contained. A transport failure after claim remains consumed/uncertain and cannot be automatically replayed.
-
-ADR-012 is capability evidence, not blanket authorization for real customer mutation.
+All five canonical action ToolSpecs have provider-free accepted-action evidence. A transport failure after claim remains consumed/uncertain and cannot be automatically replayed. ADR-012 is capability evidence, not blanket authorization for a real customer environment.
 
 ## Provider comparison state — ADR-008 through ADR-011
 
@@ -126,37 +109,21 @@ The frozen comparison remains exactly:
 
 - OpenAI `gpt-5.6-sol` / `openai.responses.v1.standard`;
 - Google `gemini-3.7-flash` / `google.interactions.v1beta.stateless`;
-- 8 public deterministic DEV probes;
-- 2 repetitions per unit/candidate;
-- 32 maximum live calls;
-- zero warm-up, automatic retry, fallback, parallel provider call or provider seed;
-- M1–M10, disqualifying hard gates and deterministic `NO_SELECTION`.
+- 8 public deterministic DEV probes × 2 repetitions × 2 candidates = maximum 32 calls;
+- zero warm-ups, retries, fallbacks, parallel live calls, provider seeds or provider-side conversation state;
+- M1–M10 hard gates and deterministic candidate ID / `NO_SELECTION` outcome.
 
 Canonical plan SHA-256:
 
 `69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f`
 
-ADR-010 freezes the exact executor. ADR-011 freezes the operational live wrapper/custody. The governed entrypoint for a future live comparison is `GovernedProviderLiveTask`, using one canonical durable custody root and both explicitly provisioned secrets.
+Issue #44 is the only live execution task. It may execute only through `GovernedProviderLiveTask` with both explicit secrets and one canonical durable custody root. Credential/account probing is forbidden. Calls remain 0/32.
 
-Issue #44 is the only current live execution task. Credential/account probing is forbidden. Calls remain 0/32.
+## ADR-013 — EV-007 failure performance
 
-## ADR-013 — EV-007 provider-free failure performance
+Canonical report SHA-256:
 
-Issue #48 / PR #49 froze the first integrated production failure campaign.
-
-Canonical evidence:
-
-```text
-failure_campaign.py blob             ad34dd0fa238738f2fa332cb6c60340aa020e80f
-validator blob                        3361ed0252cab59f2d53a82ce0a53e172dfa4ec2
-result blob                           c81c32c3477058e85b3325683b4670116370b730
-result report SHA-256                 7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9
-freeze                                research/frozen/ev007-provider-free-failure-performance-freeze-v1.json
-ADR                                   docs/adr/013-provider-free-failure-performance-campaign-2026-08-28.md
-PR #49 merge                          403316bf615a463de70741d41cbed32fea5dc34c
-```
-
-Frozen result:
+`7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9`
 
 ```text
 campaign denominator              11
@@ -169,71 +136,76 @@ real customer mutations            0
 automatic retries                   0
 ```
 
-The three evaluator FAIL cases are intentional evidence, not unresolved campaign failures:
+EV007-05, EV007-09 and EV007-11 remain intentionally expected evaluator failures: safe containment does not erase invalid proposals, incomplete post-claim action evidence or tampered provenance.
 
-- EV007-05: invalid canonical arguments are safely blocked by B1 but remain an invalid proposal;
-- EV007-09: post-claim action transport failure safely abstains and cannot replay, but the incomplete action execution chain remains evaluator-invalid;
-- EV007-11: tampered model-call provenance is rejected.
+## ADR-014 — EV-008 provider-free repeated-run stability
 
-This preserves the principle that safety containment does not erase agent/evidence defects.
+Issue #51 / PR #52 froze deterministic repeated-run stability over accepted production boundaries.
 
-### Preserved falsification
-
-Initial EV-007 head `63ec4cb0…` produced `171 passed / 8 failed` because case hashes were computed before Pydantic defaults were materialized. No campaign case executed on that head. The hash canonicalization was corrected without changing case semantics.
-
-Final PR head `d6c5ff450649ac0d365b1a5a3d01b6f322399aed` passed:
+Canonical evidence:
 
 ```text
-ev007-failure-performance #5    PASS
-production-runtime #58          182 passed
-ADR-004 regression              12 passed
-triggered workflows             12 / 12 success
-freeze self-check               PASS
+campaign version                     ev008-provider-free-stability-campaign-v1
+report SHA-256                        1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8
+stability units                       6
+repetitions per unit                  5
+provider-free runs                   30 / 30
+stable units                          6 / 6
+stable dimension checks              66 / 66
+contract expectations                30 / 30
+raw sensitive leaks                   0
+automatic retries                     0
+replays                               0
+provider calls                        0
+real customer mutations               0
+PR #52 merge                          d8c08ae532b11a5b7cecd4be08f8740c66905657
 ```
 
-## Current production execution state
+Frozen units:
+
+1. `STAB-01` read/investigate;
+2. `STAB-02` clarify;
+3. `STAB-03` abstain;
+4. `STAB-04` escalate;
+5. `STAB-05` controlled `reprocess_analysis` using fresh isolated claim custody per repetition;
+6. `STAB-06` deterministic read transport failure contained as `TOOL_BOUNDARY_FAILURE`.
+
+Frozen dimensions: terminal signature, tool selection, canonical arguments, action fingerprint, policy outcomes, evaluator classification, reason code, normalized behavioral trace, final response, leak count and retry/replay count.
+
+The behavioral trace normalization removes only per-execution top-level run/scenario identity. Tool/argument/policy/action/terminal/evaluator/final-response semantics remain in the signatures. Deliberate tamper tests prove those dimensions are not normalized away.
+
+Validation history preserves one operational falsification: dedicated validator run #1 failed before campaign execution because direct script execution lacked checkout-root `sys.path`; the bootstrap was corrected without changing any EV-008 metric or fixture. Final freeze head `4e586e657ca789ac29de4e4e3e271667038e603e` passed:
 
 ```text
-live provider authorization             EFFECTIVE / BOUNDED / ADR-009
-provider executor                       FROZEN / ADR-010
-live operational wrapper                FROZEN / ADR-011
-maximum live provider calls             32
-provider calls consumed                  0
-first live provider attempt             NO
-credentials/account probed              NO
-provider selected                       NO
-controlled action capability            FROZEN / ADR-012
-EV-007 failure performance              FROZEN / ADR-013
-EV-008 repeated-run stability           NEXT
-EV-011 communication safety             AFTER EV-008
-default runtime real actions            DISABLED
-blanket real-customer mutations         NOT AUTHORIZED
+ev008-repeated-run-stability #6      PASS
+production-runtime #67                199 passed
+ADR-004 regression                     12 passed
+triggered workflows                   12 / 12 success
+freeze self-check                     PASS
+exact 30-run reproduction             PASS
 ```
 
-The implementation foundations for provider selection, controlled actions and deterministic failure handling are now complete. The highest-value unblocked provider-free task is EV-008 repeated-run stability.
+ADR-014 establishes provider-free runtime/harness/evaluator reproducibility only. It does **not** establish live-model stability or provider quality.
 
-## Immediate blockers and priorities
+## Immediate priorities
 
-1. **EV-008 stability:** freeze an exact provider-free repeated-run population and independent stability dimensions without changing ADR-013.
-2. **Provider execution:** issue #44 may proceed only with one canonical durable custody root plus both explicit secrets; otherwise remain at attempt 0 / 0 calls.
-3. **EV-011 communication safety:** implement after EV-008 using deterministic leakage/failure-message checks first.
-4. **Scientific in parallel:** recover the exact original C4 score-row artifact only; do not reconstruct or rescore it.
-5. **After provider evidence:** freeze candidate ID or `NO_SELECTION`, bind only a governed selected provider behind ADR-006 and rerun compatible EV-007/008/011 dimensions.
-6. **Final delivery:** close reproducibility, clean install/run/evaluate, evidence index, integrated demonstration and handoff before speculative P2 work.
+1. **EV-011 customer-safe communication:** next provider-free P0/P1 task. Freeze deterministic leakage, uncertainty and handoff checks over accepted terminal/failure/action traces.
+2. **Provider execution in parallel:** issue #44 remains blocked until both explicit secrets and one canonical durable custody root exist; otherwise remain at attempt 0 / 0 calls.
+3. **Scientific recovery in parallel:** recover the exact original C4 score-row artifact only; do not reconstruct/rescore.
+4. **After provider result:** freeze exact candidate ID or `NO_SELECTION`; rerun compatible EV-007/008/011 definitions without post-hoc metric changes.
+5. **Final delivery:** integrate governed provider result, ADR-012 controlled execute scenarios, clean reproduction, evidence index and end-to-end demonstration before speculative P2 work.
 
 ## Still forbidden
 
-- reconstructing or rescoring the missing C4 score-row artifact;
-- using ADR-009 calls for C4/scientific work;
-- semantic, FRESH_BLIND or LEGACY_LOCKED_TEST access without a separate scientific gate;
-- changing ADR-008 candidates/population/thresholds after live calls without prospective amendment;
-- provider warm-ups, hidden retries/fallbacks or provider-side conversation state;
-- credential/account probing merely to test availability;
-- restarting live execution through a new custody root after a reserved/consumed run without prospective governance;
-- provider-native TRACTIAN tool execution;
-- bypassing `HarnessRunner.execute_tool()` or weakening ADR-005 for actions;
-- releasing a durable action claim after uncertain transport failure to permit replay;
-- treating ADR-012 as blanket real-customer mutation authorization;
-- weakening evaluator rules merely to convert EV-007 expected failures into passes;
-- claiming a provider/model winner from provider-free evidence;
+- reconstructing/rescoring/substituting the missing C4 artifact;
+- semantic, FRESH_BLIND or LEGACY_LOCKED_TEST access without a separate gate;
+- using ADR-009 calls for scientific/C4 work;
+- changing frozen provider comparison geometry after live evidence without prospective amendment;
+- hidden provider retries/fallbacks/warm-ups or provider-side state;
+- credential/account probing;
+- provider-native TRACTIAN tool execution or bypass of `HarnessRunner.execute_tool()`;
+- weakening ADR-005 or releasing uncertain action claims to permit replay;
+- treating ADR-012 as blanket real-customer authorization;
+- changing EV-007/EV-008 definitions after observing live provider results;
+- claiming provider/model selection from provider-free evidence;
 - global architecture or production-readiness claims beyond current evidence.
