@@ -93,7 +93,7 @@ def test_controller_routes_tool_only_through_harness_and_preserves_external_bind
 
     trace = AgentController(runner=runner, decision_source=source).run("inspect asset")
 
-    assert len(transport.cals) == 1
+    assert len(transport.calls) == 1
     request = transport.calls[0]
     assert request.headers["x-user-id"] == "usr-bound"
     assert request.query["seed"] == "seed-bound"
