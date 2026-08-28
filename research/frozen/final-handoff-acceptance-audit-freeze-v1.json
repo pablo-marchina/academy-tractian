@@ -1,0 +1,121 @@
+{
+  "schema_version": "final-handoff-acceptance-audit-freeze-v1",
+  "status": "FROZEN_FINAL_HANDOFF_ACCEPTANCE_AUDIT",
+  "date": "2026-08-28",
+  "issue": 60,
+  "pull_request": 61,
+  "starting_main_head": "0366f2214afce5bc54fca255669cd5befa517896",
+  "validated_pre_freeze_head": "79101b51c7ff85a2ed08ba229bd54760eab1c226",
+  "scientific_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+  "scientific_state_changed": false,
+  "production_provider_model_selected": false,
+  "live_provider_calls_consumed": 0,
+  "live_provider_call_envelope_max": 32,
+  "credential_account_probes": 0,
+  "real_customer_mutations": 0,
+  "semantic_private_blind_access": 0,
+  "global_architecture_frozen": false,
+  "production_readiness_authorized": false,
+  "direct_blobs": {
+    "README.md": "7298d2b4d7546b4ea93b64021faf95fb24958b0f",
+    "docs/FINAL-HANDOFF-RUNBOOK.md": "c7df131f555e3b07161fd1d518965958d245555c",
+    "docs/RUBRIC-TO-EVIDENCE.md": "a6e540147557991547c2b3b511c727384089506d",
+    "research/results/final-handoff-acceptance-audit-2026-08-28.json": "699eb2ea7a92cea3367353d1db2a065c0467492d",
+    "src/academy_tractian/handoff_audit.py": "db5e851a93f72421c6135c7dda207615858fd8b6",
+    "scripts/validate_final_handoff_audit.py": "5447529066ce4afd54f84c537aec49f0b11e2850",
+    "tests/test_handoff_audit.py": "94aa99fc3d07f0f5e28f4abad076fb56c6564540",
+    ".github/workflows/final-handoff-acceptance-audit.yml": "e73e4db62385ccc8907b284b2704e078da1ecef0",
+    "docs/adr/017-final-handoff-acceptance-audit-2026-08-28.md": "9ab307d1dc049580e3f51d2d18799eebd34725a8"
+  },
+  "audit_population": {
+    "total_rows": 83,
+    "group_counts": {"A":5,"B":13,"C":13,"D":7,"E":14,"F":10,"G":13,"H":8},
+    "preregistration_correction_comment_id": 5450823946
+  },
+  "audit_disposition": {
+    "PASS_EVIDENCED": 41,
+    "PASS_BOUNDED": 40,
+    "EXTERNALLY_BLOCKED": 1,
+    "UNEXECUTED_GATED": 1,
+    "GAP_ACTION_REQUIRED": 0
+  },
+  "closed_unblocked_handoff_gaps": [
+    "ROOT_README_REVIEWER_NAVIGATION",
+    "FINAL_HANDOFF_RUNBOOK",
+    "RUBRIC_TO_EVIDENCE_CROSSWALK"
+  ],
+  "frozen_upstream_evidence": {
+    "ADR016": {
+      "freeze_path": "research/frozen/provider-free-final-delivery-reproduction-evidence-freeze-v1.json",
+      "freeze_git_blob": "0f385781c56c5bbe80438f274976277cd88dd453",
+      "demo_report_sha256": "43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445",
+      "evidence_index_entries": 31,
+      "evidence_index_repository_resident": 30,
+      "evidence_index_resolved": 30,
+      "evidence_index_violations": 0
+    },
+    "EV007": {
+      "report_sha256": "7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9"
+    },
+    "EV008": {
+      "report_sha256": "1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8"
+    },
+    "EV011": {
+      "report_sha256": "cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e",
+      "deliberate_evaluator_fail_case": "COMM-07"
+    },
+    "provider_comparison": {
+      "plan_sha256": "69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f",
+      "status": "UNEXECUTED_GATED",
+      "calls_consumed": 0,
+      "calls_max": 32,
+      "provider_selected": false
+    },
+    "c4_score_row_artifact": {
+      "sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+      "bytes": 177350,
+      "rows": 144,
+      "repository_resident": false,
+      "status": "EXTERNALLY_BLOCKED"
+    }
+  },
+  "validation": {
+    "dedicated_workflow_name": "final-handoff-acceptance-audit",
+    "dedicated_workflow_run": 2,
+    "dedicated_workflow_run_id": 33165305212,
+    "dedicated_validation": "PASS",
+    "production_runtime_run": 93,
+    "production_runtime_run_id": 33165305239,
+    "adr016_reproduction_run": 12,
+    "adr016_reproduction_run_id": 33165305189,
+    "production_tests_in_clean_checkout_pre_freeze": 246,
+    "adr004_controller_regression_passed": 12,
+    "triggered_workflows_passed": 14,
+    "triggered_workflows_total": 14,
+    "final_audit_validation": "PASS"
+  },
+  "anti_overclaim_contract": {
+    "provider_quality_row": {"audit_id":"E-11","required_status":"UNEXECUTED_GATED"},
+    "c4_evaluation_integrity_row": {"audit_id":"C-13","required_status":"EXTERNALLY_BLOCKED"},
+    "pass_requires_repository_evidence": true,
+    "bounded_blocked_gated_require_limitation": true,
+    "gap_requires_explicit_action": true,
+    "unclosed_gap_count": 0
+  },
+  "boundaries": {
+    "default_production_runtime_actions_enabled": false,
+    "live_provider_calls_authorized_by_this_freeze": false,
+    "credential_account_probe_authorized": false,
+    "provider_selection_claim": false,
+    "real_customer_mutation_authorized": false,
+    "c4_reconstruction_rescoring_substitution_authorized": false,
+    "semantic_private_blind_evaluation_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "scientific_gate_advanced": false,
+    "global_architecture_frozen": false,
+    "production_readiness_claim_authorized": false,
+    "deployment_infrastructure_rollback_exercised": false
+  },
+  "interpretation": "Final provider-free handoff acceptance audit only. Eighty-one rows are satisfied within exact evidenced/bounded scope, one C4 row remains externally blocked, and one live provider-quality row remains governed and unexecuted. The freeze closes unblocked handoff documentation gaps without widening runtime, provider, scientific or customer-mutation authorization."
+}
