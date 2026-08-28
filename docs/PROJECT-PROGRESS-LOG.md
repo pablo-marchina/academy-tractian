@@ -603,3 +603,79 @@ production-readiness claim                 false
 ```
 
 This merge establishes a deterministic, integrated Agent Runtime + Evaluation plumbing baseline. It does **not** prove semantic task correctness, expected-path correctness, evidence-oracle completeness, final model/provider quality, consequential-action readiness or overall production readiness. The next delivery decision is production action safety, with all actions disabled as the null baseline; model/provider selection remains separate and provider calls remain unauthorized.
+
+## 21. Production consequential-action safety policy — FROZEN / ACTIONS STILL DISABLED — 2026-08-27
+
+Issue #23 / PR #24 formalized the production action-safety boundary without authorizing any mutating execution.
+
+The implementation adds:
+
+- `src/academy_tractian/action_safety.py` — runtime-owned authorization context, exact action fingerprinting, independent action-safety checks and deterministic policy decisions;
+- updated `src/academy_tractian/runtime.py` — B2 integration of the production action policy while `actions_enabled` remains `Literal[False]` and zero action permissions are granted;
+- `tests/test_action_safety.py` — coverage for all five canonical actions, every major denial family, exact confirmation/idempotency binding, duplicate protection, DecisionSource isolation and zero real action transport;
+- ADR-005 — `docs/adr/005-production-action-safety-policy-2026-08-27.md`.
+
+Initial implementation head:
+
+`f6d3be0fb26472d18d12ba5df858ac8aa55bc60d`
+
+Initial validation:
+
+```text
+workflow                 production-runtime
+run                      33133709999 / #5
+root production tests    45 / 45 PASS
+ADR-004 controller tests 12 / 12 PASS
+triggered PR workflows   11 / 11 success
+real action transport     0
+provider/model calls      0
+```
+
+After that implementation evidence passed, ADR-005 froze the P0 action-safety policy on final head:
+
+`4e566d68ccdd2d53f8180d0d31160ebf1fb9ca90`
+
+The final head was revalidated:
+
+```text
+workflow                 production-runtime
+run                      33133897094 / #6
+production tests         success
+ADR-004 controller test  success
+triggered PR workflows   11 / 11 success
+```
+
+PR #24 was merged with an expected-head guard into `main` as:
+
+`f287cc350a7029df441124ece8e7c4be4ff44678`
+
+ADR-005 freezes these independent requirements for the production action-safety protocol:
+
+- declared permission;
+- global production execution switch;
+- model/runtime authorization-state isolation;
+- canonical arguments and justification;
+- known resource/company scope, failing closed when unknown;
+- same-company scope;
+- requester confirmation bound to the exact SHA-256 action fingerprint;
+- runtime-owned idempotency key bound to that exact fingerprint;
+- rejection of consumed/duplicate idempotency state before transport.
+
+The policy can return `ALLOWED` only in an explicitly enabled hypothetical dry-run context where every gate passes. That capability validates the policy; it is **not** production authorization.
+
+Canonical real-runtime state remains:
+
+```text
+ProductionRuntimeConfig.actions_enabled     false
+action permissions provisioned                 0
+resource/company action bindings               0
+requester confirmations                        0
+idempotency bindings                            0
+durable idempotency store                  absent
+mutating action transport calls                 0
+provider/model calls                            0
+scientific gate changed                     false
+production readiness claimed                false
+```
+
+Actual action enablement is explicitly deferred to a separate governed decision backed by trusted real authorization/scope/confirmation state, durable idempotency semantics and retry/failure evidence. The immediate delivery priority therefore advances to the production model/provider `DecisionSource` adapter comparison, beginning provider-free; provider calls remain unauthorized.
