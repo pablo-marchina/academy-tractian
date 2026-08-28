@@ -679,3 +679,90 @@ production readiness claimed                false
 ```
 
 Actual action enablement is explicitly deferred to a separate governed decision backed by trusted real authorization/scope/confirmation state, durable idempotency semantics and retry/failure evidence. The immediate delivery priority therefore advances to the production model/provider `DecisionSource` adapter comparison, beginning provider-free; provider calls remain unauthorized.
+
+## 22. Provider-neutral production DecisionSource adapter — FROZEN / PROVIDER-FREE — 2026-08-27
+
+Issue #26 / PR #27 closed the missing production `DecisionSource` contract without selecting or calling a real provider/model.
+
+The merged implementation adds:
+
+- `src/academy_tractian/decision_source.py` — provider-neutral request/decision schemas, deterministic public ToolSpec projection, canonical request hashing, strict JSON parsing and the replaceable `ProviderDecisionClient` boundary;
+- `tests/test_decision_source.py` — decision-shape, context-isolation, malformed-output, duplicate-key, unknown-tool, provider-failure, binding-injection, B1-ownership and real-runner integration coverage;
+- `research/provider-decision-source-matrix-2026-08-27.md` — provider-free architecture comparison and preregistration skeleton for later provider/model evidence;
+- ADR-006 — `docs/adr/006-provider-neutral-decision-source-2026-08-27.md`.
+
+The selected P0 boundary is:
+
+```text
+ControllerContext
++ deterministic public ToolSpec projection
+→ ProviderDecisionRequest + canonical SHA-256
+→ ProviderDecisionClient.complete(request)
+→ strict JSON object / duplicate-key rejection
+→ ProviderDecisionPayload
+→ existing ControllerDecision / ToolProposal
+→ AgentController
+→ HarnessRunner.execute_tool()
+→ B1 canonical validation
+→ B2 ADR-005 action safety
+```
+
+Initial implementation head:
+
+`8e30968c34eb5972111a6189766bb76b33ac0667`
+
+Initial validation:
+
+```text
+workflow                  production-runtime
+run                       33134915702 / #8
+root production tests     66 / 66 PASS
+ADR-004 controller tests  12 / 12 PASS
+triggered PR workflows    11 / 11 success
+provider/model calls       0
+```
+
+The initial successful run exposed one non-failing Pydantic warning because the public parameter model used a field named `schema`. The warning was treated as evidence rather than ignored: the field was renamed to `parameter_schema`, and duplicate JSON object keys were also made explicitly invalid before the final ADR head.
+
+Final ADR head:
+
+`cdd592f5bae53d0fafecabe68832a31f8605907d`
+
+Final exact-head validation:
+
+```text
+workflow                  production-runtime
+run                       33135208692 / #9
+root production tests     67 / 67 PASS
+ADR-004 controller tests  12 / 12 PASS
+triggered PR workflows    11 / 11 success
+project Pydantic warning   0
+provider/model calls       0
+```
+
+The only warnings remaining in the final job were GitHub Actions/Node deprecation warnings outside project code.
+
+PR #27 was merged with an expected-head guard into `main` as:
+
+`cc3c09f8c04f1e73f13441b9176ca7631c6fd37a`
+
+Publication provenance is retained: two accidental placeholder files (`NOOP` and `NOOP2`) were committed while operating the branch and immediately removed. Neither file exists in the final validated tree or merge tree; the intermediate history is intentionally not rewritten.
+
+ADR-006 freezes the **provider-neutral adapter contract only**. Canonical state after merge remains:
+
+```text
+provider-neutral adapter                   frozen / ADR-006
+production provider/model selected          no
+real provider client                        absent
+provider/model calls authorized              0
+provider-call trace/provenance              not yet frozen
+production mutating actions enabled         false
+real action authorization state             absent
+scientific gate changed                     false
+score/artifact mutation                      0
+production readiness claimed                false
+```
+
+The adapter rejects malformed/non-object/duplicate-key JSON, extra fields, invalid decision shapes and unknown tools before execution; provider/client exceptions fail through the existing `DECISION_SOURCE_FAILURE` safe-abstention path. Model-controlled `user_id`, `x-user-id` and `seed` remain rejected before execution. Known-tool canonical argument defects deliberately remain B1-owned and traceable as `ARGUMENT_INVALID`; consequential-action authorization remains B2/ADR-005-owned.
+
+No historical C4 provider route is promoted to production by this work. Before the first real provider comparison, the repository must freeze model-call trace/provenance behavior and the prospective comparison candidate/metric protocol provider-free. A later live comparison requires its own explicit authorization. The scientific gate remains `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` and the exact frozen score artifact blocker is unchanged.
