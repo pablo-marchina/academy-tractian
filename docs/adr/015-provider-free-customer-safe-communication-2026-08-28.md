@@ -138,6 +138,14 @@ Dedicated-validator head `51f376268f8de828f4a80ae11ac3bd6a0c5dd628` passed:
 - ADR-004 regression — 12 passed;
 - 12/12 triggered workflows — success.
 
+Freeze-validation head `7a4fdb38753086ff628463f0cadece20066e39ad` then independently verified the pinned evidence:
+
+- `ev011-customer-safe-communication #5` — PASS and exact report SHA reproduction;
+- production-runtime #75 — 218 passed;
+- ADR-004 regression — 12 passed;
+- 12/12 triggered workflows — success;
+- freeze self-check — PASS, including declared Git blobs, manifest equality, exact ten-case reproduction and the preserved `COMM-07` evaluator FAIL distinction.
+
 No campaign case, predicate definition, applicability rule, expected terminal semantics or objective threshold was changed after observing this result.
 
 ## Preserved boundaries
