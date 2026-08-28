@@ -1,15 +1,15 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-28 — material-decision historical evidence audit  
-**Audit baseline:** `main@60d1da6d3ef1153d142ea261111300333eff0061`  
+**Canonical status checkpoint:** 2026-08-28 — post zero-cost provider/model fact refresh  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Evidence-first gate:** [`EVIDENCE-AUDIT-BEFORE-EXPERIMENTS.md`](EVIDENCE-AUDIT-BEFORE-EXPERIMENTS.md)  
 **Historical evidence audit:** [`MATERIAL-DECISION-HISTORICAL-EVIDENCE-AUDIT-2026-08-28.md`](MATERIAL-DECISION-HISTORICAL-EVIDENCE-AUDIT-2026-08-28.md)  
-**Machine audit:** [`../research/results/material-decision-historical-evidence-audit-2026-08-28.json`](../research/results/material-decision-historical-evidence-audit-2026-08-28.json)  
+**Provider fact refresh:** [`PROVIDER-ZERO-COST-FACT-REFRESH-2026-08-28.md`](PROVIDER-ZERO-COST-FACT-REFRESH-2026-08-28.md)  
+**Provider refresh addendum:** [`DECISION-REVALIDATION-ADDENDUM-003-ZERO-COST-PROVIDER-FACT-REFRESH.md`](DECISION-REVALIDATION-ADDENDUM-003-ZERO-COST-PROVIDER-FACT-REFRESH.md)  
 **Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)
 
-This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts/ADRs remain authoritative for their original scopes; prospective governance does not rewrite them.
+This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts and ADRs remain authoritative for their exact historical scopes.
 
 ## Executive state
 
@@ -18,20 +18,25 @@ Project North Star                           strongest defensible TRACTIAN/Intel
 permanent external service/API cost          USD 0 HARD CONSTRAINT
 evidence audit before new experiment         REQUIRED
 material-decision historical audit           COMPLETE
+provider/model current fact refresh          COMPLETE
+provider/model inference calls in refresh    0
+credential/account probes in refresh         0
+new benchmark authorized by refresh          NO
+
 material decision rows                       20
 EVIDENCE_SUFFICIENT                          11
 EVIDENCE_EXISTS_NEEDS_UPDATE                  1
 PARTIALLY_ASSESSED                            6
 UNASSESSED                                    1
 INVALIDATED_EVIDENCE_FOR_CURRENT_SCOPE        1
-new experiments authorized by audit           0
 
 provider/model final selection               NO
+provider/model quality                       PARTIALLY_ASSESSED
+broad USD-0 provider discovery               CLOSED FOR CURRENT SCOPE
+primary hosted feasible set                  GEMINI 3.7 FLASH / CLOUDFLARE FREE / GROQ HISTORICAL CONTROL
+conditional baselines                        OLLAMA LOCAL / PINNED OPENROUTER :FREE
 old ADR-008 OpenAI/Gemini packet             INVALID FOR CURRENT USD-0 EXECUTION SCOPE
 old packet calls consumed                     0 / 32
-credential/account probes                     0
-Groq API connection                          USER-REPORTED CONNECTED / NOT PROBED
-Gemini API connection                        PENDING USER CONNECTION / NOT PROBED
 
 single-agent controller                      STRONG QUALIFIED BASELINE
 single-vs-multi final topology               NOT SELECTED
@@ -42,6 +47,8 @@ RAG/vector/reranking                         NO MATERIAL CURRENT GAP / NO EXPERI
 persistent memory                            NO MATERIAL CURRENT GAP / NO EXPERIMENT
 adaptive model routing                       UNASSESSED / NOT CURRENTLY MATERIAL
 
+C4 scientific gate                          REQUIRED_PER_GROUP_AND_SLICE_REPORTING
+C4 exact-row artifact                        EXTERNALLY BLOCKED / EXACT-BYTE RECOVERY ONLY
 provider-free safety/reliability             EVIDENCE SUFFICIENT WITH BOUNDED NON-CLAIMS
 operational deterministic evaluator          EVIDENCE SUFFICIENT
 scientific evaluator / EV-012                PARTIALLY ASSESSED / C4 BLOCKED
@@ -54,87 +61,122 @@ production-readiness claim                   NOT AUTHORIZED
 real customer mutations performed            0
 ```
 
-## 1. Evidence-audit result controls all next work
+## 1. Evidence-first state
 
-The repository is **not** starting architecture research from zero. The audit reused the complete 2026-08-22 E0→E14v reinterpretation and reconciled the evidence added afterward: P12/C4, ADR-001→017, EV-007/008/011, final-delivery reproduction, the 83-row handoff audit and the new USD-0/evidence-first governance.
+The repository is not restarting architecture or provider research from zero.
 
-Permanent prospective sequence:
+Permanent sequence:
 
 ```text
 decision question
 → repository historical evidence audit
 → sufficiency classification
-→ exact material gap, if any
-→ current external fact refresh only where assumptions can change
-→ preregistration only if a minimum experiment is still necessary
-→ implementation / experiment
+→ current external fact refresh only for changing assumptions
+→ reconcile current facts with preserved positive/negative evidence
+→ demonstrate exact remaining material gap
+→ preregister minimum experiment only if still necessary
+→ implementation / execution
 → evaluation / regression / decision
 ```
 
-A demonstrated gap is not automatic experiment authorization. Dependency ordering, current-fact refresh, scope screening or artifact recovery may come first.
+A gap does not authorize an experiment automatically.
 
-## 2. Decisions with sufficient evidence — do not create redundant experiments
+## 2. Provider/model fact refresh — complete
 
-No new experiment is authorized now for:
+Current first-party documentation was refreshed without inference calls or credential/account probes for Gemini, Groq, Cloudflare Workers AI, OpenRouter, Ollama, Hugging Face Inference Providers, Cerebras and NVIDIA hosted NIM.
 
-- historical Groq/GPT-OSS reasoning-budget/structured-output tuning family — negative E14 evidence closes that family;
-- native typed ToolSpec vs MCP-compatible adapter — E7 already provides direct comparison;
-- evidence-sufficiency stopping — E5 directly beats the free-loop baseline on the recorded DEV+VALIDATION scope;
-- RAG/vector DB/reranking — current direct typed API/tool evidence has no measured retrieval gap and the delivery classifies these as P2 conditional;
-- persistent memory — current required scenarios are covered by explicit request state; persistent memory is conditional on an actual case need;
+The historical provider decision remains a **delta problem**, not blank-slate research. Binding historical evidence still includes:
+
+- E8 zero-cost candidate discovery and Groq operational/schema/trace evidence;
+- E14g→E14l GPT-OSS operational + negative task-quality evidence;
+- P12-C2/C3 Groq capacity failures;
+- ADR-001 capacity/serving-path comparison;
+- ADR-002/003 and later serving probes;
+- ADR-006→011 provider-neutral client/executor/custody engineering.
+
+### Current primary hosted feasible set
+
+#### Gemini 3.7 Flash — conditional
+
+`gemini-3.7-flash` is current GA/stable, Free Tier input/output is free, and the model exposes the contract-relevant function-calling/structured-output capabilities. ADR-008 already used this same model ID historically.
+
+The unresolved gate is **data use**: current Free Tier pricing documentation says Free Tier content is used to improve Google products. No Gemini provider call is authorized until the exact intended payload is judged acceptable under that policy.
+
+#### Cloudflare Workers AI Free — eligible
+
+Workers AI currently provides 10,000 neurons/day on Workers Free with a plan-upgrade boundary rather than silent paid spillover. Current screened agentic models include pinned GLM 4.7 Flash, Gemma 4 26B A4B and Nemotron 3 120B A12B routes.
+
+Do **not** automatically benchmark all three. The next planning step must choose only the minimum materially distinct representative(s) needed to test a real quality/capacity gap.
+
+#### Groq Free — historical/control route
+
+Current Groq Free remains contract-feasible for selected production models, but the repository already contains material negative GPT-OSS task-quality and capacity evidence. Groq must therefore be treated as historical/control evidence, not a fresh frontier candidate whose failures can be reset.
+
+Groq Qwen 3.8 is currently Preview and is excluded from final production claims.
+
+### Conditional baselines
+
+- Ollama local only if a no-inference hardware/model feasibility check identifies a realistic model;
+- a **fixed** OpenRouter `:free` route only if model/provider identity and no-fallback behavior can be pinned; generic `openrouter/free` is excluded from controlled comparison.
+
+### Screened out of the primary final hosted production set
+
+- NVIDIA hosted free NIM — development/testing positioning;
+- Cerebras Free Trial — bounded trial, already historically explored;
+- Hugging Face routed free credit — allowance too small for default production selection absent an ultra-low-volume proof;
+- Groq Qwen 3.8 Preview — not a clean production lifecycle.
+
+## 3. Exact remaining provider decision gap
+
+D01 stays `PARTIALLY_ASSESSED`, but broad provider discovery is complete enough for the current scope.
+
+Before any inference call:
+
+1. resolve Gemini Free Tier data-use/privacy eligibility for the exact payload;
+2. select the minimum pinned Cloudflare representative set by materially different capability/capacity point;
+3. decide whether Groq is historical-only or one live control under the current DecisionSource contract;
+4. decide whether Ollama is hardware/model feasible using facts only;
+5. then determine whether a **minimal prospective live provider comparison** still closes a material gap.
+
+No provider benchmark is currently authorized.
+
+## 4. Decisions with sufficient current evidence
+
+Do not create redundant experiments for:
+
+- historical Groq/GPT-OSS reasoning-budget/structured-output tuning family;
+- native typed ToolSpec vs MCP-compatible adapter;
+- evidence-sufficiency stopping;
+- RAG/vector DB/reranking;
+- persistent memory;
 - deterministic safety/authorization/consequential-action boundaries;
 - provider-free failure continuity/stability/customer-safe communication;
 - operational deterministic evaluator stack;
 - normalized RunTrace observability;
-- hosted deployment — not a formal requirement for the current delivered scope;
-- richer UI — not a formal requirement and no current reviewer/demo task-completion gap is evidenced.
+- hosted deployment;
+- richer UI.
 
-Reopen any of these only on a documented reversal trigger or new measured requirement/gap.
+Reopen only on a documented reversal trigger or new measured requirement/gap.
 
-## 3. Provider/model state — delta problem, not blank-slate research
-
-The historical evidence that must be reused includes:
-
-- E8 zero-cost candidate discovery: no-model, Groq, Gemini, OpenRouter, Hugging Face and Ollama; paid OpenAI/Anthropic blocked under the original free constraint;
-- real E8 Groq `llama-3.1-8b-instant` operational/schema/trace evidence at USD 0;
-- later evidence superseding that model for task quality;
-- E14g→E14l Groq `openai/gpt-oss-120b` operational and negative task-quality evidence;
-- P12-C2/C3 Groq capacity failures;
-- ADR-001 capacity/serving-path comparison;
-- OpenRouter/NVIDIA/C4 serving compatibility evidence;
-- ADR-006→011 provider-neutral client/executor/custody engineering.
-
-Current classification:
-
-```text
-production provider/model quality       PARTIALLY_ASSESSED
-provider serving capacity               EVIDENCE_EXISTS_NEEDS_UPDATE
-old ADR-008 live packet                 INVALIDATED_EVIDENCE_FOR_CURRENT_SCOPE
-```
-
-The next provider action is **current first-party USD-0 eligibility/capability refresh only** and reconciliation against this existing evidence. Do not call a provider merely to repeat historical evidence. Any future live comparison requires a new prospective candidate set/protocol after that refresh.
-
-## 4. Agent topology and runtime
+## 5. Agent topology and runtime
 
 ### Agent topology
 
-ADR-004 + EV-007/008/011 + ADR-016 prove a strong single-agent baseline. Historical records explicitly left multi-agent unfrozen, and this audit found no controlled single-vs-multi quality comparison.
+ADR-004 + EV-007/008/011 + ADR-016 establish the explicit single-agent controller as a strong qualified baseline. The incremental benefit/cost of planner→executor or critic/reviewer remains unmeasured.
 
 ```text
 single-agent baseline                  QUALIFIED / STRONG EVIDENCE
 multi-agent incremental benefit        NOT ESTABLISHED
-topology experiment now                NOT AUTHORIZED YET
+topology experiment now                NOT AUTHORIZED
 ```
 
-The exact gap is real, but a topology experiment must wait until there is a controlled provider/model basis and the topology remains material after screening. Do not implement planner→executor or critic/reviewer merely because the gap exists.
+Topology work remains downstream of the provider/control basis and requires its own prospective protocol if still material.
 
 ### Runtime/orchestration
 
-E6 strongly qualifies LangGraph and ADR-004 strongly qualifies the explicit controller, but evidence depth is asymmetric across retained runtime alternatives. Runtime therefore remains `PARTIALLY_ASSESSED`, not blank-slate.
+E6 strongly qualifies LangGraph and ADR-004 strongly qualifies the explicit controller. Evidence remains asymmetric across runtime alternatives. Do not restart runtime research unless provider/topology resolution or an ADR-004 reversal trigger makes the remaining runtime choice material.
 
-Reopen a runtime experiment only after higher-priority unresolved dimensions or a documented ADR-004 reversal trigger makes the remaining asymmetry material.
-
-## 5. Scientific C4 path — unchanged
+## 6. Scientific C4 path — unchanged
 
 Current gate:
 
@@ -151,13 +193,13 @@ geometry 36 common parents × 4 arms
 
 Preserved evidence:
 
-- deterministic scoring: 144/144, frozen;
+- deterministic scoring: 144/144 frozen;
 - bootstrap 20k: PASS, independent recomputation PASS;
 - LOGO sensitivity: 7/7, independent recomputation PASS.
 
 Authorized now: **exact-byte recovery only**. Reconstruction, rescoring, substitution, semantic evaluation, FRESH_BLIND and LEGACY_LOCKED_TEST remain unauthorized.
 
-## 6. Preserved provider-free delivery evidence
+## 7. Preserved provider-free delivery evidence
 
 ```text
 ADR-004 controller regression              12 / 12 PASS
@@ -169,32 +211,33 @@ ADR-017 acceptance rows                    83
 PASS_EVIDENCED                             41
 PASS_BOUNDED                               40
 EXTERNALLY_BLOCKED                          1   C4 / EV-012
-UNEXECUTED_GATED                            1   historical live provider row
+UNEXECUTED_GATED                            1   historical live-provider row
 GAP_ACTION_REQUIRED                         0
 clean-checkout production tests           251 PASS at ADR-017 freeze
 ```
 
-These facts remain historical evidence within their frozen scopes. They do not establish live-provider quality, C4 completion, global architecture optimality, real-customer mutation, hosted-deployment rollback or unconditional production readiness.
+These prove only their frozen scopes; they do not establish live-provider quality, C4 completion, global architecture optimality, real-customer mutation, hosted-deployment rollback or unconditional production readiness.
 
-## 7. Immediate authorized work
+## 8. Immediate authorized work
 
-1. merge/freeze the historical evidence audit and this reconciliation;
-2. refresh current first-party facts only for the zero-cost provider/model candidates potentially relevant to D01/D02;
-3. reconcile those facts with existing E8/E14/P12/ADR evidence before deciding whether any new provider experiment is necessary;
-4. continue exact C4 artifact recovery in parallel;
-5. keep the single-agent controller as the topology baseline, but do not implement multi-agent until provider/control prerequisites and a prospective topology protocol exist;
-6. leave runtime/adaptive-planning gaps queued behind higher-priority unresolved dimensions;
-7. do not create RAG/memory/routing/deployment/UI experiments absent a new material trigger.
+1. freeze/reconcile this provider fact refresh;
+2. resolve the Gemini payload data-use gate **without inference**;
+3. choose the minimum Cloudflare candidate set by factual capability/capacity differences;
+4. decide Groq's historical-control role and optional Ollama factual feasibility;
+5. only then decide whether a minimum prospective provider comparison is necessary;
+6. continue exact C4 artifact recovery in parallel;
+7. keep multi-agent/runtime/adaptive work queued behind the provider basis unless a reversal trigger changes priority.
 
-## 8. Still forbidden
+## 9. Still forbidden
 
-- creating an experiment before the repository evidence audit for that exact decision is complete;
+- creating an experiment before the evidence audit and current-fact reconciliation for that exact decision;
 - executing the old ADR-008/#44 packet as-is;
 - paid provider/service production usage;
 - credential/account probing merely to verify connection state;
+- provider inference before a separately frozen prospective packet;
 - hidden provider retries/fallbacks/warm-ups or uncontrolled provider state in controlled comparisons;
-- reconstructing/rescoring/substituting C4 without a separately approved prospective scientific amendment;
+- reconstructing/rescoring/substituting C4 without a separately approved scientific amendment;
 - semantic/FRESH_BLIND/LEGACY_LOCKED_TEST access without explicit authorization;
 - bypassing `HarnessRunner.execute_tool()` or weakening deterministic safety/authorization/idempotency boundaries;
-- treating historical evidence sufficiency as global mathematical optimality;
-- claiming global architecture freeze or production readiness before the unresolved material decisions close.
+- treating a historical PASS/freeze as proof of global optimality;
+- claiming global architecture freeze or production readiness before unresolved material decisions close.

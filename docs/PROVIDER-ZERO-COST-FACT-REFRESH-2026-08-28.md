@@ -15,7 +15,7 @@ This refresh implements the next step authorized by the historical evidence audi
 The repository evidence from E8/E14/P12/ADR-001→011 remains the historical baseline. This document updates only facts that can change externally over time:
 
 - current free-tier/free-endpoint eligibility;
-- model lifecycle state (GA/stable/preview/deprecated);
+- model lifecycle state;
 - structured-output and function/tool-call support;
 - published free quota/capacity semantics;
 - paid-spillover behavior and fail-closed properties;
@@ -25,28 +25,28 @@ Primary sources were checked on 2026-08-28. No community benchmark, secondary co
 
 ## 2. Current factual screening
 
-| Provider/path | Current relevant free model/path | USD-0 status | Contract-relevant capability | Material constraint | Current screening disposition |
-|---|---|---|---|---|---|
-| Google Gemini Developer API | `gemini-3.7-flash` | Free tier exists; input/output free on Free Tier | GA/stable; function calling; structured outputs; thinking; 1M input / 64k output | Free-tier content is used to improve Google products; exact active rate limits are project/account-specific in AI Studio and were not probed | `CONDITIONAL_ELIGIBLE` — strong capability frontier, but privacy/data-use fit must be acceptable before live use |
-| Groq Free | `openai/gpt-oss-120b`, `openai/gpt-oss-20b`; preview `qwen/qwen3.8-27b` | Free-plan published quotas; no paid tier required for Free use | GPT-OSS 20B/120B support strict structured outputs; all hosted Groq models support tool use | strict Structured Outputs cannot be combined with tool use in the same request; qwen3.8 is Preview; GPT-OSS 120B has preserved negative historical task-quality/capacity evidence | `ELIGIBLE_WITH_HISTORICAL_PENALTY` — retain as zero-cost baseline/control, not a blank-slate frontier candidate |
-| Cloudflare Workers AI Free | `@cf/zai-org/glm-4.7-flash`, `@cf/google/gemma-4-26b-a4b-it`, `@cf/nvidia/nemotron-3-120b-a12b` | 10,000 neurons/day free; on Workers Free, exceeding allocation fails instead of billing | model pages expose function calling; OpenAI-compatible parameters include `response_format`, `tools`, `tool_choice`, `seed`; reasoning on screened models | neuron budget varies heavily by model; several newer frontier models require Paid plan and are excluded | `ELIGIBLE` — strongest newly refreshed alternative because zero-cost boundary is explicitly fail-closed on Free plan |
-| OpenRouter Free | fixed `:free` variants and `openrouter/free` router | Free plan / free model variants; published free-plan cap 50 requests/day | OpenAI-compatible tool calling and structured outputs on compatible endpoints | `openrouter/free` selects models at random; endpoint support varies; provider-side fallback routing can retry other providers; current fixed free catalog is volatile | `CONDITIONAL_ELIGIBLE_FIXED_MODEL_ONLY` — router itself is unsuitable for controlled evaluation; any future use must pin exact model/provider behavior and disable uncontrolled fallbacks |
-| Ollama local | local tool-capable models such as Qwen-family models | No external API charge; local compute only | local tool calling; multi-turn tool loops; JSON-schema structured outputs | quality/latency depend on actual local model and hardware; no current hardware/model qualification performed in this refresh | `ELIGIBLE_LOCAL_BASELINE` — credible zero-external-cost baseline, subject to separate hardware-feasibility facts if needed |
-| Hugging Face Inference Providers | free-user monthly inference credits | Free users receive $0.10/month credits; additional routed use requires purchased credits | multi-provider OpenAI-compatible inference; model/provider metadata can expose tools/structured-output support | free allowance is very small and provider routing/billing abstraction adds another layer | `BOUNDED_EXPERIMENT_ONLY` — not a credible default production path without demonstrating workload fits permanently inside the tiny free allowance |
-| Cerebras Inference | Free Trial | $5 free credits after account creation | access to Cerebras-powered models | trial credit is bounded rather than a durable recurring free production tier | `NOT_PRIMARY_PRODUCTION_CANDIDATE` — retain historical serving evidence; do not prioritize for final zero-cost production selection |
-| NVIDIA hosted NIM/API Catalog | Free endpoints / Developer Program access | free hosted endpoints for prototyping/development/testing | many current agentic/tool-use models exposed as Free Endpoint | NVIDIA explicitly positions hosted free endpoints for development/testing; production requires an enterprise/production path | `INELIGIBLE_FOR_FINAL_HOSTED_PRODUCTION` — preserve historical compatibility evidence; no new hosted-NVIDIA benchmark justified for production selection |
+| Provider/path | Current relevant free model/path | USD-0 status | Material facts | Screening |
+|---|---|---|---|---|
+| Google Gemini Developer API | `gemini-3.7-flash` | Free Tier input/output free | GA/stable; function calling; structured outputs; thinking; 1M input / 64k output; Free Tier content is used to improve Google products; exact account limits not probed | `CONDITIONAL_ELIGIBLE` — technically strong, but exact payload must pass the Free Tier data-use/privacy gate |
+| Groq Free | `openai/gpt-oss-120b`, `openai/gpt-oss-20b`; preview `qwen/qwen3.8-27b` | published Free Plan quotas | GPT-OSS supports strict structured outputs; hosted models support tool use; strict Structured Outputs + tool use are not supported together; Qwen 3.8 is Preview; GPT-OSS 120B has preserved project-specific negative evidence | `ELIGIBLE_WITH_HISTORICAL_PENALTY` — historical/control route, not a blank-slate frontier candidate |
+| Cloudflare Workers AI Free | `@cf/zai-org/glm-4.7-flash`, `@cf/google/gemma-4-26b-a4b-it`, `@cf/nvidia/nemotron-3-120b-a12b` | 10,000 neurons/day on Workers Free | over-allocation on Free requires upgrade rather than silent billing; screened models expose function calling/reasoning; OpenAI-compatible parameters include `response_format`, `tools`, `tool_choice`, `seed` | `ELIGIBLE` — strongest newly surfaced fail-closed hosted USD-0 alternative |
+| OpenRouter Free | fixed `:free` variants; generic `openrouter/free` router | Free plan/free variants | 50 requests/day plan cap; generic free router chooses an eligible free model dynamically; provider fallback routing may retry another provider | `CONDITIONAL_ELIGIBLE_FIXED_MODEL_ONLY`; generic router excluded from controlled comparison |
+| Ollama local | local tool-capable open-weight models | no external API charge | tool calling; multi-turn tool loops; JSON-schema structured outputs | `ELIGIBLE_LOCAL_BASELINE`, subject to hardware/model feasibility facts |
+| Hugging Face Inference Providers | routed free-user credits | $0.10/month for Free users | additional routed use requires purchased credits | `BOUNDED_EXPERIMENT_ONLY`; too small for default production path absent an ultra-low-volume proof |
+| Cerebras Inference | Free Trial | $5 free trial credits | bounded trial, not durable recurring free production tier | `NOT_PRIMARY_PRODUCTION_CANDIDATE`; retain historical serving evidence |
+| NVIDIA hosted NIM/API Catalog | free hosted endpoints | development/testing access | NVIDIA positions free hosted endpoints for prototyping/development/testing; production uses a production/enterprise path | `INELIGIBLE_FOR_FINAL_HOSTED_PRODUCTION`; preserve historical compatibility evidence |
 
 ## 3. Provider details
 
-### 3.1 Google Gemini — materially stronger current candidate than the historical packet
+### 3.1 Google Gemini
 
-Current first-party docs state that Gemini 3.7 Flash (`gemini-3.7-flash`) is GA/stable and intended for agentic workflows and reliable multi-step execution. The model supports function calling, structured outputs, thinking, a 1,048,576-token input window and 65,536 output tokens.
+Current first-party documentation states that `gemini-3.7-flash` is GA/stable and intended for agentic workflows. It supports function calling, structured outputs, thinking, a 1,048,576-token input window and 65,536 output tokens.
 
-The Gemini pricing page currently lists Free Tier input and output for Gemini 3.7 Flash as free of charge. The Free usage tier has no spend-based rate limit because it has no billed spend; active RPM/TPM/RPD limits are project/model dependent and are shown in AI Studio. This refresh deliberately did not inspect the account.
+The current pricing table lists Free Tier input and output for Gemini 3.7 Flash as free of charge. Active RPM/TPM/RPD limits depend on project/model and are shown in AI Studio; this refresh deliberately did not inspect the account.
 
-The important production constraint is data policy: the pricing table states Free Tier content is used to improve Google products, while Paid Tier content is not. Therefore Gemini 3.7 Flash is technically the strongest refreshed hosted candidate, but it remains `CONDITIONAL_ELIGIBLE` until the project confirms that the exact production/evaluation payload is acceptable under that Free Tier data-use policy.
+The material constraint is the Free Tier data-use policy: current pricing documentation states Free Tier content is used to improve Google products, while Paid Tier content is not. Gemini therefore remains `CONDITIONAL_ELIGIBLE` until the exact intended project payload is judged acceptable under that policy.
 
-This is a meaningful change from the historical ADR-008 packet: the relevant current Gemini candidate is now **3.7 Flash**, not the older frozen 3.7/3.6 assumptions in prior planning, and it has a current free tier.
+**Historical provenance correction:** ADR-008 already used `gemini-3.7-flash` as its frozen Google candidate. The material change in this refresh is **not** a new Gemini model ID. It is the current confirmation that the same model is GA with a Free Tier, together with the now-explicit Free Tier data-use gate and the changed zero-cost feasible set after the OpenAI candidate became ineligible.
 
 Primary sources:
 
@@ -57,20 +57,17 @@ Primary sources:
 - https://ai.google.dev/gemini-api/docs/function-calling
 - https://ai.google.dev/gemini-api/docs/structured-output
 
-### 3.2 Groq Free — viable baseline, but historical negative evidence must remain binding
+### 3.2 Groq Free
 
-Groq's current Free Plan publishes, among other entries:
+Current Free Plan documentation includes:
 
 - `openai/gpt-oss-120b`: 30 RPM / 1K RPD / 8K TPM / 200K TPD;
 - `openai/gpt-oss-20b`: 30 RPM / 1K RPD / 8K TPM / 200K TPD;
-- `qwen/qwen3.6-27b`: 30 RPM / 1K RPD / 8K TPM / 200K TPD;
 - `qwen/qwen3.8-27b`: 30 RPM / 1K RPD / 8K TPM / 2M TPD.
 
-Groq documents strict Structured Outputs for GPT-OSS 20B, GPT-OSS 120B and Qwen 3.8 27B. It also documents tool use for hosted models. However, Structured Outputs and tool use are currently not supported together in a single Structured Outputs request. That does not necessarily block this repository because the accepted provider-neutral `DecisionSource` can request a typed decision payload and keep real tool execution in `HarnessRunner`; provider-native TRACTIAN tool execution remains forbidden anyway.
+Groq documents strict Structured Outputs for GPT-OSS 20B/120B and Qwen 3.8 27B and tool use for hosted models. It also states that strict Structured Outputs and tool use cannot currently be combined in one Structured Outputs request. The repository can keep real TRACTIAN execution inside `HarnessRunner`, so provider-native tool dispatch is not required.
 
-`qwen/qwen3.8-27b` is currently a **Preview** model. Groq explicitly states Preview models are evaluation-only and should not be used for production. It is therefore not a clean final production candidate despite its larger 2M TPD Free quota.
-
-`openai/gpt-oss-120b` remains a production model and a Free-plan route, but E14/P12 already preserve substantial negative evidence: operational completeness was achievable, while task-quality/decision/action/escalation and capacity problems were observed in prior project-specific experiments. Those results must not be erased by treating Groq as a new candidate from scratch.
+Qwen 3.8 is currently a **Preview** model; Groq states Preview models are intended for evaluation and should not be used in production. GPT-OSS 120B is a production model, but E14/P12 already preserve negative project-specific quality and capacity evidence. Those failures remain binding evidence and must not be rerun away.
 
 Primary sources:
 
@@ -80,25 +77,19 @@ Primary sources:
 - https://console.groq.com/docs/tool-use/overview
 - https://console.groq.com/docs/billing-faqs
 
-### 3.3 Cloudflare Workers AI — newly strong fail-closed zero-cost route
+### 3.3 Cloudflare Workers AI Free
 
-Workers AI is available on the Workers Free plan. Cloudflare currently grants **10,000 neurons/day free**. On Workers Free, usage above that allocation does not become billable: further operations fail. The Paid plan is a separate upgrade path. This is a strong match for the project's `USD 0` hard boundary because overage is fail-closed rather than silent paid spillover.
+Workers AI currently provides **10,000 neurons/day free** on Workers Free. Current pricing documentation makes further usage a plan-upgrade boundary rather than an automatic paid spillover path, which matches the project's fail-closed USD-0 requirement.
 
-Current Free-plan-accessible, agent-relevant models include:
+Current agent-relevant screened models include:
 
-- `@cf/zai-org/glm-4.7-flash` — 131,072 context, function calling, reasoning, multi-turn tool use;
-- `@cf/google/gemma-4-26b-a4b-it` — 256,000 context, function calling, reasoning, vision;
-- `@cf/nvidia/nemotron-3-120b-a12b` — 256,000 context, function calling, reasoning.
+| Model | Context | Function calling / reasoning | Neurons per M input | Neurons per M output |
+|---|---:|---|---:|---:|
+| `@cf/zai-org/glm-4.7-flash` | 131,072 | yes / yes | 5,500 | 36,400 |
+| `@cf/google/gemma-4-26b-a4b-it` | 256,000 | yes / yes | 9,091 | 27,273 |
+| `@cf/nvidia/nemotron-3-120b-a12b` | 256,000 | yes / yes | 45,455 | 136,364 |
 
-Their current neuron costs differ materially:
-
-- GLM-4.7-Flash: 5,500 neurons / M input; 36,400 / M output;
-- Gemma 4 26B A4B: 9,091 / M input; 27,273 / M output;
-- Nemotron 3 120B A12B: 45,455 / M input; 136,364 / M output.
-
-Cloudflare's OpenAI-compatible model schemas expose `response_format`, `tools`, `tool_choice`, `seed` (best-effort deterministic), and standard completion controls. This makes Workers AI a credible current comparison candidate without changing the project's model-neutral DecisionSource or HarnessRunner execution boundary.
-
-Some more expensive frontier models now explicitly require the Workers Paid plan and are therefore excluded from the zero-cost feasible set.
+Their model/API schemas expose contract-relevant parameters including `response_format`, `tools`, `tool_choice` and a best-effort `seed`. Several newer models explicitly require Workers Paid and are excluded from the zero-cost feasible set.
 
 Primary sources:
 
@@ -111,16 +102,11 @@ Primary sources:
 - https://developers.cloudflare.com/workers-ai/models/nemotron-3-120b-a12b/
 - https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/
 
-### 3.4 OpenRouter Free — useful interoperability route, weak controlled-experiment default
+### 3.4 OpenRouter Free
 
-OpenRouter currently exposes 25+ free models on its Free plan and publishes a 50 requests/day plan cap. It supports structured outputs on compatible endpoints and standardizes client-side tool calling.
+OpenRouter currently exposes free models and a Free plan with a published 50 requests/day cap. Structured-output support depends on the selected endpoint and tool calling is standardized at the API surface.
 
-Two facts matter for this project:
-
-1. `openrouter/free` intentionally selects a free model **at random** among models satisfying the requested features. That violates the controlled-comparison requirement for stable model identity.
-2. OpenRouter documents provider-side fallback routing: if an upstream provider rate-limits or is unavailable, another provider may be retried before the error reaches the client. This behavior is useful operationally, but it is not acceptable in a controlled provider/model comparison unless explicitly pinned/disabled prospectively.
-
-Therefore the generic free router is excluded. A specific fixed `:free` model could remain eligible only if exact model identity, endpoint/provider routing, required parameters and no-paid-spillover behavior are pinned prospectively.
+The generic `openrouter/free` route is **not** suitable for a controlled model comparison because it dynamically selects among eligible free models. OpenRouter also documents provider fallback routing that can try another provider before an upstream failure reaches the client. A future controlled use must therefore pin an exact free model/route and explicitly prevent uncontrolled routing/fallback behavior.
 
 Primary sources:
 
@@ -130,11 +116,9 @@ Primary sources:
 - https://openrouter.ai/docs/guides/features/structured-outputs
 - https://openrouter.ai/collections/tool-calling-models
 
-### 3.5 Ollama local — valid zero-external-cost baseline, not yet hardware-qualified
+### 3.5 Ollama local
 
-Ollama supports local function/tool calling, parallel and multi-turn tool loops, and structured outputs using JSON Schema. The local API defaults to `http://localhost:11434/api`.
-
-This makes an Ollama-served open-weight model a valid architecture/provider baseline because it has no external inference charge and does not require provider-side routing. However, this refresh intentionally did not choose a specific local model or execute it. Model quality, memory footprint, latency and hardware feasibility remain separate facts that should be checked only if a local baseline is required in the minimum future comparison.
+Ollama supports local function/tool calling, parallel and multi-turn tool loops, and JSON-schema structured outputs. This makes local open-weight execution a valid zero-external-charge baseline, but this factual refresh intentionally did not choose or execute a model. Hardware fit, memory footprint and latency remain a no-inference feasibility question if the local baseline is carried into a future packet.
 
 Primary sources:
 
@@ -142,11 +126,9 @@ Primary sources:
 - https://docs.ollama.com/capabilities/structured-outputs
 - https://docs.ollama.com/api/introduction
 
-### 3.6 Hugging Face Inference Providers — free but too small for default production selection
+### 3.6 Hugging Face Inference Providers
 
-Current Hugging Face documentation gives Free users **$0.10/month** of Inference Providers credits, subject to change. The routed service can access many providers and supports model/provider metadata including tool and structured-output capability flags.
-
-The allowance is real, but extremely small. Additional routed usage requires purchased credits. Therefore the path can be fail-closed at USD 0 if no credits are purchased, but it is not a credible default production route unless a measured workload is permanently bounded below that tiny allowance. It remains useful only as a bounded experiment/interoperability route, not a first-line final provider candidate.
+Current first-party pricing gives Free users **$0.10/month** of Inference Providers credits; extra routed usage requires purchased credits. The path is technically free within that tiny bound, but it is not a credible default production route without proving that the intended workload permanently fits inside it.
 
 Primary sources:
 
@@ -154,21 +136,17 @@ Primary sources:
 - https://huggingface.co/docs/inference-providers/index
 - https://huggingface.co/docs/inference-providers/hub-api
 
-### 3.7 Cerebras — retain historical serving evidence, do not prioritize
+### 3.7 Cerebras
 
-Cerebras currently describes its entry path as a **Free Trial** with $5 in free credits after account creation. This is useful for bounded evaluation, but it is not equivalent to a durable recurring free production tier.
-
-The repository already contains ADR-001 and P12 serving-path evidence for Cerebras. No new Cerebras experiment is justified by this refresh.
+Cerebras currently describes the entry path as a **Free Trial** with $5 in credits after account creation. This is useful as bounded serving evidence but not equivalent to a durable recurring free production tier. ADR-001/P12 already contain project-specific Cerebras serving work, so no new Cerebras experiment is justified by this refresh.
 
 Primary source:
 
 - https://www.cerebras.ai/pricing
 
-### 3.8 NVIDIA hosted NIM — free development endpoint, not final hosted production route
+### 3.8 NVIDIA hosted NIM
 
-NVIDIA currently advertises free NIM API endpoints and a broad catalog of current agentic models. However, NVIDIA's own developer guidance frames the hosted free access as **prototyping/development/testing**. The production path is NVIDIA AI Enterprise or another production-grade deployment route.
-
-Because the project's final selected hosted path must be zero-cost and production-defensible, the free hosted NIM/API Catalog is not eligible as the final hosted production provider. Historical ADR-003 compatibility/serving evidence remains useful and should not be rerun.
+NVIDIA advertises free NIM/API Catalog access, but current first-party developer guidance frames the hosted free path as prototyping/development/testing and points production to enterprise/production deployment routes. The free hosted endpoint is therefore not eligible as the project's final hosted production provider under the USD-0 production constraint. Historical ADR-003 compatibility evidence remains useful and should not be repeated.
 
 Primary sources:
 
@@ -177,78 +155,69 @@ Primary sources:
 - https://build.nvidia.com/models
 - https://docs.nvidia.com/nim/large-language-models/1.15.0/getting-started.html
 
-## 4. Reconciliation with repository evidence
+## 4. Reconciliation with historical repository evidence
 
-### What changed versus the historical evidence
+### Materially new/current facts
 
-- Gemini has a **new GA 3.7 Flash** candidate with a current Free Tier and full contract-relevant capabilities.
-- Cloudflare Workers AI is now a materially stronger zero-cost candidate because the Free plan gives a clear daily allocation and fails rather than billing after the allocation.
-- Groq's Free catalog has changed; Qwen 3.8 has substantially higher TPD but remains Preview, so its quota improvement does not make it a final production candidate.
-- OpenRouter's free router is broader than before but remains unsuitable for controlled model comparison because of random model selection and routing/fallback variability.
-- NVIDIA still offers free hosted inference, but first-party guidance keeps it in development/testing rather than final production.
+- Gemini 3.7 Flash remains the same historical candidate ID, but is now confirmed current GA/free and carries an explicit Free Tier data-use gate.
+- Cloudflare Workers AI is a materially credible new zero-cost candidate because its Free allocation is bounded and the screened agentic models expose the needed contract primitives.
+- Groq's Free catalog changed; Qwen 3.8 has larger TPD but is Preview and therefore not a clean production candidate.
+- OpenRouter's current generic free router remains unsuitable for controlled model identity because routing is dynamic and fallbacks may hide upstream failures.
+- NVIDIA still offers free hosted inference, but its first-party production distinction keeps that endpoint out of the final hosted production feasible set.
 
-### What did not change
+### Historical evidence that remains binding
 
-- historical Groq GPT-OSS failures remain negative evidence;
-- historical provider capacity failures remain evidence and should not be repeated;
-- provider-native tool execution still must not bypass `HarnessRunner.execute_tool()`;
-- provider credentials remain operational prerequisites, not evidence;
-- no provider/model is selected by this factual refresh;
-- no provider benchmark is authorized by this factual refresh.
+- E8 Groq operational/schema/trace evidence;
+- E14 GPT-OSS negative task-quality evidence;
+- P12-C2/C3 Groq capacity failures;
+- ADR-001 serving-path/capacity comparison;
+- ADR-002/003 and later provider-serving probes;
+- ADR-006→011 provider-neutral client/executor/custody engineering;
+- provider-native TRACTIAN execution remains forbidden outside `HarnessRunner.execute_tool()`.
 
 ## 5. Current feasible-set interpretation
 
-After the factual refresh, the provider/model decision is no longer an open-ended search.
+The provider decision is no longer an open-ended discovery problem.
 
-### Primary hosted candidates worth carrying forward
+### Primary hosted candidates to carry forward
 
-1. **Gemini 3.7 Flash** — strongest current stable/free agentic model found, but only if the Free Tier data-use policy is acceptable for the exact payload.
-2. **Cloudflare Workers AI** — at least one pinned Free-plan model, with `GLM-4.7-Flash`, `Gemma 4 26B A4B`, and `Nemotron 3 120B A12B` as current capability/capacity trade-off candidates.
-3. **Groq Free** — historical/control route; any new use must explicitly account for the prior GPT-OSS quality/capacity evidence rather than restarting evaluation.
+1. **Gemini 3.7 Flash** — only if the exact payload passes the Free Tier data-use/privacy gate.
+2. **Cloudflare Workers AI Free** — one or more **pinned** models representing genuinely distinct quality/capacity points; do not carry all three automatically.
+3. **Groq Free** — historical/control route; any future live use must incorporate the existing negative evidence rather than restart evaluation.
 
-### Baseline / conditional routes
+### Conditional baselines
 
-- **Ollama local** — credible zero-external-cost baseline if hardware feasibility supports a suitable local model.
-- **OpenRouter fixed free variant** — conditional interoperability candidate only; generic `openrouter/free` is excluded from controlled comparison.
+- **Ollama local** — only if a no-inference hardware/model feasibility check identifies a realistic local model.
+- **OpenRouter fixed `:free` variant** — interoperability candidate only if exact model/provider routing and no-fallback behavior can be pinned.
 
 ### Screened out of the primary production comparison
 
-- NVIDIA hosted free NIM — development/testing, not hosted production.
-- Cerebras Free Trial — bounded trial rather than durable primary production path; already historically explored.
-- Hugging Face routed free credits — allowance too small to justify default production selection without a measured ultra-low-volume workload.
-- Groq Qwen 3.8 Preview — Preview/evaluation-only according to Groq production guidance.
+- NVIDIA hosted free NIM — development/testing rather than free hosted production;
+- Cerebras Free Trial — bounded trial, already historically explored;
+- Hugging Face routed free credit — too small for a default production route without ultra-low-volume proof;
+- Groq Qwen 3.8 Preview — Preview/evaluation lifecycle, not production.
 
 ## 6. Decision state after refresh
 
 ```text
-current external fact refresh              COMPLETE
-provider/model inference calls              0
-credential/account probes                   0
-production provider/model selected          NO
-new benchmark authorized                    NO
-provider search from zero                   NO LONGER REQUIRED
-current primary hosted feasible set         GEMINI 3.7 FLASH / CLOUDFLARE FREE / GROQ FREE-HISTORICAL
-conditional baseline routes                 OLLAMA LOCAL / PINNED OPENROUTER :FREE
+external fact refresh                       COMPLETE
+provider/model inference calls               0
+credential/account probes                    0
+production provider/model selected           NO
+new benchmark authorized                     NO
+provider search from zero                    NO LONGER REQUIRED
+primary hosted feasible set                  GEMINI 3.7 FLASH / CLOUDFLARE FREE / GROQ HISTORICAL CONTROL
+conditional baselines                        OLLAMA LOCAL / PINNED OPENROUTER :FREE
 ```
 
-The historical audit classification for D01 remains `PARTIALLY_ASSESSED`, but its next gap is now much narrower:
+D01 remains `PARTIALLY_ASSESSED`, but the remaining work is now precise:
 
-> determine whether Gemini Free Tier privacy/data-use is acceptable for the exact project payload; choose the minimum pinned Cloudflare representative(s); decide whether existing Groq evidence plus these new candidates leaves a material quality gap requiring a prospective comparison.
+1. resolve Gemini Free Tier data-use eligibility for the exact intended payload;
+2. select the minimum Cloudflare representative set by capability/capacity, not popularity;
+3. decide whether Groq should be historical-only or one live control under the current DecisionSource contract;
+4. determine whether an Ollama baseline is hardware-feasible without inference;
+5. then decide whether a **minimal prospective provider comparison** is still necessary.
 
-That is a **planning/reconciliation step**, not authorization to call any provider.
-
-## 7. Next action
-
-Do not run models yet.
-
-The next provider task is to derive a **minimal prospective comparison candidate set** from this refresh and the historical E8/E14/P12 evidence. Before any inference call, it must:
-
-1. resolve the Gemini Free Tier data-use/privacy eligibility question for the exact intended payload;
-2. select no more Cloudflare candidates than are needed to represent materially distinct quality/capacity points;
-3. decide whether Groq GPT-OSS should remain only a historical control or one live baseline under the current DecisionSource contract;
-4. include a local Ollama baseline only if a no-inference hardware/model feasibility check finds a realistic model;
-5. exclude `openrouter/free` router and all preview/development-only paths from final-production claims;
-6. preregister exact model IDs, provider routes, case population, call budget, no-fallback/no-retry rules, metrics, hard gates and zero-cost containment;
-7. still make zero provider/model inference calls until that prospective packet is frozen.
+This document does **not** authorize provider calls or a benchmark.
 
 C4 exact-byte recovery remains separate and unchanged.
