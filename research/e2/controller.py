@@ -78,6 +78,19 @@ class DecisionSource(Protocol):
     def decide(self, context: ControllerContext) -> ControllerDecision: ...
 
 
+class DecisionSourceAuditRecord(_FrozenModel):
+    """Sanitized additive trace record emitted by an auditable DecisionSource.
+
+    The controller owns sequence assignment and trace mutation. The DecisionSource may only
+    supply a model-call identifier and metadata; it cannot emit tool events or bypass the
+    execution boundary.
+    """
+
+    event_type: Literal["model_call"] = "model_call"
+    call_id: str = Field(min_length=1)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class ControllerLimits(_FrozenModel):
     max_turns: int = Field(default=8, ge=1, le=64)
     max_tool_calls: int = Field(default=6, ge=0, le=64)
@@ -88,7 +101,9 @@ class AgentController:
 
     The decision source may propose tools or terminal decisions. It never receives the
     runner binding/seed/private evaluator state, and every real tool execution is routed
-    exclusively through HarnessRunner.execute_tool().
+    exclusively through HarnessRunner.execute_tool(). Auditable decision sources may expose
+    sanitized model-call records through `drain_audit_records()`; the controller alone appends
+    those records to the canonical trace.
     """
 
     def __init__(
@@ -111,6 +126,27 @@ class AgentController:
                 **kwargs,
             ),
         )
+
+    def _drain_decision_source_audit(self) -> None:
+        drain = getattr(self.decision_source, "drain_audit_records", None)
+        if drain is None:
+            return
+        if not callable(drain):
+            raise TypeError("decision source audit drain must be callable")
+        records = drain()
+        if not isinstance(records, tuple):
+            raise TypeError("decision source audit drain must return a tuple")
+        for item in records:
+            record = (
+                item
+                if isinstance(item, DecisionSourceAuditRecord)
+                else DecisionSourceAuditRecord.model_validate(item)
+            )
+            self._emit(
+                record.event_type,
+                call_id=record.call_id,
+                metadata=dict(record.metadata),
+            )
 
     def _finish_terminal(self, decision: ControllerDecision) -> RunTrace:
         if decision.kind is ControllerDecisionKind.FINAL:
@@ -194,9 +230,24 @@ class AgentController:
             try:
                 decision = self.decision_source.decide(context)
             except Exception:
+                try:
+                    self._drain_decision_source_audit()
+                except Exception:
+                    return self._safe_abstain(
+                        reason_code="DECISION_SOURCE_AUDIT_FAILURE",
+                        message="Decision-source provenance failed validation; no further action was executed.",
+                    )
                 return self._safe_abstain(
                     reason_code="DECISION_SOURCE_FAILURE",
                     message="The decision source failed; no further action was executed.",
+                )
+
+            try:
+                self._drain_decision_source_audit()
+            except Exception:
+                return self._safe_abstain(
+                    reason_code="DECISION_SOURCE_AUDIT_FAILURE",
+                    message="Decision-source provenance failed validation; no further action was executed.",
                 )
 
             self._emit(
