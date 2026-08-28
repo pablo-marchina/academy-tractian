@@ -8,7 +8,7 @@
 **Provider/model calls:** 0  
 **Evaluator/private/gold access:** 0  
 **LOCKED_TEST access:** 0  
-**Validation state:** `PENDING_PR_CI` — ADR/merge is forbidden until the provider-free controller tests pass on the repository CI boundary.
+**Validation state:** `VALIDATED` — repository PR CI run `#887` / Actions run `33130472742` completed with `success` on implementation head `0cc498342716a8ee631e305d255cfe92725494f6`, satisfying the pre-ADR implementation gate.
 
 ## 1. Decision question
 
@@ -63,11 +63,11 @@ The matrix below deliberately distinguishes repository-specific empirical eviden
 | Typed tool/terminal decisions | **DIRECT** with Pydantic protocol | Supported with app-owned schema/state | Strong typed/schema fit | Structured output supported, but inside SDK runner model |
 | Explicit turn + tool-call budgets | **DIRECT** | Supported | Supported by app/agent control | Turn budget built in; tool execution remains SDK-managed by default |
 | Clarify/escalate/abstain without tool execution | **DIRECT** | Supported as graph/state branches | Supported as output/deferred control | Supported through outputs/handoffs/runner behavior |
-| Deterministic fail-closed around E2 boundary | **DIRECT and testable** | **Proven compatible in E6** | Requires adapter around external tool resolution | Requires adapter because SDK runner executes local tools by default |
+| Deterministic fail-closed around E2 boundary | **DIRECT and CI-validated** | **Proven compatible in E6** | Requires adapter around external tool resolution | Requires adapter because SDK runner executes local tools by default |
 | Replay/checkpoint/pause-resume | In-process bounded state only | **Strong; empirically proven in E6** | Strong durable/deferred capabilities | Strong sessions/run-state/HITL capabilities |
 | Persistent cross-process state required by current P0? | **No extra infrastructure** | Feature-rich but not currently required | Feature-rich but not currently required | Feature-rich but not currently required |
 | New runtime dependency for P0 | **None** beyond existing Pydantic/E2 | `langgraph` | `pydantic-ai` (+ optional durability stack) | `openai-agents` |
-| Repository-specific end-to-end runtime evidence | **This #15 provider-free test gate** | **Strong historical E6 evidence** | Historical scorecard only; no equivalent current E2 integration | Historical scorecard only; no equivalent current E2 integration |
+| Repository-specific end-to-end runtime evidence | **Validated by #15 PR CI run #887** | **Strong historical E6 evidence** | Historical scorecard only; no equivalent current E2 integration | Historical scorecard only; no equivalent current E2 integration |
 | Provider neutrality of controller protocol | **Maximal** | High | High | Lower by default; SDK is OpenAI-first although model adapters exist |
 | Complexity proportional to current delivery gap | **Best fit** | Higher than current minimum | Higher than current minimum | Mismatched ownership for current execution boundary |
 
@@ -88,7 +88,9 @@ Documentation anchors:
 
 ## 5. Decision
 
-**Select the explicit provider-free `AgentController` as the P0 single-agent orchestration layer, conditional only on repository CI passing before ADR/merge.**
+**Select the explicit provider-free `AgentController` as the P0 single-agent orchestration layer.**
+
+The pre-ADR implementation gate is satisfied by repository PR CI run `#887` / Actions run `33130472742`, which completed with `success` on head `0cc498342716a8ee631e305d255cfe92725494f6`. The decision is therefore validated for ADR registration and Class C final-head revalidation.
 
 The controller is intentionally small:
 
@@ -118,9 +120,20 @@ At that point, the historical E6 path provides a concrete migration route rather
 
 Pydantic AI should be revisited if typed provider integration plus external/deferred tool execution becomes the dominant need. OpenAI Agents SDK should be revisited only if the project deliberately changes the current ownership rule and allows a framework runner to own the agent loop/tool dispatch instead of E2/application code.
 
-## 7. Validation gate before ADR
+## 7. Validation evidence and regression gate
 
-The decision is not allowed to become an ADR or merge until CI proves the implementation invariants on the actual branch. Required tests include:
+The implementation gate required by the original matrix has passed.
+
+| Validation item | Result |
+|---|---|
+| Implementation head | `0cc498342716a8ee631e305d255cfe92725494f6` |
+| PR workflow run | `#887` / Actions run `33130472742` |
+| Final workflow state | `completed` |
+| Final workflow conclusion | `success` |
+| Provider/model calls | `0` |
+| Scientific-state change | `0` |
+
+The validated test surface includes:
 
 - one successful tool turn followed by final response, with exactly one transport call through the real `HarnessRunner` path;
 - external `x-user-id` and seed binding preserved;
@@ -134,4 +147,8 @@ The decision is not allowed to become an ADR or merge until CI proves the implem
 - controller source imports no provider/runtime orchestration SDK;
 - malformed controller decision shapes fail validation.
 
-After these checks pass in the repository CI, this matrix can be marked `VALIDATED`, the ADR can record the decision, and only then may the Class C PR be merged.
+The first PR CI attempt exposed a test-only typo (`transport.cals`), which was corrected without changing runtime behavior. Run #887 then passed. That correction remains part of the branch history.
+
+ADR-004 records the scoped architecture decision. After ADR/matrix/index changes, the **new final branch head must pass the repository PR workflow again before merge**. Any regression at that final-head gate blocks merge and keeps issue #15 open.
+
+The accepted regression obligation after merge remains: future controller changes must preserve exclusive `HarnessRunner.execute_tool()` routing, runner-owned binding/seed, deterministic guards, explicit budgets/fallbacks, terminal no-tool decisions, provider/runtime isolation, and normalized trace semantics.
