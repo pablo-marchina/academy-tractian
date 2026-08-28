@@ -6,6 +6,12 @@ import pytest
 
 from academy_tractian.delivery_evidence import (
     CANONICAL_ADR_PATHS,
+    DEMO_RESULT_MANIFEST_PATH,
+    DELIVERY_VALIDATOR_PATH,
+    DELIVERY_WORKFLOW_PATH,
+    EXPECTED_DELIVERY_DEMO_REPORT_SHA256,
+    EXPECTED_DELIVERY_DEMO_RESULT_SHA256,
+    PROVIDER_COMPARISON_PLAN_PATH,
     validate_delivery_evidence_index,
 )
 from academy_tractian.delivery_reproduction import (
@@ -141,11 +147,27 @@ def _valid_index() -> EvidenceIndex:
             _resident(
                 "PROVIDER-COMPARISON-PLAN",
                 "provider_plan",
-                "research/frozen/provider-comparison-executor-freeze-v1.json",
+                PROVIDER_COMPARISON_PLAN_PATH,
                 canonical=EXPECTED_PROVIDER_PLAN_SHA256,
                 issue=44,
                 status="UNEXECUTED_GATED",
                 boundary="Live comparison remains at 0/32 calls and requires both explicit secrets plus one canonical durable custody root.",
+            ),
+            _resident(
+                "DELIVERY-VALIDATOR",
+                "validator",
+                DELIVERY_VALIDATOR_PATH,
+                issue=57,
+                pr=58,
+                boundary="Provider-free reproduction validator; it must not probe credentials or call providers.",
+            ),
+            _resident(
+                "DELIVERY-WORKFLOW",
+                "workflow",
+                DELIVERY_WORKFLOW_PATH,
+                issue=57,
+                pr=58,
+                boundary="Clean-checkout provider-free reproduction workflow; no provider secrets are consumed.",
             ),
             EvidenceEntry(
                 evidence_id="C4-SCORE-ROW-ARTIFACT",
@@ -163,22 +185,26 @@ def _valid_index() -> EvidenceIndex:
         ]
     )
 
-    for scenario_id in [f"DEMO-0{i}" for i in range(1, 6)]:
+    for scenario_id, result_sha in EXPECTED_DELIVERY_DEMO_RESULT_SHA256.items():
         entries.append(
             _resident(
                 scenario_id,
                 "demo",
-                "src/academy_tractian/delivery_reproduction.py",
+                DEMO_RESULT_MANIFEST_PATH,
+                canonical=result_sha,
                 issue=57,
-                boundary="Synthetic provider-free demo evidence only; no real customer mutation.",
+                pr=58,
+                boundary="Synthetic provider-free demo result only; no real customer mutation.",
             )
         )
     entries.append(
         _resident(
             "DELIVERY-DEMO-CAMPAIGN",
             "demo",
-            "src/academy_tractian/delivery_reproduction.py",
+            DEMO_RESULT_MANIFEST_PATH,
+            canonical=EXPECTED_DELIVERY_DEMO_REPORT_SHA256,
             issue=57,
+            pr=58,
             boundary="Synthetic provider-free demo campaign only; no production-readiness claim.",
         )
     )
@@ -289,6 +315,26 @@ def test_wrong_frozen_report_sha_is_rejected() -> None:
     validation = validate_delivery_evidence_index(index, ROOT)
     assert not validation.passed
     assert "EV011-RESULT: canonical report SHA-256 mismatch" in validation.violations
+
+
+def test_wrong_frozen_result_path_is_rejected_even_with_matching_blob() -> None:
+    replacement_path = "research/results/ev008-provider-free-stability-campaign-result-2026-08-28.json"
+    index = _replace(
+        _valid_index(),
+        "EV007-RESULT",
+        repository_path=replacement_path,
+        git_blob_sha1=git_blob_sha1(ROOT / replacement_path),
+    )
+    validation = validate_delivery_evidence_index(index, ROOT)
+    assert not validation.passed
+    assert "EV007-RESULT: canonical repository path mismatch" in validation.violations
+
+
+def test_demo_result_identity_cannot_be_relabelled() -> None:
+    index = _replace(_valid_index(), "DEMO-05", canonical_sha256="0" * 64)
+    validation = validate_delivery_evidence_index(index, ROOT)
+    assert not validation.passed
+    assert "DEMO-05: indexed result SHA-256 mismatch" in validation.violations
 
 
 def test_c4_cannot_be_relabelled_as_provider_free_reproducible() -> None:
