@@ -2,7 +2,8 @@
 
 **Status:** mandatory repository-wide governance  
 **Applies to:** research, architecture, models, prompts, evaluators, judges, tools, runtimes, retrieval, memory, orchestration, data, security, observability, deployment, UI/integration and any other material project decision.  
-**Formal project source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)
+**Formal project source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)  
+**Operational decision-revalidation plan:** [`DECISION-REVALIDATION-MASTER-PLAN.md`](DECISION-REVALIDATION-MASTER-PLAN.md)
 
 These principles override convenience, novelty, implementation momentum and prior provisional choices. A component or decision is not final merely because it works, passes a minimum gate, is already implemented, is popular, or was previously selected.
 
@@ -22,6 +23,23 @@ Every material workstream must map to at least one of:
 4. an experiment required to select among credible alternatives for one of the above.
 
 If it maps to none, defer it.
+
+### Permanent monetary hard constraint — USD 0
+
+From the 2026-08-28 decision-revalidation checkpoint forward, the production/project technology path must remain **monetarily free**:
+
+```text
+external API / hosted-service project charge    USD 0
+paid subscription required                      NO
+purchased API credits                           NO
+unbounded paid spillover                        FORBIDDEN
+```
+
+This is a **hard eligibility constraint**, not a weighted optimization metric. A provider/model/tool that requires paid usage is outside the feasible production candidate set even if it is higher quality.
+
+Within the zero-cost feasible set, the project must still search broadly for and compare the strongest credible quality frontier. “Free” does not justify choosing the first available option, and “stronger but paid” does not override the hard constraint.
+
+Free-credit or free-tier candidates are eligible only when the intended project run can be bounded to USD 0 without silent paid spillover. Local/open-weight execution is eligible as a monetary-zero external-service baseline when operationally feasible.
 
 ### Canonical source hierarchy
 
@@ -85,6 +103,27 @@ Mandatory rules:
 9. Use Pareto/frontier reasoning when objectives conflict; do not hide trade-offs in an arbitrary weighted score unless the utility function itself is justified and preregistered.
 10. Record evidence, alternatives, results, uncertainty, rejected options, reversal triggers and unresolved questions in an ADR or equivalent decision record.
 11. When an upstream project source is updated or newly delivered, reconcile the requirement/acceptance maps before allowing downstream architecture momentum to continue unchanged.
+12. Treat a newly discovered hard-constraint violation or materially credible alternative as a prospective revalidation trigger even when the prior decision was historically frozen.
+
+### Permanent pre-implementation documentation gate
+
+From the 2026-08-28 revalidation checkpoint forward, **documentation and planning precede material implementation**.
+
+Before new material code is written, the applicable plan/issue/experiment must state:
+
+- decision question and requirement/risk mapping;
+- hard constraints, including USD 0 where applicable;
+- current baseline;
+- credible materially different alternatives and explicit exclusions;
+- preregistered metrics, hard gates and task population;
+- repetition/uncertainty and robustness/failure plan where relevant;
+- production-fit measurements;
+- stopping/decision semantics;
+- regression obligations and reversal triggers.
+
+The operational checklist and current decision inventory live in `DECISION-REVALIDATION-MASTER-PLAN.md`.
+
+If implementation begins before this gate is satisfied, stop implementation and return to planning. Historical implementation effort is never justification to skip this step.
 
 ### Decision-state semantics
 
@@ -99,9 +138,11 @@ Every material choice should be understood as one of these states:
 
 **Passing a gate proves qualification, not optimality.** A choice may be called final only when no credible material alternative remains unevaluated within the explicitly defined search scope and project constraints.
 
+A historical `FROZEN` artifact remains immutable evidence of its original decision scope. If a hard assumption changes or a material alternative was omitted, the artifact is not rewritten; a prospective revalidation may later supersede its final-choice role.
+
 ### Meaning of “best possible”
 
-The project does not claim mathematical global optimality. “Best possible” means the **best-supported known option after an explicit, sufficiently broad and reproducible search of the credible decision space**, with quantitative comparison and robustness/production confirmation, while preserving full required-scope coverage. If a material alternative remains untested or a P0 delivery requirement remains uncovered, the decision/project is not final.
+The project does not claim mathematical global optimality. “Best possible” means the **best-supported known option after an explicit, sufficiently broad and reproducible search of the credible decision space**, with quantitative comparison and robustness/production confirmation, while preserving full required-scope coverage and all hard constraints. If a material alternative remains untested or a P0 delivery requirement remains uncovered, the decision/project is not final.
 
 ## P2 — Production-first, never demo-first
 
@@ -114,12 +155,12 @@ Therefore:
 - integrations must exercise real supplied contracts and realistic failure modes before production readiness is claimed;
 - state-changing behavior requires explicit authorization, idempotency/retry semantics where applicable, auditability and safe failure behavior;
 - production configuration, dependency/version control, secrets handling, environment setup, monitoring and rollback/reversal paths are part of the product, not post-demo cleanup;
-- a component that improves a benchmark but is operationally fragile, unsafe, unaffordable, unobservable or non-maintainable cannot be considered the final choice;
+- a component that improves a benchmark but is operationally fragile, unsafe, outside the USD 0 hard constraint, unobservable or non-maintainable cannot be considered the final choice;
 - introducing the agent must not make the underlying support workflow less available: provider/model/agent failure must have a safe fallback or human-handoff path;
 - customer-facing behavior must distinguish operationally useful conclusions from unnecessary disclosure of internal implementation details;
 - consequential action confirmation is a production-policy decision to evaluate explicitly; do not force it into benchmark semantics when the delivered scenario contract already treats a request as authorized execution;
 - use a stable agent-facing tool contract and isolate backend/protocol heterogeneity behind adapters when that improves maintainability and reliability;
-- for model/provider selection, do not prematurely cap capability merely for cost convenience: compare a strong quality frontier against feasible lower-cost/local options, prove value, then optimize the production Pareto frontier for latency/cost/reliability.
+- for model/provider selection, search for the strongest credible **zero-cost** quality frontier and compare it against other feasible zero-cost hosted/local options before optimizing latency, quota/resource use, reliability and operational complexity.
 
 No project milestone may be marked complete solely because the UI/demo works or because a happy-path scenario succeeds.
 
@@ -183,6 +224,7 @@ A material component, decision or workstream is **not complete** unless all appl
 - [ ] systematic research is documented;
 - [ ] credible materially different alternatives were identified;
 - [ ] comparison criteria and hard constraints were defined before final selection;
+- [ ] the USD 0 hard constraint is satisfied for applicable production/provider/service choices;
 - [ ] appropriate baselines and ablations exist;
 - [ ] quantitative controlled evaluation was executed;
 - [ ] uncertainty/repeated-run behavior was measured where stochasticity matters;
@@ -201,4 +243,4 @@ If any applicable item is missing, the correct state is still research/experimen
 
 ## Consequence for existing provisional choices
 
-Existing choices remain valid as historical experimental evidence, but their status must be interpreted using this policy. A previously “qualified” component is not automatically the final project standard. Before final architecture freeze, major choices — including model, semantic judge, orchestration/runtime, retrieval strategy, tool topology, memory, adaptive policies and evaluation stack — must be checked against this repository-wide systematic-comparison rule and against the actual requested delivery.
+Existing choices remain valid as historical experimental evidence, but their status must be interpreted using this policy. A previously “qualified” or historically frozen component is not automatically the final project standard. Before final architecture freeze, major choices — including model/provider, semantic judge, orchestration/runtime, agent topology, retrieval strategy, tool topology, memory, adaptive policies, observability, deployment and evaluation stack — must be checked against this repository-wide systematic-comparison rule, the USD 0 hard constraint and the actual requested delivery.
