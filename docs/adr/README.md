@@ -13,6 +13,7 @@ An ADR records the evidence and decision **for its stated scope at that time**. 
 | [`002-openrouter-no-card-serving-amendment-2026-08-26.md`](002-openrouter-no-card-serving-amendment-2026-08-26.md) | OpenRouter/OpenInference P12-C4 amendment | historical/consumed route after live qualification failure; not production selection |
 | [`003-nvidia-nim-no-card-serving-amendment-2026-08-26.md`](003-nvidia-nim-no-card-serving-amendment-2026-08-26.md) | NVIDIA NIM P12-C4 qualification amendment | enabled the successful C4 serving path; remains qualification-only and does not freeze NVIDIA for production |
 | [`004-agent-controller-runtime-2026-08-27.md`](004-agent-controller-runtime-2026-08-27.md) | P0 single-agent controller/runtime boundary | explicit provider-free controller frozen for the P0 scope; `HarnessRunner` remains the exclusive tool-execution boundary; LangGraph retained as the first qualified durable-orchestration upgrade path |
+| [`005-production-action-safety-policy-2026-08-27.md`](005-production-action-safety-policy-2026-08-27.md) | P0 production consequential-action safety boundary | layered runtime-owned action authorization policy frozen; all production actions remain globally disabled and actual action enablement requires a separate governed decision |
 
 Exact consumed/pass outcomes are recorded by the corresponding canonical result artifacts and `PROJECT-PROGRESS-LOG.md`. Current project state/authorization is owned only by `CURRENT-PROJECT-STATUS.md`.
 
