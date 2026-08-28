@@ -1,7 +1,8 @@
 # Production provider/model live-comparison preregistration — 2026-08-27
 
-Status: `PREREGISTRATION_DRAFT / PROVIDER_FREE_ONLY`
+Status: `PREREGISTERED / PROVIDER_FREE_ONLY`
 Issue: #29
+ADR: ADR-007
 Scientific state changed: `NO`
 Provider/model calls authorized by this document: `0`
 Production provider/model selected: `NO`
@@ -11,7 +12,7 @@ Production actions enabled: `NO`
 
 Freeze the evidence contract that must be satisfied **before** any production provider/model comparison can make a selection claim. This document does not authorize or execute a live request and does not rank candidate models.
 
-ADR-004 owns the application-side agent loop. ADR-006 owns the provider-neutral `DecisionSource` adapter. This preregistration governs only a later serving-route/model comparison behind that adapter.
+ADR-004 owns the application-side agent loop. ADR-006 owns the provider-neutral `DecisionSource` adapter. ADR-007 freezes the sanitized model-call provenance contract and accepts this preregistration. This document governs only a later serving-route/model comparison behind that adapter.
 
 ## Hard boundaries
 
@@ -226,4 +227,4 @@ production-readiness claim                 NO
 global architecture freeze                 NO
 ```
 
-The next admissible step after provider-free implementation validation is to freeze ADR-007 for the trace/provenance contract. A separate future issue/authorization is still required before the first live provider/model call.
+ADR-007 freezes this preregistration and the model-call provenance contract. The next admissible provider-comparison step is a **separate future governed task** that refreshes official current provider/model facts, freezes exact candidates, allowed development population, hard gates and the deterministic selection rule, and obtains explicit authorization before the first live request.
