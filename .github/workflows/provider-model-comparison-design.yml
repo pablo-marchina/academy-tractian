@@ -1,0 +1,32 @@
+name: provider-model-comparison-design
+
+on:
+  pull_request:
+    paths:
+      - research/provider-model-comparison-design-2026-08-28.md
+      - research/experiments/provider-model-comparison-design-manifest-v1.json
+      - research/experiments/provider-model-comparison-dev-population-v1.json
+      - scripts/research/validate_provider_model_comparison_design.py
+      - tests/test_provider_model_comparison_design.py
+      - .github/workflows/provider-model-comparison-design.yml
+      - docs/adr/008-provider-model-comparison-design-2026-08-28.md
+      - docs/adr/README.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-provider-free-design:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install project
+        run: python -m pip install -e ".[dev]"
+      - name: Validate frozen comparison design
+        run: python scripts/research/validate_provider_model_comparison_design.py
+      - name: Run comparison-design regression tests
+        run: python -m pytest -q tests/test_provider_model_comparison_design.py
