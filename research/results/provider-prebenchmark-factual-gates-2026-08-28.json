@@ -1,0 +1,61 @@
+{
+  "schema_version": "provider-prebenchmark-factual-gates-v1",
+  "date": "2026-08-28",
+  "status": "COMPLETE",
+  "baseline": "main@7e364ff6c7636d0719935c48349a322b87878007",
+  "provider_model_inference_calls": 0,
+  "credential_account_probes": 0,
+  "real_customer_mutations": 0,
+  "scientific_gate_changed": false,
+  "production_provider_selected": false,
+  "gates": {
+    "gemini_data_use": {
+      "public_synthetic_eval": "ELIGIBLE",
+      "arbitrary_production_payload": "INELIGIBLE_BY_DEFAULT",
+      "reason": "ProviderDecisionRequest can contain verbatim user_request and observation.body while Gemini Free Tier content is used to improve Google products; current public 8-probe population is synthetic/public and contains no private evaluator truth.",
+      "reversal_trigger": "prospectively validated provider-visible redaction/data-classification boundary or materially changed Free Tier data-use terms"
+    },
+    "cloudflare_minimum_set": {
+      "retained": [
+        "@cf/zai-org/glm-4.7-flash",
+        "@cf/nvidia/nemotron-3-120b-a12b"
+      ],
+      "excluded_from_minimum_first_packet": [
+        "@cf/google/gemma-4-26b-a4b-it"
+      ],
+      "reason": "GLM represents the efficient current agentic point; Nemotron represents the materially heavier model/capacity hypothesis; Gemma adds no currently required capability and its larger-context/lower-output-cost advantages are not active for the compact public DecisionSource workload."
+    },
+    "groq_role": {
+      "decision": "HISTORICAL_CONTROL_ONLY",
+      "new_live_call_justified": false,
+      "reason": "E8 operational evidence, E14 GPT-OSS hard task-quality failures, P12-C2/C3 capacity failures, unchanged GPT-OSS-120B Free quota and Qwen 3.8 Preview lifecycle leave no material reversal trigger."
+    },
+    "ollama_baseline": {
+      "decision": "SPEC_FEASIBLE_LOCAL_BASELINE",
+      "model": "qwen3:4b",
+      "artifact_size_gb": 2.5,
+      "model_context_tokens": 256000,
+      "tool_calling": true,
+      "structured_outputs": true,
+      "external_api_charge_usd": 0,
+      "host_performance_verified": false,
+      "condition": "no-inference host inventory must confirm storage/memory/runtime availability before any prospective packet includes the local candidate"
+    }
+  },
+  "d01": {
+    "classification": "PARTIALLY_ASSESSED",
+    "new_material_gap_demonstrated": true,
+    "gap": "No repository evidence can select between the retained current production-eligible Cloudflare GLM-4.7-Flash and Nemotron-3-120B-A12B on project-specific decision quality/reliability/latency.",
+    "minimum_prospective_comparison_planning_justified": true,
+    "inference_authorized": false,
+    "core_future_candidates": [
+      "@cf/zai-org/glm-4.7-flash",
+      "@cf/nvidia/nemotron-3-120b-a12b"
+    ],
+    "conditional_candidate": "ollama/qwen3:4b only after no-inference host feasibility confirmation",
+    "historical_control": "groq/openai-gpt-oss-120b evidence only",
+    "production_excluded_by_default": "gemini-3.7-flash Free Tier",
+    "next_action": "prospectively preregister the minimum comparison; reuse the existing 8 public synthetic probes and existing M1-M10 where still valid; freeze exact call/neuron budget and custody before attempt 1"
+  },
+  "c4_changed": false
+}
