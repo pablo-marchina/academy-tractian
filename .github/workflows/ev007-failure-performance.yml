@@ -1,0 +1,41 @@
+name: ev007-failure-performance
+
+on:
+  pull_request:
+    paths:
+      - "src/academy_tractian/failure_campaign.py"
+      - "tests/test_failure_campaign.py"
+      - "scripts/validate_ev007_failure_campaign.py"
+      - ".github/workflows/ev007-failure-performance.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/academy_tractian/failure_campaign.py"
+      - "tests/test_failure_campaign.py"
+      - "scripts/validate_ev007_failure_campaign.py"
+      - ".github/workflows/ev007-failure-performance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install production and E2 dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" -e "research/e2[dev]"
+
+      - name: Run exact EV-007 provider-free failure campaign
+        run: python scripts/validate_ev007_failure_campaign.py
