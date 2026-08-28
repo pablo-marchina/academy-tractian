@@ -1,0 +1,161 @@
+{
+  "schema_version": "provider-free-final-delivery-reproduction-evidence-freeze-v1",
+  "status": "FROZEN_PROVIDER_FREE_FINAL_DELIVERY_EVIDENCE",
+  "date": "2026-08-28",
+  "issue": 57,
+  "pull_request": 58,
+  "campaign_version": "provider-free-final-delivery-reproduction-v1",
+  "validated_pre_freeze_head": "9ac8296726f356d146cd3a0c549074a29548cfcb",
+  "scientific_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+  "scientific_state_changed": false,
+  "production_provider_model_selected": false,
+  "adr_009_live_calls_consumed": 0,
+  "adr_009_live_call_envelope_max": 32,
+  "credential_account_probes": 0,
+  "real_customer_mutations": 0,
+  "semantic_private_blind_access": 0,
+  "direct_blobs": {
+    "src/academy_tractian/delivery_reproduction.py": "213735806bb90844a9d8f8e91fe001a197397882",
+    "src/academy_tractian/delivery_evidence.py": "f35893ba95712442543b82a2fd2155aa2369dad3",
+    "tests/test_delivery_reproduction.py": "236ebb2989d23154dd9ec0e645b29ca9e64fac78",
+    "scripts/validate_delivery_reproduction.py": "7d12d626ccb43f29cc929681a1c63c54c6a9ea4e",
+    ".github/workflows/final-delivery-provider-free-reproduction.yml": "7138313583fe0729c72c810f43cbc71ef220e492",
+    "research/results/provider-free-final-delivery-demo-result-2026-08-28.json": "09eb9f24e743c5415bd1ac1b8916ed65b78cbed8",
+    "research/results/final-delivery-evidence-index-2026-08-28.json": "710b7b2182832aac80aea1a2aca06dcad39328d5",
+    "docs/adr/016-provider-free-final-delivery-reproduction-evidence-package-2026-08-28.md": "ea5f64f4b4477bb6ff8a3f77f5d82603592c2fcf"
+  },
+  "integrated_demo": {
+    "result_manifest_path": "research/results/provider-free-final-delivery-demo-result-2026-08-28.json",
+    "report_sha256": "43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445",
+    "denominator": 5,
+    "exact_traces_evaluated": 5,
+    "contract_expectations_passed": 5,
+    "provider_calls": 0,
+    "credential_account_probes": 0,
+    "real_customer_mutations": 0,
+    "semantic_private_blind_access": 0,
+    "automatic_retry_count": 0,
+    "replay_count": 0,
+    "scenario_hashes": {
+      "DEMO-01": {
+        "spec_sha256": "a730392bef5c6ab9063015100a2afc10742cae4e92268d3394424d34723638a4",
+        "result_sha256": "55a81f09d52fcb91caf22dcd452ac23dee143f405e4e3b90b1971d040b592cff",
+        "trace_sha256": "b715b29790af3f7cd92bf839beec6d08e2b77e3e79e8101db81c419d454e7143",
+        "behavioral_trace_sha256": "0fc767340450e6c7be388ba15b48616e39a25a566162a33eb30d54e8b18f7d99"
+      },
+      "DEMO-02": {
+        "spec_sha256": "926d91a234d5d8a331b17218fa15e57f1f61f453b9edbd0bf08638cf5c309944",
+        "result_sha256": "a30033aed27b89a52602a0c794c15134ceec39c6a7935b39709698943e4854eb",
+        "trace_sha256": "0c593d21777ed3ac62f31042caa1c1f75e6c20f62269d58a824c174e5f500dad",
+        "behavioral_trace_sha256": "b3cde3c561bc43df97bae3ecca7a7050294375a872fd288d89eb01506641b95c"
+      },
+      "DEMO-03": {
+        "spec_sha256": "8bbd629de8da5de3fe5db994b56dc36732336f61cf34ea343f26bb4e578b7e10",
+        "result_sha256": "2e4dc13ef6edbae797299974e3031d893f11bd0fa4ddd7451a8a06525c6609cb",
+        "trace_sha256": "5d57ef1e7da115cddd34bcab98c3294b10c2c56f28d6ab6c56cd7a58e0123e11",
+        "behavioral_trace_sha256": "f4cb91487ff5ec88ad9398cfae9c25b4e43a48467bb1f264a39dca44d6058869"
+      },
+      "DEMO-04": {
+        "spec_sha256": "f74dbc1466659ef432d9e4718da50ee81c31d93bcd866ccf8cb4a6a1c642c809",
+        "result_sha256": "1d72f3f40bf78bc63232c0dcc45496bd4ea5977cbdc6368565f654d313f37720",
+        "trace_sha256": "363fe4ccef4d402a27b5a22c90f8da00605de8de8c5b8c455a9296feea67db84",
+        "behavioral_trace_sha256": "a224f926f3ba823b80e919c7fabc97cfbed2351f5dbfd11c38973db03c851378"
+      },
+      "DEMO-05": {
+        "spec_sha256": "16217eb15bda21c8c6e956b89d9d9740c260af7c90dfc57385630a96e8f9049e",
+        "result_sha256": "80f11833ecfb1b425ea66f65d1fd709475ff856a240e747c37607fec74ce65ca",
+        "trace_sha256": "71e4d37da6f88033e4bd5ec25c5ac15e6d7c52eef4532eb3ba60aa5cd227f04d",
+        "behavioral_trace_sha256": "e8cc10fb55062f7a06eeccf51dc7be1fab243ee8796e56c63dd4be78e6e26565"
+      }
+    }
+  },
+  "evidence_index": {
+    "path": "research/results/final-delivery-evidence-index-2026-08-28.json",
+    "entry_count": 31,
+    "repository_resident_count": 30,
+    "resolved_repository_entries": 30,
+    "external_blocker_count": 1,
+    "violation_count": 0,
+    "self_indexed": false
+  },
+  "frozen_upstream_evidence": {
+    "EV007": {
+      "freeze_path": "research/frozen/ev007-provider-free-failure-performance-freeze-v1.json",
+      "freeze_git_blob": "cd6bdb9c6036e1cbca2d7943d25af8bc64021c6e",
+      "result_path": "research/results/ev007-provider-free-failure-campaign-result-2026-08-28.json",
+      "result_git_blob": "c81c32c3477058e85b3325683b4670116370b730",
+      "report_sha256": "7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9"
+    },
+    "EV008": {
+      "freeze_path": "research/frozen/ev008-provider-free-repeated-run-stability-freeze-v1.json",
+      "freeze_git_blob": "6f501e3ec90cd566a99e73760be5641807130a71",
+      "result_path": "research/results/ev008-provider-free-stability-campaign-result-2026-08-28.json",
+      "result_git_blob": "264b0afcde8f580a539029b4db0d492f0dbae6d3",
+      "report_sha256": "1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8"
+    },
+    "EV011": {
+      "freeze_path": "research/frozen/ev011-provider-free-customer-safe-communication-freeze-v1.json",
+      "freeze_git_blob": "38ab66419090279b95972a95e6a36bf7ef9fadd3",
+      "result_path": "research/results/ev011-provider-free-communication-campaign-result-2026-08-28.json",
+      "result_git_blob": "456f51fbc90ce4548534c14327eeb0513a5c5042",
+      "report_sha256": "cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e",
+      "deliberate_evaluator_fail_case": "COMM-07"
+    },
+    "provider_comparison_plan": {
+      "path": "research/frozen/provider-comparison-executor-freeze-v1.json",
+      "git_blob": "f6a677013d4a8d29f251ab53410eb6d2c344c21d",
+      "plan_sha256": "69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f",
+      "reproduction_status": "UNEXECUTED_GATED"
+    },
+    "c4_score_row_artifact": {
+      "repository_resident": false,
+      "sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+      "bytes": 177350,
+      "rows": 144,
+      "reproduction_status": "EXTERNALLY_BLOCKED"
+    }
+  },
+  "validation": {
+    "dedicated_workflow_name": "final-delivery-provider-free-reproduction",
+    "dedicated_workflow_run": 7,
+    "dedicated_workflow_run_id": 33158593240,
+    "dedicated_validation": "PASS",
+    "production_runtime_run": 88,
+    "production_runtime_run_id": 33158593243,
+    "production_tests_in_clean_checkout": 232,
+    "adr004_controller_regression_passed": 12,
+    "triggered_workflows_passed": 12,
+    "triggered_workflows_total": 12,
+    "evidence_index_repository_resident": 30,
+    "evidence_index_resolved": 30,
+    "evidence_index_violations": 0
+  },
+  "preserved_falsifications": [
+    {
+      "class": "INFERRED_ADR_PATHS",
+      "summary": "Initial evidence tests inferred ADR filenames from titles; the five-scenario demo passed but evidence tests failed. Canonical repository paths replaced the inferred paths without changing demo geometry or result identities."
+    },
+    {
+      "head": "16ce07c26a69a7c2b33674d8cfd7c3046430b6f5",
+      "dedicated_workflow_run_id": 33158501340,
+      "class": "HISTORICAL_FREEZE_REPRESENTATION_ASSUMPTION",
+      "production_tests": "231 passed / 1 failed",
+      "summary": "The checker assumed every EV freeze stored result.path. EV-008 and EV-011 instead bind result file identity through direct_blobs. The checker was corrected to validate each immutable historical representation; historical evidence was not edited."
+    }
+  ],
+  "boundaries": {
+    "default_production_runtime_actions_enabled": false,
+    "live_provider_calls_authorized_by_this_freeze": false,
+    "credential_account_probe_authorized": false,
+    "provider_selection_claim": false,
+    "real_customer_mutation_authorized": false,
+    "c4_reconstruction_rescoring_substitution_authorized": false,
+    "semantic_private_blind_evaluation_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false,
+    "scientific_gate_advanced": false,
+    "global_architecture_frozen": false,
+    "production_readiness_claim_authorized": false
+  },
+  "interpretation": "Clean-checkout provider-free delivery/evidence reproducibility only. This freeze distinguishes reproduced deterministic evidence from immutable history, externally blocked C4 evidence and gated unexecuted live-provider work."
+}
