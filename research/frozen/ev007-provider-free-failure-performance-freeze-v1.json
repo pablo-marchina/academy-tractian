@@ -1,0 +1,123 @@
+{
+  "schema_version": "ev007-provider-free-failure-performance-freeze-v1",
+  "status": "FROZEN_FOR_PROVIDER_FREE_FAILURE_PERFORMANCE_CAMPAIGN",
+  "date": "2026-08-28",
+  "issue": 48,
+  "pr": 49,
+  "scientific_state_changed": false,
+  "production_provider_model_selected": false,
+  "adr_009_live_calls_consumed": 0,
+  "adr_009_live_call_envelope_max": 32,
+  "real_customer_mutations": 0,
+  "validated_campaign_head": "65a921be64a6949c3fce86445280a267559fb310",
+  "campaign": {
+    "version": "ev007-provider-free-failure-campaign-v1",
+    "source": {
+      "path": "src/academy_tractian/failure_campaign.py",
+      "git_blob": "ad34dd0fa238738f2fa332cb6c60340aa020e80f"
+    },
+    "tests": {
+      "path": "tests/test_failure_campaign.py",
+      "git_blob": "5e8315a450ac37d7dd52ace4e603641bba13202c"
+    },
+    "validator": {
+      "path": "scripts/validate_ev007_failure_campaign.py",
+      "git_blob": "3361ed0252cab59f2d53a82ce0a53e172dfa4ec2"
+    },
+    "workflow": {
+      "path": ".github/workflows/ev007-failure-performance.yml",
+      "git_blob": "93dcc2e5627908859651342d29040c396cc3665f"
+    }
+  },
+  "result": {
+    "path": "research/results/ev007-provider-free-failure-campaign-result-2026-08-28.json",
+    "git_blob": "c81c32c3477058e85b3325683b4670116370b730",
+    "report_sha256": "7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9",
+    "denominator": 11,
+    "safety_expectations_passed": 11,
+    "expected_evaluator_pass_cases": 8,
+    "expected_evaluator_fail_cases": 3,
+    "raw_sensitive_leak_count": 0,
+    "provider_calls": 0,
+    "real_customer_mutations": 0,
+    "automatic_retry_count": 0
+  },
+  "preserved_dependencies": {
+    "decision_source": {
+      "path": "src/academy_tractian/decision_source.py",
+      "git_blob": "5579cf6f4c6bfe25d50220fa8b9ddf75c95d100a"
+    },
+    "controlled_actions": {
+      "path": "src/academy_tractian/controlled_actions.py",
+      "git_blob": "9e5f2d49ebc82303423f81ec8916b02c511f2a1e"
+    },
+    "controlled_action_evaluation": {
+      "path": "src/academy_tractian/controlled_action_evaluation.py",
+      "git_blob": "ae5f1a7777893941882196c8c2f3810676eba0a4"
+    },
+    "production_runtime": {
+      "path": "src/academy_tractian/runtime.py",
+      "git_blob": "a7f8adf02dded71188ce61668b111be258206745"
+    },
+    "production_evaluation": {
+      "path": "src/academy_tractian/evaluation.py",
+      "git_blob": "27adfc0e009398bf765ac05afe1ef6e8799adea1"
+    },
+    "agent_controller": {
+      "path": "research/e2/controller.py",
+      "git_blob": "b0971eda3e7c43337c54b71325a9b3eb5e1dc3ea"
+    },
+    "harness_runner": {
+      "path": "research/e2/runner.py",
+      "git_blob": "184544ede9fa81188f795dd6c698b5b4556a59c9"
+    }
+  },
+  "case_ids": [
+    "EV007-01",
+    "EV007-02",
+    "EV007-03",
+    "EV007-04",
+    "EV007-05",
+    "EV007-06",
+    "EV007-07",
+    "EV007-08",
+    "EV007-09",
+    "EV007-10",
+    "EV007-11"
+  ],
+  "expected_evaluator_failures": [
+    "EV007-05",
+    "EV007-09",
+    "EV007-11"
+  ],
+  "invariants": {
+    "safety_containment_distinct_from_evaluator_correctness": true,
+    "provider_network_inference_used": false,
+    "credential_probe_used": false,
+    "second_tool_execution_path_added": false,
+    "raw_exception_or_provider_body_persisted": false,
+    "automatic_retry_used": false,
+    "automatic_action_replay_used": false,
+    "default_production_runtime_actions_enabled": false,
+    "blanket_real_customer_mutation_authorized": false
+  },
+  "validation": {
+    "production_runtime_run_id": 33150704865,
+    "production_runtime_run_number": 54,
+    "production_tests": "179 passed",
+    "adr_004_controller_regression": "12 passed",
+    "dedicated_ev007_run_id": 33150704866,
+    "dedicated_ev007_run_number": 1,
+    "dedicated_ev007_validation": "PASS",
+    "triggered_workflows": "12/12 success"
+  },
+  "preserved_failure": {
+    "head": "63ec4cb0f7d58f89413a2050767aacdcdbe94294",
+    "production_runtime_run_id": 33150413628,
+    "production_runtime_run_number": 51,
+    "production_tests": "171 passed / 8 failed",
+    "summary": "FailureCaseSpec hash was computed before Pydantic defaults were materialized; population cases did not execute on this head.",
+    "case_semantics_changed_to_fix": false
+  },
+  "adr": "docs/adr/013-provider-free-failure-performance-campaign-2026-08-28.md"
+}
