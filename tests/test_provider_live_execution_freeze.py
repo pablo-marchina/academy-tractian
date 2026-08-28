@@ -26,9 +26,24 @@ def test_provider_live_execution_freeze_matches_exact_provider_free_implementati
     assert freeze["production_mutating_actions_enabled"] is False
 
     implementation = freeze["implementation"]
+    entrypoint = freeze["governed_entrypoint"]
     tests = freeze["tests"]
+    custody_tests = freeze["custody_tests"]
     assert _git_blob(Path(implementation["path"])) == implementation["git_blob"]
+    assert _git_blob(Path(entrypoint["path"])) == entrypoint["git_blob"]
     assert _git_blob(Path(tests["path"])) == tests["git_blob"]
+    assert _git_blob(Path(custody_tests["path"])) == custody_tests["git_blob"]
+    assert entrypoint["task_version"] == "provider-live-task-v1"
+    assert entrypoint["canonical_custody_filename"] == "adr-009-live-comparison-custody.json"
+    assert entrypoint["canonical_run_dirname"] == "run"
+
+    validation = freeze["provider_free_validation"]
+    assert validation["production_runtime_run_id"] == 33147651777
+    assert validation["production_runtime_run_number"] == 38
+    assert validation["production_tests"] == "146 passed"
+    assert validation["adr_004_controller_regression"] == "12 passed"
+    assert validation["triggered_workflows_total"] == 11
+    assert validation["triggered_workflows_success"] == 11
 
     dependencies = freeze["frozen_dependencies"]
     assert _git_blob(Path(dependencies["provider_comparison_executor_path"])) == dependencies[
@@ -48,6 +63,11 @@ def test_provider_live_execution_freeze_matches_exact_provider_free_implementati
     behavior = freeze["frozen_behavior"]
     assert behavior["required_secret_presence_check_only"] is True
     assert behavior["credential_or_account_probe"] is False
+    assert behavior["authorization_custody_exclusive"] is True
+    assert behavior["canonical_run_dir_not_caller_selectable"] is True
+    assert behavior["authorization_marker_persisted_before_run_preparation"] is True
+    assert behavior["authorization_marker_survives_post_reservation_failure"] is True
+    assert behavior["second_run_within_canonical_custody_refused"] is True
     assert behavior["write_ahead_claim_before_executor_invocation"] is True
     assert behavior["automatic_resume"] is False
     assert behavior["automatic_retry_after_claim"] is False
@@ -57,6 +77,7 @@ def test_provider_live_execution_freeze_matches_exact_provider_free_implementati
     assert behavior["raw_provider_response_persisted"] is False
     assert behavior["raw_exception_text_persisted"] is False
     assert behavior["production_selection_claim"] is False
+    assert behavior["canonical_durable_custody_root_must_be_provisioned_by_execution_task"] is True
 
     boundary = freeze["authorization_boundary"]
     assert boundary["this_freeze_executes_live_calls"] is False
