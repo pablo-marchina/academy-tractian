@@ -154,18 +154,57 @@ ProviderCallFailureCode = Literal[
 ]
 
 
+def _canonical_sha256(payload: Any) -> str:
+    canonical = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return sha256(canonical).hexdigest()
+
+
+def _text_sha256(value: str) -> str:
+    return sha256(value.encode("utf-8")).hexdigest()
+
+
+def _model_call_id_payload(
+    *,
+    provider_id: str,
+    model_id: str,
+    route_id: str,
+    live_call: bool,
+    request_sha256: str,
+    turn_index: int,
+    tool_call_count: int,
+) -> dict[str, Any]:
+    return {
+        "schema_version": PROVIDER_MODEL_CALL_SCHEMA_VERSION,
+        "adapter_version": PROVIDER_DECISION_ADAPTER_VERSION,
+        "provider_id": provider_id,
+        "model_id": model_id,
+        "route_id": route_id,
+        "live_call": live_call,
+        "request_sha256": request_sha256,
+        "turn_index": turn_index,
+        "tool_call_count": tool_call_count,
+    }
+
+
 class ProviderModelCallRecord(_FrozenModel):
     """Sanitized one-client-invocation provenance carried by a `model_call` TraceEvent."""
 
     schema_version: Literal["provider-model-call-v1"] = PROVIDER_MODEL_CALL_SCHEMA_VERSION
     adapter_version: Literal["provider-decision-adapter-v1"] = PROVIDER_DECISION_ADAPTER_VERSION
     call_id: str = Field(pattern=r"^[0-9a-f]{64}$")
-    provider_id: str = Field(min_length=1)
-    model_id: str = Field(min_length=1)
-    route_id: str = Field(min_length=1)
+    provider_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+    model_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,191}$")
+    route_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
     live_call: bool
     request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     response_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    turn_index: int = Field(ge=0)
+    tool_call_count: int = Field(ge=0)
     outcome: Literal["success", "failure"]
     decision_kind: ControllerDecisionKind | None = None
     failure_code: ProviderCallFailureCode | None = None
@@ -178,7 +217,21 @@ class ProviderModelCallRecord(_FrozenModel):
     exception_text_recorded: Literal[False] = False
 
     @model_validator(mode="after")
-    def validate_outcome(self) -> "ProviderModelCallRecord":
+    def validate_record(self) -> "ProviderModelCallRecord":
+        expected_call_id = _canonical_sha256(
+            _model_call_id_payload(
+                provider_id=self.provider_id,
+                model_id=self.model_id,
+                route_id=self.route_id,
+                live_call=self.live_call,
+                request_sha256=self.request_sha256,
+                turn_index=self.turn_index,
+                tool_call_count=self.tool_call_count,
+            )
+        )
+        if self.call_id != expected_call_id:
+            raise ValueError("call_id does not match canonical model-call provenance")
+
         if self.outcome == "success":
             if self.decision_kind is None or self.failure_code is not None or self.response_sha256 is None:
                 raise ValueError("successful model call requires decision_kind and response hash only")
@@ -197,21 +250,9 @@ class ProviderModelCallRecord(_FrozenModel):
     def from_trace_event(cls, *, call_id: str | None, metadata: Mapping[str, Any]) -> "ProviderModelCallRecord":
         if call_id is None:
             raise ValueError("model_call trace event requires call_id")
+        if "call_id" in metadata:
+            raise ValueError("model_call metadata must not duplicate call_id")
         return cls.model_validate({"call_id": call_id, **dict(metadata)})
-
-
-def _canonical_sha256(payload: Any) -> str:
-    canonical = json.dumps(
-        payload,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-    ).encode("utf-8")
-    return sha256(canonical).hexdigest()
-
-
-def _text_sha256(value: str) -> str:
-    return sha256(value.encode("utf-8")).hexdigest()
 
 
 def _reject_duplicate_object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -282,17 +323,15 @@ def build_provider_decision_request(
 
 def _call_id(identity: ProviderCallIdentity, request: ProviderDecisionRequest) -> str:
     return _canonical_sha256(
-        {
-            "schema_version": PROVIDER_MODEL_CALL_SCHEMA_VERSION,
-            "adapter_version": PROVIDER_DECISION_ADAPTER_VERSION,
-            "provider_id": identity.provider_id,
-            "model_id": identity.model_id,
-            "route_id": identity.route_id,
-            "live_call": identity.live_call,
-            "request_sha256": request.request_sha256,
-            "turn_index": request.turn_index,
-            "tool_call_count": request.tool_call_count,
-        }
+        _model_call_id_payload(
+            provider_id=identity.provider_id,
+            model_id=identity.model_id,
+            route_id=identity.route_id,
+            live_call=identity.live_call,
+            request_sha256=request.request_sha256,
+            turn_index=request.turn_index,
+            tool_call_count=request.tool_call_count,
+        )
     )
 
 
@@ -351,6 +390,8 @@ class ProviderDecisionSource(DecisionSource):
             live_call=self.call_identity.live_call,
             request_sha256=request.request_sha256,
             response_sha256=response_sha256,
+            turn_index=request.turn_index,
+            tool_call_count=request.tool_call_count,
             outcome=outcome,
             decision_kind=decision_kind,
             failure_code=failure_code,
@@ -361,7 +402,6 @@ class ProviderDecisionSource(DecisionSource):
     def decide(self, context: ControllerContext) -> ControllerDecision:
         request = self.build_request(context)
         started_ns = self._clock_ns()
-        raw: str | None = None
         response_sha256: str | None = None
 
         try:
