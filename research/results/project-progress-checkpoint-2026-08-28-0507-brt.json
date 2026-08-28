@@ -1,0 +1,81 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "checkpoint_at": "2026-08-28T05:07:00-03:00",
+  "canonical_main_head": "d8c08ae532b11a5b7cecd4be08f8740c66905657",
+  "reconciliation_branch": "docs/reconcile-adr-014-ev008",
+  "final_delivery_target": "2026-09-08",
+  "scientific": {
+    "gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+    "c4_packet": "FROZEN_COMPLETE_C4_PACKET",
+    "missing_score_row_artifact": {
+      "sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+      "bytes": 177350,
+      "rows": 144,
+      "geometry": "36 common parents x 4 arms"
+    },
+    "reconstruction_or_rescoring_authorized": false,
+    "semantic_evaluation_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false
+  },
+  "production_foundations": {
+    "adr004_agent_controller": "FROZEN",
+    "adr005_action_safety": "FROZEN",
+    "adr006_decision_source": "FROZEN",
+    "adr007_model_call_provenance": "FROZEN",
+    "adr008_provider_comparison_design": "FROZEN",
+    "adr009_provider_clients_and_live_authorization": "FROZEN",
+    "adr010_provider_comparison_executor": "FROZEN",
+    "adr011_live_execution_custody": "FROZEN",
+    "adr012_controlled_action_profile": "FROZEN",
+    "adr013_ev007_failure_performance": "FROZEN",
+    "adr014_ev008_repeated_run_stability": "FROZEN"
+  },
+  "ev007": {
+    "report_sha256": "7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9",
+    "denominator": 11,
+    "safety_expectations_passed": 11,
+    "expected_evaluator_pass": 8,
+    "expected_evaluator_fail": 3,
+    "raw_sensitive_leaks": 0
+  },
+  "ev008": {
+    "campaign_version": "ev008-provider-free-stability-campaign-v1",
+    "report_sha256": "1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8",
+    "units": 6,
+    "repetitions_per_unit": 5,
+    "denominator": 30,
+    "stable_units": 6,
+    "stable_dimension_checks": 66,
+    "total_dimension_checks": 66,
+    "contract_expectations_passed": 30,
+    "raw_sensitive_leaks": 0,
+    "automatic_retries": 0,
+    "replays": 0,
+    "final_freeze_head": "4e586e657ca789ac29de4e4e3e271667038e603e",
+    "merge_commit": "d8c08ae532b11a5b7cecd4be08f8740c66905657",
+    "final_production_tests_passed": 199,
+    "adr004_regression_passed": 12,
+    "triggered_workflows_passed": 12,
+    "triggered_workflows_total": 12
+  },
+  "live_provider": {
+    "issue": 44,
+    "calls_consumed": 0,
+    "max_calls": 32,
+    "first_attempt_executed": false,
+    "credential_account_probes": 0,
+    "provider_selected": false,
+    "requires_both_explicit_secrets": true,
+    "requires_single_canonical_durable_custody_root": true
+  },
+  "actions": {
+    "default_production_runtime_actions_enabled": false,
+    "controlled_action_capability_frozen": true,
+    "blanket_real_customer_mutations_authorized": false,
+    "real_customer_mutations_performed": 0
+  },
+  "next_provider_free_priority": "EV-011_CUSTOMER_SAFE_COMMUNICATION",
+  "production_readiness_claim_authorized": false,
+  "global_final_architecture_frozen": false
+}
