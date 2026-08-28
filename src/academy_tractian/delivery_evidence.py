@@ -158,6 +158,7 @@ def validate_delivery_evidence_index(
             violations.append(f"{result_id}: canonical report SHA-256 mismatch")
 
         result_file = root_path / result_path
+        result_blob = git_blob_sha1(result_file) if result_file.is_file() else None
         if result_file.is_file():
             payload = _load_json(result_file, result_id, violations)
             if payload is not None and payload.get("report_sha256") != expected_sha:
@@ -171,11 +172,17 @@ def validate_delivery_evidence_index(
                 frozen_result = payload.get("result")
                 if not isinstance(frozen_result, dict):
                     violations.append(f"{freeze_id}: frozen result declaration missing")
-                else:
+                elif frozen_result.get("report_sha256") != expected_sha:
+                    violations.append(f"{freeze_id}: frozen report SHA-256 mismatch")
+                if isinstance(frozen_result, dict) and "path" in frozen_result:
                     if frozen_result.get("path") != result_path:
                         violations.append(f"{freeze_id}: frozen result path mismatch")
-                    if frozen_result.get("report_sha256") != expected_sha:
-                        violations.append(f"{freeze_id}: frozen report SHA-256 mismatch")
+                else:
+                    direct_blobs = payload.get("direct_blobs")
+                    if not isinstance(direct_blobs, dict):
+                        violations.append(f"{freeze_id}: frozen direct_blobs declaration missing")
+                    elif result_blob is None or direct_blobs.get(result_path) != result_blob:
+                        violations.append(f"{freeze_id}: frozen result blob/path mismatch")
 
     provider = by_id.get("PROVIDER-COMPARISON-PLAN")
     if provider is None:
