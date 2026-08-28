@@ -868,3 +868,84 @@ production readiness claimed                false
 ```
 
 Historical C4 serving-route qualification remains scientific-route history only and is not production-provider selection. The exact frozen C4 score artifact blocker and all scientific authorization boundaries are unchanged.
+
+## 24. Exact production provider/model comparison design — FROZEN / PROVIDER-FREE — 2026-08-28
+
+Issue #32 / PR #33 converted ADR-007's abstract future comparison contract into an exact current provider/model comparison design without executing or authorizing any live model request.
+
+The accepted packet freezes:
+
+- provider-free scripted/null baseline `baseline_scripted_null_v1`;
+- quality-frontier candidate `openai/gpt-5.6-sol` via `openai.responses.v1.standard`;
+- materially lower-cost hosted candidate `google/gemini-3.7-flash` via `google.interactions.v1beta.stateless`;
+- a prospective public DEV population of 8 deterministic DecisionSource probes derived only from public delivery requirements and the canonical 18-operation ToolSpec;
+- 2 repetitions per probe per live candidate, for a hard maximum of 32 future live calls;
+- zero warm-up, zero automatic retry, zero fallback, no provider seed and serial balanced ordering;
+- disqualifying custody/safety/trace hard gates;
+- explicit M1–M10 formulas, denominators and thresholds;
+- deterministic Pareto/tie handling with required `NO_SELECTION` when evidence cannot justify a winner;
+- stopping/amendment rules that preserve already-consumed evidence after any first live call.
+
+The historical E9/E10/E14 evaluator-side `real_task_quality` labels were deliberately not reused as public ground truth. Historical E10b had three DEV groups (`asset_G501`, `asset_C710`, `asset_S420`) × two repeats, but the quality score depended on private evaluator-side oracle material and the public runner could fall back to a proxy packet. The new M4 therefore measures only the public deterministic decision-contract probes and makes no C4/generalization/semantic claim.
+
+Provider-free validation was staged before ADR acceptance. Initial implementation head `617ed300d5d4fc7aa13f0e1ada9564b79a2841ce` exposed one path-normalization defect in the new validator: `production-runtime` run `33139172799` (#17) failed with 1 failed / 85 passed because the validator compared the frozen repository-relative population path with the CI checkout's absolute filesystem path. No population, metric, candidate, threshold, custody or runtime-contract failure occurred. The failed run remains in history.
+
+The validator was corrected without rewriting history or changing comparison semantics. Corrected pre-ADR head:
+
+`0dc3753f7beb9753b762221b66efb1664dec7a66`
+
+Validation:
+
+```text
+triggered workflows                    12 / 12 success
+provider-model-comparison-design       33139265212 / #2 success
+production-runtime                     33139265204 / #18 success
+ADR-004 controller regression          success
+provider/model calls                   0
+production action calls                0
+```
+
+Only after that exact design passed provider-free was ADR-008 recorded. The ADR freezes the already-validated manifest/population/protocol bytes rather than rewriting them after green evidence.
+
+Final ADR head:
+
+`2eeae416690bcd3383f714a2446687a2d73d8dfc`
+
+Final exact-head validation:
+
+```text
+triggered workflows                    12 / 12 success
+provider-model-comparison-design       33139359204 / #4 success
+production-runtime                     33139359185 / #20 success
+ADR-004 controller regression          success
+provider/model calls                   0
+production action calls                0
+```
+
+PR #33 was merged with an expected-head guard into `main` as:
+
+`bde8ff21d7a6c91c970b397d760d94d3f4ac26c3`
+
+ADR-008 state:
+
+`FROZEN_FOR_PRODUCTION_PROVIDER_COMPARISON_DESIGN`
+
+Canonical post-merge boundary remains:
+
+```text
+exact provider comparison design             frozen / ADR-008
+live candidate routes                         OpenAI GPT-5.6 Sol + Gemini 3.7 Flash
+public deterministic DEV probes               8
+repetitions per probe/candidate                2
+maximum future live calls                     32
+provider/model calls authorized now            0
+live provider comparison authorized        false
+live provider comparison executed          false
+production provider/model selected         false
+production mutating actions enabled        false
+scientific gate           REQUIRED_PER_GROUP_AND_SLICE_REPORTING
+score/artifact mutation                       0
+production readiness claimed               false
+```
+
+The next admissible product step is **not** automatic execution of the 32-call comparison. A separate governed task must implement and provider-free test the concrete OpenAI/Google clients behind the frozen `ProviderDecisionClient` contract, validate exact request/response projection and credential isolation, and freeze an explicit live-comparison authorization packet before any real provider request. The scientific reporting blocker and all C4 authorization boundaries are unchanged.
