@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE / canonical short-horizon execution plan  
-**Planning checkpoint:** 2026-08-27 22:47 BRT  
+**Planning checkpoint:** 2026-08-27 23:14 BRT  
 **Current state source:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Macro plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
@@ -16,11 +16,11 @@ The project has two deliberately isolated short-horizon tracks:
 
 ```text
 SCIENTIFIC TRACK                              DELIVERY TRACK
-REQUIRED_PER_GROUP_AND_SLICE_REPORTING        runtime + deterministic evaluator integrated
+REQUIRED_PER_GROUP_AND_SLICE_REPORTING        ADR-006 provider-neutral adapter frozen
         ↓                                             ↓
-reporting freeze                              ADR-005 action-safety policy frozen
+reporting freeze                              model-call provenance + live-comparison prereg ← NEXT
         ↓                                             ↓
-survivor/no-survivor if authorized            model/provider DecisionSource comparison ← NEXT
+survivor/no-survivor if authorized            explicit live-provider authorization only later
         ↓                                             ↓
 later child gates only if opened              trusted auth/idempotency + real-path evidence
 ```
@@ -33,7 +33,7 @@ The current scientific gate remains:
 REQUIRED_PER_GROUP_AND_SLICE_REPORTING
 ```
 
-The production path remains provider-free and all five mutating canonical actions remain fail-closed before transport. ADR-005 freezes the required action-safety protocol but **does not authorize action execution**.
+Provider/model calls authorized now remain **0**. ADR-006 freezes the neutral `DecisionSource` adapter contract but does not select a model/provider or authorize a live client. The production path remains provider-free, and all five mutating canonical actions remain fail-closed before transport under ADR-005.
 
 ## 2. Immediate scientific sequence — highest scientific priority
 
@@ -76,7 +76,7 @@ A reporting closure may authorize a **survivor/no-survivor decision** using the 
 
 ## 3. Immediate delivery sequence — can run in parallel without C4 contamination
 
-ADR-004, the production runtime, deterministic evaluator and ADR-005 now provide a stable provider-free skeleton. The next P0 decision is the missing production `DecisionSource` adapter/model-provider boundary.
+ADR-004, the production runtime, deterministic evaluator, ADR-005 and ADR-006 now provide a stable provider-free skeleton through the model/provider decision seam. The next P0 task is to freeze the **real-provider call provenance and prospective comparison protocol** without making a live call.
 
 ### Step D1 — Production action-safety policy — COMPLETE / FROZEN
 
@@ -95,34 +95,60 @@ The real runtime still fixes `actions_enabled = false`, grants zero action permi
 
 Actual action enablement requires a **separate future governed decision** backed by trusted real authorization/scope/confirmation state, durable idempotency semantics and failure/retry evidence.
 
-### Step D2 — Define and compare the production model/provider `DecisionSource` adapter — NEXT
+### Step D2 — Provider-neutral production `DecisionSource` adapter — COMPLETE / FROZEN
 
-Start provider-free. Freeze the adapter contract and comparison protocol before any live provider call.
+ADR-006 freezes the provider-neutral contract:
 
-Required baseline invariants:
+```text
+ControllerContext
++ public deterministic ToolSpec projection
+→ ProviderDecisionRequest + canonical SHA-256
+→ ProviderDecisionClient.complete(request)
+→ strict JSON object / duplicate-key rejection
+→ ProviderDecisionPayload
+→ ControllerDecision / ToolProposal
+→ AgentController
+→ HarnessRunner / B1 / B2
+```
 
-- implementation plugs into ADR-004 `DecisionSource` and cannot bypass `AgentController` or `HarnessRunner`;
-- output is strictly one typed `ControllerDecision` per turn;
-- provider/model never receives runtime identity, seed, action authorization, idempotency state or evaluator-private truth;
-- tool arguments remain constrained by canonical ToolSpec/B1;
-- model failure, malformed output and timeout/error paths fail closed through the existing controller boundary;
-- provider-specific code stays behind a replaceable adapter interface;
-- provider/model selection is distinct from historical C4 serving-route qualification.
+Validated final head `cdd592f5bae53d0fafecabe68832a31f8605907d` passed:
 
-Compare at minimum:
+- `67/67` production tests;
+- `12/12` ADR-004 controller regressions;
+- `11/11` triggered workflows;
+- provider/model calls: `0`.
 
-1. a **null/provider-free scripted adapter** for deterministic contract testing;
-2. a strong quality-frontier provider/model candidate;
-3. a feasible lower-cost/local/open candidate;
-4. any additional candidate only if it represents a credible Pareto trade-off.
+The adapter does not expose runtime identity, seed, action authorization/idempotency/scope or evaluator-private truth. Known-tool argument semantics remain B1-owned; consequential actions remain B2/ADR-005-owned. No production provider/model is selected.
 
-Before authorizing live calls, preregister measurements for structured-decision adherence, tool-selection/argument validity, task quality on allowed development material, failure behavior, latency, reliability, resource/cost, portability and trace integrity.
+### Step D3 — Freeze provider-call trace/provenance and live-comparison preregistration — NEXT / PROVIDER-FREE
 
-**Provider calls remain unauthorized now.** The first implementation step should therefore be adapter interfaces, deterministic fake-provider tests, comparison matrix/protocol and fail-closed conformance checks. Any live comparison needs its own explicit authorization.
+Before the first live provider request, define exactly how a future `ProviderDecisionClient` records a model call without weakening ADR-004/ADR-006 or leaking sensitive payloads.
 
-### Step D3 — Prepare trusted production action authorization/idempotency integration
+Required decisions/evidence:
 
-This can proceed separately from model/provider comparison, but must not enable actions yet.
+- immutable model-call record schema and ownership;
+- exact provider, model and serving-route identifiers;
+- request SHA-256 linkage to `ProviderDecisionRequest` without copying sensitive request bodies into evaluation reports;
+- response/decision provenance linkage sufficient to audit which provider call produced which controller decision;
+- latency, status/failure, token/resource/cost metadata where available;
+- explicit no-hidden-retry/no-hidden-fallback baseline;
+- redaction rules for credentials, provider error text and customer/tool-result content;
+- deterministic behavior when telemetry recording itself fails;
+- compatibility with the existing `RunTrace`/production evaluator without exposing private/gold/oracle material;
+- prospective live comparison candidate set and metrics.
+
+The live comparison preregistration must include at minimum:
+
+1. provider-free scripted/null baseline;
+2. one strong quality-frontier provider/model candidate;
+3. one feasible lower-cost/local/open candidate;
+4. additional candidates only when they represent a distinct credible Pareto trade-off.
+
+Before any live call, freeze measurement rules for structured-decision adherence, valid known-tool selection, canonical argument validity/B1 containment, allowed-development task quality, failure behavior, latency, reliability, resource/cost, portability and trace integrity.
+
+**This step itself must make zero provider/model calls.** A subsequent live experiment requires a separate explicit authorization after these rules are frozen and current provider/model facts are refreshed from official sources.
+
+### Step D4 — Prepare trusted production action authorization/idempotency integration — PARALLEL / NO ACTION ENABLEMENT
 
 Define the production source of truth for:
 
@@ -134,20 +160,34 @@ Define the production source of truth for:
 - retry, timeout and ambiguous-result handling;
 - audit retention.
 
-ADR-005 is the contract these sources must satisfy. Do not weaken the policy to match an easier persistence implementation.
+ADR-005 is the contract these sources must satisfy. Do not weaken the policy to match an easier persistence implementation, and do not switch `actions_enabled` on in this preparation step.
 
-### Step D4 — Extend real-path Agent + Evaluator coverage after D2/D3 evidence
+### Step D5 — Execute live provider/model comparison only after separate authorization
+
+Once D3 is frozen and a new governed task explicitly authorizes live calls:
+
+- refresh exact candidate/model/route availability from primary provider sources;
+- execute only against allowed development material;
+- preserve one-call provenance and all failures;
+- do not infer production selection from historical C4 serving-route qualification;
+- compare against the preregistered metrics and null baseline;
+- record Pareto trade-offs rather than forcing a winner when evidence is insufficient.
+
+Any provider/model selection requires its own evidence-backed decision/ADR.
+
+### Step D6 — Extend real-path Agent + Evaluator coverage after D3/D4/D5 evidence
 
 Build toward:
 
 ```text
 request
 → ProductionRuntime
-→ production DecisionSource adapter
+→ provider-neutral DecisionSource
+→ separately selected/authorized ProviderDecisionClient
 → AgentController
 → HarnessRunner / canonical ToolSpec
 → supplied TRACTIAN API
-→ RunTrace
+→ RunTrace + model-call provenance
 → ProductionEvaluator
 → customer-safe response + evaluation report
 ```
@@ -161,10 +201,10 @@ Required real-path coverage should include:
 - execute only after a separate action-enablement decision;
 - partial/unavailable tools or data;
 - conflicting/inconclusive evidence;
-- model/provider failure fallback;
+- model/provider failure fallback under the prospectively frozen policy;
 - per-run deterministic evaluation.
 
-### Step D5 — Reliability, security and observability evidence
+### Step D7 — Reliability, security and observability evidence
 
 Once a real DecisionSource/provider path exists, run repeated/fault-injected tests for:
 
@@ -173,7 +213,7 @@ Once a real DecisionSource/provider path exists, run repeated/fault-injected tes
 - authorization/resource-scope/idempotency;
 - failure continuity and human fallback;
 - latency/resource/cost behavior;
-- trace/diagnostic coverage;
+- model/tool trace and diagnostic coverage;
 - customer-safe boundary regressions where deterministically testable.
 
 Semantic/judge evaluation remains a separate gate and must not be introduced merely to fill a rubric row.
@@ -223,7 +263,11 @@ PRODUCTION RUNTIME + DETERMINISTIC EVALUATOR MERGED
         ↓
 ADR-005 ACTION-SAFETY POLICY FROZEN / ACTIONS STILL OFF
         ↓
-MODEL/PROVIDER DECISIONSOURCE COMPARISON       ← DELIVERY CURRENT
+ADR-006 PROVIDER-NEUTRAL DECISIONSOURCE CONTRACT FROZEN
+        ↓
+MODEL-CALL TRACE/PROVENANCE + LIVE-COMPARISON PREREG   ← DELIVERY CURRENT
+        ↓
+SEPARATE LIVE PROVIDER/MODEL AUTHORIZATION + COMPARISON
         ↓
 TRUSTED AUTH/SCOPE/CONFIRMATION/IDEMPOTENCY INTEGRATION
         ↓
@@ -244,7 +288,7 @@ real-path demo + reproducible handoff
 
 The final delivery target remains 2026-09-08. The scientific artifact blocker must not idle non-contaminating P0/P1 delivery work. Product progress must not be used to bypass the frozen scientific gate.
 
-Prioritize the provider/model DecisionSource contract and comparison, trusted action-state integration, real-path reliability/security and demonstration evidence before speculative P2 components.
+Prioritize provider-call provenance/comparison preregistration, trusted action-state integration, separately authorized provider evidence, real-path reliability/security and demonstration evidence before speculative P2 components.
 
 ## 7. Update rule
 
