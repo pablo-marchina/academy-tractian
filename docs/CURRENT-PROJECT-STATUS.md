@@ -1,9 +1,9 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-27 23:14 BRT  
+**Canonical status checkpoint:** 2026-08-28 00:01 BRT  
 **Canonical branch after merge:** `main`  
-**Canonical main head at this checkpoint:** `cc3c09f8c04f1e73f13441b9176ca7631c6fd37a`  
-**Current reconciliation branch:** `docs/reconcile-provider-decision-source-status`  
+**Canonical main head at this checkpoint:** `87c71441745eca2ac2f18b7c976b2bfbbf94b3a8`  
+**Current reconciliation branch:** `docs/reconcile-model-call-provenance-status`  
 **Final delivery target:** 2026-09-08  
 **Audited project source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
@@ -13,7 +13,7 @@
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Progress ledger:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
 **Repository guide:** [`REPOSITORY-GUIDE.md`](REPOSITORY-GUIDE.md)  
-**Machine-readable checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-27-2314-brt.json`](../research/results/project-progress-checkpoint-2026-08-27-2314-brt.json)
+**Machine-readable checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0001-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0001-brt.json)
 
 This document is the **sole canonical human-readable source for current project state and authorization**. Frozen experiment artifacts remain authoritative for exact scientific semantics. Architecture/product progress recorded here does not itself authorize a scientific gate, provider/model call, production action or production-readiness claim.
 
@@ -51,9 +51,10 @@ production mutating actions                 DISABLED / FAIL_CLOSED BEFORE TRANSP
 real production auth/scope/confirmation     NOT PROVISIONED
 real production idempotency store           NOT IMPLEMENTED
 provider-neutral DecisionSource contract    FROZEN_FOR_P0_PROVIDER_ADAPTER_CONTRACT / ADR-006
+model-call trace/provenance contract        FROZEN_FOR_P0_MODEL_CALL_PROVENANCE_CONTRACT / ADR-007
+provider comparison preregistration         PREREGISTERED / PROVIDER_FREE_ONLY / ADR-007
 production provider/model selected          NO
 real production provider client             NOT IMPLEMENTED / NOT AUTHORIZED
-provider-call trace/provenance contract     NOT YET FROZEN
 live provider/model comparison              NOT AUTHORIZED / NOT EXECUTED
 semantic production evaluation              NOT IMPLEMENTED / NOT AUTHORIZED
 production reliability campaign             NOT YET EXECUTED
@@ -127,7 +128,7 @@ Still forbidden:
 - global final architecture freeze;
 - production-readiness claims.
 
-ADR-006 is a production integration contract and does not modify this scientific authorization boundary.
+ADR-006 and ADR-007 are production integration/evidence contracts and do not modify this scientific authorization boundary.
 
 ## Current architecture and production evidence
 
@@ -213,22 +214,61 @@ PR #27 was merged with an expected-head guard into `main` as:
 
 `cc3c09f8c04f1e73f13441b9176ca7631c6fd37a`
 
-ADR-006 freezes the provider-neutral adapter contract only. Canonical production state after the merge remains:
+ADR-006 freezes the provider-neutral adapter contract only. Known-tool canonical argument defects remain B1-owned; consequential-action authorization remains B2/ADR-005-owned. Malformed provider JSON, duplicate keys, invalid decision shapes, unknown tools and provider/client exceptions fail closed through the existing `DECISION_SOURCE_FAILURE` controller path. Runtime identity, seed, action-authorization state and evaluator-private/gold truth remain outside provider-visible request structure.
+
+### Model-call trace provenance + provider-comparison preregistration — frozen, live calls still unauthorized
+
+Issue #29 / PR #30 introduced and froze ADR-007 (`docs/adr/007-model-call-trace-provenance-2026-08-27.md`) and the provider-model comparison preregistration in `research/provider-model-live-comparison-preregistration-2026-08-27.md`.
+
+ADR-007 adds only a sanitized, additive audit path around a `DecisionSource` invocation. Existing non-audited sources keep their prior trace shape. An audited provider adapter can emit exactly one self-verifying `provider-model-call-v1` record per actual client invocation; `AgentController` validates a flat scalar allowlist **before** appending the canonical `model_call` event.
+
+The accepted record carries non-secret route identity, deterministic `call_id`, request/response hashes, turn/tool counters, success/failure family, decision kind when successful, latency, fixed one-invocation/zero-retry/zero-fallback semantics and explicit `raw_request_recorded=false`, `raw_response_recorded=false`, `exception_text_recorded=false` flags. Raw provider requests/responses, credentials, nested payloads, exception text, runtime identity/seed/action state and evaluator-private/gold truth are forbidden from this telemetry surface.
+
+The evaluator now has two explicit structural modes:
+
+- default provider-free mode — requires zero `model_call` events;
+- explicit traced-provider mode — requires valid, unique, self-verifying provenance and exact call→decision/failure ordering, but does not itself authorize live inference or evaluate semantic quality.
+
+Validation was deliberately staged before acceptance:
+
+```text
+initial complete implementation head   80131bcfafc7f8498edfb16448712aa2f70d2229
+production-runtime #11                 79 / 79 production + 12 / 12 controller PASS
+triggered workflows                    12 / 12 success
+strengthened pre-ADR head              12cd09a83c533bf35170520554b209c361d8d903
+production-runtime #12                 80 / 80 production + 12 / 12 controller PASS
+E2–E8 #891                             success / all 75 job steps
+final ADR head                         68a5ffe8e2b28e5fefa62ccca95c17e13fabb672
+production-runtime #15                 80 / 80 production + 12 / 12 controller PASS
+E2–E8 #894                             success / all 75 job steps
+final triggered workflows              12 / 12 success
+provider/model calls                   0
+production action calls                0
+```
+
+The explicit strengthened pre-ADR regression injects a duplicate otherwise-valid `call_id`; the traced-provider evaluator rejects it. Other negative paths cover tampered IDs, raw/nested audit metadata, malformed provider responses and provider/client exception leakage.
+
+PR #30 was merge-locked to final head `68a5ffe8e2b28e5fefa62ccca95c17e13fabb672` and merged into `main` as:
+
+`87c71441745eca2ac2f18b7c976b2bfbbf94b3a8`
+
+The provider-model comparison evidence protocol is now `PREREGISTERED / PROVIDER_FREE_ONLY`. It requires a future separately governed task to refresh official current provider/model facts, freeze exact candidates/routes, allowed development population, metrics, hard gates, stopping/amendment rules and deterministic selection rule before the first live request. It explicitly permits `NO_SELECTION` and keeps default retry/fallback counts at zero.
+
+Canonical provider state after ADR-007 remains:
 
 ```text
 provider-neutral adapter contract           frozen / ADR-006
-provider/model selected                      no
-real provider client                         absent
-live provider/model calls authorized          0
-provider-call trace/provenance               not yet frozen
-mutating actions enabled                     false
-real action authorization state              absent
-scientific state changed                     false
+model-call provenance contract              frozen / ADR-007
+provider comparison protocol                preregistered / provider-free only
+production provider/model selected          no
+real provider client                        absent
+live provider/model calls authorized         0
+live provider/model comparison              not executed / not authorized
+mutating actions enabled                    false
+scientific state changed                    false
 ```
 
-Known-tool canonical argument defects remain B1-owned; consequential-action authorization remains B2/ADR-005-owned. Malformed provider JSON, duplicate keys, invalid decision shapes, unknown tools and provider/client exceptions fail closed through the existing `DECISION_SOURCE_FAILURE` controller path. Runtime identity, seed, action-authorization state and evaluator-private/gold truth remain outside provider-visible request structure.
-
-Before any real provider comparison is authorized, the model-call trace/provenance contract and exact comparison protocol/candidate set must be prospectively frozen. Historical C4 provider qualification does not select a production provider.
+Historical C4 provider qualification does not select a production provider and cannot bypass the future comparison authorization.
 
 ## Current non-claims
 
@@ -240,7 +280,7 @@ The project does **not** currently claim that:
 - independent generalization has been measured;
 - a production model/provider has been selected;
 - provider/model calls are currently authorized;
-- a real production provider client or real model-call telemetry path is implemented;
+- a real production provider client exists or any live production model-call evidence has been collected;
 - production mutating actions are authorized or enabled;
 - real production permissions, company/resource mappings, requester confirmations or durable idempotency state have been provisioned;
 - the production evaluator proves semantic conclusion correctness, expected-path correctness or evidence-oracle completeness;
@@ -251,15 +291,15 @@ The project does **not** currently claim that:
 
 ## Delivery coverage state
 
-The requested final product remains an integrated **industrial agent + trustworthy evaluation framework**. The repository now has a provider-free production runtime, deterministic evaluation over the same trace, a frozen consequential-action safety protocol with execution disabled, and a frozen provider-neutral `DecisionSource` adapter contract.
+The requested final product remains an integrated **industrial agent + trustworthy evaluation framework**. The repository now has a provider-free production runtime, deterministic evaluation over the same trace, a frozen consequential-action safety protocol with execution disabled, a frozen provider-neutral `DecisionSource` adapter contract, and a frozen sanitized model-call provenance/evidence contract with a preregistered future provider-comparison protocol.
 
 The largest remaining delivery gaps are now:
 
-1. provider-call trace/provenance plus prospective live provider/model comparison protocol before any real provider call;
-2. separately authorized production provider/model comparison and client implementation on allowed development material;
+1. refresh official current provider/model facts and freeze the exact production comparison candidate set, allowed development population, hard gates, stopping rules and deterministic selection rule in a separate governed authorization;
+2. implement concrete candidate client(s) and execute a separately authorized live provider/model comparison without weakening ADR-004/005/006/007 boundaries;
 3. trusted production authorization/scope/confirmation/idempotency state before any action enablement;
 4. real-path scenario coverage and provider/tool failure behavior;
-5. reliability/security/observability evidence;
+5. reliability/security/observability evidence over the selected real path;
 6. semantic evaluation only if a later scientific/product gate explicitly authorizes it;
 7. final architecture freeze, demo and reproducible handoff.
 
@@ -276,7 +316,7 @@ P2 optional complexity only with measured benefit
 Two tracks may proceed in parallel only while their boundaries remain isolated:
 
 1. **Scientific:** recover the exact frozen score artifact → execute/validate/freeze required reporting → advance only the gate explicitly opened by that freeze.
-2. **Delivery:** freeze provider-call provenance + live-comparison preregistration provider-free; separately prepare trusted action-authorization/idempotency integration; authorize any live provider comparison only in a new governed step; then extend the real Agent + Evaluator path without touching frozen C4 evidence.
+2. **Delivery:** ADR-007 provenance/preregistration is complete → refresh/freeze the exact provider comparison design and obtain explicit live-call authorization → execute only that authorized evidence packet → separately prepare trusted action-authorization/idempotency integration → extend the real Agent + Evaluator path without touching frozen C4 evidence.
 
 ## Planning pointers
 
