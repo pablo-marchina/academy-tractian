@@ -1,0 +1,81 @@
+{
+  "schema_version": "ev008-provider-free-repeated-run-stability-freeze-v1",
+  "frozen_at": "2026-08-28",
+  "status": "FROZEN_PROVIDER_FREE_PASS",
+  "issue": 51,
+  "pull_request": 52,
+  "campaign_version": "ev008-provider-free-stability-campaign-v1",
+  "validated_implementation_head": "a88b98e53e2767a5f85290082896f3c9b4d93cd4",
+  "validation": {
+    "dedicated_workflow_name": "ev008-repeated-run-stability",
+    "dedicated_workflow_run": 2,
+    "dedicated_workflow_run_id": 33153730881,
+    "dedicated_validation": "PASS",
+    "production_runtime_run": 63,
+    "production_runtime_run_id": 33153730778,
+    "production_tests_passed": 195,
+    "adr004_regression_passed": 12,
+    "triggered_workflows_passed": 12,
+    "triggered_workflows_total": 12,
+    "first_validator_operational_failure": {
+      "head": "a404cd9efca635c8d4740a5a7479ca610e4bf24c",
+      "dedicated_workflow_run": 1,
+      "dedicated_workflow_run_id": 33153619228,
+      "failure_class": "VALIDATOR_CHECKOUT_IMPORT_PATH",
+      "campaign_executed": false,
+      "metrics_changed_by_fix": false
+    }
+  },
+  "result": {
+    "report_sha256": "1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8",
+    "unit_count": 6,
+    "repetitions_per_unit": 5,
+    "denominator": 30,
+    "stable_unit_count": 6,
+    "stable_dimension_checks": 66,
+    "total_dimension_checks": 66,
+    "contract_expectations_passed": 30,
+    "sensitive_leak_count": 0,
+    "automatic_retry_count": 0,
+    "replay_count": 0,
+    "provider_calls": 0,
+    "real_customer_mutations": 0,
+    "unit_summary_sha256": {
+      "STAB-01": "769b3ff5734ea872a0c4da2c097a7d5cf5393b1035174ae9a219f9ff92cdf680",
+      "STAB-02": "6c063133b7051fd2a7d1b642cf028a9b7ffd7d73dae01f8ad3cf3989d3838580",
+      "STAB-03": "3bafc0b536015181b7b940dd14a581faec9c952f91cb351e1af769ae403bba0a",
+      "STAB-04": "c2c9d79ce0baf3b73ccbbd54513096d3e6928f7e89c05bb0fcb6eab5253094a4",
+      "STAB-05": "1f4b8994db9ce2286e29c24852c046a0ca16877eae412c139a09d02ae013d2d6",
+      "STAB-06": "ccc52113931bf82489487575c108bf495f82c558013897931e490992df855347"
+    }
+  },
+  "direct_blobs": {
+    "src/academy_tractian/stability_campaign.py": "a7a7e581e512b9cdc3c5b62ecb0d9ac7621af748",
+    "tests/test_stability_campaign.py": "c7efb283912a0859b83aae54d4440d3bf89d39a8",
+    "scripts/validate_ev008_stability_campaign.py": "331527c0d6f1bf0472184d6e20bf15af3deb4ec2",
+    ".github/workflows/ev008-repeated-run-stability.yml": "1e562d0fa4633e4a3dea2fd07ae56f27a2740178",
+    "research/results/ev008-provider-free-stability-campaign-result-2026-08-28.json": "264b0afcde8f580a539029b4db0d492f0dbae6d3"
+  },
+  "frozen_foundation_blobs": {
+    "src/academy_tractian/runtime.py": "a7f8adf02dded71188ce61668b111be258206745",
+    "src/academy_tractian/evaluation.py": "27adfc0e009398bf765ac05afe1ef6e8799adea1",
+    "src/academy_tractian/action_safety.py": "21840f8711450dcca93f2c0b9880387702118104",
+    "src/academy_tractian/controlled_actions.py": "9e5f2d49ebc82303423f81ec8916b02c511f2a1e",
+    "src/academy_tractian/controlled_action_evaluation.py": "ae5f1a7777893941882196c8c2f3810676eba0a4",
+    "research/e2/controller.py": "b0971eda3e7c43337c54b71325a9b3eb5e1dc3ea",
+    "research/e2/runner.py": "184544ede9fa81188f795dd6c698b5b4556a59c9",
+    "research/e2/models.py": "b4a17ab686d93f51d7055174c1bc688c0af58647",
+    "research/e2/trace.py": "475fe1ae387121f17c34c7317512be2d76296553"
+  },
+  "boundaries": {
+    "adr009_live_calls_consumed": 0,
+    "credential_account_probes": 0,
+    "production_provider_selected": false,
+    "real_customer_mutations": 0,
+    "default_production_runtime_actions_enabled": false,
+    "scientific_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+    "semantic_private_blind_access": false,
+    "production_readiness_claim_authorized": false
+  },
+  "interpretation": "Provider-free deterministic runtime/harness/evaluator reproducibility evidence only. This freeze does not establish live-model stability or select a provider."
+}

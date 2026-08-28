@@ -1,0 +1,68 @@
+{
+  "schema_version": "ev008-stability-result-manifest-v1",
+  "campaign_version": "ev008-provider-free-stability-campaign-v1",
+  "report_sha256": "1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8",
+  "unit_count": 6,
+  "repetitions_per_unit": 5,
+  "denominator": 30,
+  "stable_unit_count": 6,
+  "stable_dimension_checks": 66,
+  "total_dimension_checks": 66,
+  "contract_expectations_passed": 30,
+  "sensitive_leak_count": 0,
+  "automatic_retry_count": 0,
+  "replay_count": 0,
+  "provider_calls": 0,
+  "real_customer_mutations": 0,
+  "units": [
+    {
+      "unit_id": "STAB-01",
+      "spec_sha256": "f09b4bb907ee9229280433172a68251580c79f265e50651c1a7d6d05cd67425c",
+      "summary_sha256": "769b3ff5734ea872a0c4da2c097a7d5cf5393b1035174ae9a219f9ff92cdf680",
+      "transport_count": 5,
+      "action_transport_count": 0,
+      "evaluator_pass_count": 5
+    },
+    {
+      "unit_id": "STAB-02",
+      "spec_sha256": "5905a1fe60cc7247f9b8848f5f346c8f0fe1b87b34ae1f96883f795bab98ab99",
+      "summary_sha256": "6c063133b7051fd2a7d1b642cf028a9b7ffd7d73dae01f8ad3cf3989d3838580",
+      "transport_count": 0,
+      "action_transport_count": 0,
+      "evaluator_pass_count": 5
+    },
+    {
+      "unit_id": "STAB-03",
+      "spec_sha256": "17f42e7beee250dcb4b60c24dfee52742f986848dc667e119e2dbcbb8e802ede",
+      "summary_sha256": "3bafc0b536015181b7b940dd14a581faec9c952f91cb351e1af769ae403bba0a",
+      "transport_count": 0,
+      "action_transport_count": 0,
+      "evaluator_pass_count": 5
+    },
+    {
+      "unit_id": "STAB-04",
+      "spec_sha256": "9affc56441fde65c0b7769d92abfadea79e00ec903b837a1ddd4941e035a2610",
+      "summary_sha256": "c2c9d79ce0baf3b73ccbbd54513096d3e6928f7e89c05bb0fcb6eab5253094a4",
+      "transport_count": 0,
+      "action_transport_count": 0,
+      "evaluator_pass_count": 5
+    },
+    {
+      "unit_id": "STAB-05",
+      "spec_sha256": "777abb7138514ab201d69f059b026af92e32941734d4dea441e58b4f0f947c48",
+      "summary_sha256": "1f4b8994db9ce2286e29c24852c046a0ca16877eae412c139a09d02ae013d2d6",
+      "transport_count": 5,
+      "action_transport_count": 5,
+      "evaluator_pass_count": 5
+    },
+    {
+      "unit_id": "STAB-06",
+      "spec_sha256": "0d9780d36970052ccae88a9032ea719a8148a0047b000606283eb43870947baa",
+      "summary_sha256": "ccc52113931bf82489487575c108bf495f82c558013897931e490992df855347",
+      "transport_count": 5,
+      "action_transport_count": 0,
+      "evaluator_pass_count": 5
+    }
+  ],
+  "interpretation": "Provider-free deterministic reproducibility evidence only; this manifest does not establish live-model quality or select a production provider."
+}
