@@ -766,3 +766,105 @@ production readiness claimed                false
 The adapter rejects malformed/non-object/duplicate-key JSON, extra fields, invalid decision shapes and unknown tools before execution; provider/client exceptions fail through the existing `DECISION_SOURCE_FAILURE` safe-abstention path. Model-controlled `user_id`, `x-user-id` and `seed` remain rejected before execution. Known-tool canonical argument defects deliberately remain B1-owned and traceable as `ARGUMENT_INVALID`; consequential-action authorization remains B2/ADR-005-owned.
 
 No historical C4 provider route is promoted to production by this work. Before the first real provider comparison, the repository must freeze model-call trace/provenance behavior and the prospective comparison candidate/metric protocol provider-free. A later live comparison requires its own explicit authorization. The scientific gate remains `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` and the exact frozen score artifact blocker is unchanged.
+
+## 23. Model-call trace provenance and provider-comparison preregistration — FROZEN / PROVIDER-FREE — 2026-08-28
+
+Issue #29 / PR #30 closed the missing production model-call audit boundary without making, selecting or authorizing any real provider/model call.
+
+The implementation adds:
+
+- additive `DecisionSourceAuditRecord` handling in `research/e2/controller.py` while preserving the original `DecisionSource.decide(...)` contract and application-owned loop;
+- optional `ProviderCallIdentity` + self-verifying `ProviderModelCallRecord` in `src/academy_tractian/decision_source.py`;
+- an explicit traced-provider structural mode in `src/academy_tractian/evaluation.py` while keeping provider-free evaluation as the default;
+- `tests/test_model_call_provenance.py` and `tests/test_model_call_provenance_duplicate.py` covering success, source/client failure, malformed responses, redaction, ordering, call-ID tampering, duplicate IDs and malicious audit metadata;
+- `research/provider-model-live-comparison-preregistration-2026-08-27.md`, frozen as `PREREGISTERED / PROVIDER_FREE_ONLY`;
+- ADR-007 — `docs/adr/007-model-call-trace-provenance-2026-08-27.md`.
+
+The accepted trace boundary is:
+
+```text
+ControllerContext
+→ ProviderDecisionSource
+→ ProviderDecisionClient.complete(request)       [future separately authorized concrete client]
+→ sanitized ProviderModelCallRecord
+→ DecisionSourceAuditRecord drain
+→ AgentController validates flat scalar allowlist
+→ model_call event
+→ matching controller decision OR fail-closed DECISION_SOURCE_FAILURE
+→ HarnessRunner / B1 / ADR-005 B2 / transport
+→ RunTrace
+→ ProductionEvaluator structural provenance checks
+```
+
+The audit hook cannot execute tools or alter the returned controller decision. Invalid audit metadata itself fails closed as `DECISION_SOURCE_AUDIT_FAILURE` before unsafe metadata is inserted into `RunTrace`.
+
+Canonical provenance fields include non-secret provider/model/route identifiers, `live_call`, deterministic self-verifying `call_id`, request SHA-256, response SHA-256 when a string response exists, turn/tool counters, success/failure family, successful decision kind, latency, exactly one adapter client invocation, zero retries, no fallback and explicit raw-request/raw-response/exception-text recording flags set to false.
+
+Raw provider request/response bodies, credentials, exception text, runtime identity/seed/action state and evaluator-private/gold truth are forbidden from the canonical model-call telemetry surface.
+
+Validation was intentionally staged rather than writing the ADR first.
+
+Initial complete implementation head:
+
+`80131bcfafc7f8498edfb16448712aa2f70d2229`
+
+```text
+production-runtime run        33137274889 / #11
+root production tests         79 / 79 PASS
+ADR-004 controller tests      12 / 12 PASS
+triggered workflows           12 / 12 success
+provider/model calls          0
+```
+
+Before ADR acceptance, an explicit attack test was added for an otherwise-valid duplicated `call_id`. Strengthened pre-ADR head:
+
+`12cd09a83c533bf35170520554b209c361d8d903`
+
+```text
+production-runtime run        33137347455 / #12
+root production tests         80 / 80 PASS
+ADR-004 controller tests      12 / 12 PASS
+E2–E8 run                     33137347432 / #891 success
+triggered workflows           12 / 12 success
+provider/model calls          0
+```
+
+Only after those provider-free implementation gates passed was ADR-007 recorded. The preregistration was then promoted from draft to `PREREGISTERED / PROVIDER_FREE_ONLY`, the ADR index was updated, and the exact final head was revalidated:
+
+`68a5ffe8e2b28e5fefa62ccca95c17e13fabb672`
+
+```text
+production-runtime run        33137540857 / #15
+root production tests         80 / 80 PASS
+ADR-004 controller tests      12 / 12 PASS
+E2–E8 run                     33137540795 / #894 success / all 75 job steps
+triggered workflows           12 / 12 success
+provider/model calls          0
+production action calls       0
+```
+
+The only warnings in the final production job were GitHub Actions/Node deprecation warnings outside project code.
+
+PR #30 was merged with an expected-head guard into `main` as:
+
+`87c71441745eca2ac2f18b7c976b2bfbbf94b3a8`
+
+ADR-007 freezes the **sanitized model-call provenance contract and future provider/model comparison evidence protocol only**. It does not freeze or authorize a live candidate set. The future comparison must refresh official current provider/model facts, freeze exact candidate/model/route identifiers, allowed development population, hard gates, metrics, stopping/amendment rules and deterministic selection rule before requesting a separate live-call authorization.
+
+Canonical state after this merge remains:
+
+```text
+provider-neutral adapter                    frozen / ADR-006
+model-call provenance                       frozen / ADR-007
+provider comparison protocol                preregistered / provider-free only
+production provider/model selected          no
+real provider client                        absent
+provider/model calls authorized              0
+live provider comparison                    not authorized / not executed
+production mutating actions enabled         false
+scientific gate                             REQUIRED_PER_GROUP_AND_SLICE_REPORTING
+score/artifact mutation                      0
+production readiness claimed                false
+```
+
+Historical C4 serving-route qualification remains scientific-route history only and is not production-provider selection. The exact frozen C4 score artifact blocker and all scientific authorization boundaries are unchanged.
