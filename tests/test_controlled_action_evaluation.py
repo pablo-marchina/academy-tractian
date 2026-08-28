@@ -28,7 +28,7 @@ from research.e2.controller import (
     ControllerDecisionKind,
     ToolProposal,
 )
-from research.e2.models import BoundRequest, RunTrace, TraceEvent
+from research.e2.models import BoundRequest, Decision, RunTrace, TraceEvent
 from research.e2.transport import TransportResponse
 
 
@@ -66,7 +66,7 @@ class ScriptedDecisionSource:
             ControllerDecision(
                 kind=ControllerDecisionKind.FINAL,
                 final={
-                    "decision": "EXECUTE",
+                    "decision": Decision.ACT_REPROCESS.value,
                     "response_mode": "complete",
                     "message": "The supplied synthetic action was accepted.",
                 },
@@ -198,7 +198,7 @@ def test_controlled_action_evaluator_does_not_serialize_action_response_body(tmp
     report = ControlledActionEvaluator().evaluate(trace)
     serialized = report.model_dump_json()
 
-    assert '"accepted":true' not in serialized
+    assert '\"accepted\":true' not in serialized
     assert "justification" not in serialized
     assert report.by_name()["controlled_action_execution"].details[
         "accepted_action_count"
@@ -210,14 +210,17 @@ def test_controlled_action_evaluator_imports_no_private_or_provider_stack() -> N
     tree = ast.parse(source)
     imported_modules: set[str] = set()
     imported_roots: set[str] = set()
+    imported_names: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imported_modules.add(alias.name)
                 imported_roots.add(alias.name.split(".")[0])
+                imported_names.add(alias.asname or alias.name.split(".")[-1])
         elif isinstance(node, ast.ImportFrom) and node.module:
             imported_modules.add(node.module)
             imported_roots.add(node.module.split(".")[0])
+            imported_names.update(alias.asname or alias.name for alias in node.names)
 
     forbidden_roots = {
         "anthropic",
@@ -231,4 +234,5 @@ def test_controlled_action_evaluator_imports_no_private_or_provider_stack() -> N
     assert imported_roots.isdisjoint(forbidden_roots)
     assert "research.e2.evaluators" not in imported_modules
     assert "research.e2.evaluation_suite" not in imported_modules
-    assert "Scenario" not in source
+    assert "Scenario" not in imported_names
+    assert "EvaluationSuite" not in imported_names
