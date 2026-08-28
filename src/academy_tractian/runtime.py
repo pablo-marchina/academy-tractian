@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from research.e2.controller import AgentController, ControllerLimits, DecisionSource
 from research.e2.models import ExecutionBinding, RunTrace, ToolKind, ToolSpec
-from research.e2.policy import ResourcePolicy
 from research.e2.runner import HarnessRunner
 from research.e2.tool_registry import (
     SOURCE_IMPLEMENTATION_SHA256,
@@ -18,6 +17,12 @@ from research.e2.tool_registry import (
     validate_registry,
 )
 from research.e2.transport import RequestTransport
+
+from .action_safety import (
+    ACTION_SAFETY_POLICY_VERSION,
+    ProductionActionAuthorizationContext,
+    ProductionActionSafetyPolicy,
+)
 
 
 class _FrozenModel(BaseModel):
@@ -39,6 +44,8 @@ class ProductionRequest(_FrozenModel):
 
     Identity and seed live here and are bound into the E2 execution boundary. They are
     intentionally absent from ControllerContext and therefore unavailable to DecisionSource.
+    Production action authorization state is also intentionally absent from this model-facing
+    context and is owned by the runtime/action-safety boundary.
     """
 
     request_id: str = Field(min_length=1)
@@ -61,6 +68,7 @@ def _config_hash(
 ) -> str:
     payload = {
         "runtime": config.model_dump(mode="json"),
+        "action_safety_policy_version": ACTION_SAFETY_POLICY_VERSION,
         "tool_contract_sources": {
             "openapi_sha256": SOURCE_OPENAPI_SHA256,
             "implementation_sha256": SOURCE_IMPLEMENTATION_SHA256,
@@ -76,11 +84,12 @@ def _config_hash(
 
 
 class ProductionRuntime:
-    """First production-path adapter over the accepted ADR-004 controller boundary.
+    """Production-path adapter over the accepted ADR-004 controller boundary.
 
-    This slice is intentionally provider-free and read-only. The canonical action tools stay
-    present in the registry so attempted actions remain auditable, but an empty deterministic
-    permission set denies every action at E2/B2 before transport.
+    The canonical action tools stay present in the registry so attempted actions remain
+    auditable. ProductionActionSafetyPolicy owns the B2 action-safety decision, but this runtime
+    still constructs it with execution disabled and zero permissions. No mutating action can
+    reach transport in this slice.
     """
 
     def __init__(
@@ -116,14 +125,14 @@ class ProductionRuntime:
             seed=request.seed,
         )
 
-        # The first production slice deliberately grants no action permissions. This keeps
-        # consequential operations fail-closed until the production authorization,
-        # confirmation and idempotency policy is separately governed.
-        resource_policy = ResourcePolicy(
-            user_permissions=set(),
+        # This is deliberately runtime-owned state. DecisionSource receives none of it.
+        # The global switch remains literal False and no production permissions are granted.
+        action_context = ProductionActionAuthorizationContext(
+            execution_enabled=self.config.actions_enabled,
+            user_permissions=frozenset(),
             user_company_id="__production_read_only__",
-            resource_company_lookup={},
         )
+        resource_policy = ProductionActionSafetyPolicy(context=action_context)
 
         runner = HarnessRunner(
             run_id=request.request_id,
