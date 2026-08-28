@@ -1,16 +1,16 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-28 05:36 BRT  
-**Canonical branch after merge:** `main`  
-**Canonical main head at this checkpoint:** `8c710c11e43376d89c6af60e54de598b691a4eff`  
-**Current reconciliation branch:** `docs/reconcile-adr-015-ev011`  
+**Canonical status checkpoint:** 2026-08-28 06:21 BRT  
+**Canonical branch after implementation merge:** `main`  
+**Canonical implementation merge head:** `b432ca9d5c32ffedcda2b26fc15959f3f4f415bd`  
+**Current reconciliation branch:** `docs/reconcile-adr-016-final-delivery`  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
-**Latest chronological entry:** [`progress/031-ev011-customer-safe-communication-freeze-2026-08-28.md`](progress/031-ev011-customer-safe-communication-freeze-2026-08-28.md)  
-**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0536-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0536-brt.json)
+**Latest chronological entry:** [`progress/032-final-delivery-reproduction-evidence-freeze-2026-08-28.md`](progress/032-final-delivery-reproduction-evidence-freeze-2026-08-28.md)  
+**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0621-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0621-brt.json)
 
-This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts, ADRs and authorization packets remain authoritative for exact semantics. Production work does not advance the C4 scientific gate.
+This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts, ADRs and authorization packets remain authoritative for exact semantics. Production/delivery work does not advance the C4 scientific gate.
 
 ## Executive state
 
@@ -38,13 +38,13 @@ provider comparison executor                 FROZEN / ADR-010
 live execution/custody wrapper               FROZEN / ADR-011
 controlled action execution/evaluator        FROZEN / ADR-012
 EV-007 failure performance                   FROZEN / ADR-013 / 11 OF 11 SAFETY EXPECTATIONS
-EV-008 repeated-run stability                FROZEN / ADR-014 / 30 OF 30 RUNS
-EV-008 stable units                          6 OF 6
-EV-008 stable dimension checks               66 OF 66
-EV-011 customer-safe communication           FROZEN / ADR-015 / 10 OF 10 CASES
-EV-011 applicable communication checks       60 OF 60 PASS
-EV-011 expected evaluator classifications    9 PASS / 1 FAIL (COMM-07)
-next unblocked provider-free P0/P1            CLEAN REPRODUCTION + EVIDENCE INDEX + INTEGRATED DEMO
+EV-008 repeated-run stability                FROZEN / ADR-014 / 30 OF 30 RUNS / 66 OF 66 DIMENSIONS
+EV-011 customer-safe communication           FROZEN / ADR-015 / 60 OF 60 APPLICABLE CHECKS
+final-delivery reproduction/evidence         FROZEN / ADR-016
+integrated provider-free demo                5 OF 5 / REPORT 43903731…
+evidence index                               31 ENTRIES / 30 OF 30 RESIDENT BLOBS / 0 VIOLATIONS
+clean-checkout freeze regression              237 PRODUCTION TESTS + 12 ADR-004 / PASS
+next unblocked provider-free P0/P1            FINAL HANDOFF ACCEPTANCE AUDIT + GAP CLOSURE
 
 canonical provider comparison plan           32 ATTEMPTS / SHA-256 69691adf…
 production live provider calls consumed      0 / 32
@@ -68,7 +68,7 @@ rows     144
 geometry 36 common parents × 4 arms
 ```
 
-Only exact artifact recovery/provisioning is authorized. Reconstruction, rescoring or substitution remain forbidden. Production reliability/provider work does not authorize C4 semantic judging, survivor selection or blind-partition access.
+Only exact artifact recovery/provisioning is authorized. Reconstruction, rescoring or substitution remain forbidden. Production reliability/provider/delivery work does not authorize C4 semantic judging, survivor selection or blind-partition access.
 
 ## Production architecture state
 
@@ -89,7 +89,7 @@ request
 
 Identity, seed, action authorization and evaluator-private truth remain outside provider control. The default `ProductionRuntime` remains read-only for mutating actions.
 
-A separate controlled action profile exists under ADR-012:
+The controlled supplied/test action path remains ADR-012 only:
 
 ```text
 trusted exact grant
@@ -104,9 +104,9 @@ trusted exact grant
 → ControlledActionEvaluator
 ```
 
-All five canonical action ToolSpecs have provider-free accepted-action evidence. A transport failure after claim remains consumed/uncertain and cannot be automatically replayed. ADR-012 is capability evidence, not blanket authorization for a real customer environment.
+All five canonical action ToolSpecs have provider-free accepted-action capability evidence. A transport failure after claim remains consumed/uncertain and cannot be automatically replayed. This is not blanket authorization for a real customer environment.
 
-## Provider comparison state — ADR-008 through ADR-011
+## Provider comparison state — unchanged
 
 The frozen comparison remains exactly:
 
@@ -120,104 +120,115 @@ Canonical plan SHA-256:
 
 `69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f`
 
-Issue #44 is the only live execution task. It may execute only through `GovernedProviderLiveTask` with both explicit secrets and one canonical durable custody root. Credential/account probing is forbidden. Calls remain 0/32.
+Issue #44 is the only live execution task. It may execute only through the frozen governed wrapper with both explicit secrets and one canonical durable custody root. Credential/account probing is forbidden. Calls remain 0/32 and no provider/model is selected.
 
-## ADR-013 — EV-007 failure performance
+## Frozen reliability/evaluation foundations
 
-Canonical report SHA-256:
-
-`7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9`
+### ADR-013 — EV-007
 
 ```text
-campaign denominator              11
-safety expectations passed        11 / 11
-expected evaluator PASS            8 / 11
-expected evaluator FAIL            3 / 11
-raw sensitive leaks                0
-provider calls                      0
-real customer mutations            0
-automatic retries                   0
+report SHA-256        7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9
+failure cases         11
+safety expectations   11 / 11
+expected evaluator     8 PASS / 3 FAIL
+leaks/calls/mutations  0 / 0 / 0
 ```
 
-EV007-05, EV007-09 and EV007-11 remain intentionally expected evaluator failures: safe containment does not erase invalid proposals, incomplete post-claim action evidence or tampered provenance.
+EV007-05, EV007-09 and EV007-11 remain intentional evaluator failures. Safe containment does not erase invalid/incomplete/tampered evidence.
 
-## ADR-014 — EV-008 provider-free repeated-run stability
-
-Canonical report SHA-256:
-
-`1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8`
+### ADR-014 — EV-008
 
 ```text
-stability units                       6
-repetitions per unit                  5
-provider-free runs                   30 / 30
-stable units                          6 / 6
-stable dimension checks              66 / 66
-contract expectations                30 / 30
-raw sensitive leaks                   0
-automatic retries / replays           0 / 0
-provider calls / real mutations       0 / 0
+report SHA-256             1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8
+provider-free runs         30 / 30
+stable units                6 / 6
+stable dimension checks    66 / 66
+contract expectations      30 / 30
+leaks/retries/replays       0 / 0 / 0
+provider calls/mutations    0 / 0
 ```
 
-ADR-014 establishes provider-free runtime/harness/evaluator reproducibility only. It does not establish live-model stability or provider quality.
-
-## ADR-015 — EV-011 provider-free customer-safe communication
-
-Issue #54 / PR #55 froze deterministic objective communication/leakage safety over accepted production traces.
-
-Canonical evidence:
+### ADR-015 — EV-011
 
 ```text
-campaign version                     ev011-provider-free-communication-campaign-v1
-report SHA-256                        cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
-communication cases                 10 / 10
-predicate definitions               12
-case × predicate slots             120
-applicable predicate checks         60
-passed predicate checks             60 / 60
-failed predicate checks              0
-not-applicable checks               60
-contract expectations               10 / 10
-evaluator classifications            9 PASS / 1 FAIL
-expected evaluator FAIL              COMM-07
-provider calls                        0
-real customer mutations               0
-semantic/private/blind access         0
-automatic retries / replays           0 / 0
-PR #55 merge                          8c710c11e43376d89c6af60e54de598b691a4eff
+report SHA-256                    cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
+communication cases               10 / 10
+applicable predicate checks       60
+passed predicate checks           60 / 60
+failed predicate checks            0
+evaluator classifications          9 PASS / 1 FAIL
+expected evaluator FAIL            COMM-07
+provider calls/mutations           0 / 0
+semantic/private/blind access      0
 ```
 
-The campaign covers clarification, abstention, escalation, read transport failure, malformed local provider decision, authorization denial, uncertain post-claim action failure, accepted controlled action, partial/unavailable evidence and successful read/orientation.
+`COMM-07` remains evaluator-invalid by design; safe communication does not convert an uncertain post-claim action into valid execution.
 
-The twelve predicates independently check synthetic credential leakage, raw exception leakage, private evaluator leakage, customer-facing internal disclosure, trace support for success claims, failure overclaim, uncertain-action success/replay language, clarification request, escalation handoff, fabrication and accepted-action wording.
+## ADR-016 — provider-free final-delivery reproduction and evidence package
 
-`NOT_APPLICABLE` is explicit and never counted as PASS. The test suite deliberately injects communication defects and requires them to become predicate failures.
+Issue #57 / PR #58 froze the highest-value unblocked final-delivery reproducibility path.
 
-`COMM-07` remains evaluator-invalid by design because post-claim action transport uncertainty leaves incomplete action evidence. Its communication checks pass because the response does not claim success, leak raw failure material, fabricate completion or advise replay. Safe communication does not erase evaluator-invalid execution evidence.
-
-Freeze-validation head `7a4fdb38753086ff628463f0cadece20066e39ad` passed:
+Canonical integrated demo:
 
 ```text
-ev011-customer-safe-communication #5   PASS
-report SHA-256                          cfa811da… reproduced exactly
-production-runtime #75                  218 passed
-ADR-004 regression                       12 passed
-triggered workflows                     12 / 12 success
-freeze self-check                       PASS
-exact ten-case reproduction             PASS
+campaign version                  provider-free-final-delivery-reproduction-v1
+report SHA-256                    43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445
+scenarios                         5 / 5
+exact traces evaluated            5 / 5
+contract expectations             5 / 5
+provider calls                    0
+credential/account probes         0
+real customer mutations           0
+semantic/private/blind access     0
 ```
 
-Final PR head `e915809a8d93de88bc29f010f1a780042390b188` then closed 12/12 workflows successfully before merge.
+The fixed scenario order is read/investigate, clarify, abstain, escalate and one ADR-012 controlled supplied/test accepted action. DEMO-05 produces exactly one local action transport and one durable local claim; it does not touch a real customer environment.
 
-ADR-015 establishes objective deterministic provider-free communication safety only. It does not establish subjective/live-model writing quality, provider selection or production readiness.
+Canonical evidence index:
+
+```text
+entries                            31
+repository-resident entries        30
+exact Git blobs resolved           30 / 30
+external blocker entries            1
+violations                          0
+```
+
+The index explicitly distinguishes:
+
+- provider-free reproducible evidence;
+- immutable historical ADR evidence;
+- the live provider comparison as `UNEXECUTED_GATED`;
+- the missing exact C4 artifact as `EXTERNALLY_BLOCKED`.
+
+It does not index itself, avoiding circular blob identity.
+
+Final freeze head `e603a44a817c13bbd9b1784d50edbfb41f095501` passed:
+
+```text
+final-delivery-provider-free-reproduction #10   PASS
+clean-checkout production tests                 237 passed
+ADR-004 controller regression                    12 passed
+EV-007 / EV-008 / EV-011                        PASS / exact frozen SHAs
+integrated demo                                 PASS / exact 43903731…
+evidence index                                  30 / 30 resolved / 0 violations
+triggered workflows                             12 / 12 success
+freeze self-check                               PASS
+```
+
+PR #58 merged to `main` as `b432ca9d5c32ffedcda2b26fc15959f3f4f415bd`.
+
+Two falsifications remain part of the evidence history: inferred ADR filenames in the first cut, and an incorrect checker assumption that every historical freeze used `result.path`. Neither failure changed the preregistered five-scenario geometry or any frozen upstream result.
+
+ADR-016 establishes an auditable provider-free handoff baseline only. It does not authorize or imply live provider execution, provider selection, C4 reconstruction, semantic/private/blind evaluation, global architecture freeze or production readiness.
 
 ## Immediate priorities
 
-1. **Final-delivery provider-free path:** build and freeze a clean install/run/evaluate reproduction, a machine-readable evidence index and an integrated supplied-API/provider-free demonstration over accepted runtime/tool/evaluator boundaries.
-2. **Provider execution in parallel:** issue #44 remains blocked until both explicit secrets and one canonical durable custody root exist; otherwise remain at attempt 0 / 0 calls.
+1. **Final handoff acceptance audit + gap closure:** use `DELIVERY-ACCEPTANCE.md` to produce the final rubric-to-evidence crosswalk, validate setup/run/evaluate instructions, close documentation/runbook/fallback/rollback gaps, and run one final end-to-end provider-free regression before delivery.
+2. **Provider execution in parallel:** issue #44 remains blocked until both explicit provider secrets and one canonical durable custody root exist; otherwise remain at attempt 0 / 0 calls.
 3. **Scientific recovery in parallel:** recover the exact original C4 score-row artifact only; do not reconstruct/rescore.
-4. **After provider result:** freeze exact candidate ID or `NO_SELECTION`; rerun compatible EV-007/008/011 definitions without post-hoc metric changes.
-5. **Final handoff:** complete end-to-end regression, evidence inventory, reproducible commands and demonstration before 2026-09-08.
+4. **If provider result becomes available:** freeze exact candidate ID or `NO_SELECTION`; rerun compatible frozen EV-007/008/011 definitions without post-hoc metric changes.
+5. **Final claims:** explicitly label any provider/C4-dependent acceptance row as blocked/unexecuted if its external prerequisite remains absent by handoff.
 
 ## Still forbidden
 
@@ -230,6 +241,6 @@ ADR-015 establishes objective deterministic provider-free communication safety o
 - provider-native TRACTIAN tool execution or bypass of `HarnessRunner.execute_tool()`;
 - weakening ADR-005 or releasing uncertain action claims to permit replay;
 - treating ADR-012 as blanket real-customer authorization;
-- changing EV-007/008/011 definitions after observing live provider results;
+- changing EV-007/008/011 or ADR-016 definitions after observing later evidence;
 - claiming provider/model selection from provider-free evidence;
-- global architecture or production-readiness claims beyond current evidence.
+- claiming global architecture freeze or production readiness beyond current evidence.
