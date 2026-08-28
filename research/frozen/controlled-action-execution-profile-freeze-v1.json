@@ -1,0 +1,110 @@
+{
+  "schema_version": "controlled-action-execution-profile-freeze-v1",
+  "status": "FROZEN_FOR_CONTROLLED_ACTION_EXECUTION_PROFILE",
+  "date": "2026-08-28",
+  "issue": 45,
+  "pr": 46,
+  "scientific_state_changed": false,
+  "production_provider_model_selected": false,
+  "adr_009_live_calls_consumed": 0,
+  "adr_009_live_call_envelope_max": 32,
+  "real_customer_mutations": 0,
+  "validated_pre_freeze_head": "c6d0108780c40ffd9522001d6941058c4fc59c3f",
+  "implementation": {
+    "controlled_actions": {
+      "path": "src/academy_tractian/controlled_actions.py",
+      "git_blob": "9e5f2d49ebc82303423f81ec8916b02c511f2a1e",
+      "runtime_version": "controlled-action-runtime-v1",
+      "claim_schema_version": "controlled-action-attempt-claim-v1"
+    },
+    "controlled_action_evaluation": {
+      "path": "src/academy_tractian/controlled_action_evaluation.py",
+      "git_blob": "ae5f1a7777893941882196c8c2f3810676eba0a4",
+      "evaluator_version": "controlled-action-evaluator-v1"
+    }
+  },
+  "tests": {
+    "controlled_actions": {
+      "path": "tests/test_controlled_actions.py",
+      "git_blob": "357cc503d0b329d025abe004a2c780f6ee5ea2fa"
+    },
+    "controlled_action_evaluation": {
+      "path": "tests/test_controlled_action_evaluation.py",
+      "git_blob": "4b65fd911539092bb1126cc4e6db5dc985dad76b"
+    }
+  },
+  "preserved_dependencies": {
+    "adr_005_action_safety": {
+      "path": "src/academy_tractian/action_safety.py",
+      "git_blob": "21840f8711450dcca93f2c0b9880387702118104"
+    },
+    "harness_runner": {
+      "path": "research/e2/runner.py",
+      "git_blob": "184544ede9fa81188f795dd6c698b5b4556a59c9"
+    },
+    "baseline_production_evaluator": {
+      "path": "src/academy_tractian/evaluation.py",
+      "git_blob": "27adfc0e009398bf765ac05afe1ef6e8799adea1"
+    },
+    "read_only_production_runtime": {
+      "path": "src/academy_tractian/runtime.py",
+      "git_blob": "a7f8adf02dded71188ce61668b111be258206745"
+    }
+  },
+  "execution_invariants": {
+    "default_production_runtime_remains_action_disabled": true,
+    "exclusive_tool_execution_boundary": "HarnessRunner.execute_tool",
+    "adr_005_reused_without_semantic_change": true,
+    "authorization_source_runtime_owned": true,
+    "authorization_state_provider_visible": false,
+    "durable_claim_before_action_transport": true,
+    "claim_exclusive_create": true,
+    "claim_file_fsync": true,
+    "claim_directory_fsync_where_supported": true,
+    "raw_idempotency_key_persisted": false,
+    "duplicate_claim_blocks_before_transport": true,
+    "uncertain_post_claim_failure_replayed_automatically": false,
+    "second_action_transport_path_introduced": false
+  },
+  "evaluation_invariants": {
+    "baseline_production_evaluator_remains_read_only": true,
+    "controlled_evaluator_composes_baseline": true,
+    "controlled_namespace": "prod-action:*",
+    "matching_b2_allowed_required_before_action_call": true,
+    "explicit_accepted_true_required": true,
+    "response_body_copied_to_evaluation_report": false,
+    "private_or_semantic_evaluator_required": false
+  },
+  "canonical_actions_covered": [
+    "update_asset_config",
+    "reprocess_analysis",
+    "request_specialist_analysis",
+    "request_retraining",
+    "escalate_case"
+  ],
+  "validation": {
+    "production_runtime_workflow_run_id": 33149724402,
+    "production_runtime_workflow_run_number": 46,
+    "production_tests": "168 passed",
+    "adr_004_controller_regression": "12 passed",
+    "triggered_workflows": "11/11 success",
+    "provider_calls": 0,
+    "real_customer_mutations": 0
+  },
+  "preserved_failure": {
+    "head": "02a7a95765075df08cb10ccd5f89482a813f3fa0",
+    "production_tests": "165 passed / 3 failed",
+    "summary": [
+      "two controlled evaluator tests used non-canonical terminal value EXECUTE instead of Decision.ACT_REPROCESS",
+      "one import-isolation test matched the word Scenario in a docstring instead of inspecting imported symbols"
+    ],
+    "policy_or_runtime_safety_relaxed_to_fix": false
+  },
+  "authorization_boundary": {
+    "capability_frozen": true,
+    "blanket_real_customer_mutation_authorized": false,
+    "trusted_production_identity_permission_scope_confirmation_sources_still_required": true,
+    "explicit_target_environment_transport_selection_still_required": true
+  },
+  "adr": "docs/adr/012-controlled-action-execution-profile-2026-08-28.md"
+}
