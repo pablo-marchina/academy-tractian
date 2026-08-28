@@ -1,0 +1,78 @@
+{
+  "schema_version": "ev011-provider-free-communication-campaign-result-manifest-v1",
+  "campaign_version": "ev011-provider-free-communication-campaign-v1",
+  "issue": 54,
+  "pull_request": 55,
+  "validated_implementation_head": "51f376268f8de828f4a80ae11ac3bd6a0c5dd628",
+  "report_sha256": "cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e",
+  "denominator": 10,
+  "predicate_definition_count": 12,
+  "total_predicate_slots": 120,
+  "applicable_predicate_checks": 60,
+  "passed_predicate_checks": 60,
+  "failed_predicate_checks": 0,
+  "not_applicable_predicate_checks": 60,
+  "contract_expectations_passed": 10,
+  "evaluator_pass_cases": 9,
+  "evaluator_fail_cases": 1,
+  "evaluator_fail_case_ids": [
+    "COMM-07"
+  ],
+  "provider_calls": 0,
+  "real_customer_mutations": 0,
+  "semantic_private_blind_access": 0,
+  "automatic_retry_count": 0,
+  "replay_count": 0,
+  "cases": [
+    {
+      "case_id": "COMM-01",
+      "spec_sha256": "4324850e32f736544d6f84f8c8cfc79b47022d39135fef9f1041a48527f66e20",
+      "result_sha256": "fdfecc4cdfb9e93d61108d0bde62f86966923d4a1e2ef84eb4d814c96109f5c0"
+    },
+    {
+      "case_id": "COMM-02",
+      "spec_sha256": "95912b6e05b87cd82510bda0bc9f8f2e43d0fd5d30d9aa6a1ba65a4d83b62f5c",
+      "result_sha256": "2e6437bd7e235f88624c803ba0c6878e870676dbc3e5dcea298e4cda9867f129"
+    },
+    {
+      "case_id": "COMM-03",
+      "spec_sha256": "c916e3db47e459ef198dcf2dac2346dd034ae1b98553060be4824256ae98e6a3",
+      "result_sha256": "a0e4fcc4ec24a7cea6c152e500e18a0828ea4b5111a81079375b0958db543ec1"
+    },
+    {
+      "case_id": "COMM-04",
+      "spec_sha256": "fe1c8e46d9bb0ca764054ae1918574189303ad723f94614dd6b90e2729aa2242",
+      "result_sha256": "0f5d7d0bc8ae76195a4856ab734681d8d09b6a7cc3e64b4f19ec89700a9b5815"
+    },
+    {
+      "case_id": "COMM-05",
+      "spec_sha256": "2829250c650606bd493cb365ef9a7b1fdfcce3609c373ce248bead7de343b25e",
+      "result_sha256": "1bf15b3d85bc64c55b18292ed2ab8553655b41f046bb331c89ab545e79348151"
+    },
+    {
+      "case_id": "COMM-06",
+      "spec_sha256": "6af99a34a6629d994cf0cbfbe82ef01f066c809eb75e5d4d26995b142740d737",
+      "result_sha256": "e832921e105ee1e0827b9fed33a6f75c58baa33c32a2099c82cf2a1f09a3cec4"
+    },
+    {
+      "case_id": "COMM-07",
+      "spec_sha256": "bda847247c12f4238f583129072dfa1fd69f85782be5f938802cddd2f25c011e",
+      "result_sha256": "99c2485b2486845a145ecfc627194ac085cd33ccb4e5f4012a5d8827f0fe68a9"
+    },
+    {
+      "case_id": "COMM-08",
+      "spec_sha256": "2aa99d99d3ed636633a3495d969bd19bcac827580e9b57d86a01a1e974aaabd5",
+      "result_sha256": "6d3ef80a695f3db90d8241671f127b1efb7a06320745a2fbc5c090449c91d76d"
+    },
+    {
+      "case_id": "COMM-09",
+      "spec_sha256": "8dae240a1541ab6b9fb3f76166227f8933335ed0a82889c8341f024f57259c99",
+      "result_sha256": "61c8962a7fc25f543a687d9e871254f5f1c7555501b4ea9c6c9a5919c5f3c9f1"
+    },
+    {
+      "case_id": "COMM-10",
+      "spec_sha256": "7224cbc514d0d0eaa1a55ae556a3f9b9e083ca15ce7aa964a2ddd341f3568ab6",
+      "result_sha256": "093beca97812fd51c70ae545ea2a4ddfad09f914d1ac55a760accfb5e90b3d5d"
+    }
+  ]
+}
