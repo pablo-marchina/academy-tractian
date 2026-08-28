@@ -1,12 +1,60 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-08-28 06:21 BRT  
+**Checkpoint:** 2026-08-28 08:04 BRT  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)
 
 This file is the short-horizon execution plan. It does not itself authorize a scientific gate, live provider call, real customer mutation or provider selection.
 
-## 1. Scientific critical path — unchanged and parallel
+## 1. Final provider-free handoff — complete
+
+ADR-017 / issue #60 closed the final unblocked P0/P1 acceptance-audit work.
+
+```text
+acceptance rows                         83
+PASS_EVIDENCED                          41
+PASS_BOUNDED                            40
+EXTERNALLY_BLOCKED                       1   C4 / EV-012
+UNEXECUTED_GATED                         1   live provider quality
+GAP_ACTION_REQUIRED                      0
+clean-checkout production tests        251 passed
+ADR-004 regression                      12 passed
+EV-007 / EV-008 / EV-011               PASS / exact frozen SHAs
+ADR-016 demo                             5 / 5 / exact 43903731…
+evidence index                          30 / 30 resident blobs / 0 violations
+provider calls                           0 / 32
+credential/account probes               0
+real customer mutations                 0
+final PR-associated workflows          14 / 14 success
+```
+
+Canonical ADR-017 artifacts:
+
+- `docs/adr/017-final-handoff-acceptance-audit-2026-08-28.md`;
+- `research/frozen/final-handoff-acceptance-audit-freeze-v1.json`;
+- `research/results/final-handoff-acceptance-audit-2026-08-28.json`;
+- `docs/FINAL-HANDOFF-RUNBOOK.md`;
+- `docs/RUBRIC-TO-EVIDENCE.md`;
+- `scripts/validate_final_handoff_audit.py`;
+- `.github/workflows/final-handoff-acceptance-audit.yml`.
+
+Do not reinterpret the 81 evidenced/bounded rows as proof for the two deliberately non-pass rows or as unconditional production readiness.
+
+## 2. Immediate unblocked work — submission/review hygiene only
+
+The 83-row audit found **zero unblocked `GAP_ACTION_REQUIRED` rows**. Do not create more runtime architecture merely to increase implementation breadth.
+
+The remaining provider-free work before the 2026-09-08 submission is limited to hygiene:
+
+1. verify that the external submission surface points reviewers to the root README, final runbook, rubric crosswalk and exact evidence/audit files;
+2. keep issue/PR/repository references consistent with the reconciled `main`;
+3. avoid editing ADR-017 direct frozen artifacts. If one genuinely must change, create a prospective version/amendment and revalidate rather than silently invalidating frozen blob identities;
+4. immediately before submission, rerun the canonical clean commands only if `main` changes after reconciliation;
+5. preserve explicit non-claims for provider quality, C4, real customer mutation, deployment rollback, global architecture freeze and production readiness.
+
+No new evaluation campaign is authorized merely because time remains.
+
+## 3. Scientific critical path — unchanged and parallel
 
 Current scientific gate: `REQUIRED_PER_GROUP_AND_SLICE_REPORTING`.
 
@@ -18,9 +66,18 @@ bytes    177350
 rows     144
 ```
 
-Immediate scientific work is exact artifact recovery/provisioning only. Reconstruction, rescoring and substitution are forbidden. If recovered, run only the already authorized per-group/slice reporting, independently validate and freeze before any later scientific gate.
+The only scientific action is exact artifact recovery/provisioning. Reconstruction, rescoring and substitution are forbidden.
 
-## 2. Live provider comparison — implementation complete / execution separately gated
+If the exact artifact is recovered:
+
+1. verify SHA-256, byte count, row count and 36-parent × 4-arm geometry before analysis;
+2. run only the already authorized per-group/slice reporting;
+3. independently validate;
+4. freeze/reconcile before any later scientific gate.
+
+If it remains unavailable at handoff, retain `C-13 / EV-012 = EXTERNALLY_BLOCKED`.
+
+## 4. Live provider comparison — implementation complete / execution gated
 
 ```text
 comparison design                   ADR-008 / FROZEN
@@ -33,11 +90,18 @@ calls consumed                       0
 provider selected                   NO
 ```
 
-Issue #44 is the only live execution task. Before attempt 0 it requires both explicit OpenAI/Google secrets and one canonical durable custody root. If either is absent, stay at 0/32 calls; credential/account probing is forbidden.
+Issue #44 is the only live execution task. Before attempt 0 it requires **both** explicit OpenAI/Google secrets and one canonical durable custody root. If either is absent:
 
-## 3. Frozen production/reliability foundation
+- remain at 0/32;
+- do not probe credentials/accounts;
+- do not create an alternative executor or custody root;
+- keep `E-11 / P1-MODEL-PROVIDER-QUALITY = UNEXECUTED_GATED`.
 
-Do not redesign the accepted boundaries before final handoff unless a measured P0/P1 blocker requires a prospective change.
+If genuinely provisioned, execute the exact frozen envelope once. Freeze either the exact candidate ID or `NO_SELECTION`; do not change M1–M10 or call geometry after observing outcomes.
+
+## 5. Frozen production/reliability foundation
+
+Do not redesign these accepted boundaries unless a newly measured P0/P1 blocker requires a prospective change:
 
 ```text
 ADR-004  Agent Controller                              FROZEN
@@ -53,6 +117,7 @@ ADR-013  EV-007 failure performance                   FROZEN
 ADR-014  EV-008 repeated-run stability                FROZEN
 ADR-015  EV-011 customer-safe communication           FROZEN
 ADR-016  final-delivery reproduction/evidence         FROZEN
+ADR-017  final handoff acceptance audit               FROZEN
 ```
 
 Key deterministic identities:
@@ -64,120 +129,40 @@ EV-011  cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
 DEMO     43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445
 ```
 
-The default `ProductionRuntime` remains action-disabled. ADR-012 is limited to explicitly controlled supplied/test consequential actions unless a separate real-environment authorization exists.
+The default `ProductionRuntime` remains action-disabled. ADR-012 remains limited to explicitly controlled supplied/test consequential actions unless a separate real-environment authorization exists.
 
-## 4. ADR-016 package — complete
-
-Issue #57 / PR #58 completed the previously highest-value unblocked provider-free work.
-
-```text
-clean-checkout production tests              237 passed
-ADR-004 regression                            12 passed
-EV-007 / EV-008 / EV-011                     PASS
-integrated provider-free scenarios             5 / 5
-exact integrated traces evaluated              5 / 5
-evidence-index entries                        31
-repository-resident evidence                  30
-resident Git blobs resolved                   30 / 30
-index violations                               0
-provider calls                                 0
-credential/account probes                      0
-real customer mutations                        0
-semantic/private/blind access                  0
-triggered workflows                           12 / 12 success
-```
-
-Canonical artifacts:
-
-- `docs/adr/016-provider-free-final-delivery-reproduction-evidence-package-2026-08-28.md`;
-- `research/frozen/provider-free-final-delivery-reproduction-evidence-freeze-v1.json`;
-- `research/results/provider-free-final-delivery-demo-result-2026-08-28.json`;
-- `research/results/final-delivery-evidence-index-2026-08-28.json`;
-- `scripts/validate_delivery_reproduction.py`;
-- `.github/workflows/final-delivery-provider-free-reproduction.yml`.
-
-Do not reinterpret the package as live-provider, real-customer, C4 or production-readiness evidence.
-
-## 5. NEXT provider-free P0/P1 — final handoff acceptance audit + gap closure
-
-The remaining unblocked work should now be driven directly by [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md), especially Sections 4–12. Do not add optional architecture merely to increase implementation breadth.
-
-Create one final acceptance audit that maps every material P0/P1 requirement to one of:
-
-- `PASS_EVIDENCED` — exact repository evidence exists and resolves;
-- `PASS_BOUNDED` — required behavior is demonstrated under an explicitly limited supplied/provider-free scope;
-- `EXTERNALLY_BLOCKED` — completion requires an unavailable external artifact/prerequisite;
-- `UNEXECUTED_GATED` — implementation exists but execution is separately authorized/gated;
-- `GAP_ACTION_REQUIRED` — an unblocked repository/documentation gap remains and must be closed before delivery.
-
-### Required audit dimensions
-
-At minimum audit and resolve:
-
-1. P0 project-level rows REQ-001, REQ-003, REQ-004/020, REQ-021 and REQ-017;
-2. all P0 agent-construction rows in `DELIVERY-ACCEPTANCE.md`;
-3. all EV-001 through EV-012 evaluation-framework rows;
-4. benchmark/security integrity constraints REQ-018/019 and PC-001 through PC-006;
-5. applicable P1 production-quality rows;
-6. all ten final demonstration requirements;
-7. final documentation/package requirements;
-8. official eight academic excellence dimensions.
-
-Every PASS must name the strongest concrete repository artifact, command or frozen result. Do not infer PASS from intent or architecture prose alone.
-
-### Gap-closure priority
-
-For each `GAP_ACTION_REQUIRED`, prefer the smallest change that closes an actual P0/P1 acceptance row. Likely high-value final-package gaps to inspect first are:
-
-- root README navigation/setup/run/evaluate instructions;
-- exact dependency/runtime prerequisites;
-- one concise real handoff/runbook covering failure/fallback/rollback within implemented scope;
-- rubric-to-evidence navigation for reviewers;
-- limitations/non-claims and external blocker presentation;
-- one final documented clean regression command/result.
-
-Do not fabricate latency, resource or cost measurements. Record them only where actual evidence exists.
-
-### Final audit acceptance
-
-```text
-all P0/P1 rows classified                     YES
-all PASS rows linked to exact evidence          YES
-all unblocked GAP_ACTION_REQUIRED rows closed   YES
-provider/C4 blockers honestly labeled           YES
-clean provider-free reproduction                PASS
-full production regression                      PASS
-live provider calls consumed                    0 unless #44 separately becomes executable
-credential/account probes                       0
-real customer mutations                         0
-claims beyond evidence                          0
-```
-
-Freeze the final audit only after gaps are closed and the final regression passes.
-
-## 6. Parallel provider execution
-
-If issue #44 becomes executable, run the exact ADR-009/010/011 envelope once and freeze either an exact candidate ID or `NO_SELECTION`. Do not create a new executor/custody root to evade existing evidence.
-
-After a valid provider result exists, rerun compatible EV-007/008/011 definitions against that governed result without changing metric definitions after seeing the live outcomes.
-
-If #44 remains blocked at handoff, mark provider/model selection as `UNEXECUTED_GATED`; do not convert provider-free evidence into a selected-provider claim.
-
-## 7. Parallel C4 recovery
-
-Recover the exact score-row artifact only. If it remains unavailable at handoff, preserve the exact SHA/bytes/rows identity and mark per-group/slice reporting as `EXTERNALLY_BLOCKED` rather than reconstructing or fabricating completeness.
-
-## 8. Deadline sequence
+## 6. Deadline sequence
 
 ```text
 DONE       ADR-016 clean reproduction + evidence index + integrated demo
-NEXT       final handoff acceptance audit + unblocked gap closure
-PARALLEL   issue #44: provision canonical custody + both secrets or remain at 0/32 calls
+DONE       ADR-017 final handoff acceptance audit + unblocked gap closure
+NOW        submission/review hygiene only; preserve frozen identities
+PARALLEL   issue #44: provision canonical custody + both secrets or remain at 0/32
 PARALLEL   recover exact C4 score-row artifact only
-WHEN READY execute exact live provider envelope once; freeze candidate_id or NO_SELECTION
-FINAL      full regression + handoff package + evidence-honest claims before 2026-09-08
+IF READY   execute governed provider envelope once; freeze candidate_id or NO_SELECTION
+IF FOUND   execute only authorized C4 per-group/slice reporting; validate/freeze
+FINAL      reviewer-facing submission links + evidence-honest claims before 2026-09-08
 ```
 
-## 9. Deferred unless measured P0/P1 gap
+## 7. Final pre-submission smoke check
 
-Continue deferring RAG/vector DB/reranking, persistent memory, MCP, multi-agent orchestration, adaptive routing/model selection and rich UI. Avoid a large shared-core refactor before the final acceptance audit demonstrates a concrete need.
+If `main` changes after ADR-017 reconciliation, rerun from a clean checkout:
+
+```bash
+python -m pip install -e ".[dev]" -e "research/e2[dev]"
+python -m pytest -q tests
+python -m pytest -q research/e2/tests/test_controller.py
+python scripts/validate_ev007_failure_campaign.py
+python scripts/validate_ev008_stability_campaign.py
+python scripts/validate_ev011_communication_campaign.py
+python scripts/validate_delivery_reproduction.py
+python scripts/validate_final_handoff_audit.py
+```
+
+Do not update frozen expected SHAs merely to make a changed checkout pass.
+
+## 8. Deferred unless a new measured P0/P1 gap appears
+
+Continue deferring RAG/vector DB/reranking, persistent memory, MCP, multi-agent orchestration, adaptive routing/model selection, rich UI and large shared-core refactors.
+
+The final acceptance audit is the decision rule: **zero unblocked gaps means stop adding architecture**. External blockers/gates must remain visible rather than being replaced by speculative implementation.

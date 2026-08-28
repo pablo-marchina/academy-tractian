@@ -1,14 +1,14 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-28 06:21 BRT  
+**Canonical status checkpoint:** 2026-08-28 08:04 BRT  
 **Canonical branch after implementation merge:** `main`  
-**Canonical implementation merge head:** `b432ca9d5c32ffedcda2b26fc15959f3f4f415bd`  
-**Current reconciliation branch:** `docs/reconcile-adr-016-final-delivery`  
+**Canonical implementation merge head:** `98e4bf0fadfc7ea5e10242d9ebd7dac98bcd1110`  
+**Current reconciliation branch:** `docs/reconcile-adr-017-final-handoff`  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
-**Latest chronological entry:** [`progress/032-final-delivery-reproduction-evidence-freeze-2026-08-28.md`](progress/032-final-delivery-reproduction-evidence-freeze-2026-08-28.md)  
-**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0621-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0621-brt.json)
+**Latest chronological entry:** [`progress/033-final-handoff-acceptance-audit-freeze-2026-08-28.md`](progress/033-final-handoff-acceptance-audit-freeze-2026-08-28.md)  
+**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0804-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0804-brt.json)
 
 This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts, ADRs and authorization packets remain authoritative for exact semantics. Production/delivery work does not advance the C4 scientific gate.
 
@@ -41,10 +41,14 @@ EV-007 failure performance                   FROZEN / ADR-013 / 11 OF 11 SAFETY 
 EV-008 repeated-run stability                FROZEN / ADR-014 / 30 OF 30 RUNS / 66 OF 66 DIMENSIONS
 EV-011 customer-safe communication           FROZEN / ADR-015 / 60 OF 60 APPLICABLE CHECKS
 final-delivery reproduction/evidence         FROZEN / ADR-016
+final handoff acceptance audit               FROZEN / ADR-017
 integrated provider-free demo                5 OF 5 / REPORT 43903731…
 evidence index                               31 ENTRIES / 30 OF 30 RESIDENT BLOBS / 0 VIOLATIONS
-clean-checkout freeze regression              237 PRODUCTION TESTS + 12 ADR-004 / PASS
-next unblocked provider-free P0/P1            FINAL HANDOFF ACCEPTANCE AUDIT + GAP CLOSURE
+final acceptance rows                        83 / 41 EVIDENCED / 40 BOUNDED / 1 BLOCKED / 1 GATED
+unblocked acceptance gaps                    0
+clean-checkout final freeze regression       251 PRODUCTION TESTS + 12 ADR-004 / PASS
+final freeze PR-associated workflows         14 / 14 SUCCESS
+next unblocked provider-free P0/P1           SUBMISSION / REVIEW HYGIENE ONLY
 
 canonical provider comparison plan           32 ATTEMPTS / SHA-256 69691adf…
 production live provider calls consumed      0 / 32
@@ -69,6 +73,8 @@ geometry 36 common parents × 4 arms
 ```
 
 Only exact artifact recovery/provisioning is authorized. Reconstruction, rescoring or substitution remain forbidden. Production reliability/provider/delivery work does not authorize C4 semantic judging, survivor selection or blind-partition access.
+
+ADR-017 deliberately preserves `C-13 / EV-012` as `EXTERNALLY_BLOCKED`; benchmark-integrity controls do not manufacture the missing score-row artifact or fresh-blind evidence.
 
 ## Production architecture state
 
@@ -106,7 +112,7 @@ trusted exact grant
 
 All five canonical action ToolSpecs have provider-free accepted-action capability evidence. A transport failure after claim remains consumed/uncertain and cannot be automatically replayed. This is not blanket authorization for a real customer environment.
 
-## Provider comparison state — unchanged
+## Provider comparison state — unchanged and gated
 
 The frozen comparison remains exactly:
 
@@ -121,6 +127,8 @@ Canonical plan SHA-256:
 `69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f`
 
 Issue #44 is the only live execution task. It may execute only through the frozen governed wrapper with both explicit secrets and one canonical durable custody root. Credential/account probing is forbidden. Calls remain 0/32 and no provider/model is selected.
+
+ADR-017 preserves `E-11 / P1-MODEL-PROVIDER-QUALITY` as `UNEXECUTED_GATED`. Provider-free reliability evidence cannot be relabelled as live provider quality, latency, cost or selection evidence.
 
 ## Frozen reliability/evaluation foundations
 
@@ -166,9 +174,7 @@ semantic/private/blind access      0
 
 ## ADR-016 — provider-free final-delivery reproduction and evidence package
 
-Issue #57 / PR #58 froze the highest-value unblocked final-delivery reproducibility path.
-
-Canonical integrated demo:
+Issue #57 / PR #58 froze the clean final-delivery reproduction/evidence baseline.
 
 ```text
 campaign version                  provider-free-final-delivery-reproduction-v1
@@ -194,41 +200,74 @@ external blocker entries            1
 violations                          0
 ```
 
-The index explicitly distinguishes:
+It explicitly distinguishes reproducible provider-free evidence, immutable historical evidence, live provider work as `UNEXECUTED_GATED`, and the missing C4 artifact as `EXTERNALLY_BLOCKED`.
 
-- provider-free reproducible evidence;
-- immutable historical ADR evidence;
-- the live provider comparison as `UNEXECUTED_GATED`;
-- the missing exact C4 artifact as `EXTERNALLY_BLOCKED`.
+## ADR-017 — final handoff acceptance audit and gap closure
 
-It does not index itself, avoiding circular blob identity.
+Issue #60 / PR #61 froze the final requirement-driven handoff audit without changing runtime, provider geometry or scientific semantics.
 
-Final freeze head `e603a44a817c13bbd9b1784d50edbfb41f095501` passed:
+Preregistered/frozen population:
 
 ```text
-final-delivery-provider-free-reproduction #10   PASS
-clean-checkout production tests                 237 passed
-ADR-004 controller regression                    12 passed
-EV-007 / EV-008 / EV-011                        PASS / exact frozen SHAs
-integrated demo                                 PASS / exact 43903731…
-evidence index                                  30 / 30 resolved / 0 violations
-triggered workflows                             12 / 12 success
-freeze self-check                               PASS
+A P0 project                         5
+B agent construction                13
+C evaluation framework              13
+D benchmark/security                 7
+E P1 production/quality             14
+F demonstration                     10
+G documentation/package             13
+H academic dimensions                8
+total                               83
 ```
 
-PR #58 merged to `main` as `b432ca9d5c32ffedcda2b26fc15959f3f4f415bd`.
+Final disposition:
 
-Two falsifications remain part of the evidence history: inferred ADR filenames in the first cut, and an incorrect checker assumption that every historical freeze used `result.path`. Neither failure changed the preregistered five-scenario geometry or any frozen upstream result.
+```text
+PASS_EVIDENCED                      41
+PASS_BOUNDED                        40
+EXTERNALLY_BLOCKED                   1   C-13 / EV-012 / exact C4 artifact
+UNEXECUTED_GATED                     1   E-11 / live provider quality
+GAP_ACTION_REQUIRED                  0
+```
 
-ADR-016 establishes an auditable provider-free handoff baseline only. It does not authorize or imply live provider execution, provider selection, C4 reconstruction, semantic/private/blind evaluation, global architecture freeze or production readiness.
+Three unblocked handoff gaps were closed before freeze:
 
-## Immediate priorities
+- reviewer-ready root README with exact setup/run/evaluate path;
+- one final handoff runbook covering monitoring, fail-closed behavior, fallback and bounded code/config reversal;
+- rubric-to-evidence reviewer crosswalk.
 
-1. **Final handoff acceptance audit + gap closure:** use `DELIVERY-ACCEPTANCE.md` to produce the final rubric-to-evidence crosswalk, validate setup/run/evaluate instructions, close documentation/runbook/fallback/rollback gaps, and run one final end-to-end provider-free regression before delivery.
-2. **Provider execution in parallel:** issue #44 remains blocked until both explicit provider secrets and one canonical durable custody root exist; otherwise remain at attempt 0 / 0 calls.
-3. **Scientific recovery in parallel:** recover the exact original C4 score-row artifact only; do not reconstruct/rescore.
-4. **If provider result becomes available:** freeze exact candidate ID or `NO_SELECTION`; rerun compatible frozen EV-007/008/011 definitions without post-hoc metric changes.
-5. **Final claims:** explicitly label any provider/C4-dependent acceptance row as blocked/unexecuted if its external prerequisite remains absent by handoff.
+The runbook explicitly does **not** claim an exercised infrastructure deployment rollback.
+
+Final freeze head `bcd63b886e74753d0f26ca652da3653af8c7c66b` passed:
+
+```text
+final-handoff-acceptance-audit #8             PASS
+clean-checkout production tests               251 passed
+ADR-004 controller regression                  12 passed
+EV-007 / EV-008 / EV-011                      PASS / exact frozen SHAs
+ADR-016 integrated demo                       PASS / exact 43903731…
+ADR-016 evidence index                        30 / 30 resolved / 0 violations
+final audit                                   83 / 83 structurally valid
+unblocked gaps                                 0
+provider calls                                0 / 32
+credential/account probes                     0
+real customer mutations                       0
+PR-associated workflows                      14 / 14 success
+freeze self-check                             PASS
+```
+
+PR #61 merged to `main` as `98e4bf0fadfc7ea5e10242d9ebd7dac98bcd1110`.
+
+ADR-017 establishes that the **provider-free final handoff is reviewer-ready within its evidenced scope**. It explicitly does not authorize live-provider quality claims, C4 completion, real-customer mutation, global architecture freeze, infrastructure rollback proof or unconditional production readiness.
+
+## Immediate priorities after ADR-017
+
+1. **Submission/review hygiene only:** keep reviewer links, submission metadata and canonical commands consistent; if any frozen direct artifact must change, treat that as a prospective new version rather than silently editing the freeze.
+2. **Provider execution in parallel only if genuinely provisioned:** issue #44 remains 0/32 until both explicit provider secrets and one canonical durable custody root exist. If either is absent, do nothing and do not probe.
+3. **Scientific recovery in parallel:** recover the exact original C4 score-row artifact only. Do not reconstruct/rescore/substitute.
+4. **If provider result becomes available:** execute the frozen envelope once, freeze candidate ID or `NO_SELECTION`, then rerun only compatible EV definitions prospectively.
+5. **If C4 artifact becomes available:** execute only the already authorized per-group/slice reporting, independently validate and freeze before advancing any later scientific gate.
+6. **Otherwise:** avoid new runtime architecture. The final 83-row audit found zero unblocked acceptance gaps.
 
 ## Still forbidden
 
@@ -241,6 +280,6 @@ ADR-016 establishes an auditable provider-free handoff baseline only. It does no
 - provider-native TRACTIAN tool execution or bypass of `HarnessRunner.execute_tool()`;
 - weakening ADR-005 or releasing uncertain action claims to permit replay;
 - treating ADR-012 as blanket real-customer authorization;
-- changing EV-007/008/011 or ADR-016 definitions after observing later evidence;
+- changing EV-007/008/011, ADR-016 or ADR-017 definitions after observing later evidence;
 - claiming provider/model selection from provider-free evidence;
 - claiming global architecture freeze or production readiness beyond current evidence.
