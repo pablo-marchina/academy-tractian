@@ -1,9 +1,9 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-27 22:47 BRT  
+**Canonical status checkpoint:** 2026-08-27 23:14 BRT  
 **Canonical branch after merge:** `main`  
-**Canonical main head at this checkpoint:** `f287cc350a7029df441124ece8e7c4be4ff44678`  
-**Current reconciliation branch:** `docs/reconcile-action-safety-status`  
+**Canonical main head at this checkpoint:** `cc3c09f8c04f1e73f13441b9176ca7631c6fd37a`  
+**Current reconciliation branch:** `docs/reconcile-provider-decision-source-status`  
 **Final delivery target:** 2026-09-08  
 **Audited project source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
@@ -13,9 +13,9 @@
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Progress ledger:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
 **Repository guide:** [`REPOSITORY-GUIDE.md`](REPOSITORY-GUIDE.md)  
-**Machine-readable checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-27-2247-brt.json`](../research/results/project-progress-checkpoint-2026-08-27-2247-brt.json)
+**Machine-readable checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-27-2314-brt.json`](../research/results/project-progress-checkpoint-2026-08-27-2314-brt.json)
 
-This document is the **sole canonical human-readable source for current project state and authorization**. Frozen experiment artifacts remain authoritative for exact scientific semantics. Architecture/product progress recorded here does not itself authorize a scientific gate or production action/model execution.
+This document is the **sole canonical human-readable source for current project state and authorization**. Frozen experiment artifacts remain authoritative for exact scientific semantics. Architecture/product progress recorded here does not itself authorize a scientific gate, provider/model call, production action or production-readiness claim.
 
 ## Executive state
 
@@ -46,11 +46,15 @@ P0 Agent Controller runtime                 FROZEN_FOR_P0_CONTROLLER_SCOPE / ADR
 first production runtime slice              MERGED / VALIDATED / PROVIDER_FREE / READ_ONLY
 production deterministic evaluator          MERGED / VALIDATED / TRACE_ONLY / PROVIDER_FREE
 runtime + deterministic evaluator           INTEGRATED ON THE SAME RunTrace
-production action-safety policy              FROZEN_FOR_PRODUCTION_ACTION_SAFETY_POLICY / ADR-005
+production action-safety policy             FROZEN_FOR_PRODUCTION_ACTION_SAFETY_POLICY / ADR-005
 production mutating actions                 DISABLED / FAIL_CLOSED BEFORE TRANSPORT
-real production auth/scope/confirmation      NOT PROVISIONED
-real production idempotency store            NOT IMPLEMENTED
-production model/provider adapter           NOT SELECTED / NOT IMPLEMENTED
+real production auth/scope/confirmation     NOT PROVISIONED
+real production idempotency store           NOT IMPLEMENTED
+provider-neutral DecisionSource contract    FROZEN_FOR_P0_PROVIDER_ADAPTER_CONTRACT / ADR-006
+production provider/model selected          NO
+real production provider client             NOT IMPLEMENTED / NOT AUTHORIZED
+provider-call trace/provenance contract     NOT YET FROZEN
+live provider/model comparison              NOT AUTHORIZED / NOT EXECUTED
 semantic production evaluation              NOT IMPLEMENTED / NOT AUTHORIZED
 production reliability campaign             NOT YET EXECUTED
 global final architecture                   UNFROZEN
@@ -113,7 +117,7 @@ That artifact must be recovered/provisioned exactly. Reconstruction, rescoring o
 
 Still forbidden:
 
-- provider/model generation;
+- provider/model generation or live comparison without a new explicit authorization;
 - score recomputation or mutation;
 - candidate regeneration;
 - survivor/PREFERRED decision before the reporting freeze closes;
@@ -122,6 +126,8 @@ Still forbidden:
 - LEGACY_LOCKED_TEST;
 - global final architecture freeze;
 - production-readiness claims.
+
+ADR-006 is a production integration contract and does not modify this scientific authorization boundary.
 
 ## Current architecture and production evidence
 
@@ -173,22 +179,56 @@ Validation evidence:
 - provider/model calls: 0;
 - real production action transport calls: 0.
 
-The frozen action-safety protocol requires independent checks for:
-
-- declared action permission;
-- global production execution switch;
-- runtime-context/model isolation;
-- canonical argument contract;
-- known target resource/company ownership;
-- same-company scope;
-- canonical justification;
-- requester confirmation bound to an exact SHA-256 action fingerprint;
-- runtime-owned idempotency key bound to that fingerprint;
-- non-consumed idempotency state.
+The frozen action-safety protocol requires independent checks for declared permission, global production execution switch, runtime-context/model isolation, canonical arguments/justification, known and same-company resource scope, requester confirmation bound to an exact SHA-256 action fingerprint, runtime-owned idempotency bound to that fingerprint and non-consumed idempotency state.
 
 The policy can dry-run a hypothetical enabled context so each reason family is testable, but the real runtime still fixes `actions_enabled = false`, grants zero action permissions and provisions no action confirmation/idempotency/scope state. Therefore **ADR-005 is a policy freeze, not an action-execution authorization**.
 
 No durable/distributed idempotency store or real authorization source is present yet. Any future action enablement requires a separate governed decision and evidence.
+
+### Provider-neutral production DecisionSource adapter — frozen, no live provider selected
+
+Issue #26 / PR #27 introduced and froze ADR-006 (`docs/adr/006-provider-neutral-decision-source-2026-08-27.md`).
+
+The adapter adds a provider-independent production seam without changing `ProductionRuntime` or ADR-004 `AgentController`:
+
+```text
+ControllerContext
+  + deterministic public ToolSpec projection
+  -> ProviderDecisionRequest + canonical SHA-256
+  -> ProviderDecisionClient.complete(request)
+  -> strict JSON object / duplicate-key rejection
+  -> ProviderDecisionPayload
+  -> existing ControllerDecision / ToolProposal
+  -> AgentController
+  -> HarnessRunner.execute_tool()
+  -> B1 canonical validation
+  -> B2 ADR-005 action safety
+```
+
+Initial implementation head `8e30968c34eb5972111a6189766bb76b33ac0667` passed `production-runtime` Actions run `33134915702` (#8): 66/66 production tests, 12/12 ADR-004 controller regressions and 11/11 triggered workflows. That run surfaced one non-failing Pydantic field-name warning; the final head removed the warning and added duplicate-JSON-key rejection rather than ignoring it.
+
+Final ADR head `cdd592f5bae53d0fafecabe68832a31f8605907d` passed `production-runtime` run `33135208692` (#9): **67/67 production tests**, **12/12 ADR-004 controller regressions** and **11/11 triggered workflows success**. No project Pydantic warning remained; the only warning in the job was GitHub Actions infrastructure deprecation output.
+
+PR #27 was merged with an expected-head guard into `main` as:
+
+`cc3c09f8c04f1e73f13441b9176ca7631c6fd37a`
+
+ADR-006 freezes the provider-neutral adapter contract only. Canonical production state after the merge remains:
+
+```text
+provider-neutral adapter contract           frozen / ADR-006
+provider/model selected                      no
+real provider client                         absent
+live provider/model calls authorized          0
+provider-call trace/provenance               not yet frozen
+mutating actions enabled                     false
+real action authorization state              absent
+scientific state changed                     false
+```
+
+Known-tool canonical argument defects remain B1-owned; consequential-action authorization remains B2/ADR-005-owned. Malformed provider JSON, duplicate keys, invalid decision shapes, unknown tools and provider/client exceptions fail closed through the existing `DECISION_SOURCE_FAILURE` controller path. Runtime identity, seed, action-authorization state and evaluator-private/gold truth remain outside provider-visible request structure.
+
+Before any real provider comparison is authorized, the model-call trace/provenance contract and exact comparison protocol/candidate set must be prospectively frozen. Historical C4 provider qualification does not select a production provider.
 
 ## Current non-claims
 
@@ -200,6 +240,7 @@ The project does **not** currently claim that:
 - independent generalization has been measured;
 - a production model/provider has been selected;
 - provider/model calls are currently authorized;
+- a real production provider client or real model-call telemetry path is implemented;
 - production mutating actions are authorized or enabled;
 - real production permissions, company/resource mappings, requester confirmations or durable idempotency state have been provisioned;
 - the production evaluator proves semantic conclusion correctness, expected-path correctness or evidence-oracle completeness;
@@ -210,16 +251,17 @@ The project does **not** currently claim that:
 
 ## Delivery coverage state
 
-The requested final product remains an integrated **industrial agent + trustworthy evaluation framework**. The repository now has a provider-free production runtime, deterministic evaluation over the same trace, and a frozen consequential-action safety protocol while execution remains disabled.
+The requested final product remains an integrated **industrial agent + trustworthy evaluation framework**. The repository now has a provider-free production runtime, deterministic evaluation over the same trace, a frozen consequential-action safety protocol with execution disabled, and a frozen provider-neutral `DecisionSource` adapter contract.
 
 The largest remaining delivery gaps are now:
 
-1. production model/provider `DecisionSource` adapter comparison and selection under a separately governed authorization;
-2. trusted production authorization/scope/confirmation/idempotency state before any action enablement;
-3. real-path scenario coverage and provider/tool failure behavior;
-4. reliability/security/observability evidence;
-5. semantic evaluation only if a later scientific/product gate explicitly authorizes it;
-6. final architecture freeze, demo and reproducible handoff.
+1. provider-call trace/provenance plus prospective live provider/model comparison protocol before any real provider call;
+2. separately authorized production provider/model comparison and client implementation on allowed development material;
+3. trusted production authorization/scope/confirmation/idempotency state before any action enablement;
+4. real-path scenario coverage and provider/tool failure behavior;
+5. reliability/security/observability evidence;
+6. semantic evaluation only if a later scientific/product gate explicitly authorizes it;
+7. final architecture freeze, demo and reproducible handoff.
 
 Priority remains:
 
@@ -234,7 +276,7 @@ P2 optional complexity only with measured benefit
 Two tracks may proceed in parallel only while their boundaries remain isolated:
 
 1. **Scientific:** recover the exact frozen score artifact → execute/validate/freeze required reporting → advance only the gate explicitly opened by that freeze.
-2. **Delivery:** compare/freeze the production model/provider adapter without provider calls first; separately prepare trusted action-authorization/idempotency integration; then extend the real Agent + Evaluator path without touching frozen C4 evidence.
+2. **Delivery:** freeze provider-call provenance + live-comparison preregistration provider-free; separately prepare trusted action-authorization/idempotency integration; authorize any live provider comparison only in a new governed step; then extend the real Agent + Evaluator path without touching frozen C4 evidence.
 
 ## Planning pointers
 
