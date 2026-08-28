@@ -103,6 +103,11 @@ def test_provider_visible_request_is_deterministic_sorted_and_runtime_private_st
     assert len(first.tools) == 18
     assert [tool.name for tool in first.tools] == sorted(registry)
     assert first.observations[0].body == {"asset_id": "asset-1", "status": "ok"}
+    assert all(
+        "parameter_schema" in parameter.model_dump(mode="json")
+        for tool in first.tools
+        for parameter in tool.parameters
+    )
 
     serialized = first.model_dump_json()
     for forbidden in (
@@ -176,6 +181,7 @@ def test_valid_terminal_payloads_map_to_controller_decisions(raw: str, kind, mes
     [
         "not-json",
         "[]",
+        '{"schema_version":"provider-decision-payload-v1","kind":"ABSTAIN","kind":"FINAL"}',
         _json("TOOL", tool_name="does_not_exist", arguments={}),
         json.dumps({"schema_version": "provider-decision-payload-v1", "kind": "ABSTAIN", "unexpected": True}),
         _json("FINAL"),

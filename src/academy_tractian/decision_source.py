@@ -29,7 +29,7 @@ class ProviderToolParameter(_FrozenModel):
     name: str = Field(min_length=1)
     location: Literal["path", "query", "header", "body"]
     required: bool
-    schema: dict[str, Any] = Field(default_factory=dict)
+    parameter_schema: dict[str, Any] = Field(default_factory=dict)
 
 
 class ProviderToolDefinition(_FrozenModel):
@@ -142,6 +142,15 @@ def _canonical_sha256(payload: Any) -> str:
     return sha256(canonical).hexdigest()
 
 
+def _reject_duplicate_object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object key: {key}")
+        result[key] = value
+    return result
+
+
 def _tool_projection(tool: ToolSpec) -> ProviderToolDefinition:
     return ProviderToolDefinition(
         name=tool.name,
@@ -155,7 +164,7 @@ def _tool_projection(tool: ToolSpec) -> ProviderToolDefinition:
                 name=parameter.name,
                 location=parameter.location,
                 required=parameter.required,
-                schema=dict(parameter.parameter_schema),
+                parameter_schema=dict(parameter.parameter_schema),
             )
             for parameter in tool.parameters
         ),
@@ -223,7 +232,7 @@ class ProviderDecisionSource(DecisionSource):
         if not isinstance(raw, str):
             raise TypeError("provider decision client must return a JSON string")
 
-        decoded = json.loads(raw)
+        decoded = json.loads(raw, object_pairs_hook=_reject_duplicate_object_pairs)
         if not isinstance(decoded, dict):
             raise ValueError("provider decision payload must be a JSON object")
         payload = ProviderDecisionPayload.model_validate(decoded)
