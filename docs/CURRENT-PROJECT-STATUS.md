@@ -1,19 +1,19 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-28 02:00 BRT  
+**Canonical status checkpoint:** 2026-08-28 03:25 BRT  
 **Canonical branch after merge:** `main`  
-**Canonical main head at this checkpoint:** `903b977928ff19bc63c6ff35acd92f233af813be`  
-**Current reconciliation branch:** `docs/reconcile-provider-comparison-executor`  
+**Canonical main head at this checkpoint:** `7e8cbacf4f704bb1ec6a81b627c18cf7c595d703`  
+**Current reconciliation branch:** `docs/reconcile-adr-011-live-wrapper`  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
 **Historical ledger:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
-**Latest chronological entry:** [`progress/026-provider-comparison-executor-freeze-2026-08-28.md`](progress/026-provider-comparison-executor-freeze-2026-08-28.md)  
-**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0200-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0200-brt.json)
+**Latest chronological entry:** [`progress/027-governed-live-provider-wrapper-freeze-2026-08-28.md`](progress/027-governed-live-provider-wrapper-freeze-2026-08-28.md)  
+**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0325-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0325-brt.json)
 
-This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts, ADRs and production authorization packets remain authoritative for their exact semantics. Production authorization does not alter the C4 scientific gate.
+This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts, ADRs and production authorization packets remain authoritative for their exact semantics. Production work does not alter the C4 scientific gate.
 
 ## Executive state
 
@@ -45,17 +45,19 @@ exact provider comparison design             FROZEN / ADR-008
 concrete OpenAI/Gemini HTTP clients          FROZEN / ADR-009
 bounded production live comparison           AUTHORIZED_FOR_SEPARATE_TASK / MAX 32 / ADR-009
 provider comparison executor                 FROZEN / ADR-010 / PROVIDER-FREE PASS
+governed live execution wrapper              FROZEN / ADR-011 / PROVIDER-FREE PASS
+authorization-level live custody             FROZEN / SINGLE CANONICAL CUSTODY ROOT REQUIRED
 canonical comparison plan                    32 ATTEMPTS / SHA-256 69691adf…
-provider-free fixture                        PASS / NO_SELECTION / NON-PRODUCTION EVIDENCE
 production live provider calls consumed      0 / 32
+first live attempt executed                  NO
 production provider/model selected           NO
-production credentials probed                NO
+production credentials/account probed        NO
 production reliability campaign              NOT YET EXECUTED
 global final architecture                    UNFROZEN
 production-readiness claim                   NOT AUTHORIZED
 ```
 
-## Scientific critical path — unchanged
+## Scientific critical path — unchanged and parallel
 
 The scientific path remains frozen through LOGO and blocked at `REQUIRED_PER_GROUP_AND_SLICE_REPORTING`.
 
@@ -69,6 +71,8 @@ geometry 36 common parents × 4 arms
 ```
 
 The original artifact must be recovered/provisioned exactly. Reconstruction, rescoring or substitution remains forbidden. Production provider authorization does **not** authorize C4 generation, rescoring, semantic judging, survivor selection or blind-partition access.
+
+C4 recovery remains a parallel scientific track and must not block provider-free P0/P1 production work.
 
 ## Production architecture state
 
@@ -87,81 +91,76 @@ request
 → deterministic ProductionEvaluator
 ```
 
-Identity, seed, action authorization state and evaluator-private truth remain outside provider control. All five canonical mutating actions remain disabled.
+Identity, seed, action authorization state and evaluator-private truth remain outside provider control. All canonical mutating actions remain disabled in the current production runtime.
 
-### ADR-008 / ADR-009 — frozen live-comparison envelope
+## ADR-008 through ADR-010 — frozen comparison semantics
 
-The production comparison remains exactly:
+The frozen provider comparison remains exactly:
 
 - OpenAI `gpt-5.6-sol` / `openai.responses.v1.standard`;
 - Google `gemini-3.7-flash` / `google.interactions.v1beta.stateless`;
 - 8 public deterministic DEV probes;
 - 2 repetitions per unit/candidate;
-- 32 maximum live calls;
+- maximum 32 live calls;
 - zero warm-up, automatic retry, fallback, parallel provider call or provider seed;
 - M1–M10, disqualifying hard gates and deterministic `NO_SELECTION` rule.
 
-Authorization packet:
-
-`research/frozen/provider-model-live-comparison-authorization-v1.json`
-
-It is effective only for a separately governed production-comparison execution task. Calls consumed remain **0**.
-
-### ADR-010 — exact provider comparison executor
-
-Issue #38 / PR #39 froze the executor after provider-free validation.
-
-Canonical executor evidence:
+ADR-010 freezes the exact comparison executor and canonical plan:
 
 ```text
 executor source blob                  4357aa101f5a15d5fc8376b17fa38ca51ea72ae3
-executor tests blob                   6663177bb96a8fdffd15fa64c9cc7e5a92edf2e3
-fixture validator blob                563b47e14dbf6119deef167ae8926261c38ed07a
-provider-free fixture blob            7c3972b2e467de4a21c6ef353f5427bf7651b4d9
 plan SHA-256                          69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f
-freeze artifact                       research/frozen/provider-comparison-executor-freeze-v1.json
-ADR                                   docs/adr/010-provider-comparison-executor-2026-08-28.md
 PR #39 merge                          903b977928ff19bc63c6ff35acd92f233af813be
 ```
 
-Final head `dd15ce32362247066edf0a476f8a9e93eb6cdbe8` passed **14/14** triggered workflows, including:
+The executor evaluates provider decisions only; it never executes TRACTIAN tools. Its provider-free fixture remains non-production evidence and cannot select a provider.
+
+## ADR-011 — governed live execution capability
+
+Issue #41 / PR #42 added and froze the operational layer required before a real ADR-009 run.
+
+Frozen implementation:
 
 ```text
-provider-comparison-executor   #3 / success
-production-runtime             #31 / success
-provider-model-comparison      #6 / success
-provider-live-authorization    #3 / success
-all research regressions             success
+provider_live_execution.py blob       e2e2f2c7350efc0ab67490027347d76a6da54914
+provider_live_task.py blob            6e86f008b5136c88cab574f64564709e1029a945
+wrapper freeze                        research/frozen/provider-live-execution-wrapper-freeze-v1.json
+ADR                                   docs/adr/011-governed-live-provider-execution-wrapper-2026-08-28.md
+PR #42 merge                          7e8cbacf4f704bb1ec6a81b627c18cf7c595d703
 ```
 
-The provider-free fixture exercised all 32 potential attempts without network calls and produced `NO_SELECTION` by construction because fixture evidence cannot select a production provider. It validates execution/evidence plumbing, not model quality.
+Final provider-free validation before merge:
 
-The executor:
+```text
+production-runtime #41                success
+production tests                      146 passed
+ADR-004 controller regression         12 passed
+triggered workflows                   11 / 11 success
+real provider calls                   0
+credential/account probes             0
+```
 
-- verifies frozen design/population/authorization/client identities;
-- materializes canonical attempt indexes `0..31` and parity-balanced candidate order;
-- exposes no budget reset and rejects attempt 33;
-- converts only public frozen contexts to `ControllerContext`;
-- never owns TRACTIAN tool execution;
-- adjudicates the eight public rubrics deterministically;
-- aggregates M1–M10 without semantic/private judges;
-- preserves operational failures in denominators;
-- fails closed on custody/provenance violations;
-- returns `NO_SELECTION` for fixture/incomplete/unresolved evidence;
-- never persists raw provider request/response/credential material.
+The governed entrypoint is `GovernedProviderLiveTask`, not direct lower-level wrapper invocation. A future live task must:
 
-Preserved failures remain part of evidence:
+1. receive both required secret values explicitly;
+2. use one canonical durable custody root;
+3. reserve an exclusive sanitized ADR-009 custody marker before run preparation;
+4. use only the fixed `<custody_root>/run` path;
+5. persist `CLAIMED` before each network-capable executor invocation;
+6. never automatically retry/resume a claimed or uncertain attempt;
+7. preserve all operational failures in the frozen denominators;
+8. write only sanitized custody/ledger/result evidence.
 
-1. initial #38 head changed the ADR-009-frozen package export blob; production-runtime #27 returned 130 pass / 1 governance failure. The export was restored rather than the validator weakened;
-2. first dedicated executor workflow failed before fixture evaluation because the standalone script lacked repo-root import bootstrap. The import bootstrap was fixed without changing protocol/metrics.
+If a secret is absent, preparation fails before custody creation/attempt 0. No account/capability probe is permitted.
 
-Neither failure consumed a provider call.
+If preparation fails after authorization custody is reserved, the custody marker remains and blocks normal restart/reset. Switching to another custody root is not implicitly authorized and would require a new prospective custody decision.
 
 ## Current production execution state
 
 ```text
 live authorization                    EFFECTIVE / BOUNDED / ADR-009
 executor                              FROZEN / ADR-010
+live operational wrapper              FROZEN / ADR-011
 maximum live calls                    32
 calls consumed                         0
 first live attempt executed           NO
@@ -171,26 +170,27 @@ NO_SELECTION remains valid            YES
 production actions enabled            NO
 ```
 
-The next production step is therefore no longer executor implementation. It is a **separate live-comparison execution task** using the exact ADR-010 executor. The task must not make a credential/capability probe. If required secrets are not explicitly provisioned, it must stop before attempt 0 and record an operational blocker without changing candidates/routes.
+The implementation needed for safe live execution is now complete. The next provider step is a **separate governed live execution task**, not additional wrapper development.
 
 ## Immediate blockers and priorities
 
-1. **Scientific:** recover the exact original C4 score-row artifact; do not reconstruct/rescore it.
-2. **Production:** prepare the separate ADR-009/010 live execution surface, with explicit secret injection outside provider-client code and fail-before-attempt-0 behavior when credentials are absent.
-3. Execute the exact 32-attempt comparison only when required secrets are provisioned; every actual invocation consumes the frozen budget and remains in denominators.
-4. Freeze the live result and deterministic selection (`candidate_id` or `NO_SELECTION`) without threshold/candidate changes.
-5. Keep all production mutating actions disabled.
-6. After provider evidence, run reliability/failure/security/observability regressions and integrate the selected provider — or safe `NO_SELECTION` outcome — into final delivery evidence.
+1. **Provider execution:** create the separate ADR-009/010/011 live task. It may proceed only with one canonical durable custody root and both explicitly provisioned secrets; otherwise stop before attempt 0.
+2. **Provider result:** if execution occurs, consume the exact envelope once and freeze the resulting candidate ID or `NO_SELECTION` without changing the frozen design after the fact.
+3. **Action P0 in parallel:** develop/validate the controlled action-authorization source/profile provider-free, reusing ADR-005. Do not enable real production mutations yet.
+4. **Evaluation P0/P1 in parallel:** implement EV-007 failure performance, EV-008 repeated-run stability and EV-011 customer-safe communication using provider-free/scripted paths first.
+5. **Scientific in parallel:** recover the exact original C4 score-row artifact only; do not reconstruct or rescore it.
+6. **After provider evidence:** bind the selected provider, or explicitly handle `NO_SELECTION`, then run the integrated real Agent + Evaluator regression/demo path.
 
 ## Still forbidden
 
 - reconstructing or rescoring the missing C4 score-row artifact;
 - using ADR-009 calls for C4/scientific work;
 - survivor/PREFERRED inference before the reporting freeze;
-- semantic, FRESH_BLIND or LEGACY_LOCKED_TEST access;
+- semantic, FRESH_BLIND or LEGACY_LOCKED_TEST access without a separately opened scientific gate;
 - changing ADR-008 candidates, population, thresholds or selection rules after any live call without prospective amendment;
 - hidden provider retries, fallbacks, warm-ups or provider-side conversation state;
 - credential/account probing merely to test availability;
+- restarting through a new custody root after a reserved/consumed live run without prospective governance;
 - provider-native TRACTIAN tool execution;
 - production mutating actions before separate action-enablement evidence/decision;
 - claiming a provider/model winner from fixture evidence;
