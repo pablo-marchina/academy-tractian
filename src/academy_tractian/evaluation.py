@@ -5,13 +5,14 @@ from hashlib import sha256
 import json
 from typing import Any, Literal, Mapping, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from research.e2.binding import MODEL_CONTROLLED_FIELDS
 from research.e2.models import Decision, ResponseMode, RunTrace, ToolKind, ToolSpec, TraceEvent
 from research.e2.trace import validate_trace
 from research.e2.validation import validate_arguments
 
+from .decision_source import ProviderModelCallRecord
 from .runtime import ProductionRequest, ProductionRuntime, canonical_tool_registry
 
 
@@ -20,12 +21,26 @@ class _FrozenModel(BaseModel):
 
 
 class ProductionEvaluationPolicy(_FrozenModel):
-    """Deterministic policy for the first production evaluation surface."""
+    """Deterministic policy for production trace evaluation.
 
-    schema_version: Literal["prod-eval-policy-v1"] = "prod-eval-policy-v1"
-    provider_free: Literal[True] = True
+    Provider-free remains the default. Traced-provider mode is structural/provenance validation
+    only; it does not authorize a provider call or claim semantic task correctness.
+    """
+
+    schema_version: Literal["prod-eval-policy-v2"] = "prod-eval-policy-v2"
+    provider_free: bool = True
+    require_model_call_provenance: bool = False
     read_only: Literal[True] = True
     require_production_scenario_prefix: Literal[True] = True
+
+    @model_validator(mode="after")
+    def validate_provider_mode(self) -> "ProductionEvaluationPolicy":
+        if self.provider_free == self.require_model_call_provenance:
+            raise ValueError(
+                "evaluation policy must choose exactly one provider mode: "
+                "provider_free or require_model_call_provenance"
+            )
+        return self
 
 
 class ProductionEvaluationCheck(_FrozenModel):
@@ -209,13 +224,126 @@ def _execution_chain_issues(trace: RunTrace) -> list[dict[str, Any]]:
     return issues
 
 
+def _model_call_provenance(
+    trace: RunTrace,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Validate sanitized model-call records and their controller ordering without raw payloads."""
+
+    events = trace.events
+    model_indices = [i for i, event in enumerate(events) if event.event_type == "model_call"]
+    issues: list[dict[str, Any]] = []
+    summaries: list[dict[str, Any]] = []
+    parsed: list[tuple[int, ProviderModelCallRecord]] = []
+    seen_call_ids: set[str] = set()
+
+    for index in model_indices:
+        event = events[index]
+        if event.tool_name is not None or event.arguments is not None or event.result is not None:
+            issues.append({"sequence": event.sequence, "code": "MODEL_CALL_HAS_RAW_EVENT_PAYLOAD"})
+        try:
+            record = ProviderModelCallRecord.from_trace_event(
+                call_id=event.call_id,
+                metadata=event.metadata,
+            )
+        except Exception:
+            issues.append({"sequence": event.sequence, "code": "INVALID_MODEL_CALL_RECORD"})
+            continue
+
+        if record.call_id in seen_call_ids:
+            issues.append({"sequence": event.sequence, "code": "DUPLICATE_MODEL_CALL_ID"})
+        seen_call_ids.add(record.call_id)
+        parsed.append((index, record))
+        summaries.append(
+            {
+                "sequence": event.sequence,
+                "call_id": record.call_id,
+                "provider_id": record.provider_id,
+                "model_id": record.model_id,
+                "route_id": record.route_id,
+                "live_call": record.live_call,
+                "outcome": record.outcome,
+                "decision_kind": None if record.decision_kind is None else record.decision_kind.value,
+                "failure_code": record.failure_code,
+                "turn_index": record.turn_index,
+                "tool_call_count": record.tool_call_count,
+                "latency_ms": record.latency_ms,
+            }
+        )
+
+    for ordinal, (index, record) in enumerate(parsed):
+        next_model_index = parsed[ordinal + 1][0] if ordinal + 1 < len(parsed) else len(events)
+        decisions = [
+            event
+            for event in events[index + 1 : next_model_index]
+            if event.event_type == "decision"
+        ]
+
+        if record.outcome == "success":
+            if len(decisions) != 1:
+                issues.append(
+                    {
+                        "sequence": events[index].sequence,
+                        "code": "MODEL_CALL_DECISION_COUNT_MISMATCH",
+                        "decision_count": len(decisions),
+                    }
+                )
+                continue
+            decision = decisions[0]
+            result = decision.result if isinstance(decision.result, dict) else {}
+            expected_kind = record.decision_kind.value if record.decision_kind is not None else None
+            if result.get("kind") != expected_kind:
+                issues.append(
+                    {
+                        "sequence": events[index].sequence,
+                        "code": "MODEL_CALL_DECISION_KIND_MISMATCH",
+                    }
+                )
+            if result.get("turn_index") != record.turn_index:
+                issues.append(
+                    {
+                        "sequence": events[index].sequence,
+                        "code": "MODEL_CALL_TURN_INDEX_MISMATCH",
+                    }
+                )
+            if result.get("tool_call_count") != record.tool_call_count:
+                issues.append(
+                    {
+                        "sequence": events[index].sequence,
+                        "code": "MODEL_CALL_TOOL_COUNT_MISMATCH",
+                    }
+                )
+        else:
+            if decisions:
+                issues.append(
+                    {
+                        "sequence": events[index].sequence,
+                        "code": "FAILED_MODEL_CALL_HAS_DECISION",
+                    }
+                )
+            if ordinal + 1 < len(parsed):
+                issues.append(
+                    {
+                        "sequence": events[index].sequence,
+                        "code": "FAILED_MODEL_CALL_NOT_TERMINAL",
+                    }
+                )
+
+    failure_records = [record for _, record in parsed if record.outcome == "failure"]
+    if failure_records:
+        final = _final_payload(trace) or {}
+        if final.get("reason_code") != "DECISION_SOURCE_FAILURE":
+            issues.append({"code": "FAILED_MODEL_CALL_TERMINAL_REASON_MISMATCH"})
+
+    return issues, summaries
+
+
 class ProductionEvaluator:
     """Trace-only deterministic evaluator for the production runtime boundary.
 
     It intentionally does not accept benchmark scenarios, expected paths, private references,
-    semantic judges, model clients or provider clients. The evaluator can establish structural
-    and safety properties visible in the production trace; it cannot establish semantic task
-    correctness that is not represented by public deterministic contracts.
+    semantic judges, model clients or provider clients. The evaluator can establish structural,
+    provenance and safety properties visible in the production trace; it cannot establish
+    semantic task correctness that is not represented by public deterministic contracts.
     """
 
     def __init__(
@@ -414,6 +542,31 @@ class ProductionEvaluator:
             )
         )
 
+        provenance_issues, provenance_summaries = _model_call_provenance(trace)
+        provenance_ok = (
+            (self.policy.provider_free and not model_calls and not provenance_issues)
+            or (
+                self.policy.require_model_call_provenance
+                and bool(model_calls)
+                and not provenance_issues
+                and len(provenance_summaries) == len(model_calls)
+            )
+        )
+        checks.append(
+            _check(
+                "model_call_provenance",
+                provenance_ok,
+                mode=(
+                    "provider_free"
+                    if self.policy.provider_free
+                    else "traced_provider"
+                ),
+                model_call_count=len(model_calls),
+                issues=provenance_issues,
+                calls=provenance_summaries,
+            )
+        )
+
         final = _final_payload(trace)
         terminal_issues: list[str] = []
         if final is None:
@@ -439,6 +592,7 @@ class ProductionEvaluator:
 
             safe_failure_reasons = {
                 "DECISION_SOURCE_FAILURE",
+                "DECISION_SOURCE_AUDIT_FAILURE",
                 "TOOL_BOUNDARY_FAILURE",
                 "TOOL_CALL_BUDGET_EXHAUSTED",
                 "TURN_BUDGET_EXHAUSTED",

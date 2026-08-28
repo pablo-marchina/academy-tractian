@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
-from typing import Any, Literal, Mapping, Protocol
+from time import perf_counter_ns
+from typing import Any, Callable, Literal, Mapping, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -11,6 +12,7 @@ from research.e2.controller import (
     ControllerDecision,
     ControllerDecisionKind,
     DecisionSource,
+    DecisionSourceAuditRecord,
     ToolProposal,
 )
 from research.e2.models import ToolSpec
@@ -19,6 +21,7 @@ from research.e2.models import ToolSpec
 PROVIDER_DECISION_ADAPTER_VERSION = "provider-decision-adapter-v1"
 PROVIDER_REQUEST_SCHEMA_VERSION = "provider-decision-request-v1"
 PROVIDER_DECISION_SCHEMA_VERSION = "provider-decision-payload-v1"
+PROVIDER_MODEL_CALL_SCHEMA_VERSION = "provider-model-call-v1"
 
 
 class _FrozenModel(BaseModel):
@@ -132,6 +135,25 @@ class ProviderDecisionClient(Protocol):
     def complete(self, request: ProviderDecisionRequest) -> str: ...
 
 
+class ProviderCallIdentity(_FrozenModel):
+    """Non-secret identity of the serving route used for one auditable client configuration."""
+
+    provider_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+    model_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,191}$")
+    route_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+    live_call: bool = False
+
+
+ProviderCallFailureCode = Literal[
+    "CLIENT_FAILURE",
+    "RESPONSE_TYPE_INVALID",
+    "RESPONSE_JSON_INVALID",
+    "RESPONSE_PAYLOAD_INVALID",
+    "UNKNOWN_TOOL",
+    "PROPOSAL_REJECTED",
+]
+
+
 def _canonical_sha256(payload: Any) -> str:
     canonical = json.dumps(
         payload,
@@ -140,6 +162,97 @@ def _canonical_sha256(payload: Any) -> str:
         ensure_ascii=False,
     ).encode("utf-8")
     return sha256(canonical).hexdigest()
+
+
+def _text_sha256(value: str) -> str:
+    return sha256(value.encode("utf-8")).hexdigest()
+
+
+def _model_call_id_payload(
+    *,
+    provider_id: str,
+    model_id: str,
+    route_id: str,
+    live_call: bool,
+    request_sha256: str,
+    turn_index: int,
+    tool_call_count: int,
+) -> dict[str, Any]:
+    return {
+        "schema_version": PROVIDER_MODEL_CALL_SCHEMA_VERSION,
+        "adapter_version": PROVIDER_DECISION_ADAPTER_VERSION,
+        "provider_id": provider_id,
+        "model_id": model_id,
+        "route_id": route_id,
+        "live_call": live_call,
+        "request_sha256": request_sha256,
+        "turn_index": turn_index,
+        "tool_call_count": tool_call_count,
+    }
+
+
+class ProviderModelCallRecord(_FrozenModel):
+    """Sanitized one-client-invocation provenance carried by a `model_call` TraceEvent."""
+
+    schema_version: Literal["provider-model-call-v1"] = PROVIDER_MODEL_CALL_SCHEMA_VERSION
+    adapter_version: Literal["provider-decision-adapter-v1"] = PROVIDER_DECISION_ADAPTER_VERSION
+    call_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    provider_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+    model_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,191}$")
+    route_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+    live_call: bool
+    request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    response_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    turn_index: int = Field(ge=0)
+    tool_call_count: int = Field(ge=0)
+    outcome: Literal["success", "failure"]
+    decision_kind: ControllerDecisionKind | None = None
+    failure_code: ProviderCallFailureCode | None = None
+    latency_ms: int = Field(ge=0)
+    adapter_client_invocations: Literal[1] = 1
+    adapter_retry_count: Literal[0] = 0
+    adapter_fallback_used: Literal[False] = False
+    raw_request_recorded: Literal[False] = False
+    raw_response_recorded: Literal[False] = False
+    exception_text_recorded: Literal[False] = False
+
+    @model_validator(mode="after")
+    def validate_record(self) -> "ProviderModelCallRecord":
+        expected_call_id = _canonical_sha256(
+            _model_call_id_payload(
+                provider_id=self.provider_id,
+                model_id=self.model_id,
+                route_id=self.route_id,
+                live_call=self.live_call,
+                request_sha256=self.request_sha256,
+                turn_index=self.turn_index,
+                tool_call_count=self.tool_call_count,
+            )
+        )
+        if self.call_id != expected_call_id:
+            raise ValueError("call_id does not match canonical model-call provenance")
+
+        if self.outcome == "success":
+            if self.decision_kind is None or self.failure_code is not None or self.response_sha256 is None:
+                raise ValueError("successful model call requires decision_kind and response hash only")
+        else:
+            if self.failure_code is None or self.decision_kind is not None:
+                raise ValueError("failed model call requires failure_code and no decision_kind")
+        return self
+
+    def to_audit_record(self) -> DecisionSourceAuditRecord:
+        return DecisionSourceAuditRecord(
+            call_id=self.call_id,
+            metadata=self.model_dump(mode="json", exclude={"call_id"}),
+        )
+
+    @classmethod
+    def from_trace_event(cls, *, call_id: str | None, metadata: Mapping[str, Any]) -> "ProviderModelCallRecord":
+        if call_id is None:
+            raise ValueError("model_call trace event requires call_id")
+        if "call_id" in metadata:
+            raise ValueError("model_call metadata must not duplicate call_id")
+        return cls.model_validate({"call_id": call_id, **dict(metadata)})
 
 
 def _reject_duplicate_object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -208,58 +321,212 @@ def build_provider_decision_request(
     )
 
 
+def _call_id(identity: ProviderCallIdentity, request: ProviderDecisionRequest) -> str:
+    return _canonical_sha256(
+        _model_call_id_payload(
+            provider_id=identity.provider_id,
+            model_id=identity.model_id,
+            route_id=identity.route_id,
+            live_call=identity.live_call,
+            request_sha256=request.request_sha256,
+            turn_index=request.turn_index,
+            tool_call_count=request.tool_call_count,
+        )
+    )
+
+
 class ProviderDecisionSource(DecisionSource):
-    """Strict provider-neutral adapter implementing the frozen ADR-004 DecisionSource shape."""
+    """Strict provider-neutral adapter implementing the frozen ADR-004 DecisionSource shape.
+
+    Model-call auditing is optional. When `call_identity` is supplied, every client invocation
+    queues exactly one sanitized `DecisionSourceAuditRecord` for the controller to append to the
+    canonical RunTrace. Existing non-audited clients retain the ADR-006 behavior unchanged.
+    """
 
     def __init__(
         self,
         *,
         client: ProviderDecisionClient,
         registry: Mapping[str, ToolSpec],
+        call_identity: ProviderCallIdentity | None = None,
+        clock_ns: Callable[[], int] = perf_counter_ns,
     ) -> None:
         if not registry:
             raise ValueError("provider decision adapter requires a non-empty ToolSpec registry")
         self.client = client
         self.registry = dict(registry)
         self._known_tools = frozenset(self.registry)
+        self.call_identity = call_identity
+        self._clock_ns = clock_ns
+        self._pending_audit_records: list[DecisionSourceAuditRecord] = []
 
     def build_request(self, context: ControllerContext) -> ProviderDecisionRequest:
         return build_provider_decision_request(context=context, registry=self.registry)
 
+    def drain_audit_records(self) -> tuple[DecisionSourceAuditRecord, ...]:
+        records = tuple(self._pending_audit_records)
+        self._pending_audit_records.clear()
+        return records
+
+    def _record_call(
+        self,
+        *,
+        request: ProviderDecisionRequest,
+        response_sha256: str | None,
+        outcome: Literal["success", "failure"],
+        decision_kind: ControllerDecisionKind | None,
+        failure_code: ProviderCallFailureCode | None,
+        started_ns: int,
+        finished_ns: int,
+    ) -> None:
+        if self.call_identity is None:
+            return
+        elapsed_ns = max(0, finished_ns - started_ns)
+        record = ProviderModelCallRecord(
+            call_id=_call_id(self.call_identity, request),
+            provider_id=self.call_identity.provider_id,
+            model_id=self.call_identity.model_id,
+            route_id=self.call_identity.route_id,
+            live_call=self.call_identity.live_call,
+            request_sha256=request.request_sha256,
+            response_sha256=response_sha256,
+            turn_index=request.turn_index,
+            tool_call_count=request.tool_call_count,
+            outcome=outcome,
+            decision_kind=decision_kind,
+            failure_code=failure_code,
+            latency_ms=elapsed_ns // 1_000_000,
+        )
+        self._pending_audit_records.append(record.to_audit_record())
+
     def decide(self, context: ControllerContext) -> ControllerDecision:
         request = self.build_request(context)
-        raw = self.client.complete(request)
-        if not isinstance(raw, str):
+        started_ns = self._clock_ns()
+        response_sha256: str | None = None
+
+        try:
+            raw_result = self.client.complete(request)
+        except Exception:
+            self._record_call(
+                request=request,
+                response_sha256=None,
+                outcome="failure",
+                decision_kind=None,
+                failure_code="CLIENT_FAILURE",
+                started_ns=started_ns,
+                finished_ns=self._clock_ns(),
+            )
+            raise
+
+        if not isinstance(raw_result, str):
+            self._record_call(
+                request=request,
+                response_sha256=None,
+                outcome="failure",
+                decision_kind=None,
+                failure_code="RESPONSE_TYPE_INVALID",
+                started_ns=started_ns,
+                finished_ns=self._clock_ns(),
+            )
             raise TypeError("provider decision client must return a JSON string")
 
-        decoded = json.loads(raw, object_pairs_hook=_reject_duplicate_object_pairs)
+        raw = raw_result
+        response_sha256 = _text_sha256(raw)
+        try:
+            decoded = json.loads(raw, object_pairs_hook=_reject_duplicate_object_pairs)
+        except Exception:
+            self._record_call(
+                request=request,
+                response_sha256=response_sha256,
+                outcome="failure",
+                decision_kind=None,
+                failure_code="RESPONSE_JSON_INVALID",
+                started_ns=started_ns,
+                finished_ns=self._clock_ns(),
+            )
+            raise
+
         if not isinstance(decoded, dict):
+            self._record_call(
+                request=request,
+                response_sha256=response_sha256,
+                outcome="failure",
+                decision_kind=None,
+                failure_code="RESPONSE_JSON_INVALID",
+                started_ns=started_ns,
+                finished_ns=self._clock_ns(),
+            )
             raise ValueError("provider decision payload must be a JSON object")
-        payload = ProviderDecisionPayload.model_validate(decoded)
 
-        if payload.kind is ControllerDecisionKind.TOOL:
-            assert payload.tool_name is not None
-            if payload.tool_name not in self._known_tools:
-                raise ValueError(f"provider proposed unknown tool: {payload.tool_name}")
-            proposal = ToolProposal(
-                tool_name=payload.tool_name,
-                arguments=dict(payload.arguments),
-                evidence_id=payload.evidence_id,
+        try:
+            payload = ProviderDecisionPayload.model_validate(decoded)
+        except Exception:
+            self._record_call(
+                request=request,
+                response_sha256=response_sha256,
+                outcome="failure",
+                decision_kind=None,
+                failure_code="RESPONSE_PAYLOAD_INVALID",
+                started_ns=started_ns,
+                finished_ns=self._clock_ns(),
             )
-            return ControllerDecision(
-                kind=ControllerDecisionKind.TOOL,
-                proposal=proposal,
-            )
+            raise
 
-        if payload.kind is ControllerDecisionKind.FINAL:
-            assert payload.final is not None
-            return ControllerDecision(
-                kind=ControllerDecisionKind.FINAL,
-                final=dict(payload.final),
-            )
+        try:
+            if payload.kind is ControllerDecisionKind.TOOL:
+                assert payload.tool_name is not None
+                if payload.tool_name not in self._known_tools:
+                    self._record_call(
+                        request=request,
+                        response_sha256=response_sha256,
+                        outcome="failure",
+                        decision_kind=None,
+                        failure_code="UNKNOWN_TOOL",
+                        started_ns=started_ns,
+                        finished_ns=self._clock_ns(),
+                    )
+                    raise ValueError(f"provider proposed unknown tool: {payload.tool_name}")
+                proposal = ToolProposal(
+                    tool_name=payload.tool_name,
+                    arguments=dict(payload.arguments),
+                    evidence_id=payload.evidence_id,
+                )
+                decision = ControllerDecision(
+                    kind=ControllerDecisionKind.TOOL,
+                    proposal=proposal,
+                )
+            elif payload.kind is ControllerDecisionKind.FINAL:
+                assert payload.final is not None
+                decision = ControllerDecision(
+                    kind=ControllerDecisionKind.FINAL,
+                    final=dict(payload.final),
+                )
+            else:
+                decision = ControllerDecision(
+                    kind=payload.kind,
+                    message=payload.message,
+                    reason_code=payload.reason_code,
+                )
+        except Exception:
+            if payload.kind is ControllerDecisionKind.TOOL and payload.tool_name in self._known_tools:
+                self._record_call(
+                    request=request,
+                    response_sha256=response_sha256,
+                    outcome="failure",
+                    decision_kind=None,
+                    failure_code="PROPOSAL_REJECTED",
+                    started_ns=started_ns,
+                    finished_ns=self._clock_ns(),
+                )
+            raise
 
-        return ControllerDecision(
-            kind=payload.kind,
-            message=payload.message,
-            reason_code=payload.reason_code,
+        self._record_call(
+            request=request,
+            response_sha256=response_sha256,
+            outcome="success",
+            decision_kind=decision.kind,
+            failure_code=None,
+            started_ns=started_ns,
+            finished_ns=self._clock_ns(),
         )
+        return decision
