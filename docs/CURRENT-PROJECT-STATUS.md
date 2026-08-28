@@ -1,69 +1,177 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-28 08:04 BRT  
-**Canonical branch after implementation merge:** `main`  
-**Canonical implementation merge head:** `98e4bf0fadfc7ea5e10242d9ebd7dac98bcd1110`  
-**Current reconciliation branch:** `docs/reconcile-adr-017-final-handoff`  
+**Canonical status checkpoint:** 2026-08-28 09:17 BRT  
+**Canonical implementation baseline before this planning checkpoint:** `main@5c353aa86747073d4b2ab32c1519e518c8d2b2c6`  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
+**Decision-revalidation program:** [`DECISION-REVALIDATION-MASTER-PLAN.md`](DECISION-REVALIDATION-MASTER-PLAN.md)  
 **Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
-**Latest chronological entry:** [`progress/033-final-handoff-acceptance-audit-freeze-2026-08-28.md`](progress/033-final-handoff-acceptance-audit-freeze-2026-08-28.md)  
-**Machine checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-28-0804-brt.json`](../research/results/project-progress-checkpoint-2026-08-28-0804-brt.json)
+**Master project plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
+**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)
 
-This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts, ADRs and authorization packets remain authoritative for exact semantics. Production/delivery work does not advance the C4 scientific gate.
+This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts and ADRs remain authoritative for their exact historical semantics. This checkpoint changes the **prospective development policy and final-choice interpretation**; it does not rewrite prior experiment results.
 
 ## Executive state
 
 ```text
-Project North Star                           maximize actual TRACTIAN/Inteli delivery under P1-P4
+Project North Star                           strongest defensible TRACTIAN/Inteli delivery under P1-P4
 Final delivery target                        2026-09-08
+permanent external service/API cost          USD 0 HARD CONSTRAINT
+planning before material implementation      REQUIRED
+systematic decision revalidation              ACTIVE
+historical frozen evidence                    PRESERVED
+historical freeze == global optimality        NO
 
 P12-C4 packet                                FROZEN_COMPLETE_C4_PACKET
 P12-C4 deterministic scoring                 FROZEN / 144 OF 144 / 0 RECOMPUTATION MISMATCHES
 P12-C4 bootstrap 20k                         FROZEN / PASS / INDEPENDENT RECOMPUTATION PASS
 P12-C4 LOGO sensitivity                      FROZEN / 7 OF 7 / INDEPENDENT RECOMPUTATION PASS
 current authorized scientific gate           REQUIRED_PER_GROUP_AND_SLICE_REPORTING
-per-group/slice reporting                    AUTHORIZED / BLOCKED ON EXACT SCORE-ROW ARTIFACT
+per-group/slice reporting                    BLOCKED ON EXACT SCORE-ROW ARTIFACT
 semantic / FRESH_BLIND / LEGACY_LOCKED_TEST  NOT AUTHORIZED
-project-level PREFERRED                      NONE
 
-P0 Agent Controller                          FROZEN / ADR-004
-production action safety                     FROZEN / ADR-005
-default ProductionRuntime actions            DISABLED
-provider-neutral DecisionSource              FROZEN / ADR-006
-model-call provenance                        FROZEN / ADR-007
-provider comparison design                   FROZEN / ADR-008
-OpenAI/Gemini concrete clients               FROZEN / ADR-009
-provider comparison executor                 FROZEN / ADR-010
-live execution/custody wrapper               FROZEN / ADR-011
-controlled action execution/evaluator        FROZEN / ADR-012
-EV-007 failure performance                   FROZEN / ADR-013 / 11 OF 11 SAFETY EXPECTATIONS
-EV-008 repeated-run stability                FROZEN / ADR-014 / 30 OF 30 RUNS / 66 OF 66 DIMENSIONS
-EV-011 customer-safe communication           FROZEN / ADR-015 / 60 OF 60 APPLICABLE CHECKS
-final-delivery reproduction/evidence         FROZEN / ADR-016
-final handoff acceptance audit               FROZEN / ADR-017
-integrated provider-free demo                5 OF 5 / REPORT 43903731…
-evidence index                               31 ENTRIES / 30 OF 30 RESIDENT BLOBS / 0 VIOLATIONS
-final acceptance rows                        83 / 41 EVIDENCED / 40 BOUNDED / 1 BLOCKED / 1 GATED
-unblocked acceptance gaps                    0
-clean-checkout final freeze regression       251 PRODUCTION TESTS + 12 ADR-004 / PASS
-final freeze PR-associated workflows         14 / 14 SUCCESS
-next unblocked provider-free P0/P1           SUBMISSION / REVIEW HYGIENE ONLY
-
-canonical provider comparison plan           32 ATTEMPTS / SHA-256 69691adf…
-production live provider calls consumed      0 / 32
-first live attempt executed                  NO
-production provider/model selected           NO
+provider/model final selection               NO
+old ADR-008 OpenAI/Gemini live packet        SUSPENDED_PENDING_PROSPECTIVE_AMENDMENT
+old packet live calls consumed               0 / 32
 credential/account probes                    0
-real customer mutations performed            0
-blanket real-customer mutations              NOT AUTHORIZED
+Groq API connection                          USER-REPORTED CONNECTED / NOT PROBED
+Gemini API connection                        PENDING USER CONNECTION / NOT PROBED
+OpenAI GPT-5.6 Sol production eligibility    INELIGIBLE UNDER USD 0 HARD CONSTRAINT
+new provider candidate search                REQUIRED BEFORE LIVE EXECUTION
+
+single-agent controller                      QUALIFIED_BASELINE / NOT FINAL TOPOLOGY
+multi-agent alternatives                     REVALIDATION REQUIRED
+runtime/orchestration final choice            REVALIDATION REQUIRED
+retrieval/memory/adaptive decisions           SYSTEMATIC SCREENING REQUIRED
+native tools vs MCP                           STRONG HISTORICAL COMPARATIVE EVIDENCE / PROVISIONAL
+
 global final architecture                    UNFROZEN
 production-readiness claim                   NOT AUTHORIZED
+real customer mutations performed            0
 ```
 
-## Scientific critical path — unchanged and parallel
+## 1. Prospective development policy — effective now
 
-The scientific path remains blocked at `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` on the exact original evaluator-side score-row artifact:
+Every future material development cycle must follow:
+
+```text
+plan / decision inventory update
+→ decision question + requirement/risk mapping
+→ hard constraints
+→ systematic current research
+→ credible materially different alternatives + simple/null baseline
+→ preregistered comparison
+→ implementation / execution
+→ quantitative evaluation
+→ uncertainty / repeated runs
+→ robustness / failure analysis
+→ production-fit analysis
+→ Pareto / trade-off analysis
+→ decision + reversal triggers
+→ regression
+→ PREFERRED / FROZEN only when justified
+```
+
+If the plan, alternatives and comparison protocol are not documented, implementation is not authorized.
+
+A historical ADR/freeze remains immutable evidence. When a hard assumption changes or a credible alternative was omitted, the correct action is prospective revalidation/supersession, not rewriting the historical artifact.
+
+## 2. Permanent zero-cost constraint
+
+The production/project path must remain monetarily free:
+
+```text
+external API / hosted-service project charge    USD 0
+paid subscription required                      NO
+purchased API credits                           NO
+unbounded paid spillover                        FORBIDDEN
+```
+
+Within this feasible set, the project still targets the strongest credible quality frontier; free status is only an eligibility gate, not a quality decision.
+
+Free-credit/free-tier routes are eligible only when the project run can be bounded to USD 0 without silent billable spillover.
+
+## 3. Provider/model state — previous execution plan suspended
+
+ADR-008 through ADR-011 remain historical frozen evidence of the previously designed OpenAI/Gemini comparison infrastructure and governance. They are **not deleted or rewritten**.
+
+However, the previously planned live execution is no longer prospectively valid because its OpenAI GPT-5.6 Sol candidate violates the now-explicit USD 0 hard constraint.
+
+Therefore:
+
+```text
+old comparison plan SHA-256             69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f
+historical design                         PRESERVED
+old live execution                        SUSPENDED
+old live calls consumed                   0 / 32
+first live attempt executed               NO
+production provider/model selected        NO
+new live execution                        REQUIRES PROSPECTIVE AMENDMENT
+```
+
+Issue #44 must not execute the old packet. A new provider comparison must first research and preregister the credible **zero-cost** candidate set.
+
+Minimum current screening scope includes:
+
+- Gemini free-tier candidates compatible with the required structured decision/tool contract;
+- Groq free-tier candidates compatible with the same contract;
+- OpenRouter explicitly free routes/models if model identity and zero-cost containment are adequate;
+- Cloudflare Workers AI free-tier candidates if contract fit is adequate;
+- at least one feasible local/open-weight baseline when project hardware permits;
+- other materially distinct zero-cost options discovered by primary-source research.
+
+Connection state is not evaluation evidence and must not be verified by secret/account probing:
+
+```text
+Groq API     user reports connected
+Gemini API   user will connect / pending
+```
+
+## 4. Agent architecture decision state
+
+The existing explicit single-agent controller remains valuable, tested and historically frozen within ADR-004's scope. Its provider-free reliability/safety evidence remains valid.
+
+Its current **final-choice** interpretation is now:
+
+```text
+single-agent explicit controller    QUALIFIED_BASELINE
+final topology                      NOT SELECTED
+```
+
+Before global architecture freeze, prospectively compare materially distinct topologies under controlled conditions, including at least where feasible:
+
+```text
+A  single agent / explicit controller
+B  planner → executor
+C  agent → critic/reviewer
+```
+
+Hold provider/model, case distribution, ToolSpecs, HarnessRunner, authorization policy and evaluator definitions constant where possible so topology is the changed variable.
+
+## 5. Other material decisions requiring review
+
+The active decision-revalidation program covers:
+
+- provider/model;
+- agent topology;
+- orchestration/runtime;
+- tool topology/protocol;
+- evidence/retrieval;
+- memory/state;
+- adaptive stopping/planning/model routing;
+- safety/authorization additions without weakening hard boundaries;
+- evaluator/judge scope;
+- observability;
+- deployment;
+- UI/integration where material to delivery quality.
+
+Historical evidence may be sufficient to retain some choices. It must still be checked against the current search scope and hard constraints.
+
+Native typed tools vs MCP currently has comparatively strong historical evidence: E7 demonstrated equal 18-tool coverage/schema/invocation/guard/trace fidelity with greater MCP complexity. This remains provisional evidence for native tools unless new requirements or alternatives change the trade-off.
+
+## 6. Scientific C4 critical path — exact recovery first
+
+The scientific gate remains `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` on the exact original evaluator-side score-row artifact:
 
 ```text
 SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
@@ -72,214 +180,86 @@ rows     144
 geometry 36 common parents × 4 arms
 ```
 
-Only exact artifact recovery/provisioning is authorized. Reconstruction, rescoring or substitution remain forbidden. Production reliability/provider/delivery work does not authorize C4 semantic judging, survivor selection or blind-partition access.
+The repository contains the scorer, frozen outputs, deterministic scoring freeze, bootstrap and LOGO derivatives, but the exact full score-row bytes were deliberately not committed in the original workflow.
 
-ADR-017 deliberately preserves `C-13 / EV-012` as `EXTERNALLY_BLOCKED`; benchmark-integrity controls do not manufacture the missing score-row artifact or fresh-blind evidence.
+Authorized now:
 
-## Production architecture state
+- search local/historical/temporary/workflow storage for exact bytes;
+- verify exact SHA-256, size and geometry if recovered.
 
-The default application-owned path remains:
+Not authorized by this checkpoint:
 
-```text
-request
-→ AgentController                         ADR-004
-→ DecisionSource                         ADR-006
-→ governed provider client               ADR-009 only when separately executed
-→ ControllerDecision / ToolProposal
-→ HarnessRunner.execute_tool()           exclusive tool boundary
-→ B1 canonical argument validation
-→ ADR-005/B2 action safety
-→ RunTrace
-→ deterministic ProductionEvaluator
-```
+- reconstruction;
+- rescoring;
+- substitution;
+- semantic evaluation;
+- FRESH_BLIND;
+- LEGACY_LOCKED_TEST;
+- downstream survivor/PREFERRED inference.
 
-Identity, seed, action authorization and evaluator-private truth remain outside provider control. The default `ProductionRuntime` remains read-only for mutating actions.
+If exact bytes cannot be recovered, a **separate prospective scientific amendment** must first define whether a byte-identical reproduction attempt is admissible. Any reproduction that does not match the exact frozen SHA-256 and byte count is rejected and cannot substitute for the original artifact.
 
-The controlled supplied/test action path remains ADR-012 only:
+## 7. Preserved provider-free production/reliability foundation
+
+The following historical evidence remains valid in its original scope:
 
 ```text
-trusted exact grant
-→ ControlledActionRuntime
-→ AgentController
-→ HarnessRunner.execute_tool()
-→ B1
-→ ADR-005
-→ durable exclusive-create idempotency claim
-→ supplied transport
-→ RunTrace
-→ ControlledActionEvaluator
+ADR-004  Agent Controller                              FROZEN HISTORICAL EVIDENCE
+ADR-005  production action safety                     FROZEN HISTORICAL EVIDENCE
+ADR-006  provider-neutral DecisionSource              FROZEN HISTORICAL EVIDENCE
+ADR-007  model-call provenance                        FROZEN HISTORICAL EVIDENCE
+ADR-008  prior provider comparison design             FROZEN HISTORICAL EVIDENCE / EXECUTION SUSPENDED
+ADR-009  prior concrete provider clients              FROZEN HISTORICAL EVIDENCE
+ADR-010  prior provider comparison executor           FROZEN HISTORICAL EVIDENCE
+ADR-011  prior governed live wrapper                  FROZEN HISTORICAL EVIDENCE
+ADR-012  controlled supplied/test action execution    FROZEN HISTORICAL EVIDENCE
+ADR-013  EV-007 failure performance                   FROZEN HISTORICAL EVIDENCE
+ADR-014  EV-008 repeated-run stability                FROZEN HISTORICAL EVIDENCE
+ADR-015  EV-011 customer-safe communication           FROZEN HISTORICAL EVIDENCE
+ADR-016  final-delivery reproduction/evidence         FROZEN HISTORICAL EVIDENCE
+ADR-017  final handoff acceptance audit               FROZEN HISTORICAL EVIDENCE
 ```
 
-All five canonical action ToolSpecs have provider-free accepted-action capability evidence. A transport failure after claim remains consumed/uncertain and cannot be automatically replayed. This is not blanket authorization for a real customer environment.
-
-## Provider comparison state — unchanged and gated
-
-The frozen comparison remains exactly:
-
-- OpenAI `gpt-5.6-sol` / `openai.responses.v1.standard`;
-- Google `gemini-3.7-flash` / `google.interactions.v1beta.stateless`;
-- 8 public deterministic DEV probes × 2 repetitions × 2 candidates = maximum 32 calls;
-- zero warm-ups, retries, fallbacks, parallel live calls, provider seeds or provider-side conversation state;
-- M1–M10 hard gates and deterministic candidate ID / `NO_SELECTION` outcome.
-
-Canonical plan SHA-256:
-
-`69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f`
-
-Issue #44 is the only live execution task. It may execute only through the frozen governed wrapper with both explicit secrets and one canonical durable custody root. Credential/account probing is forbidden. Calls remain 0/32 and no provider/model is selected.
-
-ADR-017 preserves `E-11 / P1-MODEL-PROVIDER-QUALITY` as `UNEXECUTED_GATED`. Provider-free reliability evidence cannot be relabelled as live provider quality, latency, cost or selection evidence.
-
-## Frozen reliability/evaluation foundations
-
-### ADR-013 — EV-007
+Key preserved evidence:
 
 ```text
-report SHA-256        7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9
-failure cases         11
-safety expectations   11 / 11
-expected evaluator     8 PASS / 3 FAIL
-leaks/calls/mutations  0 / 0 / 0
+EV-007 report SHA-256                    7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9
+EV-008 report SHA-256                    1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8
+EV-011 report SHA-256                    cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
+ADR-016 demo SHA-256                     43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445
+final acceptance rows                    83
+PASS_EVIDENCED                           41
+PASS_BOUNDED                             40
+EXTERNALLY_BLOCKED                        1
+UNEXECUTED_GATED                          1
+GAP_ACTION_REQUIRED                       0
+clean-checkout production tests         251 passed
+ADR-004 regression                       12 passed
 ```
 
-EV007-05, EV007-09 and EV007-11 remain intentional evaluator failures. Safe containment does not erase invalid/incomplete/tampered evidence.
+ADR-017 continues to prove reviewer-ready provider-free acceptance within its evidenced scope. It does **not** prove global architecture optimality, live provider quality, C4 completion or unconditional production readiness.
 
-### ADR-014 — EV-008
+## 8. Immediate priorities
 
-```text
-report SHA-256             1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8
-provider-free runs         30 / 30
-stable units                6 / 6
-stable dimension checks    66 / 66
-contract expectations      30 / 30
-leaks/retries/replays       0 / 0 / 0
-provider calls/mutations    0 / 0
-```
+1. merge/freeze this planning/governance update before new material development;
+2. complete current primary-source research and the material-decision inventory;
+3. create/freeze a prospective zero-cost provider-comparison amendment before any provider call;
+4. preregister the agent-topology comparison before implementing alternative topologies;
+5. preregister runtime/adaptive comparisons one dimension at a time;
+6. search for the exact C4 artifact in parallel;
+7. integrate only the best-supported zero-cost Pareto configuration after controlled evidence;
+8. rerun full regression and reconcile delivery evidence before final architecture freeze.
 
-### ADR-015 — EV-011
+## 9. Still forbidden
 
-```text
-report SHA-256                    cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
-communication cases               10 / 10
-applicable predicate checks       60
-passed predicate checks           60 / 60
-failed predicate checks            0
-evaluator classifications          9 PASS / 1 FAIL
-expected evaluator FAIL            COMM-07
-provider calls/mutations           0 / 0
-semantic/private/blind access      0
-```
-
-`COMM-07` remains evaluator-invalid by design; safe communication does not convert an uncertain post-claim action into valid execution.
-
-## ADR-016 — provider-free final-delivery reproduction and evidence package
-
-Issue #57 / PR #58 froze the clean final-delivery reproduction/evidence baseline.
-
-```text
-campaign version                  provider-free-final-delivery-reproduction-v1
-report SHA-256                    43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445
-scenarios                         5 / 5
-exact traces evaluated            5 / 5
-contract expectations             5 / 5
-provider calls                    0
-credential/account probes         0
-real customer mutations           0
-semantic/private/blind access     0
-```
-
-The fixed scenario order is read/investigate, clarify, abstain, escalate and one ADR-012 controlled supplied/test accepted action. DEMO-05 produces exactly one local action transport and one durable local claim; it does not touch a real customer environment.
-
-Canonical evidence index:
-
-```text
-entries                            31
-repository-resident entries        30
-exact Git blobs resolved           30 / 30
-external blocker entries            1
-violations                          0
-```
-
-It explicitly distinguishes reproducible provider-free evidence, immutable historical evidence, live provider work as `UNEXECUTED_GATED`, and the missing C4 artifact as `EXTERNALLY_BLOCKED`.
-
-## ADR-017 — final handoff acceptance audit and gap closure
-
-Issue #60 / PR #61 froze the final requirement-driven handoff audit without changing runtime, provider geometry or scientific semantics.
-
-Preregistered/frozen population:
-
-```text
-A P0 project                         5
-B agent construction                13
-C evaluation framework              13
-D benchmark/security                 7
-E P1 production/quality             14
-F demonstration                     10
-G documentation/package             13
-H academic dimensions                8
-total                               83
-```
-
-Final disposition:
-
-```text
-PASS_EVIDENCED                      41
-PASS_BOUNDED                        40
-EXTERNALLY_BLOCKED                   1   C-13 / EV-012 / exact C4 artifact
-UNEXECUTED_GATED                     1   E-11 / live provider quality
-GAP_ACTION_REQUIRED                  0
-```
-
-Three unblocked handoff gaps were closed before freeze:
-
-- reviewer-ready root README with exact setup/run/evaluate path;
-- one final handoff runbook covering monitoring, fail-closed behavior, fallback and bounded code/config reversal;
-- rubric-to-evidence reviewer crosswalk.
-
-The runbook explicitly does **not** claim an exercised infrastructure deployment rollback.
-
-Final freeze head `bcd63b886e74753d0f26ca652da3653af8c7c66b` passed:
-
-```text
-final-handoff-acceptance-audit #8             PASS
-clean-checkout production tests               251 passed
-ADR-004 controller regression                  12 passed
-EV-007 / EV-008 / EV-011                      PASS / exact frozen SHAs
-ADR-016 integrated demo                       PASS / exact 43903731…
-ADR-016 evidence index                        30 / 30 resolved / 0 violations
-final audit                                   83 / 83 structurally valid
-unblocked gaps                                 0
-provider calls                                0 / 32
-credential/account probes                     0
-real customer mutations                       0
-PR-associated workflows                      14 / 14 success
-freeze self-check                             PASS
-```
-
-PR #61 merged to `main` as `98e4bf0fadfc7ea5e10242d9ebd7dac98bcd1110`.
-
-ADR-017 establishes that the **provider-free final handoff is reviewer-ready within its evidenced scope**. It explicitly does not authorize live-provider quality claims, C4 completion, real-customer mutation, global architecture freeze, infrastructure rollback proof or unconditional production readiness.
-
-## Immediate priorities after ADR-017
-
-1. **Submission/review hygiene only:** keep reviewer links, submission metadata and canonical commands consistent; if any frozen direct artifact must change, treat that as a prospective new version rather than silently editing the freeze.
-2. **Provider execution in parallel only if genuinely provisioned:** issue #44 remains 0/32 until both explicit provider secrets and one canonical durable custody root exist. If either is absent, do nothing and do not probe.
-3. **Scientific recovery in parallel:** recover the exact original C4 score-row artifact only. Do not reconstruct/rescore/substitute.
-4. **If provider result becomes available:** execute the frozen envelope once, freeze candidate ID or `NO_SELECTION`, then rerun only compatible EV definitions prospectively.
-5. **If C4 artifact becomes available:** execute only the already authorized per-group/slice reporting, independently validate and freeze before advancing any later scientific gate.
-6. **Otherwise:** avoid new runtime architecture. The final 83-row audit found zero unblocked acceptance gaps.
-
-## Still forbidden
-
-- reconstructing/rescoring/substituting the missing C4 artifact;
-- semantic, FRESH_BLIND or LEGACY_LOCKED_TEST access without a separate gate;
-- using ADR-009 calls for scientific/C4 work;
-- changing frozen provider comparison geometry after live evidence without prospective amendment;
-- hidden provider retries/fallbacks/warm-ups or provider-side state;
-- credential/account probing;
-- provider-native TRACTIAN tool execution or bypass of `HarnessRunner.execute_tool()`;
-- weakening ADR-005 or releasing uncertain action claims to permit replay;
-- treating ADR-012 as blanket real-customer authorization;
-- changing EV-007/008/011, ADR-016 or ADR-017 definitions after observing later evidence;
-- claiming provider/model selection from provider-free evidence;
-- claiming global architecture freeze or production readiness beyond current evidence.
+- executing the old ADR-008/#44 provider packet as-is;
+- treating credential presence as authorization or evidence;
+- credential/account probing merely to verify user-reported connections;
+- paid provider/service production usage;
+- hidden provider retries/fallbacks/warm-ups or uncontrolled provider state in controlled comparisons;
+- reconstructing/rescoring/substituting C4 without a separate prospective amendment;
+- semantic/FRESH_BLIND/LEGACY_LOCKED_TEST access without explicit authorization;
+- provider-native TRACTIAN tool execution that bypasses the governed execution boundary;
+- weakening deterministic action safety/authorization/idempotency boundaries;
+- treating historical freeze/acceptance PASS as proof of optimality;
+- claiming global architecture freeze or production readiness before revalidation closes.
