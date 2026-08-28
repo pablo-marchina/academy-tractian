@@ -5,12 +5,15 @@ on:
     paths:
       - "src/academy_tractian/provider_comparison.py"
       - "tests/test_provider_comparison.py"
+      - "tests/test_provider_comparison_freeze.py"
       - "scripts/research/validate_provider_comparison_executor.py"
       - "research/results/provider-comparison-executor-provider-free-fixture-2026-08-28.json"
+      - "research/frozen/provider-comparison-executor-freeze-v1.json"
       - "research/experiments/provider-model-comparison-design-manifest-v1.json"
       - "research/experiments/provider-model-comparison-dev-population-v1.json"
       - "research/frozen/provider-model-live-comparison-authorization-v1.json"
       - "docs/adr/009-provider-http-clients-live-comparison-authorization-2026-08-28.md"
+      - "docs/adr/010-provider-comparison-executor-2026-08-28.md"
       - "src/academy_tractian/provider_clients.py"
       - "src/academy_tractian/decision_source.py"
       - ".github/workflows/provider-comparison-executor.yml"
@@ -20,12 +23,15 @@ on:
     paths:
       - "src/academy_tractian/provider_comparison.py"
       - "tests/test_provider_comparison.py"
+      - "tests/test_provider_comparison_freeze.py"
       - "scripts/research/validate_provider_comparison_executor.py"
       - "research/results/provider-comparison-executor-provider-free-fixture-2026-08-28.json"
+      - "research/frozen/provider-comparison-executor-freeze-v1.json"
       - "research/experiments/provider-model-comparison-design-manifest-v1.json"
       - "research/experiments/provider-model-comparison-dev-population-v1.json"
       - "research/frozen/provider-model-live-comparison-authorization-v1.json"
       - "docs/adr/009-provider-http-clients-live-comparison-authorization-2026-08-28.md"
+      - "docs/adr/010-provider-comparison-executor-2026-08-28.md"
       - "src/academy_tractian/provider_clients.py"
       - "src/academy_tractian/decision_source.py"
       - ".github/workflows/provider-comparison-executor.yml"
@@ -51,7 +57,7 @@ jobs:
         run: python scripts/research/validate_provider_comparison_executor.py
 
       - name: Run executor-specific tests
-        run: python -m pytest -q tests/test_provider_comparison.py
+        run: python -m pytest -q tests/test_provider_comparison.py tests/test_provider_comparison_freeze.py
 
       - name: Regress ADR-009 authorization validator
         run: python scripts/research/validate_provider_live_authorization.py

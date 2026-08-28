@@ -1,0 +1,148 @@
+{
+  "schema_version": "provider-comparison-executor-freeze-v1",
+  "status": "FROZEN_PROVIDER_FREE_EXECUTOR",
+  "date": "2026-08-28",
+  "issue": 38,
+  "pr": 39,
+  "decision_state": "FROZEN_FOR_PROVIDER_COMPARISON_EXECUTOR",
+  "scientific_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+  "scientific_state_changed": false,
+  "production_live_calls_consumed": 0,
+  "production_provider_model_selected": false,
+  "production_mutating_actions_enabled": false,
+  "semantic_private_blind_access": false,
+  "score_or_artifact_mutation": false,
+  "validated_pre_adr_head": "58e0e13a2a0ec72d86ab607162914dcf3f6a4159",
+  "plan_sha256": "69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f",
+  "frozen_inputs": {
+    "design_manifest_path": "research/experiments/provider-model-comparison-design-manifest-v1.json",
+    "design_manifest_git_blob": "9c3d0901414445bd4de557d5ef1d2f68a15c883b",
+    "population_path": "research/experiments/provider-model-comparison-dev-population-v1.json",
+    "population_git_blob": "abd6a7d973a8779f425c3607d963e29f15db09e5",
+    "population_sha256": "561d252d06a3be30e7d631053906e2e29fbcdd151f05b03b56cbf5ead024c251",
+    "live_authorization_path": "research/frozen/provider-model-live-comparison-authorization-v1.json",
+    "live_authorization_git_blob": "5690414564ccddb07184c333fdf79f4ee2fb7788",
+    "adr_009_path": "docs/adr/009-provider-http-clients-live-comparison-authorization-2026-08-28.md",
+    "adr_009_git_blob": "016ac0c40e12db211ebf7dfbab3acd258369fa0b",
+    "provider_clients_path": "src/academy_tractian/provider_clients.py",
+    "provider_clients_git_blob": "e78807bdfd4fd0ca9840fa2d9e6c62474237ee45",
+    "provider_neutral_adapter_git_blob": "5579cf6f4c6bfe25d50220fa8b9ddf75c95d100a",
+    "frozen_package_exports_git_blob": "2868fe2bf73bd89d6cc0a6f49a9a096cf5d5bcd1"
+  },
+  "frozen_files": [
+    {
+      "path": "src/academy_tractian/provider_comparison.py",
+      "git_blob": "4357aa101f5a15d5fc8376b17fa38ca51ea72ae3"
+    },
+    {
+      "path": "tests/test_provider_comparison.py",
+      "git_blob": "6663177bb96a8fdffd15fa64c9cc7e5a92edf2e3"
+    },
+    {
+      "path": "tests/test_provider_comparison_freeze.py",
+      "git_blob": "3a35d889a831aee3e8f709f864f42f2b2769ac65"
+    },
+    {
+      "path": "scripts/research/validate_provider_comparison_executor.py",
+      "git_blob": "563b47e14dbf6119deef167ae8926261c38ed07a"
+    },
+    {
+      "path": "research/results/provider-comparison-executor-provider-free-fixture-2026-08-28.json",
+      "git_blob": "7c3972b2e467de4a21c6ef353f5427bf7651b4d9"
+    },
+    {
+      "path": ".github/workflows/provider-comparison-executor.yml",
+      "git_blob": "25ed665d042f96b9424bec905a7ae2b0dd9064cd"
+    }
+  ],
+  "executor_contract": {
+    "live_plan_attempts": 32,
+    "live_candidates": 2,
+    "public_units": 8,
+    "repetitions_per_unit_per_candidate": 2,
+    "canonical_attempt_indexes": "0..31",
+    "order_policy": "P01..P08; repeats 0..1; alternate candidate order by unit_index + repeat_index parity",
+    "budget_reset_supported": false,
+    "attempt_33_allowed": false,
+    "warmup_calls": 0,
+    "automatic_retries": 0,
+    "fallbacks": 0,
+    "parallel_live_calls": false,
+    "provider_seed_forwarded": false,
+    "tractian_tool_execution_owned_by_executor": false,
+    "provider_native_tool_execution": false,
+    "raw_provider_material_persisted": false,
+    "fixture_can_select_production_provider": false,
+    "incomplete_packet_selection": "NO_SELECTION"
+  },
+  "metrics": {
+    "M1": "structured decision adherence / all attempted calls",
+    "M2": "known canonical tool validity / parsed TOOL decisions",
+    "M3": "canonical B1-valid arguments / known-tool proposals, with identity/seed attempts separate",
+    "M4": "frozen public deterministic rubric passes / fixed 16 attempts per candidate",
+    "M5": "safe contained failures / encountered failures plus one fixed provider-free injected failure case",
+    "M6": "count, median, nearest-rank p90/p95 and max latency; fixture wall-clock values are not frozen",
+    "M7": "success rate / 16 and paired repeat signature stability / 8",
+    "M8": "exact provider-reported usage only; normalized cost remains UNKNOWN when exact price inputs are unavailable",
+    "M9": "frozen route/hosting/credential constraints plus observed operational constraints",
+    "M10": "valid ADR-007 model-call provenance / attempted calls"
+  },
+  "fixture": {
+    "path": "research/results/provider-comparison-executor-provider-free-fixture-2026-08-28.json",
+    "git_blob": "7c3972b2e467de4a21c6ef353f5427bf7651b4d9",
+    "status": "PASS_PROVIDER_FREE_FIXTURE_NO_SELECTION",
+    "fixture_result": true,
+    "simulated_attempts": 32,
+    "production_live_calls_consumed": 0,
+    "selection": "NO_SELECTION",
+    "production_selection_claim": false
+  },
+  "validation_history": {
+    "initial_governance_failure": {
+      "head": "c2f5f11ec3fa5030b5422cceceba1de1e839b3b4",
+      "production_runtime_run_id": 33142884381,
+      "production_runtime_run_number": 27,
+      "result": "130 passed / 1 failed",
+      "failure": "ADR-009 validator rejected modification of frozen src/academy_tractian/__init__.py blob; executor tests themselves did not fail",
+      "live_provider_calls": 0
+    },
+    "corrected_core_validation": {
+      "head": "60427a1f123e57bffa934b3ce2639ed2662dbd9c",
+      "production_runtime_run_id": 33142983309,
+      "production_runtime_run_number": 28,
+      "triggered_workflows_success": "11/11",
+      "live_provider_calls": 0
+    },
+    "dedicated_gate_bootstrap_failure": {
+      "head": "3c16171528449e5fca9bc4a80555eca1be2432b5",
+      "provider_comparison_executor_run_id": 33143114620,
+      "provider_comparison_executor_run_number": 1,
+      "failure": "standalone validator script lacked repository root on sys.path; no fixture comparison or live call occurred",
+      "live_provider_calls": 0
+    },
+    "validated_pre_adr": {
+      "head": "58e0e13a2a0ec72d86ab607162914dcf3f6a4159",
+      "provider_comparison_executor_run_id": 33143175929,
+      "provider_comparison_executor_run_number": 2,
+      "production_runtime_run_id": 33143175942,
+      "production_runtime_run_number": 30,
+      "triggered_workflows_success": "12/12",
+      "fixture_projection": "success",
+      "executor_tests": "success",
+      "adr_009_validator": "success",
+      "full_production_suite": "success",
+      "adr_004_controller_regression": "success",
+      "live_provider_calls": 0
+    }
+  },
+  "non_authorizations": {
+    "this_freeze_executes_live_comparison": false,
+    "production_provider_selected": false,
+    "production_actions_enabled": false,
+    "semantic_evaluation": false,
+    "fresh_blind": false,
+    "legacy_locked_test": false,
+    "scientific_gate_changed": false,
+    "production_readiness_claim": false
+  }
+}
