@@ -57,6 +57,15 @@ def sha256_bytes(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _normalized_population_identity(population_path: Path) -> str:
+    repo_root = Path(__file__).resolve().parents[2]
+    resolved = population_path.resolve()
+    try:
+        return resolved.relative_to(repo_root).as_posix()
+    except ValueError:
+        return resolved.as_posix()
+
+
 def assert_provider_free_environment() -> None:
     present = sorted(name for name in FORBIDDEN_PROVIDER_ENVS if os.getenv(name))
     if present:
@@ -145,7 +154,7 @@ def validate_manifest(manifest: dict[str, Any], population_path: Path) -> None:
             assert source_id in source_ids
 
     population = manifest["population"]
-    assert population["path"] == str(population_path).replace("\\", "/")
+    assert population["path"] == _normalized_population_identity(population_path)
     assert population["sha256"] == sha256_bytes(population_path)
     assert population["unit_count"] == 8
     assert population["repetitions_per_live_candidate"] == 2
