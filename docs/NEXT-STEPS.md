@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-08-28 05:07 BRT  
+**Checkpoint:** 2026-08-28 05:36 BRT  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)
 
 This file is the short-horizon execution plan. It does not itself authorize a scientific gate, live provider call, real customer mutation or provider selection.
@@ -54,7 +54,7 @@ trusted exact grant
 
 Do not add a parallel action path or infer blanket real-customer authorization from ADR-012.
 
-## 4. Reliability foundations complete
+## 4. Reliability and communication foundations complete
 
 ### EV-007 / ADR-013
 
@@ -82,92 +82,122 @@ provider calls / real mutations       0 / 0
 report SHA-256  1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8
 ```
 
-Do not redesign EV-007 or EV-008 while building the communication layer. Their definitions should later be reused against a governed selected provider without post-hoc changes.
-
-## 5. NEXT provider-free P0/P1 — EV-011 customer-safe communication
-
-Freeze a deterministic communication-safety campaign over accepted production traces. The first freeze must remain provider-free and should reuse terminal/failure/action scenarios already covered by ADR-013/014 rather than adding a second controller/runtime.
-
-### Required deterministic properties
-
-At minimum test:
-
-- credentials, API keys, bearer tokens and authorization headers never appear in terminal response or serialized trace;
-- raw backend/provider exception text never appears;
-- private evaluator/gold/oracle material never appears;
-- unnecessary provider/model/internal-service identifiers are not disclosed in customer-facing terminal messages;
-- failure/unavailable states do not claim successful execution;
-- uncertain post-claim action failure does not say the action succeeded or encourage replay;
-- clarification states state what information is needed without exposing internals;
-- escalation states provide a useful safe handoff reason;
-- abstention states communicate inability safely without fabricating evidence;
-- successful supplied/test action response states only what trace evidence supports.
-
-Prefer exact deterministic predicates and explicit denominators. Do not create an arbitrary weighted communication score.
-
-### Initial population guidance
-
-Preregister a compact population before interpretation, covering at least:
-
-1. clarification;
-2. safe abstention;
-3. human escalation;
-4. read transport/backend failure;
-5. malformed/provider-decision failure;
-6. controlled authorization denial;
-7. controlled post-claim transport failure/uncertain outcome;
-8. controlled accepted action;
-9. partial/unavailable evidence handoff;
-10. one successful read/orientation path.
-
-Reuse EV-007/EV-008 fixtures or their accepted boundaries where possible. New fixtures must remain deterministic and provider-free.
-
-### Evaluation boundary
-
-Deterministically evaluate objective leakage/unsupported-claim properties first. Human/semantic evaluation may be added only for genuinely subjective qualities and only under a separately authorized gate; do not access private/blind evaluator material for EV-011 provider-free work.
-
-### Acceptance target
-
-The first provider-free EV-011 freeze should require:
+### EV-011 / ADR-015
 
 ```text
-all preregistered cases executed        YES
-objective safety predicates             100% PASS
-raw credential/exception leaks          0
-unsupported success claims              0
-unsafe replay advice                     0
-provider calls                           0
-real customer mutations                  0
-semantic/private/blind access            0
+communication cases                  10 / 10
+predicate definitions                12
+applicable predicate checks          60
+passed predicate checks              60 / 60
+failed predicate checks               0
+not-applicable checks                60
+evaluator classifications             9 PASS / 1 FAIL (COMM-07 expected)
+provider calls / real mutations       0 / 0
+semantic/private/blind access         0
+retries / replays                      0 / 0
+report SHA-256  cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
 ```
 
-Freeze exact population, predicates and expected outcomes before interpreting results. Preserve failures rather than weakening checks post hoc.
+Do not redesign EV-007, EV-008 or EV-011. Their frozen definitions should later be reused against a governed selected provider without post-hoc changes.
 
-## 6. After EV-011
+## 5. NEXT provider-free P0/P1 — clean reproduction + evidence index + integrated demo
 
-If issue #44 can run, execute the exact ADR-009/010/011 envelope once and freeze either a candidate ID or `NO_SELECTION`. Then rerun compatible EV-007/008/011 definitions against that governed result without changing metric definitions after seeing live outcomes.
+Issue #44 is still blocked on external prerequisites, so the highest-value unblocked work is final-delivery reproducibility rather than more architecture.
 
-If #44 remains blocked, continue final-delivery provider-free work: clean reproduction, evidence index, supplied API integration demonstration and documentation. Do not spend the deadline on speculative P2 architecture.
+Build one provider-free delivery package that proves a fresh checkout can install the accepted production/runtime dependencies, execute representative integrated scenarios, evaluate their exact `RunTrace`s, and resolve every claimed frozen evidence item through a machine-readable index.
+
+### Required reproduction path
+
+Freeze one canonical command sequence that performs, from a clean checkout with no provider secrets:
+
+1. dependency installation for the production package and `research/e2` harness;
+2. production/runtime unit regression;
+3. accepted ADR-004 controller regression;
+4. EV-007 validator;
+5. EV-008 validator;
+6. EV-011 validator;
+7. one integrated provider-free demonstration covering read/investigate, clarify, abstain, escalate and an explicitly controlled supplied/test action;
+8. deterministic evaluation of the exact traces created by the demo;
+9. evidence-index validation.
+
+No live provider call, credential probe or real customer mutation may be required for this path.
+
+### Machine-readable evidence index
+
+Create one canonical index that records at minimum:
+
+- evidence ID;
+- evidence category (`adr`, `freeze`, `result`, `validator`, `workflow`, `demo`, `scientific_blocker`);
+- repository path where applicable;
+- Git blob SHA-1 where the file is repository-resident;
+- canonical report/result SHA-256 where applicable;
+- issue / PR / ADR relationship where applicable;
+- authorization status / interpretation boundary;
+- whether the item is reproducible provider-free, externally blocked or historical immutable evidence.
+
+The index must include at least ADR-004 through ADR-015, EV-007/008/011 freezes/results, the frozen provider-comparison plan, the missing C4 artifact identity/blocker, and the integrated demo evidence produced by this task.
+
+Do not silently omit blocked evidence. The C4 artifact and live provider comparison must appear as explicitly blocked/unexecuted items rather than false PASSes.
+
+### Integrated provider-free demo
+
+Use existing runtime/controller/harness boundaries; do not build a second agent path.
+
+The demo must include deterministic supplied/local scenarios for:
+
+- successful read/investigate;
+- clarification;
+- safe abstention;
+- human escalation;
+- one controlled accepted action using ADR-012 supplied/test transport.
+
+For every scenario persist only sanitized deterministic evidence needed for reproduction: scenario ID, terminal decision/reason, ordered tool/policy signatures, evaluator classification, trace hash and result hash. Do not add real secrets, raw customer data or real mutations.
+
+### Required acceptance
+
+```text
+clean-checkout command path defined             YES
+provider secrets required                       NO
+live provider calls                              0
+credential/account probes                        0
+real customer mutations                          0
+representative demo scenarios                    5 / 5
+exact demo traces evaluated                      5 / 5
+evidence-index entries resolve                   100% for repository-resident items
+blocked external evidence labeled explicitly     YES
+EV-007 validator                                 PASS
+EV-008 validator                                 PASS
+EV-011 validator                                 PASS
+production/runtime regressions                   PASS
+```
+
+Prefer one dedicated validator/workflow for this final-delivery package. Freeze exact scenario population, index schema and command sequence before interpreting results.
+
+## 6. Parallel provider execution
+
+If issue #44 becomes executable, run the exact ADR-009/010/011 envelope once and freeze either an exact candidate ID or `NO_SELECTION`. Do not create a new executor or custody root to evade existing evidence.
+
+After a valid provider result exists, rerun compatible EV-007/008/011 definitions against that governed result without changing metric definitions after seeing the live outcomes.
 
 ## 7. Integrated final delivery path
 
-After provider evidence exists, or using the safe provider-free baseline if it remains blocked:
+After the provider-free reproduction package exists, and regardless of whether #44 remains externally blocked:
 
-- demonstrate contextualize / investigate / clarify / abstain / escalate through accepted API/tool boundaries;
-- use ADR-012 only for explicitly authorized controlled execute scenarios;
-- evaluate the exact production `RunTrace`;
-- collect deterministic reliability/communication evidence;
+- retain one clean install/run/evaluate handoff;
+- retain one machine-readable evidence inventory;
+- demonstrate accepted read/clarify/abstain/escalate/action behavior;
+- use ADR-012 only for explicitly controlled supplied/test execute scenarios unless real authorization is separately established;
 - record exact latency/resource/cost only where actual evidence exists;
-- produce a clean install/run/evaluate path and final evidence index.
+- rerun the full regression before delivery;
+- document external blockers without converting them into fabricated completeness.
 
 ## 8. Deadline sequence
 
 ```text
-NOW        reconcile ADR-014 / EV-008 freeze
-NEXT       implement and freeze EV-011 provider-free customer-safe communication
+NOW        reconcile ADR-015 / EV-011 freeze
+NEXT       clean reproduction + evidence index + integrated provider-free demo
 PARALLEL   issue #44: provision canonical custody + both secrets or remain at 0/32 calls
 PARALLEL   recover exact C4 score-row artifact only
-THEN       clean reproduction + evidence index + integrated provider-free demo
 WHEN READY execute exact live provider envelope once; freeze candidate_id or NO_SELECTION
 AFTER      rerun frozen reliability definitions against governed provider result
 FINAL      end-to-end regression, demo and handoff before 2026-09-08
