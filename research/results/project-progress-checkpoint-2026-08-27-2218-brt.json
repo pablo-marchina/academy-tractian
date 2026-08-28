@@ -1,0 +1,115 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "timestamp": "2026-08-27T22:18:00-03:00",
+  "canonical_branch_after_merge": "main",
+  "canonical_main_head_at_checkpoint": "b68dcabe3d2c2474c18e68aec082e77f1e74f3c8",
+  "working_branch": "docs/reconcile-production-runtime-status",
+  "project_north_star": "maximize the strongest defensible TRACTIAN x Inteli delivery while following P1-P4",
+  "scientific_state": {
+    "p12_c4_packet": "FROZEN_COMPLETE_C4_PACKET",
+    "deterministic_scoring": "FROZEN_C4_DETERMINISTIC_SCORING",
+    "bootstrap_20000": "FROZEN_C4_BOOTSTRAP_20000",
+    "logo_sensitivity": "FROZEN_C4_LEAVE_ONE_GROUP_OUT_SENSITIVITY",
+    "logo_independent_validation": "PASS_INDEPENDENT_LOGO_RECOMPUTATION",
+    "current_authorized_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+    "required_reporting_executed": false,
+    "survivor_decision_executed": false,
+    "semantic_stage_executed": false,
+    "fresh_blind_access": false,
+    "legacy_locked_test_access": false,
+    "provider_calls_authorized_now": 0,
+    "project_level_preferred": null,
+    "global_final_architecture": "UNFROZEN",
+    "production_readiness_claim": false
+  },
+  "reporting_blocker": {
+    "status": "BLOCKED_ON_EXACT_ORIGINAL_EVALUATOR_SIDE_SCORE_ARTIFACT",
+    "required_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "required_bytes": 177350,
+    "required_rows": 144,
+    "required_common_parents": 36,
+    "required_arms": 4,
+    "reconstruction_allowed": false,
+    "rescoring_allowed": false
+  },
+  "logo_freeze": {
+    "path": "research/results/p12-c4-logo-sensitivity-freeze-2026-08-27.json",
+    "status": "FROZEN_C4_LEAVE_ONE_GROUP_OUT_SENSITIVITY",
+    "deterministic_score_rows_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "bootstrap_result_sha256": "08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526",
+    "full_logo_result_sha256": "bc62cc45b4e3344861a152825096a8a1b28f41f2d831f86fd81de35964363f8c",
+    "independent_validation_sha256": "cb6ccce3cbdbffe61a01ade8e121d977b6f6ca7d9552684a311cf1ba59d8d3cb",
+    "groups": 7,
+    "retained_groups_per_estimate": 6,
+    "validation_mismatch_sections": 0
+  },
+  "observed_logo_evidence": {
+    "E1_expected_read_recall_sign_robust": true,
+    "E1_expected_read_recall_direction": "NEGATIVE",
+    "E1_extra_public_read_count_sign_robust": true,
+    "E1_extra_public_read_count_direction": "NEGATIVE",
+    "E1_evidence_correctness_sign_robust": false,
+    "E1_task_reference_quality_sign_robust": false,
+    "sign_flip_omission": "asset_M102",
+    "S1_all_preregistered_primary_effects_zero_under_every_omission": true,
+    "formal_survivor_decision_executed": false
+  },
+  "architecture_state": {
+    "p0_agent_controller": "FROZEN_FOR_P0_CONTROLLER_SCOPE",
+    "controller_adr": "docs/adr/004-agent-controller-runtime-2026-08-27.md",
+    "controller_execution_boundary": "research.e2.HarnessRunner.execute_tool",
+    "provider_model_selected": false,
+    "rag_selected": false,
+    "persistent_memory_selected": false,
+    "mcp_selected": false,
+    "multi_agent_selected": false,
+    "global_final_architecture": "UNFROZEN"
+  },
+  "production_delivery_state": {
+    "first_runtime_slice": "MERGED_VALIDATED_PROVIDER_FREE_READ_ONLY",
+    "issue": 17,
+    "pull_request": 18,
+    "validated_head": "5c566075b83c27de7a81eb724c0d37acdf8a1023",
+    "merge_commit": "b68dcabe3d2c2474c18e68aec082e77f1e74f3c8",
+    "production_runtime_ci_run": 33132279628,
+    "production_runtime_ci_conclusion": "success",
+    "triggered_pr_workflows": 12,
+    "triggered_pr_workflows_success": 12,
+    "canonical_tool_operations": 18,
+    "canonical_mutating_actions": 5,
+    "mutating_actions_enabled": false,
+    "action_denial_stage": "B2_BEFORE_TRANSPORT",
+    "provider_model_adapter": "NOT_IMPLEMENTED",
+    "integrated_production_evaluator": "NOT_IMPLEMENTED",
+    "production_readiness_claim": false
+  },
+  "next_scientific_gate": {
+    "id": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+    "authorized": true,
+    "basis": "frozen P12-C2 required_reporting",
+    "outputs": [
+      "all per-group outcomes",
+      "modality slices: investigate, execute, contextualize",
+      "safety and failure-family slices",
+      "operational failure counts and denominators"
+    ]
+  },
+  "next_delivery_priorities": [
+    "integrated provider-free production evaluator over RunTrace",
+    "govern production action authorization confirmation idempotency and duplicate protection before action enablement",
+    "compare production model/provider adapters only under a separately governed decision",
+    "extend real-path Agent plus Evaluator integration and regression evidence"
+  ],
+  "still_forbidden": [
+    "new provider/model generation without a new explicit authorization",
+    "deterministic score mutation or rescoring",
+    "candidate regeneration",
+    "survivor/PREFERRED decision before reporting freeze",
+    "semantic evaluation",
+    "FRESH_BLIND",
+    "LEGACY_LOCKED_TEST",
+    "production mutating action execution before a separate governed safety decision",
+    "global final architecture freeze",
+    "production readiness claim"
+  ]
+}

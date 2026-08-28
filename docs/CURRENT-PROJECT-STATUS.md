@@ -1,8 +1,9 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-08-27 11:02 BRT  
+**Canonical status checkpoint:** 2026-08-27 22:18 BRT  
 **Canonical branch after merge:** `main`  
-**Current working branch:** `eval/c4-logo-sensitivity`  
+**Canonical main head at this checkpoint:** `b68dcabe3d2c2474c18e68aec082e77f1e74f3c8`  
+**Current reconciliation branch:** `docs/reconcile-production-runtime-status`  
 **Final delivery target:** 2026-09-08  
 **Audited project source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
@@ -12,9 +13,9 @@
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Progress ledger:** [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md)  
 **Repository guide:** [`REPOSITORY-GUIDE.md`](REPOSITORY-GUIDE.md)  
-**Machine-readable checkpoint:** [`research/results/project-progress-checkpoint-2026-08-27-1102-brt.json`](../research/results/project-progress-checkpoint-2026-08-27-1102-brt.json)
+**Machine-readable checkpoint:** [`../research/results/project-progress-checkpoint-2026-08-27-2218-brt.json`](../research/results/project-progress-checkpoint-2026-08-27-2218-brt.json)
 
-This document is the **sole canonical human-readable source for current project state and authorization**. Frozen experiment artifacts remain authoritative for exact semantics.
+This document is the **sole canonical human-readable source for current project state and authorization**. Frozen experiment artifacts remain authoritative for exact scientific semantics. Architecture/product progress recorded here does not itself authorize a scientific gate.
 
 ## Executive state
 
@@ -31,7 +32,7 @@ P12-C4 packet                               FROZEN_COMPLETE_C4_PACKET
 P12-C4 deterministic scoring                FROZEN / 144 OF 144 / 0 RECOMPUTATION MISMATCHES
 P12-C4 bootstrap 20k                        FROZEN / PASS / INDEPENDENT RECOMPUTATION PASS
 P12-C4 LOGO sensitivity                     FROZEN / 7 OF 7 OMISSIONS / INDEPENDENT RECOMPUTATION PASS
-current authorized gate                     REQUIRED_PER_GROUP_AND_SLICE_REPORTING
+current authorized scientific gate          REQUIRED_PER_GROUP_AND_SLICE_REPORTING
 per-group reporting                         AUTHORIZED / NOT EXECUTED
 modality slices                             AUTHORIZED ONLY IN CURRENT REPORTING GATE / NOT EXECUTED
 safety/failure-family slices                AUTHORIZED ONLY IN CURRENT REPORTING GATE / NOT EXECUTED
@@ -41,13 +42,18 @@ LEGACY_LOCKED_TEST                          NOT AUTHORIZED
 provider calls authorized now               0
 current project-level PREFERRED             NONE
 survivor/no-survivor decision               NOT AUTHORIZED YET
-final architecture                          UNFROZEN
+P0 Agent Controller runtime                 FROZEN_FOR_P0_CONTROLLER_SCOPE / ADR-004
+first production runtime slice              MERGED / VALIDATED / PROVIDER_FREE / READ_ONLY
+production mutating actions                 DISABLED / FAIL_CLOSED BEFORE TRANSPORT
+production model/provider adapter           NOT SELECTED / NOT IMPLEMENTED
+integrated production evaluator             NOT YET IMPLEMENTED
+global final architecture                   UNFROZEN
 production-readiness claim                  NOT AUTHORIZED
 ```
 
 ## Current scientific evidence
 
-The C4 statistical chain is now frozen through LOGO:
+The C4 statistical chain remains frozen through LOGO:
 
 1. `research/results/p12-c4-deterministic-scoring-freeze-2026-08-27.json` — 144/144 deterministic score rows, 0 independent score mismatches;
 2. `research/results/p12-c4-bootstrap-20000-freeze-2026-08-27.json` — exact 20,000-resample whole-group percentile bootstrap;
@@ -74,13 +80,11 @@ Observed robustness evidence, without candidate-selection inference:
 
 All four arm aggregates still contain nonzero confirmed hard-safety violations. Under the frozen preregistration, hard safety is an exact gate rather than a statistical tradeoff, but the formal survivor/no-survivor decision remains deferred until the remaining required reporting gate is frozen.
 
-## Current authorization boundary
+## Current scientific authorization boundary
 
-The LOGO freeze opens only the staged project gate:
+The only current scientific gate remains:
 
 ### `REQUIRED_PER_GROUP_AND_SLICE_REPORTING`
-
-This label covers the still-unexecuted items explicitly required by the frozen C2 preregistration. It is a project gate label, not a claimed verbatim preregistration identifier.
 
 Authorized now:
 
@@ -89,6 +93,17 @@ Authorized now:
 - safety and failure-family slices;
 - operational failure counts and denominators;
 - validation and freeze of those reporting outputs.
+
+The prepared reporting path remains blocked on the exact original evaluator-side deterministic-score artifact whose immutable identity is:
+
+```text
+SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
+bytes    177350
+rows     144
+geometry 36 common parents × 4 arms
+```
+
+That artifact must be recovered/provisioned exactly. Reconstruction, rescoring or replacement is forbidden.
 
 Still forbidden:
 
@@ -99,8 +114,49 @@ Still forbidden:
 - semantic evaluation;
 - FRESH_BLIND;
 - LEGACY_LOCKED_TEST;
-- final architecture freeze;
+- global final architecture freeze;
 - production-readiness claims.
+
+## Current architecture and production evidence
+
+### P0 Agent Controller — frozen for scoped use
+
+ADR-004 (`docs/adr/004-agent-controller-runtime-2026-08-27.md`) records the accepted P0 controller decision:
+
+- explicit provider-free `AgentController`;
+- `HarnessRunner.execute_tool()` remains the exclusive real tool-execution boundary;
+- runner-owned identity/seed stay outside `DecisionSource` context;
+- LangGraph remains a reversal/upgrade candidate only if durable cross-process state/checkpoint/HITL becomes a demonstrated requirement.
+
+This is a scoped runtime decision, not a global architecture freeze and not a model/provider selection.
+
+### First production runtime vertical slice — merged and validated
+
+Issue #17 / PR #18 created the first distinct production surface under `src/academy_tractian/` and merged it to `main` as:
+
+`b68dcabe3d2c2474c18e68aec082e77f1e74f3c8`
+
+Validated PR head:
+
+`5c566075b83c27de7a81eb724c0d37acdf8a1023`
+
+Validation evidence:
+
+- dedicated `production-runtime` Actions run `33132279628`: `completed / success`;
+- production runtime tests: success;
+- ADR-004 controller regression: success;
+- all 12 workflows triggered against the final PR head: `completed / success`.
+
+The slice:
+
+- exposes `ProductionRuntime`, immutable request/config models and a deterministic config hash;
+- preserves the canonical 18-operation ToolSpec registry;
+- routes read tools through `HarnessRunner` with strict argument validation;
+- keeps all five mutating canonical actions present but denies them deterministically at B2 before transport;
+- preserves normalized `RunTrace` for later integrated evaluation;
+- imports no model/provider/orchestration SDK.
+
+This work used 0 provider/model calls and accessed no evaluator/private/gold/semantic/FRESH_BLIND/LEGACY_LOCKED_TEST material.
 
 ## Current non-claims
 
@@ -110,13 +166,16 @@ The project does **not** currently claim that:
 - required per-group/modality/failure reporting is complete;
 - any arm is eligible for semantic evaluation;
 - independent generalization has been measured;
-- NVIDIA or any runtime/retrieval/memory topology is final;
-- the architecture is frozen;
+- a production model/provider has been selected;
+- production mutating actions are authorized or enabled;
+- the production evaluator is integrated yet;
+- RAG, memory, MCP, multi-agent or deployment topology is final;
+- the global architecture is frozen;
 - the system is production-ready.
 
 ## Delivery coverage state
 
-The requested final product remains an integrated **industrial agent + trustworthy evaluation framework**. C4 remains candidate-selection evidence, not the final product.
+The requested final product remains an integrated **industrial agent + trustworthy evaluation framework**. The first production runtime slice materially advances the Agent Runtime Plane, but it is not yet the complete Agent + Evaluator deliverable.
 
 Priority remains:
 
@@ -128,7 +187,10 @@ P1 production/security/reliability/partner quality
 P2 optional complexity only with measured benefit
 ```
 
-Parallel P0/P1 work is permitted only when it cannot contaminate the frozen C4 path and maps directly to `DELIVERY-ACCEPTANCE.md` or a material delivery risk.
+Two tracks may proceed in parallel only while their boundaries remain isolated:
+
+1. **Scientific:** recover the exact frozen score artifact → execute/validate/freeze required reporting → advance only the gate explicitly opened by that freeze.
+2. **Delivery:** build the production evaluation integration and separately govern consequential-action safety/model-provider decisions without touching frozen C4 evidence.
 
 ## Planning pointers
 
