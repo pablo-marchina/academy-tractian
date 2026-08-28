@@ -468,3 +468,73 @@ C4 scientific state changed              false
 ```
 
 `research/tractian-source-baseline-2026-08-27.md` and `research/01-requirements-matrix.md` were reconciled to preserve the upstream duplicate-key defect as evidence while using duplicate-aware normalization for the canonical Tool Contract. This work changes source interpretation only; it does not mutate frozen C4 artifacts, scores, candidates, authorization or the current `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` gate.
+
+## 18. P0 Agent Controller runtime decision — FROZEN_FOR_P0_CONTROLLER_SCOPE — 2026-08-27
+
+Issue #15 compared the smallest credible single-agent orchestration baseline against current LangGraph, Pydantic AI and OpenAI Agents SDK capabilities while preserving the already-proven E2 execution boundary.
+
+The selected P0 pattern is the explicit provider-free `AgentController` recorded in:
+
+`docs/adr/004-agent-controller-runtime-2026-08-27.md`
+
+Key invariants frozen for this scope:
+
+- `HarnessRunner.execute_tool()` remains the exclusive real tool-execution path;
+- `DecisionSource` never receives runner binding, seed or evaluator/private state;
+- tool proposals and terminal `FINAL` / `CLARIFY` / `ESCALATE` / `ABSTAIN` decisions are typed and bounded;
+- decision-source, tool-boundary and budget failures terminate fail-closed;
+- no model/provider/runtime-orchestration SDK is required by the controller.
+
+Validation history was preserved rather than rewritten. PR #16 first failed CI because of a published test typo, then the corrected head `0cc498342716a8ee631e305d255cfe92725494f6` passed research workflow run `33130472742` (#887). After ADR/matrix registration, final head `3dbebc0172e2f8ba8771f7d8d3968ce53a5ee525` passed run `33131374709` (#888) and was merged to `main` in `fcb88a22d287785cf10831e2a912c80f6396c863`.
+
+This decision is scoped to the P0 controller/runtime pattern. It does not select a production model/provider, persistent-memory layer, RAG, MCP, multi-agent topology or deployment, and it does not change the C4 scientific gate.
+
+## 19. First production Agent runtime vertical slice — MERGED / VALIDATED / READ_ONLY — 2026-08-27
+
+Issue #17 / PR #18 created the first distinct production-path source boundary without duplicating the validated E2 execution kernel.
+
+New production surface:
+
+- `src/academy_tractian/runtime.py` — immutable `ProductionRequest` / `ProductionRuntimeConfig` and `ProductionRuntime` entrypoint;
+- `src/academy_tractian/__init__.py` — public production package exports;
+- `tests/test_runtime.py` — production runtime unit/contract regressions;
+- root `pyproject.toml` — production package/test configuration;
+- `.github/workflows/production-runtime.yml` — dedicated production-runtime CI;
+- root `README.md` — research/production boundary and local validation path.
+
+The runtime preserves the canonical 18-operation ToolSpec registry and routes tool execution through the accepted `AgentController` + `HarnessRunner` boundary. The first slice is intentionally provider-free and read-only: all five canonical mutating actions remain present for auditability but are deterministically denied at B2 before transport through an empty production action-permission set.
+
+Final validated PR head:
+
+`5c566075b83c27de7a81eb724c0d37acdf8a1023`
+
+Dedicated production validation:
+
+```text
+workflow                 production-runtime
+run                      33132279628 / #1
+production runtime tests success
+ADR-004 controller test  success
+conclusion               success
+```
+
+All 12 workflows triggered against the final PR head completed successfully, including the existing E2–E8 regression path. PR #18 was merged with an expected-head guard into:
+
+`b68dcabe3d2c2474c18e68aec082e77f1e74f3c8`
+
+Boundary evidence:
+
+```text
+provider/model calls                         0
+evaluator/private/gold accesses              0
+semantic/FRESH_BLIND/LEGACY_LOCKED_TEST      0
+score mutation/rescoring                     0
+canonical ToolSpecs                         18
+canonical mutating actions                    5
+mutating actions reaching transport           0
+production model/provider adapter       absent
+integrated production evaluator         absent
+production-readiness claim                false
+```
+
+The merge materially advances the Agent Runtime Plane but does not complete the requested Agent + Evaluator product. The immediate non-contaminating P0 delivery priority becomes integration of a deterministic production evaluator over the same `RunTrace`, while production action enablement and model/provider selection remain separate governed decisions. The scientific gate remains `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` and is still blocked on recovery of the exact original evaluator-side score artifact.
