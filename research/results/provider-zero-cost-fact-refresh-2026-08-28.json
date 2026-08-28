@@ -1,0 +1,171 @@
+{
+  "schema_version": "provider-zero-cost-fact-refresh-v1",
+  "date": "2026-08-28",
+  "status": "COMPLETE",
+  "method": "primary-source external fact refresh only",
+  "provider_model_inference_calls": 0,
+  "credential_account_probes": 0,
+  "real_customer_mutations": 0,
+  "scientific_gate_changed": false,
+  "production_provider_selected": false,
+  "new_benchmark_authorized": false,
+  "providers": [
+    {
+      "provider": "google_gemini_developer_api",
+      "current_model": "gemini-3.7-flash",
+      "lifecycle": "GA_STABLE",
+      "usd0_status": "FREE_TIER_AVAILABLE",
+      "capabilities": ["function_calling", "structured_outputs", "thinking", "1M_input_context", "64k_output"],
+      "quota_fact": "active RPM/TPM/RPD limits are project/model dependent and visible in AI Studio; not probed",
+      "privacy_fact": "Free Tier content is used to improve Google products according to current pricing table",
+      "screening": "CONDITIONAL_ELIGIBLE",
+      "condition": "exact project payload must be acceptable under Free Tier data-use policy",
+      "primary_sources": [
+        "https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash",
+        "https://ai.google.dev/gemini-api/docs/latest-model",
+        "https://ai.google.dev/gemini-api/docs/pricing",
+        "https://ai.google.dev/gemini-api/docs/rate-limits",
+        "https://ai.google.dev/gemini-api/docs/function-calling",
+        "https://ai.google.dev/gemini-api/docs/structured-output"
+      ]
+    },
+    {
+      "provider": "groq_free",
+      "current_models": ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"],
+      "usd0_status": "FREE_PLAN_PUBLISHED",
+      "capabilities": ["tool_use", "strict_structured_outputs_on_selected_models"],
+      "constraints": [
+        "strict Structured Outputs and tool use are not supported together in one request",
+        "qwen/qwen3.8-27b is Preview and Groq says Preview models should not be used in production",
+        "GPT-OSS-120B has preserved repository-specific negative task-quality/capacity evidence"
+      ],
+      "published_free_limits": {
+        "openai/gpt-oss-120b": {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 200000},
+        "openai/gpt-oss-20b": {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 200000},
+        "qwen/qwen3.8-27b": {"rpm": 30, "rpd": 1000, "tpm": 8000, "tpd": 2000000}
+      },
+      "screening": "ELIGIBLE_WITH_HISTORICAL_PENALTY",
+      "primary_sources": [
+        "https://console.groq.com/docs/rate-limits",
+        "https://console.groq.com/docs/models",
+        "https://console.groq.com/docs/structured-outputs",
+        "https://console.groq.com/docs/tool-use/overview",
+        "https://console.groq.com/docs/billing-faqs"
+      ]
+    },
+    {
+      "provider": "cloudflare_workers_ai_free",
+      "usd0_status": "FAIL_CLOSED_FREE_PLAN",
+      "daily_free_neurons": 10000,
+      "overage_behavior": "Workers Free operations fail after free allocation instead of becoming billable",
+      "screened_models": [
+        {
+          "model": "@cf/zai-org/glm-4.7-flash",
+          "context_tokens": 131072,
+          "function_calling": true,
+          "reasoning": true,
+          "neurons_per_million_input": 5500,
+          "neurons_per_million_output": 36400
+        },
+        {
+          "model": "@cf/google/gemma-4-26b-a4b-it",
+          "context_tokens": 256000,
+          "function_calling": true,
+          "reasoning": true,
+          "neurons_per_million_input": 9091,
+          "neurons_per_million_output": 27273
+        },
+        {
+          "model": "@cf/nvidia/nemotron-3-120b-a12b",
+          "context_tokens": 256000,
+          "function_calling": true,
+          "reasoning": true,
+          "neurons_per_million_input": 45455,
+          "neurons_per_million_output": 136364
+        }
+      ],
+      "api_contract_facts": ["response_format", "tools", "tool_choice", "seed_best_effort", "openai_compatible_endpoint"],
+      "screening": "ELIGIBLE",
+      "primary_sources": [
+        "https://developers.cloudflare.com/workers-ai/platform/pricing/",
+        "https://developers.cloudflare.com/workers-ai/",
+        "https://developers.cloudflare.com/workers-ai/features/json-mode/",
+        "https://developers.cloudflare.com/workers-ai/features/function-calling/",
+        "https://developers.cloudflare.com/workers-ai/models/glm-4.7-flash/",
+        "https://developers.cloudflare.com/workers-ai/models/gemma-4-26b-a4b-it/",
+        "https://developers.cloudflare.com/workers-ai/models/nemotron-3-120b-a12b/"
+      ]
+    },
+    {
+      "provider": "openrouter_free",
+      "usd0_status": "FREE_MODELS_AVAILABLE",
+      "free_plan_requests_per_day": 50,
+      "constraints": [
+        "openrouter/free selects eligible free models at random",
+        "structured-output support is endpoint-specific",
+        "provider-side fallback routing can retry other providers before surfacing an error"
+      ],
+      "screening": "CONDITIONAL_ELIGIBLE_FIXED_MODEL_ONLY",
+      "excluded_path": "openrouter/free generic router",
+      "primary_sources": [
+        "https://openrouter.ai/pricing",
+        "https://openrouter.ai/openrouter/free/",
+        "https://openrouter.ai/docs/api_reference/limits",
+        "https://openrouter.ai/docs/guides/features/structured-outputs",
+        "https://openrouter.ai/collections/tool-calling-models"
+      ]
+    },
+    {
+      "provider": "ollama_local",
+      "usd0_status": "NO_EXTERNAL_API_CHARGE",
+      "capabilities": ["local_tool_calling", "parallel_tool_calling", "multi_turn_tool_loop", "json_schema_structured_outputs"],
+      "screening": "ELIGIBLE_LOCAL_BASELINE",
+      "remaining_fact_gap": "specific model and hardware feasibility not qualified in this no-inference refresh",
+      "primary_sources": [
+        "https://docs.ollama.com/capabilities/tool-calling",
+        "https://docs.ollama.com/capabilities/structured-outputs",
+        "https://docs.ollama.com/api/introduction"
+      ]
+    },
+    {
+      "provider": "huggingface_inference_providers",
+      "usd0_status": "BOUNDED_FREE_CREDIT",
+      "free_user_monthly_credits_usd": 0.10,
+      "extra_usage": "requires purchased credits",
+      "screening": "BOUNDED_EXPERIMENT_ONLY",
+      "reason": "allowance is too small for default production selection unless workload is proven ultra-low-volume",
+      "primary_sources": [
+        "https://huggingface.co/docs/inference-providers/pricing",
+        "https://huggingface.co/docs/inference-providers/index",
+        "https://huggingface.co/docs/inference-providers/hub-api"
+      ]
+    },
+    {
+      "provider": "cerebras_inference",
+      "usd0_status": "FREE_TRIAL_5_USD_CREDITS",
+      "screening": "NOT_PRIMARY_PRODUCTION_CANDIDATE",
+      "reason": "bounded trial rather than durable recurring primary production free tier; historical serving evidence already exists",
+      "primary_sources": ["https://www.cerebras.ai/pricing"]
+    },
+    {
+      "provider": "nvidia_hosted_nim_api_catalog",
+      "usd0_status": "FREE_DEVELOPMENT_TESTING_ENDPOINTS",
+      "screening": "INELIGIBLE_FOR_FINAL_HOSTED_PRODUCTION",
+      "reason": "NVIDIA positions free hosted NIM access for prototyping/development/testing and points production to enterprise/production deployment routes",
+      "primary_sources": [
+        "https://developer.nvidia.com/nim",
+        "https://build.nvidia.com/",
+        "https://build.nvidia.com/models",
+        "https://docs.nvidia.com/nim/large-language-models/1.15.0/getting-started.html"
+      ]
+    }
+  ],
+  "current_primary_hosted_feasible_set": [
+    "gemini-3.7-flash CONDITIONAL_ON_DATA_USE",
+    "cloudflare-workers-ai-free PINNED_MODEL",
+    "groq-free HISTORICAL_CONTROL_OR_BASELINE"
+  ],
+  "conditional_baselines": ["ollama-local", "openrouter-fixed-free-variant"],
+  "screened_out_primary": ["nvidia-hosted-free-nim", "cerebras-free-trial", "huggingface-routed-free-credit", "groq-qwen3.8-preview"],
+  "next_action": "derive a minimal prospective comparison candidate set from this refresh plus historical E8/E14/P12 evidence; resolve Gemini data-use eligibility and Cloudflare representative selection before any inference call"
+}
