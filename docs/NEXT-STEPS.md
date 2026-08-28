@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE / canonical short-horizon execution plan  
-**Planning checkpoint:** 2026-08-27 22:18 BRT  
+**Planning checkpoint:** 2026-08-27 22:29 BRT  
 **Current state source:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Macro plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
@@ -16,13 +16,13 @@ The project now has two deliberately isolated short-horizon tracks:
 
 ```text
 SCIENTIFIC TRACK                              DELIVERY TRACK
-REQUIRED_PER_GROUP_AND_SLICE_REPORTING        production runtime v1 merged/read-only
+REQUIRED_PER_GROUP_AND_SLICE_REPORTING        runtime + deterministic evaluator integrated
         ↓                                             ↓
-reporting freeze                              integrated production evaluator
+reporting freeze                              production action-safety decision
         ↓                                             ↓
-survivor/no-survivor if authorized            production action-safety decision
+survivor/no-survivor if authorized            model/provider production-fit decision
         ↓                                             ↓
-later child gates only if opened              model/provider production-fit decision
+later child gates only if opened              real-path reliability/security integration
 ```
 
 Neither track may silently authorize the other.
@@ -33,7 +33,7 @@ The current scientific gate remains:
 REQUIRED_PER_GROUP_AND_SLICE_REPORTING
 ```
 
-The first production runtime slice is already merged and validated, but it is intentionally provider-free and read-only. All five mutating canonical actions remain fail-closed before transport.
+The production runtime/evaluator path is provider-free and read-only. All five mutating canonical actions remain fail-closed before transport, and the integrated evaluator establishes deterministic trace/safety properties only — not semantic task correctness.
 
 ## 2. Immediate scientific sequence — highest scientific priority
 
@@ -76,66 +76,80 @@ A reporting closure may authorize a **survivor/no-survivor decision** using the 
 
 ## 3. Immediate delivery sequence — can run in parallel without C4 contamination
 
-ADR-004 and PR #18 removed the missing-controller/production-surface blocker. The next delivery work should prioritize the complete `REQ-017` Agent + Evaluator requirement rather than adding optional orchestration complexity.
+ADR-004, PR #18 and PR #21 now provide a provider-free read-only Agent Runtime Plane plus deterministic trace evaluation on the exact same run. The next P0/P1 work must address consequential actions and the missing model/provider decision rather than optional orchestration complexity.
 
-### Step D1 — Integrate a provider-free production evaluator over `RunTrace`
-
-Create a focused P0 task that evaluates the exact trace produced by `ProductionRuntime` without changing runtime behavior and without exposing evaluator-only references to `DecisionSource`.
-
-First target deterministic capabilities already supported by runtime evidence:
-
-- trace validity and lifecycle completeness;
-- tool/proposal/call/result separation;
-- schema/argument correctness;
-- contained policy denials;
-- identity/seed isolation;
-- terminal decision/fallback classification;
-- tool/transport failure containment;
-- per-run report surface suitable for later semantic evaluators.
-
-Do not add semantic/judge calls merely to complete the interface; deterministic truth remains the baseline.
-
-### Step D2 — Govern production action safety before enabling any mutating tool
+### Step D1 — Govern production action safety before enabling any mutating tool — NEXT
 
 Current production config intentionally fixes `actions_enabled = false` and grants zero action permissions.
 
-Before changing that boundary, compare and freeze a production policy covering at minimum:
+Open a focused material decision comparing the simplest safe production-action policy against credible alternatives. Freeze at minimum:
 
-- explicit permissions and resource/company scope;
-- requester confirmation policy for consequential actions, kept separate from benchmark accepted-action semantics;
+- explicit permission mapping per canonical action;
+- resource/company scope validation;
+- requester-confirmation policy for consequential actions, explicitly separated from benchmark accepted-action semantics;
 - idempotency / duplicate-action protection;
-- justification requirements;
-- human fallback/escalation;
-- failure and retry behavior that cannot duplicate actions;
-- audit/trace evidence.
+- justification requirements and audit evidence;
+- human fallback/escalation when authorization/evidence is insufficient;
+- retry/failure semantics that cannot duplicate or ambiguously execute actions;
+- trace/evaluator obligations proving allowed, denied and repeated action behavior.
 
-No production action should reach transport until this decision and its regression tests are complete.
+The null baseline remains **all actions disabled**. No action may reach production transport until controlled evidence justifies a change from that baseline.
 
-### Step D3 — Define and compare the production model/provider adapter
+### Step D2 — Define and compare the production model/provider adapter
 
 The controller protocol is frozen; the model/provider is not.
 
-The next model/provider decision must compare a strong quality-frontier candidate with feasible lower-cost/local/open alternatives against measured task quality, robustness, latency, reliability, resource/cost, portability and failure behavior. Do not infer a production provider from historical C4 serving-route qualification.
+The model/provider decision must compare:
+
+- a strong quality-frontier candidate/configuration;
+- a feasible lower-cost/local/open baseline;
+- any additional credible Pareto candidate.
+
+Measure task quality, structured-decision adherence, robustness, latency, reliability, resource/cost, portability and failure behavior. Historical C4 serving-route qualification is not production-provider evidence by itself.
 
 Provider calls remain unauthorized until a separately governed execution explicitly opens them.
 
-### Step D4 — Extend the real production path after D1–D3 evidence
+### Step D3 — Extend real-path Agent + Evaluator coverage
 
-Then build toward:
+After the applicable action/model decisions are frozen, build toward:
 
 ```text
 request
 → ProductionRuntime
-→ model/provider DecisionSource adapter
+→ production DecisionSource adapter
 → AgentController
 → HarnessRunner / canonical ToolSpec
 → supplied TRACTIAN API
 → RunTrace
-→ integrated evaluator
-→ customer-safe response + evaluation result
+→ ProductionEvaluator
+→ customer-safe response + evaluation report
 ```
 
-Add end-to-end scenario coverage for contextualize, investigate, clarify/abstain, escalation, execute once authorized, conflicting/inconclusive evidence and provider/tool failure.
+Required real-path coverage should include:
+
+- contextualize;
+- investigate;
+- clarify / abstain;
+- escalate with useful handoff;
+- execute only after action safety is authorized;
+- partial/unavailable tools or data;
+- conflicting/inconclusive evidence;
+- model/provider failure fallback;
+- per-run deterministic evaluation.
+
+### Step D4 — Reliability, security and observability evidence
+
+Once a real DecisionSource/provider path exists, run repeated/fault-injected tests for:
+
+- EV-007 failure performance;
+- EV-008 stability/repeated-run reliability;
+- authorization/resource-scope/idempotency;
+- failure continuity and human fallback;
+- latency/resource/cost behavior;
+- trace/diagnostic coverage;
+- customer-safe boundary regressions where deterministically testable.
+
+Semantic/judge evaluation remains a separate gate and must not be introduced merely to fill a rubric row.
 
 ## 4. Work intentionally deferred
 
@@ -178,13 +192,13 @@ The non-contaminating product path now progresses in parallel:
 ```text
 ADR-004 P0 CONTROLLER FROZEN
         ↓
-FIRST PRODUCTION RUNTIME SLICE MERGED     ← DELIVERY CURRENT
+FIRST PRODUCTION RUNTIME SLICE MERGED
         ↓
-INTEGRATED PRODUCTION EVALUATOR
+DETERMINISTIC PRODUCTION EVALUATOR MERGED   ← DELIVERY CURRENT
         ↓
 ACTION-SAFETY + MODEL/PROVIDER DECISIONS
         ↓
-INTEGRATED AGENT + EVALUATOR REAL PATH
+INTEGRATED REAL AGENT + EVALUATOR PATH
         ↓
 P0/P1 regression + reliability/security evidence
         ↓
@@ -197,9 +211,9 @@ real-path demo + reproducible handoff
 
 ## 6. Deadline protection
 
-The final delivery target remains 2026-09-08. The scientific artifact blocker must not idle non-contaminating P0/P1 delivery work. At the same time, product progress must not be used to bypass the frozen scientific gate.
+The final delivery target remains 2026-09-08. The scientific artifact blocker must not idle non-contaminating P0/P1 delivery work. Product progress must not be used to bypass the frozen scientific gate.
 
-Prioritize integrated evaluation, action safety, model/provider production fit, reliability/security and real-path demonstration before any speculative P2 component.
+Prioritize action safety, production model/provider fit, real-path reliability/security and demonstration evidence before any speculative P2 component.
 
 ## 7. Update rule
 
