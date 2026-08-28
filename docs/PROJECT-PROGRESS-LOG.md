@@ -538,3 +538,68 @@ production-readiness claim                false
 ```
 
 The merge materially advances the Agent Runtime Plane but does not complete the requested Agent + Evaluator product. The immediate non-contaminating P0 delivery priority becomes integration of a deterministic production evaluator over the same `RunTrace`, while production action enablement and model/provider selection remain separate governed decisions. The scientific gate remains `REQUIRED_PER_GROUP_AND_SLICE_REPORTING` and is still blocked on recovery of the exact original evaluator-side score artifact.
+
+## 20. Deterministic production trace evaluator — MERGED / VALIDATED / INTEGRATED — 2026-08-27
+
+Issue #20 / PR #21 closed the next structural `REQ-017` gap by integrating deterministic evaluation over the exact trace produced by the first production runtime slice.
+
+New production evaluation surface:
+
+- `src/academy_tractian/evaluation.py` — trace-only deterministic evaluator and integrated runtime/evaluator runner;
+- `tests/test_evaluation.py` — healthy-flow, containment, tampering, failure, hashing and import-isolation regressions;
+- `src/academy_tractian/__init__.py` — production evaluator exports.
+
+The evaluator accepts only `RunTrace`, the public canonical ToolSpec registry and an explicit provider-free/read-only evaluation policy. It does not accept or import `Scenario`, expected-path/private oracle data, the historical research evaluator suite, semantic judges, model clients or provider clients.
+
+Independent named checks cover:
+
+- lifecycle and contiguous event-sequence validity;
+- production trace/config identity;
+- canonical ToolSpec proposal argument validity;
+- model-control isolation for identity/seed fields;
+- executed proposal → call → result → observation integrity;
+- contained versus uncontained policy denials;
+- zero executed mutating actions under the read-only production policy;
+- absence of provider/model calls in the provider-free trace;
+- terminal decision and safe-failure consistency;
+- stable canonical trace hashing.
+
+A final `TOOL_BOUNDARY_FAILURE` is treated as a valid contained failure trace even when the attempted tool call has no result/observation. This preserves failure-continuity evidence without pretending that a failed transport produced a normal result.
+
+The evaluation report intentionally does not copy tool-result/observation bodies. It records structural issue codes, tool names, event sequences, counts and trace provenance only.
+
+Final validated PR head:
+
+`53e4767bffe49162cbc13847ac69164275897275`
+
+Validation evidence:
+
+```text
+workflow                 production-runtime
+run                      33132937896 / #3
+production/evaluator tests success
+ADR-004 controller test  success
+triggered PR workflows   11 / 11 success
+```
+
+PR #21 merged into `main` as:
+
+`fb1b959d7c2c0b185c9764d23f36746e3885dd7d`
+
+Boundary evidence:
+
+```text
+provider/model calls                         0
+evaluator/private/gold accesses              0
+semantic/FRESH_BLIND/LEGACY_LOCKED_TEST      0
+score mutation/rescoring                     0
+runtime/evaluator same captured trace       true
+production mutating actions enabled        false
+production model/provider adapter          absent
+semantic production evaluation             absent / unauthorized
+production reliability campaign            not executed
+global final architecture                  unfrozen
+production-readiness claim                 false
+```
+
+This merge establishes a deterministic, integrated Agent Runtime + Evaluation plumbing baseline. It does **not** prove semantic task correctness, expected-path correctness, evidence-oracle completeness, final model/provider quality, consequential-action readiness or overall production readiness. The next delivery decision is production action safety, with all actions disabled as the null baseline; model/provider selection remains separate and provider calls remain unauthorized.
