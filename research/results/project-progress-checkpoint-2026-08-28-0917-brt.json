@@ -1,0 +1,101 @@
+{
+  "schema_version": "project-progress-checkpoint-v1",
+  "checkpoint_brt": "2026-08-28T09:17:00-03:00",
+  "status": "SYSTEMATIC_DECISION_REVALIDATION_ACTIVE",
+  "canonical_implementation_baseline_before_checkpoint": "5c353aa86747073d4b2ab32c1519e518c8d2b2c6",
+  "final_delivery_target": "2026-09-08",
+  "governance": {
+    "documentation_before_material_implementation": true,
+    "systematic_research_before_material_selection": true,
+    "credible_material_alternatives_required": true,
+    "preregistered_comparison_required": true,
+    "quantitative_evaluation_required_where_measurable": true,
+    "robustness_and_production_fit_required": true,
+    "historical_freeze_proves_global_optimality": false,
+    "global_final_architecture_frozen": false,
+    "production_readiness_claim_authorized": false
+  },
+  "cost_constraint": {
+    "external_api_or_hosted_service_project_cost_usd": 0,
+    "paid_subscription_required": false,
+    "purchased_api_credits_allowed": false,
+    "unbounded_paid_spillover_allowed": false,
+    "role": "HARD_ELIGIBILITY_CONSTRAINT"
+  },
+  "provider_state": {
+    "old_adr008_live_packet_status": "SUSPENDED_PENDING_PROSPECTIVE_AMENDMENT",
+    "old_plan_sha256": "69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f",
+    "old_live_calls_consumed": 0,
+    "old_live_call_limit": 32,
+    "first_live_attempt_executed": false,
+    "credential_account_probes": 0,
+    "production_provider_selected": false,
+    "openai_gpt_5_6_sol_eligible_under_zero_cost_constraint": false,
+    "groq_connection": "USER_REPORTED_CONNECTED_NOT_PROBED",
+    "gemini_connection": "PENDING_USER_CONNECTION_NOT_PROBED",
+    "next_gate": "PROSPECTIVE_ZERO_COST_PROVIDER_COMPARISON_AMENDMENT"
+  },
+  "provider_candidate_discovery_minimum_scope": [
+    "gemini_free_tier",
+    "groq_free_tier",
+    "openrouter_explicit_free_routes_if_bounded",
+    "cloudflare_workers_ai_free_tier_if_contract_fit",
+    "feasible_local_open_weight_baseline",
+    "other_material_zero_cost_candidates_found_by_current_primary_source_research"
+  ],
+  "architecture_decision_state": {
+    "single_agent_explicit_controller": "QUALIFIED_BASELINE_NOT_FINAL",
+    "agent_topology_final": false,
+    "minimum_topology_comparison": [
+      "single_agent_explicit_controller",
+      "planner_to_executor",
+      "agent_to_critic_reviewer"
+    ],
+    "runtime_orchestration": "REVALIDATION_REQUIRED",
+    "retrieval_memory_adaptive_decisions": "SYSTEMATIC_SCREENING_REQUIRED",
+    "native_tools_vs_mcp": "STRONG_HISTORICAL_COMPARATIVE_EVIDENCE_PROVISIONAL"
+  },
+  "scientific_state": {
+    "current_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+    "score_row_artifact_status": "EXACT_RECOVERY_REQUIRED",
+    "score_row_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+    "score_row_bytes": 177350,
+    "score_rows": 144,
+    "common_parents": 36,
+    "arms": 4,
+    "reconstruction_authorized": false,
+    "rescoring_authorized": false,
+    "substitution_authorized": false,
+    "byte_identical_recovery_amendment_required_if_exact_bytes_unavailable": true,
+    "semantic_authorized": false,
+    "fresh_blind_authorized": false,
+    "legacy_locked_test_authorized": false
+  },
+  "preserved_handoff_evidence": {
+    "final_acceptance_rows": 83,
+    "pass_evidenced": 41,
+    "pass_bounded": 40,
+    "externally_blocked": 1,
+    "unexecuted_gated": 1,
+    "gap_action_required": 0,
+    "clean_checkout_production_tests_passed": 251,
+    "adr004_regression_passed": 12,
+    "provider_free_demo_sha256": "43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445"
+  },
+  "execution_boundaries_at_checkpoint": {
+    "provider_model_calls_executed_by_this_change": 0,
+    "credential_account_probes_by_this_change": 0,
+    "real_customer_mutations_by_this_change": 0,
+    "scientific_outputs_changed_by_this_change": false,
+    "production_runtime_code_changed_by_this_change": false
+  },
+  "next_actions": [
+    "merge_or_freeze_governance_and_planning_update",
+    "perform_current_primary_source_research",
+    "complete_material_decision_inventory",
+    "preregister_zero_cost_provider_comparison_amendment",
+    "preregister_agent_topology_comparison",
+    "search_exact_c4_score_row_bytes_in_parallel",
+    "only_then_begin_corresponding_material_implementation_or_experiment"
+  ]
+}

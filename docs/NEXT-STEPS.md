@@ -1,14 +1,201 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-08-28 08:04 BRT  
-**Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)
+**Checkpoint:** 2026-08-28 09:17 BRT  
+**Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
+**Mandatory decision-revalidation plan:** [`DECISION-REVALIDATION-MASTER-PLAN.md`](DECISION-REVALIDATION-MASTER-PLAN.md)
 
 This file is the short-horizon execution plan. It does not itself authorize a scientific gate, live provider call, real customer mutation or provider selection.
 
-## 1. Final provider-free handoff — complete
+## 1. Immediate rule — plan before implementation
 
-ADR-017 / issue #60 closed the final unblocked P0/P1 acceptance-audit work.
+From this checkpoint forward, **do not start material implementation before the applicable decision is documented and preregistered**.
+
+Required order:
+
+```text
+update plan / decision inventory
+→ define decision question + requirement/risk
+→ freeze hard constraints
+→ research credible materially different alternatives
+→ preregister comparison / metrics / hard gates / repetitions / robustness
+→ only then implement or execute the experiment
+```
+
+This applies to provider/model, topology, runtime, retrieval, memory, routing, tools/protocols, evaluators, observability, deployment, UI and any other material decision.
+
+Historical freezes remain immutable evidence; they do not exempt a decision from revalidation if a hard assumption changed or a credible alternative was omitted.
+
+## 2. Permanent production/service hard constraint — USD 0
+
+```text
+external API / hosted-service project charge    USD 0
+paid subscription required                      NO
+purchased credits                               NO
+unbounded billable spillover                    FORBIDDEN
+```
+
+Within that feasible set, select the strongest evidence-backed quality/production Pareto configuration rather than the first free option.
+
+## 3. Current active workstream — global decision revalidation
+
+The previous instruction to perform “submission/review hygiene only” is superseded by this prospective planning checkpoint because the project principles require proof of best-supported choices, not only acceptance coverage.
+
+Immediate sequence:
+
+1. freeze this governance/planning update before new development;
+2. complete the material-decision inventory and current primary-source research;
+3. prospectively amend the provider/model comparison around the USD 0 feasible set;
+4. preregister controlled topology/runtime experiments before implementation;
+5. continue exact C4 artifact recovery in parallel without changing scientific semantics;
+6. only after each comparison is preregistered, execute the corresponding implementation/experiment;
+7. select by hard gates + quantitative evidence + robustness + production fit + Pareto reasoning;
+8. integrate the best-supported configuration and rerun full regression before any final architecture freeze.
+
+## 4. Provider/model comparison — old live packet suspended
+
+Current historical packet:
+
+```text
+ADR-008 historical design                   PRESERVED
+old candidates                              OpenAI GPT-5.6 Sol / Gemini 3.7 Flash
+old max calls                               32
+calls consumed                               0
+production provider selected                 NO
+```
+
+The old packet must **not execute** because OpenAI GPT-5.6 Sol is outside the project's USD 0 production feasible set.
+
+Issue #44 must remain suspended pending a prospective amendment. Do not spend any of the old 32-call budget.
+
+### Connection state
+
+User-reported only; do not probe secrets/accounts:
+
+```text
+Groq API     connected
+Gemini API   pending user connection
+```
+
+A connected credential does not authorize provider calls by itself.
+
+### Candidate discovery before amendment
+
+At minimum screen current zero-cost candidates from:
+
+- Gemini free-tier models;
+- Groq free-tier models;
+- OpenRouter explicitly free routes/models if identity and cost containment are adequate;
+- Cloudflare Workers AI free-tier models if contract fit is adequate;
+- feasible local/open-weight baseline;
+- any other materially distinct zero-cost candidate found by primary-source research.
+
+Prospective exclusions must be documented before live results are observed.
+
+## 5. Agent-topology decision — revalidate before final selection
+
+Current single-agent explicit controller remains the simple `QUALIFIED_BASELINE`, not the proven final topology.
+
+Preregister a controlled comparison with at least:
+
+```text
+A  current single-agent / explicit-controller baseline
+B  planner → executor
+C  agent → critic/reviewer
+```
+
+Hold provider/model, task distribution, ToolSpecs, HarnessRunner, authorization/safety and evaluator definitions constant where possible.
+
+Measure quality, tool/argument correctness, evidence quality, action/escalation/clarification/abstention correctness, safety, stability, latency, quota/token use, coordination failures, unnecessary handoffs, loop amplification, trace clarity, debugging and operational complexity.
+
+Do not implement B/C until their exact comparison protocol is preregistered.
+
+## 6. Runtime/orchestration and other decisions
+
+After provider and topology comparisons are preregistered/executed, review the remaining decision register in this order unless new evidence changes priority:
+
+1. orchestration/runtime;
+2. adaptive stopping/planning;
+3. model routing;
+4. retrieval/evidence routing;
+5. memory/state;
+6. evaluator/judge scope;
+7. observability;
+8. deployment;
+9. UI/integration.
+
+Tool topology/native tools vs MCP already has comparatively strong historical evidence; retain it provisionally unless current research finds a material new requirement or alternative.
+
+RAG/vector DB/reranking/persistent memory/multi-agent/richer UI are neither automatically required nor automatically deferred. They must be screened under the same rule: implement only when a credible expected benefit maps to a requirement/risk and the comparison can be measured.
+
+## 7. C4 scientific critical path — exact recovery first
+
+Current scientific gate remains `REQUIRED_PER_GROUP_AND_SLICE_REPORTING`.
+
+Exact missing evaluator-side deterministic score-row artifact:
+
+```text
+SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
+bytes    177350
+rows     144
+geometry 36 common parents × 4 arms
+```
+
+Authorized now:
+
+- search local/historical/temporary/artifact storage for the exact bytes;
+- verify SHA-256, byte count and geometry if found.
+
+Not authorized by this plan:
+
+- reconstruction;
+- rescoring;
+- substitution;
+- semantic evaluation;
+- FRESH_BLIND;
+- LEGACY_LOCKED_TEST;
+- downstream survivor/preferred inference.
+
+If exact bytes cannot be recovered, first create a separate prospective scientific amendment defining whether a byte-identical reproduction attempt is admissible. Any produced file must match the exact frozen SHA-256 and byte count or be rejected.
+
+## 8. Development authorization checklist
+
+Before starting each material implementation, confirm:
+
+- [ ] requirement/risk mapping exists;
+- [ ] decision question is explicit;
+- [ ] hard constraints are frozen;
+- [ ] credible alternatives and simple baseline are documented;
+- [ ] exclusions are documented prospectively;
+- [ ] metrics/hard gates are preregistered;
+- [ ] task population and controls are pinned;
+- [ ] repetitions/uncertainty plan exists where needed;
+- [ ] robustness/failure tests are defined;
+- [ ] production-fit measurements are defined;
+- [ ] stopping and decision semantics are defined;
+- [ ] regression obligations and reversal triggers are defined;
+- [ ] provider/service path is guaranteed USD 0 where applicable.
+
+If any applicable box is missing, remain in planning/research.
+
+## 9. Deadline sequence
+
+```text
+NOW        merge/freeze governance + revalidation planning update
+NEXT       systematic current research + complete decision inventory
+NEXT       preregister zero-cost provider amendment
+NEXT       preregister topology comparison
+PARALLEL   search exact C4 score-row bytes
+THEN       execute provider comparison only under amended frozen protocol
+THEN       execute topology/runtime comparisons one dimension at a time
+THEN       select best-supported zero-cost Pareto configuration
+THEN       integrate + full regression + reliability/security validation
+FINAL      evidence-honest architecture freeze and submission before 2026-09-08
+```
+
+## 10. Preserved provider-free handoff evidence
+
+ADR-017 remains valid within its original scope:
 
 ```text
 acceptance rows                         83
@@ -22,147 +209,19 @@ ADR-004 regression                      12 passed
 EV-007 / EV-008 / EV-011               PASS / exact frozen SHAs
 ADR-016 demo                             5 / 5 / exact 43903731…
 evidence index                          30 / 30 resident blobs / 0 violations
-provider calls                           0 / 32
-credential/account probes               0
-real customer mutations                 0
-final PR-associated workflows          14 / 14 success
 ```
 
-Canonical ADR-017 artifacts:
+These facts prove reviewer-ready provider-free acceptance evidence, not global architecture optimality. The new revalidation program builds prospectively on this baseline without rewriting it.
 
-- `docs/adr/017-final-handoff-acceptance-audit-2026-08-28.md`;
-- `research/frozen/final-handoff-acceptance-audit-freeze-v1.json`;
-- `research/results/final-handoff-acceptance-audit-2026-08-28.json`;
-- `docs/FINAL-HANDOFF-RUNBOOK.md`;
-- `docs/RUBRIC-TO-EVIDENCE.md`;
-- `scripts/validate_final_handoff_audit.py`;
-- `.github/workflows/final-handoff-acceptance-audit.yml`.
+## 11. Still forbidden
 
-Do not reinterpret the 81 evidenced/bounded rows as proof for the two deliberately non-pass rows or as unconditional production readiness.
-
-## 2. Immediate unblocked work — submission/review hygiene only
-
-The 83-row audit found **zero unblocked `GAP_ACTION_REQUIRED` rows**. Do not create more runtime architecture merely to increase implementation breadth.
-
-The remaining provider-free work before the 2026-09-08 submission is limited to hygiene:
-
-1. verify that the external submission surface points reviewers to the root README, final runbook, rubric crosswalk and exact evidence/audit files;
-2. keep issue/PR/repository references consistent with the reconciled `main`;
-3. avoid editing ADR-017 direct frozen artifacts. If one genuinely must change, create a prospective version/amendment and revalidate rather than silently invalidating frozen blob identities;
-4. immediately before submission, rerun the canonical clean commands only if `main` changes after reconciliation;
-5. preserve explicit non-claims for provider quality, C4, real customer mutation, deployment rollback, global architecture freeze and production readiness.
-
-No new evaluation campaign is authorized merely because time remains.
-
-## 3. Scientific critical path — unchanged and parallel
-
-Current scientific gate: `REQUIRED_PER_GROUP_AND_SLICE_REPORTING`.
-
-Exact missing evaluator-side deterministic score-row artifact:
-
-```text
-SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
-bytes    177350
-rows     144
-```
-
-The only scientific action is exact artifact recovery/provisioning. Reconstruction, rescoring and substitution are forbidden.
-
-If the exact artifact is recovered:
-
-1. verify SHA-256, byte count, row count and 36-parent × 4-arm geometry before analysis;
-2. run only the already authorized per-group/slice reporting;
-3. independently validate;
-4. freeze/reconcile before any later scientific gate.
-
-If it remains unavailable at handoff, retain `C-13 / EV-012 = EXTERNALLY_BLOCKED`.
-
-## 4. Live provider comparison — implementation complete / execution gated
-
-```text
-comparison design                   ADR-008 / FROZEN
-clients + authorization             ADR-009 / FROZEN
-executor                            ADR-010 / FROZEN
-live custody wrapper                ADR-011 / FROZEN
-plan SHA-256                        69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f
-max live calls                      32
-calls consumed                       0
-provider selected                   NO
-```
-
-Issue #44 is the only live execution task. Before attempt 0 it requires **both** explicit OpenAI/Google secrets and one canonical durable custody root. If either is absent:
-
-- remain at 0/32;
-- do not probe credentials/accounts;
-- do not create an alternative executor or custody root;
-- keep `E-11 / P1-MODEL-PROVIDER-QUALITY = UNEXECUTED_GATED`.
-
-If genuinely provisioned, execute the exact frozen envelope once. Freeze either the exact candidate ID or `NO_SELECTION`; do not change M1–M10 or call geometry after observing outcomes.
-
-## 5. Frozen production/reliability foundation
-
-Do not redesign these accepted boundaries unless a newly measured P0/P1 blocker requires a prospective change:
-
-```text
-ADR-004  Agent Controller                              FROZEN
-ADR-005  production action safety                     FROZEN
-ADR-006  provider-neutral DecisionSource              FROZEN
-ADR-007  model-call provenance                        FROZEN
-ADR-008  provider/model comparison design             FROZEN
-ADR-009  concrete provider clients/live authorization FROZEN
-ADR-010  provider comparison executor                 FROZEN
-ADR-011  governed live execution/custody wrapper      FROZEN
-ADR-012  controlled supplied/test action execution    FROZEN
-ADR-013  EV-007 failure performance                   FROZEN
-ADR-014  EV-008 repeated-run stability                FROZEN
-ADR-015  EV-011 customer-safe communication           FROZEN
-ADR-016  final-delivery reproduction/evidence         FROZEN
-ADR-017  final handoff acceptance audit               FROZEN
-```
-
-Key deterministic identities:
-
-```text
-EV-007  7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9
-EV-008  1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8
-EV-011  cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
-DEMO     43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445
-```
-
-The default `ProductionRuntime` remains action-disabled. ADR-012 remains limited to explicitly controlled supplied/test consequential actions unless a separate real-environment authorization exists.
-
-## 6. Deadline sequence
-
-```text
-DONE       ADR-016 clean reproduction + evidence index + integrated demo
-DONE       ADR-017 final handoff acceptance audit + unblocked gap closure
-NOW        submission/review hygiene only; preserve frozen identities
-PARALLEL   issue #44: provision canonical custody + both secrets or remain at 0/32
-PARALLEL   recover exact C4 score-row artifact only
-IF READY   execute governed provider envelope once; freeze candidate_id or NO_SELECTION
-IF FOUND   execute only authorized C4 per-group/slice reporting; validate/freeze
-FINAL      reviewer-facing submission links + evidence-honest claims before 2026-09-08
-```
-
-## 7. Final pre-submission smoke check
-
-If `main` changes after ADR-017 reconciliation, rerun from a clean checkout:
-
-```bash
-python -m pip install -e ".[dev]" -e "research/e2[dev]"
-python -m pytest -q tests
-python -m pytest -q research/e2/tests/test_controller.py
-python scripts/validate_ev007_failure_campaign.py
-python scripts/validate_ev008_stability_campaign.py
-python scripts/validate_ev011_communication_campaign.py
-python scripts/validate_delivery_reproduction.py
-python scripts/validate_final_handoff_audit.py
-```
-
-Do not update frozen expected SHAs merely to make a changed checkout pass.
-
-## 8. Deferred unless a new measured P0/P1 gap appears
-
-Continue deferring RAG/vector DB/reranking, persistent memory, MCP, multi-agent orchestration, adaptive routing/model selection, rich UI and large shared-core refactors.
-
-The final acceptance audit is the decision rule: **zero unblocked gaps means stop adding architecture**. External blockers/gates must remain visible rather than being replaced by speculative implementation.
+- executing the old ADR-008/#44 live provider packet as-is;
+- using a paid provider/service in the production feasible set;
+- credential/account probing merely to verify connection state;
+- hidden provider retries/fallbacks/warm-ups or uncontrolled provider-side state in controlled comparisons;
+- reconstructing/rescoring/substituting C4 without a separate prospective scientific amendment;
+- semantic/FRESH_BLIND/LEGACY_LOCKED_TEST access without explicit authorization;
+- provider-native TRACTIAN tool execution that bypasses the governed tool boundary;
+- weakening deterministic safety/authorization/idempotency boundaries;
+- treating a historical gate PASS or freeze as proof of global optimality;
+- claiming global architecture freeze or production readiness before revalidation closes.
