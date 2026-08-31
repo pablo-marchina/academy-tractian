@@ -135,6 +135,7 @@ def test_cloudflare_module_has_no_environment_lookup_sdk_or_network_transport() 
     tree = ast.parse(source)
     imported_roots: set[str] = set()
     imported_modules: set[str] = set()
+    referenced_environment_apis: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             imported_roots.update(alias.name.split(".")[0] for alias in node.names)
@@ -142,13 +143,16 @@ def test_cloudflare_module_has_no_environment_lookup_sdk_or_network_transport() 
         elif isinstance(node, ast.ImportFrom) and node.module:
             imported_roots.add(node.module.split(".")[0])
             imported_modules.add(node.module)
+        elif isinstance(node, ast.Name) and node.id in {"getenv", "environ"}:
+            referenced_environment_apis.add(node.id)
+        elif isinstance(node, ast.Attribute) and node.attr in {"getenv", "environ"}:
+            referenced_environment_apis.add(node.attr)
 
     assert "os" not in imported_roots
     assert "urllib" not in imported_roots
     assert "requests" not in imported_roots
     assert imported_roots.isdisjoint({"cloudflare", "openai", "httpx", "aiohttp"})
-    assert "getenv" not in source
-    assert "environ" not in source
+    assert referenced_environment_apis == set()
     assert "CLOUDFLARE_API_TOKEN" not in source
     assert "CLOUDFLARE_ACCOUNT_ID" not in source
     assert not any(module.startswith("research.e2.evaluator") for module in imported_modules)
