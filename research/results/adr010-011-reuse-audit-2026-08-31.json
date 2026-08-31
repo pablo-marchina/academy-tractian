@@ -1,0 +1,109 @@
+{
+  "schema_version": "adr010-011-reuse-audit-v1",
+  "date": "2026-08-31",
+  "issue": 73,
+  "status": "AUDIT_COMPLETE_PROVIDER_FREE",
+  "provider_model_inference_calls": 0,
+  "credential_account_probes": 0,
+  "live_network_validation": 0,
+  "comparison_attempts_consumed": 0,
+  "comparison_attempts_ceiling": 32,
+  "production_provider_model_selected": false,
+  "new_executor_implementation_in_this_audit": false,
+  "historical_inputs": {
+    "adr010_blob": "5fb6738055c5f70f10db4d331b041e5c95bb724f",
+    "provider_comparison_blob": "4357aa101f5a15d5fc8376b17fa38ca51ea72ae3",
+    "provider_comparison_tests_blob": "6663177bb96a8fdffd15fa64c9cc7e5a92edf2e3",
+    "adr011_blob": "5961c408bef649ecdce2eb69e3b79e63774421e4",
+    "provider_live_execution_blob": "e2e2f2c7350efc0ab67490027347d76a6da54914",
+    "provider_live_task_blob": "6e86f008b5136c88cab574f64564709e1029a945",
+    "provider_live_execution_tests_blob": "769c319a7de6a62b83a94a378c05d6d0a1518569",
+    "provider_live_task_tests_blob": "cd232b6adf6fc4171e7596e0e7a3ecf1887e76cd"
+  },
+  "current_scope_inputs": {
+    "adr018_blob": "e075ab4ff21904b9412769496dd2680c049cdaa8",
+    "design_v2_blob": "f70837fca46fa8ecf1e63b33ea41dec73fc051e3",
+    "population_sha256": "561d252d06a3be30e7d631053906e2e29fbcdd151f05b03b56cbf5ead024c251",
+    "adr019_blob": "b8f76831aceb13f5f3ffb5d7da0e12b595d9dd1a",
+    "cloudflare_client_blob": "a5c814b519584b6d4346e3b0567bbc3da8ba0bf4"
+  },
+  "classifications": {
+    "REUSE_UNCHANGED": [
+      "public_population_and_P01_P08_units",
+      "32_attempt_geometry",
+      "alternating_candidate_order_semantics",
+      "live_call_budget_prefix_and_attempt_33_rejection",
+      "controller_context_conversion",
+      "public_deterministic_rubric",
+      "scripted_null_baseline_behavior",
+      "forbidden_binding_private_key_inspection",
+      "canonical_B1_validation",
+      "ADR007_audit_record_validation",
+      "sanitized_attempt_evidence_fields",
+      "stdlib_one_shot_json_transport",
+      "atomic_json_fsync_pattern",
+      "exclusive_result_creation",
+      "fixed_internal_run_directory",
+      "exclusive_authorization_custody_property",
+      "write_ahead_claim_before_invocation",
+      "claimed_exception_to_uncertain_stop",
+      "no_resume_no_replay_after_uncertain",
+      "sanitized_stop_codes_and_raw_exception_discard"
+    ],
+    "REUSE_WITH_BOUNDED_ADAPTER": [
+      "M1_M2_M3_M4_M5_M6_M7_M10_aggregation",
+      "existing_H1_H3_H4_H6_H7_detection",
+      "Pareto_quality_margin_latency_NO_SELECTION_skeleton",
+      "M9_portability_concept",
+      "32_entry_ledger_schema_metadata",
+      "provider_free_fixed_M5_probe_logic",
+      "authorization_custody_marker_schema",
+      "claim_execute_complete_loop"
+    ],
+    "INCOMPATIBLE_HISTORICAL_ASSUMPTION": [
+      "v1_frozen_bundle_loader",
+      "ADR010_old_plan_sha_identity",
+      "ADR010_live_exact_OpenAI_Gemini_client_class_check",
+      "M8_normalized_cost_usd_field",
+      "normalized_cost_usd_function",
+      "OpenAI_Google_LiveProviderSecrets",
+      "OpenAI_Gemini_exact_live_client_builder",
+      "ADR011_prepare_old_bundle_and_plan_verification"
+    ],
+    "MISSING_MATERIAL_CAPABILITY": [
+      "H8_paid_spillover_nonfree_route_gate",
+      "H9_complete_resource_accounting_gate",
+      "H10_free_allocation_packet_gate",
+      "observed_prompt_token_ceiling_guard",
+      "observed_completion_token_ceiling_guard",
+      "observed_neuron_calculation",
+      "Workers_Free_pre_live_proof_gate",
+      "minimum_9000_free_neurons_pre_live_gate",
+      "Paid_or_prepaid_Gateway_rejection_evidence",
+      "Cloudflare_client_model_route_identity_custody_pins",
+      "per_attempt_resource_check_before_next_claim",
+      "cumulative_observed_plus_worst_case_remaining_projection",
+      "missing_usage_fail_closed_stop",
+      "actual_cash_cost_zero_execution_evidence"
+    ]
+  },
+  "minimum_implementation_gaps": [
+    "current_scope_frozen_bundle_and_new_plan_sha",
+    "provider_comparison_result_v2_resource_fields",
+    "cloudflare_M8_neuron_accounting_and_H8_H9_H10_guards",
+    "two_model_provider_free_Cloudflare_fixed_failure_probes",
+    "Cloudflare_live_client_factory_with_explicit_token_and_account_id",
+    "current_authorization_custody_marker_v2",
+    "pre_live_Workers_Free_and_9000_neuron_evidence_gate"
+  ],
+  "decision": {
+    "historical_adr010_live_path": "DO_NOT_EXECUTE_AS_IS",
+    "historical_adr011_live_entrypoint": "DO_NOT_EXECUTE_AS_IS",
+    "provider_neutral_scientific_logic": "HIGH_REUSE",
+    "custody_write_ahead_invariants": "HIGH_REUSE",
+    "full_executor_redesign": "NOT_JUSTIFIED",
+    "bounded_v2_adapter_result_custody_implementation": "JUSTIFIED",
+    "attempt_1_authorized": false
+  },
+  "next_authorization": "Create one separate provider-free implementation task for a versioned Cloudflare executor/custody v2 adapter implementing only the seven demonstrated gaps. It must perform zero provider inference, zero credential/account probe and zero live network validation. A later separate live authorization is still required before attempt 1."
+}
