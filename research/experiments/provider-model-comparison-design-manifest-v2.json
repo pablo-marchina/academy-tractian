@@ -1,0 +1,346 @@
+{
+  "schema_version": "provider-model-comparison-design-v2",
+  "status": "DESIGN_CANDIDATE_PROVIDER_FREE_ONLY",
+  "date": "2026-08-31",
+  "issue": 68,
+  "decision_id": "D01",
+  "scientific_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING",
+  "scientific_state_changed": false,
+  "provider_model_calls_authorized_now": 0,
+  "credential_account_probes_authorized_now": 0,
+  "production_provider_model_selected": false,
+  "production_actions_enabled": false,
+  "prospective_relationship": {
+    "historical_design": "ADR-008 through ADR-011 remain immutable historical protocol/implementation evidence",
+    "old_live_candidate_execution": "FORBIDDEN_AS_IS",
+    "supersession_scope": "candidate eligibility, resource accounting, and future live comparison design only",
+    "consumed_old_live_calls": 0
+  },
+  "source_retrieval_date": "2026-08-31",
+  "official_sources": [
+    {
+      "source_id": "cloudflare_pricing",
+      "title": "Cloudflare Workers AI pricing",
+      "url": "https://developers.cloudflare.com/workers-ai/platform/pricing/",
+      "retrieved_date": "2026-08-31"
+    },
+    {
+      "source_id": "cloudflare_glm_47_flash",
+      "title": "Cloudflare Workers AI GLM-4.7-Flash model",
+      "url": "https://developers.cloudflare.com/workers-ai/models/glm-4.7-flash/",
+      "retrieved_date": "2026-08-31"
+    },
+    {
+      "source_id": "cloudflare_nemotron_3_120b",
+      "title": "Cloudflare Workers AI Nemotron 3 120B A12B model",
+      "url": "https://developers.cloudflare.com/workers-ai/models/nemotron-3-120b-a12b/",
+      "retrieved_date": "2026-08-31"
+    },
+    {
+      "source_id": "cloudflare_json_mode",
+      "title": "Cloudflare Workers AI JSON Mode / JSON Schema",
+      "url": "https://developers.cloudflare.com/workers-ai/features/json-mode/",
+      "retrieved_date": "2026-08-31"
+    },
+    {
+      "source_id": "cloudflare_openai_compat",
+      "title": "Cloudflare Workers AI OpenAI-compatible endpoints",
+      "url": "https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/",
+      "retrieved_date": "2026-08-31"
+    },
+    {
+      "source_id": "cloudflare_free_model_change",
+      "title": "Cloudflare Workers AI models requiring Paid plan changelog",
+      "url": "https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/",
+      "retrieved_date": "2026-08-31"
+    }
+  ],
+  "candidate_set": [
+    {
+      "candidate_id": "baseline_scripted_null_v1",
+      "candidate_class": "provider_free_baseline",
+      "eligible_for_production_selection": false,
+      "provider_id": "provider-free",
+      "model_id": "scripted-null-v1",
+      "route_id": "local.scripted-null.v1",
+      "hosting_class": "local",
+      "live_call": false,
+      "decision_policy": "Always return ABSTAIN with reason_code=BASELINE_NO_PROVIDER; no provider invocation.",
+      "retry_count": 0,
+      "fallback_used": false
+    },
+    {
+      "candidate_id": "cloudflare_glm_4_7_flash_workers_free",
+      "candidate_class": "efficient_hosted_free",
+      "eligible_for_production_selection": true,
+      "provider_id": "cloudflare",
+      "model_id": "@cf/zai-org/glm-4.7-flash",
+      "route_id": "cloudflare.workers_ai.openai_compat.chat_completions.v1",
+      "endpoint_template": "POST https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions",
+      "hosting_class": "hosted_api",
+      "live_call": true,
+      "context_window_tokens": 131072,
+      "function_calling_documented": true,
+      "reasoning_documented": true,
+      "response_format": "JSON Schema through Workers AI OpenAI-compatible chat completions",
+      "neurons_per_million_input_tokens": 5500,
+      "neurons_per_million_output_tokens": 36400,
+      "source_ids": [
+        "cloudflare_pricing",
+        "cloudflare_glm_47_flash",
+        "cloudflare_json_mode",
+        "cloudflare_openai_compat",
+        "cloudflare_free_model_change"
+      ],
+      "account_access": "UNVERIFIED_NO_CREDENTIAL_PROBE",
+      "retry_count": 0,
+      "fallback_used": false
+    },
+    {
+      "candidate_id": "cloudflare_nemotron_3_120b_a12b_workers_free",
+      "candidate_class": "capacity_hosted_free",
+      "eligible_for_production_selection": true,
+      "provider_id": "cloudflare",
+      "model_id": "@cf/nvidia/nemotron-3-120b-a12b",
+      "route_id": "cloudflare.workers_ai.openai_compat.chat_completions.v1",
+      "endpoint_template": "POST https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions",
+      "hosting_class": "hosted_api",
+      "live_call": true,
+      "context_window_tokens": 256000,
+      "function_calling_documented": true,
+      "reasoning_documented": true,
+      "response_format": "JSON Schema through Workers AI OpenAI-compatible chat completions",
+      "neurons_per_million_input_tokens": 45455,
+      "neurons_per_million_output_tokens": 136364,
+      "source_ids": [
+        "cloudflare_pricing",
+        "cloudflare_nemotron_3_120b",
+        "cloudflare_json_mode",
+        "cloudflare_openai_compat",
+        "cloudflare_free_model_change"
+      ],
+      "account_access": "UNVERIFIED_NO_CREDENTIAL_PROBE",
+      "retry_count": 0,
+      "fallback_used": false
+    }
+  ],
+  "excluded_or_nonlive_roles": [
+    {
+      "candidate": "@cf/google/gemma-4-26b-a4b-it",
+      "role": "EXCLUDED_FROM_MINIMUM_FIRST_PACKET",
+      "reason": "No demonstrated current requirement separates it enough from the retained efficiency/capacity endpoints to justify additional live calls."
+    },
+    {
+      "candidate": "Groq GPT-OSS",
+      "role": "HISTORICAL_CONTROL_ONLY",
+      "reason": "E8/E14/P12 already preserve operational, negative task-quality, and capacity evidence; freshness rerun is forbidden."
+    },
+    {
+      "candidate": "gemini-3.7-flash Free Tier",
+      "role": "PUBLIC_SYNTHETIC_EVAL_ELIGIBLE_NOT_FINAL_PRODUCTION_CANDIDATE",
+      "reason": "Current provider-visible runtime request can contain unsanitized user/tool observation data under Free Tier data-use terms."
+    },
+    {
+      "candidate": "ollama qwen3:4b",
+      "role": "CONDITIONAL_LOCAL_BASELINE_NOT_IN_CORE_PACKET",
+      "reason": "Specification-feasible but exact host fit is not yet established; adding it is not required to close the hosted D01 gap."
+    }
+  ],
+  "population": {
+    "path": "research/experiments/provider-model-comparison-dev-population-v1.json",
+    "sha256": "561d252d06a3be30e7d631053906e2e29fbcdd151f05b03b56cbf5ead024c251",
+    "unit_count": 8,
+    "repetitions_per_live_candidate": 2,
+    "quality_scope": "public deterministic DecisionSource decision-contract probes; not semantic C4/generalization evidence",
+    "private_oracle_required": false,
+    "population_reused_without_mutation": true
+  },
+  "request_contract": {
+    "application_controller_owns_loop": true,
+    "harnessrunner_only_real_tool_execution_boundary": true,
+    "provider_native_tool_execution_enabled": false,
+    "provider_side_conversation_state_enabled": false,
+    "ai_gateway_enabled": false,
+    "built_in_web_search_enabled": false,
+    "stream": false,
+    "n": 1,
+    "temperature": 0,
+    "max_completion_tokens": 512,
+    "provider_seed_forwarded": false,
+    "response_format": "strict ProviderDecisionPayload JSON Schema",
+    "store": false,
+    "automatic_repair": false
+  },
+  "execution": {
+    "live_candidate_count": 2,
+    "provider_calls_per_unit_per_live_candidate": 2,
+    "max_live_provider_calls_total": 32,
+    "attempts_per_live_candidate": 16,
+    "warmup_calls": 0,
+    "automatic_retries": 0,
+    "provider_fallbacks": 0,
+    "parallel_live_calls": false,
+    "order_policy": "Run provider-free baseline first. Then P01..P08, repeats 0..1, alternating GLM/Nemotron order by unit_index + repeat_index parity.",
+    "provider_seed_forwarded": false,
+    "stop_on_custody_or_provenance_violation": true,
+    "stop_on_route_or_model_change": true,
+    "operational_failures_remain_in_denominators": true
+  },
+  "zero_cost_resource_budget": {
+    "required_workers_plan": "Workers Free",
+    "prepaid_ai_gateway_credits_allowed": false,
+    "workers_paid_plan_allowed": false,
+    "published_free_neurons_per_day": 10000,
+    "allocation_reset": "00:00 UTC daily",
+    "max_accounted_input_tokens_per_attempt": 8000,
+    "max_completion_tokens_per_attempt": 512,
+    "glm_max_neurons_per_attempt": 62.6368,
+    "glm_max_neurons_for_16_attempts": 1002.1888,
+    "nemotron_max_neurons_per_attempt": 433.458368,
+    "nemotron_max_neurons_for_16_attempts": 6935.333888,
+    "max_packet_neurons": 7937.522688,
+    "free_allocation_headroom_neurons": 2062.477312,
+    "free_allocation_headroom_fraction": 0.2062477312,
+    "minimum_free_neurons_remaining_before_attempt_1": 9000,
+    "budget_formula": "sum over candidates/attempts of (prompt_tokens * candidate_input_neurons_per_million + completion_tokens * candidate_output_neurons_per_million) / 1000000",
+    "authoritative_live_accounting": "provider-reported usage.prompt_tokens and usage.completion_tokens when present; missing exact usage is a resource-accounting failure, not an invitation to fabricate values",
+    "fail_closed_rules": [
+      "Do not start unless separate live authorization proves Workers Free and at least 9000 free neurons remain for the current UTC day without inference.",
+      "If an observed attempt exceeds 8000 prompt tokens or 512 completion tokens, stop before the next attempt and return NO_SELECTION/incomplete packet.",
+      "If cumulative observed neurons plus frozen worst-case remaining-attempt neurons can exceed the available free allocation, stop before the next attempt.",
+      "Any billable paid usage, Paid-plan execution, prepaid AI Gateway billing, or hidden provider route is disqualifying."
+    ]
+  },
+  "hard_gates": {
+    "H1_private_or_binding_leakage_violations": {"required": 0, "disqualifying": true},
+    "H2_unauthorized_action_transport": {"required": 0, "disqualifying": true},
+    "H3_hidden_retry_fallback_warmup_or_provider_state": {"required": 0, "disqualifying": true},
+    "H4_model_call_provenance_valid_rate": {"required": 1.0, "disqualifying": true},
+    "H5_controller_harnessrunner_B1_B2_ownership_preserved": {"required": true, "disqualifying": true},
+    "H6_raw_request_response_exception_recording": {"required": false, "disqualifying": true},
+    "H7_route_or_model_changed_mid_run": {"required": false, "disqualifying": true},
+    "H8_paid_spillover_or_nonfree_route_used": {"required": false, "disqualifying": true},
+    "H9_resource_accounting_complete": {"required": true, "disqualifying": true},
+    "H10_packet_budget_within_free_allocation": {"required": true, "disqualifying": true}
+  },
+  "metrics": {
+    "M1": {
+      "name": "structured_decision_adherence",
+      "denominator": "all 16 live attempts per candidate",
+      "formula": "accepted ProviderDecisionPayload without adapter repair / attempted live invocations",
+      "minimum": 0.9375
+    },
+    "M2": {
+      "name": "known_tool_selection_validity",
+      "denominator": "all parsed decisions with kind=TOOL",
+      "formula": "TOOL decisions whose tool_name is in the frozen 18-operation registry / TOOL decisions",
+      "minimum": 1.0
+    },
+    "M3": {
+      "name": "canonical_argument_validity_B1_containment",
+      "denominator": "all known-tool proposals",
+      "formula": "known-tool proposals passing B1 / known-tool proposals; report ARGUMENT_INVALID and identity/seed attempts separately",
+      "minimum": 0.9,
+      "identity_seed_attempts_required": 0
+    },
+    "M4": {
+      "name": "public_allowed_development_task_quality",
+      "denominator": "all 16 fixed public probe attempts per candidate, including operational failures as 0",
+      "formula": "attempts satisfying the unit's frozen deterministic decision rubric / 16",
+      "minimum": 0.75,
+      "semantic_judge_used": false,
+      "population_sha256": "561d252d06a3be30e7d631053906e2e29fbcdd151f05b03b56cbf5ead024c251"
+    },
+    "M5": {
+      "name": "safe_failure_behavior",
+      "denominator": "all encountered provider/client/parsing failures plus provider-free injected client failure coverage for the Cloudflare client configuration",
+      "formula": "safe DECISION_SOURCE_FAILURE + valid provenance + zero unauthorized transport/leakage / failure cases",
+      "minimum": 1.0
+    },
+    "M6": {
+      "name": "latency",
+      "denominator": "all 16 live attempts per candidate",
+      "statistics": ["count", "median_ms", "p90_ms", "p95_ms", "max_ms"],
+      "failures_reported_separately": true
+    },
+    "M7": {
+      "name": "reliability_and_repeat_stability",
+      "denominator": "16 live attempts and 8 paired repeat units per candidate",
+      "formula": {
+        "success_rate": "successful client responses / 16",
+        "signature_stability": "units whose two repeats agree on decision kind and, for TOOL, tool_name / 8"
+      },
+      "minimum_success_rate": 0.9375,
+      "minimum_signature_stability": 0.75
+    },
+    "M8": {
+      "name": "usage_neurons_and_zero_cash_cost",
+      "denominator": "all live attempts with exact provider usage",
+      "formula": "compute neurons from provider-reported prompt/completion tokens using the frozen per-model neuron rates; sum candidate and packet totals",
+      "actual_cash_cost_required_usd": 0,
+      "packet_neuron_ceiling": 7937.522688,
+      "fabricated_missing_values_forbidden": true,
+      "selection_resource_axis": "total_observed_neurons"
+    },
+    "M9": {
+      "name": "portability_operational_constraints",
+      "denominator": "candidate route",
+      "fields": [
+        "direct_workers_ai_http_dependency",
+        "credential_account_requirements",
+        "Workers_Free_requirement",
+        "observed_rate_capacity_constraints",
+        "reproducibility_limitations",
+        "free_neuron_headroom"
+      ]
+    },
+    "M10": {
+      "name": "trace_integrity",
+      "denominator": "all attempted live invocations",
+      "formula": "valid provider-model-call-v1 events satisfying ADR-007 / attempted invocations",
+      "minimum": 1.0
+    }
+  },
+  "selection_rule": {
+    "baseline_eligible": false,
+    "step_1": "Disqualify hard-gate failures and candidates below M1/M4/M5/M7/M10 minimums.",
+    "step_2": "If no live candidate remains, return NO_SELECTION.",
+    "step_3": "Compute Pareto non-dominance over M4 and M7 maximize and M6 p95 plus M8 total observed neurons minimize.",
+    "step_4": "If exactly one candidate is Pareto-nondominated, select it.",
+    "step_5": "If multiple remain, choose highest M4 only if it leads every other remaining candidate by at least 0.125.",
+    "step_6": "Otherwise within 0.125 M4, prefer lower total observed neurons only if chosen signature stability is not lower by more than 0.125.",
+    "step_7": "If resource use cannot resolve, prefer lower M6 p95 only when both candidates completed all 16 attempts.",
+    "step_8": "If still unresolved, accounting is incomplete, packet is incomplete, or protocol integrity is uncertain, return NO_SELECTION.",
+    "allowed_outcomes": [
+      "cloudflare_glm_4_7_flash_workers_free",
+      "cloudflare_nemotron_3_120b_a12b_workers_free",
+      "NO_SELECTION"
+    ],
+    "weighted_global_score_forbidden": true,
+    "post_result_threshold_changes_forbidden": true
+  },
+  "custody_and_provenance": {
+    "write_ahead_attempt_claim_required": true,
+    "one_durable_custody_root_required": true,
+    "raw_provider_request_persisted": false,
+    "raw_provider_response_persisted": false,
+    "secret_material_persisted": false,
+    "sanitized_result_required": true,
+    "claimed_or_uncertain_attempt_auto_replay_forbidden": true,
+    "ADR_007_model_call_provenance_required": true
+  },
+  "amendment_rules": {
+    "before_first_live_call": "Candidate, population, metric, threshold, route, request contract, or budget changes require a new prospective manifest version and provider-free validation.",
+    "after_first_live_call": "Any material change requires a prospective amendment preserving consumed evidence; a changed route/model is a new candidate.",
+    "credential_probe_before_separate_live_authorization": false,
+    "implementation_before_this_design_freezes": false
+  },
+  "forbidden_inputs": [
+    "eval/expected-paths.json",
+    "docs/test-scenarios.md",
+    "data/cases.parquet",
+    "FRESH_BLIND",
+    "LEGACY_LOCKED_TEST"
+  ],
+  "next_authorization": "After this exact design is frozen and provider-free validated, a separate task may implement and validate the Cloudflare client without inference. A further explicit live-execution authorization is required before attempt 1. This manifest itself authorizes zero provider/model calls."
+}

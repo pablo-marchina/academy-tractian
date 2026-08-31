@@ -1,10 +1,10 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-08-28 — provider pre-benchmark factual gates closed  
+**Checkpoint:** 2026-08-31 — ADR-018 minimum Cloudflare comparison preregistered/frozen  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
-**Factual gate record:** [`PROVIDER-PREBENCHMARK-FACTUAL-GATES-2026-08-28.md`](PROVIDER-PREBENCHMARK-FACTUAL-GATES-2026-08-28.md)  
-**Latest addendum:** [`DECISION-REVALIDATION-ADDENDUM-004-PROVIDER-PREBENCHMARK-GATES.md`](DECISION-REVALIDATION-ADDENDUM-004-PROVIDER-PREBENCHMARK-GATES.md)
+**Frozen preregistration:** [`adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md`](adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md)  
+**Protocol:** [`../research/provider-model-comparison-design-v2-2026-08-31.md`](../research/provider-model-comparison-design-v2-2026-08-31.md)
 
 This file is the short-horizon execution plan. It does not authorize provider inference, customer mutation or C4 advancement.
 
@@ -13,106 +13,115 @@ This file is the short-horizon execution plan. It does not authorize provider in
 ```text
 historical evidence audit                   DONE
 current USD-0 provider fact refresh         DONE
-Gemini payload data-use gate                DONE
-Cloudflare minimum representative selection DONE
-Groq historical-vs-live-control decision    DONE
-Ollama baseline spec feasibility            DONE
+four provider pre-benchmark factual gates   DONE
 material D01 benchmark gap                  DEMONSTRATED
-provider/model inference calls                0
+minimum Cloudflare live candidate set       FROZEN
+public population / geometry                FROZEN
+M1-M10 mapping / hard gates                 FROZEN
+zero-cost neuron envelope                   FROZEN
+selection / NO_SELECTION semantics          FROZEN
+custody / amendment rules                   FROZEN
+provider/model inference calls               0
+credential/account probes                    0
+Cloudflare client implementation             0
 ```
 
-Closed decisions:
+## 2. ADR-018 frozen packet
 
-- Gemini Free: public/synthetic evaluation only; arbitrary production payload is ineligible by default under the current unsanitized provider request/data-use boundary.
-- Cloudflare minimum core: GLM 4.7 Flash + Nemotron 3 120B A12B.
-- Gemma 4 26B A4B: excluded from the minimum first packet, not globally rejected.
-- Groq: `HISTORICAL_CONTROL_ONLY`; no freshness rerun.
-- Ollama: `qwen3:4b` is a spec-feasible local baseline; exact host performance remains unverified.
-
-## 2. NOW — preregister the minimum provider/model comparison
-
-A precise remaining gap exists: no repository evidence selects between the two retained current production-eligible Cloudflare models on project-specific decision quality, reliability and latency.
-
-The next task is **planning only**: create/freeze a prospective amendment that supersedes the old ADR-008 candidate set without rewriting historical evidence.
-
-### Core candidates
+Core candidates:
 
 ```text
 C1  @cf/zai-org/glm-4.7-flash
 C2  @cf/nvidia/nemotron-3-120b-a12b
 ```
 
-### Conditional local baseline
+Public population is reused unchanged:
 
-`qwen3:4b` may be included only if a no-inference host inventory is completed before the packet freezes and demonstrates sufficient local storage/memory/runtime availability. Do not download or run it merely to decide the preregistration.
+```text
+units                         8
+repetitions / unit / model    2
+attempts / model             16
+maximum future live attempts 32
+population SHA-256            561d252d06a3be30e7d631053906e2e29fbcdd151f05b03b56cbf5ead024c251
+```
 
-### Historical / excluded roles
+Frozen zero-cost envelope:
+
+```text
+max prompt tokens / attempt       8000
+max completion tokens / attempt    512
+max packet neurons              7937.522688
+Workers Free allocation        10000
+headroom                        2062.477312 / 20.6248%
+minimum remaining before run    9000 neurons
+```
+
+Workers Paid and prepaid AI Gateway are forbidden.
+
+## 3. NOW — no more design changes unless CI exposes a defect
+
+The preregistration itself is complete. Until the ADR-018 PR is merged with provider-free CI green, do not start provider implementation.
+
+If CI exposes a defect in the preregistered bytes, fix only that defect prospectively before merge; do not change candidates, metrics, thresholds or budget for convenience.
+
+## 4. THEN — separate provider-free Cloudflare implementation task
+
+After the freeze is merged, the next provider task is a **separate governed implementation authorization**. Its scope may be only:
+
+- implement the direct Cloudflare Workers AI OpenAI-compatible client needed by ADR-018;
+- map the frozen `ProviderDecisionRequest` to the frozen strict `ProviderDecisionPayload` response contract;
+- preserve `AgentController` and `HarnessRunner` ownership;
+- enforce `temperature=0`, `max_completion_tokens=512`, no seed, no stream, no AI Gateway, no provider-side state, no provider-native execution, no repair/retry/fallback/warm-up;
+- implement zero-cost/resource accounting guards required by ADR-018;
+- validate all behavior provider-free with mocks/fakes only;
+- preserve ADR-007 sanitized provenance and custody interfaces.
+
+That task must still authorize:
+
+```text
+provider/model inference      0
+credential/account probes     0
+production provider selection NO
+```
+
+Implementation may not rewrite the ADR-018 population, candidates, thresholds or budget to fit the code.
+
+## 5. AFTER IMPLEMENTATION — separate live-execution authorization
+
+Only after the client passes provider-free validation may a later task decide whether all ADR-018 pre-live gates are satisfied and explicitly authorize attempt 1.
+
+Before attempt 1 it must prove without inference:
+
+- Workers Free account path;
+- no Paid-plan or prepaid Gateway billing;
+- at least 9,000 free neurons remain for the UTC day;
+- exact model/route identities still match ADR-018;
+- one durable custody root exists;
+- write-ahead attempt claims work;
+- zero retries/fallbacks/warm-ups/provider state remain true;
+- production actions remain disabled.
+
+A connected API token is only an operational prerequisite; it is not evidence and does not authorize a call.
+
+## 6. Historical/excluded roles remain unchanged
 
 ```text
 Groq GPT-OSS                 HISTORICAL_CONTROL_ONLY
-Gemini 3.7 Flash Free        OUTSIDE FINAL PRODUCTION SELECTION UNDER CURRENT DATA-USE BOUNDARY
+Gemini 3.7 Flash Free        PUBLIC/SYNTHETIC ONLY UNDER CURRENT DATA-USE BOUNDARY
 Cloudflare Gemma 4 26B       EXCLUDED FROM MINIMUM FIRST PACKET
-OpenRouter generic free      EXCLUDED / uncontrolled model routing
-preview/development paths    EXCLUDED FROM FINAL PRODUCTION CLAIMS
+Ollama qwen3:4b              CONDITIONAL LOCAL BASELINE / OUTSIDE CORE PACKET
+old ADR-008/#44 live packet  MUST NOT EXECUTE AS-IS
 ```
 
-## 3. Reuse before inventing anything new
+## 7. Agent topology — queued
 
-The prospective packet should audit/reuse the frozen provider-comparison components already in the repository:
+The single-agent controller remains a strong qualified baseline. The single-vs-multi comparative gap remains real, but do not implement planner→executor or critic/reviewer before the provider/model basis is selected or an honest provider `NO_SELECTION` is frozen.
 
-- eight public synthetic DecisionSource probes from `provider-model-comparison-dev-population-v1.json`;
-- M1–M10 definitions and hard-gate logic from ADR-008 / the frozen provider comparison design;
-- ADR-006 provider-neutral `ProviderDecisionSource` contract;
-- ADR-007 model-call provenance;
-- ADR-010 comparison executor concepts where provider-neutral;
-- ADR-011 custody/no-retry/no-fallback principles;
-- EV-007/008/011 metric definitions for failure/stability/communication where applicable.
+## 8. Runtime/orchestration — queued
 
-Do not copy an old candidate-specific assumption merely because infrastructure exists. Any reused artifact must be checked against the new Cloudflare routes and USD-0 boundary.
+Do not restart runtime research. E6 already qualifies LangGraph and ADR-004 qualifies the explicit controller. Reopen only if provider/topology results or an ADR-004 reversal trigger make runtime choice materially unresolved.
 
-## 4. Mandatory prospective packet fields
-
-Before the first inference request, freeze:
-
-- exact candidate IDs/routes;
-- explicit exclusions and reversal triggers;
-- exact public probe population and hash/blob identity;
-- exact repetitions and call ceiling;
-- exact output/token ceiling per call;
-- a conservative Cloudflare neuron upper-bound proving the complete packet fits inside Workers Free without paid spillover;
-- model/provider conversation-state policy;
-- hidden warm-up, retry and fallback count: zero;
-- execution order;
-- M1–M10 mapping and any prospectively justified amendment;
-- quality/safety/stability/latency/resource hard gates;
-- Pareto and `NO_SELECTION` semantics;
-- provider-visible/private-state boundary;
-- durable claim/custody/output provenance;
-- regression obligations after selection.
-
-If the free-neuron upper bound cannot prove attempt completion, do not start the run.
-
-## 5. Inference remains forbidden until freeze
-
-```text
-provider/model inference                    NOT AUTHORIZED
-credential/account probing for evidence     NOT AUTHORIZED
-old ADR-008/#44 packet                       MUST NOT EXECUTE AS-IS
-new comparison implementation/execution      ONLY AFTER PREREGISTRATION FREEZE
-```
-
-A connected credential is an operational prerequisite only; it is not evaluation evidence or authorization.
-
-## 6. After provider/model comparison
-
-Only after a provider/model basis is selected or a bounded `NO_SELECTION` is frozen:
-
-1. revisit the single-agent vs multi-agent topology gap;
-2. preregister topology comparison only if still material;
-3. revisit runtime/orchestration only if provider/topology evidence or an ADR-004 reversal trigger requires it;
-4. leave RAG/memory/routing/deployment/UI closed unless new measured triggers appear.
-
-## 7. C4 — parallel unchanged track
+## 9. C4 — parallel unchanged track
 
 Required exact artifact:
 
@@ -125,32 +134,36 @@ geometry 36 parents × 4 arms
 
 Only exact-byte recovery is authorized. No reconstruction, rescoring, substitution or downstream scientific gate advancement.
 
-## 8. Ordered queue
+## 10. Ordered queue
 
 ```text
 DONE      evidence audit
-DONE      current provider fact refresh
-DONE      four pre-benchmark factual gates
-NOW       preregister/freeze minimum Cloudflare provider/model comparison
-OPTIONAL  include Ollama qwen3:4b only after no-inference host inventory
+DONE      provider fact refresh
+DONE      four factual gates
+DONE      preregister/freeze minimum Cloudflare comparison
+NOW       merge ADR-018 only after provider-free CI is green
+THEN      separate provider-free Cloudflare client implementation task
+THEN      separate live-execution authorization
+THEN      execute exact 32-attempt-max packet once
+THEN      freeze candidate selection or honest NO_SELECTION
 PARALLEL  exact C4 artifact recovery
-THEN      execute provider comparison only under frozen packet
-THEN      select candidate or honest NO_SELECTION
 LATER     topology comparison if still material
 LATER     runtime/adaptive work only on reversal trigger/material gap
 FINAL     integrate best-supported configuration + full regression + architecture freeze
 ```
 
-## 9. Still forbidden
+## 11. Still forbidden
 
-- inference before the prospective packet freezes;
-- executing the old ADR-008/#44 candidate packet;
-- Gemini Free for arbitrary production payload under the current provider-visible contract;
+- any provider inference in ADR-018/preregistration work;
+- writing the Cloudflare client before the preregistration freeze is merged;
+- credential/account probing merely to inspect availability;
+- executing the old ADR-008/#44 packet;
+- Paid Workers or prepaid AI Gateway usage;
+- changing the frozen candidates/population/metrics/thresholds/budget without a prospective amendment;
 - Groq rerun for freshness;
-- adding extra candidates without a material documented reason;
+- adding extra candidates without a material new reason;
 - hidden retries/fallbacks/warm-ups/provider state;
-- paid production usage;
 - weakening deterministic safety, `HarnessRunner` ownership or evaluator isolation;
 - C4 reconstruction/rescoring;
 - premature multi-agent/runtime implementation;
-- final architecture or production-readiness claims before the evidence supports them.
+- final architecture or production-readiness claims before evidence supports them.
