@@ -1,0 +1,113 @@
+{
+  "schema_version": "cloudflare-executor-custody-v2-provider-free-validation-v1",
+  "date": "2026-09-01",
+  "issue": 75,
+  "pr": 76,
+  "status": "PASS_PROVIDER_FREE_IMPLEMENTATION",
+  "decision_state": "FROZEN_IMPLEMENTATION_PENDING_ADR",
+  "provider_model_inference_calls": 0,
+  "credential_account_probes": 0,
+  "live_network_validation": 0,
+  "comparison_attempts_consumed": 0,
+  "comparison_attempts_ceiling": 32,
+  "production_provider_model_selected": false,
+  "customer_mutations": 0,
+  "c4_scientific_changes": 0,
+  "attempt_1_authorized": false,
+  "canonical_plan_sha256": "092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb",
+  "frozen_upstream": {
+    "adr018_blob": "e075ab4ff21904b9412769496dd2680c049cdaa8",
+    "adr019_blob": "b8f76831aceb13f5f3ffb5d7da0e12b595d9dd1a",
+    "cloudflare_client_blob": "a5c814b519584b6d4346e3b0567bbc3da8ba0bf4",
+    "design_v2_blob": "f70837fca46fa8ecf1e63b33ea41dec73fc051e3",
+    "population_sha256": "561d252d06a3be30e7d631053906e2e29fbcdd151f05b03b56cbf5ead024c251"
+  },
+  "implementation_blobs": {
+    "src/academy_tractian/cloudflare_provider_comparison_v2.py": "e12b1dfa03eb1c50bc97848821235ef422516092",
+    "src/academy_tractian/cloudflare_provider_live_v2.py": "70d8e0ccc4d4eb003d78cdd152b1dffd30b43f29",
+    "src/academy_tractian/cloudflare_provider_provenance_v2.py": "e7f8bdc60910ef0acf7b14c71616448338eeefc2",
+    "tests/test_cloudflare_provider_comparison_v2.py": "b9d02070ed0d17a66a5e9aed69bf3ff6cd4d2b39",
+    "tests/test_cloudflare_provider_provenance_v2.py": "f9e752523d50876f88a6de100afb33948c602157",
+    ".github/workflows/cloudflare-executor-custody-v2-provider-free.yml": "752f9c8906b124578164ee21885a90387842ff19"
+  },
+  "seven_audited_gaps": {
+    "current_scope_bundle_and_plan_v2": "CLOSED",
+    "result_summary_v2_resource_fields": "CLOSED",
+    "M8_neuron_accounting_H8_H9_H10_resource_guards": "CLOSED_PROVIDER_FREE",
+    "two_model_fixed_M5_probes": "CLOSED_PROVIDER_FREE",
+    "exact_cloudflare_client_factory": "CLOSED_PROVIDER_FREE",
+    "authorization_custody_marker_v2": "CLOSED_PROVIDER_FREE",
+    "pre_live_workers_free_9000_neuron_evidence_gate": "IMPLEMENTED_PROVIDER_FREE_NOT_POPULATED_FOR_LIVE"
+  },
+  "prospective_provenance_compatibility": {
+    "discovered_by_initial_ci": true,
+    "historical_problem": "ProviderCallIdentity and ProviderModelCallRecord reject official Cloudflare model IDs beginning with @cf/.",
+    "forbidden_resolution": "Do not strip @ and do not modify historical decision_source.py frozen bytes.",
+    "implemented_resolution": "Cloudflare-only exact-model provenance adapter preserving provider-model-call-v1 event shape, provider-decision-adapter-v1, ADR-007 call-id derivation, sanitized fields, failure codes, one invocation, zero retry/fallback and raw-material=false invariants.",
+    "allowed_model_ids": [
+      "@cf/zai-org/glm-4.7-flash",
+      "@cf/nvidia/nemotron-3-120b-a12b"
+    ],
+    "protocol_candidate_metric_threshold_route_budget_changed": false
+  },
+  "resource_contract": {
+    "workers_plan": "Workers Free",
+    "workers_paid_allowed": false,
+    "prepaid_ai_gateway_allowed": false,
+    "minimum_free_neurons_before_attempt_1": 9000,
+    "workers_free_daily_neurons": 10000,
+    "max_prompt_tokens_per_attempt": 8000,
+    "max_completion_tokens_per_attempt": 512,
+    "max_packet_neurons": 7937.522688,
+    "missing_exact_usage": "FAIL_CLOSED",
+    "observed_plus_worst_case_remaining_guard": true,
+    "actual_cash_cost_required_usd": 0
+  },
+  "custody_contract": {
+    "one_canonical_durable_root": true,
+    "canonical_run_dirname": "run",
+    "exclusive_authorization_marker": "cloudflare-adr018-live-comparison-custody-v2.json",
+    "ledger_entries": 32,
+    "write_ahead_claim_before_invocation": true,
+    "claimed_exception_becomes_uncertain": true,
+    "automatic_resume": false,
+    "automatic_retry_after_claim": false,
+    "second_run_same_root_refused": true,
+    "raw_provider_material_persisted": false,
+    "credentials_persisted": false
+  },
+  "validation_history": {
+    "initial_dedicated_run": {
+      "run_id": 33506528408,
+      "result": "FAIL",
+      "new_tests": "23 passed / 6 failed",
+      "cause": "Historical provenance model-id regex rejected exact @cf/... IDs; no provider call or credential probe occurred."
+    },
+    "corrected_dedicated_run": {
+      "head": "9c25143c1b37c7728d4c3130263607e6e6b0f1ed",
+      "run_id": 33507169465,
+      "result": "SUCCESS",
+      "cloudflare_v2_client_provenance_tests": "32 passed",
+      "historical_executor_custody_regressions": "29 passed",
+      "provider_credentials_present": false,
+      "provider_calls": 0
+    },
+    "corrected_head_workflows": {
+      "total": 14,
+      "success": 14,
+      "production_runtime": "SUCCESS",
+      "final_handoff_acceptance_audit": "SUCCESS",
+      "final_delivery_provider_free_reproduction": "SUCCESS"
+    }
+  },
+  "non_authorizations": {
+    "real_cloudflare_request": false,
+    "credential_account_probe_for_evidence": false,
+    "comparison_attempt_1": false,
+    "production_provider_selection": false,
+    "production_actions": false,
+    "semantic_private_blind_evaluation": false,
+    "c4_change": false
+  },
+  "next_step": "Freeze this provider-free implementation in ADR-020 and canonical status. After that, design/freeze a separate live-execution authorization that supplies genuine non-inference pre-live Workers Free/free-neuron evidence plus explicit credentials; attempt 1 remains forbidden until that separate authorization is complete."
+}
