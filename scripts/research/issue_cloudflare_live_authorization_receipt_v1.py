@@ -5,8 +5,14 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import sys
 
-from academy_tractian.cloudflare_live_authorization_v1 import (
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from academy_tractian.cloudflare_live_authorization_v1 import (  # noqa: E402
     CloudflareLiveAuthorizationEvidenceV1,
     issue_live_authorization_receipt,
     validate_frozen_authorization_protocol,
