@@ -43,10 +43,10 @@ tests/test_cloudflare_live_authorization_v1.py
 blob 33dc736f6d40a50bbf1276c5567e3e63df8a1def
 
 .github/workflows/cloudflare-live-authorization-v1-provider-free.yml
-blob bfcec3a2b041175ec01ea505640b95a0e8fdf33f
+blob f0a952715be74267046230753011c9f44afe2086
 
 research/results/cloudflare-live-authorization-v1-provider-free-validation-2026-09-01.json
-blob dd78847564eabd0bf88d353a569de350f0d0f3d8
+blob e5842dc953703e3d058109ce6ada81f1c524fec7
 ```
 
 Upstream frozen pins remain unchanged:
@@ -86,22 +86,22 @@ A future operator must create a sanitized evidence object from a manual Cloudfla
 Required evidence state:
 
 ```text
-Workers plan                         Workers Free
-Workers Paid enabled                 false
-free allocation/day                  10000 neurons
-free neurons remaining               >= 9000
-same UTC day                         required
-observation maximum age              600 seconds
-comparison attempts already used     0
+Workers plan                          Workers Free
+Workers Paid enabled                  false
+free allocation/day                   10000 neurons
+free neurons remaining                >= 9000
+same UTC day                          required
+observation maximum age               600 seconds
+comparison attempts already used      0
 provider inference to obtain evidence 0
-credential/account probe             0
-direct Workers AI route              true
-AI Gateway route                     false
-prepaid/unified billing route        false
+credential/account probe              0
+direct Workers AI route               true
+AI Gateway route                      false
+prepaid/unified billing route         false
 cf-aig-gateway-id present             false
-exclusive Workers AI usage window    attested
-account identifier persisted         false
-secret persisted                     false
+exclusive Workers AI usage window     attested
+account identifier persisted          false
+secret persisted                      false
 ```
 
 The evidence model also requires:
@@ -186,17 +186,17 @@ Crossing the 00:00 UTC allocation reset also requires fresh evidence and a new r
 
 ## Provider-free validation
 
-Validated head before ADR freeze:
+Final validated freeze candidate:
 
 ```text
-0d61e7908b5e9511e851bcd2c8e1e02e2299a682
+ab9767f66bb100e474623eaee81bd86f08895357
 ```
 
 Dedicated workflow:
 
 ```text
 cloudflare-live-authorization-v1-provider-free
-run 33512426906
+run 33513108347
 SUCCESS
 ```
 
@@ -208,7 +208,7 @@ Cloudflare v2 client/executor/provenance      32 passed
 ADR-010/011 executor/custody regressions      29 passed
 ```
 
-All 14 PR-associated workflows on the validated head completed successfully, including `production-runtime`, `final-handoff-acceptance-audit` and `final-delivery-provider-free-reproduction`.
+All **15/15** PR-associated workflows on the validated head completed successfully, including `provider-model-comparison-design-v2`, `production-runtime`, `final-handoff-acceptance-audit` and `final-delivery-provider-free-reproduction`.
 
 ## Failed validation history preserved
 
@@ -236,17 +236,17 @@ Those claims require future real evidence and, for model behavior, the preregist
 ## Current state after freeze
 
 ```text
-provider/model inference calls       0
-credential/account probes            0
-live network validation              0
-comparison attempts consumed         0 / 32
-real account evidence captured       NO
-real authorization receipt issued    NO
+provider/model inference calls        0
+credential/account probes             0
+live network validation               0
+comparison attempts consumed          0 / 32
+real account evidence captured        NO
+real authorization receipt issued     NO
 real provider credentials provisioned NO
-attempt 1 authorized                 NO
-production provider/model selected   NO
-customer mutations                   0
-C4 changes                           0
+attempt 1 authorized                  NO
+production provider/model selected    NO
+customer mutations                    0
+C4 changes                            0
 ```
 
 ## Next admissible step
