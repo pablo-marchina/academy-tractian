@@ -1,0 +1,84 @@
+{
+  "schema_version": "cloudflare-live-authorization-reset-window-amendment-v1",
+  "date": "2026-09-01",
+  "decision_state": "PROSPECTIVE_AMENDMENT_CANDIDATE_PROVIDER_FREE_ONLY",
+  "trigger_issue": 80,
+  "implementation_issue": 82,
+  "purpose": "Add a defensible non-inference fallback when the target Workers AI dashboard does not expose an explicit current Neuron balance, without modifying ADR-021 historical bytes or weakening the USD 0 resource gate.",
+  "historical_protocol": {
+    "adr_021_blob": "9627219e5b9c64dda83d23e0f3e99f4c9b953519",
+    "preserve_original_dashboard_balance_path": true,
+    "historical_bytes_modified": false
+  },
+  "primary_source_facts_checked_2026_09_01": {
+    "pricing_url": "https://developers.cloudflare.com/workers-ai/platform/pricing/",
+    "free_allocation_neurons_per_day": 10000,
+    "all_limits_reset_daily_at_utc": "00:00:00Z",
+    "workers_free_overage_behavior": "further operations fail; Workers Paid is required to continue beyond the free allocation",
+    "errors_url": "https://developers.cloudflare.com/workers-ai/platform/errors/",
+    "free_allocation_exhausted_http_status": 429,
+    "free_allocation_exhausted_internal_code": 3036,
+    "free_model_changelog_url": "https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/",
+    "frozen_models_listed_as_workers_free": [
+      "@cf/zai-org/glm-4.7-flash",
+      "@cf/nvidia/nemotron-3-120b-a12b"
+    ]
+  },
+  "fallback_mode": {
+    "name": "RESET_WINDOW_ATTESTATION",
+    "availability_derivation": "10000 Neurons at 00:00 UTC documented reset, conditioned on explicit no-use/exclusive-account attestation since reset",
+    "reset_capture_max_offset_seconds": 600,
+    "evidence_max_age_seconds": 600,
+    "receipt_max_lifetime_seconds": 300,
+    "derived_free_neurons_at_evidence": 10000,
+    "minimum_required_free_neurons": 9000,
+    "same_utc_day_required": true,
+    "workers_plan_required": "Workers Free",
+    "workers_paid_enabled_required": false,
+    "no_workers_ai_calls_since_reset_required": true,
+    "no_automated_workers_ai_consumers_since_reset_required": true,
+    "exclusive_workers_ai_account_window_until_packet_completion_required": true,
+    "direct_workers_ai_route_required": true,
+    "ai_gateway_route_required": false,
+    "prepaid_unified_billing_route_required": false,
+    "comparison_attempts_consumed_required": 0,
+    "provider_inference_used_to_obtain_evidence": false,
+    "credential_account_probe_used_to_obtain_evidence": false,
+    "workers_free_dashboard_source_artifact_sha256_required": true,
+    "source_artifact_retained_outside_repo": true,
+    "account_identifier_persisted": false,
+    "secret_persisted": false
+  },
+  "fail_closed_conditions": [
+    "observation later than 00:10:00 UTC",
+    "evidence older than 600 seconds at receipt issuance",
+    "Workers Paid active or plan not proven Workers Free",
+    "any Workers AI call occurred after reset before evidence",
+    "any automated/background Workers AI consumer may have run after reset",
+    "exclusive-account attestation cannot be made",
+    "any unrelated Workers AI usage occurs after evidence and before/during packet",
+    "AI Gateway or prepaid/unified billing route is used",
+    "comparison attempts consumed is not zero",
+    "UTC day changes",
+    "receipt expires",
+    "evidence/custody/upstream/model/route hash binding changes"
+  ],
+  "explicitly_rejected_evidence_sources": [
+    "absence of a dashboard meter interpreted as zero usage",
+    "browser DevTools/private dashboard endpoints",
+    "Alpha/Restricted generic billable usage API as canonical balance source",
+    "sacrificial inference call",
+    "credential/account probe merely to discover quota",
+    "weakening the 9000-Neuron gate"
+  ],
+  "future_execution_boundary": {
+    "provider_model_inference_calls_in_this_task": 0,
+    "credential_account_probes_in_this_task": 0,
+    "live_network_validation_in_this_task": 0,
+    "comparison_attempts_consumed": 0,
+    "real_reset_window_evidence_captured": false,
+    "real_receipt_issued": false,
+    "attempt_1_authorized": false,
+    "production_provider_selected": false
+  }
+}
