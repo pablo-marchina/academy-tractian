@@ -4,11 +4,18 @@ on:
   pull_request:
     paths:
       - research/experiments/cloudflare-live-authorization-reset-window-amendment-v1.json
+      - research/results/cloudflare-reset-window-amendment-provider-free-validation-2026-09-01.json
       - src/academy_tractian/cloudflare_live_authorization_reset_v2.py
       - scripts/research/validate_cloudflare_reset_window_amendment_v1.py
       - scripts/research/issue_cloudflare_reset_window_receipt_v1.py
       - tests/test_cloudflare_live_authorization_reset_v2.py
       - docs/adr/021-cloudflare-live-execution-authorization-protocol-2026-09-01.md
+      - docs/adr/022-cloudflare-reset-window-neuron-evidence-amendment-2026-09-01.md
+      - docs/CURRENT-PROJECT-STATUS.md
+      - docs/NEXT-STEPS.md
+      - docs/PROJECT-PLAN.md
+      - docs/ARCHITECTURE-ROADMAP.md
+      - docs/progress/043-cloudflare-reset-window-evidence-amendment-2026-09-01.md
       - .github/workflows/cloudflare-reset-window-amendment-provider-free.yml
   workflow_dispatch:
 
