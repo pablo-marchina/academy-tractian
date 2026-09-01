@@ -32,7 +32,11 @@ from .cloudflare_provider_comparison_v2 import (
     build_cloudflare_provider_comparison_plan_v2,
     load_frozen_cloudflare_comparison_bundle_v2,
 )
-from .decision_source import ProviderCallIdentity, ProviderDecisionSource, ProviderModelCallRecord
+from .cloudflare_provider_provenance_v2 import (
+    CloudflareProviderCallIdentityV2,
+    CloudflareProviderDecisionSourceV2,
+    CloudflareProviderModelCallRecordV2,
+)
 from .provider_clients import (
     ProviderHttpClientError,
     ProviderHttpRequest,
@@ -53,23 +57,23 @@ RESULT_FILENAME = "result-v2.json"
 
 
 class CloudflareLiveExecutionError(RuntimeError):
-    """Base error for the v2 governed Cloudflare execution surface."""
+    pass
 
 
 class MissingCloudflareSecretsError(CloudflareLiveExecutionError):
-    """Required Cloudflare secret values were not provisioned."""
+    pass
 
 
 class ExistingCloudflareRunError(CloudflareLiveExecutionError):
-    """Durable run/custody evidence already exists."""
+    pass
 
 
 class CloudflareLiveExecutionInvariantError(CloudflareLiveExecutionError):
-    """A v2 custody or resource invariant was violated."""
+    pass
 
 
 class CloudflareLiveExecutionStopped(CloudflareLiveExecutionError):
-    """Execution stopped fail-closed after durable evidence was recorded."""
+    pass
 
 
 @dataclass(frozen=True, repr=False)
@@ -97,7 +101,7 @@ class _FrozenModel(BaseModel):
 
 
 class CloudflarePreLiveEvidence(_FrozenModel):
-    """Sanitized evidence supplied by a later authorization task; performs no probe."""
+    """Sanitized caller-supplied evidence; validation performs no provider/account probe."""
 
     schema_version: Literal["cloudflare-pre-live-evidence-v1"] = "cloudflare-pre-live-evidence-v1"
     workers_plan: Literal["Workers Free"] = "Workers Free"
@@ -123,14 +127,14 @@ class CloudflarePreLiveEvidence(_FrozenModel):
 
     @property
     def canonical_sha256(self) -> str:
-        payload = self.model_dump(mode="json")
-        data = json.dumps(
-            payload,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-        ).encode("utf-8")
-        return sha256(data).hexdigest()
+        return sha256(
+            json.dumps(
+                self.model_dump(mode="json"),
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+        ).hexdigest()
 
 
 AttemptState = Literal["pending", "claimed", "completed", "uncertain"]
@@ -138,7 +142,7 @@ RunState = Literal["prepared", "running", "stopped", "complete"]
 
 
 class CloudflareLiveAttemptLedgerEntryV2(_FrozenModel):
-    attempt_index: int = Field(ge=0, lt=MAX_LIVE_ATTEMPTS_V2)
+    attempt_index: int = Field(ge=0, lt=32)
     candidate_id: str
     unit_id: str
     repeat_index: int = Field(ge=0, lt=2)
@@ -158,9 +162,7 @@ class CloudflareLiveAttemptLedgerEntryV2(_FrozenModel):
 
 
 class CloudflareLiveRunLedgerV2(_FrozenModel):
-    schema_version: Literal["cloudflare-live-attempt-ledger-v2"] = (
-        "cloudflare-live-attempt-ledger-v2"
-    )
+    schema_version: Literal["cloudflare-live-attempt-ledger-v2"] = "cloudflare-live-attempt-ledger-v2"
     wrapper_version: Literal["cloudflare-live-execution-v2"] = CLOUDFLARE_LIVE_EXECUTION_VERSION
     plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     design_blob: str = Field(pattern=r"^[0-9a-f]{40}$")
@@ -169,19 +171,15 @@ class CloudflareLiveRunLedgerV2(_FrozenModel):
     adr_019_blob: str = Field(pattern=r"^[0-9a-f]{40}$")
     cloudflare_client_blob: str = Field(pattern=r"^[0-9a-f]{40}$")
     pre_live_evidence_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    available_free_neurons_at_start: float = Field(ge=MIN_FREE_NEURONS_BEFORE_ATTEMPT_1)
+    available_free_neurons_at_start: float = Field(ge=9000, le=10000)
     state: RunState = "prepared"
     stop_code: str | None = None
     entries: tuple[CloudflareLiveAttemptLedgerEntryV2, ...]
 
     @model_validator(mode="after")
     def validate_geometry(self) -> "CloudflareLiveRunLedgerV2":
-        if len(self.entries) != MAX_LIVE_ATTEMPTS_V2:
-            raise ValueError("v2 live ledger must contain exactly 32 entries")
-        if tuple(item.attempt_index for item in self.entries) != tuple(
-            range(MAX_LIVE_ATTEMPTS_V2)
-        ):
-            raise ValueError("v2 ledger indexes must be canonical 0..31")
+        if len(self.entries) != 32 or tuple(item.attempt_index for item in self.entries) != tuple(range(32)):
+            raise ValueError("v2 live ledger must contain canonical indexes 0..31")
         if self.state == "complete" and any(item.state != "completed" for item in self.entries):
             raise ValueError("complete v2 ledger requires all attempts completed")
         if self.state == "stopped" and not self.stop_code:
@@ -190,24 +188,15 @@ class CloudflareLiveRunLedgerV2(_FrozenModel):
 
 
 class CloudflareAuthorizationCustodyRecordV2(_FrozenModel):
-    schema_version: Literal["cloudflare-live-authorization-custody-v2"] = (
-        "cloudflare-live-authorization-custody-v2"
-    )
+    schema_version: Literal["cloudflare-live-authorization-custody-v2"] = "cloudflare-live-authorization-custody-v2"
     task_version: Literal["cloudflare-live-task-v2"] = CLOUDFLARE_LIVE_TASK_VERSION
     wrapper_version: Literal["cloudflare-live-execution-v2"] = CLOUDFLARE_LIVE_EXECUTION_VERSION
     adr_018_blob: Literal["e075ab4ff21904b9412769496dd2680c049cdaa8"] = ADR_018_GIT_BLOB
     adr_019_blob: Literal["b8f76831aceb13f5f3ffb5d7da0e12b595d9dd1a"] = ADR_019_GIT_BLOB
-    cloudflare_client_blob: Literal["a5c814b519584b6d4346e3b0567bbc3da8ba0bf4"] = (
-        CLOUDFLARE_CLIENT_GIT_BLOB
-    )
-    plan_sha256: Literal[
-        "092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb"
-    ] = EXPECTED_PLAN_SHA256
+    cloudflare_client_blob: Literal["a5c814b519584b6d4346e3b0567bbc3da8ba0bf4"] = CLOUDFLARE_CLIENT_GIT_BLOB
+    plan_sha256: Literal["092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb"] = EXPECTED_PLAN_SHA256
     pre_live_evidence_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    available_free_neurons_at_reservation: float = Field(
-        ge=MIN_FREE_NEURONS_BEFORE_ATTEMPT_1,
-        le=WORKERS_FREE_DAILY_NEURONS,
-    )
+    available_free_neurons_at_reservation: float = Field(ge=9000, le=10000)
     canonical_run_dirname: Literal["run"] = CANONICAL_RUN_DIRNAME
     state: Literal["reserved"] = "reserved"
     live_calls_consumed_at_reservation: Literal[0] = 0
@@ -219,14 +208,12 @@ class CloudflareAuthorizationCustodyRecordV2(_FrozenModel):
 
 
 class CloudflareGovernedExecutionResultV2(_FrozenModel):
-    schema_version: Literal["cloudflare-governed-live-result-v2"] = (
-        "cloudflare-governed-live-result-v2"
-    )
+    schema_version: Literal["cloudflare-governed-live-result-v2"] = "cloudflare-governed-live-result-v2"
     wrapper_version: Literal["cloudflare-live-execution-v2"] = CLOUDFLARE_LIVE_EXECUTION_VERSION
     plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     state: Literal["complete", "stopped"]
-    completed_attempts: int = Field(ge=0, le=MAX_LIVE_ATTEMPTS_V2)
-    consumed_or_uncertain_attempts: int = Field(ge=0, le=MAX_LIVE_ATTEMPTS_V2)
+    completed_attempts: int = Field(ge=0, le=32)
+    consumed_or_uncertain_attempts: int = Field(ge=0, le=32)
     stop_code: str | None = None
     selection: str
     provider_result: dict[str, Any] | None = None
@@ -258,7 +245,6 @@ def build_cloudflare_live_clients_v2(
 
 
 def build_cloudflare_one_shot_transport_v2() -> UrllibProviderJsonTransport:
-    """Construct the generic one-shot transport; construction performs no network I/O."""
     return UrllibProviderJsonTransport()
 
 
@@ -271,7 +257,10 @@ class _InjectedFailureTransport(ProviderJsonTransport):
         raise ProviderHttpClientError("INJECTED_PROVIDER_FREE_FAILURE")
 
 
-def _fixed_failure_probe(model_id: str) -> bool:
+def _fixed_failure_probe(model_id: Literal[
+    "@cf/zai-org/glm-4.7-flash",
+    "@cf/nvidia/nemotron-3-120b-a12b",
+]) -> bool:
     transport = _InjectedFailureTransport()
     client = CloudflareWorkersAIChatCompletionsDecisionClient(
         api_token="provider-free-injected-token",
@@ -281,13 +270,11 @@ def _fixed_failure_probe(model_id: str) -> bool:
     )
     bundle = load_frozen_cloudflare_comparison_bundle_v2()
     context = controller_context_for_unit(bundle, bundle.population["units"][0]["unit_id"])
-    source = ProviderDecisionSource(
+    source = CloudflareProviderDecisionSourceV2(
         client=client,
         registry=canonical_tool_registry(),
-        call_identity=ProviderCallIdentity(
-            provider_id=client.provider_id,
-            model_id=client.model_id,
-            route_id=client.route_id,
+        call_identity=CloudflareProviderCallIdentityV2(
+            model_id=model_id,
             live_call=False,
         ),
     )
@@ -299,13 +286,12 @@ def _fixed_failure_probe(model_id: str) -> bool:
         return False
     else:
         return False
-
     records = source.drain_audit_records()
     if transport.calls != 1 or len(records) != 1:
         return False
     item = records[0]
     try:
-        record = ProviderModelCallRecord.model_validate(
+        record = CloudflareProviderModelCallRecordV2.model_validate(
             {"call_id": item.call_id, **dict(item.metadata)}
         )
     except Exception:
@@ -395,15 +381,6 @@ class DurableCloudflareLiveRunLedgerV2:
             raise ExistingCloudflareRunError(
                 "Cloudflare v2 run directory already exists; refusing resume or budget reset"
             ) from exc
-        entries = tuple(
-            CloudflareLiveAttemptLedgerEntryV2(
-                attempt_index=item.attempt_index,
-                candidate_id=item.candidate_id,
-                unit_id=item.unit_id,
-                repeat_index=item.repeat_index,
-            )
-            for item in plan.entries
-        )
         ledger = CloudflareLiveRunLedgerV2(
             plan_sha256=plan.plan_sha256,
             design_blob=bundle.design_blob,
@@ -413,17 +390,21 @@ class DurableCloudflareLiveRunLedgerV2:
             cloudflare_client_blob=bundle.cloudflare_client_blob,
             pre_live_evidence_sha256=pre_live_evidence.canonical_sha256,
             available_free_neurons_at_start=pre_live_evidence.free_neurons_remaining,
-            entries=entries,
+            entries=tuple(
+                CloudflareLiveAttemptLedgerEntryV2(
+                    attempt_index=item.attempt_index,
+                    candidate_id=item.candidate_id,
+                    unit_id=item.unit_id,
+                    repeat_index=item.repeat_index,
+                )
+                for item in plan.entries
+            ),
         )
         path = run_dir / LEDGER_FILENAME
         _write_json_atomic(path, ledger.model_dump(mode="json"))
         return cls(path=path, ledger=ledger)
 
-    def _replace_entry(
-        self,
-        index: int,
-        replacement: CloudflareLiveAttemptLedgerEntryV2,
-    ) -> None:
+    def _replace_entry(self, index: int, replacement: CloudflareLiveAttemptLedgerEntryV2) -> None:
         entries = list(self.ledger.entries)
         entries[index] = replacement
         self.ledger = self.ledger.model_copy(update={"entries": tuple(entries)})
@@ -434,44 +415,28 @@ class DurableCloudflareLiveRunLedgerV2:
     def claim(self, *, attempt_index: int) -> None:
         pending = [item.attempt_index for item in self.ledger.entries if item.state == "pending"]
         if not pending or attempt_index != min(pending):
-            raise CloudflareLiveExecutionInvariantError(
-                "attempt claim is not the next canonical pending index"
-            )
+            raise CloudflareLiveExecutionInvariantError("attempt claim is not next canonical pending index")
         if any(item.state in {"claimed", "uncertain"} for item in self.ledger.entries):
-            raise CloudflareLiveExecutionInvariantError(
-                "existing claimed/uncertain evidence forbids another attempt"
-            )
+            raise CloudflareLiveExecutionInvariantError("claimed/uncertain evidence forbids another attempt")
         current = self.ledger.entries[attempt_index]
-        self._replace_entry(
-            attempt_index,
-            current.model_copy(update={"state": "claimed"}),
-        )
+        self._replace_entry(attempt_index, current.model_copy(update={"state": "claimed"}))
         self.ledger = self.ledger.model_copy(update={"state": "running", "stop_code": None})
         self._persist()
 
     def complete(self, attempt: ProviderComparisonAttempt) -> None:
-        index = attempt.attempt_index
-        current = self.ledger.entries[index]
+        current = self.ledger.entries[attempt.attempt_index]
         if current.state != "claimed":
-            raise CloudflareLiveExecutionInvariantError(
-                "completed attempt was not durably claimed first"
-            )
+            raise CloudflareLiveExecutionInvariantError("completed attempt was not durably claimed")
         if (
             attempt.candidate_id != current.candidate_id
             or attempt.unit_id != current.unit_id
             or attempt.repeat_index != current.repeat_index
         ):
-            raise CloudflareLiveExecutionInvariantError(
-                "attempt evidence does not match canonical v2 ledger entry"
-            )
+            raise CloudflareLiveExecutionInvariantError("attempt does not match canonical ledger entry")
         self._replace_entry(
-            index,
+            attempt.attempt_index,
             current.model_copy(
-                update={
-                    "state": "completed",
-                    "attempt": attempt.model_dump(mode="json"),
-                    "stop_code": None,
-                }
+                update={"state": "completed", "attempt": attempt.model_dump(mode="json"), "stop_code": None}
             ),
         )
         self._persist()
@@ -479,33 +444,23 @@ class DurableCloudflareLiveRunLedgerV2:
     def mark_uncertain(self, *, attempt_index: int, stop_code: str) -> None:
         current = self.ledger.entries[attempt_index]
         if current.state != "claimed":
-            raise CloudflareLiveExecutionInvariantError(
-                "only a claimed attempt can become uncertain"
-            )
+            raise CloudflareLiveExecutionInvariantError("only claimed attempt can become uncertain")
         self._replace_entry(
             attempt_index,
             current.model_copy(update={"state": "uncertain", "stop_code": stop_code}),
         )
-        self.ledger = self.ledger.model_copy(
-            update={"state": "stopped", "stop_code": stop_code}
-        )
+        self.ledger = self.ledger.model_copy(update={"state": "stopped", "stop_code": stop_code})
         self._persist()
 
     def stop_after_completed(self, *, stop_code: str) -> None:
         if any(item.state == "claimed" for item in self.ledger.entries):
-            raise CloudflareLiveExecutionInvariantError(
-                "cannot stop cleanly while an attempt remains claimed"
-            )
-        self.ledger = self.ledger.model_copy(
-            update={"state": "stopped", "stop_code": stop_code}
-        )
+            raise CloudflareLiveExecutionInvariantError("cannot stop while attempt remains claimed")
+        self.ledger = self.ledger.model_copy(update={"state": "stopped", "stop_code": stop_code})
         self._persist()
 
     def mark_complete(self) -> None:
         if any(item.state != "completed" for item in self.ledger.entries):
-            raise CloudflareLiveExecutionInvariantError(
-                "cannot complete before all 32 attempts are recorded"
-            )
+            raise CloudflareLiveExecutionInvariantError("cannot complete before all attempts recorded")
         self.ledger = self.ledger.model_copy(update={"state": "complete", "stop_code": None})
         self._persist()
 
@@ -515,10 +470,7 @@ class DurableCloudflareLiveRunLedgerV2:
 
     @property
     def consumed_or_uncertain_attempts(self) -> int:
-        return sum(
-            item.state in {"claimed", "completed", "uncertain"}
-            for item in self.ledger.entries
-        )
+        return sum(item.state in {"claimed", "completed", "uncertain"} for item in self.ledger.entries)
 
 
 def _reserve_authorization_custody_v2(
@@ -528,33 +480,23 @@ def _reserve_authorization_custody_v2(
 ) -> Path:
     custody_root.mkdir(parents=True, exist_ok=True)
     path = custody_root / CLOUDFLARE_CUSTODY_FILENAME
-    data = json.dumps(
-        record.model_dump(mode="json"),
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-    ) + "\n"
+    data = json.dumps(record.model_dump(mode="json"), sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n"
     try:
         descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except FileExistsError as exc:
         raise ExistingCloudflareRunError(
             "Cloudflare ADR-018 custody already exists; refusing a second run or budget reset"
         ) from exc
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-            handle.write(data)
-            handle.flush()
-            os.fsync(handle.fileno())
-        _fsync_directory(custody_root)
-    except Exception:
-        raise
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+    _fsync_directory(custody_root)
     return path
 
 
 def _sanitized_exception_code(exc: Exception) -> str:
-    if isinstance(exc, CloudflareLiveExecutionError):
-        return type(exc).__name__.upper()
-    return "EXECUTOR_INTERNAL_FAILURE"
+    return type(exc).__name__.upper() if isinstance(exc, CloudflareLiveExecutionError) else "EXECUTOR_INTERNAL_FAILURE"
 
 
 @dataclass
@@ -582,17 +524,14 @@ class GovernedCloudflareProviderComparisonV2:
         secrets.validate_presence()
         bundle = load_frozen_cloudflare_comparison_bundle_v2(repo_root)
         plan = build_cloudflare_provider_comparison_plan_v2(bundle)
-        if plan.plan_sha256 != EXPECTED_PLAN_SHA256:
-            raise CloudflareLiveExecutionInvariantError("Cloudflare v2 plan SHA drift")
-        path = Path(run_dir)
         ledger = DurableCloudflareLiveRunLedgerV2.create(
-            run_dir=path,
+            run_dir=Path(run_dir),
             bundle=bundle,
             plan=plan,
             pre_live_evidence=pre_live_evidence,
         )
         return cls(
-            run_dir=path,
+            run_dir=Path(run_dir),
             bundle=bundle,
             plan=plan,
             secrets=secrets,
@@ -603,8 +542,8 @@ class GovernedCloudflareProviderComparisonV2:
         )
 
     def execute_all(self) -> CloudflareGovernedExecutionResultV2:
-        fixed_probes = run_cloudflare_provider_free_fixed_failure_probes_v2()
-        if not all(fixed_probes.values()):
+        fixed = run_cloudflare_provider_free_fixed_failure_probes_v2()
+        if not all(fixed.values()):
             self.ledger.stop_after_completed(stop_code="FIXED_FAILURE_PROBE_FAILED")
             result = CloudflareGovernedExecutionResultV2(
                 plan_sha256=self.plan.plan_sha256,
@@ -617,27 +556,20 @@ class GovernedCloudflareProviderComparisonV2:
             _write_result_once(self.run_dir, result)
             return result
 
-        clients = build_cloudflare_live_clients_v2(
-            secrets=self.secrets,
-            transport=self.transport,
-        )
         executor = CloudflareProviderComparisonExecutorV2(
             bundle=self.bundle,
-            clients=clients,
+            clients=build_cloudflare_live_clients_v2(secrets=self.secrets, transport=self.transport),
             fixture_result=self.fixture_result,
             available_free_neurons=self.pre_live_evidence.free_neurons_remaining,
             zero_cash_cost_route_proven=self.pre_live_evidence.zero_cash_route_proven,
         )
-
         for entry in self.plan.entries:
             try:
                 executor.assert_next_attempt_allowed()
             except CloudflareComparisonStopped:
                 stop_code = executor.stop_reason or "RESOURCE_GUARD_STOP"
                 self.ledger.stop_after_completed(stop_code=stop_code)
-                provider_result = executor.finalize(
-                    fixed_failure_probe_passed=fixed_probes
-                )
+                provider_result = executor.finalize(fixed_failure_probe_passed=fixed)
                 result = CloudflareGovernedExecutionResultV2(
                     plan_sha256=self.plan.plan_sha256,
                     state="stopped",
@@ -655,10 +587,7 @@ class GovernedCloudflareProviderComparisonV2:
                 attempt = executor.execute_next()
             except Exception as exc:
                 stop_code = _sanitized_exception_code(exc)
-                self.ledger.mark_uncertain(
-                    attempt_index=entry.attempt_index,
-                    stop_code=stop_code,
-                )
+                self.ledger.mark_uncertain(attempt_index=entry.attempt_index, stop_code=stop_code)
                 result = CloudflareGovernedExecutionResultV2(
                     plan_sha256=self.plan.plan_sha256,
                     state="stopped",
@@ -674,9 +603,7 @@ class GovernedCloudflareProviderComparisonV2:
             if executor.stopped:
                 stop_code = executor.stop_reason or "EXECUTOR_HARD_GATE_STOP"
                 self.ledger.stop_after_completed(stop_code=stop_code)
-                provider_result = executor.finalize(
-                    fixed_failure_probe_passed=fixed_probes
-                )
+                provider_result = executor.finalize(fixed_failure_probe_passed=fixed)
                 result = CloudflareGovernedExecutionResultV2(
                     plan_sha256=self.plan.plan_sha256,
                     state="stopped",
@@ -689,7 +616,7 @@ class GovernedCloudflareProviderComparisonV2:
                 _write_result_once(self.run_dir, result)
                 return result
 
-        provider_result = executor.finalize(fixed_failure_probe_passed=fixed_probes)
+        provider_result = executor.finalize(fixed_failure_probe_passed=fixed)
         self.ledger.mark_complete()
         result = CloudflareGovernedExecutionResultV2(
             plan_sha256=self.plan.plan_sha256,
@@ -724,13 +651,12 @@ class GovernedCloudflareLiveTaskV2:
         bundle = load_frozen_cloudflare_comparison_bundle_v2(repo_root)
         plan = build_cloudflare_provider_comparison_plan_v2(bundle)
         root = Path(custody_root)
-        record = CloudflareAuthorizationCustodyRecordV2(
-            pre_live_evidence_sha256=pre_live_evidence.canonical_sha256,
-            available_free_neurons_at_reservation=pre_live_evidence.free_neurons_remaining,
-        )
         custody_path = _reserve_authorization_custody_v2(
             custody_root=root,
-            record=record,
+            record=CloudflareAuthorizationCustodyRecordV2(
+                pre_live_evidence_sha256=pre_live_evidence.canonical_sha256,
+                available_free_neurons_at_reservation=pre_live_evidence.free_neurons_remaining,
+            ),
         )
         execution = GovernedCloudflareProviderComparisonV2.prepare(
             run_dir=root / CANONICAL_RUN_DIRNAME,
@@ -741,14 +667,8 @@ class GovernedCloudflareLiveTaskV2:
             repo_root=repo_root,
         )
         if execution.plan.plan_sha256 != plan.plan_sha256:
-            raise CloudflareLiveExecutionInvariantError(
-                "custody and execution plan identities diverged"
-            )
-        return cls(
-            custody_root=root,
-            custody_path=custody_path,
-            execution=execution,
-        )
+            raise CloudflareLiveExecutionInvariantError("custody and execution plan identities diverged")
+        return cls(custody_root=root, custody_path=custody_path, execution=execution)
 
     def execute_all(self) -> CloudflareGovernedExecutionResultV2:
         return self.execution.execute_all()
