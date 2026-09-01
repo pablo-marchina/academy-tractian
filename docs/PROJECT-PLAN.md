@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Governed Project Plan to Final Delivery
 
 **Status:** ACTIVE / canonical macro plan  
-**Planning checkpoint:** 2026-09-01 — ADR-023 governed Cloudflare entrypoint merged and provider-free validated  
+**Planning checkpoint:** 2026-09-01 — ADR-023 governed entrypoint merged; standalone production wheel reproducibility proved; real D01 reset-window evidence pending  
 **Final delivery target:** 2026-09-08  
 **Current status:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Immediate next steps:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
@@ -27,7 +27,7 @@ external API / hosted-service project charge    USD 0
 paid spillover                                  FORBIDDEN
 ```
 
-The project does not optimize experiment count or architecture breadth. It closes only material evidence gaps that can still change the final delivery.
+The project does not optimize experiment count, framework novelty or architecture breadth. It closes only material evidence gaps that can still change the final delivery.
 
 ## 2. Non-negotiable governance
 
@@ -55,10 +55,12 @@ Priority:
 ```text
 P0 required behavior + trustworthy evaluation
 ↓
-P1 production/security/reliability closure
+P1 production/security/reliability/reproducibility closure
 ↓
 P2 optional complexity only if evidence says it can matter and deadline allows
 ```
+
+Provider-free audits may continue before D01 only when they cannot alter or consume the frozen Cloudflare packet and do not pre-empt a post-D01 topology/runtime decision.
 
 ## 3. Current provider path
 
@@ -76,15 +78,22 @@ original live authorization protocol             FROZEN / ADR-021
 Neuron evidence-source revalidation              RESOLVED / ADR-022
 governed entrypoint audit/contract               ACCEPTED / ADR-023
 minimal gate-specific live launcher              MERGED / PROVIDER-FREE VALIDATED
+standalone production wheel reproduction         PROVED / PR #91
 ```
 
-Canonical merge containing ADR-023/launcher:
+Canonical current `main` after the reproduction closure:
+
+```text
+a93854dd5e70edf8084bdaae1762dd64cdb6aa48
+```
+
+The ADR-023/launcher merge remains historical provenance at:
 
 ```text
 5b4b0a2f4bbf51215c901af534216805d26386b0
 ```
 
-The push-triggered `production-runtime` workflow on that `main` merge completed successfully.
+PR #91 added no runtime/provider/evaluator semantic change. Its clean-wheel job built the root wheel, installed only that wheel in a clean virtual environment, executed outside the repository checkout, imported both `academy_tractian` and `research.e2`, and validated the canonical 18-operation registry. Existing production/runtime regressions remained green.
 
 Frozen candidates:
 
@@ -172,14 +181,55 @@ python scripts/research/execute_cloudflare_live_comparison_v2.py --evidence <evi
 
 No direct client construction, duplicate authorization, retry, fallback, alternate custody/model/provider, generic CLI framework or `[project.scripts]` promotion is authorized.
 
-## 6. Immediate critical path
+## 6. Pre-D01 work allowed before the reset
 
-The critical path is no longer protocol or launcher design. It is a real operational reset window.
+The provider path itself needs no more implementation before the reset. The remaining safe work is acceptance/reliability auditing that is independent of provider choice.
+
+Priority order:
+
+```text
+A. standalone distribution/reproduction risk      CLOSED / PR #91
+B. canonical action-plan reconciliation            ACTIVE
+C. delivery-acceptance gap audit                   NEXT
+D. real-demo path completeness audit               NEXT
+E. security / trace / failure-containment audit    NEXT
+```
+
+For C–E, classify every finding as:
+
+```text
+PROVED
+PARTIAL
+BLOCKED
+MISSING
+```
+
+A finding may be fixed before D01 only if all are true:
+
+1. it maps to a concrete P0/P1 acceptance row or reproducibility/security risk;
+2. it is provider-independent;
+3. it does not change ADR-018→023 semantics, packet, custody or attempt accounting;
+4. it does not select or implement a topology/runtime/RAG/memory decision reserved for post-D01;
+5. the smallest fix can be validated provider-free.
+
+Otherwise record it and defer to the relevant post-D01 materiality gate.
+
+## 7. Immediate D01 critical path
+
+The next admissible target reset window is:
+
+```text
+2026-09-02 00:00–00:10 UTC
+=
+2026-09-01 21:00–21:10 America/Sao_Paulo
+```
+
+Operational sequence:
 
 ```text
 ADR-018→023 provider-free path frozen/validated
 ↓
-wait for admissible 00:00 UTC reset
+enter admissible 00:00 UTC reset
 ↓
 within first 10 minutes capture Workers Free evidence
 + no-use/exclusive-use attestations
@@ -199,7 +249,7 @@ execute frozen packet
 
 If the account cannot be placed under truthful exclusive Workers AI custody, do not weaken the protocol. Freeze an external blocker.
 
-## 7. Allowed provider outcomes
+## 8. Allowed provider outcomes
 
 All are legitimate:
 
@@ -225,12 +275,13 @@ LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
 
 Forced provider selection is forbidden.
 
-## 8. Decision state by architecture area
+## 9. Decision state by architecture area
 
 | Area | Evidence state | Plan consequence |
 |---|---|---|
 | Provider/model | `PARTIALLY_ASSESSED`; live comparison pending | current operational gate |
 | Provider entrypoint | `EVIDENCE_SUFFICIENT`; ADR-023 provider-free validated | preserve; no more wrapper work |
+| Standalone packaging/reproduction | `EVIDENCE_SUFFICIENT`; PR #91 clean-wheel smoke passed | preserve/regress |
 | Native typed tools vs MCP | `EVIDENCE_SUFFICIENT` | preserve native ToolSpec; no new experiment |
 | Evidence-sufficiency stopping | `EVIDENCE_SUFFICIENT` | preserve |
 | Safety/authorization/idempotency | strong deterministic boundary | preserve/strengthen only |
@@ -238,28 +289,42 @@ Forced provider selection is forbidden.
 | RAG/vector/reranking | no demonstrated material gap | do not add |
 | Persistent memory | no demonstrated material need | do not add |
 | Agent topology | strong single-agent qualified baseline; comparative optimality conditional | audit after provider D01 |
-| Runtime/orchestration | historical evidence strong but asymmetric | assess only if still material |
+| Runtime/orchestration | historical evidence strong but asymmetric | assess only if still material after topology |
 | Adaptive model routing | unassessed but not currently material | defer |
 | Rich observability/UI/deployment | P2 unless acceptance gap appears | defer |
+| Architecture-selection protocol | PLANNED / issue #92 | activate only after D01 resolves/bounds |
 | C4 | exact artifact externally blocked | exact-byte recovery only |
 
-## 9. Post-provider evidence audit
+## 10. Post-provider architecture materiality and Pareto protocol
 
-After the provider result or external-blocker freeze:
+Issue #92 is the prospective planning authority for remaining architecture decisions. It authorizes no pre-D01 experiment.
+
+Start condition:
 
 ```text
-provider D01 resolved/bounded
-→ re-audit topology evidence
+provider D01 result
+OR
+LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED frozen
+```
+
+Then:
+
+```text
+re-audit topology evidence
 → can topology still materially change P0/P1/final architecture?
    ├─ NO → preserve single-agent qualified baseline
    └─ YES → preregister minimum controlled topology comparison
 ```
 
-Runtime/orchestration is assessed only after topology/materiality is closed.
+Every candidate must first pass hard gates for P0 coverage, deterministic safety, evaluator/gold isolation, trace integrity, clean reproduction, USD 0 feasibility and safe failure behavior.
 
-Do not automatically launch multi-agent or framework experiments because they were once on a roadmap.
+Only hard-gate-passing candidates may be compared on a Pareto frontier covering correctness, tool/argument/evidence quality, escalation/fallback, stability, latency/resources, coordination failures, operational complexity and debuggability.
 
-## 10. C4 parallel track
+Do not collapse the decision into an arbitrary weighted score.
+
+Runtime/orchestration is assessed only after topology/materiality is closed. RAG/vector/reranking, persistent memory, MCP migration, adaptive routing and richer observability remain conditional on a measured material gap.
+
+## 11. C4 parallel track
 
 Exact required artifact:
 
@@ -276,31 +341,41 @@ A fresh 2026-09-01 recovery pass found no candidate in connected ChatGPT Library
 
 C4 does not block preserving the already validated provider-free handoff; it limits the exact claims that can be made.
 
-## 11. Phase map
+## 12. Phase map
 
 | Phase | State | Exit condition |
 |---|---|---|
 | Governance/benchmark foundation | COMPLETE | immutable governance and benchmark semantics |
 | Historical candidate/failure learning | COMPLETE | evidence preserved |
 | Provider packet foundations | COMPLETE | ADR-018→023 provider-free freezes/validation |
+| Standalone packaging/reproduction | COMPLETE | clean-wheel installation/import proof |
+| Pre-D01 acceptance/reliability audit | ACTIVE | provider-independent P0/P1 gaps classified/bounded |
 | Operational provider selection | ACTIVE | live result, `NO_SELECTION`, or external-blocker freeze |
-| Remaining architecture decisions | CONDITIONAL | only still-material gaps closed/bounded |
+| Remaining architecture decisions | CONDITIONAL | #92 materiality/Pareto protocol activated after D01 |
 | Final architecture integration | PENDING | supported choices integrated/regressed |
 | Final demonstration/delivery | PENDING | acceptance evidence + reproducible real path |
 
-## 12. Deadline protection
+## 13. Deadline protection
 
-### 2026-09-01 → 2026-09-02
+### 2026-09-01 before 21:00 America/Sao_Paulo
 
-- ADR-023/launcher merged and provider-free validated;
-- use the next admissible reset window only if exclusive account custody can be truthfully established;
-- otherwise prepare the external-blocker outcome rather than weakening evidence;
-- C4 remains exact-byte recovery only.
+- standalone production wheel reproduction closed by PR #91;
+- reconcile canonical action plans/status;
+- audit remaining delivery-acceptance, demo-path and security/trace gaps provider-free;
+- do not implement topology/runtime/RAG/memory changes;
+- prepare private reset evidence source/custody inputs without provider calls or credential probes.
+
+### 2026-09-01 21:00–21:10 America/Sao_Paulo / 2026-09-02 00:00–00:10 UTC
+
+- use the reset window only if every ADR-022 attestation is truthful;
+- capture evidence → issue receipt → provision secrets → explicit launcher invocation;
+- otherwise freeze the external blocker instead of weakening evidence.
 
 ### 2026-09-02 → 2026-09-03
 
 - finish live packet and provider decision if authorized; or
-- freeze `LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED`.
+- freeze `LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED`;
+- activate issue #92 only after D01 is resolved/bounded.
 
 ### 2026-09-03 → 2026-09-05
 
@@ -323,7 +398,7 @@ Deliver only evidence-backed claims.
 
 After 2026-09-05, default against speculative P2 work.
 
-## 13. Stop/pivot rules
+## 14. Stop/pivot rules
 
 - preserve failed/consumed experiments;
 - never fabricate quota or operational evidence;
@@ -334,10 +409,11 @@ After 2026-09-05, default against speculative P2 work.
 - do not change the ADR-018 packet after live results begin;
 - do not add a second launcher/wrapper or rewrite executor/custody/client/authorization for entrypoint convenience;
 - do not add RAG/memory/multi-agent/runtime/UI complexity absent a measured material gap;
+- pre-D01 audits may identify gaps but may not pre-empt #92 topology/runtime decisions;
 - do not promote an implemented component to final merely because it exists;
 - if an external condition blocks stronger evidence, freeze the blocker and continue the strongest defensible delivery.
 
-## 14. Repository-wide definition of done
+## 15. Repository-wide definition of done
 
 ```text
 all requested P0 capabilities demonstrably covered
@@ -350,7 +426,7 @@ material final decisions resolved or explicitly bounded
 +
 USD 0 feasibility
 +
-P1 production/security/reliability risks closed or bounded
+P1 production/security/reliability/reproducibility risks closed or bounded
 +
 reproducible real-path demonstration
 +
