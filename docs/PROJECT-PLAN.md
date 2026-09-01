@@ -1,329 +1,354 @@
-# Academy × TRACTIAN — Governed Project Plan to Production Delivery
+# Academy × TRACTIAN — Governed Project Plan to Final Delivery
 
 **Status:** ACTIVE / canonical macro plan  
-**Planning checkpoint:** 2026-08-28 09:17 BRT  
+**Planning checkpoint:** 2026-09-01  
 **Final delivery target:** 2026-09-08  
 **Current status:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Immediate next steps:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
+**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
 **Decision revalidation:** [`DECISION-REVALIDATION-MASTER-PLAN.md`](DECISION-REVALIDATION-MASTER-PLAN.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
-**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
-**Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
-**Source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)
+**Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
 
 ## 1. Purpose
 
-This document is the **master phase/milestone map** for delivering the strongest defensible TRACTIAN × Inteli individual project by 2026-09-08.
+This document is the canonical macro plan for delivering the strongest defensible TRACTIAN × Inteli project by 2026-09-08.
 
-Use:
-
-- `CURRENT-PROJECT-STATUS.md` — where the project is and what is authorized;
-- `NEXT-STEPS.md` — what should be done next;
-- `DECISION-REVALIDATION-MASTER-PLAN.md` — mandatory planning gate before all future material development;
-- `DELIVERY-ACCEPTANCE.md` — what must demonstrably be true at final delivery;
-- `ARCHITECTURE-ROADMAP.md` — how the integrated agent/evaluator reaches a production path;
-- `PROJECT-PROGRESS-LOG.md` — completed evidence/history;
-- `PROJECT-PRINCIPLES.md` — non-negotiable development rules.
-
-The objective is not to maximize implementation volume. It is to maximize **required-scope coverage × scientific credibility × production quality × academic evidence quality** within the deadline and the permanent **USD 0 monetary hard constraint**.
-
-## 2. Non-negotiable planning rules
-
-All phases follow the fixed Project North Star and P1–P4:
-
-- **P1 — systematic comparison:** no material architecture/product decision is final before credible alternatives are compared under explicit requirements;
-- **P2 — production-first:** production constraints and partner-quality risks are part of selection, not post-hoc decoration;
-- **P3 — quantitative/adaptive by default:** measurable decisions use metrics/uncertainty and adaptive policies must beat simpler static baselines;
-- **P4 — eval-driven engineering:** requirements, evaluators, baselines and regression evidence drive implementation through delivery;
-- **USD 0 — monetary hard constraint:** production/provider/service choices must not incur project API/service charges or require paid spillover.
-
-A gate PASS means evidence for that gate. It does not automatically mean `PREFERRED`, `FROZEN`, final or production-ready.
-
-### 2.1 Documentation-before-development rule
-
-From the 2026-08-28 09:17 BRT checkpoint forward, every material workstream begins with:
+The optimization target is:
 
 ```text
-decision inventory / plan update
-→ decision question + requirement/risk mapping
+required-scope coverage
+× scientific credibility
+× production quality
+× academic evidence quality
+```
+
+subject to:
+
+```text
+external API / hosted-service project charge    USD 0
+paid spillover                                  FORBIDDEN
+```
+
+The goal is not to maximize architecture breadth or experiment count. The goal is to close the smallest set of material evidence gaps that can still change the final delivery.
+
+## 2. Non-negotiable rules
+
+All work continues under P1–P4:
+
+- **P1 — systematic comparison:** no material final choice without credible alternatives or a documented evidence-based reason that alternatives are not material;
+- **P2 — production-first:** production/security/reliability risks are part of selection;
+- **P3 — quantitative/adaptive by default:** measurable choices use evidence, uncertainty and simple baselines;
+- **P4 — eval-driven engineering:** requirements/evaluators/regressions drive implementation;
+- **USD 0:** no production/provider/service choice may require a project charge or uncontrolled paid spillover.
+
+### 2.1 Evidence audit before experiments
+
+Before any new experiment:
+
+```text
+decision question
+→ repository-wide historical evidence audit
+→ evidence sufficiency classification
+→ exact material gap
+→ only if gap remains: preregister minimum experiment
+→ implementation/execution
+```
+
+A new experiment is prohibited when existing repository evidence already answers the decision for the current scope.
+
+### 2.2 Documentation before development
+
+For every material future workstream:
+
+```text
+plan/status update
+→ requirement/risk mapping
 → hard constraints
-→ systematic research
-→ credible alternatives + simple/null baseline
-→ preregistered comparison
-→ only then implementation / experiment
-```
-
-The mandatory checklist and initial revalidation inventory are in `DECISION-REVALIDATION-MASTER-PLAN.md`.
-
-If a new credible alternative or a hard-constraint violation is discovered after a historical freeze, preserve the old evidence and create a prospective revalidation/supersession. Do not rewrite history and do not continue implementation merely because the current code works.
-
-### 2.2 Acceptance-first priority rule
-
-Every material workstream must map to at least one of:
-
-1. a P0/P1 row in `DELIVERY-ACCEPTANCE.md`;
-2. an official academic evaluation criterion;
-3. a material production/security/reliability risk that can block such a row; or
-4. an experiment needed to select among credible alternatives for the above.
-
-If it maps to none, defer it.
-
-Priority order:
-
-```text
-P0 requested capabilities + trustworthy evaluation
-        ↓
-P1 production/partner-quality fitness needed to operate P0
-        ↓
-P2 optional complexity only with measured benefit
-```
-
-P0/rubric coverage must not be sacrificed to implement optional RAG, vector DB, reranking, persistent memory, multi-agent decomposition, protocol adapters, adaptive routing or richer UI merely because they are interesting. However, a material credible alternative that could improve the requested delivery must be systematically screened rather than deferred solely because the current baseline already passes acceptance.
-
-### 2.3 Source-reconciliation rule
-
-When a new upstream source is delivered or clarified:
-
-```text
-source audit
-→ requirements reconciliation
-→ delivery-acceptance reconciliation
-→ decision revalidation
-→ architecture/next-step review
-→ continue development
-```
-
-Do not allow implementation momentum to override a newer formal requirement or the actual delivered package.
-
-## 3. Macro phases
-
-| Phase | Objective | Exit evidence |
-|---|---|---|
-| 1. Governance and benchmark foundation | Freeze evidence roles, access rules, requirements and evaluation semantics | governance/source/benchmark foundations |
-| 2. Candidate exploration and failure learning | Learn from historical implementation/experiment evidence without over-promoting it | preserved candidate/failure evidence |
-| 3. Confirmatory packet generation | Collect and freeze a complete comparable candidate packet | frozen complete packet |
-| 4. Deterministic, statistical and semantic evaluation | Score immutable outputs and select/reject exact survivors under frozen rules | evidence-backed survivor/no-survivor decision |
-| **4R. Global decision revalidation — ACTIVE** | Reassess every material project choice under current rules, USD 0 and credible alternatives before further implementation | decision inventory + preregistered comparisons + prospective amendments |
-| 5. Production-fit selection and independent validation | Compare material product choices, freeze candidate/evaluator and obtain authorized independent evidence | PREFERRED/FROZEN behavior + independent evidence |
-| 6. Final architecture freeze and integrated implementation | Build the production-path agent + evaluation framework that covers P0/P1 | frozen architecture + integrated source/tests/config |
-| 7. Integration, regression, demonstration and final delivery | Prove final acceptance rows end to end and make reviewer evidence easy to find | final reproducible package + demo + rubric evidence index |
-
-`CURRENT-PROJECT-STATUS.md` remains authoritative for the active gate.
-
-## 4. Active Phase 4R — decision revalidation
-
-Phase 4R exists because final delivery acceptance and historical component freezes do not prove global optimality. It must complete before any new material implementation branch is treated as final-development work.
-
-### 4.1 Immediate provider correction
-
-The previous ADR-008 live packet is **not executable as-is** because it includes OpenAI GPT-5.6 Sol while the project now explicitly enforces USD 0 as a hard production eligibility constraint.
-
-Therefore:
-
-```text
-ADR-008 historical artifact                 PRESERVED
-old 32-call live packet                      SUSPENDED
-calls consumed                               0 / 32
-production provider selected                 NO
-new requirement                              prospective zero-cost provider amendment
-```
-
-Provider discovery must search the current credible zero-cost space before preregistration. At minimum screen Gemini free-tier candidates, Groq free-tier candidates, OpenRouter explicitly free routes where identity/cost can be bounded, Cloudflare Workers AI free-tier candidates, and a feasible local/open-weight baseline. Other credible zero-cost providers discovered in current primary-source research must also be considered.
-
-User-reported connection state is operational context only: Groq is reported connected; Gemini is pending user connection. Do not probe secrets/accounts before an amended provider experiment authorizes live execution.
-
-### 4.2 Material decision review
-
-The revalidation program covers at least:
-
-- provider/model;
-- agent topology including single-agent vs materially distinct multi-agent patterns;
-- orchestration/runtime;
-- tool topology/protocol;
-- evidence/retrieval;
-- memory/state;
-- adaptive stopping/planning/routing;
-- safety/authorization additions without weakening hard boundaries;
-- evaluator/judge stack;
-- observability;
-- deployment;
-- UI/integration where material to delivery quality.
-
-Existing evidence may be enough to keep some decisions preferred; others require new controlled comparisons. The decision inventory in `DECISION-REVALIDATION-MASTER-PLAN.md` is the starting point.
-
-### 4.3 C4 parallel recovery
-
-C4 remains scientifically separate. First search for the exact original 177350-byte / 144-row artifact with SHA-256 `b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`.
-
-No reconstruction/rescoring/substitution is authorized by this planning update. If exact bytes are unavailable, any byte-identical recovery attempt requires its own prospective scientific amendment before execution.
-
-## 5. Phase-transition rule
-
-Every material transition follows:
-
-```text
-frozen inputs/current evidence
-→ plan/decision question update
-→ preregistered authorized work
+→ evidence audit/current fact refresh
+→ alternatives/simple baseline
+→ preregistration when experiment is still necessary
+→ implementation
 → validation
-→ result artifact
-→ provenance/hashes
-→ freeze/closure
-→ status update
-→ next-step update
-→ acceptance/architecture update if materially affected
+→ freeze/status update
 ```
 
-For experimental/statistical gates, no later gate may run unless the new freeze explicitly opens it.
+### 2.3 Acceptance-first priority
 
-For architecture/product decisions, no choice may advance to `PREFERRED/FROZEN` merely because it exists, is popular, historically frozen in a narrower scope or performed well in a narrower research setting.
+Work must map to at least one of:
 
-## 6. Phase 5 completion target — production-fit selection + independent evidence
+1. P0/P1 acceptance requirement;
+2. official evaluation criterion;
+3. material production/security/reliability risk;
+4. experiment needed to choose among credible alternatives above.
 
-Before final implementation:
+Otherwise defer it.
 
-- candidate behavior/configuration is frozen as required;
-- evaluator generation/configuration is frozen as required;
-- hidden independent outcomes remain inaccessible until separately authorized;
-- material production choices have controlled comparison evidence;
-- model/provider selection compares the strongest credible **zero-cost** quality frontier against feasible zero-cost hosted/local alternatives;
-- single-agent/simple controller remains the topology baseline but is not final until materially credible alternative topologies are compared or prospectively excluded with evidence;
-- stable typed tool contract is compared against protocol/framework alternatives where material;
-- failure continuity/human fallback, action safety, communication and observability requirements are explicit;
-- every proposed final component has a requirement/risk rationale and reversal trigger.
+Priority:
 
-## 7. Phase 6 completion target — integrated agent + evaluator
+```text
+P0 required behavior + trustworthy evaluation
+↓
+P1 production/partner-quality closure
+↓
+P2 optional complexity only when measured benefit is plausible and deadline-safe
+```
 
-Final architecture freeze requires evidence-backed decisions for every applicable material component.
+## 3. Current project state — 2026-09-01
 
-The production implementation must be a distinct engineering surface that preserves validated behavior while adding production concerns explicitly. Research runners are not automatically promoted into production code.
+The earlier global-revalidation program is no longer a future discovery phase. Most provider groundwork is complete.
 
-The integrated implementation must cover, as applicable:
+```text
+historical material-decision audit                 COMPLETE
+current USD-0 provider factual refresh              COMPLETE
+minimum Cloudflare provider comparison              FROZEN / ADR-018
+Cloudflare direct provider client                   FROZEN / ADR-019
+ADR-010/011 executor/custody reuse audit            COMPLETE
+Cloudflare executor/custody v2                      FROZEN / ADR-020
+Cloudflare live authorization protocol              FROZEN / ADR-021
 
-- supplied TRACTIAN API contract through a stable typed tool boundary;
-- contextualize/investigate/clarify-or-abstain/execute/escalate outcomes;
-- authorization and action semantics;
-- safe human fallback when evidence or system availability is insufficient;
-- normalized inspectable traces;
-- customer-safe response boundary;
-- integrated evaluation of the same traces without leaking gold;
-- robustness and repeated-run reliability;
-- reproducible zero-cost configuration/build/run path.
+provider/model inference calls                      0
+credential/account probes                           0
+live network validation                             0
+comparison attempts consumed                        0 / 32
+production provider/model selected                  NO
+```
 
-## 8. Phase 7 completion target — rubric-maximizing delivery
+Frozen comparison candidates:
 
-The final project window is protected for integration, regression, evidence closure and communication quality rather than unmeasured architecture breadth.
+```text
+@cf/zai-org/glm-4.7-flash
+@cf/nvidia/nemotron-3-120b-a12b
+```
 
-Required final evidence includes, where applicable:
+Frozen packet:
 
-- clean setup and reproducible run;
-- unit/contract/integration/regression tests;
-- real TRACTIAN API-path exercise;
-- contextualization, investigation, execution, clarification/abstention and escalation coverage;
-- degraded/conflicting/unavailable evidence handling;
-- provider/tool/agent failure fallback;
-- evaluator/behavior preservation tests;
-- authorization/idempotency/security tests;
-- latency/reliability/resource/quota measurements;
-- observability/trace-inspection evidence;
-- model/provider/runtime/architecture ADRs and trade-offs;
-- quantitative experiment results with uncertainty;
-- explicit USD 0 feasibility for the selected production path;
-- limitations/non-claims and risks;
-- runbook/fallback/rollback guidance;
-- final integrated demonstration;
-- concise rubric-to-evidence index.
+```text
+8 public probes × 2 repeats × 2 candidates = max 32 calls
+plan SHA-256 092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb
+packet worst-case 7937.522688 neurons
+Workers Free daily allocation 10000 neurons
+```
 
-The final demonstration must exercise the real integrated path rather than a mock-only path.
+## 4. Current critical path — ADR-021 evidence-source revalidation
 
-## 9. Deadline-protection plan
+The current blocker is **not model implementation**.
 
-### 2026-08-28 → 2026-08-30 — global revalidation + scientific recovery search
+The target account proves:
 
-Primary objective:
+```text
+Workers Free / Active                 YES
+Workers Paid active                   NO
+```
 
-- freeze the new decision-revalidation governance;
-- inventory every material decision and its evidence state;
-- research/preregister the zero-cost provider comparison amendment;
-- search for the exact C4 score-row artifact;
-- preregister the first controlled topology/runtime comparisons before implementation.
+But the current `AI → Workers AI` dashboard does not expose an explicit current Neuron usage/remaining meter. Therefore ADR-021's original account-evidence assumption cannot currently be satisfied as written.
 
-### 2026-08-30 → 2026-09-02 — execute highest-value controlled comparisons
+Issue #79 is blocked pending issue #80:
 
-Target:
+```text
+#79 capture real Cloudflare pre-live evidence
+    BLOCKED
 
-- provider/model comparison across the credible zero-cost set;
-- agent-topology comparison;
-- runtime/orchestration comparison where evidence shows it is material;
-- adaptive policy comparisons where likely to affect quality/resource use;
-- prospective ADR supersession only after results.
+#80 prospectively amend ADR-021 Neuron evidence source
+    CURRENT D01 CRITICAL PATH
+```
 
-If a P2 experiment threatens P0/P1 completion, stop the P2 experiment.
+Until #80 is resolved:
 
-### 2026-09-03 → 2026-09-05 — integrate Pareto-selected configuration + reliability
+```text
+receipt issuance                 NO
+Cloudflare credential provision  NO
+provider inference               NO
+attempt 1                        NOT AUTHORIZED
+```
 
-Target:
+No `used=0` or `remaining=10000` value may be inferred from a missing dashboard meter.
 
-- integrate the best-supported zero-cost configuration;
-- end-to-end scenario/regression suite;
+## 5. Decision state by material area
+
+| Area | Current evidence state | Plan consequence |
+|---|---|---|
+| Provider/model | `PARTIALLY_ASSESSED`; Cloudflare live comparison frozen but not executed | close #80; execute only if defensibly authorized |
+| Native typed tools vs MCP | `EVIDENCE_SUFFICIENT` for current scope | no new experiment |
+| Evidence-sufficiency stopping | `EVIDENCE_SUFFICIENT` | preserve |
+| RAG/vector/reranking | no demonstrated material retrieval gap | no experiment |
+| Persistent memory | no demonstrated material need | no experiment |
+| Safety/authorization | strong deterministic boundary | preserve; no weakening |
+| Evaluator/RunTrace | sufficient for operational scope, C4 separate | preserve/regress |
+| Agent topology | single-agent is strong qualified baseline; final comparison gap remains conditional | reassess only after provider result/blocker resolution |
+| Runtime/orchestration | strong but asymmetric historical evidence | reassess only if still material after provider/topology basis |
+| Adaptive model routing | unassessed but not currently material | defer |
+| Deployment/UI richness | P2 unless acceptance evidence shows a gap | defer |
+| C4 | exact artifact externally blocked | exact-byte recovery only |
+
+## 6. Phase map — reconciled
+
+| Phase | State | Exit condition |
+|---|---|---|
+| 1. Governance/benchmark foundations | COMPLETE | governance + benchmark semantics frozen |
+| 2. Candidate/failure learning | COMPLETE | historical evidence preserved |
+| 3. Confirmatory packet foundations | COMPLETE for current provider path | ADR-018/019/020/021 freezes |
+| 4. Deterministic/statistical evaluation foundations | COMPLETE with bounded C4 exception | operational evaluator evidence + explicit C4 blocker |
+| 4R. Global decision revalidation | **MOSTLY COMPLETE** | only genuinely material unresolved decisions remain |
+| 5. Production-fit selection | **ACTIVE / provider gate** | provider result, `NO_SELECTION`, or defensible external-blocker freeze |
+| 6. Final architecture freeze/integration | PENDING | remaining material decisions closed or bounded |
+| 7. Regression/demo/final delivery | PENDING | reproducible acceptance evidence |
+
+## 7. Provider decision outcomes allowed
+
+The project must not make the final delivery depend on one optimistic external path.
+
+Three legitimate provider outcomes exist:
+
+### A. Live Cloudflare packet becomes authorized
+
+```text
+#80 amendment/gate resolved
+→ real admissible evidence
+→ short-lived receipt
+→ explicit live authorization
+→ execute max 32 frozen attempts
+→ evaluate M1–M10/H8–H10
+→ select GLM / Nemotron / NO_SELECTION
+```
+
+### B. Cloudflare remains externally blocked before deadline
+
+Freeze an explicit bounded result:
+
+```text
+LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
+```
+
+Then final delivery must reuse provider-free/historical evidence and clearly state that live Cloudflare comparative quality was not established.
+
+### C. Live packet executes but no candidate qualifies
+
+`NO_SELECTION` is a valid preregistered scientific outcome. Do not force-select a provider.
+
+## 8. Topology/runtime plan — now conditional, not automatic
+
+The old schedule assumed provider, topology and runtime experiments would all run in sequence. That is no longer deadline-safe or evidence-first.
+
+After provider D01 reaches A/B/C above, perform a **fresh evidence sufficiency check**:
+
+```text
+Does single-agent vs multi-agent still materially affect a P0/P1/final architecture decision?
+```
+
+If **NO**:
+
+- preserve the qualified single-agent controller;
+- document bounded non-final comparative claim;
+- do not create a topology experiment merely for completeness.
+
+If **YES**:
+
+- preregister the minimum controlled comparison;
+- hold provider/task/tools/evaluators constant where feasible;
+- compare single-agent vs only materially distinct topology candidates.
+
+Runtime/orchestration gets the same gate **after topology**, rather than automatic experimentation.
+
+## 9. C4 parallel recovery
+
+C4 remains scientifically separate:
+
+```text
+required SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
+bytes             177350
+rows              144
+geometry          36 parents × 4 arms
+```
+
+Only exact-byte recovery is currently authorized.
+
+C4 must not be silently reconstructed/rescored, but an external C4 block also must not erase already valid provider-free production/evaluator evidence. Final claims must separate the two scopes.
+
+## 10. Deadline-protection plan
+
+### 2026-09-01 → 2026-09-02 — close provider authorization evidence decision
+
+Priority:
+
+1. resolve #80 prospectively and provider-free;
+2. either freeze a defensible replacement evidence path or freeze the live packet as externally blocked;
+3. do not spend time on speculative P2 architecture.
+
+### 2026-09-02 → 2026-09-03 — provider result or bounded blocker
+
+If live authorization is defensible:
+
+- execute exactly the frozen Cloudflare packet;
+- preserve all failures/usage/provenance;
+- evaluate and freeze candidate or `NO_SELECTION`.
+
+If not defensible:
+
+- stop the provider live track;
+- freeze the blocker/non-claim;
+- continue final delivery from existing evidence.
+
+### 2026-09-03 → 2026-09-05 — architecture closure + production reliability
+
+- audit whether topology/runtime are still material;
+- run only minimum justified comparisons;
+- freeze remaining material architecture choices;
+- full production-path regression;
 - degraded/conflicting/unavailable evidence tests;
-- action/permission/safety tests;
-- human fallback/escalation handoff;
-- model/tool/provider failure behavior;
-- repeated-run reliability;
-- latency/resource/quota/observability evidence;
-- fix only evidence-backed failures.
+- action/permission/idempotency/security tests;
+- fallback/escalation continuity;
+- latency/resource/trace evidence;
+- fix only demonstrated blockers.
 
-### 2026-09-06 → 2026-09-07 — final documentation and demonstration hardening
+**After 2026-09-05, no new speculative architecture experiment.**
 
-Target:
+### 2026-09-05 → 2026-09-07 — final evidence package
 
+- final architecture ADR/reconciliation;
 - clean-environment reproduction;
-- final architecture/decision records;
-- rubric-to-evidence reconciliation;
-- demonstration rehearsal using the real path;
-- ensure every claim points to evidence and remains inside USD 0.
+- acceptance/rubric-to-evidence index;
+- demo/runbook/fallback/rollback;
+- limitations/non-claims;
+- real integrated path demonstration where authorized.
 
 ### 2026-09-08 — delivery
 
-Only evidence-backed claims. No last-minute architecture change without regression/re-evaluation.
+Deliver the strongest evidence-backed scope actually achieved. Do not overstate production readiness, provider comparison, C4 completion or architecture optimality.
 
-## 10. Stop / pivot rules
+## 11. Stop/pivot rules
 
-- preserve failed and consumed experiments; never silently erase or rerun them;
-- do not score incomplete packets;
-- do not cross evaluator/private/independent boundaries before authorization;
-- do not promote `QUALIFIED` to `PREFERRED/FROZEN` without systematic comparison;
-- do not freeze architecture because a component is already implemented, historically frozen in a narrower scope or popular;
-- do not add optional complexity without measurable advantage over a simpler baseline;
-- do not admit a paid provider/tool into the production feasible set while USD 0 is a hard constraint;
-- do not accept adaptive complexity without measurable benefit over static baseline and deterministic safety boundaries;
-- do not infer production fitness from a demo or benchmark alone;
-- do not expose internal implementation detail to customers when it is not needed for resolution;
-- do not let agent/provider failure break the underlying support path;
-- after material implementation changes, rerun applicable regression/evaluation before release;
-- after 2026-09-05, default against speculative P2 work unless it fixes a demonstrated delivery blocker.
+- no experiment before repository evidence sufficiency audit;
+- no new provider call because credentials happen to exist;
+- no fabricated quota/evidence value;
+- no retry/replay of consumed/uncertain attempts;
+- no paid provider/service spillover;
+- no RAG/memory/multi-agent/runtime/UI complexity without a material decision gap;
+- no architecture freeze based on implementation effort/popularity;
+- no C4 reconstruction/rescoring without prospective amendment;
+- no P2 experiment after 2026-09-05 unless it closes a demonstrated P0/P1 blocker;
+- no last-minute architecture change without regression.
 
-## 11. Repository-wide definition of done
+## 12. Repository-wide definition of done
 
-Project completion requires:
+Final completion means:
 
 ```text
-all requested P0 capabilities demonstrably covered
+all required P0 capabilities demonstrably covered
 +
 trustworthy integrated evaluation framework
 +
-scientific evidence strong enough for the claims
+material final choices supported or explicitly bounded
 +
-all material final choices revalidated against credible alternatives
+USD 0 feasibility
 +
-USD 0 production/service feasibility
+production/security/reliability risks closed or bounded
 +
-P1 production/partner-quality risks closed or explicitly bounded
+reproducible integrated delivery
 +
-official rubric dimensions backed by clear evidence
+rubric claims linked to evidence
 +
-reproducible real-path delivery
+explicit external blockers/non-claims where unresolved
 ```
 
-If external constraints prevent the strongest intended target by 2026-09-08, deliver the strongest evidence-backed zero-cost scope achieved with explicit limitations rather than overstating readiness.
+The final answer may legitimately be the strongest bounded architecture rather than an overclaimed globally optimal one.
