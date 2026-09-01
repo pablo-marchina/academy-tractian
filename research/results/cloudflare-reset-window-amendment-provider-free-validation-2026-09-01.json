@@ -1,0 +1,70 @@
+{
+  "schema_version": "cloudflare-reset-window-amendment-provider-free-validation-v1",
+  "date": "2026-09-01",
+  "trigger_issue": 80,
+  "implementation_issue": 82,
+  "pull_request": 84,
+  "status": "PASS_PROVIDER_FREE_FREEZE_CANDIDATE",
+  "validated_head": "b74b7246d71e4c39fe8a547233c3ff634a9bafbc",
+  "all_pr_workflows": "17/17 success",
+  "dedicated_workflow": {
+    "name": "cloudflare-reset-window-amendment-provider-free",
+    "run_id": 33519920065,
+    "job_id": 99896271035,
+    "conclusion": "success",
+    "provider_credentials_present": false,
+    "amendment_validator": "success",
+    "reset_window_authorization_tests": "success",
+    "adr_021_regressions": "success",
+    "cloudflare_executor_client_provenance_regressions": "success"
+  },
+  "global_regressions": {
+    "production_runtime": "success",
+    "provider_model_comparison_design_v2": "success",
+    "cloudflare_live_authorization_v1_provider_free": "success",
+    "final_handoff_acceptance_audit": "success",
+    "final_delivery_provider_free_reproduction": "success",
+    "research_e2_e8": "success",
+    "research_e9": "success",
+    "research_e14_families": "success"
+  },
+  "exact_core_blobs": {
+    "research/experiments/cloudflare-live-authorization-reset-window-amendment-v1.json": "0da205900cb3cfdef3f4129a9549c007acc91bf9",
+    "src/academy_tractian/cloudflare_live_authorization_reset_v2.py": "e30b6a473fd9f738c046377bc52bd689360ff2f7",
+    "scripts/research/validate_cloudflare_reset_window_amendment_v1.py": "830307700cfd68b6758218c42284fe8e4f9ea4fd",
+    "scripts/research/issue_cloudflare_reset_window_receipt_v1.py": "76faf82e70fe89c87e17a4c79564540e20d5604a",
+    "tests/test_cloudflare_live_authorization_reset_v2.py": "ae316deddb98c681cfcc4190737d3d79c0c8ffb5",
+    ".github/workflows/cloudflare-reset-window-amendment-provider-free.yml": "1e10d2e9097c233f61f78d0f71273539ec5a0261",
+    "docs/adr/022-cloudflare-reset-window-neuron-evidence-amendment-2026-09-01.md_candidate": "f0f29b30a2613d70a84ed5ed09ccb1f7fc34eb9b"
+  },
+  "historical_pin": {
+    "adr_021_blob": "9627219e5b9c64dda83d23e0f3e99f4c9b953519",
+    "historical_adr_021_modified": false
+  },
+  "validated_guarantees": {
+    "reset_capture_max_offset_seconds": 600,
+    "evidence_max_age_seconds": 600,
+    "receipt_max_lifetime_seconds": 300,
+    "derived_free_neurons": 10000,
+    "minimum_historical_start_gate": 9000,
+    "workers_free_required": true,
+    "workers_paid_forbidden": true,
+    "no_workers_ai_calls_since_reset_required": true,
+    "no_automated_workers_ai_consumers_since_reset_required": true,
+    "exclusive_account_window_required": true,
+    "ai_gateway_prepaid_route_forbidden": true,
+    "provider_inference_to_obtain_evidence": 0,
+    "credential_account_probes_to_obtain_evidence": 0
+  },
+  "hard_boundaries": {
+    "provider_model_inference_calls": 0,
+    "credential_account_probes": 0,
+    "live_network_validation": 0,
+    "comparison_attempts_consumed": 0,
+    "real_reset_window_evidence_captured": false,
+    "real_receipt_issued": false,
+    "provider_credentials_provisioned": false,
+    "attempt_1_authorized": false,
+    "production_provider_selected": false
+  }
+}
