@@ -1,299 +1,256 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-09-01 — Cloudflare executor/custody v2 provider-free implementation frozen by ADR-020  
+**Canonical status checkpoint:** 2026-09-01 — Cloudflare live-execution authorization protocol frozen by ADR-021  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Evidence-first gate:** [`EVIDENCE-AUDIT-BEFORE-EXPERIMENTS.md`](EVIDENCE-AUDIT-BEFORE-EXPERIMENTS.md)  
-**Historical evidence audit:** [`MATERIAL-DECISION-HISTORICAL-EVIDENCE-AUDIT-2026-08-28.md`](MATERIAL-DECISION-HISTORICAL-EVIDENCE-AUDIT-2026-08-28.md)  
-**Frozen preregistration:** [`adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md`](adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md)  
-**Frozen provider-free client:** [`adr/019-cloudflare-provider-client-provider-free-implementation-2026-08-31.md`](adr/019-cloudflare-provider-client-provider-free-implementation-2026-08-31.md)  
-**Execution/custody reuse audit:** [`ADR-010-011-REUSE-AUDIT-2026-08-31.md`](ADR-010-011-REUSE-AUDIT-2026-08-31.md)  
-**Frozen executor/custody v2:** [`adr/020-cloudflare-executor-custody-v2-provider-free-implementation-2026-09-01.md`](adr/020-cloudflare-executor-custody-v2-provider-free-implementation-2026-09-01.md)  
-**Immediate execution plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)
+**Frozen comparison:** [`adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md`](adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md)  
+**Frozen client:** [`adr/019-cloudflare-provider-client-provider-free-implementation-2026-08-31.md`](adr/019-cloudflare-provider-client-provider-free-implementation-2026-08-31.md)  
+**Frozen executor/custody:** [`adr/020-cloudflare-executor-custody-v2-provider-free-implementation-2026-09-01.md`](adr/020-cloudflare-executor-custody-v2-provider-free-implementation-2026-09-01.md)  
+**Frozen authorization protocol:** [`adr/021-cloudflare-live-execution-authorization-protocol-2026-09-01.md`](adr/021-cloudflare-live-execution-authorization-protocol-2026-09-01.md)  
+**Immediate plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)
 
-This document is the **sole canonical human-readable source for current project state and authorization**. Frozen scientific artifacts and ADRs remain authoritative for their exact scopes.
+This is the sole canonical human-readable current authorization state. Historical frozen ADRs/artifacts remain authoritative for their exact scopes.
 
 ## Executive state
 
 ```text
-Project North Star                              strongest defensible TRACTIAN/Inteli delivery under P1-P4
-permanent external service/API cost             USD 0 HARD CONSTRAINT
-evidence audit before new experiment            REQUIRED
+external API / hosted-service project cost      USD 0 HARD CONSTRAINT
+evidence audit before new experiment             REQUIRED
 
-historical material-decision audit              COMPLETE
-current provider factual gates                  COMPLETE
-minimum Cloudflare comparison preregistration   FROZEN / ADR-018
-Cloudflare provider-free client                 FROZEN / ADR-019
-ADR-010/011 reuse audit                         COMPLETE
-Cloudflare executor/custody v2                  FROZEN PROVIDER-FREE / ADR-020
+historical evidence audit                        COMPLETE
+provider factual refresh                         COMPLETE
+Cloudflare comparison preregistration             FROZEN / ADR-018
+Cloudflare provider client                        FROZEN / ADR-019
+Cloudflare executor/custody v2                    FROZEN / ADR-020
+Cloudflare live authorization protocol            FROZEN / ADR-021
 
-provider/model inference calls in ADR-020 work  0
-credential/account probes in ADR-020 work       0
-live network validation in ADR-020 work         0
-comparison attempts consumed                    0 / 32
-production provider/model selected              NO
-provider/model inference                        NOT AUTHORIZED
+provider/model inference calls                    0
+credential/account probes                         0
+live network validation                           0
+comparison attempts consumed                      0 / 32
+real Cloudflare dashboard evidence captured       NO
+real authorization receipt issued                 NO
+real Cloudflare credentials provisioned           NO
+attempt 1 authorized                              NO
+production provider/model selected                NO
 
-core candidate 1                                @cf/zai-org/glm-4.7-flash
-core candidate 2                                @cf/nvidia/nemotron-3-120b-a12b
-public probe units                              8
-repetitions / unit / candidate                  2
-max future live attempts                        32
-canonical Cloudflare v2 plan SHA                092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb
-max completion tokens / attempt                 512
-max accounted prompt tokens / attempt           8000
-max complete-packet neurons                     7937.522688
-Workers Free daily allocation                   10000
-minimum free neurons before future attempt 1    9000
-Workers Paid / prepaid Gateway                  FORBIDDEN
+candidate 1  @cf/zai-org/glm-4.7-flash
+candidate 2  @cf/nvidia/nemotron-3-120b-a12b
+plan SHA     092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb
+population   8 public probes × 2 repeats × 2 candidates
+max calls    32
+packet max   7937.522688 neurons
+Free daily   10000 neurons
+start gate   >=9000 neurons remaining
 
-Cloudflare direct client                        IMPLEMENTED / PROVIDER-FREE VALIDATED
-Cloudflare comparison executor v2               IMPLEMENTED / PROVIDER-FREE VALIDATED
-Cloudflare custody/write-ahead v2               IMPLEMENTED / PROVIDER-FREE VALIDATED
-Cloudflare pre-live evidence contract           IMPLEMENTED / REAL ACCOUNT EVIDENCE NOT YET SUPPLIED
-Cloudflare exact @cf provenance adapter          IMPLEMENTED / PROVIDER-FREE VALIDATED
-
-client environment credential lookup            NONE
-credential/account probing                      NONE
-retry/fallback/warm-up                          NONE
-parallel live calls                             NONE
-provider-native tool execution                  REJECTED
-AI Gateway                                      DISABLED
-model allowlist                                 EXACT ADR-018 TWO MODELS
-usage fabrication                               FORBIDDEN
-claimed/uncertain automatic replay              FORBIDDEN
-
-ADR-010 historical executor live path           DO NOT EXECUTE AS-IS
-ADR-010 provider-neutral scientific logic       REUSED
-ADR-011 historical live entrypoint              DO NOT EXECUTE AS-IS
-ADR-011 custody/write-ahead invariants           REUSED
-full executor redesign                          NOT USED / NOT JUSTIFIED
-
-single-agent controller                         STRONG QUALIFIED BASELINE
-single-vs-multi final topology                  NOT SELECTED / QUEUED AFTER PROVIDER BASIS
-runtime/orchestration final choice              NOT SELECTED / QUEUED
-native ToolSpec + conditional MCP adapter       EVIDENCE SUFFICIENT FOR CURRENT SCOPE
-evidence-sufficiency stopping                   EVIDENCE SUFFICIENT FOR CURRENT SCOPE
-RAG/vector/reranking                            NO MATERIAL CURRENT GAP / NO EXPERIMENT
-persistent memory                               NO MATERIAL CURRENT GAP / NO EXPERIMENT
-adaptive model routing                          UNASSESSED / NOT CURRENTLY MATERIAL
-
-C4 scientific gate                              REQUIRED_PER_GROUP_AND_SLICE_REPORTING
-C4 exact-row artifact                           EXTERNALLY BLOCKED / EXACT-BYTE RECOVERY ONLY
-provider-free safety/reliability                EVIDENCE SUFFICIENT WITH BOUNDED NON-CLAIMS
-operational deterministic evaluator             EVIDENCE SUFFICIENT
-scientific evaluator / EV-012                   PARTIALLY ASSESSED / C4 BLOCKED
-observability via RunTrace                      EVIDENCE SUFFICIENT FOR CURRENT SCOPE
-
-global final architecture                       UNFROZEN
-production-readiness claim                      NOT AUTHORIZED
-real customer mutations performed               0
+Workers Paid                         FORBIDDEN
+AI Gateway / prepaid unified billing FORBIDDEN
+hidden retry/fallback/warm-up        FORBIDDEN
+parallel live calls                  FORBIDDEN
+provider-native tool execution       FORBIDDEN
+claimed/uncertain replay             FORBIDDEN
 ```
 
-## 1. Evidence-first provider sequence
-
-Permanent sequence:
+## 1. Evidence-first D01 sequence
 
 ```text
-decision question
-→ historical evidence audit
-→ update only mutable external facts
-→ demonstrate exact material gap
-→ preregister minimum comparison
-→ freeze preregistration
-→ implement provider-free client
-→ freeze client
-→ audit historical executor/custody reuse
-→ implement only demonstrated execution gaps provider-free
-→ freeze execution/custody capability
-→ design/freeze separate live authorization
-→ only then permit attempt 1
-→ execute/evaluate/select candidate or honest NO_SELECTION
+historical evidence audit                         DONE
+current USD-0 factual refresh                     DONE
+minimum provider gap demonstrated                 DONE
+comparison preregistration                        FROZEN / ADR-018
+Cloudflare direct client                          FROZEN / ADR-019
+ADR-010/011 reuse audit                           DONE
+executor/custody v2 provider-free                 FROZEN / ADR-020
+live authorization protocol provider-free         FROZEN / ADR-021
+                                                    ↓
+fresh real manual account/dashboard evidence      PENDING USER/ACCOUNT SIDE
+                                                    ↓
+short-lived authorization receipt                 NOT ISSUED
+                                                    ↓
+secure token/account-ID provisioning               NOT DONE
+                                                    ↓
+final receipt/root/evidence validation             NOT DONE
+                                                    ↓
+attempt 1                                          NOT AUTHORIZED
 ```
 
-For D01, the project has completed through **provider-free execution/custody capability freeze**. Attempt 1 remains unauthorized.
+No step may be skipped merely because credentials become available.
 
-## 2. ADR-018 comparison contract — unchanged
+## 2. ADR-018 scientific contract
 
-Two production-selection candidates only:
-
-1. `cloudflare_glm_4_7_flash_workers_free` → `@cf/zai-org/glm-4.7-flash`;
-2. `cloudflare_nemotron_3_120b_a12b_workers_free` → `@cf/nvidia/nemotron-3-120b-a12b`.
-
-Population remains unchanged:
+Frozen and unchanged:
 
 ```text
-research/experiments/provider-model-comparison-dev-population-v1.json
-SHA-256 561d252d06a3be30e7d631053906e2e29fbcdd151f05b03b56cbf5ead024c251
-8 units × 2 repeats × 2 candidates = 32 maximum attempts
+models        GLM 4.7 Flash / Nemotron 3 120B A12B
+population    SHA-256 561d252d06a3be30e7d631053906e2e29fbcdd151f05b03b56cbf5ead024c251
+geometry      8 × 2 × 2 = 32 max live attempts
+input ceiling 8000 accounted tokens / attempt
+output max    512 tokens / attempt
+packet max    7937.522688 neurons
+selection     Pareto / NO_SELECTION permitted
 ```
 
-No candidate, population, metric, threshold, request contract or resource budget changed in ADR-020.
+No candidate, metric, threshold, population or resource budget changed in ADR-021.
 
-## 3. ADR-019 client — unchanged and still frozen
+## 3. ADR-019 client
+
+Frozen direct Workers AI client:
 
 ```text
 src/academy_tractian/cloudflare_provider_client.py
-blob a5c814b519584b6d4346e3b0567bbc3da8ba0bf4
+a5c814b519584b6d4346e3b0567bbc3da8ba0bf4
 ```
 
-ADR-020 does not modify that client. It constructs it with explicit token/account/model/transport and exact allowlisted model IDs.
+Properties remain: exact two-model allowlist, direct route, explicit credentials, injected transport, zero retry/fallback/warm-up, strict JSON schema, no provider-native tool execution and no usage fabrication.
 
-## 4. ADR-020 exact implementation freeze
+## 4. ADR-020 executor/custody
+
+Frozen implementation identities remain unchanged:
 
 ```text
-cloudflare_provider_comparison_v2.py     e12b1dfa03eb1c50bc97848821235ef422516092
-cloudflare_provider_live_v2.py           70d8e0ccc4d4eb003d78cdd152b1dffd30b43f29
-cloudflare_provider_provenance_v2.py     e7f8bdc60910ef0acf7b14c71616448338eeefc2
-test_cloudflare_provider_comparison_v2   b9d02070ed0d17a66a5e9aed69bf3ff6cd4d2b39
-test_cloudflare_provider_provenance_v2   f9e752523d50876f88a6de100afb33948c602157
-provider-free workflow                   752f9c8906b124578164ee21885a90387842ff19
-validation result                        d7a9d04028408d2492e0d11e20c90430709f0a3a
+comparison v2  e12b1dfa03eb1c50bc97848821235ef422516092
+live/custody   70d8e0ccc4d4eb003d78cdd152b1dffd30b43f29
+provenance v2  e7f8bdc60910ef0acf7b14c71616448338eeefc2
 ```
 
-Canonical v2 plan:
+ADR-020 preserves ADR-010/011 provider-neutral behavior: public P01-P08, B1, M1-M7/M10, one-shot calls, exact usage/neurons, H8-H10, durable 32-entry ledger, `CLAIMED` before network-capable invocation, uncertain/no-replay and sanitized immutable result.
+
+## 5. ADR-021 authorization protocol
+
+ADR-021 freezes **authorization capability, not a real authorization**.
+
+Exact authorization gates:
 
 ```text
-092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb
+manual Workers AI dashboard observation          REQUIRED
+source artifact retained outside repo            REQUIRED
+source artifact SHA-256 in sanitized evidence    REQUIRED
+Workers plan                                     Workers Free
+Workers Paid                                     false
+free neurons remaining                           >=9000
+used + remaining                                 10000
+same UTC day                                     REQUIRED
+evidence maximum age                             600 seconds
+receipt maximum lifetime                         300 seconds
+receipt <= evidence validity                     REQUIRED
+direct Workers AI route                          true
+AI Gateway route                                 false
+prepaid/unified billing route                    false
+cf-aig-gateway-id                                absent
+comparison attempts consumed                     0
+exclusive Workers AI usage window                attested
+provider inference used to obtain evidence       0
+credential/account probe used for evidence       0
 ```
 
-This plan is intentionally distinct from the historical ADR-010 OpenAI/Gemini plan because exact candidate/model/route identities changed while geometry remained identical.
+The receipt is cryptographically bound to:
 
-## 5. Seven audited execution gaps — status
+- canonical evidence SHA-256;
+- one canonical custody-root SHA-256;
+- ADR-018/019/020 frozen blobs;
+- plan SHA;
+- direct Cloudflare route;
+- exact two `@cf/...` model IDs;
+- one UTC-day/freshness window.
+
+It stores neither token, account ID nor raw local custody path.
+
+## 6. Secret policy
+
+Credentials are intentionally provisioned **after** a valid receipt exists.
+
+Frozen policy:
 
 ```text
-1 current ADR-018/019 bundle + v2 plan                    CLOSED
-2 result/summary v2 resource fields                       CLOSED
-3 M8 neurons + H8/H9/H10 + resource stop guards          CLOSED PROVIDER-FREE
-4 fixed M5 probes for both Cloudflare configs             CLOSED PROVIDER-FREE
-5 exact Cloudflare client factory                         CLOSED PROVIDER-FREE
-6 current authorization/custody marker + ledger v2        CLOSED PROVIDER-FREE
-7 Workers Free/no-paid/>=9000 pre-live evidence contract  IMPLEMENTED PROVIDER-FREE
+API token permission      Account > Workers AI > Read
+resource scope            exact target account only
+AI Gateway permissions    not required / should not be granted
+Global API Key            forbidden
+credential probing        forbidden
+secret persistence        forbidden
 ```
 
-Gap 7 is an **interface/capability freeze**, not proof of current account state. Real evidence has not yet been supplied or probed.
+Connected credentials alone never authorize execution.
 
-## 6. Resource and fail-closed behavior
+## 7. Canonical future receipt command
 
-Frozen accounting:
+Only after fresh real evidence exists:
 
 ```text
-GLM input       5,500 neurons / 1M input tokens
-GLM output     36,400 neurons / 1M output tokens
-Nemotron input 45,455 neurons / 1M input tokens
-Nemotron output 136,364 neurons / 1M output tokens
-prompt max       8,000 tokens / attempt
-completion max     512 tokens / attempt
-packet max      7,937.522688 neurons
+python scripts/research/issue_cloudflare_live_authorization_receipt_v1.py --evidence <evidence.json> --custody-root <canonical-root> --output <receipt.json>
 ```
 
-The v2 executor stops fail-closed when:
+The issuer is provider-free and refuses to run if provider credential environment variables are already present.
 
-- exact prompt/output usage is missing;
-- observed prompt exceeds 8,000;
-- observed completion exceeds 512;
-- packet observed neurons exceed the frozen ceiling;
-- current observed neurons + frozen worst-case remaining attempts can exceed available free-neuron evidence;
-- provenance/model/route/raw-material hard gates fail.
+## 8. Freshness/concurrency rule
 
-Incomplete/resource-uncertain packets cannot select a provider.
+The evidence assumes exclusive Workers AI usage on the target account between observation and completion of the governed packet. Any unrelated Workers AI consumption invalidates the quota evidence and therefore the receipt.
 
-## 7. Custody / no-replay behavior
-
-The ADR-011 security model is preserved prospectively:
-
-```text
-one durable custody root
-exclusive authorization marker
-fixed root/run directory
-32 canonical ledger entries
-CLAIMED persisted before network-capable invocation
-claimed crash/exception -> uncertain
-no automatic resume
-no retry/replay of uncertain attempt
-second run in same root refused
-sanitized immutable result
-credentials persisted false
-raw provider material persisted false
-```
-
-Current marker name:
-
-`cloudflare-adr018-live-comparison-custody-v2.json`
-
-## 8. Exact Cloudflare provenance compatibility
-
-Provider-free CI exposed that historical ADR-007 Pydantic regexes reject model IDs beginning with `@`, while both official Workers AI IDs begin `@cf/`.
-
-The project did **not**:
-
-- strip or rewrite `@`;
-- weaken M10;
-- modify frozen historical `decision_source.py` bytes.
-
-Instead, ADR-020 freezes a Cloudflare-only provenance extension that accepts only the exact two ADR-018 model IDs while preserving:
-
-- `provider-model-call-v1` event shape;
-- `provider-decision-adapter-v1`;
-- ADR-007 call-id derivation;
-- exact provider/model/route/request hashes;
-- one client invocation;
-- zero retry/fallback;
-- raw request/response/exception flags false.
+Crossing 00:00 UTC also invalidates the authorization context; capture fresh evidence and issue a new receipt.
 
 ## 9. Provider-free validation
 
-Initial dedicated CI: `23 passed / 6 failed`; all failures were the historical `@cf/...` regex incompatibility. No provider call occurred.
-
-Corrected dedicated run `33507169465` on head `9c25143c1b37c7728d4c3130263607e6e6b0f1ed`:
+Validated candidate head before ADR-021 documentation:
 
 ```text
-Cloudflare v2/client/provenance tests       32 passed
-historical ADR-010/011 regressions          29 passed
-provider credentials in workflow           absent
-provider calls                              0
+0d61e7908b5e9511e851bcd2c8e1e02e2299a682
 ```
 
-All 14 workflows on that implementation head completed successfully, including `production-runtime`, `final-handoff-acceptance-audit` and `final-delivery-provider-free-reproduction`.
-
-## 10. Next admissible provider step
-
-The next provider task is **not inference**. It is a separate **live-execution authorization design/freeze**, still with zero inference.
-
-That authorization must define and freeze:
-
-- exact ADR-018/019/020 identities;
-- how genuine non-inference evidence of `Workers Free` is obtained;
-- how `Workers Paid = false` and prepaid AI Gateway = false are established;
-- how >=9,000 free neurons for the current UTC day are established without consuming inference;
-- explicit secret provisioning without persistence;
-- one canonical durable custody root;
-- exact one-shot invocation command/entrypoint;
-- operator stop conditions and artifact custody;
-- explicit statement that attempt 1 is authorized only after all above gates pass.
-
-Until that later authorization freezes, connected credentials are operational prerequisites only and have no authorization effect.
-
-## 11. Still not authorized
+Dedicated run `33512426906`:
 
 ```text
-real Cloudflare HTTP request                 NO
-credential/account probe merely for evidence NO
-comparison attempt 1                         NO
-provider/model selection                     NO
-production actions                           DISABLED
-old ADR-008/009/010/011 live packet          FORBIDDEN AS-IS
-C4 change                                    NONE
-semantic/FRESH_BLIND/LEGACY_LOCKED_TEST      NOT AUTHORIZED
-topology/runtime experiment                  NOT AUTHORIZED
-global architecture freeze                   NO
+authorization tests                          8 passed
+Cloudflare v2 regressions                   32 passed
+ADR-010/011 regressions                     29 passed
+provider credentials present                 false
+provider calls                               0
 ```
 
-## 12. Agent topology/runtime ordering
+All 14 workflows on that candidate were successful, including production runtime, final handoff audit and provider-free final reproduction.
 
-The single-agent controller remains the strong qualified baseline. Multi-agent and runtime comparisons remain queued until provider/model evidence selects a basis or freezes an honest `NO_SELECTION`.
+## 10. Current non-claims
 
-## 13. C4 — unchanged parallel track
+ADR-021 does **not** prove any of the following:
+
+- the private account is currently Workers Free;
+- >=9000 neurons are currently available;
+- a Cloudflare token/account ID exists or works;
+- either model is live-accessible from the target account;
+- model quality/reliability/latency;
+- attempt 1 authorization;
+- production provider selection.
+
+## 11. Next admissible task
+
+The next step is **fresh real evidence acquisition and actual receipt issuance**. This is the first point in this provider path that requires account-side/user action because the project intentionally does not have access to the private Cloudflare dashboard or secrets.
+
+Required order:
+
+```text
+1 manual dashboard evidence
+2 choose one canonical custody root
+3 create sanitized evidence JSON + retain source artifact privately
+4 issue short-lived receipt with zero provider secrets present
+5 only then provision CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID
+6 validate exact receipt/evidence/root/time
+7 explicit execution decision
+8 only then attempt 1
+```
+
+## 12. Other decision areas
+
+```text
+single-agent controller      STRONG QUALIFIED BASELINE
+multi-agent comparison       QUEUED AFTER PROVIDER BASIS
+runtime comparison           QUEUED
+native tools vs MCP          EVIDENCE SUFFICIENT CURRENT SCOPE
+RAG/vector/reranking         NO MATERIAL CURRENT GAP
+persistent memory            NO MATERIAL CURRENT GAP
+adaptive routing             NOT CURRENTLY MATERIAL
+```
+
+## 13. C4 parallel track — unchanged
 
 ```text
 SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
@@ -303,18 +260,17 @@ geometry 36 common parents × 4 arms
 gate     REQUIRED_PER_GROUP_AND_SLICE_REPORTING
 ```
 
-Only exact-byte recovery is authorized. Reconstruction, rescoring, substitution, semantic evaluation, FRESH_BLIND and LEGACY_LOCKED_TEST remain unauthorized.
+Only exact-byte recovery is authorized. No reconstruction, rescoring, substitution, semantic evaluation, FRESH_BLIND or LEGACY_LOCKED_TEST.
 
 ## 14. Still forbidden
 
-- real provider inference before separate live authorization;
-- using connected credentials as evidence or authorization;
-- Paid Workers, prepaid AI Gateway or paid spillover;
-- modifying ADR-010/011/018/019 historical frozen bytes;
-- changing ADR-020 implementation post hoc after live evidence begins;
-- changing ADR-018 candidates/population/metrics/thresholds/budget without a prospective amendment;
+- provider inference before a valid real receipt and explicit execution decision;
+- credential/account probes merely to prove availability;
+- Paid Workers, AI Gateway prepaid/unified billing or paid spillover;
+- modifying ADR-018/019/020/021 frozen behavior after real evidence begins;
 - hidden retries/fallbacks/warm-ups/provider state;
-- weakening `HarnessRunner`, authorization/idempotency or evaluator-private boundaries;
+- changing the preregistered scientific packet post hoc;
+- weakening HarnessRunner/safety/evaluator-private boundaries;
 - C4 reconstruction/rescoring;
-- premature multi-agent/runtime implementation;
+- premature topology/runtime experiments;
 - final architecture or production-readiness claims before evidence supports them.
