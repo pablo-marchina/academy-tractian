@@ -2,6 +2,7 @@
 
 **Status:** ACCEPTED  
 **Decision state:** `SUBSTANTIVE_COMPOSITION_SUFFICIENT / OPERATIONAL_ENTRYPOINT_MISSING / MINIMAL_LAUNCHER_ONLY / LIVE_NOT_AUTHORIZED`  
+**Implementation validation:** `PROVIDER_FREE_VALIDATED / LIVE_NOT_AUTHORIZED`  
 **Date:** 2026-09-01  
 **Base audited:** `main@0a7d093c87c3c746eb45bbfa1e7e82e4de7f8502`  
 **Provider/model inference calls in this audit:** 0  
@@ -227,7 +228,34 @@ The first PR-associated `production-runtime` execution reached the complete prod
 
 All three failures were caused solely by modifying the ADR-017-pinned `docs/FINAL-HANDOFF-RUNBOOK.md` blob. No launcher/test failure was reported in that run. The frozen runbook was restored byte-for-byte and the prospective Cloudflare addendum was introduced instead.
 
-This failed provider-free CI run consumed:
+The corrected candidate:
+
+```text
+fbdac76f885902f2d4f06d623957fd4e377aab00
+```
+
+then completed all 17 PR-associated workflows successfully, including:
+
+```text
+production-runtime
+final-handoff-acceptance-audit
+final-delivery-provider-free-reproduction
+cloudflare-live-authorization-v1-provider-free
+cloudflare-reset-window-amendment-provider-free
+cloudflare-reset-window-evidence-capture-provider-free
+provider-model-comparison-design-v2
+```
+
+The corrected `production-runtime` run reported:
+
+```text
+310 passed   python -m pytest -q tests
+12 passed    python -m pytest -q research/e2/tests/test_controller.py
+```
+
+The final-handoff acceptance workflow passed its production tests, ADR-004 regression, EV-007, EV-008, EV-011, ADR-016 clean reproduction and final handoff audit.
+
+All provider-free validation runs, including the initial documentation failure and the corrected success, consumed:
 
 ```text
 provider inference        0
@@ -236,7 +264,7 @@ live network validation   0
 comparison attempts       0 / 32
 ```
 
-Final provider-free acceptance remains contingent on the corrected PR head passing the applicable regressions.
+Provider-free launcher acceptance is therefore complete. Live authorization remains a separate future gate.
 
 ## Live gate remains separate
 
