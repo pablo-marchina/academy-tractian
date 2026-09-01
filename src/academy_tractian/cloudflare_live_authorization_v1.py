@@ -74,6 +74,10 @@ def _as_utc(value: datetime) -> datetime:
     return value.astimezone(timezone.utc)
 
 
+def _utc_json(value: datetime) -> str:
+    return _as_utc(value).isoformat().replace("+00:00", "Z")
+
+
 def canonical_custody_root_sha256(custody_root: Path | str) -> str:
     resolved = Path(custody_root).expanduser().resolve(strict=False).as_posix()
     return sha256(resolved.encode("utf-8")).hexdigest()
@@ -246,13 +250,13 @@ def validate_evidence_for_authorization(
 ) -> None:
     now = _as_utc(now_utc)
     observed = _as_utc(evidence.observed_at_utc)
+    if now.date().isoformat() != evidence.utc_day:
+        raise CloudflareAuthorizationError("evidence is not from the current UTC day")
     age = (now - observed).total_seconds()
     if age < -CLOCK_SKEW_SECONDS:
         raise CloudflareAuthorizationError("evidence observation is in the future")
     if age > EVIDENCE_MAX_AGE_SECONDS:
         raise CloudflareAuthorizationError("evidence is stale")
-    if now.date().isoformat() != evidence.utc_day:
-        raise CloudflareAuthorizationError("evidence is not from the current UTC day")
 
 
 def issue_live_authorization_receipt(
@@ -275,8 +279,8 @@ def issue_live_authorization_receipt(
     payload = {
         "schema_version": AUTHORIZATION_RECEIPT_VERSION,
         "protocol_version": AUTHORIZATION_PROTOCOL_VERSION,
-        "issued_at_utc": now.isoformat(),
-        "expires_at_utc": receipt_expiry.isoformat(),
+        "issued_at_utc": _utc_json(now),
+        "expires_at_utc": _utc_json(receipt_expiry),
         "utc_day": evidence.utc_day,
         "evidence_sha256": evidence.canonical_sha256,
         "custody_root_sha256": canonical_custody_root_sha256(custody_root),
