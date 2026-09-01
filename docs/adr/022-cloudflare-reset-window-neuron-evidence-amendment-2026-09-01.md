@@ -1,7 +1,7 @@
 # ADR-022 — Cloudflare reset-window Neuron evidence amendment
 
-**Status:** ACCEPTED CANDIDATE / FINAL PR REGRESSION PENDING  
-**Decision state:** `PROSPECTIVE_EVIDENCE_SOURCE_AMENDMENT / PROVIDER_FREE_VALIDATED / LIVE_NOT_AUTHORIZED`  
+**Status:** ACCEPTED  
+**Decision state:** `FROZEN_EVIDENCE_SOURCE_AMENDMENT / REAL_RESET_EVIDENCE_PENDING / LIVE_NOT_AUTHORIZED`  
 **Date:** 2026-09-01  
 **Trigger issue:** #80  
 **Implementation issue:** #82  
@@ -44,7 +44,7 @@ provider inference used to obtain evidence = 0
 credential/account probe used to obtain evidence = 0
 ```
 
-Under these conditions, the starting state is derived as:
+Under these conditions:
 
 ```text
 00:00 UTC documented reset
@@ -68,35 +68,31 @@ The original explicit dashboard-balance path remains valid if the target UI late
 
 ## Primary-source basis checked 2026-09-01
 
-Cloudflare Workers AI pricing documentation:
+Cloudflare Workers AI pricing:
 
 `https://developers.cloudflare.com/workers-ai/platform/pricing/`
 
-Current facts used by the amendment:
-
-- Workers Free receives 10,000 Neurons per day at no charge;
+- Workers Free receives 10,000 Neurons/day at no charge;
 - all limits reset daily at 00:00 UTC;
 - exceeding the Free allocation causes further operations to fail; Workers Paid is required to continue above the free allocation.
 
-Cloudflare Workers AI errors:
+Workers AI errors:
 
 `https://developers.cloudflare.com/workers-ai/platform/errors/`
 
 - exhausted daily free allocation is HTTP 429 / internal code 3036.
 
-Cloudflare Workers AI changelog:
+Workers AI changelog:
 
 `https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/`
 
-- both frozen candidates remain listed as available on Workers Free:
+- both frozen candidates remain listed as Workers Free-accessible:
   - `@cf/zai-org/glm-4.7-flash`;
   - `@cf/nvidia/nemotron-3-120b-a12b`.
 
-If any material fact changes before a real reset-window observation, this amendment must be revalidated before receipt issuance.
+If any material fact changes before real evidence capture, revalidate the amendment before receipt issuance.
 
-## Frozen candidate implementation identities
-
-Provider-free candidate validated before freeze documentation:
+## Frozen implementation identities
 
 ```text
 research/experiments/cloudflare-live-authorization-reset-window-amendment-v1.json
@@ -113,28 +109,28 @@ blob 76faf82e70fe89c87e17a4c79564540e20d5604a
 
 tests/test_cloudflare_live_authorization_reset_v2.py
 blob ae316deddb98c681cfcc4190737d3d79c0c8ffb5
-```
 
-The final workflow blob is frozen after the documentation-aware PR regression completes.
+.github/workflows/cloudflare-reset-window-amendment-provider-free.yml
+blob 1e10d2e9097c233f61f78d0f71273539ec5a0261
+
+research/results/cloudflare-reset-window-amendment-provider-free-validation-2026-09-01.json
+blob 5e15e31134934fe30839adbabc77616c680f1dc2
+```
 
 ## Time semantics
 
 ### Reset observation window
 
-A reset-window observation is admissible only during:
-
 ```text
 00:00:00 UTC <= observed_at_utc <= 00:10:00 UTC
 ```
 
-The ten-minute cap is intentionally conservative. It minimizes the interval in which an unobserved/background consumer could invalidate the no-use premise and gives a simple operational procedure.
+The ten-minute cap is conservative: it minimizes the interval in which unobserved/background consumption could invalidate the no-use premise and creates a simple operational procedure.
 
 ### Evidence freshness
 
-At receipt issuance:
-
 ```text
-evidence age <= 600 seconds
+evidence age <= 600 seconds at receipt issuance
 ```
 
 ### Receipt lifetime
@@ -145,24 +141,24 @@ receipt expiry <= evidence validity
 same UTC day required
 ```
 
-Crossing the next UTC day invalidates the authorization context.
+Crossing a UTC-day boundary invalidates the authorization context.
 
 ## Required real source artifact
 
-The real reset-window evidence must still include a private/out-of-repo source artifact proving:
+The real reset-window evidence must retain privately/outside the repository a source artifact proving:
 
 ```text
 Workers Free / Active
 Workers Paid not active
 ```
 
-Only the source artifact SHA-256 is serialized. Account ID, email, billing details and secrets remain outside evidence/receipt artifacts.
+Only the source artifact SHA-256 is serialized. Account ID, email, billing details and secrets stay outside evidence/receipt artifacts.
 
-The Neuron balance itself is not read from the missing meter under this fallback; it is derived from the documented reset plus the explicit no-use attestations.
+The Neuron balance itself is not read from the missing meter under this fallback; it is derived from the documented reset plus explicit no-use attestations.
 
 ## Mandatory operator attestations
 
-The operator must be able to attest all three without qualification:
+The operator must be able to attest without qualification:
 
 ```text
 1. no Workers AI calls have occurred on the target account since 00:00 UTC;
@@ -170,11 +166,11 @@ The operator must be able to attest all three without qualification:
 3. no unrelated Workers AI usage will occur until the governed comparison finishes or aborts.
 ```
 
-If the account cannot be placed under this exclusive-use custody, use neither this fallback nor a fabricated balance. The correct result is external blocker.
+If exclusive account custody cannot be established, use neither this fallback nor a fabricated balance. The correct outcome is external blocker.
 
 ## Resource semantics
 
-The amendment does not weaken ADR-018/020 resource guards.
+ADR-022 does not weaken ADR-018/020 resource guards.
 
 Starting state under an admissible reset-window receipt:
 
@@ -192,7 +188,7 @@ ADR-020 still owns:
 - missing usage fail-closed behavior;
 - 32-entry write-ahead ledger and no replay.
 
-The preregistered packet worst case remains `7937.522688` Neurons, so the reset-derived state is stronger than the historical `>=9000` start gate rather than weaker.
+The preregistered packet worst case remains `7937.522688` Neurons. Therefore the reset-derived state is stronger than the historical `>=9000` start gate rather than weaker.
 
 ## Explicitly rejected alternatives
 
@@ -208,29 +204,52 @@ Still forbidden as canonical quota evidence:
 
 ## Provider-free validation
 
-Initial candidate head:
+Initial implementation candidate:
 
 ```text
 90913cc23b1baa021ec89ddd316bf55d452fae3c
 ```
 
-Dedicated workflow:
+Initial dedicated run:
 
 ```text
 cloudflare-reset-window-amendment-provider-free
-run 33519145953
+33519145953
 SUCCESS
 ```
 
-The dedicated job confirmed:
+Documentation-aware freeze candidate:
 
-- provider credentials absent;
-- amendment validator passed;
-- reset-window authorization tests passed;
-- ADR-021 authorization regressions passed;
-- Cloudflare executor/client/provenance regressions passed.
+```text
+b74b7246d71e4c39fe8a547233c3ff634a9bafbc
+```
 
-All PR-associated workflows on that initial candidate completed successfully before freeze documentation was added.
+Dedicated freeze run:
+
+```text
+cloudflare-reset-window-amendment-provider-free
+33519920065
+SUCCESS
+```
+
+All **17/17** PR-associated workflows on that freeze candidate completed successfully, including:
+
+- ADR-021 provider-free authorization regression;
+- reset-window amendment gate;
+- `provider-model-comparison-design-v2`;
+- `production-runtime`;
+- `final-handoff-acceptance-audit`;
+- `final-delivery-provider-free-reproduction`;
+- historical E2–E9/E14 gates.
+
+Machine-readable validation:
+
+```text
+research/results/cloudflare-reset-window-amendment-provider-free-validation-2026-09-01.json
+blob 5e15e31134934fe30839adbabc77616c680f1dc2
+```
+
+No validated run contained provider credentials, provider inference or consumed comparison attempts.
 
 ## What this ADR does not prove
 
@@ -239,8 +258,8 @@ It does not prove:
 - that no Workers AI use has actually occurred on a future reset day;
 - that the target account can be held exclusively during the live packet;
 - that Cloudflare credentials exist or work;
-- that either model is reachable at live execution time;
-- model quality/reliability/latency;
+- that either model is reachable at execution time;
+- live model quality/reliability/latency;
 - that attempt 1 is currently authorized;
 - that either candidate should be selected.
 
@@ -258,8 +277,8 @@ attempt 1 authorized                 NO
 production provider selected         NO
 ```
 
-## Next admissible step after final PR freeze
+## Next admissible step
 
-At a future daily reset, an account-side operator may capture Workers Free evidence within the first ten minutes after 00:00 UTC and provide the required no-use/exclusive-use attestations. Only then may the provider-free reset-window receipt be issued.
+During a future daily reset, an account-side operator may capture Workers Free evidence within the first ten minutes after 00:00 UTC and provide the no-use/exclusive-use attestations. Only then may the provider-free reset-window receipt be issued.
 
-For America/Sao_Paulo on 2026-09-01, 00:00 UTC corresponds to 21:00 local time on the preceding calendar date relationship for the active UTC day. Operational instructions must always use UTC as the canonical clock to avoid DST/time-zone ambiguity.
+Operational instructions must use UTC as the canonical clock. Local-time conversion is convenience only and must never replace the frozen UTC boundary.
