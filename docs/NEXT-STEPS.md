@@ -1,176 +1,104 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-09-01 — ADR-021 live authorization protocol frozen; real account evidence pending  
+**Checkpoint:** 2026-09-01 — ADR-021 frozen; explicit Neuron evidence unavailable in target UI; issue #80 is the current gate  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
-**Frozen preregistration:** ADR-018  
-**Frozen client:** ADR-019  
-**Frozen executor/custody:** ADR-020  
-**Frozen authorization protocol:** ADR-021
+**Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
+**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)
 
-This file is the short-horizon plan. It does not itself authorize provider inference or attempt 1.
+This file is the short-horizon plan. It does not authorize provider inference, credential probing or attempt 1.
 
 ## 1. Completed
 
 ```text
 historical evidence audit                         DONE
-current provider factual refresh                  DONE
-four factual provider gates                       DONE
-minimum Cloudflare comparison preregistration     FROZEN / ADR-018
-provider-free Cloudflare client                   FROZEN / ADR-019
-ADR-010/011 reuse audit                           DONE
-Cloudflare executor/custody v2 provider-free      FROZEN / ADR-020
-live authorization protocol provider-free         FROZEN / ADR-021
+provider factual refresh                         DONE
+Cloudflare comparison preregistration             FROZEN / ADR-018
+Cloudflare direct client                         FROZEN / ADR-019
+ADR-010/011 reuse audit                          DONE
+Cloudflare executor/custody v2                   FROZEN / ADR-020
+live authorization protocol                     FROZEN / ADR-021
+Workers Free / Active                           PROVED MANUALLY
 
-provider inference                                0
-credential/account probes                         0
-live network validation                           0
-comparison attempts consumed                      0 / 32
-real account evidence                             NONE
-real authorization receipt                        NONE
-attempt 1                                         NOT AUTHORIZED
+provider inference                              0
+credential/account probes                       0
+live network validation                         0
+comparison attempts consumed                    0 / 32
 ```
 
-## 2. NOW — acquire fresh real Cloudflare evidence
+## 2. NOW — issue #80: revalidate ADR-021 Neuron evidence source
 
-This is the first provider-path task requiring user/account-side access.
-
-Before any credentials are provisioned, obtain a **manual Cloudflare Workers AI dashboard observation** proving the current state.
-
-Required evidence:
+Observed blocker:
 
 ```text
-Workers plan                         Workers Free
-Workers Paid enabled                 false
-neurons used today                   explicit value
-free neurons remaining               explicit value >=9000
-used + remaining                     exactly 10000 within tolerance
-UTC day                              current
-observation age                      <=600 seconds when receipt is issued
-comparison attempts already used     0
-AI Gateway route                     false
-prepaid/unified billing route        false
-cf-aig-gateway-id                    absent
-exclusive Workers AI usage window    attested
+ADR-021 requires explicit current Neuron usage/remaining
+↓
+target AI → Workers AI UI exposes no such meter
+↓
+Workers Free is proved, but >=9000 remaining is not
 ```
 
-Do not use an inference call or credential/account API probe to obtain this evidence.
+Do not:
 
-The source screenshot/export must be retained privately/outside the repo. The sanitized evidence JSON records only its SHA-256, not the screenshot, account ID or secret.
+- infer zero usage from a missing meter;
+- use undocumented/private dashboard endpoints as canonical evidence;
+- use Alpha/Restricted billing APIs as the authoritative gate without prospective justification;
+- perform a credential/account probe;
+- make a sacrificial model call;
+- weaken the 9000-Neuron start threshold post hoc.
 
-## 3. Select one canonical custody root
+Issue #80 must prospectively determine the smallest defensible non-inference fallback.
 
-Before issuing the receipt, choose exactly one durable local custody root.
+## 3. Candidate fallback to evaluate prospectively
 
-ADR-021 stores only:
+Current candidate hypothesis:
 
 ```text
-SHA-256(canonical resolved custody-root path)
+Workers Free / Active proof
++
+documented 10000-Neuron daily reset at 00:00 UTC
++
+operator attestation of no Workers AI calls since reset
++
+exclusive Workers AI usage window
++
+0 / 32 comparison attempts consumed
+=
+starting allocation treated as 10000 for the bounded execution window
 ```
 
-The raw path is not persisted in the receipt.
+This is **not authorized yet**. The amendment must freeze exact timing, source evidence, TTL, attestation and failure semantics before use.
 
-Changing roots after receipt issuance invalidates authorization.
+## 4. Decision deadline for provider path
 
-## 4. Create the sanitized evidence JSON
+By 2026-09-02, choose one evidence-backed branch:
 
-Use the frozen schema `cloudflare-live-authorization-evidence-v1`.
-
-Required structure includes:
-
-- observation timestamp in UTC;
-- current UTC day;
-- used/remaining neurons;
-- Workers Free / no Paid;
-- direct route / no Gateway or prepaid billing;
-- zero comparison attempts consumed;
-- exclusive usage-window attestation;
-- zero inference/probe flags;
-- source artifact SHA-256;
-- no account identifier or secret.
-
-The evidence must remain fresh; do not prepare it hours in advance.
-
-## 5. Issue the receipt provider-free
-
-With **no provider credential variables present**, run:
+### Branch A — defensible amendment freezes
 
 ```text
-python scripts/research/issue_cloudflare_live_authorization_receipt_v1.py --evidence <evidence.json> --custody-root <canonical-root> --output <receipt.json>
+freeze prospective ADR-021 amendment
+→ obtain admissible real evidence
+→ select canonical custody root
+→ issue short-lived receipt provider-free
+→ only then provision Cloudflare token/account ID
+→ explicit execution authorization
+→ run frozen ADR-018 packet
 ```
 
-The receipt:
-
-- lasts <=300 seconds;
-- never outlives the 600-second evidence window;
-- is bound to the evidence SHA;
-- is bound to the custody-root SHA;
-- is bound to ADR-018/019/020 and the exact plan/models/route;
-- becomes invalid across UTC-day reset;
-- contains no token/account ID/raw path.
-
-If it expires, do not reuse it. Capture fresh evidence and issue another receipt.
-
-## 6. Only after receipt — provision secrets
-
-Then provide, securely at runtime:
+### Branch B — no defensible evidence path
 
 ```text
-CLOUDFLARE_API_TOKEN
-CLOUDFLARE_ACCOUNT_ID
+freeze LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
+→ no token needed
+→ no provider inference
+→ continue final delivery from provider-free/historical evidence
 ```
 
-Token policy:
+Do not let the project wait indefinitely on the external quota-evidence surface.
 
-```text
-permission       Account > Workers AI > Read
-resource scope   exact target account only
-AI Gateway perms not required / should not be granted
-Global API Key   forbidden
-```
+## 5. If live packet becomes authorized
 
-Do not commit, log or serialize these values.
-
-## 7. Final pre-attempt validation
-
-Immediately before attempt 1, verify:
-
-```text
-receipt unexpired                          YES
-evidence still <=600 seconds old           YES
-same UTC day                               YES
-custody-root SHA exact                     YES
-evidence SHA exact                         YES
-ADR-018/019/020 pins exact                 YES
-plan SHA exact                             YES
-model IDs exact                            YES
-direct route exact                         YES
-exclusive account usage window intact      YES
-comparison attempts consumed               0
-```
-
-If unrelated Workers AI usage happened after evidence capture, invalidate the receipt and start again with fresh evidence.
-
-## 8. THEN — explicit live execution decision
-
-Only after all gates above are true may a separate execution action authorize:
-
-```text
-fixture_result = false
-attempt 1 = admissible
-```
-
-The live path remains:
-
-```text
-GovernedCloudflareLiveTaskV2.prepare(...).execute_all()
-```
-
-ADR-020 then owns write-ahead `CLAIMED`, exact 32-entry ledger, uncertain/no-replay and resource stop guards.
-
-## 9. Live packet if authorized
-
-The scientific packet remains exactly:
+Packet remains unchanged:
 
 ```text
 @cf/zai-org/glm-4.7-flash
@@ -181,9 +109,7 @@ VS
 max 32 attempts
 ```
 
-No candidate, threshold, metric, prompt population or budget may change after results begin.
-
-Valid terminal outcomes:
+Valid outcomes:
 
 ```text
 cloudflare_glm_4_7_flash_workers_free
@@ -191,9 +117,39 @@ cloudflare_nemotron_3_120b_a12b_workers_free
 NO_SELECTION
 ```
 
-## 10. Parallel C4 track
+No candidate, metric, threshold, population or budget may change after results begin.
 
-Exact artifact still required:
+## 6. After provider D01 is resolved or bounded
+
+Run another **evidence sufficiency audit**, not an automatic experiment queue.
+
+### Agent topology
+
+Ask whether single-agent vs multi-agent can still materially change a P0/P1/final architecture decision.
+
+- if no: keep qualified single-agent baseline and document bounded non-claim;
+- if yes: preregister the minimum controlled topology comparison.
+
+### Runtime/orchestration
+
+Only assess after topology/materiality is closed. Do not conduct generic LangGraph/framework research.
+
+### No-current-gap areas
+
+Do not experiment on these absent new evidence:
+
+```text
+native tools vs MCP
+RAG/vector/reranking
+persistent memory
+rich observability backend
+rich UI
+adaptive routing
+```
+
+## 7. Parallel C4 track
+
+Exact artifact only:
 
 ```text
 SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
@@ -202,28 +158,28 @@ rows     144
 geometry 36 parents × 4 arms
 ```
 
-Only exact-byte recovery is authorized.
+No reconstruction/rescoring/substitution is authorized.
 
-## 11. Later queue
+## 8. Deadline sequence
 
 ```text
-AFTER PROVIDER RESULT  assess single-agent vs multi-agent only if still material
-AFTER TOPOLOGY         runtime/orchestration comparison only if evidence gap remains
-FINAL                  integrate best-supported configuration + full regression + architecture freeze
+09-01 → 09-02   close/bound #80
+09-02 → 09-03   live provider result OR external-blocker freeze
+09-03 → 09-05   only still-material architecture decisions + reliability/regression
+09-05 → 09-07   architecture freeze + acceptance evidence + demo/runbook/reproduction
+09-08           delivery
 ```
 
-RAG, persistent memory and richer UI remain out of experiment scope unless a measured material gap appears.
+After 2026-09-05, no speculative P2 experiment unless it closes a demonstrated delivery blocker.
 
-## 12. Still forbidden
+## 9. Still forbidden
 
-- issuing a real receipt from stale/synthetic/fabricated account evidence;
-- provisioning secrets before receipt issuance;
-- credential/account probing merely to prove account state;
-- any inference before receipt + explicit execution authorization;
-- Workers Paid, AI Gateway prepaid/unified billing or paid spillover;
-- concurrent unrelated Workers AI use during the evidence/receipt/execution window;
-- changing ADR-018 packet after execution begins;
-- automatic retry/fallback/warm-up/resume;
-- replaying claimed/uncertain attempts;
-- C4 reconstruction or rescoring;
-- premature final provider/architecture claims.
+- provider inference before defensible authorization;
+- token/account provisioning merely to test account state;
+- fabricated quota values;
+- Workers Paid / prepaid AI Gateway / paid spillover;
+- retry/replay of claimed or uncertain attempts;
+- changing ADR-018 packet post hoc;
+- C4 reconstruction/rescoring;
+- premature multi-agent/runtime work;
+- final provider/architecture claims beyond evidence.
