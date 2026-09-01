@@ -1,31 +1,35 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-09-01 — ADR-023 merged/provider-free validated; standalone production wheel reproduction proved by PR #91; D01 reset-window gate still pending  
+**Checkpoint:** 2026-09-01 — provider-free delivery/demo/security audits complete; PFG-01 escalation-handoff gap closed by PR #96; D01 is the next operational gate  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
+**D01 operator preflight:** [`CLOUDFLARE-D01-PREFLIGHT-2026-09-01.md`](CLOUDFLARE-D01-PREFLIGHT-2026-09-01.md)  
 **Current provider handoff addendum:** [`FINAL-HANDOFF-RUNBOOK-CLOUDFLARE-ADDENDUM-2026-09-01.md`](FINAL-HANDOFF-RUNBOOK-CLOUDFLARE-ADDENDUM-2026-09-01.md)
 
-This file is the short-horizon plan. It does not authorize provider inference, credential probing or attempt 1.
+This file is the short-horizon authorization plan. It does not itself authorize provider inference, credential probing or attempt 1.
 
-`FINAL-HANDOFF-RUNBOOK.md` remains byte-pinned ADR-017 historical evidence. Current Cloudflare provider-comparison guidance is prospective and lives in this file plus the linked addendum; do not rewrite the frozen ADR-017 runbook to update provider guidance.
+`FINAL-HANDOFF-RUNBOOK.md` remains byte-pinned ADR-017 historical evidence. Do not rewrite it.
 
-## 1. Completed / frozen before the real gate
+## 1. Provider-free work completed before D01
 
 ```text
 historical evidence audit                         DONE
 provider factual refresh                         DONE
 Cloudflare comparison preregistration             FROZEN / ADR-018
 Cloudflare direct client                         FROZEN / ADR-019
-ADR-010/011 reuse audit                          DONE
 Cloudflare executor/custody v2                   FROZEN / ADR-020
 original live authorization protocol             FROZEN / ADR-021
-Neuron evidence-source revalidation              RESOLVED / ADR-022
-Workers Free / Active                           PROVED MANUALLY
-entrypoint sufficiency audit                     ACCEPTED / ADR-023
+reset-window evidence amendment                  FROZEN / ADR-022
+governed entrypoint contract                     ACCEPTED / ADR-023
 minimal governed launcher                       MERGED / PROVIDER-FREE VALIDATED
 standalone production wheel                     PROVED / PR #91
+2026-09-01 delivery-acceptance audit             DONE
+2026-09-01 final-demo audit                      DONE
+2026-09-01 security/trace/failure audit          DONE
+structured escalation handoff PFG-01            CLOSED / PR #96
+D01 operator preflight                          PREPARED
 
 provider inference                              0
 credential/account probes                       0
@@ -33,131 +37,92 @@ live network validation                         0
 comparison attempts consumed                    0 / 32
 ```
 
-Stable implementation baseline after PR #91:
+PR #96 merged the current provider-free readiness closure as:
 
 ```text
-a93854dd5e70edf8084bdaae1762dd64cdb6aa48
+f383bbe0e87e6927411c14fd67ba8dbda9e57cbc
 ```
 
-Action-plan reconciliation merge #93:
+Its final head passed all 13 PR-associated workflows, including `production-runtime`, `final-delivery-provider-free-reproduction` and `final-handoff-acceptance-audit`.
+
+## 2. What the audits concluded
+
+### Delivery acceptance
+
+No new provider-independent authorization/security blocker remains.
+
+The strongest remaining bounded areas are:
 
 ```text
-7d8f3d1a13e07544deb144004d02e78806e6d4f4
+final non-scripted real-provider demo      D01 dependent
+provider/model quality comparison          D01 dependent
+provider-specific latency/resource data    D01 dependent
+EV-012 exact C4 evidence                    external exact-byte blocker
+final deployment/rollback evidence         later final-integration choice
 ```
 
-PR #91 closed a concrete clean-reproduction gap without changing runtime/evaluator/provider semantics. Its new `standalone-wheel-smoke` job:
+### Demo
 
-```text
-build root wheel
-→ create clean virtualenv
-→ install only root wheel
-→ change cwd outside repository checkout
-→ import academy_tractian + research.e2.controller
-→ validate canonical 18-operation registry
-→ validate read-only production default
-```
+The frozen five-scenario provider-free demo remains valid integration evidence, but its decisions are scripted. It must not be relabeled as a final live-provider demo.
 
-The job passed together with the existing production runtime regression suite.
+Final `PROVED` status for the real integrated agent path requires D01 to resolve or be explicitly bounded, followed by the appropriate final provider-path demonstration/limitation.
 
-ADR-023 freezes the entrypoint conclusion:
+### Security / trace
 
-```text
-substantive composition sufficient
-operational entrypoint was the only material provider-path gap
-no executor/custody/client/authorization rewrite authorized
-```
-
-The only prospective execution surface is:
-
-```text
-scripts/research/execute_cloudflare_live_comparison_v2.py
-```
-
-## 2. NOW — provider-free work before the reset
-
-Do not add provider-path code. The safe short-horizon work is to close or classify remaining delivery gaps that are independent of provider choice.
-
-Run these audits in order:
-
-### A. Delivery-acceptance gap audit
-
-Use `DELIVERY-ACCEPTANCE.md` as the row-level contract and classify each applicable P0/P1 item:
-
-```text
-PROVED
-PARTIAL
-BLOCKED
-MISSING
-```
-
-For every `PARTIAL` or `MISSING`, record:
-
-- exact requirement/acceptance row;
-- existing repository evidence;
-- missing proof or behavior;
-- whether the gap is provider-independent;
-- smallest provider-free validation/fix if one exists;
-- whether the gap must wait for D01/#92.
-
-Do not infer that a component is complete merely because code exists.
-
-### B. Real-demo path completeness audit
-
-Verify that the final integrated path can eventually demonstrate, with real runtime traces rather than scripted prose:
-
-```text
-contextualize
-investigate with read tools
-safe consequential-action behavior
-clarify / insufficient evidence
-human escalation + handoff
-conflicting/inconclusive evidence
-partial/unavailable tool or provider failure
-customer-safe final response
-per-run integrated evaluation
-aggregate/reliability view
-```
-
-Before D01, this is an evidence audit. Implement only provider-independent P0/P1 omissions that do not alter frozen provider or post-D01 architecture decisions.
-
-### C. Security / trace / failure-containment audit
-
-Confirm provider-free evidence for:
+Current deterministic boundaries remain supported:
 
 ```text
 identity outside model control
 seed outside model control
 authorization outside model control
-HarnessRunner sole tool-execution boundary
-action permission/target/argument validation
-idempotency / duplicate-action containment
-model-call provenance sanitization
-no evaluator-private truth in runtime
+HarnessRunner sole execution boundary
+strict argument validation
+permission/action containment
+idempotency / no replay
+sanitized model-call provenance
+evaluator-private truth isolated
 trace lifecycle integrity
-safe failure → clarify / abstain / escalate
-no credentials/private oracle in persisted traces
+provider/tool failures fail closed
+no hidden retry/fallback on governed paths
 ```
 
-### D. Reproduction audit
+### Escalation handoff
 
-Standalone wheel distribution is now `PROVED`. Preserve this as a regression obligation; do not redesign packaging unless the clean-wheel test later fails.
-
-## 3. Rule for fixing anything found before D01
-
-A pre-D01 change is allowed only if all conditions hold:
+The one provider-free gap found by the audit was closed prospectively by PR #96:
 
 ```text
-maps to concrete P0/P1 or reproducibility/security risk
-AND provider-independent
-AND no ADR-018→023 semantic change
-AND no provider/model call or credential probe
-AND no topology/runtime/RAG/memory decision is pre-empted
-AND smallest provider-free fix can be tested
+ProductionRequest + exact RunTrace
+→ ESCALATE_HUMAN
+→ structured trace-linked HumanEscalationHandoff
+→ deterministic validation
 ```
 
-Otherwise log the finding and defer it.
+Raw observation bodies, identity/user/seed, credentials, provider raw material and evaluator-private material do not enter the handoff.
 
-Issue #92 is planning-only until D01 resolves/bounds. It defines the later hard-gate + Pareto decision protocol for topology/runtime and optional architecture complexity.
+## 3. NOW — prepare only the operator-side D01 preflight
+
+Before 21:00 BRT, use the dedicated preflight document to prepare:
+
+- one private local root outside the repository;
+- private Workers Free source-artifact path;
+- fresh evidence output path;
+- fresh receipt output path;
+- one canonical custody root;
+- assurance that no background Worker/application/integration can consume Workers AI during the governed window.
+
+Before evidence capture and receipt issuance, provider credentials must be absent from the process. The receipt helper explicitly rejects:
+
+```text
+CLOUDFLARE_API_TOKEN
+CLOUDFLARE_ACCOUNT_ID
+OPENAI_API_KEY
+GEMINI_API_KEY
+GROQ_API_KEY
+```
+
+Do not print their values merely to check whether they exist.
+
+No more provider-path code or architecture experimentation is justified before D01.
 
 ## 4. NEXT LIVE GATE — reset window
 
@@ -169,50 +134,29 @@ Target window:
 2026-09-01 21:00:00–21:10:00 America/Sao_Paulo
 ```
 
-ADR-022 adds one fallback:
+Proceed only if every statement is truthful:
 
 ```text
-RESET_WINDOW_ATTESTATION
-```
-
-Required real observation:
-
-```text
-00:00:00 UTC <= observation <= 00:10:00 UTC
 Workers Free / Active                         proven
 Workers Paid                                  false
 no Workers AI calls since reset               attested
 no automated/background Workers AI consumer   attested
 exclusive Workers AI account use              attested through packet completion
 direct Workers AI route                       required
-AI Gateway/prepaid unified billing            forbidden
+AI Gateway/prepaid unified billing            absent
 comparison attempts                           0 / 32
 provider inference/probe to obtain evidence   0
 ```
 
-Under those exact premises:
+Any uncertainty fails closed to:
 
 ```text
-documented daily reset at 00:00 UTC
-+ documented Workers Free allocation 10000 Neurons/day
-+ zero post-reset Workers AI use
-= derived 10000 Neurons remaining
+LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
 ```
 
-If any no-use/exclusive-use statement cannot be made with confidence, stop and freeze `LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED` instead.
+## 5. Capture real reset-window evidence
 
-## 5. Capture Workers Free source evidence
-
-During the reset window, retain privately/outside the repository one source artifact showing:
-
-```text
-Workers Free / Active
-Workers Paid not active
-```
-
-Do not serialize account ID, email, billing details or secrets. The evidence JSON records only the source artifact SHA-256.
-
-The canonical helper is:
+Retain the source artifact privately/outside the repository, then within the first ten minutes after reset run:
 
 ```powershell
 python scripts/research/capture_cloudflare_reset_window_evidence_v1.py `
@@ -227,9 +171,11 @@ python scripts/research/capture_cloudflare_reset_window_evidence_v1.py `
   --attest-no-ai-gateway-or-prepaid-unified-billing
 ```
 
-Evidence age at receipt issuance must be <=600 seconds.
+The helper uses the real UTC clock, serializes only sanitized evidence and refuses overwrite.
 
-## 6. Issue the reset-window receipt provider-free
+Evidence age at receipt issuance must be `<=600` seconds.
+
+## 6. Issue the reset-window receipt — still provider-free
 
 Before any provider secret is provisioned:
 
@@ -240,23 +186,13 @@ python scripts/research/issue_cloudflare_reset_window_receipt_v1.py `
   --output "<PATH_TO_PRIVATE_RECEIPT_JSON>"
 ```
 
-Receipt rules:
+Receipt lifetime is `<=300` seconds and remains bound to the exact evidence/custody/ADR/plan/model/route identities.
 
-```text
-lifetime <=300 seconds
-expiry <= evidence validity
-same UTC day
-bound to evidence SHA
-bound to custody-root SHA
-bound to ADR-018/019/020/021 + plan + route + model IDs
-contains no token/account ID/raw path
-```
+If the receipt expires, do not reuse it.
 
-If it expires, do not reuse it. Wait for the next 00:00 UTC reset and capture fresh evidence.
+## 7. Only after a valid receipt — provision Cloudflare secrets
 
-## 7. Only after a valid receipt — provision secrets
-
-Then securely provide at runtime:
+Then provide locally at runtime:
 
 ```text
 CLOUDFLARE_API_TOKEN
@@ -268,36 +204,29 @@ Policy remains:
 ```text
 permission       Account > Workers AI > Read
 resource scope   exact target account only
-AI Gateway perms not required / should not be granted
+AI Gateway perms not required
 Global API Key   forbidden
 ```
 
-Do not commit, log or serialize these values. Do not pass either value as a launcher argument.
+Never commit, log, serialize, paste into chat or pass either secret as a launcher argument.
 
-## 8. Final pre-attempt validation
+## 8. Final operator gate and explicit live invocation
 
-Immediately before attempt 1:
+Immediately before invocation verify:
 
 ```text
 receipt unexpired                              YES
 evidence <=600 seconds old                     YES
 same UTC day                                   YES
-custody-root SHA exact                         YES
-evidence SHA exact                             YES
-ADR-018/019/020/021 pins exact                 YES
-plan/model/route IDs exact                     YES
-no unrelated Workers AI use since reset        YES
-exclusive account window still intact          YES
-comparison attempts consumed                   0
+custody root exact                             YES
+evidence/receipt bindings exact                YES
+ADR/model/route/plan bindings exact            YES
+no unrelated Workers AI use since reset       YES
+exclusive account window still intact         YES
+attempts consumed                              0 / 32
 ```
 
-Any concurrent/unaccounted Workers AI usage invalidates the receipt.
-
-Attempt 1 remains unauthorized until all conditions are true and the operator separately invokes the launcher.
-
-## 9. THEN — explicit governed live execution decision
-
-Only after every gate above remains true may the operator explicitly invoke:
+Only then invoke:
 
 ```powershell
 python scripts/research/execute_cloudflare_live_comparison_v2.py `
@@ -306,25 +235,11 @@ python scripts/research/execute_cloudflare_live_comparison_v2.py `
   --custody-root "<CANONICAL_CUSTODY_ROOT>"
 ```
 
-The launcher is hard-pinned to:
+The launcher remains hard-pinned to `fixture_result=False` and delegates to the frozen ADR-022→ADR-020 path.
 
-```text
-fixture_result = false
-```
+No warm-up, credential probe, retry, fallback, parallel call, alternate model/provider/custody root or ad-hoc Python composition is authorized.
 
-and delegates directly to:
-
-```text
-reset_window_authorization_to_adr020_pre_live_evidence(...)
-→ CloudflareLiveSecrets(...)
-→ build_cloudflare_one_shot_transport_v2()
-→ GovernedCloudflareLiveTaskV2.prepare(...)
-→ execute_all()
-```
-
-No retry, fallback, warm-up, parallel call, alternate model, alternate provider, alternate custody or ad-hoc Python composition is authorized.
-
-## 10. Frozen live packet
+## 9. Frozen live packet / valid outcomes
 
 ```text
 @cf/zai-org/glm-4.7-flash
@@ -332,8 +247,9 @@ VS
 @cf/nvidia/nemotron-3-120b-a12b
 
 8 public probes × 2 repeats × 2 candidates
-max 32 attempts
-packet worst-case 7937.522688 Neurons
+max attempts        32
+packet maximum      7937.522688 Neurons
+selection           Pareto / NO_SELECTION allowed
 ```
 
 Valid terminal outcomes:
@@ -345,55 +261,32 @@ NO_SELECTION
 LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
 ```
 
-No candidate, metric, threshold, population or budget may change after results begin.
+## 10. After D01
 
-## 11. After provider D01 is resolved or bounded
+Activate issue #92 only after a governed provider result or explicit external-blocker freeze.
 
-Activate issue #92 and run another evidence-sufficiency audit, not an automatic experiment queue.
-
-### Hard gates before any alternative architecture is eligible
-
-No candidate may regress:
+Sequence:
 
 ```text
-P0 behavior coverage
-deterministic authorization/action safety/evaluator isolation
-trace integrity and diagnosability
-clean reproduction
-USD 0 feasibility
-bounded retry/fallback/state semantics
-safe failure/clarify/abstain/escalate behavior
+D01 resolved/bounded
+→ re-audit agent-topology materiality
+→ if no material P0/P1 topology gap: preserve single-agent baseline
+→ if material: preregister minimum controlled topology comparison
+→ only after topology closure assess runtime/orchestration materiality
 ```
 
-### Agent topology
-
-Ask whether single-agent vs multi-agent can still materially change a P0/P1/final architecture decision.
-
-- if no: keep qualified single-agent baseline and document bounded non-claim;
-- if yes: preregister the minimum controlled topology comparison.
-
-### Runtime/orchestration
-
-Only assess after topology/materiality is closed. Compare a graph/runtime framework only if a measured requirement such as durable execution, checkpoint/resume or persistent human interruption is actually missing.
-
-### Pareto decision
-
-For hard-gate-passing candidates, compare correctness, tool/argument/evidence quality, escalation/fallback, stability, latency/resource use, coordination failures, operational complexity and debuggability. Do not invent an arbitrary weighted total score.
-
-### No-current-gap areas
-
-Do not experiment absent new evidence:
+Do not add absent a measured gap:
 
 ```text
-native tools vs MCP
 RAG/vector/reranking
 persistent memory
+MCP migration
+adaptive routing
 rich observability backend
 rich UI
-adaptive routing
 ```
 
-## 12. Parallel C4 track
+## 11. C4 parallel track
 
 Exact artifact only:
 
@@ -404,33 +297,21 @@ rows     144
 geometry 36 parents × 4 arms
 ```
 
-No reconstruction/rescoring/substitution is authorized.
+No reconstruction, rescoring or substitution is authorized.
 
-## 13. Deadline sequence
+## 12. Stop rules
 
-```text
-09-01 before 21:00  action-plan reconciliation + provider-free acceptance/demo/security audits
-09-01 21:00–21:10 D01 reset-window evidence/receipt/live gate if truthful custody exists
-09-02 → 09-03       live provider result OR external-blocker freeze; activate #92
-09-03 → 09-05       only still-material architecture decisions + reliability/regression
-09-05 → 09-07       architecture freeze + acceptance evidence + demo/runbook/reproduction
-09-08               delivery
-```
+Still forbidden:
 
-After 2026-09-05, no speculative P2 experiment unless it closes a demonstrated delivery blocker.
-
-## 14. Still forbidden
-
-- provider inference before real receipt + explicit launcher invocation;
-- token/account provisioning merely to inspect quota;
-- fabricated quota values;
-- using reset fallback outside the first ten minutes after 00:00 UTC;
-- uncertain attestation about calls/background consumers/exclusive custody;
+- provider inference before real evidence + valid receipt + explicit launcher invocation;
+- provider/account probes merely to inspect quota or credentials;
+- fabricated quota/use evidence;
+- uncertain exclusivity attestations;
 - Workers Paid / prepaid AI Gateway / paid spillover;
-- retry/replay of claimed or uncertain attempts;
-- changing ADR-018 packet post hoc;
-- bypassing the governed launcher with an ad-hoc execution wrapper;
-- modifying frozen executor/custody/client/authorization semantics for launcher convenience;
+- replay of claimed/uncertain attempts;
+- changing ADR-018 packet after live results begin;
+- bypassing the governed launcher;
 - C4 reconstruction/rescoring;
-- topology/runtime/RAG/memory implementation before D01 unless a distinct provider-independent P0/P1 gap explicitly requires it and governance is updated first;
+- topology/runtime/RAG/memory work before D01;
+- claiming the scripted provider-free demo is a live-model demonstration;
 - final provider/architecture claims beyond evidence.
