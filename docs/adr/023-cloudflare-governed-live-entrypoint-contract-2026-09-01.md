@@ -204,12 +204,39 @@ The production launcher itself remains hard-pinned to `fixture_result=False`; th
 
 ## Operational documentation reconciliation
 
-After the launcher exists and passes provider-free validation:
+The first CI run exposed an additional historical immutability constraint: `docs/FINAL-HANDOFF-RUNBOOK.md` is a direct byte-pinned artifact of the ADR-017 freeze (`c7df131f555e3b07161fd1d518965958d245555c`). Editing that file causes the canonical final-handoff audit and ADR-017 freeze regressions to fail.
 
-- `docs/NEXT-STEPS.md` must name the exact launcher command after receipt issuance and secret provisioning;
-- `docs/FINAL-HANDOFF-RUNBOOK.md` must identify ADR-018→023 Cloudflare as the current governed provider-comparison path;
-- historical OpenAI/Gemini issue #44 evidence remains preserved as historical, not current execution guidance;
+Therefore the correct reconciliation preserves the historical bytes and uses a prospective addendum:
+
+- `docs/NEXT-STEPS.md` names the exact launcher command after receipt issuance and secret provisioning;
+- `docs/FINAL-HANDOFF-RUNBOOK.md` remains byte-for-byte unchanged as ADR-017 evidence;
+- `docs/FINAL-HANDOFF-RUNBOOK-CLOUDFLARE-ADDENDUM-2026-09-01.md` prospectively supersedes only the provider-comparison guidance in that frozen runbook;
+- historical OpenAI/Gemini issue #44 remains preserved as historical evidence, not current execution guidance;
 - ADR-018 through ADR-022 remain immutable.
+
+This is a governance-preserving resolution of the apparent conflict between “update the operational guidance” and “do not rewrite historical frozen artifacts.”
+
+## Validation history
+
+The first PR-associated `production-runtime` execution reached the complete production test suite and reported:
+
+```text
+307 passed
+3 failed
+```
+
+All three failures were caused solely by modifying the ADR-017-pinned `docs/FINAL-HANDOFF-RUNBOOK.md` blob. No launcher/test failure was reported in that run. The frozen runbook was restored byte-for-byte and the prospective Cloudflare addendum was introduced instead.
+
+This failed provider-free CI run consumed:
+
+```text
+provider inference        0
+credential/account probes 0
+live network validation   0
+comparison attempts       0 / 32
+```
+
+Final provider-free acceptance remains contingent on the corrected PR head passing the applicable regressions.
 
 ## Live gate remains separate
 
