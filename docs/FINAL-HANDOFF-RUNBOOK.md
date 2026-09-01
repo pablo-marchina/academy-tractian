@@ -1,6 +1,6 @@
 # Academy × TRACTIAN — Final Handoff Runbook
 
-**Scope:** provider-free final handoff for the actually evidenced runtime/evaluator path.  
+**Scope:** provider-free final handoff for the actually evidenced runtime/evaluator path, plus the separately governed current Cloudflare comparison boundary.  
 **Authority:** subordinate to `CURRENT-PROJECT-STATUS.md`, frozen ADRs and frozen experiment artifacts.  
 **Does not authorize:** live provider calls, credential probing, real customer mutation, C4 reconstruction/rescoring, semantic/private/blind evaluation, global architecture freeze or unconditional production-readiness claims.
 
@@ -21,6 +21,8 @@ request
 
 The default `ProductionRuntime` is action-disabled. The separately governed `ControlledActionRuntime` is used only for explicitly authorized supplied/test action demonstrations and preserves durable idempotency custody before action transport.
 
+The current provider-comparison path is separate from this provider-free handoff and is governed by ADR-018 through ADR-023. It must not be invoked merely to reproduce the handoff.
+
 ## 2. Environment prerequisites
 
 Use Python 3.11 or newer. The production and E2 packages require `pydantic>=2.6,<3`; test extras require `pytest>=8`.
@@ -32,7 +34,7 @@ python --version
 python -m pip install -e ".[dev]" -e "research/e2[dev]"
 ```
 
-No provider secret is required for the canonical provider-free reproduction. Do not add dummy provider secrets, probe accounts or invoke issue #44 merely to test setup.
+No provider secret is required for the canonical provider-free reproduction. Do not add dummy provider secrets, probe accounts or invoke the governed Cloudflare comparison merely to test setup.
 
 ## 3. Canonical clean reproduction
 
@@ -124,21 +126,63 @@ In the controlled action profile the durable idempotency claim is acquired befor
 
 Do not expose credentials, raw exception/provider material, evaluator-private/gold information or unnecessary internal implementation details. Success claims must be supported by the trace; uncertain/failed actions must not be phrased as completed.
 
-## 7. Provider fallback boundary
+## 7. Current governed provider comparison boundary
 
-There is currently no selected live provider and no automatic cross-provider fallback. The frozen comparison is issue #44 only:
+There is currently no selected live provider and no automatic cross-provider fallback.
+
+The current frozen candidate packet is the ADR-018→023 Cloudflare path:
 
 ```text
-OpenAI gpt-5.6-sol      16 maximum attempts
-Google gemini-3.7-flash 16 maximum attempts
-total                   32 maximum attempts
-consumed                 0 / 32 at the handoff baseline
-automatic retries        0
-fallbacks                0
-parallel calls           0
+@cf/zai-org/glm-4.7-flash                    16 maximum attempts
+@cf/nvidia/nemotron-3-120b-a12b              16 maximum attempts
+total                                          32 maximum attempts
+consumed                                        0 / 32 at current baseline
+automatic retries                               0
+fallbacks                                       0
+warm-ups                                        0
+parallel provider calls                         0
+packet worst-case                               7937.522688 Neurons
+Workers Paid / prepaid spillover                forbidden
 ```
 
-Execution requires both explicitly provisioned provider secrets and one canonical durable custody root. If prerequisites are absent, remain at attempt 0. Do not probe credentials/accounts to infer readiness.
+The historical issue #44 OpenAI/Gemini packet remains repository evidence for its original scope. It is **not** the current live execution instruction and must not be substituted for the ADR-018→023 Cloudflare path.
+
+### Current governance layers
+
+```text
+ADR-018   Cloudflare comparison preregistration
+ADR-019   direct Workers AI client
+ADR-020   executor/custody/resource accounting
+ADR-021   original live authorization protocol
+ADR-022   reset-window evidence fallback
+ADR-023   entrypoint sufficiency audit + minimal launcher contract
+```
+
+ADR-023 freezes the conclusion that substantive composition is sufficient. No executor, custody, client or authorization rewrite is authorized for launcher convenience.
+
+### Preconditions for any live invocation
+
+Provider execution is separate from provider-free reproduction and requires all of the following:
+
+```text
+admissible reset-window evidence
+valid short-lived receipt bound to exact custody root
+exclusive Workers AI account window still intact
+CLOUDFLARE_API_TOKEN provisioned only after receipt
+CLOUDFLARE_ACCOUNT_ID provisioned only after receipt
+explicit operator execution decision
+0 consumed comparison attempts before attempt 1
+```
+
+If any prerequisite is absent or uncertain, remain at attempt 0 and use `LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED` where applicable. Do not probe credentials/accounts to infer readiness.
+
+After all gates are true, the only current operational command is:
+
+```text
+python scripts/research/execute_cloudflare_live_comparison_v2.py --evidence <evidence.json> --receipt <receipt.json> --custody-root <canonical-root>
+```
+
+The launcher delegates to the frozen ADR-022 adapter and ADR-020 governed task with `fixture_result=False`. It does not expose provider/model/retry/fallback/budget options.
 
 A provider-free regression failure is never a reason to execute the live comparison.
 
@@ -161,11 +205,13 @@ Never persist or print provider secrets, bearer tokens, raw idempotency secrets,
 
 Identity and evaluation seed are runner/runtime-owned and outside model/provider control. API permission enforcement and project/system safety policy are distinct checks.
 
+For the current Cloudflare comparison specifically, the launcher accepts no secret CLI argument. `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are consumed from the runtime environment only after receipt issuance, and ADR-020 custody/result artifacts remain sanitized.
+
 ## 10. Known limitations and non-claims
 
 The final handoff must state these rather than hiding them:
 
-- live provider comparison remains unexecuted at 0/32 calls; no model/provider is selected;
+- live Cloudflare provider comparison remains unexecuted at 0/32 calls; no model/provider is selected;
 - provider latency, live reliability and live cost/resource behavior are not measured yet;
 - no credential/account probe has occurred;
 - no real customer mutation has occurred;
@@ -185,7 +231,7 @@ A provider-free handoff is reproducible only if:
 - EV-007, EV-008 and EV-011 reproduce their frozen SHAs;
 - ADR-016 demo reproduces `43903731…` and the evidence index resolves with zero violations;
 - the final acceptance-audit validator passes;
-- provider calls remain 0/32 unless issue #44 separately records a governed execution;
+- provider calls remain 0/32 unless a separately authorized ADR-018→023 governed Cloudflare execution records consumed attempts;
 - credential probes and real customer mutations remain zero;
 - scientific/C4 authorization state is unchanged unless separately reconciled.
 
