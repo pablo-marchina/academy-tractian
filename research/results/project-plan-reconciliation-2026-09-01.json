@@ -1,0 +1,51 @@
+{
+  "schema_version": "project-plan-reconciliation-v1",
+  "date": "2026-09-01",
+  "scope": "PROJECT-PLAN + ARCHITECTURE-ROADMAP + canonical status/next-step reconciliation",
+  "scientific_execution": false,
+  "provider_inference_calls": 0,
+  "credential_account_probes": 0,
+  "comparison_attempts_consumed": 0,
+  "material_findings": [
+    {
+      "id": "F01",
+      "finding": "The macro project plan still treated zero-cost provider discovery/preregistration as future work although ADR-018 through ADR-021 are already frozen.",
+      "resolution": "Replace discovery-phase language with current Cloudflare frozen path and issue #80 evidence-source blocker."
+    },
+    {
+      "id": "F02",
+      "finding": "The architecture roadmap still described Cloudflare as one candidate among a future provider search set and said the comparison amendment still needed preregistration.",
+      "resolution": "Describe ADR-018/019/020/021 as the current frozen provider serving architecture while keeping provider selection unresolved."
+    },
+    {
+      "id": "F03",
+      "finding": "The old deadline schedule automatically queued provider, topology and runtime experiments before delivery.",
+      "resolution": "Make topology/runtime conditional on a fresh evidence-sufficiency audit after provider D01 is resolved or bounded."
+    },
+    {
+      "id": "F04",
+      "finding": "CURRENT-PROJECT-STATUS and NEXT-STEPS still instructed manual explicit Neuron-meter capture although the target UI does not expose that meter.",
+      "resolution": "Make issue #80 the current gate and preserve issue #79 as blocked."
+    },
+    {
+      "id": "F05",
+      "finding": "The prior plan lacked a deadline-safe fallback if live Cloudflare authorization remains externally blocked.",
+      "resolution": "Add a legitimate LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED branch and preserve final delivery using provider-free/historical evidence with bounded non-claims."
+    }
+  ],
+  "reconciled_deadline": {
+    "2026-09-01_to_2026-09-02": "close or bound issue #80",
+    "2026-09-02_to_2026-09-03": "execute frozen provider packet if admissible, otherwise freeze external blocker",
+    "2026-09-03_to_2026-09-05": "close only still-material architecture decisions and run reliability/regression",
+    "2026-09-05_to_2026-09-07": "architecture freeze, acceptance evidence, demo/runbook/reproduction",
+    "2026-09-08": "delivery"
+  },
+  "current_hard_boundaries": {
+    "provider_model_inference_calls": 0,
+    "credential_account_probes": 0,
+    "live_network_validation": 0,
+    "comparison_attempts_consumed": 0,
+    "production_provider_selected": false,
+    "c4_reconstruction_rescoring": false
+  }
+}
