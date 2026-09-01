@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Governed Project Plan to Final Delivery
 
 **Status:** ACTIVE / canonical macro plan  
-**Planning checkpoint:** 2026-09-01 — ADR-022 reset-window evidence amendment  
+**Planning checkpoint:** 2026-09-01 — ADR-023 governed Cloudflare entrypoint merged and provider-free validated  
 **Final delivery target:** 2026-09-08  
 **Current status:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Immediate next steps:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
@@ -74,7 +74,17 @@ ADR-010/011 executor/custody reuse audit         COMPLETE
 Cloudflare executor/custody v2                   FROZEN / ADR-020
 original live authorization protocol             FROZEN / ADR-021
 Neuron evidence-source revalidation              RESOLVED / ADR-022
+governed entrypoint audit/contract               ACCEPTED / ADR-023
+minimal gate-specific live launcher              MERGED / PROVIDER-FREE VALIDATED
 ```
+
+Canonical merge containing ADR-023/launcher:
+
+```text
+5b4b0a2f4bbf51215c901af534216805d26386b0
+```
+
+The push-triggered `production-runtime` workflow on that `main` merge completed successfully.
 
 Frozen candidates:
 
@@ -104,11 +114,11 @@ attempts consumed         0 / 32
 provider selected         NO
 ```
 
-## 4. ADR-022 resolves issue #80 prospectively
+## 4. ADR-022 reset-window authorization path
 
 ADR-021's explicit Neuron-balance path remains historically frozen and valid when such a meter exists. The target account UI does not expose it.
 
-ADR-022 adds a conservative fallback:
+ADR-022 adds the conservative fallback:
 
 ```text
 RESET_WINDOW_ATTESTATION
@@ -133,12 +143,41 @@ no AI Gateway / prepaid unified billing
 
 Any uncertainty fails closed.
 
-## 5. Immediate critical path
+## 5. ADR-023 entrypoint boundary
 
-The critical path is no longer protocol design. It is a real operational reset window.
+The entrypoint audit found:
 
 ```text
-ADR-022 final PR regression/freeze
+substantive composition sufficient
+operational entrypoint missing
+no executor/custody/client/authorization changes authorized
+minimal gate-specific launcher only
+```
+
+ADR-023 freezes the only allowed live composition:
+
+```text
+reset_window_authorization_to_adr020_pre_live_evidence(...)
+→ CloudflareLiveSecrets from environment only
+→ build_cloudflare_one_shot_transport_v2()
+→ GovernedCloudflareLiveTaskV2.prepare(..., fixture_result=False)
+→ execute_all()
+```
+
+The canonical operator command is:
+
+```text
+python scripts/research/execute_cloudflare_live_comparison_v2.py --evidence <evidence.json> --receipt <receipt.json> --custody-root <canonical-root>
+```
+
+No direct client construction, duplicate authorization, retry, fallback, alternate custody/model/provider, generic CLI framework or `[project.scripts]` promotion is authorized.
+
+## 6. Immediate critical path
+
+The critical path is no longer protocol or launcher design. It is a real operational reset window.
+
+```text
+ADR-018→023 provider-free path frozen/validated
 ↓
 wait for admissible 00:00 UTC reset
 ↓
@@ -147,18 +186,20 @@ within first 10 minutes capture Workers Free evidence
 ↓
 create reset-window evidence JSON
 ↓
-issue <=5-minute provider-free receipt
+issue <=5-minute provider-free receipt bound to exact custody root
 ↓
 only then provision Cloudflare token/account ID
 ↓
-explicit live authorization
+explicitly invoke the ADR-023 governed launcher
+↓
+ADR-020 governed executor/custody path
 ↓
 execute frozen packet
 ```
 
 If the account cannot be placed under truthful exclusive Workers AI custody, do not weaken the protocol. Freeze an external blocker.
 
-## 6. Allowed provider outcomes
+## 7. Allowed provider outcomes
 
 All are legitimate:
 
@@ -184,11 +225,12 @@ LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
 
 Forced provider selection is forbidden.
 
-## 7. Decision state by architecture area
+## 8. Decision state by architecture area
 
 | Area | Evidence state | Plan consequence |
 |---|---|---|
 | Provider/model | `PARTIALLY_ASSESSED`; live comparison pending | current operational gate |
+| Provider entrypoint | `EVIDENCE_SUFFICIENT`; ADR-023 provider-free validated | preserve; no more wrapper work |
 | Native typed tools vs MCP | `EVIDENCE_SUFFICIENT` | preserve native ToolSpec; no new experiment |
 | Evidence-sufficiency stopping | `EVIDENCE_SUFFICIENT` | preserve |
 | Safety/authorization/idempotency | strong deterministic boundary | preserve/strengthen only |
@@ -201,7 +243,7 @@ Forced provider selection is forbidden.
 | Rich observability/UI/deployment | P2 unless acceptance gap appears | defer |
 | C4 | exact artifact externally blocked | exact-byte recovery only |
 
-## 8. Post-provider evidence audit
+## 9. Post-provider evidence audit
 
 After the provider result or external-blocker freeze:
 
@@ -217,7 +259,7 @@ Runtime/orchestration is assessed only after topology/materiality is closed.
 
 Do not automatically launch multi-agent or framework experiments because they were once on a roadmap.
 
-## 9. C4 parallel track
+## 10. C4 parallel track
 
 Exact required artifact:
 
@@ -230,27 +272,30 @@ geometry 36 common parents × 4 arms
 
 Only exact-byte recovery is currently authorized. No reconstruction, rescoring, substitution, semantic evaluation, FRESH_BLIND or LEGACY_LOCKED_TEST.
 
+A fresh 2026-09-01 recovery pass found no candidate in connected ChatGPT Library/conversation storage or Google Drive by exact SHA or deterministic-scoring identifiers. Issue #9 remains open as the explicit external scientific blocker.
+
 C4 does not block preserving the already validated provider-free handoff; it limits the exact claims that can be made.
 
-## 10. Phase map
+## 11. Phase map
 
 | Phase | State | Exit condition |
 |---|---|---|
 | Governance/benchmark foundation | COMPLETE | immutable governance and benchmark semantics |
 | Historical candidate/failure learning | COMPLETE | evidence preserved |
-| Provider packet foundations | COMPLETE | ADR-018→022 provider-free freezes |
+| Provider packet foundations | COMPLETE | ADR-018→023 provider-free freezes/validation |
 | Operational provider selection | ACTIVE | live result, `NO_SELECTION`, or external-blocker freeze |
 | Remaining architecture decisions | CONDITIONAL | only still-material gaps closed/bounded |
 | Final architecture integration | PENDING | supported choices integrated/regressed |
 | Final demonstration/delivery | PENDING | acceptance evidence + reproducible real path |
 
-## 11. Deadline protection
+## 12. Deadline protection
 
 ### 2026-09-01 → 2026-09-02
 
-- freeze ADR-022;
+- ADR-023/launcher merged and provider-free validated;
 - use the next admissible reset window only if exclusive account custody can be truthfully established;
-- otherwise prepare the external-blocker outcome rather than weakening evidence.
+- otherwise prepare the external-blocker outcome rather than weakening evidence;
+- C4 remains exact-byte recovery only.
 
 ### 2026-09-02 → 2026-09-03
 
@@ -278,20 +323,21 @@ Deliver only evidence-backed claims.
 
 After 2026-09-05, default against speculative P2 work.
 
-## 12. Stop/pivot rules
+## 13. Stop/pivot rules
 
 - preserve failed/consumed experiments;
 - never fabricate quota or operational evidence;
 - do not use Paid Workers or paid AI Gateway spillover;
-- no provider inference before valid authorization;
+- no provider inference before valid authorization and explicit governed launcher invocation;
 - no hidden retries/fallbacks/warm-ups/provider state;
 - no replay of claimed/uncertain attempts;
 - do not change the ADR-018 packet after live results begin;
+- do not add a second launcher/wrapper or rewrite executor/custody/client/authorization for entrypoint convenience;
 - do not add RAG/memory/multi-agent/runtime/UI complexity absent a measured material gap;
 - do not promote an implemented component to final merely because it exists;
 - if an external condition blocks stronger evidence, freeze the blocker and continue the strongest defensible delivery.
 
-## 13. Repository-wide definition of done
+## 14. Repository-wide definition of done
 
 ```text
 all requested P0 capabilities demonstrably covered
