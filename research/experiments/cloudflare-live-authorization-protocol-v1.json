@@ -1,0 +1,118 @@
+{
+  "schema_version": "cloudflare-live-authorization-protocol-v1",
+  "date": "2026-09-01",
+  "decision_state": "FROZEN_PROTOCOL_CANDIDATE_REAL_EVIDENCE_PENDING",
+  "purpose": "Authorize at most one ADR-018/019/020 live comparison only after fresh zero-cost account evidence is supplied, without using provider inference or credential/account probes to obtain that evidence.",
+  "upstream_pins": {
+    "adr_018_blob": "e075ab4ff21904b9412769496dd2680c049cdaa8",
+    "adr_019_blob": "b8f76831aceb13f5f3ffb5d7da0e12b595d9dd1a",
+    "adr_020_blob": "857eaab01e02f4615e0a4ec3b2a74f4e16faa90e",
+    "cloudflare_client_blob": "a5c814b519584b6d4346e3b0567bbc3da8ba0bf4",
+    "cloudflare_comparison_v2_blob": "e12b1dfa03eb1c50bc97848821235ef422516092",
+    "cloudflare_live_v2_blob": "70d8e0ccc4d4eb003d78cdd152b1dffd30b43f29",
+    "cloudflare_provenance_v2_blob": "e7f8bdc60910ef0acf7b14c71616448338eeefc2",
+    "plan_sha256": "092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb"
+  },
+  "candidate_identity": {
+    "provider_id": "cloudflare",
+    "route_id": "cloudflare.workers_ai.openai_compat.chat_completions.v1",
+    "direct_endpoint_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions",
+    "models": [
+      "@cf/zai-org/glm-4.7-flash",
+      "@cf/nvidia/nemotron-3-120b-a12b"
+    ]
+  },
+  "current_primary_source_facts": {
+    "checked_on": "2026-09-01",
+    "workers_ai_pricing": {
+      "url": "https://developers.cloudflare.com/workers-ai/platform/pricing/",
+      "free_allocation_neurons_per_day": 10000,
+      "reset_time_utc": "00:00",
+      "workers_free_overage_behavior": "further operations fail; upgrade to Workers Paid is required",
+      "workers_paid_overage_billing_usd_per_1000_neurons": 0.011
+    },
+    "workers_ai_errors": {
+      "url": "https://developers.cloudflare.com/workers-ai/platform/errors/",
+      "free_allocation_exhausted_http_status": 429,
+      "free_allocation_exhausted_internal_code": 3036
+    },
+    "ai_gateway_billing": {
+      "url": "https://developers.cloudflare.com/ai-gateway/usage/providers/workersai/",
+      "prepaid_credits_require_gateway_routing": true,
+      "workers_ai_gateway_header": "cf-aig-gateway-id",
+      "unified_billing_can_deduct_prepaid_credits": true
+    },
+    "rest_authentication": {
+      "url": "https://developers.cloudflare.com/ai-gateway/usage/rest-api/",
+      "minimum_permission": "Account > Workers AI > Read",
+      "ai_gateway_permission_not_required_for_direct_workers_ai_route": true
+    }
+  },
+  "authorization_evidence": {
+    "source": "manual Cloudflare Workers AI dashboard observation plus locally retained source artifact hash",
+    "max_age_seconds": 600,
+    "same_utc_day_required": true,
+    "workers_plan_required": "Workers Free",
+    "workers_paid_enabled_required": false,
+    "direct_workers_ai_route_required": true,
+    "ai_gateway_route_required": false,
+    "prepaid_unified_billing_route_required": false,
+    "gateway_header_present_required": false,
+    "minimum_free_neurons_remaining": 9000,
+    "daily_free_neurons": 10000,
+    "comparison_attempts_consumed_required": 0,
+    "provider_inference_used_to_obtain_evidence": false,
+    "credential_account_probe_used_to_obtain_evidence": false,
+    "exclusive_workers_ai_usage_window_attestation_required": true,
+    "account_identifier_persisted": false,
+    "secret_persisted": false
+  },
+  "authorization_receipt": {
+    "max_lifetime_seconds": 300,
+    "must_expire_no_later_than_evidence_window": true,
+    "bound_to_evidence_sha256": true,
+    "bound_to_custody_root_sha256": true,
+    "bound_to_upstream_pins": true,
+    "bound_to_exact_models_and_route": true,
+    "reusable_after_expiry": false,
+    "portable_to_another_custody_root": false
+  },
+  "secret_provisioning": {
+    "provision_only_after_valid_receipt": true,
+    "api_token_delivery": "explicit runtime secret/environment value; never serialized",
+    "account_id_delivery": "explicit runtime value; never serialized in authorization evidence/receipt",
+    "api_token_minimum_permission": "Account > Workers AI > Read",
+    "api_token_resource_scope": "exact target account only",
+    "ai_gateway_permissions": "not required and should not be granted for this task",
+    "global_api_key": "forbidden",
+    "credential_probe_before_attempt_1": "forbidden"
+  },
+  "custody": {
+    "canonical_root_selected_before_receipt": true,
+    "receipt_records_only_canonical_root_sha256": true,
+    "raw_local_path_persisted_in_receipt": false,
+    "alternate_root_after_receipt": "forbidden",
+    "adr_020_write_ahead_claim": "required",
+    "claimed_or_uncertain_replay": "forbidden"
+  },
+  "future_execution_contract": {
+    "governed_entrypoint": "academy_tractian.cloudflare_provider_live_v2.GovernedCloudflareLiveTaskV2.prepare(...).execute_all()",
+    "fixture_result": false,
+    "transport": "academy_tractian.cloudflare_provider_live_v2.build_cloudflare_one_shot_transport_v2()",
+    "pre_live_evidence_conversion": "academy_tractian.cloudflare_live_authorization_v1.authorization_to_adr020_pre_live_evidence(...)",
+    "receipt_issuance_command": "python scripts/research/issue_cloudflare_live_authorization_receipt_v1.py --evidence <evidence.json> --custody-root <canonical-root> --output <receipt.json>",
+    "attempt_1_may_start_only_after": "fresh real evidence + valid unexpired receipt + explicit secrets + exact custody root + separate execution decision"
+  },
+  "current_task_boundaries": {
+    "provider_model_inference_calls": 0,
+    "credential_account_probes": 0,
+    "live_network_validation": 0,
+    "comparison_attempts_consumed": 0,
+    "real_account_evidence_captured": false,
+    "real_provider_credentials_required": false,
+    "attempt_1_authorized": false,
+    "production_provider_selected": false,
+    "customer_mutations": 0,
+    "c4_changes": 0
+  }
+}

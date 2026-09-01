@@ -1,259 +1,229 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-09-01 — ADR-020 Cloudflare executor/custody v2 provider-free implementation frozen  
+**Checkpoint:** 2026-09-01 — ADR-021 live authorization protocol frozen; real account evidence pending  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
-**Frozen preregistration:** [`adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md`](adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md)  
-**Frozen provider-free client:** [`adr/019-cloudflare-provider-client-provider-free-implementation-2026-08-31.md`](adr/019-cloudflare-provider-client-provider-free-implementation-2026-08-31.md)  
-**Frozen executor/custody v2:** [`adr/020-cloudflare-executor-custody-v2-provider-free-implementation-2026-09-01.md`](adr/020-cloudflare-executor-custody-v2-provider-free-implementation-2026-09-01.md)
+**Frozen preregistration:** ADR-018  
+**Frozen client:** ADR-019  
+**Frozen executor/custody:** ADR-020  
+**Frozen authorization protocol:** ADR-021
 
-This is the short-horizon execution plan. It does **not** authorize provider inference, credential/account probing for evidence, customer mutation or C4 advancement.
+This file is the short-horizon plan. It does not itself authorize provider inference or attempt 1.
 
-## 1. Completed provider decision work
+## 1. Completed
 
 ```text
 historical evidence audit                         DONE
-current USD-0 provider factual refresh           DONE
-four provider pre-benchmark factual gates         DONE
-material D01 comparison gap                       DEMONSTRATED
+current provider factual refresh                  DONE
+four factual provider gates                       DONE
 minimum Cloudflare comparison preregistration     FROZEN / ADR-018
 provider-free Cloudflare client                   FROZEN / ADR-019
-ADR-010/011 execution/custody reuse audit         DONE
-bounded Cloudflare executor/custody v2            FROZEN / ADR-020
-exact @cf provenance compatibility                FROZEN / ADR-020
-provider-free v2 validation                       PASS
-provider/model inference calls                    0
+ADR-010/011 reuse audit                           DONE
+Cloudflare executor/custody v2 provider-free      FROZEN / ADR-020
+live authorization protocol provider-free         FROZEN / ADR-021
+
+provider inference                                0
 credential/account probes                         0
 live network validation                           0
 comparison attempts consumed                      0 / 32
-production provider selected                      NO
+real account evidence                             NONE
+real authorization receipt                        NONE
+attempt 1                                         NOT AUTHORIZED
 ```
 
-All seven execution gaps demonstrated by the reuse audit are closed at the provider-free capability level.
+## 2. NOW — acquire fresh real Cloudflare evidence
 
-## 2. NOW — separate live-execution authorization design/freeze
+This is the first provider-path task requiring user/account-side access.
 
-The next task is **authorization design only**, not a live run.
+Before any credentials are provisioned, obtain a **manual Cloudflare Workers AI dashboard observation** proving the current state.
 
-It must answer one question:
-
-> Under exactly which externally verifiable, non-inference preconditions may the already-frozen ADR-018/019/020 machinery consume comparison attempt 1?
-
-No Cloudflare inference is admissible while this authorization is being designed or frozen.
-
-## 3. Required authorization packet
-
-The prospective live authorization must pin at minimum:
-
-### A. Exact code/protocol identities
+Required evidence:
 
 ```text
-ADR-018 preregistration
-ADR-019 exact Cloudflare client
-ADR-020 comparison/provenance/custody v2
-Cloudflare v2 plan SHA
-092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb
+Workers plan                         Workers Free
+Workers Paid enabled                 false
+neurons used today                   explicit value
+free neurons remaining               explicit value >=9000
+used + remaining                     exactly 10000 within tolerance
+UTC day                              current
+observation age                      <=600 seconds when receipt is issued
+comparison attempts already used     0
+AI Gateway route                     false
+prepaid/unified billing route        false
+cf-aig-gateway-id                    absent
+exclusive Workers AI usage window    attested
 ```
 
-It must fail closed if any pinned byte or plan identity changes.
+Do not use an inference call or credential/account API probe to obtain this evidence.
 
-### B. Exact provider/model/route identities
+The source screenshot/export must be retained privately/outside the repo. The sanitized evidence JSON records only its SHA-256, not the screenshot, account ID or secret.
 
-Only:
+## 3. Select one canonical custody root
+
+Before issuing the receipt, choose exactly one durable local custody root.
+
+ADR-021 stores only:
 
 ```text
-@cf/zai-org/glm-4.7-flash
-@cf/nvidia/nemotron-3-120b-a12b
-provider: cloudflare
-route: cloudflare.workers_ai.openai_compat.chat_completions.v1
+SHA-256(canonical resolved custody-root path)
 ```
 
-Any model or route drift is a stop condition, not a fallback opportunity.
+The raw path is not persisted in the receipt.
 
-### C. Genuine zero-cost pre-live evidence
+Changing roots after receipt issuance invalidates authorization.
 
-Before attempt 1, the future authorization must establish **without model inference**:
+## 4. Create the sanitized evidence JSON
+
+Use the frozen schema `cloudflare-live-authorization-evidence-v1`.
+
+Required structure includes:
+
+- observation timestamp in UTC;
+- current UTC day;
+- used/remaining neurons;
+- Workers Free / no Paid;
+- direct route / no Gateway or prepaid billing;
+- zero comparison attempts consumed;
+- exclusive usage-window attestation;
+- zero inference/probe flags;
+- source artifact SHA-256;
+- no account identifier or secret.
+
+The evidence must remain fresh; do not prepare it hours in advance.
+
+## 5. Issue the receipt provider-free
+
+With **no provider credential variables present**, run:
 
 ```text
-workers_plan                       Workers Free
-workers_paid_enabled               false
-prepaid_ai_gateway_enabled         false
-direct_workers_ai_route            true
-actual_cash_cost_usd               0
-free_neurons_remaining             >= 9000
-free_neurons_remaining             <= 10000
-credential_account_probe_used      false, unless a prospective amendment explicitly proves a safe non-inference account-state read is necessary and admissible
+python scripts/research/issue_cloudflare_live_authorization_receipt_v1.py --evidence <evidence.json> --custody-root <canonical-root> --output <receipt.json>
 ```
 
-Do not invent or self-attest account state. The authorization design must specify what artifact/UI/export/configuration evidence is acceptable and how its provenance is preserved.
+The receipt:
 
-### D. Secret provisioning boundary
+- lasts <=300 seconds;
+- never outlives the 600-second evidence window;
+- is bound to the evidence SHA;
+- is bound to the custody-root SHA;
+- is bound to ADR-018/019/020 and the exact plan/models/route;
+- becomes invalid across UTC-day reset;
+- contains no token/account ID/raw path.
 
-The authorization must specify how these two execution-owned values are supplied:
+If it expires, do not reuse it. Capture fresh evidence and issue another receipt.
+
+## 6. Only after receipt — provision secrets
+
+Then provide, securely at runtime:
 
 ```text
 CLOUDFLARE_API_TOKEN
 CLOUDFLARE_ACCOUNT_ID
 ```
 
-Requirements:
-
-- explicit provisioning only;
-- no repo persistence;
-- no result/ledger/marker persistence;
-- no secret in repr/errors/logs;
-- secret presence alone is not evidence that account gates pass;
-- no provider capability/model call merely to test the credential.
-
-If GitHub Actions is chosen for the later execution, secrets must be supplied through GitHub Actions secrets by the operator; the current ChatGPT GitHub connector cannot create repository secrets.
-
-### E. Canonical custody root
-
-Freeze exactly one durable execution root and preserve:
+Token policy:
 
 ```text
-exclusive authorization marker
-fixed run/
-32 canonical entries
-CLAIMED fsync before invocation
-no retry/replay after claimed or uncertain attempt
-no alternate run root to reset budget
-immutable sanitized result
+permission       Account > Workers AI > Read
+resource scope   exact target account only
+AI Gateway perms not required / should not be granted
+Global API Key   forbidden
 ```
 
-### F. Resource guard
+Do not commit, log or serialize these values.
 
-Before every next claim, the already-implemented ADR-020 rule must remain:
+## 7. Final pre-attempt validation
+
+Immediately before attempt 1, verify:
 
 ```text
-observed neurons
-+
-frozen worst-case remaining-attempt neurons
-<=
-validated available free neurons
+receipt unexpired                          YES
+evidence still <=600 seconds old           YES
+same UTC day                               YES
+custody-root SHA exact                     YES
+evidence SHA exact                         YES
+ADR-018/019/020 pins exact                 YES
+plan SHA exact                             YES
+model IDs exact                            YES
+direct route exact                         YES
+exclusive account usage window intact      YES
+comparison attempts consumed               0
 ```
 
-Also preserve:
+If unrelated Workers AI usage happened after evidence capture, invalidate the receipt and start again with fresh evidence.
+
+## 8. THEN — explicit live execution decision
+
+Only after all gates above are true may a separate execution action authorize:
 
 ```text
-prompt <= 8000
-completion <= 512
-packet <= 7937.522688 neurons
-missing exact usage -> fail closed
-paid/nonfree route -> disqualifying
+fixture_result = false
+attempt 1 = admissible
 ```
 
-## 4. Authorization design acceptance criteria
-
-Before any real request can be authorized:
-
-- exact ADR-018/019/020 blobs and v2 plan SHA pinned;
-- exact two `@cf/...` model IDs pinned;
-- source and timestamp/UTC-day semantics for pre-live free-plan/quota evidence defined;
-- evidence freshness/reversal condition defined;
-- secret delivery method defined without persistence;
-- canonical custody root defined;
-- exact command/entrypoint defined;
-- attempt-1 transition explicitly separated from authorization preparation;
-- no hidden warm-up/test call;
-- no credential/account inference probe;
-- no retry/fallback/parallel path;
-- `NO_SELECTION` remains valid;
-- provider/model calls during authorization-design task remain 0.
-
-## 5. What the authorization task must NOT do
+The live path remains:
 
 ```text
-call Cloudflare model endpoint             NO
-consume attempt 1                          NO
-check token by making inference            NO
-change candidate/model/route               NO
-change M1-M10 thresholds                   NO
-change population                          NO
-change 32-attempt geometry                 NO
-change resource budget                     NO
-change ADR-020 after seeing model output    NO
-select provider                            NO
+GovernedCloudflareLiveTaskV2.prepare(...).execute_all()
 ```
 
-If the real-account evidence mechanism cannot be established cleanly, the correct result is an authorization blocker — not a workaround call.
+ADR-020 then owns write-ahead `CLAIMED`, exact 32-entry ledger, uncertain/no-replay and resource stop guards.
 
-## 6. After live authorization freezes
+## 9. Live packet if authorized
 
-Only then can a separate execution task:
-
-1. provision the exact approved credentials;
-2. materialize the approved pre-live evidence;
-3. reserve the canonical custody root once;
-4. invoke the exact ADR-020 governed entrypoint;
-5. consume at most the remaining 32-attempt envelope;
-6. stop fail-closed on any resource/provenance/custody violation;
-7. freeze either the selected candidate or honest `NO_SELECTION` evidence.
-
-Execution and selection remain separate from the current authorization-design step.
-
-## 7. Provider/model roles remain
+The scientific packet remains exactly:
 
 ```text
-Cloudflare GLM 4.7 Flash      LIVE CANDIDATE / NOT YET EXECUTED
-Cloudflare Nemotron 3 120B    LIVE CANDIDATE / NOT YET EXECUTED
-Groq GPT-OSS                  HISTORICAL_CONTROL_ONLY
-Gemini 3.7 Flash Free         PUBLIC/SYNTHETIC ONLY UNDER CURRENT DATA-USE BOUNDARY
-Cloudflare Gemma 4 26B        EXCLUDED FROM MINIMUM FIRST PACKET
-Ollama qwen3:4b               CONDITIONAL LOCAL BASELINE / OUTSIDE CORE PACKET
-old ADR-008/#44 packet        MUST NOT EXECUTE AS-IS
+@cf/zai-org/glm-4.7-flash
+VS
+@cf/nvidia/nemotron-3-120b-a12b
+
+8 public probes × 2 repeats × 2 candidates
+max 32 attempts
 ```
 
-## 8. Agent topology — queued
+No candidate, threshold, metric, prompt population or budget may change after results begin.
 
-The single-agent controller remains a strong qualified baseline. Do not implement planner→executor or critic/reviewer until the provider/model basis is selected or an honest provider `NO_SELECTION` is frozen.
+Valid terminal outcomes:
 
-## 9. Runtime/orchestration — queued
+```text
+cloudflare_glm_4_7_flash_workers_free
+cloudflare_nemotron_3_120b_a12b_workers_free
+NO_SELECTION
+```
 
-Do not restart generic runtime research. E6 already qualifies LangGraph and ADR-004 qualifies the explicit controller. Reopen only on a material reversal trigger after provider/topology evidence.
+## 10. Parallel C4 track
 
-## 10. C4 — parallel unchanged track
+Exact artifact still required:
 
 ```text
 SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
 bytes    177350
 rows     144
 geometry 36 parents × 4 arms
-gate     REQUIRED_PER_GROUP_AND_SLICE_REPORTING
 ```
 
-Only exact-byte recovery is authorized. No reconstruction, rescoring, substitution or downstream scientific gate advancement.
+Only exact-byte recovery is authorized.
 
-## 11. Ordered queue
+## 11. Later queue
 
 ```text
-DONE      evidence audit
-DONE      provider fact refresh
-DONE      four factual gates
-DONE      preregister/freeze minimum Cloudflare comparison
-DONE      implement/validate/freeze provider-free Cloudflare client
-DONE      audit ADR-010/011 reuse
-DONE      implement/validate/freeze bounded Cloudflare executor/custody v2
-NOW       design/validate/freeze separate live-execution authorization — zero inference
-THEN      operator supplies required real-account evidence + secrets
-THEN      execute exact <=32-attempt packet once
-THEN      freeze selected candidate or honest NO_SELECTION
-PARALLEL  exact C4 artifact recovery
-LATER     topology comparison if still material
-LATER     runtime/adaptive work only on reversal trigger/material gap
-FINAL     integrate best-supported configuration + full regression + architecture freeze
+AFTER PROVIDER RESULT  assess single-agent vs multi-agent only if still material
+AFTER TOPOLOGY         runtime/orchestration comparison only if evidence gap remains
+FINAL                  integrate best-supported configuration + full regression + architecture freeze
 ```
+
+RAG, persistent memory and richer UI remain out of experiment scope unless a measured material gap appears.
 
 ## 12. Still forbidden
 
-- provider inference during live-authorization design;
-- credential validation via inference;
-- self-invented/free-quota evidence;
-- Paid Workers or prepaid AI Gateway;
-- changing ADR-018 candidates/population/metrics/thresholds/budget without prospective amendment;
-- changing ADR-019/020 frozen behavior after seeing future model output;
-- hidden retries/fallbacks/warm-ups/provider state;
-- weakening deterministic safety, `HarnessRunner` ownership or evaluator isolation;
-- C4 reconstruction/rescoring;
-- premature multi-agent/runtime implementation;
-- final architecture or production-readiness claims before evidence supports them.
+- issuing a real receipt from stale/synthetic/fabricated account evidence;
+- provisioning secrets before receipt issuance;
+- credential/account probing merely to prove account state;
+- any inference before receipt + explicit execution authorization;
+- Workers Paid, AI Gateway prepaid/unified billing or paid spillover;
+- concurrent unrelated Workers AI use during the evidence/receipt/execution window;
+- changing ADR-018 packet after execution begins;
+- automatic retry/fallback/warm-up/resume;
+- replaying claimed/uncertain attempts;
+- C4 reconstruction or rescoring;
+- premature final provider/architecture claims.

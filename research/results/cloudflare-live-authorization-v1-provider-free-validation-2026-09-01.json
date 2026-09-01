@@ -1,0 +1,84 @@
+{
+  "schema_version": "cloudflare-live-authorization-v1-provider-free-validation-v1",
+  "date": "2026-09-01",
+  "issue": 77,
+  "pull_request": 78,
+  "status": "PASS_PROVIDER_FREE_PROTOCOL_FREEZE",
+  "decision_state": "PROTOCOL_VALIDATED_REAL_EVIDENCE_PENDING_ATTEMPT_1_NOT_AUTHORIZED",
+  "validated_head": "ab9767f66bb100e474623eaee81bd86f08895357",
+  "workflow_run": {
+    "id": 33513108347,
+    "name": "cloudflare-live-authorization-v1-provider-free",
+    "conclusion": "success"
+  },
+  "exact_candidate_blobs": {
+    "research/experiments/cloudflare-live-authorization-protocol-v1.json": "c641a9c98e84385dcfa8e5f14c09f4a29edf75a9",
+    "src/academy_tractian/cloudflare_live_authorization_v1.py": "f5573e4cca51614d6c3b9139fb5bfd8fc6b2c676",
+    "scripts/research/validate_cloudflare_live_authorization_protocol_v1.py": "0b809c0160cb97ab4ff2c639126913b5d6362aa0",
+    "scripts/research/issue_cloudflare_live_authorization_receipt_v1.py": "56adc69a21be4d54cb8342c1411e6156cee8ae7a",
+    "tests/test_cloudflare_live_authorization_v1.py": "33dc736f6d40a50bbf1276c5567e3e63df8a1def",
+    ".github/workflows/cloudflare-live-authorization-v1-provider-free.yml": "f0a952715be74267046230753011c9f44afe2086"
+  },
+  "upstream_pins": {
+    "adr_018_blob": "e075ab4ff21904b9412769496dd2680c049cdaa8",
+    "adr_019_blob": "b8f76831aceb13f5f3ffb5d7da0e12b595d9dd1a",
+    "adr_020_blob": "857eaab01e02f4615e0a4ec3b2a74f4e16faa90e",
+    "plan_sha256": "092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb"
+  },
+  "provider_free_test_evidence": {
+    "authorization_tests_passed": 8,
+    "cloudflare_v2_client_executor_provenance_regressions_passed": 32,
+    "historical_adr010_011_executor_custody_regressions_passed": 29,
+    "provider_credentials_present_in_ci": false,
+    "static_protocol_validator_passed": true,
+    "production_runtime_workflow": "success",
+    "final_handoff_acceptance_audit": "success",
+    "final_delivery_provider_free_reproduction": "success",
+    "provider_model_comparison_design_v2": "success",
+    "all_workflows_on_validated_head": "15/15 success"
+  },
+  "protocol_guarantees_validated": {
+    "workers_free_required": true,
+    "minimum_free_neurons_remaining": 9000,
+    "evidence_max_age_seconds": 600,
+    "receipt_max_lifetime_seconds": 300,
+    "same_utc_day_required": true,
+    "direct_workers_ai_route_required": true,
+    "ai_gateway_route_forbidden": true,
+    "prepaid_unified_billing_route_forbidden": true,
+    "gateway_header_forbidden": true,
+    "receipt_bound_to_evidence_sha256": true,
+    "receipt_bound_to_custody_root_sha256": true,
+    "exclusive_workers_ai_usage_window_attestation_required": true,
+    "least_privilege_permission": "Account > Workers AI > Read",
+    "global_api_key_forbidden": true,
+    "secret_persistence_forbidden": true
+  },
+  "failed_validation_history_preserved": [
+    {
+      "workflow_run_id": 33511597396,
+      "stage": "static validator",
+      "cause": "standalone script did not bootstrap repository root, causing research namespace import failure",
+      "policy_or_protocol_changed": false
+    },
+    {
+      "workflow_run_id": 33512055375,
+      "stage": "provider-free authorization tests",
+      "cause": "receipt hash used +00:00 timestamps while Pydantic canonical JSON normalized UTC to Z; cross-day test also hit stale gate first",
+      "policy_or_protocol_changed": false
+    }
+  ],
+  "current_hard_boundaries": {
+    "provider_model_inference_calls": 0,
+    "credential_account_probes": 0,
+    "live_network_validation": 0,
+    "comparison_attempts_consumed": 0,
+    "real_account_evidence_captured": false,
+    "real_authorization_receipt_issued": false,
+    "real_provider_credentials_provisioned": false,
+    "attempt_1_authorized": false,
+    "production_provider_selected": false,
+    "customer_mutations": 0,
+    "c4_changes": 0
+  }
+}
