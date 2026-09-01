@@ -1,34 +1,29 @@
 # Academy × TRACTIAN — Architecture Roadmap
 
 **Status:** ACTIVE / canonical macro architecture roadmap  
-**Architecture checkpoint:** 2026-09-01  
+**Architecture checkpoint:** 2026-09-01 — ADR-022 reset-window evidence amendment  
 **Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Immediate execution:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Delivery acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
 
-This document describes the production-path architecture and which architecture decisions are already supported, still conditional or explicitly blocked. It does not authorize live execution; `CURRENT-PROJECT-STATUS.md` remains authoritative for authorization.
+This document describes the production-path architecture and which choices are already supported, conditional, or blocked. It does not authorize live provider execution.
 
-## 1. Architecture objective
+## 1. Target architecture
 
-The final solution has two coupled planes separated by an evaluator-private boundary:
+Two coupled planes share structured traces while preserving evaluator-private truth:
 
 ```text
-                    AGENT RUNTIME PLANE
+                   AGENT RUNTIME PLANE
 
 User / request
       ↓
 Request Context Boundary
-  - identity
-  - authorization
-  - request state
+  identity / authorization / request state
       ↓
-Agent Controller / selected topology
-  - evidence sufficiency
-  - stopping
-  - clarification / abstention
-  - action / escalation decision
+AgentController / selected topology
+  evidence sufficiency / stopping / clarification / escalation
       ↓
 Stable typed Tool Contract
       ↓
@@ -38,25 +33,24 @@ Supplied industrial API
       ↓
 Normalized observations
       ↓
-Agent Controller
+AgentController
       ↓
-Customer-safe outcome
+customer-safe outcome
       ↓
-Normalized RunTrace
+RunTrace
       │
       │ sanitized runtime evidence only
       ▼
-              EVALUATION & RELIABILITY PLANE
+             EVALUATION & RELIABILITY PLANE
 
-Scenario/requirement contract
-+ evaluator-only references
+scenario/requirement contract + evaluator-only references
       ↓
-Deterministic evaluators where possible
+deterministic evaluators where possible
       ↓
-Validated semantic/human judgment only where necessary
+validated semantic/human judgment only where necessary
       ↓
-quality / tool / argument / evidence / action /
-escalation / safety / robustness / stability metrics
+quality / tool / arguments / evidence / decision /
+action / escalation / safety / robustness / stability
       ↓
 reports + trace inspection + architecture evidence
 ```
@@ -67,39 +61,35 @@ Hard boundary:
 runtime ─X─> private oracle / evaluator-only gold / hidden outcomes
 ```
 
-Observable structured state is required; hidden chain-of-thought is not.
+Hidden chain-of-thought is not required; inspectable structured state is.
 
-## 2. Architectural invariants already strongly supported
+## 2. Strongly supported architectural invariants
 
-These are not waiting for broad reimplementation.
+### HarnessRunner is the execution boundary
 
-### 2.1 HarnessRunner remains the execution boundary
+`HarnessRunner.execute_tool()` remains the sole real tool-execution boundary. Provider output proposes a decision; provider-native tools never execute real actions.
 
-`HarnessRunner.execute_tool()` remains the sole real tool-execution boundary for the current production path. Provider/model output proposes decisions; it does not execute provider-native tools.
+### Native typed tools remain the current integration surface
 
-### 2.2 Stable typed native tool contract
-
-Historical Native Tools × MCP evidence is sufficient for the current scope:
+Historical Native Tools × MCP evidence is sufficient for this scope:
 
 ```text
-native typed ToolSpec       preferred current integration surface
-MCP adapter                 conditional portability option
-new Native-vs-MCP experiment not justified now
+native typed ToolSpec   preferred
+MCP                     optional portability adapter
+new Native-vs-MCP test  not justified now
 ```
 
-Backend/protocol heterogeneity belongs behind adapters rather than in the model context.
+### Deterministic authorization/action safety is non-negotiable
 
-### 2.3 Deterministic safety and action semantics
+Permission checks, action validation, idempotency, write-ahead claims and no-replay semantics may be preserved or strengthened, never weakened for convenience.
 
-Authorization, action validation, idempotency and no-replay behavior are hard boundaries. New architecture may preserve or strengthen them but may not weaken them for convenience.
+### RunTrace/evaluator separation is an architecture foundation
 
-### 2.4 Structured trace / evaluator separation
+The current structured trace and deterministic operational evaluator are sufficient foundations. Richer observability backends are optional absent a measured diagnostic/delivery gap.
 
-Normalized `RunTrace` and deterministic operational evaluation are sufficient architecture foundations for the current scope. Richer observability backends are optional unless a measured diagnostic/delivery gap appears.
+### Human fallback is first-class
 
-### 2.5 Human fallback is first-class
-
-When evidence/provider/tool availability is insufficient, valid outcomes include:
+Valid outcomes include:
 
 ```text
 clarify
@@ -107,20 +97,20 @@ abstain
 escalate with evidence handoff
 ```
 
-rather than invented certainty or unsafe action.
+rather than fabricated certainty or unsafe mutation.
 
-## 3. Current provider serving architecture
+## 3. Current provider serving path
 
-The old OpenAI/Gemini path is historical evidence only and must not be executed as the current production provider packet.
+Historical OpenAI/Gemini/Groq paths remain evidence; they are not the current candidate production packet.
 
-The currently frozen experimental serving path is:
+The frozen current experimental serving path is:
 
 ```text
 ProviderDecisionSource
       ↓
 CloudflareWorkersAIChatCompletionsDecisionClient
       ↓
-direct Workers AI OpenAI-compatible endpoint
+direct Workers AI endpoint
       ↓
 ONE OF
   @cf/zai-org/glm-4.7-flash
@@ -128,282 +118,246 @@ ONE OF
       ↓
 strict ProviderDecisionPayload
       ↓
-Cloudflare-specific exact provenance adapter
+Cloudflare exact provenance adapter
       ↓
-AgentController / HarnessRunner
+AgentController
+      ↓
+HarnessRunner
 ```
 
 Frozen layers:
 
 ```text
 ADR-018  provider comparison preregistration
-ADR-019  direct provider client
-ADR-020  comparison executor/custody/resource accounting
-ADR-021  live authorization protocol
+ADR-019  direct client
+ADR-020  executor/custody/resource accounting
+ADR-021  original live authorization protocol
+ADR-022  reset-window Neuron evidence fallback
 ```
 
-Scientific packet:
+Scientific packet remains:
 
 ```text
 8 public probes × 2 repeats × 2 models
 max attempts       32
-input ceiling      8000 accounted tokens/attempt
+input ceiling      8000 tokens/attempt
 output ceiling     512 tokens/attempt
-packet maximum     7937.522688 neurons
+packet maximum     7937.522688 Neurons
 selection          Pareto / NO_SELECTION allowed
 ```
 
-Current state:
+## 4. ADR-022 changes authorization evidence, not serving architecture
+
+The target account proves `Workers Free / Active`, but the current Workers AI UI does not expose the explicit Neuron meter assumed by ADR-021.
+
+The architecture/client/executor were already ready provider-free. ADR-022 only adds an evidence mode:
 
 ```text
-live attempts consumed        0 / 32
-production provider selected  NO
+RESET_WINDOW_ATTESTATION
 ```
 
-## 4. Current provider blocker is authorization evidence, not architecture code
-
-The target account proves `Workers Free / Active`, but its current Workers AI dashboard does not expose the explicit Neuron balance assumed by ADR-021.
-
-Therefore:
+Derived start state:
 
 ```text
-Cloudflare client architecture         READY / FROZEN PROVIDER-FREE
-Cloudflare executor/custody            READY / FROZEN PROVIDER-FREE
-live authorization protocol            FROZEN
-original Neuron evidence source        NOT OPERABLE ON TARGET UI
-issue #80                              CURRENT REVALIDATION
+Cloudflare documented 10000 Neurons/day
++ documented daily reset at 00:00 UTC
++ observation <=00:10 UTC
++ no Workers AI calls since reset
++ no background/automated Workers AI consumer since reset
++ exclusive account custody through packet completion
+= 10000 Neurons remaining at evidence observation
 ```
 
-Do not solve this by:
+Any uncertain premise fails closed.
 
-- fabricating `used=0`;
-- scraping undocumented private dashboard APIs as canonical evidence;
-- sacrificial inference;
-- arbitrary credential probes;
-- silently weakening the 9000-Neuron gate.
+The original ADR-021 explicit-balance path remains preserved for a UI/account where the balance is actually exposed.
 
-If a defensible prospective amendment is frozen, live comparison may proceed. Otherwise the architecture must carry an explicit externally-blocked provider-selection non-claim into final delivery.
+## 5. Authorization/custody architecture after ADR-022
 
-## 5. Production architecture decision register — reconciled
+```text
+manual Workers Free source evidence
++ reset-window no-use/exclusive-use attestation
+      ↓
+CloudflareResetWindowEvidenceV1
+      ↓
+provider-free validation
+      ↓
+short-lived reset-window receipt
+  evidence SHA
+  custody-root SHA
+  ADR-018/019/020/021 pins
+  plan/model/route pins
+      ↓
+ONLY THEN provider credentials
+      ↓
+ADR-020 governed prepare/claim/execute
+```
+
+Time boundaries:
+
+```text
+reset observation    first 600 seconds after 00:00 UTC
+evidence age         <=600 seconds at receipt issuance
+receipt life         <=300 seconds
+same UTC day         required
+```
+
+No account ID, token or raw custody path is serialized into evidence/receipt.
+
+## 6. Resource safety remains ADR-020-owned
+
+ADR-022 does not replace execution-time accounting.
+
+ADR-020 continues to enforce:
+
+- actual reported usage only;
+- Neuron accounting for GLM/Nemotron;
+- H8/H9/H10;
+- per-attempt input/output ceilings;
+- projected worst-case remaining budget before the next call;
+- missing usage fail-closed;
+- durable 32-attempt write-ahead ledger;
+- `CLAIMED` before network-capable call;
+- uncertain/no-replay behavior.
+
+Reset-window start state `10000` is stronger than the historical `>=9000` start gate.
+
+## 7. Production architecture decision register
 
 | Decision | Current state | Architecture consequence |
 |---|---|---|
-| Provider/model | `PARTIALLY_ASSESSED`; Cloudflare packet frozen, live comparative evidence pending/blockable | current critical decision |
-| Tool topology | `EVIDENCE_SUFFICIENT` | native typed ToolSpec remains standard; MCP conditional |
-| Evidence-sufficiency stopping | `EVIDENCE_SUFFICIENT` | preserve current policy |
+| Provider/model | `PARTIALLY_ASSESSED`; live result pending | current operational decision |
+| Tool topology | `EVIDENCE_SUFFICIENT` | native typed ToolSpec standard; MCP conditional |
+| Stopping/evidence policy | `EVIDENCE_SUFFICIENT` | preserve |
 | Safety/authorization/idempotency | strong hard boundary | preserve/strengthen only |
 | RunTrace/operational evaluator | `EVIDENCE_SUFFICIENT` current scope | preserve |
-| Retrieval/RAG/vector/reranking | no material gap demonstrated | do not add |
-| Persistent memory | no material task need demonstrated | do not add |
-| Agent topology | strong single-agent qualified baseline; comparative optimality unresolved | conditional post-provider audit |
-| Runtime/orchestration | historical evidence strong but asymmetric | conditional after topology/materiality audit |
+| Retrieval/RAG/vector/reranking | no material gap | do not add |
+| Persistent memory | no material task need | do not add |
+| Agent topology | strong single-agent qualified baseline | conditional post-provider audit |
+| Runtime/orchestration | historical evidence strong but asymmetric | conditional after topology/materiality |
 | Adaptive model routing | unassessed, not currently material | defer |
-| Rich observability backend | optional | defer unless diagnostic requirement appears |
-| Hosted deployment | final delivery need not assume paid hosted deployment | choose simplest reproducible zero-cost path |
-| Rich UI | optional | only add if it improves acceptance/demo materially |
+| Rich observability | optional | defer unless measured need appears |
+| Hosted deployment | simplest reproducible zero-cost path | no paid dependency required |
+| Rich UI | optional | only if acceptance/demo benefit is material |
 
-## 6. Agent topology — conditional decision, not automatic next experiment
+## 8. Agent topology is conditional, not automatic
 
-Current architecture:
+Current baseline:
 
 ```text
 single AgentController
-+ explicit decision state
++ explicit state
 + evidence-sufficiency stopping
-+ stable typed tools
++ typed tools
 + HarnessRunner execution boundary
 ```
 
-This remains the **strong qualified baseline**.
-
-The previous roadmap required single-agent vs planner→executor vs critic/reviewer before final freeze by default. That rule is now refined by evidence-first governance:
+After provider D01 resolves or is bounded:
 
 ```text
-provider D01 resolved/bounded
-→ audit whether topology can still materially change P0/P1/final architecture
-→ if NO: preserve simple baseline and document bounded comparative non-claim
-→ if YES: preregister minimum controlled topology experiment
+re-audit topology evidence
+→ can topology still materially change P0/P1/final architecture?
+   ├─ NO → preserve simple baseline; document comparative limitation
+   └─ YES → preregister minimum controlled comparison
 ```
 
-If a topology experiment is justified, hold constant where feasible:
+If comparison is justified, hold provider/model, ToolSpecs, HarnessRunner, safety, evaluator definitions and task population constant where feasible.
 
-- provider/model basis;
-- public task population;
-- ToolSpecs/HarnessRunner;
-- safety/authorization boundaries;
-- evaluator definitions;
-- repetition geometry.
+Adopt multi-agent only if measured benefit survives coordination errors, latency/quota cost, trace complexity and debugging overhead.
 
-Adopt multi-agent only if measured benefit survives coordination failure, latency/quota overhead, trace complexity and debugging burden.
+## 9. Runtime/orchestration is one gate later
 
-## 7. Runtime/orchestration — one gate later
+Do not perform generic framework research.
 
-Explicit controller/state-machine behavior and historical LangGraph/runtime evidence already exist. Do not launch generic framework research.
+After topology/materiality is closed, ask whether changing runtime can still materially improve:
 
-After topology is closed/bounded, ask:
+- correctness;
+- recovery;
+- observability;
+- maintainability;
+- deterministic safety.
 
-```text
-Would changing runtime/orchestrator still materially improve correctness,
-recovery, observability or maintainability for the final architecture?
-```
+Only then compare the minimum credible runtime alternatives with topology/provider held fixed.
 
-Only if YES, compare the minimum credible runtime alternatives with topology/provider held fixed.
-
-Framework novelty alone is not evidence.
-
-## 8. Retrieval, memory and routing
+## 10. Retrieval, memory, routing and optional infrastructure
 
 ### Retrieval/RAG
 
-Current direct tool/evidence routing has no demonstrated retrieval-recall bottleneck requiring RAG/vector DB/reranking. Architecture therefore remains:
-
-```text
-structured request
-→ explicit tools/API evidence
-→ normalized observations
-```
-
-RAG remains a reversal-triggered option only.
+No measured retrieval-recall bottleneck currently justifies RAG/vector DB/reranking. Direct typed tool/evidence routing remains preferred.
 
 ### Persistent memory
 
-Request-local/explicit state remains preferred because persistent memory has no demonstrated task benefit and introduces contamination/privacy/reproducibility risk.
+No current task requires cross-request learned memory strongly enough to justify contamination/privacy/reproducibility risk. Explicit request-local state remains preferred.
 
 ### Adaptive model routing
 
-Do not add routing until multiple qualified provider/model options exist and routing can solve a measured problem. A routing experiment before provider qualification is premature.
+Deferred until multiple final-eligible models exist and a routing decision could materially improve quality/resource use.
 
-## 9. Evaluation architecture
+### Observability
 
-The final evaluator should consume the same normalized production trace while preserving evaluator-only truth.
+Structured RunTrace is sufficient current scope. OTel/hosted backends require a demonstrated diagnostic or acceptance benefit.
 
-Required layers:
+### Deployment/UI
 
-```text
-deterministic contract/safety/tool/action evaluation
-+
-evidence/conclusion evaluation where authorized
-+
-robustness/failure variants
-+
-repeated-run reliability when applicable
-+
-trace inspection
-+
-requirement/rubric coverage reporting
-```
+Use the simplest reproducible zero-cost delivery surface. Richer hosted deployment/UI is P2 unless needed for final acceptance/demo quality.
 
-Semantic/human judgment is used only where deterministic truth is insufficient and the judge itself is validated.
+## 11. Provider outcomes and architecture consequences
 
-C4 remains a separate scientific gate, not a reason to rewrite the runtime architecture.
+### Live winner
 
-## 10. C4 parallel track
+If GLM or Nemotron is supported by the frozen packet, freeze that serving configuration prospectively and regress the integrated path.
 
-Required exact evaluator-side artifact:
+### NO_SELECTION
+
+Do not force a provider. Preserve provider-free/historical evidence and deliver the strongest defensible architecture with explicit limitation.
+
+### LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
+
+If exclusive reset-window custody cannot be established, freeze the external blocker. Do not weaken architecture/security/evidence guarantees merely to obtain a provider result.
+
+## 12. C4 remains a separate scientific recovery track
 
 ```text
 SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
 bytes    177350
 rows     144
-geometry 36 common parents × 4 arms
+geometry 36 parents × 4 arms
 ```
 
-Only exact-byte recovery is currently authorized. Reconstruction/rescoring/substitution remains forbidden absent a prospective scientific amendment.
+Only exact-byte recovery is authorized. C4 limitation must remain explicit in final claims if unresolved.
 
-Final architecture claims must distinguish operational evaluator evidence from the externally blocked C4 claim scope.
+## 13. Architecture freeze criteria
 
-## 11. Productionization sequence — current
+Final architecture may freeze only when applicable material choices have:
 
-### Stage A — material decision closure
-
-Current focus:
-
-1. close/bound provider D01;
-2. audit whether topology remains material;
-3. audit whether runtime remains material;
-4. preserve evidence-sufficient decisions.
-
-### Stage B — architecture freeze
-
-Freeze only components that are necessary for the strongest supported final path:
-
-- request/context boundary;
-- selected/bounded provider strategy;
-- controller/topology;
-- stable Tool Contract;
-- API adapter;
-- action/authorization semantics;
-- RunTrace;
-- evaluator interface;
-- fallback/escalation behavior;
-- resource/latency/reliability boundaries;
-- zero-cost run path.
-
-### Stage C — integrated verification
-
-Required evidence, as applicable:
-
-- unit/contract/integration tests;
-- production-path regression;
-- evaluator regression;
-- degraded/conflicting/unavailable evidence behavior;
-- provider/tool failure continuity;
-- authorization/idempotency/security;
-- escalation handoff;
-- customer-safe response boundary;
-- latency/resource/quota evidence;
-- trace/observability validation;
-- clean reproducibility;
-- fallback/rollback path.
-
-### Stage D — final delivery
-
-Deliver versioned architecture + evidence + limitations + runbook/demo. A live Cloudflare comparison is valuable if defensibly authorized, but final delivery must remain truthful and viable even if the external account-evidence gate remains blocked.
-
-## 12. Architecture freeze criteria — deadline-aware
-
-A material architecture choice can freeze when it has:
-
-1. requirement/material-risk rationale;
-2. applicable hard constraints;
+1. requirement/risk rationale;
+2. hard constraints including USD 0;
 3. repository evidence audit;
-4. credible alternatives or documented non-materiality;
-5. quantitative evidence where comparison remains necessary;
-6. robustness/failure analysis;
-7. production-fit trade-offs;
-8. ADR/reversal triggers;
+4. credible alternatives or a documented reason they are not material;
+5. controlled evidence where a comparison remains necessary;
+6. robustness/failure evidence;
+7. production-fit evidence;
+8. explicit trade-offs/reversal triggers;
 9. regression obligations;
-10. compatibility with independent/private-evidence boundaries;
-11. no unresolved P0 blocker caused by that choice.
+10. no uncovered P0 acceptance row introduced by the choice.
 
-By 2026-09-05, unresolved optional comparative breadth should default to a bounded non-claim rather than launching speculative P2 experiments.
+Implementation effort, framework popularity or novelty are not selection evidence.
 
-## 13. Deadline architecture strategy
+## 14. Productionization sequence
 
 ```text
-09-01 → 09-02
-  resolve/bound Cloudflare authorization evidence (#80)
-
-09-02 → 09-03
-  execute frozen provider packet if admissible
-  OR freeze external blocker/non-claim
-
-09-03 → 09-05
-  close only still-material topology/runtime decisions
-  integrated reliability/regression
-  architecture freeze
-
-09-05 → 09-07
-  evidence package, runbook, demo, acceptance reconciliation
-
-09-08
-  delivery
+provider D01 result/bounded blocker
+→ materiality audit of remaining architecture decisions
+→ minimum additional comparison only if needed
+→ final architecture ADR/freeze
+→ integrated regression/reliability
+→ clean reproduction
+→ demo/runbook/fallback/limitations
+→ delivery
 ```
 
-## 14. Architecture quality rule
+## 15. Architecture quality rule
 
-The best final architecture is:
+The final architecture is the **simplest architecture on the best-supported zero-cost quality/production Pareto frontier that fully covers the requested delivery**.
 
-> **the simplest architecture on the best-supported zero-cost quality/production Pareto frontier that fully covers the requested delivery.**
-
-More components are not inherently better. An experiment is not inherently better than a bounded evidence-backed decision. Existing code is not automatically final. Evidence decides.
+Evidence decides complexity; neither more nor fewer components are inherently better.
