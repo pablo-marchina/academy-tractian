@@ -5,11 +5,14 @@ on:
     paths:
       - src/academy_tractian/cloudflare_provider_comparison_v2.py
       - src/academy_tractian/cloudflare_provider_live_v2.py
+      - src/academy_tractian/cloudflare_provider_provenance_v2.py
       - src/academy_tractian/cloudflare_provider_client.py
+      - src/academy_tractian/decision_source.py
       - src/academy_tractian/provider_comparison.py
       - src/academy_tractian/provider_live_execution.py
       - src/academy_tractian/provider_live_task.py
       - tests/test_cloudflare_provider_comparison_v2.py
+      - tests/test_cloudflare_provider_provenance_v2.py
       - research/experiments/provider-model-comparison-design-manifest-v2.json
       - docs/adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md
       - docs/adr/019-cloudflare-provider-client-provider-free-implementation-2026-08-31.md
@@ -40,6 +43,10 @@ jobs:
       - name: Validate frozen ADR-018 preregistration
         run: python scripts/research/validate_provider_model_comparison_design_v2.py
       - name: Run Cloudflare v2 provider-free tests
-        run: python -m pytest -q tests/test_cloudflare_provider_comparison_v2.py tests/test_cloudflare_provider_client.py
+        run: >-
+          python -m pytest -q
+          tests/test_cloudflare_provider_comparison_v2.py
+          tests/test_cloudflare_provider_provenance_v2.py
+          tests/test_cloudflare_provider_client.py
       - name: Preserve historical executor and custody regressions
         run: python -m pytest -q tests/test_provider_comparison.py tests/test_provider_live_execution.py tests/test_provider_live_task.py
