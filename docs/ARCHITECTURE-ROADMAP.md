@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Architecture Roadmap
 
 **Status:** ACTIVE / canonical macro architecture roadmap  
-**Architecture checkpoint:** 2026-09-01 — ADR-022 reset-window evidence amendment  
+**Architecture checkpoint:** 2026-09-01 — ADR-023 governed entrypoint accepted/merged; standalone production wheel reproducibility proved; post-D01 selection protocol planned in issue #92  
 **Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Immediate execution:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
@@ -99,6 +99,12 @@ escalate with evidence handoff
 
 rather than fabricated certainty or unsafe mutation.
 
+### Reproducibility is a production boundary, not only a documentation task
+
+The production distribution must install and import without relying on repository-local editable packages. PR #91 proves the current root wheel includes the accepted `research.e2` runtime contracts under their existing import path and works in a clean virtual environment outside the checkout.
+
+This proof is now a regression obligation.
+
 ## 3. Current provider serving path
 
 Historical OpenAI/Gemini/Groq paths remain evidence; they are not the current candidate production packet.
@@ -125,7 +131,7 @@ AgentController
 HarnessRunner
 ```
 
-Frozen layers:
+Frozen/accepted layers:
 
 ```text
 ADR-018  provider comparison preregistration
@@ -133,6 +139,7 @@ ADR-019  direct client
 ADR-020  executor/custody/resource accounting
 ADR-021  original live authorization protocol
 ADR-022  reset-window Neuron evidence fallback
+ADR-023  governed receipt→live-task entrypoint contract
 ```
 
 Scientific packet remains:
@@ -172,7 +179,37 @@ Any uncertain premise fails closed.
 
 The original ADR-021 explicit-balance path remains preserved for a UI/account where the balance is actually exposed.
 
-## 5. Authorization/custody architecture after ADR-022
+## 5. ADR-023 closes only the operational entrypoint gap
+
+The entrypoint audit concluded:
+
+```text
+substantive composition sufficient
+operational entrypoint missing
+minimal launcher only
+```
+
+The accepted live composition is:
+
+```text
+CloudflareResetWindowEvidenceV1
++ CloudflareResetWindowReceiptV1
++ custody root
+      ↓
+reset_window_authorization_to_adr020_pre_live_evidence(...)
+      ↓
+CloudflareLiveSecrets from environment only
+      ↓
+build_cloudflare_one_shot_transport_v2()
+      ↓
+GovernedCloudflareLiveTaskV2.prepare(..., fixture_result=False)
+      ↓
+execute_all()
+```
+
+ADR-023 does not own or duplicate executor, custody, provider client, authorization, comparison, scoring, retry/fallback or resource semantics.
+
+## 6. Authorization/custody architecture after ADR-023
 
 ```text
 manual Workers Free source evidence
@@ -187,6 +224,8 @@ short-lived reset-window receipt
   custody-root SHA
   ADR-018/019/020/021 pins
   plan/model/route pins
+      ↓
+ADR-023 authorization adapter
       ↓
 ONLY THEN provider credentials
       ↓
@@ -204,9 +243,9 @@ same UTC day         required
 
 No account ID, token or raw custody path is serialized into evidence/receipt.
 
-## 6. Resource safety remains ADR-020-owned
+## 7. Resource safety remains ADR-020-owned
 
-ADR-022 does not replace execution-time accounting.
+ADR-022/023 do not replace execution-time accounting.
 
 ADR-020 continues to enforce:
 
@@ -222,11 +261,38 @@ ADR-020 continues to enforce:
 
 Reset-window start state `10000` is stronger than the historical `>=9000` start gate.
 
-## 7. Production architecture decision register
+## 8. Distribution/reproducibility architecture
+
+Current root package:
+
+```text
+academy-tractian wheel
+├── academy_tractian
+└── research.e2 accepted runtime/evaluation contracts
+```
+
+PR #91 added only build metadata and clean-wheel CI coverage. It did not move/rewrite the accepted E2 source or change production semantics.
+
+Required regression proof:
+
+```text
+build root wheel
+→ clean virtualenv
+→ install only root wheel
+→ execute outside repository checkout
+→ import production + E2 contracts
+→ validate canonical tool registry
+```
+
+A future architecture candidate that breaks autonomous distribution/reproduction fails a hard gate regardless of model-quality benefit.
+
+## 9. Production architecture decision register
 
 | Decision | Current state | Architecture consequence |
 |---|---|---|
 | Provider/model | `PARTIALLY_ASSESSED`; live result pending | current operational decision |
+| Provider entrypoint | `EVIDENCE_SUFFICIENT`; ADR-023 provider-free validated | preserve |
+| Standalone packaging/reproduction | `EVIDENCE_SUFFICIENT`; PR #91 | preserve/regress |
 | Tool topology | `EVIDENCE_SUFFICIENT` | native typed ToolSpec standard; MCP conditional |
 | Stopping/evidence policy | `EVIDENCE_SUFFICIENT` | preserve |
 | Safety/authorization/idempotency | strong hard boundary | preserve/strengthen only |
@@ -239,14 +305,39 @@ Reset-window start state `10000` is stronger than the historical `>=9000` start 
 | Rich observability | optional | defer unless measured need appears |
 | Hosted deployment | simplest reproducible zero-cost path | no paid dependency required |
 | Rich UI | optional | only if acceptance/demo benefit is material |
+| Remaining architecture selection | issue #92 planning-only | hard gates + Pareto after D01 |
 
-## 8. Agent topology is conditional, not automatic
+## 10. Pre-D01 architecture rule
+
+Before D01 resolves or is explicitly bounded:
+
+```text
+allowed:
+  acceptance-gap audit
+  demo-path audit
+  security/trace/failure-containment audit
+  provider-independent P0/P1 fixes
+  reproduction regression
+
+not allowed:
+  topology selection/experiment
+  runtime-framework migration
+  RAG/vector/reranking build
+  persistent-memory build
+  adaptive routing experiment
+  architecture complexity added for novelty
+```
+
+A provider-independent fix is eligible only if it maps to a concrete P0/P1 gap, preserves ADR-018→023 and can be validated without provider inference/probing.
+
+## 11. Agent topology is conditional, not automatic
 
 Current baseline:
 
 ```text
 single AgentController
-+ explicit state
++ explicit request-local state
++ bounded turns/tool calls
 + evidence-sufficiency stopping
 + typed tools
 + HarnessRunner execution boundary
@@ -265,21 +356,25 @@ If comparison is justified, hold provider/model, ToolSpecs, HarnessRunner, safet
 
 Adopt multi-agent only if measured benefit survives coordination errors, latency/quota cost, trace complexity and debugging overhead.
 
-## 9. Runtime/orchestration is one gate later
+## 12. Runtime/orchestration is one gate later
 
 Do not perform generic framework research.
 
-After topology/materiality is closed, ask whether changing runtime can still materially improve:
+After topology/materiality is closed, ask whether changing runtime can still materially improve a demonstrated P0/P1 requirement such as:
 
-- correctness;
-- recovery;
-- observability;
+- correctness/recovery;
+- durable execution;
+- checkpoint/resume;
+- persistent human interruption/resumption;
+- observability/diagnosability;
 - maintainability;
 - deterministic safety.
 
-Only then compare the minimum credible runtime alternatives with topology/provider held fixed.
+Only then compare the minimum credible runtime alternative with topology/provider held fixed.
 
-## 10. Retrieval, memory, routing and optional infrastructure
+Framework features the project does not need do not count as benefits.
+
+## 13. Retrieval, memory, routing and optional infrastructure
 
 ### Retrieval/RAG
 
@@ -301,7 +396,50 @@ Structured RunTrace is sufficient current scope. OTel/hosted backends require a 
 
 Use the simplest reproducible zero-cost delivery surface. Richer hosted deployment/UI is P2 unless needed for final acceptance/demo quality.
 
-## 11. Provider outcomes and architecture consequences
+## 14. Hard-gate + Pareto architecture selection after D01
+
+Issue #92 defines the prospective selection protocol.
+
+Start condition:
+
+```text
+provider D01 result
+OR
+LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED frozen
+```
+
+Every candidate must first pass hard gates for:
+
+1. P0 behavior coverage;
+2. deterministic authorization/action safety/idempotency;
+3. evaluator-private/gold isolation;
+4. structured trace integrity/diagnosability;
+5. clean-environment reproduction;
+6. USD 0 feasibility/no paid spillover;
+7. bounded retry/fallback/state semantics;
+8. safe failure/clarify/abstain/escalate behavior.
+
+Any hard-gate failure makes a candidate ineligible even if one quality metric improves.
+
+Hard-gate-passing candidates may then be compared on the Pareto frontier using:
+
+- task/decision correctness;
+- tool-selection correctness;
+- semantic argument correctness;
+- evidence correctness / unsupported-claim rate;
+- action correctness / duplicate or premature action rate;
+- escalation/handoff quality;
+- failure safe-fallback rate;
+- repeated-run stability;
+- p50/p95 latency;
+- model tokens / Cloudflare Neurons / tool-call count;
+- coordination/runtime failure rate;
+- operational complexity and deployment requirements;
+- reproducibility/debuggability.
+
+Do not collapse these into an arbitrary weighted architecture score.
+
+## 15. Provider outcomes and architecture consequences
 
 ### Live winner
 
@@ -315,7 +453,7 @@ Do not force a provider. Preserve provider-free/historical evidence and deliver 
 
 If exclusive reset-window custody cannot be established, freeze the external blocker. Do not weaken architecture/security/evidence guarantees merely to obtain a provider result.
 
-## 12. C4 remains a separate scientific recovery track
+## 16. C4 remains a separate scientific recovery track
 
 ```text
 SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
@@ -326,7 +464,7 @@ geometry 36 parents × 4 arms
 
 Only exact-byte recovery is authorized. C4 limitation must remain explicit in final claims if unresolved.
 
-## 13. Architecture freeze criteria
+## 17. Architecture freeze criteria
 
 Final architecture may freeze only when applicable material choices have:
 
@@ -343,11 +481,12 @@ Final architecture may freeze only when applicable material choices have:
 
 Implementation effort, framework popularity or novelty are not selection evidence.
 
-## 14. Productionization sequence
+## 18. Productionization sequence
 
 ```text
-provider D01 result/bounded blocker
-→ materiality audit of remaining architecture decisions
+pre-D01 provider-independent acceptance/security/demo audits
+→ D01 provider result/bounded blocker
+→ activate issue #92 materiality audit
 → minimum additional comparison only if needed
 → final architecture ADR/freeze
 → integrated regression/reliability
@@ -356,7 +495,7 @@ provider D01 result/bounded blocker
 → delivery
 ```
 
-## 15. Architecture quality rule
+## 19. Architecture quality rule
 
 The final architecture is the **simplest architecture on the best-supported zero-cost quality/production Pareto frontier that fully covers the requested delivery**.
 
