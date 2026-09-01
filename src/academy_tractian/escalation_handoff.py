@@ -23,9 +23,21 @@ class _FrozenModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+def _jsonable(value: Any) -> Any:
+    if isinstance(value, BaseModel):
+        return value.model_dump(mode="json")
+    if isinstance(value, tuple):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, list):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _jsonable(item) for key, item in value.items()}
+    return value
+
+
 def _canonical_hash(payload: Any) -> str:
     raw = json.dumps(
-        payload,
+        _jsonable(payload),
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
