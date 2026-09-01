@@ -57,6 +57,7 @@
     "direct_workers_ai_route_required": true,
     "ai_gateway_route_required": false,
     "prepaid_unified_billing_route_required": false,
+    "gateway_header_present_required": false,
     "minimum_free_neurons_remaining": 9000,
     "daily_free_neurons": 10000,
     "comparison_attempts_consumed_required": 0,
@@ -98,7 +99,7 @@
     "governed_entrypoint": "academy_tractian.cloudflare_provider_live_v2.GovernedCloudflareLiveTaskV2.prepare(...).execute_all()",
     "fixture_result": false,
     "transport": "academy_tractian.cloudflare_provider_live_v2.build_cloudflare_one_shot_transport_v2()",
-    "pre_live_evidence_conversion": "academy_tractian.cloudflare_live_authorization_v1.authorization_to_adr020_pre_live_evidence(...) ",
+    "pre_live_evidence_conversion": "academy_tractian.cloudflare_live_authorization_v1.authorization_to_adr020_pre_live_evidence(...)",
     "receipt_issuance_command": "python scripts/research/issue_cloudflare_live_authorization_receipt_v1.py --evidence <evidence.json> --custody-root <canonical-root> --output <receipt.json>",
     "attempt_1_may_start_only_after": "fresh real evidence + valid unexpired receipt + explicit secrets + exact custody root + separate execution decision"
   },
