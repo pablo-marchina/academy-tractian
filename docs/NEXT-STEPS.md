@@ -33,10 +33,16 @@ live network validation                         0
 comparison attempts consumed                    0 / 32
 ```
 
-Current canonical `main`:
+Stable implementation baseline after PR #91:
 
 ```text
 a93854dd5e70edf8084bdaae1762dd64cdb6aa48
+```
+
+Action-plan reconciliation merge #93:
+
+```text
+7d8f3d1a13e07544deb144004d02e78806e6d4f4
 ```
 
 PR #91 closed a concrete clean-reproduction gap without changing runtime/evaluator/provider semantics. Its new `standalone-wheel-smoke` job:
