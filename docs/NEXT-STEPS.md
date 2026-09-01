@@ -4,9 +4,12 @@
 **Checkpoint:** 2026-09-01 — ADR-023 entrypoint audit/contract accepted; minimal governed launcher implemented; provider-free CI validation pending  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
-**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)
+**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
+**Current provider handoff addendum:** [`FINAL-HANDOFF-RUNBOOK-CLOUDFLARE-ADDENDUM-2026-09-01.md`](FINAL-HANDOFF-RUNBOOK-CLOUDFLARE-ADDENDUM-2026-09-01.md)
 
 This file is the short-horizon plan. It does not authorize provider inference, credential probing or attempt 1.
+
+`FINAL-HANDOFF-RUNBOOK.md` remains byte-pinned ADR-017 historical evidence. Current Cloudflare provider-comparison guidance is prospective and lives in this file plus the linked addendum; do not rewrite the frozen ADR-017 runbook to update provider guidance.
 
 ## 1. Completed / frozen before the real gate
 
