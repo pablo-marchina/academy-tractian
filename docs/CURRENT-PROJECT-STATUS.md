@@ -1,6 +1,6 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-09-01 — ADR-022 reset-window Neuron evidence amendment frozen subject to final PR regression  
+**Canonical status checkpoint:** 2026-09-01 — ADR-023 governed Cloudflare entrypoint merged and provider-free validated; real reset-window evidence pending  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
@@ -21,14 +21,21 @@ Cloudflare comparison preregistration             FROZEN / ADR-018
 Cloudflare provider client                        FROZEN / ADR-019
 Cloudflare executor/custody v2                    FROZEN / ADR-020
 Cloudflare original authorization protocol        FROZEN / ADR-021
-reset-window Neuron evidence amendment            FROZEN / ADR-022 (merge contingent on PR #84 CI)
+reset-window Neuron evidence amendment            FROZEN / ADR-022
+governed entrypoint audit/contract                ACCEPTED / ADR-023
+minimal governed live launcher                    MERGED / PROVIDER-FREE VALIDATED
+
+canonical merge containing ADR-023 launcher       5b4b0a2f4bbf51215c901af534216805d26386b0
+main push production-runtime validation           PASSED
 
 Workers Free / Active account state               PROVED MANUALLY
 explicit current Neuron meter in target UI        NOT AVAILABLE
 ADR-021 explicit-balance path                     PRESERVED BUT NOT OPERABLE ON TARGET UI
 ADR-022 reset-window fallback                     PROVIDER-FREE VALIDATED
-issue #80 evidence-source decision                RESOLVED BY ADR-022 CANDIDATE
-issue #79 real evidence/receipt                    MAY RESUME ONLY IN A VALID RESET WINDOW
+ADR-023 receipt→ADR-020 composition               PROVIDER-FREE VALIDATED
+issue #44 OpenAI/Gemini path                      CLOSED / HISTORICAL / SUPERSEDED
+issue #79 real evidence/receipt                    READY PENDING VALID RESET WINDOW
+issue #9 C4 exact artifact                        EXTERNALLY BLOCKED / EXACT BYTES ONLY
 
 provider/model inference calls                    0
 credential/account probes                         0
@@ -68,6 +75,9 @@ ADR-010/011 reuse audit                      DONE
 executor/custody v2                          FROZEN / ADR-020
 original live authorization protocol         FROZEN / ADR-021
 Neuron evidence-source revalidation          RESOLVED / ADR-022
+entrypoint sufficiency audit/contract         ACCEPTED / ADR-023
+minimal gate-specific launcher               MERGED
+provider-free receipt→governed-task test      PASSED
 ```
 
 Next operational gate:
@@ -83,16 +93,20 @@ within first 10 minutes:
 ↓
 create sanitized reset-window evidence
 ↓
-issue short-lived provider-free receipt
+issue short-lived provider-free receipt bound to exact custody root
 ↓
 only then provision Cloudflare token/account ID
 ↓
-explicit live execution authorization
+revalidate receipt/evidence/custody with ADR-022 adapter
+↓
+explicitly invoke scripts/research/execute_cloudflare_live_comparison_v2.py
+↓
+ADR-020 GovernedCloudflareLiveTaskV2
 ↓
 attempt 1
 ```
 
-Attempt 1 remains unauthorized until a real evidence packet and receipt exist.
+Attempt 1 remains unauthorized until a real evidence packet and receipt exist and the operator explicitly invokes the ADR-023 launcher while every attestation remains true.
 
 ## 2. What ADR-022 changes
 
@@ -123,7 +137,35 @@ inference/probes used to obtain evidence = 0
 
 Any uncertainty fails closed.
 
-## 3. Evidence freshness and custody
+## 3. What ADR-023 changes
+
+ADR-023 closes only the operational entrypoint gap. It does not change executor, custody, client, authorization, comparison, scoring or resource policy.
+
+The canonical live composition is now:
+
+```text
+CloudflareResetWindowEvidenceV1 + CloudflareResetWindowReceiptV1 + custody root
+↓
+reset_window_authorization_to_adr020_pre_live_evidence(...)
+↓
+CloudflareLiveSecrets from environment only
+↓
+build_cloudflare_one_shot_transport_v2()
+↓
+GovernedCloudflareLiveTaskV2.prepare(..., fixture_result=False)
+↓
+execute_all()
+```
+
+The only operator-facing live command is:
+
+```text
+python scripts/research/execute_cloudflare_live_comparison_v2.py --evidence <evidence.json> --receipt <receipt.json> --custody-root <canonical-root>
+```
+
+No ad-hoc execution wrapper, retry, fallback, alternate custody, alternate model/provider or `[project.scripts]` surface is authorized.
+
+## 4. Evidence freshness and custody
 
 ```text
 reset observation window       00:00:00–00:10:00 UTC
@@ -137,7 +179,7 @@ account ID / token              never serialized
 
 The receipt remains bound to the exact evidence hash, custody-root hash, ADR-018/019/020/021 pins, plan SHA, direct route and exact model IDs.
 
-## 4. Resource/safety behavior unchanged
+## 5. Resource/safety behavior unchanged
 
 ADR-020 still owns:
 
@@ -151,7 +193,9 @@ ADR-020 still owns:
 
 ADR-022 does not weaken the 9000-Neuron start requirement: an admissible reset-window derives 10000, which is strictly stronger.
 
-## 5. Explicitly rejected paths
+ADR-023 duplicates none of these mechanisms; it only composes the frozen authorization adapter into the frozen governed task.
+
+## 6. Explicitly rejected paths
 
 Still forbidden:
 
@@ -161,21 +205,23 @@ Still forbidden:
 - sacrificial inference;
 - credential/account probe merely to discover quota;
 - Workers Paid / prepaid AI Gateway / paid spillover;
-- operator attestation with uncertainty about background/other-account usage.
+- operator attestation with uncertainty about background/other-account usage;
+- bypassing the governed launcher with ad-hoc Python;
+- modifying executor/custody/client/authorization semantics for launcher convenience.
 
 If exclusive account custody cannot be truthfully attested, the correct result is `LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED`.
 
-## 6. Allowed provider outcomes
+## 7. Allowed provider outcomes
 
 ```text
-A  reset-window evidence + receipt → live packet → GLM / Nemotron / NO_SELECTION
+A  reset-window evidence + receipt → governed launcher → live packet → GLM / Nemotron / NO_SELECTION
 B  reset-window custody cannot be satisfied before deadline → LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
 C  live packet executes but no candidate qualifies → NO_SELECTION
 ```
 
 Forced provider selection remains forbidden.
 
-## 7. Other architecture decisions
+## 8. Other architecture decisions
 
 ```text
 single-agent controller      STRONG QUALIFIED BASELINE
@@ -189,7 +235,7 @@ adaptive routing             UNASSESSED / NOT CURRENTLY MATERIAL
 rich UI/deployment work      P2 UNLESS ACCEPTANCE GAP APPEARS
 ```
 
-## 8. C4 parallel track
+## 9. C4 parallel track
 
 ```text
 required SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
@@ -200,10 +246,12 @@ geometry          36 common parents × 4 arms
 
 Only exact-byte recovery is authorized. Reconstruction/rescoring/substitution remains forbidden.
 
-## 9. Deadline state
+A fresh 2026-09-01 recovery check found no candidate in connected ChatGPT Library/conversation storage or Google Drive by exact SHA or deterministic-scoring identifiers. Issue #9 remains the explicit external scientific blocker.
+
+## 10. Deadline state
 
 ```text
-09-01 → 09-02  freeze ADR-022; use next admissible reset window if account custody is possible
+09-01 → 09-02  ADR-023/launcher merged; use next admissible reset window if account custody is possible
 09-02 → 09-03  live provider result OR external-blocker freeze
 09-03 → 09-05  close only still-material architecture decisions + full reliability/regression
 09-05 → 09-07  architecture freeze + acceptance/demo/runbook/reproduction
@@ -212,15 +260,16 @@ Only exact-byte recovery is authorized. Reconstruction/rescoring/substitution re
 
 After 2026-09-05, default against speculative P2 experiments.
 
-## 10. Still forbidden
+## 11. Still forbidden
 
-- provider inference before a real valid receipt and explicit execution authorization;
+- provider inference before a real valid receipt and explicit governed launcher invocation;
 - credential/account probes merely to obtain quota evidence;
 - fabricated quota values;
 - concurrent/unaccounted Workers AI use during reset-window custody;
 - Paid Workers / AI Gateway prepaid or paid spillover;
 - changing ADR-018 packet post hoc;
 - retry/replay of claimed/uncertain attempts;
-- C4 reconstruction/rescoring;
+- C4 reconstruction/rescoring/substitution;
 - unnecessary RAG/memory/multi-agent/runtime/UI complexity;
+- topology/runtime work before D01 is resolved or explicitly bounded;
 - final provider/architecture/production-readiness claims beyond evidence.
