@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-09-01 — ADR-023 entrypoint audit/contract accepted; minimal governed launcher provider-free validated on `fbdac76f885902f2d4f06d623957fd4e377aab00`  
+**Checkpoint:** 2026-09-01 — ADR-023 merged/provider-free validated; standalone production wheel reproduction proved by PR #91; D01 reset-window gate still pending  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
@@ -23,8 +23,9 @@ Cloudflare executor/custody v2                   FROZEN / ADR-020
 original live authorization protocol             FROZEN / ADR-021
 Neuron evidence-source revalidation              RESOLVED / ADR-022
 Workers Free / Active                           PROVED MANUALLY
-entrypoint sufficiency audit                     FROZEN / ADR-023
-minimal governed launcher                       PROVIDER-FREE VALIDATED
+entrypoint sufficiency audit                     ACCEPTED / ADR-023
+minimal governed launcher                       MERGED / PROVIDER-FREE VALIDATED
+standalone production wheel                     PROVED / PR #91
 
 provider inference                              0
 credential/account probes                       0
@@ -32,13 +33,31 @@ live network validation                         0
 comparison attempts consumed                    0 / 32
 ```
 
-Validated launcher candidate `fbdac76f885902f2d4f06d623957fd4e377aab00` completed all 17 PR-associated workflows successfully. `production-runtime` reported `310 passed` for `tests` and `12 passed` for the accepted ADR-004 controller regression; `final-handoff-acceptance-audit` also completed successfully.
+Current canonical `main`:
+
+```text
+a93854dd5e70edf8084bdaae1762dd64cdb6aa48
+```
+
+PR #91 closed a concrete clean-reproduction gap without changing runtime/evaluator/provider semantics. Its new `standalone-wheel-smoke` job:
+
+```text
+build root wheel
+→ create clean virtualenv
+→ install only root wheel
+→ change cwd outside repository checkout
+→ import academy_tractian + research.e2.controller
+→ validate canonical 18-operation registry
+→ validate read-only production default
+```
+
+The job passed together with the existing production runtime regression suite.
 
 ADR-023 freezes the entrypoint conclusion:
 
 ```text
 substantive composition sufficient
-operational entrypoint was the only material gap
+operational entrypoint was the only material provider-path gap
 no executor/custody/client/authorization rewrite authorized
 ```
 
@@ -48,9 +67,101 @@ The only prospective execution surface is:
 scripts/research/execute_cloudflare_live_comparison_v2.py
 ```
 
-It composes the already-frozen ADR-022 authorization adapter into the already-frozen ADR-020 governed task. It does not own comparison, custody, client, authorization, retry, fallback or resource policy.
+## 2. NOW — provider-free work before the reset
 
-## 2. NOW — use a real reset-window only if exclusive custody is possible
+Do not add provider-path code. The safe short-horizon work is to close or classify remaining delivery gaps that are independent of provider choice.
+
+Run these audits in order:
+
+### A. Delivery-acceptance gap audit
+
+Use `DELIVERY-ACCEPTANCE.md` as the row-level contract and classify each applicable P0/P1 item:
+
+```text
+PROVED
+PARTIAL
+BLOCKED
+MISSING
+```
+
+For every `PARTIAL` or `MISSING`, record:
+
+- exact requirement/acceptance row;
+- existing repository evidence;
+- missing proof or behavior;
+- whether the gap is provider-independent;
+- smallest provider-free validation/fix if one exists;
+- whether the gap must wait for D01/#92.
+
+Do not infer that a component is complete merely because code exists.
+
+### B. Real-demo path completeness audit
+
+Verify that the final integrated path can eventually demonstrate, with real runtime traces rather than scripted prose:
+
+```text
+contextualize
+investigate with read tools
+safe consequential-action behavior
+clarify / insufficient evidence
+human escalation + handoff
+conflicting/inconclusive evidence
+partial/unavailable tool or provider failure
+customer-safe final response
+per-run integrated evaluation
+aggregate/reliability view
+```
+
+Before D01, this is an evidence audit. Implement only provider-independent P0/P1 omissions that do not alter frozen provider or post-D01 architecture decisions.
+
+### C. Security / trace / failure-containment audit
+
+Confirm provider-free evidence for:
+
+```text
+identity outside model control
+seed outside model control
+authorization outside model control
+HarnessRunner sole tool-execution boundary
+action permission/target/argument validation
+idempotency / duplicate-action containment
+model-call provenance sanitization
+no evaluator-private truth in runtime
+trace lifecycle integrity
+safe failure → clarify / abstain / escalate
+no credentials/private oracle in persisted traces
+```
+
+### D. Reproduction audit
+
+Standalone wheel distribution is now `PROVED`. Preserve this as a regression obligation; do not redesign packaging unless the clean-wheel test later fails.
+
+## 3. Rule for fixing anything found before D01
+
+A pre-D01 change is allowed only if all conditions hold:
+
+```text
+maps to concrete P0/P1 or reproducibility/security risk
+AND provider-independent
+AND no ADR-018→023 semantic change
+AND no provider/model call or credential probe
+AND no topology/runtime/RAG/memory decision is pre-empted
+AND smallest provider-free fix can be tested
+```
+
+Otherwise log the finding and defer it.
+
+Issue #92 is planning-only until D01 resolves/bounds. It defines the later hard-gate + Pareto decision protocol for topology/runtime and optional architecture complexity.
+
+## 4. NEXT LIVE GATE — reset window
+
+Target window:
+
+```text
+2026-09-02 00:00:00–00:10:00 UTC
+=
+2026-09-01 21:00:00–21:10:00 America/Sao_Paulo
+```
 
 ADR-022 adds one fallback:
 
@@ -84,7 +195,7 @@ documented daily reset at 00:00 UTC
 
 If any no-use/exclusive-use statement cannot be made with confidence, stop and freeze `LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED` instead.
 
-## 3. Capture Workers Free source evidence
+## 5. Capture Workers Free source evidence
 
 During the reset window, retain privately/outside the repository one source artifact showing:
 
@@ -95,42 +206,32 @@ Workers Paid not active
 
 Do not serialize account ID, email, billing details or secrets. The evidence JSON records only the source artifact SHA-256.
 
-The missing Neuron meter is no longer required under the reset-window fallback.
-
-## 4. Create reset-window evidence JSON
-
-Use schema:
-
-```text
-cloudflare-live-authorization-reset-window-evidence-v1
-```
-
-The evidence must include:
-
-- exact UTC observation timestamp;
-- exact reset timestamp `00:00:00Z` on the same UTC day;
-- Workers Free/no Paid flags;
-- fixed 10000 free allocation + derived 10000 remaining;
-- all no-use/exclusive-use attestations;
-- no Gateway/prepaid route;
-- zero attempts/probes/inference;
-- source artifact SHA-256;
-- no account identifier or secret.
-
 The canonical helper is:
 
-```text
-python scripts/research/capture_cloudflare_reset_window_evidence_v1.py --workers-free-source <private-source-artifact> --output <evidence.json> --attest-workers-free-active --attest-workers-paid-disabled --attest-no-workers-ai-calls-since-reset --attest-no-automated-workers-ai-consumers-since-reset --attest-exclusive-workers-ai-window-until-packet-completion --attest-direct-workers-ai-route --attest-no-ai-gateway-or-prepaid-unified-billing
+```powershell
+python scripts/research/capture_cloudflare_reset_window_evidence_v1.py `
+  --workers-free-source "<PATH_TO_PRIVATE_WORKERS_FREE_SCREENSHOT>" `
+  --output "<PATH_TO_PRIVATE_EVIDENCE_JSON>" `
+  --attest-workers-free-active `
+  --attest-workers-paid-disabled `
+  --attest-no-workers-ai-calls-since-reset `
+  --attest-no-automated-workers-ai-consumers-since-reset `
+  --attest-exclusive-workers-ai-window-until-packet-completion `
+  --attest-direct-workers-ai-route `
+  --attest-no-ai-gateway-or-prepaid-unified-billing
 ```
 
 Evidence age at receipt issuance must be <=600 seconds.
 
-## 5. Issue the reset-window receipt provider-free
+## 6. Issue the reset-window receipt provider-free
 
 Before any provider secret is provisioned:
 
-```text
-python scripts/research/issue_cloudflare_reset_window_receipt_v1.py --evidence <evidence.json> --custody-root <canonical-root> --output <receipt.json>
+```powershell
+python scripts/research/issue_cloudflare_reset_window_receipt_v1.py `
+  --evidence "<PATH_TO_PRIVATE_EVIDENCE_JSON>" `
+  --custody-root "<CANONICAL_CUSTODY_ROOT>" `
+  --output "<PATH_TO_PRIVATE_RECEIPT_JSON>"
 ```
 
 Receipt rules:
@@ -145,9 +246,9 @@ bound to ADR-018/019/020/021 + plan + route + model IDs
 contains no token/account ID/raw path
 ```
 
-If it expires, do not reuse it. The reset-window itself is not replayable later in the day; wait for the next 00:00 UTC reset and capture fresh evidence.
+If it expires, do not reuse it. Wait for the next 00:00 UTC reset and capture fresh evidence.
 
-## 6. Only after a valid receipt — provision secrets
+## 7. Only after a valid receipt — provision secrets
 
 Then securely provide at runtime:
 
@@ -167,7 +268,7 @@ Global API Key   forbidden
 
 Do not commit, log or serialize these values. Do not pass either value as a launcher argument.
 
-## 7. Final pre-attempt validation
+## 8. Final pre-attempt validation
 
 Immediately before attempt 1:
 
@@ -186,17 +287,18 @@ comparison attempts consumed                   0
 
 Any concurrent/unaccounted Workers AI usage invalidates the receipt.
 
-The launcher re-validates the frozen ADR-022 amendment and calls the existing receipt/evidence/custody validation adapter before preparing the ADR-020 task. It does not replace the operator obligation to confirm exclusivity immediately before invocation.
+Attempt 1 remains unauthorized until all conditions are true and the operator separately invokes the launcher.
 
-## 8. THEN — explicit governed live execution decision
+## 9. THEN — explicit governed live execution decision
 
 Only after every gate above remains true may the operator explicitly invoke:
 
-```text
-python scripts/research/execute_cloudflare_live_comparison_v2.py --evidence <evidence.json> --receipt <receipt.json> --custody-root <canonical-root>
+```powershell
+python scripts/research/execute_cloudflare_live_comparison_v2.py `
+  --evidence "<PATH_TO_PRIVATE_EVIDENCE_JSON>" `
+  --receipt "<PATH_TO_PRIVATE_RECEIPT_JSON>" `
+  --custody-root "<CANONICAL_CUSTODY_ROOT>"
 ```
-
-Invoking this command is the separate live execution action. There is no automatic transition from receipt issuance to execution.
 
 The launcher is hard-pinned to:
 
@@ -216,7 +318,7 @@ reset_window_authorization_to_adr020_pre_live_evidence(...)
 
 No retry, fallback, warm-up, parallel call, alternate model, alternate provider, alternate custody or ad-hoc Python composition is authorized.
 
-## 9. Frozen live packet
+## 10. Frozen live packet
 
 ```text
 @cf/zai-org/glm-4.7-flash
@@ -239,9 +341,23 @@ LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
 
 No candidate, metric, threshold, population or budget may change after results begin.
 
-## 10. After provider D01 is resolved or bounded
+## 11. After provider D01 is resolved or bounded
 
-Run another evidence-sufficiency audit, not an automatic experiment queue.
+Activate issue #92 and run another evidence-sufficiency audit, not an automatic experiment queue.
+
+### Hard gates before any alternative architecture is eligible
+
+No candidate may regress:
+
+```text
+P0 behavior coverage
+deterministic authorization/action safety/evaluator isolation
+trace integrity and diagnosability
+clean reproduction
+USD 0 feasibility
+bounded retry/fallback/state semantics
+safe failure/clarify/abstain/escalate behavior
+```
 
 ### Agent topology
 
@@ -252,7 +368,11 @@ Ask whether single-agent vs multi-agent can still materially change a P0/P1/fina
 
 ### Runtime/orchestration
 
-Only assess after topology/materiality is closed. Do not conduct generic framework research.
+Only assess after topology/materiality is closed. Compare a graph/runtime framework only if a measured requirement such as durable execution, checkpoint/resume or persistent human interruption is actually missing.
+
+### Pareto decision
+
+For hard-gate-passing candidates, compare correctness, tool/argument/evidence quality, escalation/fallback, stability, latency/resource use, coordination failures, operational complexity and debuggability. Do not invent an arbitrary weighted total score.
 
 ### No-current-gap areas
 
@@ -267,7 +387,7 @@ rich UI
 adaptive routing
 ```
 
-## 11. Parallel C4 track
+## 12. Parallel C4 track
 
 Exact artifact only:
 
@@ -280,19 +400,20 @@ geometry 36 parents × 4 arms
 
 No reconstruction/rescoring/substitution is authorized.
 
-## 12. Deadline sequence
+## 13. Deadline sequence
 
 ```text
-09-01 → 09-02   freeze ADR-023 launcher contract + provider-free validation + use next admissible reset if custody is possible
-09-02 → 09-03   live provider result OR external-blocker freeze
-09-03 → 09-05   only still-material architecture decisions + reliability/regression
-09-05 → 09-07   architecture freeze + acceptance evidence + demo/runbook/reproduction
-09-08           delivery
+09-01 before 21:00  action-plan reconciliation + provider-free acceptance/demo/security audits
+09-01 21:00–21:10 D01 reset-window evidence/receipt/live gate if truthful custody exists
+09-02 → 09-03       live provider result OR external-blocker freeze; activate #92
+09-03 → 09-05       only still-material architecture decisions + reliability/regression
+09-05 → 09-07       architecture freeze + acceptance evidence + demo/runbook/reproduction
+09-08               delivery
 ```
 
 After 2026-09-05, no speculative P2 experiment unless it closes a demonstrated delivery blocker.
 
-## 13. Still forbidden
+## 14. Still forbidden
 
 - provider inference before real receipt + explicit launcher invocation;
 - token/account provisioning merely to inspect quota;
@@ -305,5 +426,5 @@ After 2026-09-05, no speculative P2 experiment unless it closes a demonstrated d
 - bypassing the governed launcher with an ad-hoc execution wrapper;
 - modifying frozen executor/custody/client/authorization semantics for launcher convenience;
 - C4 reconstruction/rescoring;
-- premature multi-agent/runtime work;
+- topology/runtime/RAG/memory implementation before D01 unless a distinct provider-independent P0/P1 gap explicitly requires it and governance is updated first;
 - final provider/architecture claims beyond evidence.
