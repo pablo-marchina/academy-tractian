@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-09-01 — ADR-023 entrypoint audit/contract accepted; minimal governed launcher implemented; provider-free CI validation pending  
+**Checkpoint:** 2026-09-01 — ADR-023 entrypoint audit/contract accepted; minimal governed launcher provider-free validated on `fbdac76f885902f2d4f06d623957fd4e377aab00`  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
 **Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
@@ -24,13 +24,15 @@ original live authorization protocol             FROZEN / ADR-021
 Neuron evidence-source revalidation              RESOLVED / ADR-022
 Workers Free / Active                           PROVED MANUALLY
 entrypoint sufficiency audit                     FROZEN / ADR-023
-minimal governed launcher                       IMPLEMENTED / CI VALIDATION PENDING
+minimal governed launcher                       PROVIDER-FREE VALIDATED
 
 provider inference                              0
 credential/account probes                       0
 live network validation                         0
 comparison attempts consumed                    0 / 32
 ```
+
+Validated launcher candidate `fbdac76f885902f2d4f06d623957fd4e377aab00` completed all 17 PR-associated workflows successfully. `production-runtime` reported `310 passed` for `tests` and `12 passed` for the accepted ADR-004 controller regression; `final-handoff-acceptance-audit` also completed successfully.
 
 ADR-023 freezes the entrypoint conclusion:
 
