@@ -1,14 +1,17 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE  
-**Checkpoint:** 2026-09-01 — ADR-022 reset-window evidence fallback provider-free validated; real reset-window evidence pending  
+**Checkpoint:** 2026-09-01 — ADR-023 entrypoint audit/contract accepted; minimal governed launcher provider-free validated on `fbdac76f885902f2d4f06d623957fd4e377aab00`  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
-**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)
+**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
+**Current provider handoff addendum:** [`FINAL-HANDOFF-RUNBOOK-CLOUDFLARE-ADDENDUM-2026-09-01.md`](FINAL-HANDOFF-RUNBOOK-CLOUDFLARE-ADDENDUM-2026-09-01.md)
 
 This file is the short-horizon plan. It does not authorize provider inference, credential probing or attempt 1.
 
-## 1. Completed
+`FINAL-HANDOFF-RUNBOOK.md` remains byte-pinned ADR-017 historical evidence. Current Cloudflare provider-comparison guidance is prospective and lives in this file plus the linked addendum; do not rewrite the frozen ADR-017 runbook to update provider guidance.
+
+## 1. Completed / frozen before the real gate
 
 ```text
 historical evidence audit                         DONE
@@ -20,12 +23,32 @@ Cloudflare executor/custody v2                   FROZEN / ADR-020
 original live authorization protocol             FROZEN / ADR-021
 Neuron evidence-source revalidation              RESOLVED / ADR-022
 Workers Free / Active                           PROVED MANUALLY
+entrypoint sufficiency audit                     FROZEN / ADR-023
+minimal governed launcher                       PROVIDER-FREE VALIDATED
 
 provider inference                              0
 credential/account probes                       0
 live network validation                         0
 comparison attempts consumed                    0 / 32
 ```
+
+Validated launcher candidate `fbdac76f885902f2d4f06d623957fd4e377aab00` completed all 17 PR-associated workflows successfully. `production-runtime` reported `310 passed` for `tests` and `12 passed` for the accepted ADR-004 controller regression; `final-handoff-acceptance-audit` also completed successfully.
+
+ADR-023 freezes the entrypoint conclusion:
+
+```text
+substantive composition sufficient
+operational entrypoint was the only material gap
+no executor/custody/client/authorization rewrite authorized
+```
+
+The only prospective execution surface is:
+
+```text
+scripts/research/execute_cloudflare_live_comparison_v2.py
+```
+
+It composes the already-frozen ADR-022 authorization adapter into the already-frozen ADR-020 governed task. It does not own comparison, custody, client, authorization, retry, fallback or resource policy.
 
 ## 2. NOW — use a real reset-window only if exclusive custody is possible
 
@@ -94,6 +117,12 @@ The evidence must include:
 - source artifact SHA-256;
 - no account identifier or secret.
 
+The canonical helper is:
+
+```text
+python scripts/research/capture_cloudflare_reset_window_evidence_v1.py --workers-free-source <private-source-artifact> --output <evidence.json> --attest-workers-free-active --attest-workers-paid-disabled --attest-no-workers-ai-calls-since-reset --attest-no-automated-workers-ai-consumers-since-reset --attest-exclusive-workers-ai-window-until-packet-completion --attest-direct-workers-ai-route --attest-no-ai-gateway-or-prepaid-unified-billing
+```
+
 Evidence age at receipt issuance must be <=600 seconds.
 
 ## 5. Issue the reset-window receipt provider-free
@@ -136,7 +165,7 @@ AI Gateway perms not required / should not be granted
 Global API Key   forbidden
 ```
 
-Do not commit, log or serialize these values.
+Do not commit, log or serialize these values. Do not pass either value as a launcher argument.
 
 ## 7. Final pre-attempt validation
 
@@ -157,16 +186,35 @@ comparison attempts consumed                   0
 
 Any concurrent/unaccounted Workers AI usage invalidates the receipt.
 
-## 8. THEN — explicit live execution decision
+The launcher re-validates the frozen ADR-022 amendment and calls the existing receipt/evidence/custody validation adapter before preparing the ADR-020 task. It does not replace the operator obligation to confirm exclusivity immediately before invocation.
 
-Only after all gates above are true may a separate execution action authorize:
+## 8. THEN — explicit governed live execution decision
+
+Only after every gate above remains true may the operator explicitly invoke:
+
+```text
+python scripts/research/execute_cloudflare_live_comparison_v2.py --evidence <evidence.json> --receipt <receipt.json> --custody-root <canonical-root>
+```
+
+Invoking this command is the separate live execution action. There is no automatic transition from receipt issuance to execution.
+
+The launcher is hard-pinned to:
 
 ```text
 fixture_result = false
-attempt 1 = admissible
 ```
 
-The live path remains the ADR-020 governed executor/custody implementation.
+and delegates directly to:
+
+```text
+reset_window_authorization_to_adr020_pre_live_evidence(...)
+→ CloudflareLiveSecrets(...)
+→ build_cloudflare_one_shot_transport_v2()
+→ GovernedCloudflareLiveTaskV2.prepare(...)
+→ execute_all()
+```
+
+No retry, fallback, warm-up, parallel call, alternate model, alternate provider, alternate custody or ad-hoc Python composition is authorized.
 
 ## 9. Frozen live packet
 
@@ -235,7 +283,7 @@ No reconstruction/rescoring/substitution is authorized.
 ## 12. Deadline sequence
 
 ```text
-09-01 → 09-02   freeze ADR-022 + use next admissible reset if custody is possible
+09-01 → 09-02   freeze ADR-023 launcher contract + provider-free validation + use next admissible reset if custody is possible
 09-02 → 09-03   live provider result OR external-blocker freeze
 09-03 → 09-05   only still-material architecture decisions + reliability/regression
 09-05 → 09-07   architecture freeze + acceptance evidence + demo/runbook/reproduction
@@ -246,7 +294,7 @@ After 2026-09-05, no speculative P2 experiment unless it closes a demonstrated d
 
 ## 13. Still forbidden
 
-- provider inference before real receipt + explicit authorization;
+- provider inference before real receipt + explicit launcher invocation;
 - token/account provisioning merely to inspect quota;
 - fabricated quota values;
 - using reset fallback outside the first ten minutes after 00:00 UTC;
@@ -254,6 +302,8 @@ After 2026-09-05, no speculative P2 experiment unless it closes a demonstrated d
 - Workers Paid / prepaid AI Gateway / paid spillover;
 - retry/replay of claimed or uncertain attempts;
 - changing ADR-018 packet post hoc;
+- bypassing the governed launcher with an ad-hoc execution wrapper;
+- modifying frozen executor/custody/client/authorization semantics for launcher convenience;
 - C4 reconstruction/rescoring;
 - premature multi-agent/runtime work;
 - final provider/architecture claims beyond evidence.
