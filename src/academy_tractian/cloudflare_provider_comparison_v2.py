@@ -21,7 +21,11 @@ from .cloudflare_provider_client import (
     CLOUDFLARE_ROUTE_ID,
     CloudflareWorkersAIChatCompletionsDecisionClient,
 )
-from .decision_source import ProviderCallIdentity, ProviderDecisionSource
+from .cloudflare_provider_provenance_v2 import (
+    CloudflareProviderCallIdentityV2,
+    CloudflareProviderDecisionSourceV2,
+    validate_cloudflare_audit_record_v2,
+)
 from .provider_comparison import (
     FORBIDDEN_BINDING_KEYS,
     FORBIDDEN_PRIVATE_KEYS,
@@ -33,7 +37,6 @@ from .provider_comparison import (
     _nested_forbidden_key_present,
     _rate,
     _signature,
-    _validate_audit_record,
     adjudicate_public_rubric,
     controller_context_for_unit,
 )
@@ -80,11 +83,11 @@ class _FrozenModel(BaseModel):
 
 
 class CloudflareFrozenInputError(RuntimeError):
-    """Current Cloudflare comparison inputs do not match ADR-018/019 frozen bytes."""
+    pass
 
 
 class CloudflareComparisonStopped(RuntimeError):
-    """The v2 comparison hit a preregistered hard/resource stop."""
+    pass
 
 
 class CloudflareProviderComparisonPlanEntry(_FrozenModel):
@@ -110,9 +113,7 @@ class CloudflareProviderComparisonPlan(_FrozenModel):
     def validate_geometry(self) -> "CloudflareProviderComparisonPlan":
         if len(self.entries) != MAX_LIVE_ATTEMPTS_V2:
             raise ValueError("Cloudflare v2 plan must contain exactly 32 attempts")
-        if tuple(item.attempt_index for item in self.entries) != tuple(
-            range(MAX_LIVE_ATTEMPTS_V2)
-        ):
+        if tuple(item.attempt_index for item in self.entries) != tuple(range(32)):
             raise ValueError("Cloudflare v2 attempt indexes must be canonical 0..31")
         payload = {
             "schema_version": self.schema_version,
@@ -128,7 +129,7 @@ class CloudflareCandidateComparisonSummaryV2(_FrozenModel):
     candidate_id: str
     complete: bool
     attempts: int
-    expected_attempts: Literal[16] = EXPECTED_ATTEMPTS_PER_CANDIDATE_V2
+    expected_attempts: Literal[16] = 16
     M1_structured_decision_adherence: float | None
     M2_known_tool_selection_validity: float | None
     M3_b1_argument_validity: float | None
@@ -153,15 +154,13 @@ class CloudflareCandidateComparisonSummaryV2(_FrozenModel):
 
 
 class CloudflareProviderComparisonResultV2(_FrozenModel):
-    schema_version: Literal["cloudflare-provider-comparison-result-v2"] = (
-        CLOUDFLARE_RESULT_SCHEMA_VERSION
-    )
+    schema_version: Literal["cloudflare-provider-comparison-result-v2"] = CLOUDFLARE_RESULT_SCHEMA_VERSION
     executor_version: Literal["cloudflare-provider-comparison-executor-v2"] = (
         CLOUDFLARE_PROVIDER_COMPARISON_EXECUTOR_VERSION
     )
     fixture_result: bool
     plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    attempted_calls: int = Field(ge=0, le=MAX_LIVE_ATTEMPTS_V2)
+    attempted_calls: int = Field(ge=0, le=32)
     complete: bool
     stopped: bool
     stop_reason: str | None
@@ -188,39 +187,38 @@ class FrozenCloudflareComparisonBundleV2:
 
 
 def _canonical_sha256(payload: Any) -> str:
-    data = json.dumps(
-        payload,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-    ).encode("utf-8")
-    return sha256(data).hexdigest()
+    return sha256(
+        json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    ).hexdigest()
 
 
 def _git_blob_sha1(data: bytes) -> str:
     return sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest()
 
 
-def _read_exact_bytes(root: Path, relpath: str, expected_blob: str) -> bytes:
-    data = (root / relpath).read_bytes()
-    actual = _git_blob_sha1(data)
-    if actual != expected_blob:
-        raise CloudflareFrozenInputError(f"frozen git blob mismatch: {relpath}")
+def _exact_bytes(root: Path, path: str, expected_blob: str) -> bytes:
+    data = (root / path).read_bytes()
+    if _git_blob_sha1(data) != expected_blob:
+        raise CloudflareFrozenInputError(f"frozen git blob mismatch: {path}")
     return data
 
 
-def _read_exact_json(root: Path, relpath: str, expected_blob: str) -> dict[str, Any]:
-    data = _read_exact_bytes(root, relpath, expected_blob)
+def _exact_json(root: Path, path: str, expected_blob: str) -> dict[str, Any]:
     try:
-        payload = json.loads(data)
+        value = json.loads(_exact_bytes(root, path, expected_blob))
     except Exception as exc:
-        raise CloudflareFrozenInputError(f"invalid frozen JSON: {relpath}") from exc
-    if not isinstance(payload, dict):
-        raise CloudflareFrozenInputError(f"frozen JSON must be object: {relpath}")
-    return payload
+        raise CloudflareFrozenInputError(f"invalid frozen JSON: {path}") from exc
+    if not isinstance(value, dict):
+        raise CloudflareFrozenInputError(f"frozen JSON must be object: {path}")
+    return value
 
 
-def _live_candidates_from_design(design: Mapping[str, Any]) -> list[dict[str, Any]]:
+def _live_candidates(design: Mapping[str, Any]) -> list[dict[str, Any]]:
     raw = design.get("candidate_set")
     if not isinstance(raw, list):
         raise CloudflareFrozenInputError("design candidate_set invalid")
@@ -233,8 +231,10 @@ def _live_candidates_from_design(design: Mapping[str, Any]) -> list[dict[str, An
     ]
     if [item.get("candidate_id") for item in live] != list(CLOUDFLARE_LIVE_CANDIDATE_IDS):
         raise CloudflareFrozenInputError("Cloudflare v2 live candidate identity drift")
-    expected_models = [CLOUDFLARE_GLM_MODEL_ID, CLOUDFLARE_NEMOTRON_MODEL_ID]
-    if [item.get("model_id") for item in live] != expected_models:
+    if [item.get("model_id") for item in live] != [
+        CLOUDFLARE_GLM_MODEL_ID,
+        CLOUDFLARE_NEMOTRON_MODEL_ID,
+    ]:
         raise CloudflareFrozenInputError("Cloudflare v2 model identity drift")
     if any(
         item.get("provider_id") != CLOUDFLARE_PROVIDER_ID
@@ -249,67 +249,56 @@ def load_frozen_cloudflare_comparison_bundle_v2(
     repo_root: Path | str = ".",
 ) -> FrozenCloudflareComparisonBundleV2:
     root = Path(repo_root)
-    design = _read_exact_json(root, DESIGN_V2_PATH, DESIGN_V2_GIT_BLOB)
-    population_bytes = _read_exact_bytes(root, POPULATION_PATH, POPULATION_GIT_BLOB)
-    try:
-        population = json.loads(population_bytes)
-    except Exception as exc:
-        raise CloudflareFrozenInputError("invalid frozen comparison population JSON") from exc
-    if not isinstance(population, dict):
-        raise CloudflareFrozenInputError("comparison population must be an object")
+    design = _exact_json(root, DESIGN_V2_PATH, DESIGN_V2_GIT_BLOB)
+    population_bytes = _exact_bytes(root, POPULATION_PATH, POPULATION_GIT_BLOB)
     if sha256(population_bytes).hexdigest() != POPULATION_SHA256:
         raise CloudflareFrozenInputError("comparison population SHA-256 mismatch")
+    population = json.loads(population_bytes)
+    if not isinstance(population, dict):
+        raise CloudflareFrozenInputError("comparison population must be object")
 
-    adr018 = _read_exact_bytes(root, ADR_018_PATH, ADR_018_GIT_BLOB).decode("utf-8")
-    adr019 = _read_exact_bytes(root, ADR_019_PATH, ADR_019_GIT_BLOB).decode("utf-8")
-    _read_exact_bytes(root, CLOUDFLARE_CLIENT_PATH, CLOUDFLARE_CLIENT_GIT_BLOB)
+    adr018 = _exact_bytes(root, ADR_018_PATH, ADR_018_GIT_BLOB).decode("utf-8")
+    adr019 = _exact_bytes(root, ADR_019_PATH, ADR_019_GIT_BLOB).decode("utf-8")
+    _exact_bytes(root, CLOUDFLARE_CLIENT_PATH, CLOUDFLARE_CLIENT_GIT_BLOB)
+    if "FROZEN_PREREGISTRATION / LIVE_NOT_AUTHORIZED" not in adr018:
+        raise CloudflareFrozenInputError("ADR-018 state drift")
+    if "FROZEN_IMPLEMENTATION / LIVE_NOT_AUTHORIZED" not in adr019:
+        raise CloudflareFrozenInputError("ADR-019 state drift")
 
-    if "**Status:** ACCEPTED" not in adr018 or "FROZEN_PREREGISTRATION / LIVE_NOT_AUTHORIZED" not in adr018:
-        raise CloudflareFrozenInputError("ADR-018 is not in the frozen preregistration state")
-    if "**Status:** ACCEPTED" not in adr019 or "FROZEN_IMPLEMENTATION / LIVE_NOT_AUTHORIZED" not in adr019:
-        raise CloudflareFrozenInputError("ADR-019 is not in the frozen implementation state")
-
-    population_meta = design.get("population")
-    execution = design.get("execution")
-    resource = design.get("zero_cost_resource_budget")
-    request_contract = design.get("request_contract")
-    if not all(isinstance(item, dict) for item in (population_meta, execution, resource, request_contract)):
-        raise CloudflareFrozenInputError("Cloudflare v2 design shape invalid")
-
+    population_meta = design.get("population", {})
+    execution = design.get("execution", {})
+    resource = design.get("zero_cost_resource_budget", {})
+    request = design.get("request_contract", {})
     if population_meta.get("sha256") != POPULATION_SHA256 or population_meta.get("unit_count") != 8:
-        raise CloudflareFrozenInputError("Cloudflare v2 population pin drift")
+        raise CloudflareFrozenInputError("population pin drift")
     if (
-        execution.get("max_live_provider_calls_total") != MAX_LIVE_ATTEMPTS_V2
-        or execution.get("attempts_per_live_candidate") != EXPECTED_ATTEMPTS_PER_CANDIDATE_V2
+        execution.get("max_live_provider_calls_total") != 32
+        or execution.get("attempts_per_live_candidate") != 16
+        or execution.get("warmup_calls") != 0
         or execution.get("automatic_retries") != 0
         or execution.get("provider_fallbacks") != 0
-        or execution.get("warmup_calls") != 0
         or execution.get("parallel_live_calls") is not False
     ):
-        raise CloudflareFrozenInputError("Cloudflare v2 execution contract drift")
+        raise CloudflareFrozenInputError("execution contract drift")
     if (
         resource.get("required_workers_plan") != "Workers Free"
         or resource.get("workers_paid_plan_allowed") is not False
         or resource.get("prepaid_ai_gateway_credits_allowed") is not False
-        or float(resource.get("published_free_neurons_per_day", -1)) != WORKERS_FREE_DAILY_NEURONS
-        or float(resource.get("minimum_free_neurons_remaining_before_attempt_1", -1))
-        != MIN_FREE_NEURONS_BEFORE_ATTEMPT_1
+        or float(resource.get("published_free_neurons_per_day", -1)) != 10000.0
+        or float(resource.get("minimum_free_neurons_remaining_before_attempt_1", -1)) != 9000.0
         or float(resource.get("max_packet_neurons", -1)) != MAX_PACKET_NEURONS
-        or int(resource.get("max_accounted_input_tokens_per_attempt", -1))
-        != CLOUDFLARE_MAX_ACCOUNTED_PROMPT_TOKENS
-        or int(resource.get("max_completion_tokens_per_attempt", -1))
-        != CLOUDFLARE_MAX_COMPLETION_TOKENS
+        or int(resource.get("max_accounted_input_tokens_per_attempt", -1)) != 8000
+        or int(resource.get("max_completion_tokens_per_attempt", -1)) != 512
     ):
-        raise CloudflareFrozenInputError("Cloudflare v2 resource contract drift")
+        raise CloudflareFrozenInputError("resource contract drift")
     if (
-        request_contract.get("provider_native_tool_execution_enabled") is not False
-        or request_contract.get("provider_side_conversation_state_enabled") is not False
-        or request_contract.get("ai_gateway_enabled") is not False
-        or request_contract.get("automatic_repair") is not False
+        request.get("provider_native_tool_execution_enabled") is not False
+        or request.get("provider_side_conversation_state_enabled") is not False
+        or request.get("ai_gateway_enabled") is not False
+        or request.get("automatic_repair") is not False
     ):
-        raise CloudflareFrozenInputError("Cloudflare v2 request boundary drift")
-
-    _live_candidates_from_design(design)
+        raise CloudflareFrozenInputError("request boundary drift")
+    _live_candidates(design)
     return FrozenCloudflareComparisonBundleV2(
         design=design,
         population=population,
@@ -327,28 +316,24 @@ def build_cloudflare_provider_comparison_plan_v2(
     units = bundle.population.get("units")
     if not isinstance(units, list) or len(units) != 8:
         raise CloudflareFrozenInputError("comparison population must contain exactly 8 units")
-    candidates = _live_candidates_from_design(bundle.design)
-
+    candidates = _live_candidates(bundle.design)
     entries: list[CloudflareProviderComparisonPlanEntry] = []
     for unit_index, unit in enumerate(units):
-        if not isinstance(unit, dict) or not isinstance(unit.get("unit_id"), str):
-            raise CloudflareFrozenInputError("invalid comparison unit")
         for repeat_index in range(2):
             ordered = candidates if (unit_index + repeat_index) % 2 == 0 else list(reversed(candidates))
             for candidate in ordered:
                 entries.append(
                     CloudflareProviderComparisonPlanEntry(
                         attempt_index=len(entries),
-                        candidate_id=str(candidate["candidate_id"]),
-                        provider_id=str(candidate["provider_id"]),
-                        model_id=str(candidate["model_id"]),
-                        route_id=str(candidate["route_id"]),
-                        unit_id=str(unit["unit_id"]),
+                        candidate_id=candidate["candidate_id"],
+                        provider_id=candidate["provider_id"],
+                        model_id=candidate["model_id"],
+                        route_id=candidate["route_id"],
+                        unit_id=unit["unit_id"],
                         unit_index=unit_index,
                         repeat_index=repeat_index,
                     )
                 )
-
     payload = {
         "schema_version": CLOUDFLARE_PLAN_SCHEMA_VERSION,
         "executor_version": CLOUDFLARE_PROVIDER_COMPARISON_EXECUTOR_VERSION,
@@ -374,35 +359,25 @@ def observed_neurons(
     if input_tokens < 0 or output_tokens < 0:
         raise ValueError("token usage must be nonnegative")
     input_rate, output_rate = NEURON_RATES_PER_MILLION[candidate_id]
-    return (
-        input_tokens * input_rate / 1_000_000
-        + output_tokens * output_rate / 1_000_000
-    )
+    return input_tokens * input_rate / 1_000_000 + output_tokens * output_rate / 1_000_000
 
 
 def worst_case_neurons_for_candidate(candidate_id: str) -> float:
     return observed_neurons(
         candidate_id,
-        input_tokens=CLOUDFLARE_MAX_ACCOUNTED_PROMPT_TOKENS,
-        output_tokens=CLOUDFLARE_MAX_COMPLETION_TOKENS,
+        input_tokens=8000,
+        output_tokens=512,
     )
 
 
-def _portability_v2(
-    *,
-    candidate_id: str,
-    fixture_result: bool,
-    available_free_neurons: float,
-) -> dict[str, Any]:
+def _portability(candidate_id: str, fixture: bool, available: float) -> dict[str, Any]:
     return {
         "direct_workers_ai_http_dependency": True,
         "credential_account_requirements": "explicit_api_token_and_account_id",
         "Workers_Free_requirement": True,
-        "observed_rate_capacity_constraints": (
-            "NOT_OBSERVED_FIXTURE" if fixture_result else "OBSERVED_AT_EXECUTION"
-        ),
+        "observed_rate_capacity_constraints": "NOT_OBSERVED_FIXTURE" if fixture else "OBSERVED_AT_EXECUTION",
         "reproducibility_limitations": "provider_seed_not_forwarded",
-        "free_neuron_headroom_at_start": available_free_neurons,
+        "free_neuron_headroom_at_start": available,
         "candidate_id": candidate_id,
     }
 
@@ -417,38 +392,30 @@ def summarize_cloudflare_candidate_v2(
     zero_cash_cost_route_proven: bool,
     available_free_neurons: float,
 ) -> CloudflareCandidateComparisonSummaryV2:
-    if len({item.attempt_index for item in attempts}) != len(attempts):
-        raise ValueError("duplicate attempt_index in candidate evidence")
     ordered = tuple(sorted(attempts, key=lambda item: item.attempt_index))
+    if len({item.attempt_index for item in ordered}) != len(ordered):
+        raise ValueError("duplicate attempt_index in candidate evidence")
     parsed = [item for item in ordered if item.structured_decision_adherent]
-    tool_items = [
-        item for item in parsed if item.decision_kind == ControllerDecisionKind.TOOL.value
-    ]
-    b1_items = [item for item in tool_items if item.b1_valid is not None]
+    tools = [item for item in parsed if item.decision_kind == ControllerDecisionKind.TOOL.value]
+    b1_items = [item for item in tools if item.b1_valid is not None]
     failures = [item for item in ordered if item.outcome == "failure"]
-    safe_failure_num = (
-        sum(item.safe_failure_contained is True for item in failures)
-        + int(fixed_failure_probe_passed)
-    )
-    safe_failure_den = len(failures) + 1
     latencies = [item.latency_ms for item in ordered if item.latency_ms is not None]
 
     stable = 0
     for unit in bundle.population["units"]:
         pair = [item for item in ordered if item.unit_id == unit["unit_id"]]
-        if len(pair) != 2:
-            continue
-        first, second = sorted(pair, key=lambda item: item.repeat_index)
-        signature = _signature(first)
-        if signature is not None and signature == _signature(second):
-            stable += 1
+        if len(pair) == 2:
+            first, second = sorted(pair, key=lambda item: item.repeat_index)
+            sig = _signature(first)
+            stable += int(sig is not None and sig == _signature(second))
 
-    complete = len(ordered) == EXPECTED_ATTEMPTS_PER_CANDIDATE_V2
+    complete = len(ordered) == 16
     usage_complete = complete and all(
         item.input_tokens is not None and item.output_tokens is not None for item in ordered
     )
-    total_neurons = (
-        sum(
+    total_neurons = None
+    if usage_complete:
+        total_neurons = sum(
             observed_neurons(
                 candidate_id,
                 input_tokens=int(item.input_tokens),
@@ -456,60 +423,57 @@ def summarize_cloudflare_candidate_v2(
             )
             for item in ordered
         )
-        if usage_complete
-        else None
-    )
 
     m1 = _rate(len(parsed), len(ordered))
-    m2 = _rate(sum(item.known_tool_selection_valid is True for item in tool_items), len(tool_items))
+    m2 = _rate(sum(item.known_tool_selection_valid is True for item in tools), len(tools))
     m3 = _rate(sum(item.b1_valid is True for item in b1_items), len(b1_items))
-    m4 = sum(item.rubric_pass for item in ordered) / EXPECTED_ATTEMPTS_PER_CANDIDATE_V2
-    m5 = _rate(safe_failure_num, safe_failure_den)
-    m7_success = sum(item.outcome == "success" for item in ordered) / EXPECTED_ATTEMPTS_PER_CANDIDATE_V2
+    m4 = sum(item.rubric_pass for item in ordered) / 16
+    m5 = _rate(
+        sum(item.safe_failure_contained is True for item in failures) + int(fixed_failure_probe_passed),
+        len(failures) + 1,
+    )
+    m7_success = sum(item.outcome == "success" for item in ordered) / 16
     m7_stability = stable / 8
     m10 = _rate(sum(item.trace_integrity for item in ordered), len(ordered))
 
-    hard_failures: list[str] = []
+    hard: list[str] = []
     if any(item.identity_seed_attempt or item.private_key_attempt for item in ordered):
-        hard_failures.append("H1_PRIVATE_OR_BINDING_LEAKAGE")
+        hard.append("H1_PRIVATE_OR_BINDING_LEAKAGE")
     if any("HIDDEN_RETRY_OR_FALLBACK" in item.trace_issue_codes for item in ordered):
-        hard_failures.append("H3_HIDDEN_RETRY_OR_FALLBACK")
+        hard.append("H3_HIDDEN_RETRY_OR_FALLBACK")
     if any(not item.trace_integrity for item in ordered):
-        hard_failures.append("H4_MODEL_CALL_PROVENANCE")
+        hard.append("H4_MODEL_CALL_PROVENANCE")
     if any(item.raw_material_recorded for item in ordered):
-        hard_failures.append("H6_RAW_MATERIAL_RECORDED")
+        hard.append("H6_RAW_MATERIAL_RECORDED")
     if any("ROUTE_OR_MODEL_IDENTITY" in item.trace_issue_codes for item in ordered):
-        hard_failures.append("H7_ROUTE_OR_MODEL_CHANGED")
+        hard.append("H7_ROUTE_OR_MODEL_CHANGED")
     if not zero_cash_cost_route_proven:
-        hard_failures.append("H8_NONFREE_OR_PAID_ROUTE")
+        hard.append("H8_NONFREE_OR_PAID_ROUTE")
     if not usage_complete:
-        hard_failures.append("H9_RESOURCE_ACCOUNTING_INCOMPLETE")
+        hard.append("H9_RESOURCE_ACCOUNTING_INCOMPLETE")
     if any(
-        (item.input_tokens is not None and item.input_tokens > CLOUDFLARE_MAX_ACCOUNTED_PROMPT_TOKENS)
-        or (item.output_tokens is not None and item.output_tokens > CLOUDFLARE_MAX_COMPLETION_TOKENS)
+        (item.input_tokens is not None and item.input_tokens > 8000)
+        or (item.output_tokens is not None and item.output_tokens > 512)
         for item in ordered
     ):
-        hard_failures.append("H10_PER_ATTEMPT_RESOURCE_CEILING")
+        hard.append("H10_PER_ATTEMPT_RESOURCE_CEILING")
     if total_neurons is not None and total_neurons > MAX_PACKET_NEURONS:
-        hard_failures.append("H10_PACKET_RESOURCE_CEILING")
+        hard.append("H10_PACKET_RESOURCE_CEILING")
     if not complete:
-        hard_failures.append("INCOMPLETE_PACKET")
+        hard.append("INCOMPLETE_PACKET")
 
     metrics = bundle.design["metrics"]
     if complete:
         if m1 is None or m1 < metrics["M1"]["minimum"]:
-            hard_failures.append("M1_BELOW_MINIMUM")
+            hard.append("M1_BELOW_MINIMUM")
         if m4 < metrics["M4"]["minimum"]:
-            hard_failures.append("M4_BELOW_MINIMUM")
+            hard.append("M4_BELOW_MINIMUM")
         if m5 is None or m5 < metrics["M5"]["minimum"]:
-            hard_failures.append("M5_BELOW_MINIMUM")
-        if (
-            m7_success < metrics["M7"]["minimum_success_rate"]
-            or m7_stability < metrics["M7"]["minimum_signature_stability"]
-        ):
-            hard_failures.append("M7_BELOW_MINIMUM")
+            hard.append("M5_BELOW_MINIMUM")
+        if m7_success < metrics["M7"]["minimum_success_rate"] or m7_stability < metrics["M7"]["minimum_signature_stability"]:
+            hard.append("M7_BELOW_MINIMUM")
         if m10 is None or m10 < metrics["M10"]["minimum"]:
-            hard_failures.append("M10_BELOW_MINIMUM")
+            hard.append("M10_BELOW_MINIMUM")
 
     return CloudflareCandidateComparisonSummaryV2(
         candidate_id=candidate_id,
@@ -528,33 +492,19 @@ def summarize_cloudflare_candidate_v2(
         M6_max_ms=None if not latencies else max(latencies),
         M7_success_rate=m7_success,
         M7_signature_stability=m7_stability,
-        M8_usage_records=sum(
-            item.input_tokens is not None and item.output_tokens is not None for item in ordered
-        ),
+        M8_usage_records=sum(item.input_tokens is not None and item.output_tokens is not None for item in ordered),
         M8_usage_complete=usage_complete,
         M8_total_observed_neurons=total_neurons,
         M8_actual_cash_cost_usd=0.0 if zero_cash_cost_route_proven else None,
-        M9_portability=_portability_v2(
-            candidate_id=candidate_id,
-            fixture_result=fixture_result,
-            available_free_neurons=available_free_neurons,
-        ),
+        M9_portability=_portability(candidate_id, fixture_result, available_free_neurons),
         M10_trace_integrity=m10,
-        hard_gate_pass=not hard_failures,
-        hard_gate_failures=tuple(dict.fromkeys(hard_failures)),
+        hard_gate_pass=not hard,
+        hard_gate_failures=tuple(dict.fromkeys(hard)),
     )
 
 
-def _dominates_v2(
-    left: CloudflareCandidateComparisonSummaryV2,
-    right: CloudflareCandidateComparisonSummaryV2,
-) -> bool:
-    if (
-        left.M6_p95_ms is None
-        or right.M6_p95_ms is None
-        or left.M8_total_observed_neurons is None
-        or right.M8_total_observed_neurons is None
-    ):
+def _dominates(left: CloudflareCandidateComparisonSummaryV2, right: CloudflareCandidateComparisonSummaryV2) -> bool:
+    if left.M6_p95_ms is None or right.M6_p95_ms is None or left.M8_total_observed_neurons is None or right.M8_total_observed_neurons is None:
         return False
     dimensions = (
         (left.M4_public_task_quality, right.M4_public_task_quality, True),
@@ -563,13 +513,9 @@ def _dominates_v2(
         (float(left.M6_p95_ms), float(right.M6_p95_ms), False),
         (left.M8_total_observed_neurons, right.M8_total_observed_neurons, False),
     )
-    no_worse = all(
-        a >= b if maximize else a <= b for a, b, maximize in dimensions
-    )
-    strictly_better = any(
-        a > b if maximize else a < b for a, b, maximize in dimensions
-    )
-    return no_worse and strictly_better
+    no_worse = all(a >= b if maximize else a <= b for a, b, maximize in dimensions)
+    better = any(a > b if maximize else a < b for a, b, maximize in dimensions)
+    return no_worse and better
 
 
 def select_cloudflare_candidate_v2(
@@ -579,49 +525,28 @@ def select_cloudflare_candidate_v2(
 ) -> str:
     if fixture_result:
         return "NO_SELECTION"
-    eligible = [item for item in summaries if item.hard_gate_pass and item.complete]
+    eligible = [item for item in summaries if item.complete and item.hard_gate_pass]
     if not eligible:
         return "NO_SELECTION"
     if len(eligible) == 1:
         return eligible[0].candidate_id
-
     pareto = [
         item
         for item in eligible
-        if not any(
-            _dominates_v2(other, item)
-            for other in eligible
-            if other.candidate_id != item.candidate_id
-        )
+        if not any(_dominates(other, item) for other in eligible if other.candidate_id != item.candidate_id)
     ]
     if len(pareto) == 1:
         return pareto[0].candidate_id
-
-    ranked_quality = sorted(pareto, key=lambda item: (-item.M4_public_task_quality, item.candidate_id))
-    top_quality = ranked_quality[0]
-    if all(
-        top_quality.M4_public_task_quality - other.M4_public_task_quality >= 0.125
-        for other in ranked_quality[1:]
-    ):
-        return top_quality.candidate_id
-
+    ranked = sorted(pareto, key=lambda item: (-item.M4_public_task_quality, item.candidate_id))
+    top = ranked[0]
+    if all(top.M4_public_task_quality - other.M4_public_task_quality >= 0.125 for other in ranked[1:]):
+        return top.candidate_id
     if all(item.M8_total_observed_neurons is not None for item in pareto):
-        by_neurons = sorted(
-            pareto,
-            key=lambda item: (float(item.M8_total_observed_neurons), item.candidate_id),
-        )
-        unique_lowest = (
-            len(by_neurons) == 1
-            or float(by_neurons[0].M8_total_observed_neurons)
-            < float(by_neurons[1].M8_total_observed_neurons)
-        )
+        by_neurons = sorted(pareto, key=lambda item: (float(item.M8_total_observed_neurons), item.candidate_id))
+        unique = len(by_neurons) == 1 or float(by_neurons[0].M8_total_observed_neurons) < float(by_neurons[1].M8_total_observed_neurons)
         best_stability = max(item.M7_signature_stability for item in pareto)
-        if (
-            unique_lowest
-            and by_neurons[0].M7_signature_stability >= best_stability - 0.125
-        ):
+        if unique and by_neurons[0].M7_signature_stability >= best_stability - 0.125:
             return by_neurons[0].candidate_id
-
     if all(item.M6_p95_ms is not None for item in pareto):
         by_latency = sorted(pareto, key=lambda item: (int(item.M6_p95_ms), item.candidate_id))
         if len(by_latency) == 1 or int(by_latency[0].M6_p95_ms) < int(by_latency[1].M6_p95_ms):
@@ -630,11 +555,7 @@ def select_cloudflare_candidate_v2(
 
 
 class CloudflareProviderComparisonExecutorV2:
-    """ADR-018/019 bounded comparison executor.
-
-    The provider-free task validates this class only with local fake clients/transports.
-    Capability is not live authorization.
-    """
+    """ADR-018/019 bounded comparison executor; capability is not live authorization."""
 
     def __init__(
         self,
@@ -645,13 +566,10 @@ class CloudflareProviderComparisonExecutorV2:
         available_free_neurons: float,
         zero_cash_cost_route_proven: bool,
     ) -> None:
-        if available_free_neurons < MIN_FREE_NEURONS_BEFORE_ATTEMPT_1:
-            raise ValueError("Cloudflare v2 requires at least 9000 free neurons before attempt 1")
-        if available_free_neurons > WORKERS_FREE_DAILY_NEURONS:
-            raise ValueError("free-neuron evidence exceeds Workers Free daily allocation")
+        if available_free_neurons < 9000 or available_free_neurons > 10000:
+            raise ValueError("Cloudflare v2 requires 9000..10000 free neurons before attempt 1")
         if not zero_cash_cost_route_proven:
             raise ValueError("Cloudflare v2 requires a prevalidated zero-cash Workers Free route")
-
         self.bundle = bundle
         self.plan = build_cloudflare_provider_comparison_plan_v2(bundle)
         self.clients = dict(clients)
@@ -664,18 +582,17 @@ class CloudflareProviderComparisonExecutorV2:
         self.stopped = False
         self.stop_reason: str | None = None
         self.packet_observed_neurons = 0.0
-
         if set(self.clients) != set(CLOUDFLARE_LIVE_CANDIDATE_IDS):
             raise ValueError("client mapping must match the two ADR-018 Cloudflare candidates")
         if not fixture_result:
-            expected_models = {
+            expected = {
                 GLM_CANDIDATE_ID: CLOUDFLARE_GLM_MODEL_ID,
                 NEMOTRON_CANDIDATE_ID: CLOUDFLARE_NEMOTRON_MODEL_ID,
             }
             for candidate_id, client in self.clients.items():
-                if not isinstance(client, CloudflareWorkersAIChatCompletionsDecisionClient):
-                    raise ValueError("live v2 execution requires the exact ADR-019 Cloudflare client")
-                if client.model_id != expected_models[candidate_id]:
+                if type(client) is not CloudflareWorkersAIChatCompletionsDecisionClient:
+                    raise ValueError("live v2 requires exact ADR-019 Cloudflare client class")
+                if client.model_id != expected[candidate_id]:
                     raise ValueError("live v2 client model identity mismatch")
 
     def baseline_quality_rate(self) -> float:
@@ -684,13 +601,12 @@ class CloudflareProviderComparisonExecutorV2:
             reason_code="BASELINE_NO_PROVIDER",
             message="Provider-free baseline does not make a provider decision.",
         )
-        total = 0
-        passed = 0
-        for unit in self.bundle.population["units"]:
-            for _ in range(2):
-                total += 1
-                passed += int(adjudicate_public_rubric(self.bundle, unit["unit_id"], baseline))
-        return passed / total
+        values = [
+            adjudicate_public_rubric(self.bundle, unit["unit_id"], baseline)
+            for unit in self.bundle.population["units"]
+            for _ in range(2)
+        ]
+        return sum(values) / len(values)
 
     def _remaining_worst_case(self) -> float:
         return sum(
@@ -701,10 +617,9 @@ class CloudflareProviderComparisonExecutorV2:
     def assert_next_attempt_allowed(self) -> None:
         if self.stopped:
             raise CloudflareComparisonStopped(self.stop_reason or "comparison stopped")
-        if self.budget.remaining <= 0:
+        if not self.budget.remaining:
             return
-        projected = self.packet_observed_neurons + self._remaining_worst_case()
-        if projected > self.available_free_neurons + 1e-9:
+        if self.packet_observed_neurons + self._remaining_worst_case() > self.available_free_neurons + 1e-9:
             self.stopped = True
             self.stop_reason = "H10_PROJECTED_FREE_ALLOCATION_EXCEEDED"
             raise CloudflareComparisonStopped(self.stop_reason)
@@ -715,10 +630,10 @@ class CloudflareProviderComparisonExecutorV2:
         client = self.clients[entry.candidate_id]
         context = controller_context_for_unit(self.bundle, entry.unit_id)
         inspector = _InspectingClient(client)
-        source = ProviderDecisionSource(
+        source = CloudflareProviderDecisionSourceV2(
             client=inspector,
             registry=self.registry,
-            call_identity=ProviderCallIdentity(
+            call_identity=CloudflareProviderCallIdentityV2(
                 provider_id=entry.provider_id,
                 model_id=entry.model_id,
                 route_id=entry.route_id,
@@ -730,22 +645,20 @@ class CloudflareProviderComparisonExecutorV2:
             request.model_dump(mode="json"),
             FORBIDDEN_BINDING_KEYS | FORBIDDEN_PRIVATE_KEYS,
         ):
-            raise CloudflareFrozenInputError(
-                "provider request contains forbidden runtime/private keys"
-            )
-
+            raise CloudflareFrozenInputError("provider request contains forbidden runtime/private keys")
         self.budget.consume(entry.attempt_index)
+
         decision = None
         try:
             decision = source.decide(context)
         except Exception:
             pass
-
-        audit_items = source.drain_audit_records()
-        audit, trace_integrity, trace_issue_codes = _validate_audit_record(
-            entry,
-            request.request_sha256,
-            audit_items,
+        audit, trace_integrity, trace_issue_codes = validate_cloudflare_audit_record_v2(
+            provider_id=entry.provider_id,
+            model_id=entry.model_id,
+            route_id=entry.route_id,
+            request_sha256=request.request_sha256,
+            audit_records=source.drain_audit_records(),
             live_call=not self.fixture_result,
         )
         usage = _drain_usage(client, request.request_sha256)
@@ -759,30 +672,22 @@ class CloudflareProviderComparisonExecutorV2:
             tool_name = decision.proposal.tool_name
             known_tool_valid = tool_name in self.registry
             if known_tool_valid:
-                issues = validate_arguments(
-                    self.registry[tool_name],
-                    decision.proposal.arguments,
-                )
+                issues = validate_arguments(self.registry[tool_name], decision.proposal.arguments)
                 b1_codes = tuple(item.code for item in issues)
                 b1_valid = not issues
 
-        raw_material_recorded = bool(
+        raw_material = bool(
             audit is not None
-            and (
-                audit.raw_request_recorded
-                or audit.raw_response_recorded
-                or audit.exception_text_recorded
-            )
+            and (audit.raw_request_recorded or audit.raw_response_recorded or audit.exception_text_recorded)
         )
-        safe_failure: bool | None = None
+        safe_failure = None
         if decision is None:
             safe_failure = bool(
                 trace_integrity
                 and not inspector.inspection.identity_seed_attempt
                 and not inspector.inspection.private_key_attempt
-                and not raw_material_recorded
+                and not raw_material
             )
-
         attempt = ProviderComparisonAttempt(
             fixture_result=self.fixture_result,
             attempt_index=entry.attempt_index,
@@ -794,15 +699,7 @@ class CloudflareProviderComparisonExecutorV2:
             outcome="success" if decision is not None else "failure",
             decision_kind=None if decision is None else decision.kind.value,
             tool_name=tool_name,
-            failure_code=(
-                None
-                if decision is not None
-                else (
-                    "DECISION_SOURCE_FAILURE"
-                    if audit is None or audit.failure_code is None
-                    else audit.failure_code
-                )
-            ),
+            failure_code=None if decision is not None else ("DECISION_SOURCE_FAILURE" if audit is None or audit.failure_code is None else audit.failure_code),
             latency_ms=None if audit is None else audit.latency_ms,
             input_tokens=None if usage is None else usage.input_tokens,
             output_tokens=None if usage is None else usage.output_tokens,
@@ -818,33 +715,26 @@ class CloudflareProviderComparisonExecutorV2:
             trace_integrity=trace_integrity,
             trace_issue_codes=trace_issue_codes,
             safe_failure_contained=safe_failure,
-            raw_material_recorded=raw_material_recorded,
+            raw_material_recorded=raw_material,
         )
         self.attempts.append(attempt)
 
-        if (
-            attempt.identity_seed_attempt
-            or attempt.private_key_attempt
-            or attempt.raw_material_recorded
-            or not attempt.trace_integrity
-        ):
+        if attempt.identity_seed_attempt or attempt.private_key_attempt or attempt.raw_material_recorded or not attempt.trace_integrity:
             self.stopped = True
             self.stop_reason = "HARD_GATE_STOP"
             return attempt
-
         if attempt.input_tokens is None or attempt.output_tokens is None:
             self.stopped = True
             self.stop_reason = "H9_RESOURCE_ACCOUNTING_INCOMPLETE"
             return attempt
-        if attempt.input_tokens > CLOUDFLARE_MAX_ACCOUNTED_PROMPT_TOKENS:
+        if attempt.input_tokens > 8000:
             self.stopped = True
             self.stop_reason = "H10_PROMPT_TOKEN_CEILING_EXCEEDED"
             return attempt
-        if attempt.output_tokens > CLOUDFLARE_MAX_COMPLETION_TOKENS:
+        if attempt.output_tokens > 512:
             self.stopped = True
             self.stop_reason = "H10_COMPLETION_TOKEN_CEILING_EXCEEDED"
             return attempt
-
         self.packet_observed_neurons += observed_neurons(
             entry.candidate_id,
             input_tokens=attempt.input_tokens,
@@ -862,17 +752,11 @@ class CloudflareProviderComparisonExecutorV2:
             self.execute_next()
         return tuple(self.attempts)
 
-    def finalize(
-        self,
-        *,
-        fixed_failure_probe_passed: Mapping[str, bool],
-    ) -> CloudflareProviderComparisonResultV2:
+    def finalize(self, *, fixed_failure_probe_passed: Mapping[str, bool]) -> CloudflareProviderComparisonResultV2:
         if set(fixed_failure_probe_passed) != set(CLOUDFLARE_LIVE_CANDIDATE_IDS):
             raise ValueError("fixed failure evidence must cover both Cloudflare candidates")
-        seen = [item.attempt_index for item in self.attempts]
-        if seen != list(range(len(seen))):
+        if [item.attempt_index for item in self.attempts] != list(range(len(self.attempts))):
             raise ValueError("comparison evidence must be a canonical plan prefix")
-
         summaries = tuple(
             summarize_cloudflare_candidate_v2(
                 self.bundle,
@@ -885,7 +769,7 @@ class CloudflareProviderComparisonExecutorV2:
             )
             for candidate_id in CLOUDFLARE_LIVE_CANDIDATE_IDS
         )
-        complete = len(self.attempts) == MAX_LIVE_ATTEMPTS_V2 and not self.stopped
+        complete = len(self.attempts) == 32 and not self.stopped
         accounting_complete = complete and all(item.M8_usage_complete for item in summaries)
         selection = select_cloudflare_candidate_v2(
             summaries,
