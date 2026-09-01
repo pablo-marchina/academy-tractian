@@ -3,11 +3,11 @@
   "date": "2026-09-01",
   "issue": 77,
   "pull_request": 78,
-  "status": "PASS_PROVIDER_FREE_PROTOCOL_CANDIDATE",
+  "status": "PASS_PROVIDER_FREE_PROTOCOL_FREEZE",
   "decision_state": "PROTOCOL_VALIDATED_REAL_EVIDENCE_PENDING_ATTEMPT_1_NOT_AUTHORIZED",
-  "validated_head": "0d61e7908b5e9511e851bcd2c8e1e02e2299a682",
+  "validated_head": "ab9767f66bb100e474623eaee81bd86f08895357",
   "workflow_run": {
-    "id": 33512426906,
+    "id": 33513108347,
     "name": "cloudflare-live-authorization-v1-provider-free",
     "conclusion": "success"
   },
@@ -17,7 +17,7 @@
     "scripts/research/validate_cloudflare_live_authorization_protocol_v1.py": "0b809c0160cb97ab4ff2c639126913b5d6362aa0",
     "scripts/research/issue_cloudflare_live_authorization_receipt_v1.py": "56adc69a21be4d54cb8342c1411e6156cee8ae7a",
     "tests/test_cloudflare_live_authorization_v1.py": "33dc736f6d40a50bbf1276c5567e3e63df8a1def",
-    ".github/workflows/cloudflare-live-authorization-v1-provider-free.yml": "bfcec3a2b041175ec01ea505640b95a0e8fdf33f"
+    ".github/workflows/cloudflare-live-authorization-v1-provider-free.yml": "f0a952715be74267046230753011c9f44afe2086"
   },
   "upstream_pins": {
     "adr_018_blob": "e075ab4ff21904b9412769496dd2680c049cdaa8",
@@ -34,7 +34,8 @@
     "production_runtime_workflow": "success",
     "final_handoff_acceptance_audit": "success",
     "final_delivery_provider_free_reproduction": "success",
-    "all_workflows_on_validated_head": "14/14 success"
+    "provider_model_comparison_design_v2": "success",
+    "all_workflows_on_validated_head": "15/15 success"
   },
   "protocol_guarantees_validated": {
     "workers_free_required": true,
