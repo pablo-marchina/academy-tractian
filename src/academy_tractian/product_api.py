@@ -17,10 +17,7 @@ from .observability import safe_run_id
 from .observability_api import create_observability_app
 from .production_controls import ProductionControlState
 from .production_telemetry import ProductionTelemetry
-from .realtime_observability import (
-    DuckDBObservabilityEventSink,
-    SafeObservabilityEventSink,
-)
+from .realtime_observability import DuckDBObservabilityEventSink, SafeObservabilityEventSink
 from .realtime_runtime import PreparedRealtimeRun, RealtimeProductionRuntime
 from .runtime import ProductionRequest
 
@@ -54,9 +51,7 @@ class RuntimeContextProvider(Protocol):
 
 
 class RealtimeRuntimeFactory(Protocol):
-    def __call__(
-        self, sink: SafeObservabilityEventSink
-    ) -> RealtimeProductionRuntime: ...
+    def __call__(self, sink: SafeObservabilityEventSink) -> RealtimeProductionRuntime: ...
 
 
 class RunExecutionRegistry:
@@ -146,13 +141,8 @@ def create_product_app(
         raise ValueError("heartbeat_interval_ms must be within [250, 10000]")
 
     created_perf = perf_counter()
-    executor = ThreadPoolExecutor(
-        max_workers=max_workers,
-        thread_name_prefix="academy-tractian-run",
-    )
-    telemetry = ProductionTelemetry(
-        heartbeat_stale_after_ms=max(1000, heartbeat_interval_ms * 3)
-    )
+    executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="academy-tractian-run")
+    telemetry = ProductionTelemetry(heartbeat_stale_after_ms=max(1000, heartbeat_interval_ms * 3))
     controls = ProductionControlState(provider_calls_enabled=provider_calls_enabled)
     registry = RunExecutionRegistry(max_workers=max_workers)
 
@@ -165,9 +155,7 @@ def create_product_app(
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
-        telemetry.mark_started(
-            startup_readiness_ms=(perf_counter() - created_perf) * 1000.0
-        )
+        telemetry.mark_started(startup_readiness_ms=(perf_counter() - created_perf) * 1000.0)
 
         async def heartbeat_loop() -> None:
             while True:
@@ -182,8 +170,6 @@ def create_product_app(
             with suppress(asyncio.CancelledError):
                 await heartbeat_task
             telemetry.mark_stopped()
-            # Graceful product shutdown waits for already accepted work and forbids silently
-            # abandoning a claimed one-shot run at process teardown.
             executor.shutdown(wait=True, cancel_futures=False)
 
     try:
@@ -206,15 +192,26 @@ def create_product_app(
 
     def execute_prepared(run_id: str, prepared: PreparedRealtimeRun) -> None:
         registry.running(run_id)
+        telemetry.runtime_execution_started(run_id=run_id)
         try:
             trace = prepared.execute()
-            # Evaluator enters only after the runtime has produced a terminal trace.
             report = ProductionEvaluator().evaluate(trace)
-            # Re-persisting the completed safe projection is idempotent and attaches the
-            # post-runtime safe evaluation without exposing evaluator-private material.
             store.persist_trace(trace, evaluation=report)
+            safe_run = store.get_run(run_id)
+            telemetry.runtime_request_finished(
+                run_id=run_id,
+                outcome="completed",
+                terminal_decision=None if safe_run is None else safe_run.get("terminal_decision"),
+                response_mode=None if safe_run is None else safe_run.get("terminal_response_mode"),
+            )
         except Exception:
             registry.failed(run_id)
+            telemetry.runtime_request_finished(
+                run_id=run_id,
+                outcome="failed",
+                terminal_decision=None,
+                response_mode=None,
+            )
             return
         registry.completed(run_id)
 
@@ -267,8 +264,22 @@ def create_product_app(
                 detail="run_start_not_persisted",
             )
 
+        telemetry.runtime_request_started(run_id=run_id)
         registry.accepted(run_id)
-        future = executor.submit(execute_prepared, run_id, prepared)
+        try:
+            future = executor.submit(execute_prepared, run_id, prepared)
+        except Exception as exc:
+            registry.failed(run_id)
+            telemetry.runtime_request_finished(
+                run_id=run_id,
+                outcome="failed",
+                terminal_decision=None,
+                response_mode=None,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="run_dispatch_failed",
+            ) from exc
         registry.bind_future(run_id, future)
 
         return RunAccepted(
