@@ -49,4 +49,5 @@ jobs:
           src/academy_tractian/realtime_runtime.py
           src/academy_tractian/product_api.py
           src/academy_tractian/production_actions_v2.py
+          src/academy_tractian/action_evaluation.py
           src/academy_tractian/action_product_api.py
