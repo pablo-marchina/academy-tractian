@@ -1,3 +1,4 @@
+import type { ActionExecutionAccepted, PendingActionSafe } from "./actionTypes";
 import type {
   AnalyticsQuerySpec,
   ArchitectureManifest,
@@ -87,6 +88,21 @@ export function fetchExecution(executionPath: string): Promise<ExecutionStateRes
 
 export function fetchEvaluation(runId: string): Promise<ItemsResponse<SafeEvaluationCheck>> {
   return requestJson<ItemsResponse<SafeEvaluationCheck>>(`/api/runs/${encodeURIComponent(runId)}/evaluation`);
+}
+
+export function fetchRunActions(runId: string): Promise<ItemsResponse<PendingActionSafe>> {
+  return requestJson<ItemsResponse<PendingActionSafe>>(`/api/runs/${encodeURIComponent(runId)}/actions`);
+}
+
+export function fetchAction(actionId: string): Promise<PendingActionSafe> {
+  return requestJson<PendingActionSafe>(`/api/actions/${encodeURIComponent(actionId)}`);
+}
+
+export function confirmAction(actionId: string): Promise<ActionExecutionAccepted> {
+  return requestJson<ActionExecutionAccepted>(`/api/actions/${encodeURIComponent(actionId)}/confirm`, {
+    method: "POST",
+    body: JSON.stringify({ confirm: true }),
+  });
 }
 
 export function fetchArchitecture(): Promise<ArchitectureManifest> {
