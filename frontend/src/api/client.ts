@@ -1,13 +1,23 @@
 import type {
+  AnalyticsQuerySpec,
   ArchitectureManifest,
+  DynamicAnalyticsResult,
+  DynamicAnalyticsSchema,
+  EvaluationMetrics,
   ExecutionStateResponse,
   ItemsResponse,
+  OutputLineage,
+  PoliciesMetrics,
+  ProductionHealth,
+  ProviderExperimentRegistry,
   RunAccepted,
   SafeEvaluationCheck,
   SafeEvent,
   SafeEvidenceRef,
   SafeRun,
   ServiceHealth,
+  ToolsMetrics,
+  OverviewMetrics,
 } from "./types";
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
@@ -24,11 +34,9 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     let detail = `${response.status} ${response.statusText}`;
     try {
       const body = (await response.json()) as { detail?: unknown };
-      if (typeof body.detail === "string") {
-        detail = body.detail;
-      }
+      if (typeof body.detail === "string") detail = body.detail;
     } catch {
-      // Keep the status-only public error when the server does not expose JSON detail.
+      // Keep status-only public error when JSON detail is unavailable.
     }
     throw new Error(detail);
   }
@@ -56,15 +64,15 @@ export function fetchRuns(limit = 100): Promise<ItemsResponse<SafeRun>> {
 }
 
 export function fetchRunEvents(runId: string): Promise<ItemsResponse<SafeEvent>> {
-  return requestJson<ItemsResponse<SafeEvent>>(
-    `/api/runs/${encodeURIComponent(runId)}/events`,
-  );
+  return requestJson<ItemsResponse<SafeEvent>>(`/api/runs/${encodeURIComponent(runId)}/events`);
 }
 
 export function fetchEvidence(runId: string): Promise<ItemsResponse<SafeEvidenceRef>> {
-  return requestJson<ItemsResponse<SafeEvidenceRef>>(
-    `/api/runs/${encodeURIComponent(runId)}/evidence`,
-  );
+  return requestJson<ItemsResponse<SafeEvidenceRef>>(`/api/runs/${encodeURIComponent(runId)}/evidence`);
+}
+
+export function fetchLineage(runId: string): Promise<OutputLineage> {
+  return requestJson<OutputLineage>(`/api/runs/${encodeURIComponent(runId)}/lineage`);
 }
 
 export function fetchExecution(executionPath: string): Promise<ExecutionStateResponse> {
@@ -72,9 +80,7 @@ export function fetchExecution(executionPath: string): Promise<ExecutionStateRes
 }
 
 export function fetchEvaluation(runId: string): Promise<ItemsResponse<SafeEvaluationCheck>> {
-  return requestJson<ItemsResponse<SafeEvaluationCheck>>(
-    `/api/runs/${encodeURIComponent(runId)}/evaluation`,
-  );
+  return requestJson<ItemsResponse<SafeEvaluationCheck>>(`/api/runs/${encodeURIComponent(runId)}/evaluation`);
 }
 
 export function fetchArchitecture(): Promise<ArchitectureManifest> {
@@ -83,4 +89,39 @@ export function fetchArchitecture(): Promise<ArchitectureManifest> {
 
 export function fetchHealth(): Promise<ServiceHealth> {
   return requestJson<ServiceHealth>("/health");
+}
+
+export function fetchOverview(): Promise<OverviewMetrics> {
+  return requestJson<OverviewMetrics>("/api/overview");
+}
+
+export function fetchProductionHealth(): Promise<ProductionHealth> {
+  return requestJson<ProductionHealth>("/api/production/health");
+}
+
+export function fetchToolsMetrics(): Promise<ToolsMetrics> {
+  return requestJson<ToolsMetrics>("/api/tools/metrics");
+}
+
+export function fetchPoliciesMetrics(): Promise<PoliciesMetrics> {
+  return requestJson<PoliciesMetrics>("/api/policies/metrics");
+}
+
+export function fetchEvaluationMetrics(): Promise<EvaluationMetrics> {
+  return requestJson<EvaluationMetrics>("/api/evaluations/metrics");
+}
+
+export function fetchProviderExperiments(): Promise<ProviderExperimentRegistry> {
+  return requestJson<ProviderExperimentRegistry>("/api/providers/experiments");
+}
+
+export function fetchDynamicAnalyticsSchema(): Promise<DynamicAnalyticsSchema> {
+  return requestJson<DynamicAnalyticsSchema>("/api/query/schema");
+}
+
+export function executeAnalyticsQuery(spec: AnalyticsQuerySpec): Promise<DynamicAnalyticsResult> {
+  return requestJson<DynamicAnalyticsResult>("/api/query", {
+    method: "POST",
+    body: JSON.stringify(spec),
+  });
 }

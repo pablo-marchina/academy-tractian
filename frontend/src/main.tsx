@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles.css";
 import "./explorer.css";
+import "./operations.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
