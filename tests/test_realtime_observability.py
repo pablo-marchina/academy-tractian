@@ -13,6 +13,7 @@ from research.e2.transport import TransportResponse
 
 from academy_tractian.observability_store import ObservabilityStore
 from academy_tractian.realtime_observability import DuckDBObservabilityEventSink
+from academy_tractian.realtime_runtime import RealtimeProductionRuntime
 from academy_tractian.runtime import ProductionRequest, ProductionRuntime
 
 
@@ -79,7 +80,7 @@ def test_observable_runtime_preserves_exact_canonical_trace(tmp_path) -> None:
 
     store = ObservabilityStore(tmp_path / "live.duckdb")
     observed_transport = FakeTransport()
-    runtime = ProductionRuntime(
+    runtime = RealtimeProductionRuntime(
         decision_source=_source(),
         transport=observed_transport,
         observability_sink=DuckDBObservabilityEventSink(store),
@@ -88,10 +89,13 @@ def test_observable_runtime_preserves_exact_canonical_trace(tmp_path) -> None:
 
     assert observed.model_dump(mode="json") == baseline.model_dump(mode="json")
     assert observed_transport.calls == baseline_transport.calls
-    assert runtime.observability_publisher is not None
+    assert runtime.config_hash == ProductionRuntime(
+        decision_source=_source(), transport=FakeTransport()
+    ).config_hash
     assert runtime.observability_publisher.failure_count == 0
     assert runtime.observability_publisher.published_count == len(observed.events)
 
+    assert runtime.observability_publisher.last_event_id is not None
     safe_run_id = runtime.observability_publisher.last_event_id.rsplit(":", 1)[0]
     persisted_run = store.get_run(safe_run_id)
     persisted_events = store.get_events(safe_run_id)
@@ -123,7 +127,7 @@ def test_sink_failure_cannot_change_runtime_trace_or_tool_execution() -> None:
     ).run(_request())
 
     observed_transport = FakeTransport()
-    runtime = ProductionRuntime(
+    runtime = RealtimeProductionRuntime(
         decision_source=_source(),
         transport=observed_transport,
         observability_sink=ExplodingSink(),
@@ -132,7 +136,6 @@ def test_sink_failure_cannot_change_runtime_trace_or_tool_execution() -> None:
 
     assert observed.model_dump(mode="json") == baseline.model_dump(mode="json")
     assert observed_transport.calls == baseline_transport.calls
-    assert runtime.observability_publisher is not None
     assert runtime.observability_publisher.published_count == 0
     assert runtime.observability_publisher.failure_count == len(observed.events)
 
@@ -155,7 +158,7 @@ class InspectingSink:
 def test_events_are_persisted_during_execution_not_only_after_finish(tmp_path) -> None:
     store = ObservabilityStore(tmp_path / "incremental.duckdb")
     sink = InspectingSink(store)
-    runtime = ProductionRuntime(
+    runtime = RealtimeProductionRuntime(
         decision_source=_source(),
         transport=FakeTransport(),
         observability_sink=sink,
