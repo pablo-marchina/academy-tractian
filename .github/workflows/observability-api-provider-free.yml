@@ -33,3 +33,4 @@ jobs:
           src/academy_tractian/observability_store.py
           src/academy_tractian/observability_api.py
           src/academy_tractian/realtime_observability.py
+          src/academy_tractian/realtime_runtime.py
