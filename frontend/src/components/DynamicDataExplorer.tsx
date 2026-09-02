@@ -7,15 +7,21 @@ import { dynamicOption } from "../state/analyticsOptions";
 import { EChart } from "./EChart";
 
 function parseFilterValue(operator: AnalyticsFilter["operator"], raw: string): AnalyticsFilter["value"] {
-  const parseOne = (value: string): string | number | boolean => {
-    const trimmed = value.trim();
-    if (trimmed === "true") return true;
-    if (trimmed === "false") return false;
-    if (trimmed !== "" && Number.isFinite(Number(trimmed))) return Number(trimmed);
-    return trimmed;
-  };
-  if (operator === "in") return raw.split(",").map(parseOne);
-  return parseOne(raw);
+  const trimmed = raw.trim();
+  if (operator === "in") {
+    const values = raw.split(",").map((item) => item.trim());
+    if (values.every((value) => value === "true" || value === "false")) {
+      return values.map((value) => value === "true");
+    }
+    if (values.every((value) => value !== "" && Number.isFinite(Number(value)))) {
+      return values.map(Number);
+    }
+    return values;
+  }
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+  if (trimmed !== "" && Number.isFinite(Number(trimmed))) return Number(trimmed);
+  return trimmed;
 }
 
 function TableResult({ rows }: { rows: Record<string, string | number | boolean | null>[] }) {
@@ -89,7 +95,7 @@ export function DynamicDataExplorer() {
             <label>Dataset<select value={dataset} onChange={(event) => resetForDataset(event.target.value as AnalyticsQuerySpec["dataset"])}>{Object.keys(schemaQuery.data!.datasets).map((item) => <option key={item}>{item}</option>)}</select></label>
             <label>Dimension 1<select value={dimensionA} onChange={(event) => setDimensionA(event.target.value)}><option value="">none</option>{datasetSchema.dimensions.map((item) => <option key={item}>{item}</option>)}</select></label>
             <label>Dimension 2<select value={dimensionB} disabled={!dimensionA} onChange={(event) => setDimensionB(event.target.value)}><option value="">none</option>{datasetSchema.dimensions.filter((item) => item !== dimensionA).map((item) => <option key={item}>{item}</option>)}</select></label>
-            <label>Measure<select value={measure} onChange={(event) => { setMeasure(event.target.value); setChartType(event.target.value === "latency_ms_distribution" ? "histogram" : "table"); }} >{datasetSchema.measures.map((item) => <option key={item}>{item}</option>)}</select></label>
+            <label>Measure<select value={measure} onChange={(event) => { setMeasure(event.target.value); setChartType(event.target.value === "latency_ms_distribution" ? "histogram" : "table"); }}>{datasetSchema.measures.map((item) => <option key={item}>{item}</option>)}</select></label>
             <label>Chart<select value={validCharts.includes(chartType) ? chartType : validCharts[0]} onChange={(event) => setChartType(event.target.value as ChartType)}>{validCharts.map((item) => <option key={item}>{item}</option>)}</select></label>
           </div>
 
