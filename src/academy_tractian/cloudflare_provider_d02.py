@@ -7,7 +7,7 @@ from typing import Any, Callable, Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from research.e2.controller import ControllerDecisionKind, DecisionSourceAuditRecord
+from research.e2.controller import ControllerDecisionKind
 from research.e2.models import ToolSpec
 
 from .cloudflare_provider_client import (
@@ -27,7 +27,7 @@ from .cloudflare_provider_comparison_v2 import (
 from .cloudflare_provider_provenance_v2 import (
     CloudflareProviderCallIdentityV2,
     CloudflareProviderDecisionSourceV2,
-    CloudflareProviderModelCallRecordV2,
+    validate_cloudflare_audit_record_v2,
 )
 from .decision_source import (
     ProviderCallFailureCode,
@@ -40,7 +40,7 @@ from .provider_clients import ProviderHttpClientError, ProviderHttpRequest, Prov
 
 CLOUDFLARE_D02_PROTOCOL_VERSION = "cloudflare-d02-completion-budget-protocol-v1"
 CLOUDFLARE_D02_CLIENT_VERSION = "cloudflare-provider-client-d02-v1"
-CLOUDFLARE_D02_PROVENANCE_VERSION = "cloudflare-provider-provenance-d02-v1"
+CLOUDFLARE_D02_DIAGNOSTIC_SCHEMA_VERSION = "cloudflare-provider-failure-diagnostic-d02-v1"
 CLOUDFLARE_D02_EXECUTOR_VERSION = "cloudflare-d02-comparison-executor-v1"
 CLOUDFLARE_D02_PLAN_SCHEMA_VERSION = "cloudflare-d02-comparison-plan-v1"
 CLOUDFLARE_D02_RESULT_SCHEMA_VERSION = "cloudflare-d02-comparison-result-v1"
@@ -115,11 +115,7 @@ assert abs(worst_case_neurons_per_candidate_d02(NEMOTRON_CANDIDATE_ID) - 8052.42
 class CloudflareWorkersAIChatCompletionsDecisionClientD02(
     CloudflareWorkersAIChatCompletionsDecisionClient
 ):
-    """D01 client semantics with only the prospective D02 completion cap changed.
-
-    The client keeps one sanitized failure subtype in memory for the immediately associated
-    provenance record. It never stores response text, request text, credentials, or exception text.
-    """
+    """D01 request semantics with only the prospective D02 completion cap changed."""
 
     client_version = CLOUDFLARE_D02_CLIENT_VERSION
 
@@ -166,31 +162,21 @@ class CloudflareWorkersAIChatCompletionsDecisionClientD02(
             raise
 
 
-class CloudflareProviderModelCallRecordD02(CloudflareProviderModelCallRecordV2):
-    provenance_version: Literal["cloudflare-provider-provenance-d02-v1"] = (
-        CLOUDFLARE_D02_PROVENANCE_VERSION
-    )
-    failure_subtype: str | None = Field(
-        default=None,
-        pattern=r"^[A-Z][A-Z0-9_]{0,95}$",
-    )
+class CloudflareProviderFailureDiagnosticD02(_FrozenModel):
+    """Ledger-only diagnostic deliberately excluded from canonical RunTrace metadata."""
 
-    @model_validator(mode="after")
-    def validate_d02_failure_subtype(self) -> "CloudflareProviderModelCallRecordD02":
-        if self.outcome == "success":
-            if self.failure_subtype is not None:
-                raise ValueError("successful D02 call cannot contain failure_subtype")
-            return self
-        if self.failure_code == "CLIENT_FAILURE":
-            if self.failure_subtype is None:
-                raise ValueError("D02 CLIENT_FAILURE requires sanitized failure_subtype")
-        elif self.failure_subtype is not None:
-            raise ValueError("D02 failure_subtype is only valid for CLIENT_FAILURE")
-        return self
+    schema_version: Literal["cloudflare-provider-failure-diagnostic-d02-v1"] = (
+        CLOUDFLARE_D02_DIAGNOSTIC_SCHEMA_VERSION
+    )
+    call_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    failure_subtype: str = Field(pattern=r"^[A-Z][A-Z0-9_]{0,95}$")
+    raw_request_recorded: Literal[False] = False
+    raw_response_recorded: Literal[False] = False
+    exception_text_recorded: Literal[False] = False
 
 
 class CloudflareProviderDecisionSourceD02(CloudflareProviderDecisionSourceV2):
-    """D02 Cloudflare provenance source preserving a sanitized client-error subtype."""
+    """Preserves the existing trace contract and exposes D02 diagnostics separately."""
 
     def __init__(
         self,
@@ -208,6 +194,12 @@ class CloudflareProviderDecisionSourceD02(CloudflareProviderDecisionSourceV2):
             call_identity=call_identity,
             clock_ns=clock_ns,
         )
+        self._pending_failure_diagnostics: list[CloudflareProviderFailureDiagnosticD02] = []
+
+    def drain_failure_diagnostics(self) -> tuple[CloudflareProviderFailureDiagnosticD02, ...]:
+        records = tuple(self._pending_failure_diagnostics)
+        self._pending_failure_diagnostics.clear()
+        return records
 
     def _record_call(
         self,
@@ -220,8 +212,18 @@ class CloudflareProviderDecisionSourceD02(CloudflareProviderDecisionSourceV2):
         started_ns: int,
         finished_ns: int,
     ) -> None:
+        super()._record_call(
+            request=request,
+            response_sha256=response_sha256,
+            outcome=outcome,
+            decision_kind=decision_kind,
+            failure_code=failure_code,
+            started_ns=started_ns,
+            finished_ns=finished_ns,
+        )
+        if outcome != "failure" or failure_code != "CLIENT_FAILURE":
+            return
         identity = self.cloudflare_call_identity
-        elapsed_ns = max(0, finished_ns - started_ns)
         call_id = _canonical_sha256(
             _model_call_id_payload(
                 provider_id=identity.provider_id,
@@ -233,26 +235,13 @@ class CloudflareProviderDecisionSourceD02(CloudflareProviderDecisionSourceV2):
                 tool_call_count=request.tool_call_count,
             )
         )
-        failure_subtype = None
-        if outcome == "failure" and failure_code == "CLIENT_FAILURE":
-            failure_subtype = self.client.last_failure_subtype
-        record = CloudflareProviderModelCallRecordD02(
-            call_id=call_id,
-            provider_id=identity.provider_id,
-            model_id=identity.model_id,
-            route_id=identity.route_id,
-            live_call=identity.live_call,
-            request_sha256=request.request_sha256,
-            response_sha256=response_sha256,
-            turn_index=request.turn_index,
-            tool_call_count=request.tool_call_count,
-            outcome=outcome,
-            decision_kind=decision_kind,
-            failure_code=failure_code,
-            failure_subtype=failure_subtype,
-            latency_ms=elapsed_ns // 1_000_000,
+        subtype = self.client.last_failure_subtype or "UNCLASSIFIED_CLIENT_FAILURE"
+        self._pending_failure_diagnostics.append(
+            CloudflareProviderFailureDiagnosticD02(
+                call_id=call_id,
+                failure_subtype=subtype,
+            )
         )
-        self._pending_audit_records.append(record.to_audit_record())
 
 
 def validate_cloudflare_audit_record_d02(
@@ -263,37 +252,28 @@ def validate_cloudflare_audit_record_d02(
     request_sha256: str,
     audit_records: tuple[object, ...],
     live_call: bool,
-) -> tuple[CloudflareProviderModelCallRecordD02 | None, bool, tuple[str, ...]]:
-    if len(audit_records) != 1:
-        return None, False, ("AUDIT_RECORD_COUNT",)
-    item = audit_records[0]
-    call_id = getattr(item, "call_id", None)
-    metadata = getattr(item, "metadata", None)
-    if call_id is None or metadata is None:
-        return None, False, ("AUDIT_RECORD_INVALID",)
-    try:
-        record = CloudflareProviderModelCallRecordD02.model_validate(
-            {"call_id": call_id, **dict(metadata)}
-        )
-    except Exception:
-        return None, False, ("AUDIT_RECORD_INVALID",)
+):
+    return validate_cloudflare_audit_record_v2(
+        provider_id=provider_id,
+        model_id=model_id,
+        route_id=route_id,
+        request_sha256=request_sha256,
+        audit_records=audit_records,
+        live_call=live_call,
+    )
 
+
+def validate_cloudflare_failure_diagnostic_d02(
+    *,
+    diagnostic_records: tuple[CloudflareProviderFailureDiagnosticD02, ...],
+    expected_call_id: str,
+) -> tuple[CloudflareProviderFailureDiagnosticD02 | None, bool, tuple[str, ...]]:
+    if len(diagnostic_records) != 1:
+        return None, False, ("FAILURE_DIAGNOSTIC_COUNT",)
+    record = diagnostic_records[0]
     issues: list[str] = []
-    if (
-        record.provider_id != provider_id
-        or record.model_id != model_id
-        or record.route_id != route_id
-        or record.live_call is not live_call
-    ):
-        issues.append("ROUTE_OR_MODEL_IDENTITY")
-    if record.request_sha256 != request_sha256:
-        issues.append("REQUEST_HASH_MISMATCH")
-    if (
-        record.adapter_client_invocations != 1
-        or record.adapter_retry_count != 0
-        or record.adapter_fallback_used is not False
-    ):
-        issues.append("HIDDEN_RETRY_OR_FALLBACK")
+    if record.call_id != expected_call_id:
+        issues.append("FAILURE_DIAGNOSTIC_CALL_ID_MISMATCH")
     if (
         record.raw_request_recorded
         or record.raw_response_recorded
