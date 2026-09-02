@@ -152,6 +152,60 @@ class ObservabilityStore:
         finally:
             connection.close()
 
+    @staticmethod
+    def _run_values(run: SafeRun) -> list[Any]:
+        return [
+            run.run_id,
+            run.scenario_id,
+            run.config_hash,
+            run.event_count,
+            run.model_calls,
+            run.tool_proposals,
+            run.tool_calls,
+            run.policy_blocks,
+            run.errors,
+            run.terminal_decision,
+            run.terminal_response_mode,
+            run.terminal_reason_code,
+            run.terminal_message,
+            run.completed,
+        ]
+
+    @staticmethod
+    def _event_values(event: SafeEvent) -> list[Any]:
+        return [
+            event.event_id,
+            event.run_id,
+            event.sequence,
+            event.event_type,
+            event.origin,
+            event.timestamp,
+            event.tool_name,
+            event.decision_kind,
+            event.provider_id,
+            event.model_id,
+            event.route_id,
+            event.live_call,
+            event.outcome,
+            event.failure_code,
+            event.latency_ms,
+            event.turn_index,
+            event.tool_call_count,
+            ",".join(event.argument_names),
+            event.method,
+            event.path_template,
+            event.tool_kind,
+            event.status_code,
+            event.policy_stage,
+            event.policy_allowed,
+            event.policy_contained,
+            event.policy_violation,
+            event.evidence_id,
+            event.reason_code,
+            event.response_mode,
+            event.message,
+        ]
+
     def persist_trace(
         self,
         trace: RunTrace,
@@ -189,29 +243,10 @@ class ObservabilityStore:
             connection.execute("DELETE FROM evidence WHERE run_id = ?", [run.run_id])
             connection.execute("DELETE FROM events WHERE run_id = ?", [run.run_id])
             connection.execute("DELETE FROM runs WHERE run_id = ?", [run.run_id])
-
             connection.execute(
-                """
-                INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    run.run_id,
-                    run.scenario_id,
-                    run.config_hash,
-                    run.event_count,
-                    run.model_calls,
-                    run.tool_proposals,
-                    run.tool_calls,
-                    run.policy_blocks,
-                    run.errors,
-                    run.terminal_decision,
-                    run.terminal_response_mode,
-                    run.terminal_reason_code,
-                    run.terminal_message,
-                    run.completed,
-                ],
+                "INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                self._run_values(run),
             )
-
             for event in events:
                 connection.execute(
                     """
@@ -220,40 +255,8 @@ class ObservabilityStore:
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                     )
                     """,
-                    [
-                        event.event_id,
-                        event.run_id,
-                        event.sequence,
-                        event.event_type,
-                        event.origin,
-                        event.timestamp,
-                        event.tool_name,
-                        event.decision_kind,
-                        event.provider_id,
-                        event.model_id,
-                        event.route_id,
-                        event.live_call,
-                        event.outcome,
-                        event.failure_code,
-                        event.latency_ms,
-                        event.turn_index,
-                        event.tool_call_count,
-                        ",".join(event.argument_names),
-                        event.method,
-                        event.path_template,
-                        event.tool_kind,
-                        event.status_code,
-                        event.policy_stage,
-                        event.policy_allowed,
-                        event.policy_contained,
-                        event.policy_violation,
-                        event.evidence_id,
-                        event.reason_code,
-                        event.response_mode,
-                        event.message,
-                    ],
+                    self._event_values(event),
                 )
-
             for item in evidence:
                 connection.execute(
                     "INSERT INTO evidence VALUES (?, ?, ?, ?, ?)",
@@ -265,7 +268,6 @@ class ObservabilityStore:
                         item.status_code,
                     ],
                 )
-
             if evaluation is not None:
                 for check in evaluation.checks:
                     connection.execute(
@@ -278,7 +280,6 @@ class ObservabilityStore:
                             evaluation.blocking_pass,
                         ],
                     )
-
             connection.execute("COMMIT")
         except Exception:
             connection.execute("ROLLBACK")
@@ -286,6 +287,66 @@ class ObservabilityStore:
         finally:
             connection.close()
         return run.run_id
+
+    def persist_live_update(
+        self,
+        *,
+        run: SafeRun,
+        event: SafeEvent,
+        evidence: SafeEvidenceRef | None = None,
+    ) -> bool:
+        """Persist one genuine safe event plus the current safe run summary.
+
+        `event_id` and evidence primary keys make duplicate transport/publication idempotent.
+        Returning False means the event already existed; the run summary is still refreshed.
+        """
+
+        if event.run_id != run.run_id:
+            raise ValueError("event run_id does not match SafeRun")
+        if evidence is not None and evidence.run_id != run.run_id:
+            raise ValueError("evidence run_id does not match SafeRun")
+        if evidence is not None and evidence.sequence != event.sequence:
+            raise ValueError("evidence sequence does not match SafeEvent")
+
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN TRANSACTION")
+            existed = connection.execute(
+                "SELECT 1 FROM events WHERE event_id = ?",
+                [event.event_id],
+            ).fetchone() is not None
+
+            connection.execute(
+                "INSERT OR REPLACE INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                self._run_values(run),
+            )
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO events VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+                """,
+                self._event_values(event),
+            )
+            if evidence is not None:
+                connection.execute(
+                    "INSERT OR REPLACE INTO evidence VALUES (?, ?, ?, ?, ?)",
+                    [
+                        evidence.evidence_id,
+                        evidence.run_id,
+                        evidence.sequence,
+                        evidence.tool_name,
+                        evidence.status_code,
+                    ],
+                )
+            connection.execute("COMMIT")
+            return not existed
+        except Exception:
+            connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
 
     @staticmethod
     def _rows(cursor: duckdb.DuckDBPyConnection) -> list[dict[str, Any]]:
@@ -337,7 +398,9 @@ class ObservabilityStore:
     def get_run(self, run_id: str) -> dict[str, Any] | None:
         connection = self._connect()
         try:
-            rows = self._rows(connection.execute("SELECT * FROM runs WHERE run_id = ?", [run_id]))
+            rows = self._rows(
+                connection.execute("SELECT * FROM runs WHERE run_id = ?", [run_id])
+            )
             return rows[0] if rows else None
         finally:
             connection.close()
@@ -349,6 +412,33 @@ class ObservabilityStore:
                 connection.execute(
                     "SELECT * FROM events WHERE run_id = ? ORDER BY sequence",
                     [run_id],
+                )
+            )
+        finally:
+            connection.close()
+
+    def get_events_after(
+        self,
+        run_id: str,
+        *,
+        after_sequence: int = -1,
+        limit: int = 1000,
+    ) -> list[dict[str, Any]]:
+        if after_sequence < -1:
+            raise ValueError("after_sequence must be >= -1")
+        if not 1 <= limit <= 1000:
+            raise ValueError("limit must be within [1, 1000]")
+        connection = self._connect()
+        try:
+            return self._rows(
+                connection.execute(
+                    """
+                    SELECT * FROM events
+                    WHERE run_id = ? AND sequence > ?
+                    ORDER BY sequence
+                    LIMIT ?
+                    """,
+                    [run_id, after_sequence, limit],
                 )
             )
         finally:
