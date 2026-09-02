@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from concurrent.futures import Future, ThreadPoolExecutor
+from contextlib import asynccontextmanager
 from pathlib import Path
 from threading import Lock
-from typing import Callable, Literal, Protocol
+from typing import Literal, Protocol
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request, status
@@ -108,13 +109,28 @@ def create_product_app(
     if not 1 <= max_workers <= 64:
         raise ValueError("max_workers must be within [1, 64]")
 
-    app = create_observability_app(db_path=db_path)
-    store = app.state.observability_store
-    sink = DuckDBObservabilityEventSink(store)
     executor = ThreadPoolExecutor(
         max_workers=max_workers,
         thread_name_prefix="academy-tractian-run",
     )
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        try:
+            yield
+        finally:
+            # Graceful product shutdown waits for already accepted work and forbids silently
+            # abandoning a claimed one-shot run at process teardown.
+            executor.shutdown(wait=True, cancel_futures=False)
+
+    try:
+        app = create_observability_app(db_path=db_path, lifespan=lifespan)
+    except Exception:
+        executor.shutdown(wait=False, cancel_futures=True)
+        raise
+
+    store = app.state.observability_store
+    sink = DuckDBObservabilityEventSink(store)
     registry = RunExecutionRegistry()
     app.state.product_executor = executor
     app.state.run_execution_registry = registry
@@ -192,8 +208,4 @@ def create_product_app(
             raise HTTPException(status_code=404, detail="run_execution_not_found")
         return {"run_id": run_id, "status": execution_state}
 
-    def shutdown_executor() -> None:
-        executor.shutdown(wait=True, cancel_futures=False)
-
-    app.add_event_handler("shutdown", shutdown_executor)
     return app
