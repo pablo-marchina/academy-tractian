@@ -7,7 +7,8 @@ import { dynamicOption, toolsOption } from "./analyticsOptions";
 describe("operational chart adapters", () => {
   it("maps tool API counts directly into chart series", () => {
     const metrics: ToolsMetrics = {
-      schema_version: "tools-metrics-v1",
+      schema_version: "tools-metrics-v2",
+      scope: { run_id: "run_safe_scope" },
       count: 2,
       items: [
         { tool_name: "get_asset", proposals: 3, calls: 2, results: 2, observations: 2, status_codes: { "200": 2 } },
@@ -22,10 +23,11 @@ describe("operational chart adapters", () => {
     expect(option.series[3].data).toEqual([2, 1]);
   });
 
-  it("maps one-dimensional dynamic rows without manufacturing points", () => {
+  it("maps one-dimensional scoped rows without manufacturing points", () => {
     const result: DynamicAnalyticsResult = {
-      schema_version: "dynamic-analytics-result-v1",
+      schema_version: "dynamic-analytics-result-v2",
       dataset: "events",
+      run_id: "run_safe_scope",
       dimensions: ["event_type"],
       measure: "count",
       chart_type: "bar",
@@ -44,8 +46,9 @@ describe("operational chart adapters", () => {
 
   it("uses exactly backend heatmap cells and values", () => {
     const result: DynamicAnalyticsResult = {
-      schema_version: "dynamic-analytics-result-v1",
+      schema_version: "dynamic-analytics-result-v2",
       dataset: "events",
+      run_id: null,
       dimensions: ["event_type", "origin"],
       measure: "count",
       chart_type: "heatmap",
@@ -63,8 +66,9 @@ describe("operational chart adapters", () => {
 
   it("does not create an ECharts option for table results", () => {
     const result: DynamicAnalyticsResult = {
-      schema_version: "dynamic-analytics-result-v1",
+      schema_version: "dynamic-analytics-result-v2",
       dataset: "runs",
+      run_id: null,
       dimensions: [],
       measure: "count",
       chart_type: "table",
