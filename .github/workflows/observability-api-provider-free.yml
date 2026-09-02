@@ -18,15 +18,19 @@ jobs:
           cache: pip
       - name: Install project
         run: python -m pip install -e '.[dev]'
-      - name: Safe observability store and API tests
+      - name: Safe observability and realtime contract tests
         run: >-
           python -m pytest -q
           tests/test_observability.py
           tests/test_observability_store.py
           tests/test_observability_api.py
+          tests/test_realtime_observability.py
+          tests/test_observability_sse.py
       - name: Compile production observability modules
         run: >-
           python -m py_compile
           src/academy_tractian/observability.py
           src/academy_tractian/observability_store.py
           src/academy_tractian/observability_api.py
+          src/academy_tractian/realtime_observability.py
+          src/academy_tractian/realtime_runtime.py
