@@ -11,16 +11,14 @@ import {
   fetchRunEvents,
   fetchRuns,
 } from "./api/client";
-import type { SafeEvent } from "./api/types";
+import type { RunAccepted, SafeEvent } from "./api/types";
+import { ActionControl } from "./components/ActionControl";
 import { ArchitectureExplorer } from "./components/ArchitectureExplorer";
 import { OperationsWorkspace } from "./components/OperationsWorkspace";
 import { RunExplorer } from "./components/RunExplorer";
 import { TraceGraph } from "./components/TraceGraph";
 import { useLiveRun } from "./hooks/useLiveRun";
-import {
-  deriveRunEventMetrics,
-  eventDisplayLabel,
-} from "./state/runEvents";
+import { deriveRunEventMetrics, eventDisplayLabel } from "./state/runEvents";
 
 function valueOrDash(value: string | number | boolean | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -49,15 +47,8 @@ function EventMeta({ event }: { event: SafeEvent }) {
     event.latency_ms !== null && ["latency", `${event.latency_ms} ms`],
     event.reason_code && ["reason", event.reason_code],
   ].filter(Boolean) as [string, string][];
-
   if (items.length === 0) return null;
-  return (
-    <div className="event-meta">
-      {items.map(([label, value]) => (
-        <span key={`${label}:${value}`}><b>{label}</b> {value}</span>
-      ))}
-    </div>
-  );
+  return <div className="event-meta">{items.map(([label, value]) => <span key={`${label}:${value}`}><b>{label}</b> {value}</span>)}</div>;
 }
 
 export default function App() {
@@ -78,7 +69,6 @@ export default function App() {
       return status === "completed" || status === "failed" ? false : 500;
     },
   });
-
   const liveEvaluationReady = executionQuery.data?.status === "completed";
   const liveEvaluationQuery = useQuery({ queryKey: ["evaluation", live.accepted?.run_id], queryFn: () => fetchEvaluation(live.accepted!.run_id), enabled: Boolean(live.accepted && liveEvaluationReady) });
   const historicalRunQuery = useQuery({ queryKey: ["historical-run", historicalRunId], queryFn: () => fetchRunById(historicalRunId!), enabled: Boolean(historicalRunId) });
@@ -98,6 +88,11 @@ export default function App() {
     if (!normalized || live.submitting) return;
     setHistoricalRunId(null);
     try { await live.submit(normalized); } catch { /* Hook exposes sanitized submission error state. */ }
+  };
+
+  const followActionRun = (run: RunAccepted) => {
+    setHistoricalRunId(null);
+    live.follow(run);
   };
 
   const blockingChecks = selectedEvaluation?.items.filter((check) => check.blocking) ?? [];
@@ -141,9 +136,7 @@ export default function App() {
         <section className="workspace-grid">
           <article className="panel timeline-panel">
             <div className="section-heading compact"><div><p className="eyebrow">RUNTIME TIME</p><h2>Canonical event timeline</h2></div><span className="count-pill">{selectedEvents.length} events</span></div>
-            {selectedEvents.length === 0 ? <div className="empty-state"><strong>No runtime events selected</strong><p>Submit a live request or select a persisted run. This panel never fabricates trace history.</p></div> : (
-              <ol className="timeline-list">{selectedEvents.map((event) => <li key={event.event_id} className={`timeline-item tone-${eventTone(event)}`}><div className="sequence">{String(event.sequence).padStart(2, "0")}</div><div className="timeline-content"><div className="event-title-row"><div><span className="origin-badge">{event.origin}</span><strong>{eventDisplayLabel(event)}</strong></div><small>{event.latency_ms !== null ? `${event.latency_ms} ms` : event.timestamp ?? ""}</small></div><EventMeta event={event} />{event.message && <p className="event-message">{event.message}</p>}</div></li>)}</ol>
-            )}
+            {selectedEvents.length === 0 ? <div className="empty-state"><strong>No runtime events selected</strong><p>Submit a live request or select a persisted run. This panel never fabricates trace history.</p></div> : <ol className="timeline-list">{selectedEvents.map((event) => <li key={event.event_id} className={`timeline-item tone-${eventTone(event)}`}><div className="sequence">{String(event.sequence).padStart(2, "0")}</div><div className="timeline-content"><div className="event-title-row"><div><span className="origin-badge">{event.origin}</span><strong>{eventDisplayLabel(event)}</strong></div><small>{event.latency_ms !== null ? `${event.latency_ms} ms` : event.timestamp ?? ""}</small></div><EventMeta event={event} />{event.message && <p className="event-message">{event.message}</p>}</div></li>)}</ol>}
           </article>
 
           <aside className="side-stack">
@@ -159,6 +152,7 @@ export default function App() {
           {architectureQuery.data ? <ArchitectureExplorer manifest={architectureQuery.data} events={selectedEvents} hasRun={Boolean(selectedRunId)} hasEvaluation={Boolean(selectedEvaluation?.count)} /> : <div className="empty-state graph-empty"><strong>Architecture manifest unavailable</strong><p>The UI will not substitute hard-coded architecture when the backend manifest is missing.</p></div>}
         </article>
 
+        <ActionControl selectedRunId={selectedRunId} onFollowExecution={followActionRun} />
         <OperationsWorkspace selectedRunId={selectedRunId} />
       </main>
     </div>
