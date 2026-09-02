@@ -1,0 +1,41 @@
+name: cloudflare-d02-live-authorization-provider-free
+
+on:
+  pull_request:
+    paths:
+      - "research/experiments/cloudflare-d02-fresh-reset-live-authorization-v1.json"
+      - "docs/adr/027-cloudflare-d02-fresh-reset-live-authorization-2026-09-02.md"
+      - "src/academy_tractian/cloudflare_d02_live_authorization_v1.py"
+      - "scripts/research/capture_cloudflare_d02_zero_use_evidence_v1.py"
+      - "scripts/research/issue_cloudflare_d02_live_receipt_v1.py"
+      - "scripts/research/execute_cloudflare_d02_live_v1.py"
+      - "tests/test_cloudflare_d02_live_authorization_v1.py"
+      - ".github/workflows/cloudflare-d02-live-authorization-provider-free.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Compile
+        run: |
+          python -m py_compile src/academy_tractian/cloudflare_d02_live_authorization_v1.py
+          python -m py_compile scripts/research/capture_cloudflare_d02_zero_use_evidence_v1.py
+          python -m py_compile scripts/research/issue_cloudflare_d02_live_receipt_v1.py
+          python -m py_compile scripts/research/execute_cloudflare_d02_live_v1.py
+      - name: Authorization regression
+        run: pytest -q tests/test_cloudflare_d02_live_authorization_v1.py
+      - name: Prove CI cannot carry provider credentials
+        shell: bash
+        run: |
+          test -z "${CLOUDFLARE_API_TOKEN:-}"
+          test -z "${CLOUDFLARE_ACCOUNT_ID:-}"
+      - name: Prove current UTC window is explicitly blocked by source contract
+        shell: bash
+        run: grep -q 'D01_USED_UTC_DAY = "2026-09-02"' src/academy_tractian/cloudflare_d02_live_authorization_v1.py
