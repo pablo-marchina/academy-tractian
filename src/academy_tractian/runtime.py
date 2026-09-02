@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
-from typing import TYPE_CHECKING, Literal, Mapping
+from typing import Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -23,12 +23,6 @@ from .action_safety import (
     ProductionActionAuthorizationContext,
     ProductionActionSafetyPolicy,
 )
-
-if TYPE_CHECKING:
-    from .realtime_observability import (
-        FailIsolatedObservabilityPublisher,
-        SafeObservabilityEventSink,
-    )
 
 
 class _FrozenModel(BaseModel):
@@ -96,11 +90,6 @@ class ProductionRuntime:
     auditable. ProductionActionSafetyPolicy owns the B2 action-safety decision, but this runtime
     still constructs it with execution disabled and zero permissions. No mutating action can
     reach transport in this slice.
-
-    Realtime observability is optional and fail-isolated. When a safe event sink is supplied,
-    production-owned wrappers publish allow-listed projections immediately after canonical E2
-    trace appends. The accepted `research/e2` controller/runner bytes and tool-execution
-    ownership are not modified, and sink failure cannot change the returned RunTrace.
     """
 
     def __init__(
@@ -110,19 +99,11 @@ class ProductionRuntime:
         transport: RequestTransport,
         registry: Mapping[str, ToolSpec] | None = None,
         config: ProductionRuntimeConfig | None = None,
-        observability_sink: SafeObservabilityEventSink | None = None,
     ) -> None:
         self.decision_source = decision_source
         self.transport = transport
         self.registry = dict(registry or canonical_tool_registry())
         self.config = config or ProductionRuntimeConfig()
-        self.observability_sink = observability_sink
-        self.observability_publisher: FailIsolatedObservabilityPublisher | None = None
-        if observability_sink is not None:
-            # Lazy import avoids coupling the base runtime import path to FastAPI/DuckDB modules.
-            from .realtime_observability import FailIsolatedObservabilityPublisher
-
-            self.observability_publisher = FailIsolatedObservabilityPublisher(observability_sink)
 
         action_tools = [
             tool for tool in self.registry.values() if tool.kind is ToolKind.ACTION
@@ -153,7 +134,7 @@ class ProductionRuntime:
         )
         resource_policy = ProductionActionSafetyPolicy(context=action_context)
 
-        runner_kwargs = dict(
+        runner = HarnessRunner(
             run_id=request.request_id,
             scenario_id=f"prod:{request.request_id}",
             config_hash=self.config_hash,
@@ -164,35 +145,12 @@ class ProductionRuntime:
             strict_arguments=True,
             resource_policy=resource_policy,
         )
-
-        if self.observability_publisher is None:
-            runner = HarnessRunner(**runner_kwargs)
-            controller = AgentController(
-                runner=runner,
-                decision_source=self.decision_source,
-                limits=ControllerLimits(
-                    max_turns=self.config.max_turns,
-                    max_tool_calls=self.config.max_tool_calls,
-                ),
-            )
-        else:
-            from .realtime_observability import (
-                ObservableAgentController,
-                ObservableHarnessRunner,
-            )
-
-            runner = ObservableHarnessRunner(
-                observability_publisher=self.observability_publisher,
-                **runner_kwargs,
-            )
-            controller = ObservableAgentController(
-                runner=runner,
-                decision_source=self.decision_source,
-                limits=ControllerLimits(
-                    max_turns=self.config.max_turns,
-                    max_tool_calls=self.config.max_tool_calls,
-                ),
-                observability_publisher=self.observability_publisher,
-            )
-
+        controller = AgentController(
+            runner=runner,
+            decision_source=self.decision_source,
+            limits=ControllerLimits(
+                max_turns=self.config.max_turns,
+                max_tool_calls=self.config.max_tool_calls,
+            ),
+        )
         return controller.run(request.user_request)
