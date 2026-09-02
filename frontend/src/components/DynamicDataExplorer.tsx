@@ -7,6 +7,8 @@ import { dynamicOption } from "../state/analyticsOptions";
 import { buildDrilldownQuery, type AnalyticsDrilldown } from "../state/analyticsScope";
 import { EChart, type EChartDataPoint } from "./EChart";
 
+export type { AnalyticsDrilldown } from "../state/analyticsScope";
+
 function parseFilterValue(operator: AnalyticsFilter["operator"], raw: string): AnalyticsFilter["value"] {
   const trimmed = raw.trim();
   if (operator === "in") {
