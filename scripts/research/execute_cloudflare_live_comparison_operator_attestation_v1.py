@@ -58,10 +58,11 @@ def main() -> None:
     receipt = CloudflareOperatorAttestationReceiptV1.model_validate(
         json.loads(args.receipt.read_text(encoding="utf-8"))
     )
+    custody_root = args.custody_root.expanduser().resolve(strict=False)
     pre_live_evidence = operator_attestation_to_adr020_pre_live_evidence(
         receipt,
         evidence,
-        custody_root=args.custody_root,
+        custody_root=custody_root,
         now_utc=_current_utc(),
     )
 
@@ -78,14 +79,19 @@ def main() -> None:
             target_root=frozen_root,
         )
         task = GovernedCloudflareLiveTaskV2.prepare(
-            custody_root=args.custody_root,
+            custody_root=custody_root,
             secrets=secrets,
             pre_live_evidence=pre_live_evidence,
             transport=transport,
             fixture_result=False,
             repo_root=frozen_root,
         )
-        result = task.execute_all()
+        original_cwd = Path.cwd()
+        try:
+            os.chdir(frozen_root)
+            result = task.execute_all()
+        finally:
+            os.chdir(original_cwd)
 
     print(
         json.dumps(
