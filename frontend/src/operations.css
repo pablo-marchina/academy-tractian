@@ -81,6 +81,21 @@
 .analytics-table { width: 100%; border-collapse: collapse; font-size: 10px; }
 .analytics-table th { position: sticky; top: 0; background: #111822; color: #a8b5c5; text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }
 .analytics-table td { padding: 7px 8px; border-top: 1px solid #202a37; color: #bdc8d5; }
-@media (max-width: 1150px) { .health-grid { grid-template-columns: repeat(2, 1fr); } .mission-kpis, .telemetry-kpis { grid-template-columns: repeat(3, 1fr); } .query-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 850px) { .operations-two-column { grid-template-columns: 1fr; } .health-grid, .operability-strip { grid-template-columns: 1fr; } .query-grid { grid-template-columns: repeat(2, 1fr); } .filter-row { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 560px) { .workspace-title { align-items: flex-start; flex-direction: column; } .mission-kpis, .telemetry-kpis { grid-template-columns: repeat(2, 1fr); } .query-grid, .filter-row { grid-template-columns: 1fr; } }
+
+.action-control-panel { margin-top: 14px; overflow: visible; }
+.action-card-list { display: grid; gap: 10px; margin-top: 12px; }
+.action-card { border: 1px solid #2b3746; border-radius: 10px; padding: 13px; background: #0b1017; }
+.action-card-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.action-card-heading > div { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.action-card-heading strong { font-size: 12px; }
+.action-card dl { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.action-card dl > div { border-top: 1px solid #202a37; padding-top: 8px; min-width: 0; }
+.action-card dt { color: var(--muted); font-size: 8px; text-transform: uppercase; letter-spacing: .06em; }
+.action-card dd { margin: 4px 0 0; color: #c1ccd9; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+.action-confirm-button { border: 1px solid rgba(80,216,144,.35); border-radius: 8px; padding: 9px 12px; background: rgba(80,216,144,.08); color: #8ce9b8; font-size: 10px; font-weight: 800; }
+.action-confirm-button:disabled { color: #8e8370; border-color: rgba(243,186,75,.22); background: rgba(243,186,75,.04); }
+.action-follow-button { margin-left: 8px; }
+
+@media (max-width: 1150px) { .health-grid { grid-template-columns: repeat(2, 1fr); } .mission-kpis, .telemetry-kpis { grid-template-columns: repeat(3, 1fr); } .query-grid { grid-template-columns: repeat(3, 1fr); } .action-card dl { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 850px) { .operations-two-column { grid-template-columns: 1fr; } .health-grid, .operability-strip { grid-template-columns: 1fr; } .query-grid { grid-template-columns: repeat(2, 1fr); } .filter-row { grid-template-columns: 1fr 1fr; } .action-card dl { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .workspace-title { align-items: flex-start; flex-direction: column; } .mission-kpis, .telemetry-kpis { grid-template-columns: repeat(2, 1fr); } .query-grid, .filter-row, .action-card dl { grid-template-columns: 1fr; } .action-follow-button { margin: 8px 0 0; display: block; } }
