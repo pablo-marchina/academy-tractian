@@ -102,7 +102,7 @@ export function DynamicDataExplorer({
     setChartType(chosenChart);
   };
 
-  const result = queryMutation.data;
+  const result = queryMutation.data?.run_id === globalRunId ? queryMutation.data : undefined;
   const option = result ? dynamicOption(result) : null;
 
   const drillIntoResult = (point: EChartDataPoint) => {
