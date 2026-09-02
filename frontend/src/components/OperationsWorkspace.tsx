@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
   fetchEvaluationMetrics,
@@ -12,29 +12,38 @@ import {
   fetchToolsMetrics,
 } from "../api/client";
 import { evaluationOption, policiesOption, providerOption, toolsOption } from "../state/analyticsOptions";
-import { DynamicDataExplorer } from "./DynamicDataExplorer";
-import { EChart } from "./EChart";
+import { DynamicDataExplorer, type AnalyticsDrilldown } from "./DynamicDataExplorer";
+import { EChart, type EChartDataPoint } from "./EChart";
 
 function percent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-function HealthStatus({ status }: { status: string }) {
+function milliseconds(value: number | null | undefined): string {
+  return value === null || value === undefined ? "—" : `${value.toFixed(1)} ms`;
+}
+
+function HealthStatus({ status, engagedIsSafe = false }: { status: string; engagedIsSafe?: boolean }) {
   const normalized = status.toLowerCase();
-  const tone = normalized === "ready" || normalized === "available" || normalized === "selected" || normalized === "provider_free"
+  const good = new Set(["ready", "available", "selected", "provider_free", "instrumented", "measured", "observed", "disengaged"]);
+  const unknown = new Set(["not_instrumented", "no_selection", "no_observations", "not_executed"]);
+  const tone = good.has(normalized) || (engagedIsSafe && normalized === "engaged")
     ? "health-good"
-    : normalized === "not_instrumented" || normalized === "no_selection"
+    : unknown.has(normalized)
       ? "health-unknown"
       : "health-bad";
   return <span className={`health-status ${tone}`}>{status}</span>;
 }
 
 export function OperationsWorkspace({ selectedRunId }: { selectedRunId: string | null }) {
+  const [drilldown, setDrilldown] = useState<AnalyticsDrilldown | null>(null);
+  const drilldownSequence = useRef(0);
+
   const overviewQuery = useQuery({ queryKey: ["overview"], queryFn: fetchOverview, refetchInterval: 3_000 });
-  const healthQuery = useQuery({ queryKey: ["production-health"], queryFn: fetchProductionHealth, refetchInterval: 5_000 });
-  const toolsQuery = useQuery({ queryKey: ["tools-metrics"], queryFn: fetchToolsMetrics, refetchInterval: 5_000 });
-  const policiesQuery = useQuery({ queryKey: ["policies-metrics"], queryFn: fetchPoliciesMetrics, refetchInterval: 5_000 });
-  const evaluationMetricsQuery = useQuery({ queryKey: ["evaluation-metrics"], queryFn: fetchEvaluationMetrics, refetchInterval: 5_000 });
+  const healthQuery = useQuery({ queryKey: ["production-health"], queryFn: fetchProductionHealth, refetchInterval: 2_000 });
+  const toolsQuery = useQuery({ queryKey: ["tools-metrics", selectedRunId], queryFn: () => fetchToolsMetrics(selectedRunId), refetchInterval: 5_000 });
+  const policiesQuery = useQuery({ queryKey: ["policies-metrics", selectedRunId], queryFn: () => fetchPoliciesMetrics(selectedRunId), refetchInterval: 5_000 });
+  const evaluationMetricsQuery = useQuery({ queryKey: ["evaluation-metrics", selectedRunId], queryFn: () => fetchEvaluationMetrics(selectedRunId), refetchInterval: 5_000 });
   const providerQuery = useQuery({ queryKey: ["provider-experiments"], queryFn: fetchProviderExperiments, staleTime: 60_000 });
   const evidenceQuery = useQuery({
     queryKey: ["evidence", selectedRunId],
@@ -56,8 +65,37 @@ export function OperationsWorkspace({ selectedRunId }: { selectedRunId: string |
   const evalOption = useMemo(() => evaluationMetricsQuery.data ? evaluationOption(evaluationMetricsQuery.data) : null, [evaluationMetricsQuery.data]);
   const d01Option = useMemo(() => d01 && d01.candidates.length ? providerOption(d01) : null, [d01]);
 
+  const requestDrilldown = useCallback((request: Omit<AnalyticsDrilldown, "key">) => {
+    drilldownSequence.current += 1;
+    setDrilldown({ ...request, key: drilldownSequence.current });
+  }, []);
+
+  const toolDrilldown = useCallback((point: EChartDataPoint) => {
+    if (!point.name) return;
+    requestDrilldown({ dataset: "events", dimension: "event_type", filterField: "tool_name", filterValue: point.name, chartType: "bar" });
+  }, [requestDrilldown]);
+
+  const policyDrilldown = useCallback((point: EChartDataPoint) => {
+    if (!point.name) return;
+    requestDrilldown({ dataset: "events", dimension: "policy_allowed", filterField: "policy_stage", filterValue: point.name, chartType: "bar" });
+  }, [requestDrilldown]);
+
+  const evaluationDrilldown = useCallback((point: EChartDataPoint) => {
+    if (!point.name) return;
+    requestDrilldown({ dataset: "evaluations", dimension: "passed", filterField: "check_name", filterValue: point.name, chartType: "bar" });
+  }, [requestDrilldown]);
+
   const overview = overviewQuery.data;
   const health = healthQuery.data;
+  const measured = health?.measured;
+  const heartbeat = measured?.runtime_heartbeat;
+  const pressure = measured?.executor_pressure;
+  const observability = measured?.observability;
+  const sse = measured?.sse;
+  const provider = measured?.provider_operability;
+  const adapter = measured?.tractian_adapter_operability;
+  const controls = measured?.controls;
+  const analyticsScope = selectedRunId ?? "all persisted runs";
 
   return (
     <section className="operations-workspace">
@@ -83,21 +121,40 @@ export function OperationsWorkspace({ selectedRunId }: { selectedRunId: string |
         </div>
         {health ? (
           <>
+            <div className="telemetry-kpis">
+              <div><span>Heartbeat age</span><strong>{milliseconds(heartbeat?.age_ms)}</strong><small>{heartbeat?.status ?? "not instrumented"}</small></div>
+              <div><span>Executor</span><strong>{pressure ? `${pressure.active_runs} / ${pressure.max_workers}` : "—"}</strong><small>{pressure ? `${pressure.queued_runs} queued` : "not instrumented"}</small></div>
+              <div><span>Active SSE</span><strong>{sse?.active_clients ?? "—"}</strong><small>{sse ? `${sse.reconnects} reconnects` : "not instrumented"}</small></div>
+              <div><span>Event → persist p95</span><strong>{milliseconds(observability?.runtime_event_to_persistence.p95_ms)}</strong><small>{observability?.runtime_event_to_persistence.count ?? 0} samples</small></div>
+              <div><span>Persist → SSE p95</span><strong>{milliseconds(sse?.persistence_to_delivery.p95_ms)}</strong><small>{sse?.persistence_to_delivery.count ?? 0} deliveries</small></div>
+              <div><span>Obs overhead p95</span><strong>{milliseconds(observability?.publish_overhead.p95_ms)}</strong><small>{observability?.publisher_failures ?? 0} failures</small></div>
+            </div>
             <div className="health-grid">
               {health.components.map((item) => (
                 <div className="health-card" key={item.component}>
-                  <div><strong>{item.component}</strong><HealthStatus status={item.status} /></div>
+                  <div><strong>{item.component}</strong><HealthStatus status={item.status} engagedIsSafe={item.component === "action_kill_switch"} /></div>
                   <p>{item.detail}</p>
                 </div>
               ))}
             </div>
+            <div className="operability-strip">
+              <div><strong>Provider passive operability</strong><span>{provider ? `${provider.observations} observations · ${percent(provider.failure_rate)} failures · p95 ${milliseconds(provider.latency.p95_ms)}` : "unavailable"}</span><small>external probe: no</small></div>
+              <div><strong>TRACTIAN adapter passive operability</strong><span>{adapter ? `${adapter.status_observations} status observations · ${percent(adapter.http_2xx_rate)} HTTP 2xx` : "unavailable"}</span><small>external probe: no</small></div>
+              <div><strong>Kill switches</strong><span>provider {controls?.provider_kill_switch.engaged ? "ENGAGED" : "disengaged"} · actions {controls?.action_kill_switch.engaged ? "ENGAGED" : "disengaged"}</span><small>no public mutation endpoint</small></div>
+            </div>
             <div className="instrumentation-gap">
-              <strong>Not measured yet</strong>
-              <span>{health.not_measured_yet.join(" · ")}</span>
+              <strong>Still not measured</strong>
+              <span>{health.not_measured_yet.length ? health.not_measured_yet.join(" · ") : "none"}</span>
             </div>
           </>
         ) : <p className="muted">Loading production health…</p>}
       </article>
+
+      <div className="analytics-scope-banner global-scope">
+        <strong>Global analytics scope</strong>
+        <span title={selectedRunId ?? undefined}>{analyticsScope}</span>
+        <small>Evidence, lineage, tools, policy, eval and Dynamic Explorer share this run scope. Product Health and Provider Lab remain global.</small>
+      </div>
 
       <div className="operations-two-column">
         <article className="panel operations-panel">
@@ -135,28 +192,28 @@ export function OperationsWorkspace({ selectedRunId }: { selectedRunId: string |
       <div className="operations-two-column">
         <article className="panel operations-panel">
           <div className="section-heading compact"><div><p className="eyebrow">TOOL CONTRACT</p><h2>Tools Analytics</h2></div><span className="count-pill">{toolsQuery.data?.count ?? 0} tools</span></div>
-          {toolOption && toolsQuery.data?.items.length ? <><EChart option={toolOption} /><div className="compact-data-list">{toolsQuery.data.items.map((item) => <div key={item.tool_name}><strong>{item.tool_name}</strong><span>{item.calls} calls · {item.results} results · {item.observations} observations</span></div>)}</div></> : <p className="muted">No persisted tool activity yet.</p>}
+          {toolOption && toolsQuery.data?.items.length ? <><EChart option={toolOption} onDataPointClick={toolDrilldown} /><div className="compact-data-list">{toolsQuery.data.items.map((item) => <div key={item.tool_name}><div><strong>{item.tool_name}</strong><button className="drilldown-button" type="button" onClick={() => requestDrilldown({ dataset: "events", dimension: "event_type", filterField: "tool_name", filterValue: item.tool_name, chartType: "bar" })}>drill down</button></div><span>{item.calls} calls · {item.results} results · {item.observations} observations</span></div>)}</div></> : <p className="muted">No persisted tool activity in this scope.</p>}
         </article>
         <article className="panel operations-panel">
           <div className="section-heading compact"><div><p className="eyebrow">DETERMINISTIC SAFETY</p><h2>Policy Analytics</h2></div><span className="count-pill">{policiesQuery.data?.count ?? 0} stages</span></div>
-          {policyOption && policiesQuery.data?.items.length ? <><EChart option={policyOption} /><div className="compact-data-list">{policiesQuery.data.items.map((item) => <div key={item.policy_stage}><strong>{item.policy_stage}</strong><span>{item.checks} checks · {percent(item.block_rate)} blocked · {item.contained} contained</span></div>)}</div></> : <p className="muted">No persisted policy checks yet.</p>}
+          {policyOption && policiesQuery.data?.items.length ? <><EChart option={policyOption} onDataPointClick={policyDrilldown} /><div className="compact-data-list">{policiesQuery.data.items.map((item) => <div key={item.policy_stage}><div><strong>{item.policy_stage}</strong><button className="drilldown-button" type="button" onClick={() => requestDrilldown({ dataset: "events", dimension: "policy_allowed", filterField: "policy_stage", filterValue: item.policy_stage, chartType: "bar" })}>drill down</button></div><span>{item.checks} checks · {percent(item.block_rate)} blocked · {item.contained} contained</span></div>)}</div></> : <p className="muted">No persisted policy checks in this scope.</p>}
         </article>
       </div>
 
       <div className="operations-two-column">
         <article className="panel operations-panel">
           <div className="section-heading compact"><div><p className="eyebrow">POST-RUNTIME QUALITY</p><h2>Eval Lab</h2></div>{evaluationMetricsQuery.data && <span className="count-pill">blocking {percent(evaluationMetricsQuery.data.blocking_pass_rate)}</span>}</div>
-          {evalOption && evaluationMetricsQuery.data?.checks.length ? <><EChart option={evalOption} height={320} /><div className="eval-summary"><span>overall pass {percent(evaluationMetricsQuery.data.overall_pass_rate)}</span><span>{evaluationMetricsQuery.data.rows} check rows</span></div></> : <p className="muted">No persisted evaluation aggregate yet.</p>}
+          {evalOption && evaluationMetricsQuery.data?.checks.length ? <><EChart option={evalOption} height={320} onDataPointClick={evaluationDrilldown} /><div className="compact-data-list">{evaluationMetricsQuery.data.checks.map((item) => <div key={item.check_name}><div><strong>{item.check_name}</strong><button className="drilldown-button" type="button" onClick={() => requestDrilldown({ dataset: "evaluations", dimension: "passed", filterField: "check_name", filterValue: item.check_name, chartType: "bar" })}>drill down</button></div><span>{percent(item.pass_rate)} pass · {item.evaluations} evaluations</span></div>)}</div><div className="eval-summary"><span>overall pass {percent(evaluationMetricsQuery.data.overall_pass_rate)}</span><span>{evaluationMetricsQuery.data.rows} check rows</span></div></> : <p className="muted">No persisted evaluation aggregate in this scope.</p>}
         </article>
 
         <article className="panel operations-panel provider-lab">
-          <div className="section-heading compact"><div><p className="eyebrow">GOVERNED PROVIDER EVIDENCE</p><h2>Provider D01 / D02 Lab</h2></div>{providerQuery.data && <span className="count-pill" title={providerQuery.data.registry_sha256}>registry {providerQuery.data.registry_sha256.slice(0, 10)}</span>}</div>
+          <div className="section-heading compact"><div><p className="eyebrow">GOVERNED PROVIDER EVIDENCE · GLOBAL</p><h2>Provider D01 / D02 Lab</h2></div>{providerQuery.data && <span className="count-pill" title={providerQuery.data.registry_sha256}>registry {providerQuery.data.registry_sha256.slice(0, 10)}</span>}</div>
           {d01 ? <div className="experiment-card"><div className="experiment-heading"><strong>D01</strong><HealthStatus status={d01.selection ?? d01.status} /></div><div className="experiment-kpis"><span>{d01.attempted_calls}/{d01.expected_calls} calls</span><span>USD {d01.cash_cost_usd?.toFixed(2) ?? "—"}</span><span>{d01.packet_observed_neurons?.toFixed(2) ?? "—"} Neurons</span><span>cap {d01.completion_cap_tokens}</span></div>{d01Option && <EChart option={d01Option} height={260} />}{d01.diagnostic && <div className="diagnostic-note"><strong>Completion-budget diagnostic</strong><p>{d01.diagnostic.interpretation}</p><span>{d01.diagnostic.client_failures_at_completion_cap}/{d01.diagnostic.client_failures} CLIENT_FAILURE at exact cap</span></div>}<p className="panel-copy">{d01.note}</p></div> : <p className="muted">D01 registry unavailable.</p>}
           {d02 && <div className="experiment-card prospective"><div className="experiment-heading"><strong>D02</strong><HealthStatus status={d02.status} /></div><div className="experiment-kpis"><span>{d02.attempted_calls}/{d02.expected_calls} calls</span><span>cap {d02.completion_cap_tokens}</span><span>max {d02.packet_max_neurons.toFixed(3)} Neurons</span></div><p>{d02.note}</p><strong className="no-result-label">No live D02 result exists.</strong></div>}
         </article>
       </div>
 
-      <DynamicDataExplorer />
+      <DynamicDataExplorer globalRunId={selectedRunId} drilldown={drilldown} />
     </section>
   );
 }
