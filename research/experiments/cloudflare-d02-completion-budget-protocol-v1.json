@@ -1,0 +1,99 @@
+{
+  "schema_version": "cloudflare-d02-completion-budget-protocol-v1",
+  "status": "FROZEN_PROVIDER_FREE_LIVE_NOT_AUTHORIZED",
+  "created_date": "2026-09-02",
+  "decision_question": "Does raising only the Cloudflare completion-token budget remove the D01 output censoring while preserving all existing safety, trace, evaluator and USD0 boundaries?",
+  "d01_observation": {
+    "completed_attempts": 32,
+    "client_failure_attempts": 24,
+    "client_failure_attempts_at_512_output_tokens": 24,
+    "glm_client_failures": 16,
+    "nemotron_client_failures": 8,
+    "nemotron_success_output_token_range": [297, 495],
+    "nemotron_response_payload_invalid_output_tokens": 476,
+    "selection": "NO_SELECTION",
+    "actual_cash_cost_usd": 0.0,
+    "interpretation": "D01 remains authoritative; these observations motivate a prospective single-variable D02 test and do not retroactively change D01."
+  },
+  "held_constant": {
+    "provider": "cloudflare_workers_ai",
+    "candidates": [
+      "cloudflare_glm_4_7_flash_workers_free",
+      "cloudflare_nemotron_3_120b_a12b_workers_free"
+    ],
+    "models": [
+      "@cf/zai-org/glm-4.7-flash",
+      "@cf/nvidia/nemotron-3-120b-a12b"
+    ],
+    "public_population_path": "research/experiments/provider-model-comparison-dev-population-v1.json",
+    "public_population_git_blob": "abd6a7d973a8779f425c3607d963e29f15db09e5",
+    "unit_count": 8,
+    "repetitions_per_candidate": 2,
+    "attempts_per_candidate": 16,
+    "max_attempts_total": 32,
+    "temperature": 0,
+    "automatic_retries": 0,
+    "provider_fallbacks": 0,
+    "parallel_live_calls": false,
+    "provider_native_tool_execution": false,
+    "provider_side_conversation_state": false,
+    "ai_gateway": false,
+    "prepaid_unified_billing": false,
+    "architecture_change": false,
+    "prompt_change": false,
+    "json_schema_change": false,
+    "evaluator_change": false
+  },
+  "changed_variables": {
+    "max_completion_tokens_per_attempt": {
+      "d01": 512,
+      "d02": 1024
+    },
+    "sanitized_failure_subtype_recording": {
+      "d01": false,
+      "d02": true,
+      "raw_provider_material_recorded": false
+    }
+  },
+  "resource_budget": {
+    "max_accounted_input_tokens_per_attempt": 8000,
+    "max_completion_tokens_per_attempt": 1024,
+    "workers_free_daily_neurons": 10000.0,
+    "candidate_rates_neurons_per_million_tokens": {
+      "cloudflare_glm_4_7_flash_workers_free": {
+        "input": 5500.0,
+        "output": 36400.0
+      },
+      "cloudflare_nemotron_3_120b_a12b_workers_free": {
+        "input": 45455.0,
+        "output": 136364.0
+      }
+    },
+    "derived_worst_case_neurons": {
+      "cloudflare_glm_4_7_flash_workers_free_16_attempts": 1300.3776,
+      "cloudflare_nemotron_3_120b_a12b_workers_free_16_attempts": 8052.427776,
+      "full_32_attempt_packet": 9352.805376
+    },
+    "minimum_free_neurons_before_attempt_1": 9352.805376,
+    "hard_usd_budget": 0.0,
+    "paid_spillover_allowed": false
+  },
+  "plan": {
+    "schema_version": "cloudflare-d02-comparison-plan-v1",
+    "executor_version": "cloudflare-d02-comparison-executor-v1",
+    "expected_plan_sha256": "e768b324baa00dd337c8e56bdfb29b9444be92619508a9fefc30e30b746d1958"
+  },
+  "diagnostics": {
+    "generic_failure_code_preserved": "CLIENT_FAILURE",
+    "sanitized_failure_subtype_required_for_client_failure": true,
+    "required_distinguishable_subtype": "CLOUDFLARE_FINISH_REASON_INVALID",
+    "exception_text_recorded": false,
+    "raw_request_recorded": false,
+    "raw_response_recorded": false
+  },
+  "authorization": {
+    "live_provider_calls_authorized_by_this_protocol": 0,
+    "requires_separate_fresh_zero-use_authorization": true,
+    "requires_provider_free_ci_green_before_live": true
+  }
+}
