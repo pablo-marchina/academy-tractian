@@ -74,6 +74,11 @@ class BlockingFinalSource:
         )
 
 
+class FailingSource:
+    def decide(self, _context: ControllerContext) -> ControllerDecision:
+        raise RuntimeError("provider-free synthetic execution failure")
+
+
 def _context(_request) -> AuthenticatedRuntimeContext:
     return AuthenticatedRuntimeContext(identity_id="identity", user_id="user")
 
@@ -82,7 +87,7 @@ def _component(health: dict, name: str) -> dict:
     return next(item for item in health["components"] if item["component"] == name)
 
 
-def test_health_reports_real_runtime_persistence_sse_controls_and_passive_adapter(tmp_path) -> None:
+def test_health_reports_real_quantitative_runtime_api_sse_resource_and_adapter_metrics(tmp_path) -> None:
     transports: list[FakeTransport] = []
 
     def runtime_factory(sink) -> RealtimeProductionRuntime:
@@ -124,9 +129,25 @@ def test_health_reports_real_runtime_persistence_sse_controls_and_passive_adapte
         assert f"id: {run_id}:0" not in reconnect.text
         assert "event: trace_event" in reconnect.text
 
+        assert client.get("/api/query/schema").status_code == 200
+        query = client.post(
+            "/api/query",
+            json={
+                "dataset": "runs",
+                "run_id": run_id,
+                "dimensions": [],
+                "measure": "count",
+                "filters": [],
+                "chart_type": "table",
+                "limit": 20,
+            },
+        )
+        assert query.status_code == 200
+
         health = client.get("/api/production/health").json()
-        assert health["schema_version"] == "production-health-v2"
+        assert health["schema_version"] == "production-health-v3"
         assert health["overall_status"] == "ready"
+        assert health["quantitative_measurement_contract"]["thresholds_preregistered"] is False
         assert _component(health, "runtime")["status"] == "ready"
         assert _component(health, "sse_clients")["status"] == "instrumented"
         assert _component(health, "provider_kill_switch")["status"] == "disengaged"
@@ -142,6 +163,28 @@ def test_health_reports_real_runtime_persistence_sse_controls_and_passive_adapte
         assert measured["controls"]["provider_kill_switch"]["engaged"] is False
         assert measured["controls"]["action_kill_switch"]["engaged"] is True
 
+        runtime_requests = measured["runtime_requests"]
+        assert runtime_requests["sample_count"] >= 1
+        assert runtime_requests["request_latency"]["p50_ms"] is not None
+        assert runtime_requests["request_latency"]["p95_ms"] is not None
+        assert runtime_requests["execution_latency"]["p95_ms"] is not None
+        assert runtime_requests["by_outcome"]["completed"]["count"] >= 1
+        assert runtime_requests["by_terminal_decision"]["ORIENT"]["count"] >= 1
+        assert runtime_requests["by_response_mode"]["complete"]["count"] >= 1
+
+        api = measured["api"]
+        assert api["sample_count"] > 0
+        assert api["request_latency"]["p95_ms"] is not None
+        assert api["by_kind"]["runtime_submit"]["count"] >= 1
+        assert api["by_kind"]["analytics_query"]["count"] >= 1
+        assert api["by_kind"]["analytics_schema"]["count"] >= 1
+
+        resources = measured["resources"]
+        assert resources["process_cpu_time_ms"] >= 0
+        assert resources["threshold_interpretation"] == "not_preregistered"
+        assert resources["rss_current_source"] in {"proc_self_statm", "unavailable"}
+        assert resources["rss_max_source"] in {"resource_getrusage", "unavailable"}
+
         observability = measured["observability"]
         assert observability["publish_overhead"]["count"] > 0
         assert observability["persistence_duration"]["count"] > 0
@@ -156,6 +199,21 @@ def test_health_reports_real_runtime_persistence_sse_controls_and_passive_adapte
         assert sse["events_delivered"] > 0
         assert sse["persistence_to_delivery"]["count"] > 0
         assert sse["reconnect_recovery"]["count"] >= 1
+        assert sse["reconnect_first_event_checks"] >= 1
+        assert sse["reconnect_sequential_recovery_rate"] == 1.0
+        assert sse["detected_gap_events"] == 0
+        assert sse["detected_gap_rate"] == 0.0
+        assert sse["logical_duplicate_events"] == 0
+        assert sse["logical_duplicate_rate"] == 0.0
+
+        for closed_gap in (
+            "runtime_request_latency_by_outcome_ms",
+            "api_read_query_latency_ms",
+            "cpu_memory_pressure",
+            "reconnect_event_loss_rate",
+            "logical_duplicate_delivery_rate",
+        ):
+            assert closed_gap not in health["not_measured_yet"]
 
         adapter = measured["tractian_adapter_operability"]
         assert adapter["observations"] >= 1
@@ -163,6 +221,38 @@ def test_health_reports_real_runtime_persistence_sse_controls_and_passive_adapte
         assert adapter["external_probe_performed"] is False
         assert len(transports) == 1
         assert len(transports[0].calls) == 1
+
+
+def test_failed_runtime_is_quantitatively_sliced_without_private_material(tmp_path) -> None:
+    def runtime_factory(sink) -> RealtimeProductionRuntime:
+        return RealtimeProductionRuntime(
+            decision_source=FailingSource(),
+            transport=FakeTransport(),
+            observability_sink=sink,
+        )
+
+    app = create_product_app(
+        db_path=tmp_path / "failed-run.duckdb",
+        runtime_factory=runtime_factory,
+        context_provider=_context,
+        heartbeat_interval_ms=250,
+    )
+
+    with TestClient(app) as client:
+        accepted = client.post("/api/runs", json={"user_request": "Fail safely."}).json()
+        future = app.state.run_execution_registry.future(accepted["run_id"])
+        assert future is not None
+        future.result(timeout=10)
+        assert app.state.run_execution_registry.status(accepted["run_id"]) == "failed"
+
+        health = client.get("/api/production/health").json()
+        runtime_requests = health["measured"]["runtime_requests"]
+        assert runtime_requests["by_outcome"]["failed"]["count"] == 1
+        serialized = str(runtime_requests).lower()
+        assert "identity" not in serialized
+        assert "user" not in serialized
+        assert "seed" not in serialized
+        assert "fail safely" not in serialized
 
 
 def test_provider_kill_switch_blocks_before_runtime_factory(tmp_path) -> None:
