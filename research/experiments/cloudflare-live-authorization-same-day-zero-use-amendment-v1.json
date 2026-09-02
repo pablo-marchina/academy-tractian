@@ -1,0 +1,66 @@
+{
+  "schema_version": "cloudflare-live-authorization-same-day-zero-use-amendment-v1",
+  "decision_state": "FROZEN_PROVIDER_FREE_AMENDMENT / REAL_EVIDENCE_PENDING / ATTEMPT_1_NOT_AUTHORIZED",
+  "historical_protocol": {
+    "adr_021_blob": "9627219e5b9c64dda83d23e0f3e99f4c9b953519",
+    "adr_022_blob": "f32bc7e3ca37c74f04fce4cc0dfd56cfab2efcd0",
+    "adr_023_blob": "b124a02e89f4f604399e6a9a01616c91ceebb491",
+    "preserve_adr_021": true,
+    "preserve_adr_022": true,
+    "preserve_adr_023": true
+  },
+  "evidence_mode": {
+    "name": "SAME_DAY_ZERO_USE_ATTESTATION",
+    "observation_must_be_same_utc_day_as_reset": true,
+    "reset_hour_utc": 0,
+    "evidence_max_age_seconds": 600,
+    "receipt_max_lifetime_seconds": 300,
+    "derived_free_neurons_at_evidence": 10000.0,
+    "minimum_required_free_neurons": 9000.0,
+    "workers_plan_required": "Workers Free",
+    "workers_paid_enabled_required": false,
+    "no_workers_ai_calls_since_reset_required": true,
+    "no_automated_workers_ai_consumers_since_reset_required": true,
+    "exclusive_workers_ai_account_window_until_packet_completion_required": true,
+    "direct_workers_ai_route_required": true,
+    "ai_gateway_route_required": false,
+    "prepaid_unified_billing_route_required": false,
+    "comparison_attempts_consumed_required": 0,
+    "provider_inference_used_to_obtain_evidence": false,
+    "credential_account_probe_used_to_obtain_evidence": false,
+    "source_artifact_retained_outside_repo_required": true
+  },
+  "derivation": {
+    "documented_daily_free_allocation_neurons": 10000.0,
+    "documented_daily_reset_utc": "00:00:00",
+    "operator_attests_zero_consumption_since_reset": true,
+    "derived_free_neurons_remaining": 10000.0
+  },
+  "frozen_packet": {
+    "provider_id": "cloudflare",
+    "route_id": "cloudflare.workers_ai.openai_compat.chat_completions.v1",
+    "model_ids": [
+      "@cf/zai-org/glm-4.7-flash",
+      "@cf/nvidia/nemotron-3-120b-a12b"
+    ],
+    "comparison_attempts_max": 32,
+    "packet_worst_case_neurons": 7937.522688
+  },
+  "execution_reuse": {
+    "adr_020_governed_task_only": true,
+    "fixture_result": false,
+    "retry": false,
+    "fallback": false,
+    "alternate_model": false,
+    "alternate_provider": false,
+    "alternate_custody_root": false
+  },
+  "future_execution_boundary": {
+    "provider_model_inference_calls_in_this_task": 0,
+    "credential_account_probes_in_this_task": 0,
+    "live_network_validation_in_this_task": 0,
+    "comparison_attempts_consumed": 0,
+    "attempt_1_authorized": false,
+    "production_provider_selected": false
+  }
+}
