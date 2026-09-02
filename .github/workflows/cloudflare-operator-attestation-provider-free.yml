@@ -6,10 +6,12 @@ on:
       - "docs/adr/025-cloudflare-operator-attestation-source-amendment-2026-09-02.md"
       - "research/experiments/cloudflare-live-authorization-operator-attestation-amendment-v1.json"
       - "src/academy_tractian/cloudflare_live_authorization_operator_attestation_v4.py"
+      - "src/academy_tractian/cloudflare_frozen_bundle_portability.py"
       - "scripts/research/capture_cloudflare_operator_attestation_evidence_v1.py"
       - "scripts/research/issue_cloudflare_operator_attestation_receipt_v1.py"
       - "scripts/research/execute_cloudflare_live_comparison_operator_attestation_v1.py"
       - "tests/test_cloudflare_operator_attestation_authorization_v4.py"
+      - "tests/test_cloudflare_frozen_bundle_portability.py"
       - ".github/workflows/cloudflare-operator-attestation-provider-free.yml"
   workflow_dispatch:
 
@@ -34,5 +36,6 @@ jobs:
         run: |
           pytest -q \
             tests/test_cloudflare_operator_attestation_authorization_v4.py \
+            tests/test_cloudflare_frozen_bundle_portability.py \
             tests/test_cloudflare_live_authorization_reset_v2.py \
             tests/test_cloudflare_governed_live_entrypoint.py
