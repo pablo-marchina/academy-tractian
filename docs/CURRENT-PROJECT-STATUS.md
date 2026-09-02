@@ -1,354 +1,204 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-09-01 — provider-free delivery/demo/security audits complete; PFG-01 escalation-handoff gap closed; D01 reset-window evidence is the next operational gate  
+**Canonical status checkpoint:** 2026-09-02 — D01 completed live; D02 governed path provider-free validated; frontend/demo visualization promoted to P0 delivery work  
 **Final delivery target:** 2026-09-08  
 **Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
-**Master plan:** [`PROJECT-PLAN.md`](PROJECT-PLAN.md)  
-**Architecture roadmap:** [`ARCHITECTURE-ROADMAP.md`](ARCHITECTURE-ROADMAP.md)  
 **Immediate plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
-**D01 preflight:** [`CLOUDFLARE-D01-PREFLIGHT-2026-09-01.md`](CLOUDFLARE-D01-PREFLIGHT-2026-09-01.md)
+**Final sprint:** GitHub issue #115  
+**Frontend/test track:** GitHub issues #114, #118, #119  
+**D02 live execution:** GitHub issue #117
 
-This is the canonical human-readable current authorization state. Historical frozen ADRs/artifacts remain authoritative for their exact scopes.
+This document is the current human-readable state. Historical ADRs, frozen experiment inputs and prior result artifacts remain authoritative for their exact scopes and are not rewritten by this checkpoint.
 
-## Executive state
+## 1. Executive state
 
 ```text
 external API / hosted-service project cost      USD 0 HARD CONSTRAINT
-evidence audit before new experiment             REQUIRED
+final delivery                                   2026-09-08
 
-historical evidence audit                        COMPLETE
-provider factual refresh                         COMPLETE
-Cloudflare comparison preregistration             FROZEN / ADR-018
-Cloudflare provider client                        FROZEN / ADR-019
-Cloudflare executor/custody v2                    FROZEN / ADR-020
-Cloudflare original authorization protocol        FROZEN / ADR-021
-reset-window Neuron evidence amendment            FROZEN / ADR-022
-governed entrypoint audit/contract                ACCEPTED / ADR-023
-minimal governed live launcher                    MERGED / PROVIDER-FREE VALIDATED
-standalone production wheel reproduction          PROVED / PR #91
-delivery-acceptance audit 2026-09-01             COMPLETE / PR #96
-final-demo audit 2026-09-01                      COMPLETE / PR #96
-security/trace/failure audit 2026-09-01          COMPLETE / PR #96
-structured escalation handoff PFG-01             CLOSED / PROVED / PR #96
-D01 operator preflight                           PREPARED
+production runtime / evaluator                   IMPLEMENTED / REGRESSION-GREEN
+provider-free integrated demo                    VALID / PRESERVED
+structured escalation handoff                    PROVED
+standalone wheel                                 PROVED
 
-stable implementation baseline after PR #91      a93854dd5e70edf8084bdaae1762dd64cdb6aa48
-provider-free readiness merge PR #96             f383bbe0e87e6927411c14fd67ba8dbda9e57cbc
-standalone-wheel-smoke                            PASSED
-PR #96 final workflow set                         13 / 13 SUCCESS
+D01 live comparison                              COMPLETE
+D01 attempts                                     32 / 32 COMPLETED
+D01 actual cash cost                             USD 0.00
+D01 observed Neurons                             2813.628464
+D01 selection                                    NO_SELECTION
+D01 raw provider material persisted              NO
 
-Workers Free / Active account state               PROVED MANUALLY
-explicit current Neuron meter in target UI        NOT AVAILABLE
-ADR-021 explicit-balance path                     PRESERVED BUT NOT OPERABLE ON TARGET UI
-ADR-022 reset-window fallback                     PROVIDER-FREE VALIDATED
-ADR-023 receipt→ADR-020 composition               PROVIDER-FREE VALIDATED
-issue #44 OpenAI/Gemini path                      CLOSED / HISTORICAL / SUPERSEDED
-issue #79 real evidence/receipt                    READY PENDING VALID RESET WINDOW
-issue #89 standalone wheel gap                    CLOSED / PROVED
-issue #92 architecture materiality/Pareto         PLANNING ONLY / STARTS AFTER D01
-issue #95 escalation-handoff completeness         CLOSED / PROVED
-issue #9 C4 exact artifact                        EXTERNALLY BLOCKED / EXACT BYTES ONLY
+D01 GLM CLIENT_FAILURE                           16 / 16 at exactly 512 output tokens
+D01 Nemotron CLIENT_FAILURE                       8 / 8 at exactly 512 output tokens
+D01 total CLIENT_FAILURE                         24 / 24 at exact 512-token ceiling
+D01 Nemotron technically accepted outputs         7, range 297..495 tokens
+D01 Nemotron RESPONSE_PAYLOAD_INVALID              1, 476 tokens
 
-provider/model inference calls                    0
-credential/account probes                         0
-live network validation                           0
-comparison attempts consumed                      0 / 32
-real reset-window evidence captured               NO
-real authorization receipt issued                 NO
-Cloudflare credentials provisioned                NO
-attempt 1 authorized                              NO
-production provider/model selected                NO
+D02 completion cap                               1024
+D02 full-packet worst-case                       9352.805376 Neurons
+D02 start gate                                   >= 9352.805376 free Neurons
+D02 provider-free implementation                 MERGED / VALIDATED
+D02 governed custody/authorization               MERGED / VALIDATED
+D02 live result                                  NOT YET EXECUTED
+
+2026-09-02 UTC modeled remaining after D01        7186.371536 Neurons
+full D02 in current UTC allocation               INELIGIBLE
+next Workers AI reset                            2026-09-03 00:00 UTC
+                                                   = 2026-09-02 21:00 BRT
+
+frontend application in canonical main tree      NOT LOCATED
+frontend/demo visualization                      P0 DELIVERY GAP
+architecture expansion                           NO_CHANGE
 ```
 
-Frozen candidates/packet:
+## 2. What D01 changed
+
+D01 resolved the original live-provider gate but did not support a production provider selection. Both candidates failed hard quality/stability gates, so the valid frozen result is `NO_SELECTION`.
+
+Post-run sanitized accounting produced a strong censoring signal: every generic `CLIENT_FAILURE` occurred at exactly the frozen 512 completion-token ceiling. This supports a prospective completion-budget diagnostic, not an architecture rewrite.
+
+D01 remains authoritative and is not rescored or retroactively repaired.
+
+## 3. D02 state
+
+ADR-026 / the D02 provider-free contract changes only the variables required to test the censoring hypothesis:
 
 ```text
-@cf/zai-org/glm-4.7-flash
-@cf/nvidia/nemotron-3-120b-a12b
-8 public probes × 2 repeats × 2 candidates = max 32 calls
-plan SHA 092e1e6070876f63388f4dd3e4bf47205db785f5f54e4676f3307992d81ac9cb
-packet max 7937.522688 Neurons
-Workers Free documented allocation 10000 Neurons/day
-historical start gate >=9000 Neurons remaining
-reset-window derived start state 10000 Neurons
+max_completion_tokens        512 -> 1024
+failure subtype visibility   generic CLIENT_FAILURE -> generic code + sanitized subtype
 ```
 
-## 1. Provider-free readiness audit result
-
-The current final-delivery acceptance wording was re-audited against repository-resident evidence rather than inheriting historical `PASS_BOUNDED` labels.
-
-The audit concluded:
+Held constant:
 
 ```text
-core runtime/evaluator/security boundaries       EVIDENCED
-standalone distribution                          EVIDENCED
-provider-free failure/stability evidence         EVIDENCED
-customer-safe communication                      EVIDENCED
-structured trace observability                   EVIDENCED
-clarify / abstain / fail-closed behavior         EVIDENCED
-escalation handoff completeness                  GAP FOUND → CLOSED BY PR #96
-final real non-scripted provider demo            PARTIAL / D01 DEPENDENT
-provider/model quality                           BLOCKED / D01 DEPENDENT
-provider-specific latency/resource evidence      PARTIAL / D01 DEPENDENT
-EV-012 / C4 exact evidence                       BLOCKED / EXACT ARTIFACT MISSING
-final deployment/rollback evidence               LATER FINAL-INTEGRATION DECISION
+Cloudflare Workers AI
+GLM 4.7 Flash + Nemotron 3 120B A12B
+8 public units × 2 repeats × 2 candidates = 32 attempts
+prompt / JSON decision schema / temperature
+typed ToolSpecs / evaluator / public rubric
+single-agent controller
+zero retries / zero fallbacks
+direct Workers AI
+USD 0 / no paid spillover
 ```
 
-Audit artifacts:
-
-- `docs/DELIVERY-ACCEPTANCE-AUDIT-2026-09-01.md`
-- `docs/DEMO-AUDIT-2026-09-01.md`
-- `docs/SECURITY-TRACE-AUDIT-2026-09-01.md`
-
-These documents are current audit evidence, not retroactive rewrites of frozen 2026-08-28 experiment results.
-
-## 2. Structured escalation handoff closure
-
-The audit found the frozen EV-011 `C10_ESCALATION_HAS_SAFE_HANDOFF` predicate proved safe human-review wording but did not enforce the stronger current requirement for a useful operational handoff.
-
-PR #96 closed this prospectively without changing frozen controller/provider/evaluator results:
+The D02 resource bound is derived from the frozen rates and ceilings:
 
 ```text
-ProductionRequest
-+ exact captured RunTrace
-+ ESCALATE_HUMAN outcome
-↓
-HumanEscalationHandoff
-  unresolved request
-  exact reason/message
-  deterministic observation references + hashes
-  COLLECTED / NONE_COLLECTED state
-  fixed safe reviewer continuation instruction
-↓
-deterministic handoff validation
+GLM, 16 attempts        1300.3776 Neurons
+Nemotron, 16 attempts   8052.427776 Neurons
+full packet             9352.805376 Neurons
+Workers Free daily      10000 Neurons
+max modeled headroom     647.194624 Neurons
 ```
 
-The handoff does not serialize raw observation bodies, identity binding, user id, seed, credentials, provider raw material or evaluator-private truth.
+The governed D02 executor, write-ahead custody, no-replay behavior, fresh-reset authorization, CLIs and provider-free regressions are merged. No D02 live provider call has been made by that implementation work.
 
-The initial PR CI correctly caught one JSON-canonicalization defect. It was fixed without weakening a gate; the final head then completed all 13 associated workflows successfully.
+## 4. Current D02 live boundary
 
-## 3. Final-demo state
-
-The frozen provider-free five-scenario demo remains useful integrated evidence because it executes the real runtime, tool boundary, trace and evaluator. Its decision source is nevertheless scripted.
-
-Therefore:
+The current UTC allocation cannot safely guarantee the full D02 packet under the hard USD 0 constraint:
 
 ```text
-provider-free integrated demo          VALID / PRESERVED
-final real non-scripted provider demo  NOT YET PROVED
+10000 - 2813.628464 = 7186.371536 remaining modeled Neurons
+7186.371536 < 9352.805376 required D02 bound
 ```
 
-Do not relabel scripted evidence as live-provider evidence.
+Therefore the current window is blocked for the full governed D02 packet.
 
-After D01 resolves or is explicitly bounded, the final demonstration must use the resulting real/bounded decision-source path where feasible, preserve per-run evaluation separation, and visibly surface at least one uncertainty/failure path plus the structured escalation handoff when escalation is demonstrated.
-
-## 4. Security / trace state
-
-Current supported invariants:
+The earliest next eligible reset is:
 
 ```text
-identity outside model control
-seed outside model control
-authorization outside model control
-HarnessRunner sole real tool-execution boundary
-strict argument validation before transport
-permission/project-policy separation
-consequential-action claim/idempotency containment
-sanitized scalar-only model-call provenance
-no evaluator-private truth in runtime/provider request
-trace lifecycle + execution-chain integrity
-policy denial containment
-provider/tool failures fail closed
-bounded turns/tool calls
-no hidden retry/fallback on governed paths
-no raw secrets/private provider material in canonical artifacts
-customer-safe failure communication
+2026-09-03 00:00:00 UTC
+2026-09-02 21:00:00 America/Sao_Paulo
 ```
 
-No current security evidence justifies adding LangGraph, persistent memory, MCP migration, RAG/vector infrastructure, external observability SaaS or another authorization framework before D01.
+The reset does not itself authorize inference. D02 still requires fresh truthful zero-use operator attestation, evidence no older than 600 seconds, receipt no older than 300 seconds, exact custody binding, direct Workers AI, Workers Paid disabled, no AI Gateway/prepaid route, and explicit launcher invocation.
 
-## 5. Current D01 sequence
+No blind retry or replay is allowed after any attempt is durably claimed or becomes uncertain.
 
-The provider path requires no additional implementation before the reset.
+## 5. Frontend / visualization state
 
-Next real window:
+The previous plan treated rich UI as P2. That priority is superseded for final delivery.
+
+The runtime, evaluation and delivery evidence are mature enough that interface quality, integration and demo usability now represent a material delivery risk. The canonical `main` tree does not currently expose an identifiable versioned frontend application (`package.json`, React/Vite/Next, Streamlit/dashboard source not found during the 2026-09-02 audit).
+
+Current frontend actions:
 
 ```text
-2026-09-01 21:00:00–21:10:00 America/Sao_Paulo
-=
-2026-09-02 00:00:00–00:10:00 UTC
+#118 locate/version the actual UI source or document exact external ownership
+#119 freeze the required UI state matrix
+#114 implement visual changes, integrate, test, freeze and regress
+#115 preserve a dedicated frontend test day and hard visual/feature freeze
 ```
 
-Before the window, only operator-side private preparation remains:
+Required demo-visible states include at minimum:
 
 ```text
-choose one private local root outside repository
-choose one canonical custody root
-prepare private Workers Free source path
-prepare fresh evidence/receipt output paths
-ensure no background Workers AI consumer can run
-ensure provider credentials are absent before evidence/receipt
+success / orient
+clarify missing context
+abstain / unavailable evidence
+escalation + structured handoff
+action or policy blocked
+loading
+empty
+error / provider or tool failure
 ```
 
-Receipt issuance rejects these provider environment variables if present:
+The UI must never expose credentials, account identifiers, evaluator-private truth, raw provider material or raw private observations prohibited by the runtime contracts.
+
+## 6. Architecture decision
+
+D01 provides no evidence that topology caused the dominant failures. D02 is intentionally a single-variable diagnostic. Until D02 or another controlled measurement proves a material P0/P1 gap:
 
 ```text
-CLOUDFLARE_API_TOKEN
-CLOUDFLARE_ACCOUNT_ID
-OPENAI_API_KEY
-GEMINI_API_KEY
-GROQ_API_KEY
+single-agent controller   PRESERVE
+LangGraph                  DO NOT ADD
+multi-agent                DO NOT ADD
+RAG/vector/reranking       DO NOT ADD
+persistent memory          DO NOT ADD
+MCP migration              DO NOT ADD
+adaptive routing           DO NOT ADD
 ```
 
-Use `docs/CLOUDFLARE-D01-PREFLIGHT-2026-09-01.md` for the exact PowerShell sequence.
+Issue #92 remains a materiality gate, not an instruction to add architecture.
 
-## 6. Real reset-window authorization gate
-
-Proceed only if all are truthful:
+## 7. Delivery schedule
 
 ```text
-Cloudflare primary docs still state 10000 Neurons/day
-Cloudflare primary docs still state reset at 00:00 UTC
-observation occurs <=00:10:00 UTC
-Workers Free / Active is proved
-Workers Paid is false
-no Workers AI calls since reset
-no automated/background Workers AI consumers since reset
-exclusive account usage through packet completion
-direct Workers AI route only
-AI Gateway/prepaid unified billing absent
-comparison attempts = 0
-inference/probes used to obtain evidence = 0
+2026-09-02  frontend visual changes + first test window; D02 after 21:00 reset if freshly authorized
+2026-09-03  D02 analysis/provider-state integration + frontend regression
+2026-09-04  dedicated frontend end-to-end test day
+2026-09-05  HARD VISUAL + FEATURE FREEZE
+2026-09-06  clean reproduction + full acceptance
+2026-09-07  final rehearsal + contingency buffer; P0 fixes only
+2026-09-08  delivery; no same-day feature development
 ```
 
-Any uncertainty fails closed.
+After the hard freeze, every code/UI change requires a P0/P1 delivery justification and targeted regression.
 
-The governed sequence remains:
+## 8. Remaining blockers / bounded gaps
 
 ```text
-private Workers Free source artifact
-↓
-reset-window evidence JSON
-↓
-<=5-minute provider-free receipt bound to exact custody root
-↓
-ONLY THEN Cloudflare token/account ID
-↓
-ADR-022 receipt/evidence/custody validation
-↓
-ADR-023 governed launcher
-↓
-ADR-020 GovernedCloudflareLiveTaskV2
-↓
-attempt 1
+D02 live result                         P0 / WAITING FOR ELIGIBLE RESET + FRESH AUTHORIZATION
+frontend source ownership              P1 / #118
+frontend visual integration/testing    P0 / #114
+final sprint freeze/reproduction        P0 / #115
+C4 exact evaluator artifact             EXTERNAL EXACT-BYTE BLOCKER / NO RECONSTRUCTION
+production provider selection           MAY REMAIN NO_SELECTION
 ```
 
-Attempt 1 remains unauthorized until the real evidence and receipt exist and the operator explicitly invokes the launcher while every attestation remains true.
+`NO_SELECTION` is a valid provider outcome and must not trigger a last-minute architecture rewrite.
 
-## 7. Evidence freshness and custody
+## 9. Still forbidden
 
-```text
-reset observation window       00:00:00–00:10:00 UTC
-evidence maximum age           600 seconds
-receipt maximum lifetime       300 seconds
-same UTC day                    required
-source artifact                 retained privately outside repo
-serialized source evidence      SHA-256 only
-account ID / token              never serialized
-```
-
-No warm-up, quota probe, alternate custody root, hidden retry/fallback or sacrificial inference is authorized.
-
-## 8. Allowed D01 outcomes
-
-```text
-A  governed live packet → GLM supported
-B  governed live packet → Nemotron supported
-C  governed live packet → NO_SELECTION
-D  truthful reset-window/exclusive-custody gate unavailable → LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED
-```
-
-Forced provider selection remains forbidden.
-
-## 9. Architecture decision state
-
-```text
-single-agent controller      STRONG QUALIFIED BASELINE
-standalone packaging         EVIDENCE SUFFICIENT / REGRESSION OBLIGATION
-structured escalation handoff EVIDENCE SUFFICIENT / REGRESSION OBLIGATION
-native tools vs MCP          EVIDENCE SUFFICIENT CURRENT SCOPE
-stopping/evidence policy     EVIDENCE SUFFICIENT CURRENT SCOPE
-RAG/vector/reranking         NO MATERIAL CURRENT GAP / NO EXPERIMENT
-persistent memory            NO MATERIAL CURRENT GAP / NO EXPERIMENT
-multi-agent comparison       CONDITIONAL AFTER PROVIDER D01
-runtime comparison           CONDITIONAL AFTER TOPOLOGY/MATERIALITY AUDIT
-adaptive routing             UNASSESSED / NOT CURRENTLY MATERIAL
-rich UI/deployment           P2 UNLESS FINAL ACCEPTANCE GAP APPEARS
-issue #92                    PLANNING-ONLY HARD-GATE + PARETO PROTOCOL
-```
-
-The architecture is not claimed globally optimal. It is the strongest qualified current baseline.
-
-## 10. Post-D01 architecture protocol
-
-Issue #92 activates only after:
-
-```text
-provider D01 result
-OR
-LIVE_PROVIDER_COMPARISON_EXTERNALLY_BLOCKED frozen
-```
-
-Then:
-
-```text
-re-audit topology materiality
-→ if no P0/P1 topology gap: preserve single-agent baseline
-→ if material: preregister minimum controlled topology comparison
-→ only after topology closure assess runtime/orchestration
-```
-
-Any alternative must first preserve P0 coverage, deterministic safety, evaluator isolation, trace integrity, clean reproduction, USD 0 feasibility and fail-safe behavior before entering a Pareto comparison.
-
-No arbitrary weighted architecture score is authorized.
-
-## 11. C4 parallel track
-
-```text
-required SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
-bytes             177350
-rows              144
-geometry          36 common parents × 4 arms
-```
-
-Only exact-byte recovery is authorized. Reconstruction, rescoring or substitution remains forbidden.
-
-Issue #9 remains the explicit external scientific blocker.
-
-## 12. Deadline state
-
-```text
-09-01 provider-free readiness audits/fix          COMPLETE
-09-01 21:00–21:10 D01 reset gate                 NEXT IF TRUTHFUL CUSTODY EXISTS
-09-02 → 09-03 provider result/blocker + #92       PENDING
-09-03 → 09-05 only still-material architecture    CONDITIONAL
-09-05 → 09-07 freeze/demo/runbook/reproduction    PENDING
-09-08 delivery                                    TARGET
-```
-
-After 2026-09-05, default against speculative P2 work.
-
-## 13. Still forbidden
-
-- provider inference before real valid evidence + receipt + explicit governed launcher invocation;
-- credential/account probes merely to obtain quota or verify secrets;
-- fabricated quota values;
-- concurrent/unaccounted Workers AI use during reset-window custody;
-- Paid Workers / prepaid AI Gateway / paid spillover;
-- changing ADR-018 packet post hoc;
-- retry/replay of claimed/uncertain attempts;
-- C4 reconstruction/rescoring/substitution;
-- unnecessary RAG/memory/multi-agent/runtime/UI complexity;
-- topology/runtime work before D01 is resolved or explicitly bounded;
-- claiming the scripted provider-free demo is a live-model demonstration;
-- final provider/architecture/production-readiness claims beyond evidence.
+- paid Workers AI or paid spillover;
+- fabricated quota/use evidence;
+- credential/account probing as a readiness shortcut;
+- provider inference without the applicable governed authorization path;
+- replay of claimed/uncertain live attempts;
+- rewriting frozen D01 evidence or ADRs post hoc;
+- reconstructing the unavailable C4 artifact;
+- exposing evaluator-private truth, credentials or raw provider material in UI/demo artifacts;
+- speculative architecture expansion;
+- cosmetic redesign after the hard visual freeze;
+- claiming provider/model support beyond measured evidence.
