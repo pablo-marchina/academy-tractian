@@ -5,6 +5,7 @@ from hashlib import sha256
 from importlib.metadata import PackageNotFoundError, version
 import json
 from pathlib import Path
+from typing import AsyncContextManager, Callable
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -48,12 +49,14 @@ def _sse_record(event: dict[str, object]) -> str:
 def create_observability_app(
     *,
     db_path: str | Path = "./var/observability.duckdb",
+    lifespan: Callable[[FastAPI], AsyncContextManager[None]] | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="Academy × TRACTIAN Observability API",
         version=_package_version(),
         docs_url="/docs",
         redoc_url=None,
+        lifespan=lifespan,
     )
     store = ObservabilityStore(db_path)
     app.state.observability_store = store
@@ -131,7 +134,7 @@ def create_observability_app(
         poll_ms: int = Query(default=200, ge=50, le=5000),
         last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
     ) -> StreamingResponse:
-        run = require_run(run_id)
+        require_run(run_id)
         try:
             after_sequence = _last_sequence(run_id, last_event_id)
         except ValueError as exc:
