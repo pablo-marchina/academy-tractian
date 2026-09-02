@@ -61,20 +61,10 @@ def _safe_route_template(request: Request) -> str:
         tail = "" if len(suffix) < 5 else f"/{suffix[4]}"
         return f"/api/runs/{{run_id}}{tail}"
     if path in {
-        "/api/runs",
-        "/api/stream",
-        "/api/query",
-        "/api/query/schema",
-        "/api/overview",
-        "/api/production/health",
-        "/api/tools/metrics",
-        "/api/policies/metrics",
-        "/api/evaluations/metrics",
-        "/api/providers/experiments",
-        "/api/architecture",
-        "/health",
-        "/ready",
-        "/version",
+        "/api/runs", "/api/stream", "/api/query", "/api/query/schema", "/api/overview",
+        "/api/production/health", "/api/tools/metrics", "/api/policies/metrics",
+        "/api/evaluations/metrics", "/api/providers/experiments", "/api/architecture",
+        "/health", "/ready", "/version",
     }:
         return path
     return "unclassified"
@@ -92,18 +82,56 @@ def _api_kind(method: str, route_template: str) -> str:
     if route_template.startswith("/api/runs/") or route_template == "/api/runs":
         return "run_read"
     if route_template in {
-        "/api/overview",
-        "/api/tools/metrics",
-        "/api/policies/metrics",
-        "/api/evaluations/metrics",
-        "/api/providers/experiments",
-        "/api/architecture",
-        "/api/production/health",
+        "/api/overview", "/api/tools/metrics", "/api/policies/metrics", "/api/evaluations/metrics",
+        "/api/providers/experiments", "/api/architecture", "/api/production/health",
     }:
         return "analytics_read"
     if route_template in {"/health", "/ready", "/version"}:
         return "control_read"
     return "other"
+
+
+def _augment_health_with_quantitative_telemetry(
+    health: dict[str, Any],
+    live_operability: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if live_operability is None:
+        return health
+    telemetry = live_operability.get("telemetry")
+    if not isinstance(telemetry, dict):
+        return health
+
+    measured = health.setdefault("measured", {})
+    if not isinstance(measured, dict):
+        return health
+
+    for key in ("runtime_requests", "api", "resources"):
+        value = telemetry.get(key)
+        if isinstance(value, dict):
+            measured[key] = value
+
+    sse = telemetry.get("sse")
+    if isinstance(sse, dict):
+        measured["sse"] = sse
+
+    closed_gaps = {
+        "runtime_request_latency_by_outcome_ms": "runtime_requests" in measured,
+        "api_read_query_latency_ms": "api" in measured,
+        "cpu_memory_pressure": "resources" in measured,
+        "reconnect_event_loss_rate": isinstance(sse, dict) and "detected_gap_rate" in sse,
+        "logical_duplicate_delivery_rate": isinstance(sse, dict) and "logical_duplicate_rate" in sse,
+    }
+    gaps = health.get("not_measured_yet")
+    if isinstance(gaps, list):
+        health["not_measured_yet"] = [
+            item for item in gaps if not closed_gaps.get(str(item), False)
+        ]
+    health["schema_version"] = "production-health-v3"
+    health["quantitative_measurement_contract"] = {
+        "thresholds_preregistered": False,
+        "interpretation": "measured_distributions_only; targets require provider-free baseline and EDD preregistration",
+    }
+    return health
 
 
 def create_observability_app(
@@ -185,10 +213,11 @@ def create_observability_app(
     @app.get("/api/production/health")
     def production_health() -> dict[str, object]:
         live_operability = None if live_operability_supplier is None else live_operability_supplier()
-        return analytics.production_health(
+        payload = analytics.production_health(
             provider_selection_state=provider_selection_state,
             live_operability=live_operability,
         )
+        return _augment_health_with_quantitative_telemetry(payload, live_operability)
 
     @app.get("/api/tools/metrics")
     def tools_metrics(run_id: str | None = Query(default=None, min_length=1, max_length=128)) -> dict[str, object]:
