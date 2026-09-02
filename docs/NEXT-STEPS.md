@@ -1,249 +1,234 @@
 # Academy × TRACTIAN — Next Steps
 
 **Status:** ACTIVE / FINAL SPRINT  
-**Checkpoint:** 2026-09-02 — D01 complete; D02 provider-free ready; frontend visualization and test time promoted to P0  
+**Checkpoint:** 2026-09-02 — D01 complete; D02 provider-free ready; realtime observability/control-room delivery is P0  
 **Canonical state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
-**Frontend execution:** GitHub issue #114  
-**Final sprint:** GitHub issue #115  
-**D02 live execution:** GitHub issue #117  
-**Frontend source:** GitHub issue #118  
-**UI acceptance matrix:** GitHub issue #119
+**TAPI stack/techniques/outputs:** [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md)  
+**Final output inventory:** [`FINAL-DELIVERY-OUTPUT-INVENTORY-2026-09-02.md`](FINAL-DELIVERY-OUTPUT-INVENTORY-2026-09-02.md)  
+**Realtime/frontend acceptance:** GitHub issues #114, #119, #121, #122, #123, #124, #125  
+**D02 live execution:** GitHub issue #117
 
 This is the short-horizon execution plan. It does not authorize provider inference by itself.
 
-## 1. Current priorities
+## 1. Declared academic scope
 
-Priority order is now:
+The project combines both TAPI tracks:
 
 ```text
-P0  frontend/demo visualization + integration + test window
-P0  D02 live execution after the next eligible reset
-P0  hard freeze + clean reproduction + final acceptance
-P1  locate/version actual UI source and close UI state matrix
-P2  anything not required to deliver or demonstrate the governed agent
+Track A  functional industrial agent + typed TRACTIAN tools
+Track B  evaluation framework + trace inspection + robustness/stability experiments
 ```
 
-Do not spend final-sprint capacity on LangGraph, multi-agent, RAG, persistent memory, MCP migration, adaptive routing or speculative observability infrastructure.
+The final delivery must make the exact stack, techniques, framework choices, model/provider configurations and executable outputs visible rather than leaving them implicit in code/ADRs.
 
-## 2. D01 is complete
+## 2. Critical stack to deliver
 
-Canonical D01 facts:
+```text
+AGENT/RUNTIME
+Python >=3.11
+Pydantic 2.x
+custom AgentController
+HarnessRunner
+ToolSpec / typed schemas
+TRACTIAN HTTP adapter
+B1/B2/B3-style deterministic safety/action boundaries
+
+MODEL/PROVIDER
+Cloudflare Workers AI
+GLM 4.7 Flash
+Nemotron 3 120B A12B
+D01 + D02 controlled comparison
+
+EVALUATION
+pytest
+scenario runner
+trace-only deterministic evaluator
+failure/adversarial/stability campaigns
+provider comparison harness
+trace capture/reproduction
+
+OBSERVABILITY
+safe telemetry projection
+ObservabilityEventSink
+FastAPI
+SSE
+DuckDB
+optional stream adapter only when multi-instance behavior is actually tested
+
+FRONTEND
+TypeScript
+React 19.2 stable line
+Vite 8.1 stable line
+TanStack Query 5.x
+Apache ECharts 6.1
+React Flow 12.11
+
+FRONTEND QA
+Vitest 4.1 stable line
+Testing Library
+Playwright 1.62 stable line
+API/SSE contract tests
+clean build + E2E + security/reconnect gates
+```
+
+Exact frontend dependency versions must be frozen in the lockfile when scaffolded. Stable releases are preferred over beta/alpha dependencies.
+
+## 3. Named agent/evaluation techniques
+
+The final documentation/demo must explicitly name and evidence:
+
+1. bounded tool-augmented iterative agent loop;
+2. typed function/tool calling;
+3. evidence-aware orient/investigate/clarify/abstain/escalate/action policy;
+4. bounded planning and stopping;
+5. fail-closed argument/permission/evidence action safety;
+6. evidence/provenance tracing;
+7. robustness to complete/partial/inconclusive/conflict/unavailable API behavior;
+8. repeated-execution stability measurement;
+9. frozen controlled provider/model experimentation;
+10. trace-only deterministic evaluation with evaluator isolation;
+11. realtime append-only safe observability projection and reconnect/catch-up;
+12. schema-driven dynamic data visualization.
+
+Do not claim hidden chain-of-thought or literal ReAct prompting unless such prompting is explicitly implemented and tested. The architecture is structurally tool-observation iterative but its evidence is the actual controller/trace behavior.
+
+## 4. Framework decisions that must be explained
+
+```text
+LangGraph      not used: no measured topology gap
+LangChain      not used: unnecessary abstraction for current typed path
+Pydantic AI    not used as orchestrator: direct Pydantic + custom controller retained
+MCP            not main path: native typed tools are an accepted equivalent
+RAG            not used: no demonstrated retrieval gap
+Memory         not used: no measured requirement; reproducibility/state risk
+Streamlit      not used: realtime control-room requirements exceed demo-only UI
+Grafana/Phoenix/Langfuse optional only: native product UI is delivery-critical
+Redis Streams conditional: required only if claiming tested multi-instance realtime
+```
+
+Absence is a scoped technical decision, not an undocumented omission.
+
+## 5. D01 / D02
+
+D01 facts:
 
 ```text
 attempts                  32 / 32 completed
 cash cost                 USD 0.00
 observed Neurons          2813.628464
 selection                 NO_SELECTION
-raw provider material     not persisted
-CLIENT_FAILURE            24 / 24 at exactly 512 output tokens
+CLIENT_FAILURE            24 / 24 at exact 512 output tokens
 ```
 
-This is strong evidence for a completion-budget diagnostic. It is not evidence for topology changes.
+D02 changes only the completion cap (512 -> 1024) plus sanitized failure subtypes while holding packet/provider/prompt/schema/evaluator geometry constant. Execute #117 only after a fresh eligible Workers AI reset/authorization. `NO_SELECTION` remains a valid result.
 
-## 3. D02 is implementation-ready but current-window blocked
-
-D02 changes only:
+## 6. Build order
 
 ```text
-completion cap          512 -> 1024
-client diagnostics      sanitized failure_subtype added
+#119 safe observability/realtime/explanation matrix
+→ #121 telemetry read model/API/persistence
+→ #124 runtime event sink + SSE/reconnect/catch-up
+→ #122 Mission Control / Live Runs / Run Explorer / Trace views
+→ #125 Architecture Explorer + Explain This Run / Output Lineage
+→ #123 Dynamic Data Explorer + Quality/Provider + Tools/Policy
+→ #114 integrated E2E/security/realtime/frontend acceptance
+→ hard visual/feature freeze
+→ clean reproduction + README/runbook + final rehearsal
 ```
 
-Full-packet worst-case:
+D02 runs in parallel and must not block provider-free frontend implementation/testing.
+
+## 7. Final executable/product outputs
+
+The final delivery is expected to contain:
 
 ```text
-9352.805376 Neurons
+O1  functional industrial agent
+O2  typed TRACTIAN integration package
+O3  evaluation framework
+O4  governed D01/D02 experiment package
+O5  realtime Observability Control Room
+O6  Architecture Explorer
+O7  per-run Output Lineage / Explain This Run
+O8  schema-driven Dynamic Data Explorer
+O9  realtime production telemetry + reconnect/catch-up
+O10 complete technical documentation/reproduction package
 ```
 
-Modeled remaining capacity in the current 2026-09-02 UTC allocation after D01:
+The final output inventory document is the completion checklist. A runtime-only deliverable is not sufficient.
+
+## 8. Required frontend areas
 
 ```text
-7186.371536 Neurons
+Mission Control
+Live Runs
+Run Explorer
+Trace Timeline / Waterfall
+Trace Graph
+Tools & Policy
+Quality & Providers
+Dynamic Data Explorer
+Architecture Explorer
+Explain This Run / Output Lineage
 ```
 
-Therefore do not invoke the full D02 packet before the next reset.
+Every KPI/graph/output must drill down to safe run/event evidence where applicable.
 
-Next reset:
+## 9. Realtime requirements
+
+- genuine emitted runtime events only;
+- no fake thinking/progress animations;
+- persistent sanitized events before/with publication;
+- SSE event id/cursor;
+- reconnect + persisted catch-up;
+- idempotent browser reducer;
+- slow/disconnected browser cannot block runtime;
+- terminal state only from genuine terminal evidence;
+- browser never receives raw RunTrace/private material.
+
+## 10. Architecture/output explanation requirements
+
+For every selected run, the UI must answer:
 
 ```text
-2026-09-03 00:00 UTC
-2026-09-02 21:00 America/Sao_Paulo
+what happened?
+which component produced it?
+which safe evidence/input fed it?
+what output was produced?
+what component consumed it next?
+what became the terminal result?
+what evaluation happened only after runtime completion?
 ```
 
-After reset, execute #117 only if a fresh zero-use attestation is truthful. Evidence must be <=600 seconds old and the D02 receipt <=300 seconds old. Credentials are provisioned only after evidence/receipt validation. No retry/replay after a claimed or uncertain attempt.
+Every output is labeled `MODEL`, `CONTROLLER`, `POLICY`, `TOOL`, `OBSERVATION`, `EVALUATOR` or `SYSTEM`.
 
-## 4. NOW — use the pre-reset window for frontend work
-
-The canonical repository audit did not find a versioned frontend application. First resolve #118: identify the actual UI source/artifact and either version it in the governed delivery path or document its exact external ownership. Do not create a second throwaway frontend without first locating the existing visualization.
-
-Once identified, execute #114.
-
-### 13:55–14:30 BRT — visual contract / inventory
-
-- identify UI source and run command;
-- list current screens/components;
-- map actual runtime/evaluator fields to the UI;
-- freeze the minimum visible state contract from #119;
-- mark requested visual changes P0/P1/P2;
-- defer P2.
-
-### 14:30–16:30 — visual + integration implementation
-
-- implement P0/P1 visualization changes;
-- keep decision outputs connected to the real project runtime/demo boundary rather than invented frontend decisions;
-- preserve action authorization/idempotency boundaries;
-- do not expose evaluator-private truth or raw provider material.
-
-### 16:30–18:00 — first exploratory frontend test pass
-
-Exercise at least:
+## 11. Testing schedule
 
 ```text
-success/orient
-clarify missing context
-abstain/unavailable evidence
-escalation + structured handoff
-policy/action blocked
-loading
-empty
-error/provider/tool failure
-long content / overflow
-presentation viewport / responsive sanity
+2026-09-02  contracts + observability/realtime foundation + D02 after eligible reset
+2026-09-03  telemetry API/realtime stream + core control room
+2026-09-04  architecture/output lineage + dynamic visualization + feature completion
+2026-09-05  dedicated integrated frontend/realtime/security test + fixes; HARD FREEZE EOD
+2026-09-06  clean reproduction + full acceptance + final README/runbook
+2026-09-07  exact demo rehearsal + contingency
+2026-09-08  delivery; smoke check only, no same-day feature development
 ```
 
-Record defects by severity.
+## 12. TAPI completion gate
 
-### 18:00 — soft visual freeze
+Before final delivery, a reviewer must be able to identify from README/UI/docs:
 
-After 18:00 today:
+- declared combined TAPI tracks;
+- API integration and tool contracts;
+- exact agent/framework architecture;
+- exact stack and frozen versions;
+- provider/model/configuration;
+- named techniques and why they were used;
+- experiment hypothesis, controls, metrics and results;
+- failure/stability/high-impact-action evidence;
+- final product/executable outputs;
+- limitations and rejected optional frameworks;
+- clean reproduction;
+- realtime request -> tool/API -> output -> trace/evaluation demonstration.
 
-- no cosmetic redesign;
-- only P0/P1 correctness, usability, integration or demo-blocking fixes;
-- rerun every affected state after a fix.
-
-### 18:00–19:30 — integrated provider-free demo regression
-
-- run the frontend against provider-free real runtime/evaluator traces;
-- verify status/outcome/trace consistency;
-- verify escalation handoff readability;
-- verify no credentials, account ID, evaluator-private truth or forbidden raw material appears;
-- preserve a usable fallback demo independent of live provider availability.
-
-### 19:30–20:15 — P0/P1 fixes only
-
-Close demo blockers and rerun targeted regression.
-
-### 20:15–20:45 — D02 preflight
-
-```text
-sync exact main
-prepare new private evidence path
-prepare new private receipt path
-prepare new custody root
-ensure Cloudflare provider credentials are absent
-ensure no background Workers AI consumer will use the account after reset
-```
-
-Do not capture evidence before the new UTC reset.
-
-### 21:00+ — execute D02 once if freshly authorized
-
-Sequence:
-
-```text
-fresh D02 zero-use evidence
-→ fresh D02 receipt
-→ only then provision token/account ID
-→ governed D02 launcher
-→ 32-attempt packet or hard governed stop
-→ clear credentials
-→ inspect custody/ledger/result
-→ analyze D02 vs D01
-```
-
-If any attempt is `claimed`/`uncertain` or provider-call outcome is ambiguous, do not blind rerun.
-
-## 5. 2026-09-03 — provider-state integration + frontend regression
-
-Immediately after D02 analysis:
-
-- apply the frozen Pareto/hard-gate rule;
-- accept `NO_SELECTION` if no candidate qualifies;
-- integrate only the bounded provider state needed by the final demo;
-- do not redesign the UI around the provider result;
-- rerun frontend success/clarify/abstain/escalate/failure states.
-
-A second provider experiment is not automatically authorized just because D02 is inconclusive.
-
-## 6. 2026-09-04 — dedicated frontend test day
-
-This day is protected for testing rather than feature expansion.
-
-Test:
-
-- full end-to-end state matrix;
-- loading/empty/error paths;
-- layout/overflow/presentation viewport;
-- status terminology and information hierarchy;
-- failure communication;
-- escalation handoff usability;
-- runtime→UI consistency;
-- sensitive/private field exclusion;
-- demo repeatability.
-
-P2 visual polish is deferred unless trivial, isolated and regression-safe.
-
-## 7. 2026-09-05 — HARD VISUAL + FEATURE FREEZE
-
-By end of 2026-09-05 freeze:
-
-```text
-layout
-information hierarchy
-copy/status terminology
-runtime→UI mapping
-feature set
-provider-state presentation
-```
-
-After this point, changes require explicit P0/P1 delivery justification plus targeted regression.
-
-## 8. 2026-09-06 — clean reproduction + acceptance
-
-- clean checkout/install;
-- full production/runtime tests;
-- final-delivery reproduction;
-- integrated demo from clean environment;
-- frontend run/setup verification;
-- documentation/status audit;
-- close all P0s.
-
-## 9. 2026-09-07 — rehearsal + contingency
-
-- run the exact final demo flow;
-- verify presentation-machine setup;
-- verify provider-independent fallback demo;
-- make P0 demo-blocking fixes only;
-- rerun affected tests after every fix.
-
-## 10. 2026-09-08 — delivery
-
-No same-day feature development.
-
-Run only a short smoke check and present the frozen/bounded evidence accurately.
-
-## 11. Stop rules
-
-Still forbidden:
-
-- paid provider spillover;
-- fabricated quota evidence;
-- credential/account probing as a quota shortcut;
-- provider calls outside the governed authorization/launcher;
-- replay of claimed/uncertain attempts;
-- D01 retroactive repair/rescore;
-- C4 reconstruction or substitution;
-- exposing credentials/evaluator-private/raw provider material in the UI;
-- speculative architecture work;
-- cosmetic redesign after hard visual freeze;
-- forcing a provider selection when the evidence says `NO_SELECTION`.
+Do not mark the project complete merely because backend tests pass.
