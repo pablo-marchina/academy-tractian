@@ -47,7 +47,6 @@ class DuckDBObservabilityEventSink:
         if self.telemetry is not None:
             self.telemetry.record_persistence(
                 event_id=event.event_id,
-                event_timestamp=event.timestamp,
                 duration_ms=(perf_counter() - started) * 1000.0,
             )
 
@@ -80,11 +79,16 @@ class FailIsolatedObservabilityPublisher:
         with self._lock:
             return self._last_event_id
 
-    def publish_trace_state(self, trace: RunTrace) -> None:
-        """Publish the newest safe event.
+    def publish_trace_state(
+        self,
+        trace: RunTrace,
+        *,
+        canonical_append_perf: float | None = None,
+    ) -> None:
+        """Publish the newest safe event after the accepted canonical append.
 
-        Projection happens before the sink boundary. Any projection/persistence failure is
-        intentionally contained so observability cannot make the production agent unavailable.
+        `canonical_append_perf` is captured immediately after the frozen runner/controller append
+        returns. It is monotonic process-local instrumentation only and never enters RunTrace.
         """
 
         started = perf_counter()
@@ -108,14 +112,19 @@ class FailIsolatedObservabilityPublisher:
                 )
             return
 
+        completed = perf_counter()
         with self._lock:
             self._published_count += 1
             self._last_event_id = event.event_id
         if self.telemetry is not None:
             self.telemetry.record_publish_overhead(
-                duration_ms=(perf_counter() - started) * 1000.0,
+                duration_ms=(completed - started) * 1000.0,
                 failed=False,
             )
+            if canonical_append_perf is not None:
+                self.telemetry.record_event_to_persistence(
+                    duration_ms=(completed - canonical_append_perf) * 1000.0,
+                )
 
 
 class ObservableHarnessRunner(HarnessRunner):
@@ -129,12 +138,21 @@ class ObservableHarnessRunner(HarnessRunner):
     ) -> None:
         self.observability_publisher = observability_publisher
         super().__init__(**kwargs)
-        # HarnessRunner constructs run_started directly rather than through _emit().
-        self.observability_publisher.publish_trace_state(self.trace)
+        # HarnessRunner constructs run_started directly rather than through _emit(). Capture the
+        # first possible post-construction monotonic boundary without altering the frozen trace.
+        canonical_append_perf = perf_counter()
+        self.observability_publisher.publish_trace_state(
+            self.trace,
+            canonical_append_perf=canonical_append_perf,
+        )
 
     def _emit(self, event_type: str, **kwargs: Any) -> None:
         super()._emit(event_type, **kwargs)
-        self.observability_publisher.publish_trace_state(self.trace)
+        canonical_append_perf = perf_counter()
+        self.observability_publisher.publish_trace_state(
+            self.trace,
+            canonical_append_perf=canonical_append_perf,
+        )
 
 
 class ObservableAgentController(AgentController):
@@ -152,4 +170,8 @@ class ObservableAgentController(AgentController):
     def _emit(self, event_type: str, **kwargs: Any) -> None:
         # ADR-004 semantics stay owned by the accepted controller implementation.
         super()._emit(event_type, **kwargs)
-        self.observability_publisher.publish_trace_state(self.runner.trace)
+        canonical_append_perf = perf_counter()
+        self.observability_publisher.publish_trace_state(
+            self.runner.trace,
+            canonical_append_perf=canonical_append_perf,
+        )
