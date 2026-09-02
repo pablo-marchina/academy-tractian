@@ -2,12 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { FormEvent, useMemo, useState } from "react";
 
 import {
+  fetchArchitecture,
   fetchEvaluation,
   fetchExecution,
   fetchHealth,
   fetchRun,
+  fetchRunById,
+  fetchRunEvents,
+  fetchRuns,
 } from "./api/client";
 import type { SafeEvent } from "./api/types";
+import { ArchitectureExplorer } from "./components/ArchitectureExplorer";
+import { RunExplorer } from "./components/RunExplorer";
+import { TraceGraph } from "./components/TraceGraph";
 import { useLiveRun } from "./hooks/useLiveRun";
 import {
   deriveRunEventMetrics,
@@ -56,8 +63,8 @@ function EventMeta({ event }: { event: SafeEvent }) {
 
 export default function App() {
   const [requestText, setRequestText] = useState("");
+  const [historicalRunId, setHistoricalRunId] = useState<string | null>(null);
   const live = useLiveRun();
-  const metrics = useMemo(() => deriveRunEventMetrics(live.events), [live.events]);
 
   const healthQuery = useQuery({
     queryKey: ["health"],
@@ -65,7 +72,19 @@ export default function App() {
     refetchInterval: 5_000,
   });
 
-  const runQuery = useQuery({
+  const architectureQuery = useQuery({
+    queryKey: ["architecture"],
+    queryFn: fetchArchitecture,
+    staleTime: 60_000,
+  });
+
+  const runsQuery = useQuery({
+    queryKey: ["runs"],
+    queryFn: () => fetchRuns(100),
+    refetchInterval: live.accepted && live.connection !== "completed" ? 2_000 : 5_000,
+  });
+
+  const liveRunQuery = useQuery({
     queryKey: ["run", live.accepted?.run_id],
     queryFn: () => fetchRun(live.accepted!.run_path),
     enabled: Boolean(live.accepted),
@@ -82,17 +101,49 @@ export default function App() {
     },
   });
 
-  const evaluationReady = executionQuery.data?.status === "completed";
-  const evaluationQuery = useQuery({
+  const liveEvaluationReady = executionQuery.data?.status === "completed";
+  const liveEvaluationQuery = useQuery({
     queryKey: ["evaluation", live.accepted?.run_id],
     queryFn: () => fetchEvaluation(live.accepted!.run_id),
-    enabled: Boolean(live.accepted && evaluationReady),
+    enabled: Boolean(live.accepted && liveEvaluationReady),
   });
+
+  const historicalRunQuery = useQuery({
+    queryKey: ["historical-run", historicalRunId],
+    queryFn: () => fetchRunById(historicalRunId!),
+    enabled: Boolean(historicalRunId),
+  });
+
+  const historicalEventsQuery = useQuery({
+    queryKey: ["historical-events", historicalRunId],
+    queryFn: () => fetchRunEvents(historicalRunId!),
+    enabled: Boolean(historicalRunId),
+  });
+
+  const historicalEvaluationQuery = useQuery({
+    queryKey: ["historical-evaluation", historicalRunId],
+    queryFn: () => fetchEvaluation(historicalRunId!),
+    enabled: Boolean(historicalRunId),
+  });
+
+  const selectedRun = historicalRunId ? historicalRunQuery.data : liveRunQuery.data;
+  const selectedEvents = historicalRunId
+    ? historicalEventsQuery.data?.items ?? []
+    : live.events;
+  const selectedEvaluation = historicalRunId
+    ? historicalEvaluationQuery.data
+    : liveEvaluationQuery.data;
+  const selectedEvaluationReady = historicalRunId
+    ? Boolean(historicalRunQuery.data?.completed)
+    : liveEvaluationReady;
+  const selectedRunId = historicalRunId ?? live.accepted?.run_id ?? null;
+  const metrics = useMemo(() => deriveRunEventMetrics(selectedEvents), [selectedEvents]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const normalized = requestText.trim();
     if (!normalized || live.submitting) return;
+    setHistoricalRunId(null);
     try {
       await live.submit(normalized);
     } catch {
@@ -100,9 +151,9 @@ export default function App() {
     }
   };
 
-  const blockingChecks = evaluationQuery.data?.items.filter((check) => check.blocking) ?? [];
+  const blockingChecks = selectedEvaluation?.items.filter((check) => check.blocking) ?? [];
   const passedChecks = blockingChecks.filter((check) => check.passed).length;
-  const run = runQuery.data;
+  const viewingHistorical = historicalRunId !== null;
 
   return (
     <div className="app-shell">
@@ -129,7 +180,7 @@ export default function App() {
             </div>
             {live.accepted && (
               <button className="ghost-button" type="button" onClick={live.clear}>
-                Clear run
+                Clear live run
               </button>
             )}
           </div>
@@ -155,22 +206,34 @@ export default function App() {
           {live.error && <div className="error-banner">{live.error}</div>}
         </section>
 
+        <RunExplorer
+          runs={runsQuery.data?.items ?? []}
+          selectedRunId={historicalRunId}
+          liveRunId={live.accepted?.run_id ?? null}
+          loading={runsQuery.isLoading}
+          onSelect={setHistoricalRunId}
+        />
+
         <section className="run-strip" aria-live="polite">
           <div>
-            <span className="metric-label">Stream</span>
-            <strong className={`connection connection-${live.connection}`}>{live.connection}</strong>
+            <span className="metric-label">View</span>
+            <strong>{viewingHistorical ? "historical" : live.accepted ? "live" : "idle"}</strong>
           </div>
           <div>
-            <span className="metric-label">Execution</span>
-            <strong>{executionQuery.data?.status ?? (live.accepted ? "accepted" : "—")}</strong>
+            <span className="metric-label">Stream / execution</span>
+            <strong>
+              {viewingHistorical
+                ? "persisted"
+                : `${live.connection} / ${executionQuery.data?.status ?? (live.accepted ? "accepted" : "—")}`}
+            </strong>
           </div>
           <div className="run-id-cell">
-            <span className="metric-label">Safe run ID</span>
-            <strong title={live.accepted?.run_id}>{live.accepted?.run_id ?? "No active run"}</strong>
+            <span className="metric-label">Selected safe run ID</span>
+            <strong title={selectedRunId ?? undefined}>{selectedRunId ?? "No selected run"}</strong>
           </div>
           <div>
             <span className="metric-label">Config</span>
-            <strong title={run?.config_hash}>{run?.config_hash?.slice(0, 12) ?? "—"}</strong>
+            <strong title={selectedRun?.config_hash}>{selectedRun?.config_hash?.slice(0, 12) ?? "—"}</strong>
           </div>
         </section>
 
@@ -197,17 +260,17 @@ export default function App() {
                 <p className="eyebrow">RUNTIME TIME</p>
                 <h2>Canonical event timeline</h2>
               </div>
-              <span className="count-pill">{live.events.length} events</span>
+              <span className="count-pill">{selectedEvents.length} events</span>
             </div>
 
-            {live.events.length === 0 ? (
+            {selectedEvents.length === 0 ? (
               <div className="empty-state">
-                <strong>No runtime events yet</strong>
-                <p>Submit a request. This panel only grows when the backend emits a real safe event.</p>
+                <strong>No runtime events selected</strong>
+                <p>Submit a live request or select a persisted run. This panel never fabricates trace history.</p>
               </div>
             ) : (
               <ol className="timeline-list">
-                {live.events.map((event) => (
+                {selectedEvents.map((event) => (
                   <li key={event.event_id} className={`timeline-item tone-${eventTone(event)}`}>
                     <div className="sequence">{String(event.sequence).padStart(2, "0")}</div>
                     <div className="timeline-content">
@@ -231,17 +294,17 @@ export default function App() {
             <article className="panel terminal-panel">
               <p className="eyebrow">CUSTOMER-SAFE OUTPUT</p>
               <h2>Terminal outcome</h2>
-              {!run?.completed ? (
+              {!selectedRun?.completed ? (
                 <div className="empty-state small">
-                  <strong>Runtime still active</strong>
+                  <strong>Runtime not complete</strong>
                   <p>No terminal result is shown until the persisted run is actually complete.</p>
                 </div>
               ) : (
                 <dl className="detail-list">
-                  <div><dt>Decision</dt><dd>{valueOrDash(run.terminal_decision)}</dd></div>
-                  <div><dt>Response mode</dt><dd>{valueOrDash(run.terminal_response_mode)}</dd></div>
-                  <div><dt>Reason</dt><dd>{valueOrDash(run.terminal_reason_code)}</dd></div>
-                  <div className="message-detail"><dt>Message</dt><dd>{valueOrDash(run.terminal_message)}</dd></div>
+                  <div><dt>Decision</dt><dd>{valueOrDash(selectedRun.terminal_decision)}</dd></div>
+                  <div><dt>Response mode</dt><dd>{valueOrDash(selectedRun.terminal_response_mode)}</dd></div>
+                  <div><dt>Reason</dt><dd>{valueOrDash(selectedRun.terminal_reason_code)}</dd></div>
+                  <div className="message-detail"><dt>Message</dt><dd>{valueOrDash(selectedRun.terminal_message)}</dd></div>
                 </dl>
               )}
             </article>
@@ -252,23 +315,21 @@ export default function App() {
                 <span>Evaluator isolated from agent-time state</span>
               </div>
               <h2>Evaluation</h2>
-              {!run?.completed ? (
+              {!selectedRun?.completed ? (
                 <div className="empty-state small">
                   <strong>Not evaluated yet</strong>
                   <p>Evaluation appears only after the runtime has emitted its terminal trace.</p>
                 </div>
-              ) : !evaluationReady ? (
+              ) : !selectedEvaluationReady ? (
                 <p className="muted">Runtime finished. Waiting for post-runtime evaluation persistence…</p>
-              ) : evaluationQuery.isLoading ? (
-                <p className="muted">Loading safe evaluation…</p>
-              ) : evaluationQuery.data?.count ? (
+              ) : selectedEvaluation?.count ? (
                 <>
                   <div className="evaluation-score">
                     <strong>{passedChecks}/{blockingChecks.length}</strong>
                     <span>blocking checks passed</span>
                   </div>
                   <ul className="check-list">
-                    {evaluationQuery.data.items.map((check) => (
+                    {selectedEvaluation.items.map((check) => (
                       <li key={check.check_name}>
                         <span className={check.passed ? "check-pass" : "check-fail"}>
                           {check.passed ? "PASS" : "FAIL"}
@@ -284,6 +345,42 @@ export default function App() {
             </article>
           </aside>
         </section>
+
+        <article className="panel visual-panel">
+          <div className="section-heading compact">
+            <div>
+              <p className="eyebrow">EXECUTION TOPOLOGY</p>
+              <h2>Trace Graph</h2>
+            </div>
+            <span className="count-pill">derived from {selectedEvents.length} safe events</span>
+          </div>
+          <TraceGraph events={selectedEvents} />
+        </article>
+
+        <article className="panel visual-panel">
+          <div className="section-heading compact">
+            <div>
+              <p className="eyebrow">IMPLEMENTATION-BACKED SYSTEM MAP</p>
+              <h2>Architecture Explorer</h2>
+            </div>
+            {architectureQuery.data && (
+              <span className="count-pill">provider: {architectureQuery.data.provider_selection_state}</span>
+            )}
+          </div>
+          {architectureQuery.data ? (
+            <ArchitectureExplorer
+              manifest={architectureQuery.data}
+              events={selectedEvents}
+              hasRun={Boolean(selectedRunId)}
+              hasEvaluation={Boolean(selectedEvaluation?.count)}
+            />
+          ) : (
+            <div className="empty-state graph-empty">
+              <strong>Architecture manifest unavailable</strong>
+              <p>The UI will not substitute hard-coded architecture when the backend manifest is missing.</p>
+            </div>
+          )}
+        </article>
       </main>
     </div>
   );
