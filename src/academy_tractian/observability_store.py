@@ -1,0 +1,379 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+import duckdb
+
+from research.e2.models import RunTrace
+
+from .evaluation import ProductionEvaluationReport
+from .observability import (
+    SafeEvaluation,
+    SafeEvidenceRef,
+    SafeEvent,
+    SafeRun,
+    project_evaluation,
+    project_trace,
+)
+
+
+OBSERVABILITY_SCHEMA_VERSION = "observability-store-v1"
+
+
+class ObservabilityStore:
+    """DuckDB-backed persistence for browser-safe observability projections only.
+
+    Raw RunTrace objects may enter this class through `persist_trace()`, but only their
+    allow-listed projections are persisted. The database is therefore a safe read model,
+    not a second raw-trace store.
+    """
+
+    def __init__(self, path: str | Path) -> None:
+        self.path = str(path)
+        if self.path == ":memory:":
+            raise ValueError(
+                "ObservabilityStore requires a persistent DuckDB path; ':memory:' is unsupported"
+            )
+        Path(self.path).parent.mkdir(parents=True, exist_ok=True)
+        self._initialize()
+
+    def _connect(self) -> duckdb.DuckDBPyConnection:
+        return duckdb.connect(self.path)
+
+    def _initialize(self) -> None:
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS observability_meta (
+                    key VARCHAR PRIMARY KEY,
+                    value VARCHAR NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS runs (
+                    run_id VARCHAR PRIMARY KEY,
+                    scenario_id VARCHAR NOT NULL,
+                    config_hash VARCHAR NOT NULL,
+                    event_count INTEGER NOT NULL,
+                    model_calls INTEGER NOT NULL,
+                    tool_proposals INTEGER NOT NULL,
+                    tool_calls INTEGER NOT NULL,
+                    policy_blocks INTEGER NOT NULL,
+                    errors INTEGER NOT NULL,
+                    terminal_decision VARCHAR,
+                    terminal_response_mode VARCHAR,
+                    terminal_reason_code VARCHAR,
+                    terminal_message VARCHAR,
+                    completed BOOLEAN NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS events (
+                    event_id VARCHAR PRIMARY KEY,
+                    run_id VARCHAR NOT NULL,
+                    sequence INTEGER NOT NULL,
+                    event_type VARCHAR NOT NULL,
+                    origin VARCHAR NOT NULL,
+                    timestamp VARCHAR,
+                    tool_name VARCHAR,
+                    decision_kind VARCHAR,
+                    provider_id VARCHAR,
+                    model_id VARCHAR,
+                    route_id VARCHAR,
+                    live_call BOOLEAN,
+                    outcome VARCHAR,
+                    failure_code VARCHAR,
+                    latency_ms INTEGER,
+                    turn_index INTEGER,
+                    tool_call_count INTEGER,
+                    argument_names VARCHAR,
+                    method VARCHAR,
+                    path_template VARCHAR,
+                    tool_kind VARCHAR,
+                    status_code INTEGER,
+                    policy_stage VARCHAR,
+                    policy_allowed BOOLEAN,
+                    policy_contained BOOLEAN,
+                    policy_violation VARCHAR,
+                    evidence_id VARCHAR,
+                    reason_code VARCHAR,
+                    response_mode VARCHAR,
+                    message VARCHAR
+                )
+                """
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS evidence (
+                    evidence_id VARCHAR NOT NULL,
+                    run_id VARCHAR NOT NULL,
+                    sequence INTEGER NOT NULL,
+                    tool_name VARCHAR,
+                    status_code INTEGER,
+                    PRIMARY KEY (run_id, sequence, evidence_id)
+                )
+                """
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS evaluations (
+                    run_id VARCHAR NOT NULL,
+                    check_name VARCHAR NOT NULL,
+                    passed BOOLEAN NOT NULL,
+                    blocking BOOLEAN NOT NULL,
+                    blocking_pass BOOLEAN NOT NULL,
+                    PRIMARY KEY (run_id, check_name)
+                )
+                """
+            )
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO observability_meta(key, value)
+                VALUES ('schema_version', ?)
+                """,
+                [OBSERVABILITY_SCHEMA_VERSION],
+            )
+        finally:
+            connection.close()
+
+    def ready(self) -> bool:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT value FROM observability_meta WHERE key = 'schema_version'"
+            ).fetchone()
+            return bool(row and row[0] == OBSERVABILITY_SCHEMA_VERSION)
+        finally:
+            connection.close()
+
+    def persist_trace(
+        self,
+        trace: RunTrace,
+        *,
+        evaluation: ProductionEvaluationReport | None = None,
+    ) -> str:
+        run, events, evidence = project_trace(trace)
+        safe_evaluation = None if evaluation is None else project_evaluation(evaluation)
+        return self.persist_projection(
+            run,
+            events,
+            evidence,
+            evaluation=safe_evaluation,
+        )
+
+    def persist_projection(
+        self,
+        run: SafeRun,
+        events: tuple[SafeEvent, ...],
+        evidence: tuple[SafeEvidenceRef, ...],
+        *,
+        evaluation: SafeEvaluation | None = None,
+    ) -> str:
+        if any(event.run_id != run.run_id for event in events):
+            raise ValueError("event run_id does not match SafeRun")
+        if any(item.run_id != run.run_id for item in evidence):
+            raise ValueError("evidence run_id does not match SafeRun")
+        if evaluation is not None and evaluation.run_id != run.run_id:
+            raise ValueError("evaluation run_id does not match SafeRun")
+
+        connection = self._connect()
+        try:
+            connection.execute("BEGIN TRANSACTION")
+            connection.execute("DELETE FROM evaluations WHERE run_id = ?", [run.run_id])
+            connection.execute("DELETE FROM evidence WHERE run_id = ?", [run.run_id])
+            connection.execute("DELETE FROM events WHERE run_id = ?", [run.run_id])
+            connection.execute("DELETE FROM runs WHERE run_id = ?", [run.run_id])
+
+            connection.execute(
+                """
+                INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    run.run_id,
+                    run.scenario_id,
+                    run.config_hash,
+                    run.event_count,
+                    run.model_calls,
+                    run.tool_proposals,
+                    run.tool_calls,
+                    run.policy_blocks,
+                    run.errors,
+                    run.terminal_decision,
+                    run.terminal_response_mode,
+                    run.terminal_reason_code,
+                    run.terminal_message,
+                    run.completed,
+                ],
+            )
+
+            for event in events:
+                connection.execute(
+                    """
+                    INSERT INTO events VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    )
+                    """,
+                    [
+                        event.event_id,
+                        event.run_id,
+                        event.sequence,
+                        event.event_type,
+                        event.origin,
+                        event.timestamp,
+                        event.tool_name,
+                        event.decision_kind,
+                        event.provider_id,
+                        event.model_id,
+                        event.route_id,
+                        event.live_call,
+                        event.outcome,
+                        event.failure_code,
+                        event.latency_ms,
+                        event.turn_index,
+                        event.tool_call_count,
+                        ",".join(event.argument_names),
+                        event.method,
+                        event.path_template,
+                        event.tool_kind,
+                        event.status_code,
+                        event.policy_stage,
+                        event.policy_allowed,
+                        event.policy_contained,
+                        event.policy_violation,
+                        event.evidence_id,
+                        event.reason_code,
+                        event.response_mode,
+                        event.message,
+                    ],
+                )
+
+            for item in evidence:
+                connection.execute(
+                    "INSERT INTO evidence VALUES (?, ?, ?, ?, ?)",
+                    [
+                        item.evidence_id,
+                        item.run_id,
+                        item.sequence,
+                        item.tool_name,
+                        item.status_code,
+                    ],
+                )
+
+            if evaluation is not None:
+                for check in evaluation.checks:
+                    connection.execute(
+                        "INSERT INTO evaluations VALUES (?, ?, ?, ?, ?)",
+                        [
+                            evaluation.run_id,
+                            check.name,
+                            check.passed,
+                            check.blocking,
+                            evaluation.blocking_pass,
+                        ],
+                    )
+
+            connection.execute("COMMIT")
+        except Exception:
+            connection.execute("ROLLBACK")
+            raise
+        finally:
+            connection.close()
+        return run.run_id
+
+    @staticmethod
+    def _rows(cursor: duckdb.DuckDBPyConnection) -> list[dict[str, Any]]:
+        columns = [description[0] for description in cursor.description]
+        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+    def overview(self) -> dict[str, Any]:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                """
+                SELECT
+                    COUNT(*) AS total_runs,
+                    COALESCE(SUM(CASE WHEN completed THEN 1 ELSE 0 END), 0) AS completed_runs,
+                    COALESCE(SUM(model_calls), 0) AS model_calls,
+                    COALESCE(SUM(tool_calls), 0) AS tool_calls,
+                    COALESCE(SUM(policy_blocks), 0) AS policy_blocks,
+                    COALESCE(SUM(errors), 0) AS errors
+                FROM runs
+                """
+            ).fetchone()
+            assert row is not None
+            return {
+                "schema_version": OBSERVABILITY_SCHEMA_VERSION,
+                "total_runs": int(row[0]),
+                "completed_runs": int(row[1]),
+                "model_calls": int(row[2]),
+                "tool_calls": int(row[3]),
+                "policy_blocks": int(row[4]),
+                "errors": int(row[5]),
+            }
+        finally:
+            connection.close()
+
+    def list_runs(self, *, limit: int = 100) -> list[dict[str, Any]]:
+        if not 1 <= limit <= 1000:
+            raise ValueError("limit must be within [1, 1000]")
+        connection = self._connect()
+        try:
+            return self._rows(
+                connection.execute(
+                    "SELECT * FROM runs ORDER BY run_id DESC LIMIT ?",
+                    [limit],
+                )
+            )
+        finally:
+            connection.close()
+
+    def get_run(self, run_id: str) -> dict[str, Any] | None:
+        connection = self._connect()
+        try:
+            rows = self._rows(connection.execute("SELECT * FROM runs WHERE run_id = ?", [run_id]))
+            return rows[0] if rows else None
+        finally:
+            connection.close()
+
+    def get_events(self, run_id: str) -> list[dict[str, Any]]:
+        connection = self._connect()
+        try:
+            return self._rows(
+                connection.execute(
+                    "SELECT * FROM events WHERE run_id = ? ORDER BY sequence",
+                    [run_id],
+                )
+            )
+        finally:
+            connection.close()
+
+    def get_evidence(self, run_id: str) -> list[dict[str, Any]]:
+        connection = self._connect()
+        try:
+            return self._rows(
+                connection.execute(
+                    "SELECT * FROM evidence WHERE run_id = ? ORDER BY sequence",
+                    [run_id],
+                )
+            )
+        finally:
+            connection.close()
+
+    def get_evaluation(self, run_id: str) -> list[dict[str, Any]]:
+        connection = self._connect()
+        try:
+            return self._rows(
+                connection.execute(
+                    "SELECT * FROM evaluations WHERE run_id = ? ORDER BY check_name",
+                    [run_id],
+                )
+            )
+        finally:
+            connection.close()
