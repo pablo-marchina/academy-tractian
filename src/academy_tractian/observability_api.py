@@ -10,6 +10,7 @@ from typing import AsyncContextManager, Callable
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
+from .architecture_manifest import ProviderSelectionState, architecture_manifest
 from .observability_store import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStore
 
 
@@ -50,6 +51,7 @@ def create_observability_app(
     *,
     db_path: str | Path = "./var/observability.duckdb",
     lifespan: Callable[[FastAPI], AsyncContextManager[None]] | None = None,
+    provider_selection_state: ProviderSelectionState = "NO_SELECTION",
 ) -> FastAPI:
     app = FastAPI(
         title="Academy × TRACTIAN Observability API",
@@ -86,6 +88,12 @@ def create_observability_app(
             "store_schema_version": OBSERVABILITY_SCHEMA_VERSION,
             "config_hash": _safe_config_hash(),
         }
+
+    @app.get("/api/architecture")
+    def architecture() -> dict[str, object]:
+        return architecture_manifest(
+            provider_selection_state=provider_selection_state
+        ).model_dump(mode="json")
 
     @app.get("/api/overview")
     def overview() -> dict[str, object]:
