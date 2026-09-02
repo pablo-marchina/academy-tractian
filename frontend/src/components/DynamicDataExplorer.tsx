@@ -4,16 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { executeAnalyticsQuery, fetchDynamicAnalyticsSchema } from "../api/client";
 import type { AnalyticsFilter, AnalyticsQuerySpec, ChartType } from "../api/types";
 import { dynamicOption } from "../state/analyticsOptions";
+import { buildDrilldownQuery, type AnalyticsDrilldown } from "../state/analyticsScope";
 import { EChart, type EChartDataPoint } from "./EChart";
-
-export interface AnalyticsDrilldown {
-  key: number;
-  dataset: AnalyticsQuerySpec["dataset"];
-  dimension: string;
-  filterField: string;
-  filterValue: string | number | boolean;
-  chartType?: ChartType;
-}
 
 function parseFilterValue(operator: AnalyticsFilter["operator"], raw: string): AnalyticsFilter["value"] {
   const trimmed = raw.trim();
@@ -96,15 +88,7 @@ export function DynamicDataExplorer({
     setFilterField(drilldown.filterField);
     setFilterOperator("eq");
     setFilterValue(scalarToInput(drilldown.filterValue));
-    mutateQuery({
-      dataset: drilldown.dataset,
-      run_id: globalRunId,
-      dimensions: [drilldown.dimension],
-      measure: "count",
-      chart_type: nextChart,
-      filters: [{ field: drilldown.filterField, operator: "eq", value: drilldown.filterValue }],
-      limit: 200,
-    });
+    mutateQuery(buildDrilldownQuery(drilldown, globalRunId));
   }, [drilldown, globalRunId, mutateQuery]);
 
   const runQuery = () => {
