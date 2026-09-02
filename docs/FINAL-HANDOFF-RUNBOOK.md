@@ -1,42 +1,43 @@
 # Academy × TRACTIAN — Final Handoff Runbook
 
-**Scope:** provider-free final handoff for the actually evidenced runtime/evaluator path.  
-**Authority:** subordinate to `CURRENT-PROJECT-STATUS.md`, frozen ADRs and frozen experiment artifacts.  
-**Does not authorize:** live provider calls, credential probing, real customer mutation, C4 reconstruction/rescoring, semantic/private/blind evaluation, global architecture freeze or unconditional production-readiness claims.
+**Status:** ACTIVE operational runbook  
+**Authority:** subordinate to [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md), accepted ADRs and frozen experiment evidence.  
+**Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)
 
-## 1. Supported handoff path
+This runbook separates **what works now** from **what becomes the final handoff once the realtime observability/frontend P0 work is merged**.
 
-The reviewer-facing path is intentionally small:
+## 1. Current supported provider-free path
 
 ```text
 request
-→ AgentController
+→ ProductionRuntime
 → DecisionSource
-→ HarnessRunner.execute_tool()
-→ strict B1 argument validation
-→ B2 action/resource safety
+→ AgentController
+→ HarnessRunner
+→ typed TRACTIAN tools
+→ B1/B2/B3 safety boundaries as applicable
 → RunTrace
 → deterministic evaluator
 ```
 
-The default `ProductionRuntime` is action-disabled. The separately governed `ControlledActionRuntime` is used only for explicitly authorized supplied/test action demonstrations and preserves durable idempotency custody before action transport.
+The default production runtime is action-disabled. The controlled supplied/test action profile is separately governed and does not authorize real-customer mutation.
 
-## 2. Environment prerequisites
+## 2. Backend prerequisites
 
-Use Python 3.11 or newer. The production and E2 packages require `pydantic>=2.6,<3`; test extras require `pytest>=8`.
+- Python 3.11+
+- `pydantic>=2.6,<3`
+- `pytest>=8` for development/test
 
-From a clean checkout at the repository root:
+From repository root:
 
 ```bash
 python --version
 python -m pip install -e ".[dev]" -e "research/e2[dev]"
 ```
 
-No provider secret is required for the canonical provider-free reproduction. Do not add dummy provider secrets, probe accounts or invoke issue #44 merely to test setup.
+No provider secret is needed for provider-free reproduction.
 
-## 3. Canonical clean reproduction
-
-Execute in this exact order:
+## 3. Current clean provider-free reproduction
 
 ```bash
 python -m pytest -q tests
@@ -48,14 +49,9 @@ python scripts/validate_delivery_reproduction.py
 python scripts/validate_final_handoff_audit.py
 ```
 
-Interpretation:
+Do not change frozen expected identities to make a regression pass. Diagnose the implementation/evidence change instead.
 
-- test/validator failure means the handoff is not reproduced at that checkout;
-- do not change frozen expected SHAs to make a failing regression green;
-- diagnose the changed implementation/evidence instead;
-- no failed provider-free validator permits a live-provider fallback.
-
-Frozen identities that must remain unchanged:
+Historical frozen campaign identities include:
 
 ```text
 EV-007  7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9
@@ -64,129 +60,199 @@ EV-011  cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
 DEMO    43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445
 ```
 
-## 4. Demonstration sequence
+## 4. Provider-free demonstration
 
-`python scripts/validate_delivery_reproduction.py` reruns the five frozen integrated scenarios and validates the static result/evidence index:
+`python scripts/validate_delivery_reproduction.py` exercises representative integrated paths including:
 
-1. `DEMO-01` — supplied/local `get_asset`, investigate/read, supported `ORIENT`;
-2. `DEMO-02` — `ASK_CLARIFICATION / MISSING_CONTEXT`;
-3. `DEMO-03` — `ABSTAIN / NO_SAFE_PATH`;
-4. `DEMO-04` — `ESCALATE_HUMAN / HUMAN_REVIEW_REQUIRED`;
-5. `DEMO-05` — authorized supplied/test `reprocess_analysis`, one deterministic local action transport and one fresh durable local claim.
+- investigate/read → orient/final;
+- missing context → clarification;
+- no safe path → abstention;
+- human review → escalation;
+- controlled supplied/test action with local transport/idempotency custody.
 
-Expected campaign SHA: `43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445`.
+This is synthetic/provider-free delivery evidence and performs no real customer mutation.
 
-This demonstrates integrated runtime + evaluator behavior without provider calls or real customer mutations. It is not a live customer deployment demonstration.
+## 5. D01 historical live evidence
 
-## 5. Evidence and monitoring surfaces
-
-For a run, inspect `RunTrace` rather than relying only on final text. The normalized trace records lifecycle events such as proposal, policy check, tool call/result, observation, final response and run finish. Production evaluator/campaign outputs add deterministic classifications and reason codes.
-
-Reviewer-level evidence surfaces:
-
-- `research/results/final-delivery-evidence-index-2026-08-28.json` — exact repository evidence identities;
-- `research/results/provider-free-final-delivery-demo-result-2026-08-28.json` — five demo result identities;
-- EV-007 result/freeze — deterministic failure containment;
-- EV-008 result/freeze — repeated-run stability;
-- EV-011 result/freeze — customer-safe communication;
-- `docs/BENCHMARK-INTEGRITY-GATE.md` — evaluation contamination/independence boundaries;
-- `docs/RUBRIC-TO-EVIDENCE.md` — reviewer navigation.
-
-For operational diagnosis, classify the failure at the earliest failing boundary instead of masking it with retries.
-
-## 6. Failure and fallback behavior
-
-### Invalid tool arguments
-
-Strict B1 validation blocks malformed/incomplete arguments before transport. Treat the run as evaluator-invalid where applicable; do not rewrite it into a successful execution.
-
-### Read/tool transport failure
-
-The production path fails closed to `ABSTAIN / TOOL_BOUNDARY_FAILURE` without exposing raw exception material. Do not retry automatically unless a separately frozen policy explicitly authorizes a replacement class; the current delivery campaigns report zero automatic retries.
-
-### Decision-source/provider payload failure
-
-Malformed/unusable decision material fails safely rather than being converted into an invented action or answer. Provider execution is not required for the provider-free handoff.
-
-### Missing/ambiguous evidence
-
-Use clarification, abstention or escalation according to the trace decision. Do not fabricate certainty.
-
-### Consequential action denied
-
-The default `ProductionRuntime` has actions permanently disabled by its frozen config type and grants zero production action permissions. A denied action must stop before transport.
-
-### Post-claim action transport uncertainty
-
-In the controlled action profile the durable idempotency claim is acquired before transport. If transport then fails, the attempt is consumed/uncertain and must **not** be automatically replayed or described as successful. Human/operator reconciliation is required before any future action decision.
-
-### Customer-facing communication
-
-Do not expose credentials, raw exception/provider material, evaluator-private/gold information or unnecessary internal implementation details. Success claims must be supported by the trace; uncertain/failed actions must not be phrased as completed.
-
-## 7. Provider fallback boundary
-
-There is currently no selected live provider and no automatic cross-provider fallback. The frozen comparison is issue #44 only:
+D01 has already executed:
 
 ```text
-OpenAI gpt-5.6-sol      16 maximum attempts
-Google gemini-3.7-flash 16 maximum attempts
-total                   32 maximum attempts
-consumed                 0 / 32 at the handoff baseline
-automatic retries        0
-fallbacks                0
-parallel calls           0
+Cloudflare Workers AI
+GLM 4.7 Flash + Nemotron 3 120B A12B
+32 / 32 completed attempts
+USD 0.00
+2813.628464 observed Neurons
+NO_SELECTION
+24 / 24 CLIENT_FAILURE at exact 512 output-token ceiling
 ```
 
-Execution requires both explicitly provisioned provider secrets and one canonical durable custody root. If prerequisites are absent, remain at attempt 0. Do not probe credentials/accounts to infer readiness.
+Do not rerun D01 or alter its frozen semantics.
 
-A provider-free regression failure is never a reason to execute the live comparison.
+## 6. D02 governed live boundary
 
-## 8. Rollback / reversal
+D02 is a prospective diagnostic with:
 
-No deployment platform is frozen by this handoff, so there is no evidence-backed claim of an exercised infrastructure deployment rollback. The implemented reversal controls are narrower and deterministic:
+```text
+same providers/probes/repeats/prompt/schema/evaluator
+completion cap 1024
+sanitized failure subtype
+worst-case packet 9352.805376 Neurons
+USD0 / no retries / no fallbacks
+```
 
-1. **Runtime behavior change:** revert the release/commit to the last frozen validated Git head and rerun the canonical clean reproduction.
-2. **Consequential actions:** keep default `ProductionRuntime` action-disabled; do not enable actions as a recovery shortcut.
-3. **Controlled action uncertainty:** never delete/reuse an idempotency claim to manufacture replay eligibility; reconcile the external state first.
-4. **Provider comparison:** preserve custody/attempt ledgers; never reset a consumed/uncertain attempt by switching roots. A recovery needs a prospective governance decision.
-5. **Scientific evidence:** frozen artifacts remain immutable. Do not reconstruct or replace the missing C4 artifact; retain the external blocker.
-6. **Benchmark/blind breach:** reclassify consumed evidence according to the benchmark-integrity rules; do not erase the breach.
+Operational rule:
 
-Thus the delivery has a documented **code/config/fail-closed reversal path**, not proof of a production deployment rollback exercise.
+1. start from exact current `main`;
+2. provider credentials absent;
+3. wait for an eligible Workers AI UTC reset;
+4. make a fresh truthful zero-use operator attestation;
+5. capture fresh evidence (<=600 s);
+6. issue fresh receipt (<=300 s) bound to exact custody root;
+7. only then provision token/account ID in environment;
+8. execute the governed D02 launcher once;
+9. clear credentials immediately;
+10. inspect custody/ledger/result;
+11. if any attempt is `CLAIMED`/`UNCERTAIN`, never blind-rerun it;
+12. analyze D02 vs D01 and apply frozen hard-gate/Pareto rules.
 
-## 9. Security/privacy boundaries
+Never paste tokens/account identifiers into documentation or chat logs.
 
-Never persist or print provider secrets, bearer tokens, raw idempotency secrets, evaluator-private gold, blind outcomes or customer-sensitive payloads in handoff artifacts. Synthetic sentinels are used by fault campaigns to prove leakage detection without real credentials.
+## 7. Failure behavior
 
-Identity and evaluation seed are runner/runtime-owned and outside model/provider control. API permission enforcement and project/system safety policy are distinct checks.
+### Invalid arguments
 
-## 10. Known limitations and non-claims
+B1 blocks before transport. Preserve the failure; do not convert it into success.
 
-The final handoff must state these rather than hiding them:
+### Policy/authorization denial
 
-- live provider comparison remains unexecuted at 0/32 calls; no model/provider is selected;
-- provider latency, live reliability and live cost/resource behavior are not measured yet;
-- no credential/account probe has occurred;
-- no real customer mutation has occurred;
-- the integrated demo is provider-free/supplied-test evidence;
-- the default production runtime remains action-disabled;
-- C4 per-group/slice reporting is blocked on the exact evaluator-side artifact SHA `b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c` (177350 bytes, 144 rows);
-- `FRESH_BLIND`, `LEGACY_LOCKED_TEST` and semantic/private evaluation are not authorized;
-- no independent fresh-blind generalization claim is available;
-- global final architecture and unconditional production readiness are not frozen/authorized.
+Denied actions stop before transport and remain visible as contained policy events.
 
-## 11. Reviewer completion checklist
+### Tool boundary failure
 
-A provider-free handoff is reproducible only if:
+Fail closed to a safe terminal path where implemented. Do not invent successful external state.
 
-- dependency installation succeeds from a clean checkout;
-- complete production tests and ADR-004 regression pass;
-- EV-007, EV-008 and EV-011 reproduce their frozen SHAs;
-- ADR-016 demo reproduces `43903731…` and the evidence index resolves with zero violations;
-- the final acceptance-audit validator passes;
-- provider calls remain 0/32 unless issue #44 separately records a governed execution;
-- credential probes and real customer mutations remain zero;
-- scientific/C4 authorization state is unchanged unless separately reconciled.
+### Decision-source/provider failure
 
-If any item fails, report the exact failed boundary and preserve the failure; do not broaden claims.
+Malformed/unusable provider output must not become an invented action or answer. Sanitized failure/provenance metadata may be recorded; raw material remains private.
+
+### Missing/conflicting evidence
+
+Clarify, abstain or escalate; do not fabricate certainty.
+
+### Consequential action uncertainty
+
+Once a durable idempotency/attempt claim is consumed, do not delete/reuse it to manufacture retry eligibility.
+
+## 8. Realtime observability/frontend handoff contract
+
+Once #121/#124/#122/#125/#123 are merged, the final clean setup must additionally document exact commands for:
+
+```text
+backend/observability install
+frontend install from lockfile
+frontend build
+observability API start
+React control-room start
+provider-independent live demo
+frontend/unit/E2E test suite
+```
+
+Do not add placeholder commands before the actual package/scripts exist. This runbook must be updated from committed executable commands, not from planned names.
+
+Final realtime behavior must show:
+
+- `LIVE / RECONNECTING / CAUGHT_UP / HISTORICAL` state;
+- real event-driven timeline/trace graph updates;
+- reconnect/cursor catch-up;
+- safe drill-down;
+- architecture/output lineage;
+- no raw/private telemetry in browser.
+
+## 9. Observability diagnosis
+
+For any run, diagnose the earliest failing boundary:
+
+```text
+request/context
+→ decision source
+→ controller decision
+→ tool proposal
+→ B1 validation
+→ B2/B3 policy
+→ tool transport
+→ observation
+→ terminal outcome
+→ trace validation
+→ evaluator
+→ safe projection
+→ persistence
+→ SSE transport
+→ browser reducer/render
+```
+
+Do not mask one boundary with retry/fallback from another.
+
+## 10. Security/privacy
+
+Never persist or expose through handoff/frontend/API/SSE:
+
+- provider secrets/tokens;
+- account/auth identifiers/headers;
+- identity binding/user ID/seed;
+- raw provider prompt/response material;
+- forbidden raw tool/observation bodies;
+- hidden chain-of-thought;
+- evaluator-private gold/oracles/blind outcomes.
+
+## 11. Rollback/reversal
+
+- code/runtime regression: return to last validated Git commit and rerun clean reproduction;
+- frontend/observability regression: revert to last validated frozen frontend/backend build and rerun affected tests;
+- controlled action uncertainty: reconcile external state, never auto-replay consumed claim;
+- provider experiment: preserve custody/ledger; no alternate root to reset attempts;
+- scientific evidence: frozen artifacts remain immutable;
+- privacy/evaluation leak: treat as evidence-integrity incident, not a documentation cleanup opportunity.
+
+A documented code/config reversal path is not equivalent to proof of infrastructure rollback in a horizontally deployed production environment.
+
+## 12. Final presentation sequence
+
+The target final demo flow is:
+
+```text
+1. Mission Control / system state
+2. submit representative industrial request
+3. run appears LIVE
+4. architecture path activates from real events
+5. model/decision metadata
+6. typed tool proposal
+7. validation/policy result
+8. TRACTIAN tool/API metadata
+9. safe observation/evidence
+10. terminal response
+11. runtime trace completes
+12. evaluator appears after runtime completion
+13. Explain This Run / output lineage
+14. dynamic data explorer
+15. Tools & Policy / failure behavior
+16. D01 vs D02 / provider quality/resource evidence
+17. one clarification/abstain/escalation/blocked/failure case
+```
+
+Maintain a provider-independent fallback demo so live provider availability is not a single presentation point of failure.
+
+## 13. Final completion checklist
+
+Before delivery:
+
+- clean backend install/reproduction passes;
+- frontend/observability clean install/build/start passes once implemented;
+- all P0 acceptance rows in `DELIVERY-ACCEPTANCE.md` pass or are explicitly bounded;
+- D02 is resolved or its blocker is explicitly documented;
+- no open P0 frontend/observability defect;
+- documentation links/commands match committed code;
+- no secrets/private evaluator material are present;
+- hard visual/feature freeze respected;
+- exact final demo rehearsed on the presentation environment.
+
+If any item fails, report the exact boundary and limitation rather than broadening claims.

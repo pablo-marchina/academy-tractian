@@ -1,51 +1,90 @@
 # Academy × TRACTIAN
 
-This repository is the governed individual TRACTIAN × Inteli project: a production-path agent runtime, deterministic evaluation framework, controlled reliability/safety campaigns, and reproducible delivery evidence.
+Engenharia e avaliação de agentes industriais sobre a API didática da TRACTIAN, combinando as duas trilhas permitidas pelo TAPI:
 
-## Start here
+- **Trilha A — agente:** agente industrial com tools tipadas, política de parada, evidência, segurança e outcomes `FINAL / CLARIFY / ABSTAIN / ESCALATE`;
+- **Trilha B — avaliação:** cenários, métricas, campanhas de falha/estabilidade, experimentos de provider, inspeção de traces e reprodução.
 
-The repository deliberately separates **what is implemented** from **what is authorized or proven**.
+## Estado atual
 
-- [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — sole canonical human-readable current state and authorization boundary.
-- [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) — final P0/P1 acceptance matrix.
-- [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md) — setup, reproduce, demo, monitoring, failure/fallback and rollback instructions.
-- [`docs/RUBRIC-TO-EVIDENCE.md`](docs/RUBRIC-TO-EVIDENCE.md) — reviewer navigation from the academic rubric to exact evidence.
-- [`research/results/final-delivery-evidence-index-2026-08-28.json`](research/results/final-delivery-evidence-index-2026-08-28.json) — machine-readable frozen evidence inventory.
-- [`docs/adr/016-provider-free-final-delivery-reproduction-evidence-package-2026-08-28.md`](docs/adr/016-provider-free-final-delivery-reproduction-evidence-package-2026-08-28.md) — frozen clean-checkout reproduction decision.
+- runtime/evaluator provider-free: **implementado e reproduzível**;
+- integração TRACTIAN: **18 operações tipadas**;
+- D01 Cloudflare: **32/32 live attempts**, **USD 0**, `NO_SELECTION`;
+- D01: **24/24 `CLIENT_FAILURE` ocorreram exatamente no teto de 512 output tokens**;
+- D02: mesmo experimento com **1024 completion tokens** e failure subtype sanitizado; execução live governada ainda pendente;
+- arquitetura do agente: **single-agent preservada** até evidência justificar mudança;
+- frontend: será construído do zero como **realtime observability control room**;
+- observabilidade planejada: safe projection → durable telemetry → FastAPI/SSE → React control room;
+- entrega final: **2026-09-08**.
 
-Do not infer authorization from the presence of code, old branches, workflows or historical experiment artifacts.
+## Comece aqui
 
-## Delivered architecture
+A documentação ativa foi consolidada. Leia nesta ordem:
 
-The production path reuses the accepted ADR-004 controller and the E2 `HarnessRunner` tool boundary rather than duplicating research execution logic. The canonical tool registry normalizes the supplied industrial API into 18 operations (17 path templates), with strict argument validation and explicit action permissions. The default `ProductionRuntime` keeps mutating actions disabled. ADR-012 separately demonstrates supplied/test controlled action execution with authorization and durable idempotency custody; it is not blanket real-customer authorization.
+1. [`docs/README.md`](docs/README.md) — índice e política de documentação;
+2. [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — única fonte humana de estado/autorizações atuais;
+3. [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md) — plano unificado até a entrega;
+4. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — arquitetura, stack, técnicas e frameworks;
+5. [`docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md`](docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md) — requisito TAPI → técnica/stack/output/evidência;
+6. [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) — Definition of Done final;
+7. [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md) — setup, reprodução, demo e fallback;
+8. [`docs/RUBRIC-TO-EVIDENCE.md`](docs/RUBRIC-TO-EVIDENCE.md) — navegação para evidência acadêmica;
+9. [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) — governança.
 
-The repository is organized as:
+ADRs e artefatos congelados continuam históricos e imutáveis; sua existência não implica autorização atual.
 
-- `src/academy_tractian/` — production-path runtime, evaluator, provider adapters, controlled actions and delivery helpers;
-- `research/e2/` — framework-neutral controller, typed tool contracts, trace model and evaluation harness;
-- `research/` — controlled research/evaluation evidence, benchmark-integrity records and frozen artifacts;
-- `tests/` — production-path and frozen-regression tests;
-- `scripts/` — deterministic validators and governed utilities;
-- `docs/` — source-of-truth status, acceptance, ADRs, runbook and review navigation.
+## Arquitetura resumida
 
-## Prerequisites
+```text
+User request
+  → ProductionRuntime
+  → DecisionSource / provider
+  → AgentController
+  → HarnessRunner
+  → typed ToolSpec registry
+  → B1/B2/B3 safety boundaries
+  → TRACTIAN API transport
+  → observations
+  → terminal outcome
+  → RunTrace
+  → evaluator
+  → safe observability projection
+  → telemetry store / FastAPI / SSE
+  → React control room
+```
 
-- Python **3.11 or newer**.
-- Project dependency: `pydantic>=2.6,<3`.
-- Development/test dependency: `pytest>=8`.
-- No provider secret is required for the canonical provider-free reproduction.
+O `RunTrace` bruto nunca deve ser servido ao browser. A UI recebe apenas projeções sanitizadas; evaluator-private truth, identidade/seed, credenciais, raw provider material e bodies proibidos permanecem fora da fronteira web.
 
-From a clean checkout:
+## Stack principal
+
+### Já implementado
+
+- Python 3.11+
+- Pydantic 2.x
+- `AgentController` próprio
+- `HarnessRunner`
+- typed `ToolSpec` registry
+- pytest
+- hatchling/wheel
+- Cloudflare Workers AI clients/experiments governados
+
+### P0 até a entrega
+
+- FastAPI
+- DuckDB
+- Server-Sent Events
+- React + TypeScript + Vite
+- TanStack Query
+- Apache ECharts
+- React Flow
+- Vitest + Testing Library + Playwright
+
+LangGraph, LangChain, MCP, RAG, persistent memory e adaptive routing **não fazem parte do caminho crítico** porque não há gap medido que justifique adicioná-los.
+
+## Provider-free reprodução atual
 
 ```bash
 python -m pip install -e ".[dev]" -e "research/e2[dev]"
-```
-
-## Canonical provider-free reproduction
-
-Run this exact sequence from the repository root:
-
-```bash
 python -m pytest -q tests
 python -m pytest -q research/e2/tests/test_controller.py
 python scripts/validate_ev007_failure_campaign.py
@@ -55,47 +94,15 @@ python scripts/validate_delivery_reproduction.py
 python scripts/validate_final_handoff_audit.py
 ```
 
-ADR-016 froze the upstream sequence through `validate_delivery_reproduction.py`; issue #60 appends only the final handoff-audit validator. The dedicated GitHub Actions workflows start from a clean checkout and require no live-provider credential.
+Essa sequência não requer secrets nem chamadas live de provider.
 
-Frozen upstream identities that must not move to make the handoff pass:
+## Regras de evidência
 
-- EV-007: `7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9`
-- EV-008: `1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8`
-- EV-011: `cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e`
-- integrated provider-free demo: `43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445`
+- USD 0 para serviços externos do projeto; paid spillover proibido.
+- Não inventar quota, provider state ou resultado.
+- Não reexecutar attempt live `CLAIMED`/`UNCERTAIN`.
+- Não modificar artefatos/ADRs congelados para alinhar narrativa posterior.
+- `NO_SELECTION` é resultado válido.
+- Falha de provider/frontend não autoriza expansão arquitetural automática.
 
-## Integrated demo
-
-The frozen provider-free demo executes five real runtime/evaluator traces through existing boundaries:
-
-1. read/investigate → `ORIENT`;
-2. missing context → `ASK_CLARIFICATION`;
-3. no safe path → `ABSTAIN`;
-4. human review → `ESCALATE_HUMAN`;
-5. one fully authorized supplied/test `reprocess_analysis` action with one local transport and one durable local idempotency claim.
-
-Run:
-
-```bash
-python scripts/validate_delivery_reproduction.py
-```
-
-The demo is synthetic/provider-free delivery evidence. It performs **0 real customer mutations**.
-
-## Current external/gated boundaries
-
-At the canonical handoff baseline:
-
-- live provider comparison: **0/32 calls**, no provider/model selected, issue #44 separately gated on explicit secrets plus durable custody;
-- credential/account probes: **0** and forbidden as a readiness shortcut;
-- real customer mutations: **0**;
-- scientific gate: `REQUIRED_PER_GROUP_AND_SLICE_REPORTING`;
-- exact C4 evaluator-side score-row artifact remains unavailable (`b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`, 177350 bytes, 144 rows);
-- semantic, `FRESH_BLIND` and `LEGACY_LOCKED_TEST` access remains unauthorized;
-- global architecture freeze and unconditional production-readiness claims remain unauthorized.
-
-See the runbook for failure/fallback/rollback behavior and the rubric crosswalk for the strongest evidence behind each review dimension.
-
-## Development governance
-
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) before changing experiment semantics, evaluation, runtime behavior, provider geometry, production architecture or canonical project state. Frozen evidence remains immutable; later delivery work must bound claims rather than rewrite earlier results.
+Para desenvolvimento, leia também [`CONTRIBUTING.md`](CONTRIBUTING.md).
