@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from threading import Lock
+from time import perf_counter
 from typing import Any, Protocol
 
 from research.e2.controller import AgentController
@@ -9,6 +10,7 @@ from research.e2.runner import HarnessRunner
 
 from .observability import SafeEvidenceRef, SafeEvent, SafeRun, project_trace
 from .observability_store import ObservabilityStore
+from .production_telemetry import ProductionTelemetry
 
 
 class SafeObservabilityEventSink(Protocol):
@@ -24,8 +26,14 @@ class SafeObservabilityEventSink(Protocol):
 
 
 class DuckDBObservabilityEventSink:
-    def __init__(self, store: ObservabilityStore) -> None:
+    def __init__(
+        self,
+        store: ObservabilityStore,
+        *,
+        telemetry: ProductionTelemetry | None = None,
+    ) -> None:
         self.store = store
+        self.telemetry = telemetry
 
     def publish(
         self,
@@ -34,7 +42,14 @@ class DuckDBObservabilityEventSink:
         event: SafeEvent,
         evidence: SafeEvidenceRef | None,
     ) -> None:
+        started = perf_counter()
         self.store.persist_live_update(run=run, event=event, evidence=evidence)
+        if self.telemetry is not None:
+            self.telemetry.record_persistence(
+                event_id=event.event_id,
+                event_timestamp=event.timestamp,
+                duration_ms=(perf_counter() - started) * 1000.0,
+            )
 
 
 class FailIsolatedObservabilityPublisher:
@@ -42,6 +57,9 @@ class FailIsolatedObservabilityPublisher:
 
     def __init__(self, sink: SafeObservabilityEventSink) -> None:
         self.sink = sink
+        self.telemetry = (
+            sink.telemetry if isinstance(sink, DuckDBObservabilityEventSink) else None
+        )
         self._lock = Lock()
         self._published_count = 0
         self._failure_count = 0
@@ -69,6 +87,7 @@ class FailIsolatedObservabilityPublisher:
         intentionally contained so observability cannot make the production agent unavailable.
         """
 
+        started = perf_counter()
         try:
             run, events, evidence = project_trace(trace)
             if not events:
@@ -82,11 +101,21 @@ class FailIsolatedObservabilityPublisher:
         except Exception:
             with self._lock:
                 self._failure_count += 1
+            if self.telemetry is not None:
+                self.telemetry.record_publish_overhead(
+                    duration_ms=(perf_counter() - started) * 1000.0,
+                    failed=True,
+                )
             return
 
         with self._lock:
             self._published_count += 1
             self._last_event_id = event.event_id
+        if self.telemetry is not None:
+            self.telemetry.record_publish_overhead(
+                duration_ms=(perf_counter() - started) * 1000.0,
+                failed=False,
+            )
 
 
 class ObservableHarnessRunner(HarnessRunner):
