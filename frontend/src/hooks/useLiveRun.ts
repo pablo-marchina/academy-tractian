@@ -30,6 +30,7 @@ export interface LiveRunState {
   error: string | null;
   submitting: boolean;
   submit: (userRequest: string) => Promise<void>;
+  follow: (run: RunAccepted) => void;
   clear: () => void;
 }
 
@@ -72,9 +73,7 @@ export function useLiveRun(): LiveRunState {
       source.addEventListener("trace_event", (message) => {
         try {
           const incoming = parseSafeEvent((message as MessageEvent<string>).data);
-          if (incoming.run_id !== run.run_id) {
-            throw new Error("cross_run_event_rejected");
-          }
+          if (incoming.run_id !== run.run_id) throw new Error("cross_run_event_rejected");
           setEvents((current) => {
             const next = mergeSafeEvent(current, incoming);
             if (isRunFinished(next)) {
@@ -94,8 +93,6 @@ export function useLiveRun(): LiveRunState {
       });
 
       source.onerror = () => {
-        // EventSource reconnects automatically and carries Last-Event-ID. Do not synthesize
-        // progress while disconnected; the persisted server cursor will catch up real events.
         if (sourceRef.current === source) {
           setConnection((current) => (current === "completed" ? current : "reconnecting"));
         }
@@ -104,14 +101,20 @@ export function useLiveRun(): LiveRunState {
     [closeSource, refreshTerminalState],
   );
 
-  const mutation = useMutation({
-    mutationFn: submitRun,
-    onSuccess: (run) => {
+  const follow = useCallback(
+    (run: RunAccepted) => {
+      closeSource();
       setAccepted(run);
       setEvents([]);
       setError(null);
       connect(run);
     },
+    [closeSource, connect],
+  );
+
+  const mutation = useMutation({
+    mutationFn: submitRun,
+    onSuccess: follow,
     onError: (cause) => {
       setConnection("failed");
       setError(cause instanceof Error ? cause.message : "run_submission_failed");
@@ -147,6 +150,7 @@ export function useLiveRun(): LiveRunState {
     error,
     submitting: mutation.isPending,
     submit,
+    follow,
     clear,
   };
 }
