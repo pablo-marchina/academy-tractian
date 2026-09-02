@@ -1,0 +1,242 @@
+from __future__ import annotations
+
+from threading import Event
+
+from fastapi.testclient import TestClient
+
+from research.e2.controller import (
+    ControllerContext,
+    ControllerDecision,
+    ControllerDecisionKind,
+    ToolProposal,
+)
+from research.e2.models import BoundRequest
+from research.e2.transport import TransportResponse
+
+from academy_tractian.product_api import AuthenticatedRuntimeContext, create_product_app
+from academy_tractian.realtime_runtime import RealtimeProductionRuntime
+
+
+class FakeTransport:
+    def __init__(self) -> None:
+        self.calls: list[BoundRequest] = []
+
+    def request(self, request: BoundRequest) -> TransportResponse:
+        self.calls.append(request)
+        return TransportResponse(
+            status_code=200,
+            headers={"content-type": "application/json"},
+            body={"asset_id": "asset-1", "status": "ok"},
+        )
+
+
+class ToolThenFinalSource:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def decide(self, _context: ControllerContext) -> ControllerDecision:
+        self.calls += 1
+        if self.calls == 1:
+            return ControllerDecision(
+                kind=ControllerDecisionKind.TOOL,
+                proposal=ToolProposal(
+                    tool_name="get_asset",
+                    arguments={"asset_id": "asset-1"},
+                    evidence_id="EV-operability-asset",
+                ),
+            )
+        return ControllerDecision(
+            kind=ControllerDecisionKind.FINAL,
+            final={
+                "decision": "ORIENT",
+                "response_mode": "complete",
+                "message": "Measured operability path completed.",
+            },
+        )
+
+
+class BlockingFinalSource:
+    def __init__(self, *, entered: Event, release: Event) -> None:
+        self.entered = entered
+        self.release = release
+
+    def decide(self, _context: ControllerContext) -> ControllerDecision:
+        self.entered.set()
+        if not self.release.wait(timeout=10):
+            raise RuntimeError("release timeout")
+        return ControllerDecision(
+            kind=ControllerDecisionKind.FINAL,
+            final={
+                "decision": "ORIENT",
+                "response_mode": "complete",
+                "message": "Released.",
+            },
+        )
+
+
+def _context(_request) -> AuthenticatedRuntimeContext:
+    return AuthenticatedRuntimeContext(identity_id="identity", user_id="user")
+
+
+def _component(health: dict, name: str) -> dict:
+    return next(item for item in health["components"] if item["component"] == name)
+
+
+def test_health_reports_real_runtime_persistence_sse_controls_and_passive_adapter(tmp_path) -> None:
+    transports: list[FakeTransport] = []
+
+    def runtime_factory(sink) -> RealtimeProductionRuntime:
+        transport = FakeTransport()
+        transports.append(transport)
+        return RealtimeProductionRuntime(
+            decision_source=ToolThenFinalSource(),
+            transport=transport,
+            observability_sink=sink,
+        )
+
+    app = create_product_app(
+        db_path=tmp_path / "operability.duckdb",
+        runtime_factory=runtime_factory,
+        context_provider=_context,
+        max_workers=2,
+        heartbeat_interval_ms=250,
+    )
+
+    with TestClient(app) as client:
+        accepted = client.post(
+            "/api/runs",
+            json={"user_request": "Inspect asset-1."},
+        ).json()
+        run_id = accepted["run_id"]
+        future = app.state.run_execution_registry.future(run_id)
+        assert future is not None
+        future.result(timeout=10)
+
+        replay = client.get(f"{accepted['stream_path']}&follow=false")
+        assert replay.status_code == 200
+        assert "event: trace_event" in replay.text
+
+        reconnect = client.get(
+            f"{accepted['stream_path']}&follow=false",
+            headers={"Last-Event-ID": f"{run_id}:0"},
+        )
+        assert reconnect.status_code == 200
+        assert f"id: {run_id}:0" not in reconnect.text
+        assert "event: trace_event" in reconnect.text
+
+        health = client.get("/api/production/health").json()
+        assert health["schema_version"] == "production-health-v2"
+        assert health["overall_status"] == "ready"
+        assert _component(health, "runtime")["status"] == "ready"
+        assert _component(health, "sse_clients")["status"] == "instrumented"
+        assert _component(health, "provider_kill_switch")["status"] == "disengaged"
+        assert _component(health, "action_kill_switch")["status"] == "engaged"
+        assert _component(health, "executor_pressure")["status"] == "measured"
+        assert _component(health, "tractian_api_adapter")["status"] == "observed"
+
+        measured = health["measured"]
+        assert measured["startup_readiness_ms"] is not None
+        assert measured["runtime_heartbeat"]["age_ms"] is not None
+        assert measured["executor_pressure"]["max_workers"] == 2
+        assert measured["executor_pressure"]["active_runs"] == 0
+        assert measured["controls"]["provider_kill_switch"]["engaged"] is False
+        assert measured["controls"]["action_kill_switch"]["engaged"] is True
+
+        observability = measured["observability"]
+        assert observability["publish_overhead"]["count"] > 0
+        assert observability["persistence_duration"]["count"] > 0
+        assert observability["runtime_event_to_persistence"]["count"] > 0
+        assert observability["publisher_failures"] == 0
+
+        sse = measured["sse"]
+        assert sse["active_clients"] == 0
+        assert sse["connections_opened"] >= 2
+        assert sse["connections_closed"] >= 2
+        assert sse["reconnects"] >= 1
+        assert sse["events_delivered"] > 0
+        assert sse["persistence_to_delivery"]["count"] > 0
+        assert sse["reconnect_recovery"]["count"] >= 1
+
+        adapter = measured["tractian_adapter_operability"]
+        assert adapter["observations"] >= 1
+        assert adapter["http_2xx"] >= 1
+        assert adapter["external_probe_performed"] is False
+        assert len(transports) == 1
+        assert len(transports[0].calls) == 1
+
+
+def test_provider_kill_switch_blocks_before_runtime_factory(tmp_path) -> None:
+    factory_calls = 0
+
+    def runtime_factory(_sink) -> RealtimeProductionRuntime:
+        nonlocal factory_calls
+        factory_calls += 1
+        raise AssertionError("runtime factory must not run while provider switch is engaged")
+
+    app = create_product_app(
+        db_path=tmp_path / "kill-switch.duckdb",
+        runtime_factory=runtime_factory,
+        context_provider=_context,
+        provider_calls_enabled=False,
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/runs",
+            json={"user_request": "Do not reach provider construction."},
+        )
+        assert response.status_code == 503
+        assert response.json()["detail"] == "provider_kill_switch_engaged"
+        assert factory_calls == 0
+
+        health = client.get("/api/production/health").json()
+        assert _component(health, "provider_kill_switch")["status"] == "engaged"
+        assert health["measured"]["controls"]["provider_kill_switch"]["provider_calls_enabled"] is False
+
+
+def test_executor_pressure_reports_one_running_and_one_queued_with_single_worker(tmp_path) -> None:
+    release = Event()
+    entered_events: list[Event] = []
+
+    def runtime_factory(sink) -> RealtimeProductionRuntime:
+        entered = Event()
+        entered_events.append(entered)
+        return RealtimeProductionRuntime(
+            decision_source=BlockingFinalSource(entered=entered, release=release),
+            transport=FakeTransport(),
+            observability_sink=sink,
+        )
+
+    app = create_product_app(
+        db_path=tmp_path / "pressure.duckdb",
+        runtime_factory=runtime_factory,
+        context_provider=_context,
+        max_workers=1,
+        heartbeat_interval_ms=250,
+    )
+
+    with TestClient(app) as client:
+        first = client.post("/api/runs", json={"user_request": "First."}).json()
+        assert entered_events[0].wait(timeout=5)
+
+        second = client.post("/api/runs", json={"user_request": "Second."}).json()
+        health = client.get("/api/production/health").json()
+        pressure = health["measured"]["executor_pressure"]
+        assert pressure["active_runs"] == 1
+        assert pressure["queued_runs"] == 1
+        assert pressure["inflight_runs"] == 2
+        assert pressure["max_workers"] == 1
+        assert pressure["executor_utilization"] == 1.0
+
+        release.set()
+        first_future = app.state.run_execution_registry.future(first["run_id"])
+        second_future = app.state.run_execution_registry.future(second["run_id"])
+        assert first_future is not None
+        assert second_future is not None
+        first_future.result(timeout=10)
+        second_future.result(timeout=10)
+
+        after = client.get("/api/production/health").json()["measured"]["executor_pressure"]
+        assert after["active_runs"] == 0
+        assert after["queued_runs"] == 0
+        assert after["completed"] == 2
