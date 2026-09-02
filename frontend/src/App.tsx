@@ -69,20 +69,24 @@ export default function App() {
     queryKey: ["run", live.accepted?.run_id],
     queryFn: () => fetchRun(live.accepted!.run_path),
     enabled: Boolean(live.accepted),
-    refetchInterval: live.accepted && live.connection !== "completed" ? 1_000 : false,
+    refetchInterval: (query) => (query.state.data?.completed ? false : 1_000),
   });
 
   const executionQuery = useQuery({
     queryKey: ["execution", live.accepted?.run_id],
     queryFn: () => fetchExecution(live.accepted!.execution_path),
     enabled: Boolean(live.accepted),
-    refetchInterval: live.accepted && live.connection !== "completed" ? 1_000 : false,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === "completed" || status === "failed" ? false : 500;
+    },
   });
 
+  const evaluationReady = executionQuery.data?.status === "completed";
   const evaluationQuery = useQuery({
     queryKey: ["evaluation", live.accepted?.run_id],
     queryFn: () => fetchEvaluation(live.accepted!.run_id),
-    enabled: Boolean(live.accepted && runQuery.data?.completed),
+    enabled: Boolean(live.accepted && evaluationReady),
   });
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -253,6 +257,8 @@ export default function App() {
                   <strong>Not evaluated yet</strong>
                   <p>Evaluation appears only after the runtime has emitted its terminal trace.</p>
                 </div>
+              ) : !evaluationReady ? (
+                <p className="muted">Runtime finished. Waiting for post-runtime evaluation persistence…</p>
               ) : evaluationQuery.isLoading ? (
                 <p className="muted">Loading safe evaluation…</p>
               ) : evaluationQuery.data?.count ? (
