@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from datetime import datetime, timezone
 from statistics import mean
 from threading import Lock
 from time import perf_counter
@@ -39,7 +38,10 @@ class ProductionTelemetry:
     """Bounded process-local metrics for real production control-plane operations.
 
     This object never receives prompts, response bodies, credentials, identity values or raw
-    RunTrace material. Event correlation is restricted to already-safe event ids.
+    RunTrace material. Event correlation is restricted to already-safe event ids. Runtime-event
+    persistence latency is measured from the first monotonic instant immediately after the
+    accepted canonical append returns until safe persistence completes; no wall-clock timestamp
+    is inferred when TraceEvent.timestamp is absent.
     """
 
     def __init__(self, *, sample_limit: int = 4096, heartbeat_stale_after_ms: int = 3000) -> None:
@@ -61,7 +63,6 @@ class ProductionTelemetry:
         self._event_to_persistence_ms: list[float] = []
         self._persistence_to_sse_ms: list[float] = []
         self._publisher_failures = 0
-        self._persistence_clock_unavailable = 0
 
         self._connections: dict[str, tuple[float, bool, bool]] = {}
         self._sse_connections_opened = 0
@@ -105,30 +106,19 @@ class ProductionTelemetry:
         self,
         *,
         event_id: str,
-        event_timestamp: str | None,
         duration_ms: float,
     ) -> None:
         persisted_perf = perf_counter()
-        wall_now = datetime.now(timezone.utc)
-        event_to_persistence_ms: float | None = None
-        if event_timestamp:
-            try:
-                parsed = datetime.fromisoformat(event_timestamp)
-                if parsed.tzinfo is not None:
-                    event_to_persistence_ms = (wall_now - parsed.astimezone(timezone.utc)).total_seconds() * 1000.0
-            except ValueError:
-                event_to_persistence_ms = None
-
         with self._lock:
             self._append(self._persistence_duration_ms, duration_ms)
-            if event_to_persistence_ms is None:
-                self._persistence_clock_unavailable += 1
-            else:
-                self._append(self._event_to_persistence_ms, event_to_persistence_ms)
             self._persisted_perf[event_id] = persisted_perf
             self._persisted_perf.move_to_end(event_id)
             while len(self._persisted_perf) > self.sample_limit:
                 self._persisted_perf.popitem(last=False)
+
+    def record_event_to_persistence(self, *, duration_ms: float) -> None:
+        with self._lock:
+            self._append(self._event_to_persistence_ms, duration_ms)
 
     def sse_open(self, *, reconnect: bool) -> str:
         connection_id = uuid4().hex
@@ -195,8 +185,8 @@ class ProductionTelemetry:
                     "publish_overhead": _summary(list(self._publish_overhead_ms)),
                     "persistence_duration": _summary(list(self._persistence_duration_ms)),
                     "runtime_event_to_persistence": _summary(list(self._event_to_persistence_ms)),
+                    "runtime_event_to_persistence_boundary": "post_canonical_append_to_successful_safe_persistence",
                     "publisher_failures": self._publisher_failures,
-                    "event_timestamp_unavailable": self._persistence_clock_unavailable,
                 },
                 "sse": {
                     "active_clients": len(self._connections),
