@@ -1,0 +1,77 @@
+{
+  "schema_version": "cloudflare-d02-live-authorization-protocol-v1",
+  "status": "FROZEN_PROVIDER_FREE_LIVE_NOT_CURRENTLY_AUTHORIZED",
+  "created_date": "2026-09-02",
+  "purpose": "Authorize at most one governed D02 packet only after a fresh Workers Free zero-use reset-window attestation; this protocol itself performs and authorizes zero provider calls.",
+  "pins": {
+    "d02_completion_protocol_path": "research/experiments/cloudflare-d02-completion-budget-protocol-v1.json",
+    "d02_completion_protocol_git_blob": "eda022821c4ffe08b28b80b814d0da28f84580f6",
+    "adr_026_path": "docs/adr/026-cloudflare-d02-completion-budget-amendment-2026-09-02.md",
+    "adr_026_git_blob": "c5d00a1668613cacd3b520cd241a8b969a262119",
+    "d02_contract_path": "src/academy_tractian/cloudflare_provider_d02.py",
+    "d02_contract_git_blob": "c6cc416c4201a30961861c852aaa746e6c5c9113",
+    "d02_live_core_path": "src/academy_tractian/cloudflare_provider_d02_live.py",
+    "d02_live_core_git_blob": "9da20694e4a1d0129b6e8fa9107b9e6f2d0f3fe2",
+    "d02_plan_sha256": "e768b324baa00dd337c8e56bdfb29b9444be92619508a9fefc30e30b746d1958"
+  },
+  "packet": {
+    "provider": "cloudflare_workers_ai",
+    "model_ids": [
+      "@cf/zai-org/glm-4.7-flash",
+      "@cf/nvidia/nemotron-3-120b-a12b"
+    ],
+    "attempts": 32,
+    "completion_token_cap": 1024,
+    "maximum_packet_neurons": 9352.805376,
+    "minimum_free_neurons_before_attempt_1": 9352.805376,
+    "workers_free_daily_neurons": 10000.0,
+    "paid_spillover_allowed": false,
+    "hard_usd_budget": 0.0,
+    "automatic_retries": 0,
+    "provider_fallbacks": 0,
+    "parallel_live_calls": false
+  },
+  "operator_attestation": {
+    "evidence_mode": "OPERATOR_ZERO_USE_AFTER_UTC_RESET",
+    "reset_hour_utc": 0,
+    "evidence_max_age_seconds": 600,
+    "receipt_max_lifetime_seconds": 300,
+    "clock_skew_seconds": 30,
+    "same_utc_day_required": true,
+    "workers_free_active_required": true,
+    "workers_paid_disabled_required": true,
+    "no_workers_ai_calls_since_reset_required": true,
+    "no_automated_workers_ai_consumers_since_reset_required": true,
+    "exclusive_account_window_until_packet_completion_required": true,
+    "direct_workers_ai_route_required": true,
+    "ai_gateway_required": false,
+    "prepaid_unified_billing_required": false,
+    "derived_free_neurons_when_all_attestations_true": 10000.0,
+    "external_plan_source_artifact_required": false,
+    "credential_or_account_probe_allowed": false
+  },
+  "custody": {
+    "write_ahead_claim_before_provider_request": true,
+    "resume_after_claimed_or_uncertain": false,
+    "duplicate_run_directory_allowed": false,
+    "credentials_recorded": false,
+    "account_identifier_recorded": false,
+    "raw_provider_material_recorded": false,
+    "sanitized_failure_subtype_recorded_for_client_failure": true
+  },
+  "current_window": {
+    "utc_day": "2026-09-02",
+    "d01_observed_neurons_consumed": 2813.628464,
+    "maximum_remaining_neurons_from_d01_accounting": 7186.371536,
+    "d02_minimum_required_neurons": 9352.805376,
+    "d02_live_eligible_in_this_window": false,
+    "next_possible_reset_utc": "2026-09-03T00:00:00Z",
+    "note": "A future run still requires a new zero-use attestation after that reset; the reset alone does not authorize execution."
+  },
+  "execution_boundary": {
+    "provider_calls_authorized_by_this_protocol_file": 0,
+    "attempt_1_authorized_without_fresh_receipt": false,
+    "production_provider_selected": false,
+    "architecture_change_authorized": false
+  }
+}
