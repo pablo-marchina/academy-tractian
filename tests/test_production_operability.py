@@ -223,7 +223,7 @@ def test_health_reports_real_quantitative_runtime_api_sse_resource_and_adapter_m
         assert len(transports[0].calls) == 1
 
 
-def test_failed_runtime_is_quantitatively_sliced_without_private_material(tmp_path) -> None:
+def test_decision_source_failure_is_completed_safe_abstention_slice_without_private_material(tmp_path) -> None:
     def runtime_factory(sink) -> RealtimeProductionRuntime:
         return RealtimeProductionRuntime(
             decision_source=FailingSource(),
@@ -232,7 +232,7 @@ def test_failed_runtime_is_quantitatively_sliced_without_private_material(tmp_pa
         )
 
     app = create_product_app(
-        db_path=tmp_path / "failed-run.duckdb",
+        db_path=tmp_path / "handled-failure.duckdb",
         runtime_factory=runtime_factory,
         context_provider=_context,
         heartbeat_interval_ms=250,
@@ -243,11 +243,17 @@ def test_failed_runtime_is_quantitatively_sliced_without_private_material(tmp_pa
         future = app.state.run_execution_registry.future(accepted["run_id"])
         assert future is not None
         future.result(timeout=10)
-        assert app.state.run_execution_registry.status(accepted["run_id"]) == "failed"
+        assert app.state.run_execution_registry.status(accepted["run_id"]) == "completed"
+
+        run = client.get(accepted["run_path"]).json()
+        assert run["terminal_decision"] == "ABSTAIN"
+        assert run["terminal_response_mode"] == "unavailable"
 
         health = client.get("/api/production/health").json()
         runtime_requests = health["measured"]["runtime_requests"]
-        assert runtime_requests["by_outcome"]["failed"]["count"] == 1
+        assert runtime_requests["by_outcome"]["completed"]["count"] == 1
+        assert runtime_requests["by_terminal_decision"]["ABSTAIN"]["count"] == 1
+        assert runtime_requests["by_response_mode"]["unavailable"]["count"] == 1
         serialized = str(runtime_requests).lower()
         assert "identity" not in serialized
         assert "user" not in serialized
