@@ -8,7 +8,6 @@ from academy_tractian.eval_driven import (
     EvalMetricBundle,
     EvalMetricRule,
     compare_eval_bundles,
-    default_agent_quality_rules,
 )
 
 
@@ -16,13 +15,14 @@ def _load_json(path: Path) -> object:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _load_rules(path: Path | None) -> tuple[EvalMetricRule, ...]:
-    if path is None:
-        return default_agent_quality_rules()
+def _load_rules(path: Path) -> tuple[EvalMetricRule, ...]:
     payload = _load_json(path)
     if not isinstance(payload, list):
         raise ValueError("rules file must contain a JSON array")
-    return tuple(EvalMetricRule.model_validate(item) for item in payload)
+    rules = tuple(EvalMetricRule.model_validate(item) for item in payload)
+    if not rules:
+        raise ValueError("rules file must contain at least one rule")
+    return rules
 
 
 def _markdown(report) -> str:
@@ -71,11 +71,16 @@ def _markdown(report) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Compare provider-free eval metric bundles using group-aware EDD rules."
+        description="Compare provider-free eval bundles using preregistered group-aware EDD rules."
     )
     parser.add_argument("--baseline", type=Path, required=True)
     parser.add_argument("--candidate", type=Path, required=True)
-    parser.add_argument("--rules", type=Path)
+    parser.add_argument(
+        "--rules",
+        type=Path,
+        required=True,
+        help="Preregistered JSON metric rules. No implicit promotion thresholds are used.",
+    )
     parser.add_argument("--json-output", type=Path)
     parser.add_argument("--markdown-output", type=Path)
     parser.add_argument("--bootstrap-samples", type=int, default=4000)
