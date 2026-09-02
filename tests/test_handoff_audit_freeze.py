@@ -14,7 +14,9 @@ from academy_tractian.handoff_audit import (
 
 ROOT = Path(__file__).resolve().parents[1]
 FREEZE_PATH = ROOT / "research/frozen/final-handoff-acceptance-audit-freeze-v1.json"
+RELOCATION_PATH = ROOT / "research/frozen/final-handoff-documentation-relocation-v2.json"
 ADR016_FREEZE = ROOT / "research/frozen/provider-free-final-delivery-reproduction-evidence-freeze-v1.json"
+ADR017_FREEZE_BLOB = "dec6c7e0beacd8003f65e6aedf7b45b74d99ddfd"
 
 
 def _load(path: Path) -> dict:
@@ -23,18 +25,48 @@ def _load(path: Path) -> dict:
     return payload
 
 
-def test_adr017_freeze_declared_direct_blobs_are_exact() -> None:
+def test_adr017_freeze_is_unchanged_and_declared_blobs_are_preserved() -> None:
     freeze = _load(FREEZE_PATH)
+    relocation = _load(RELOCATION_PATH)
+
+    assert git_blob_sha1(FREEZE_PATH.read_bytes()) == ADR017_FREEZE_BLOB
+    assert relocation["historical_freeze"] == {
+        "path": "research/frozen/final-handoff-acceptance-audit-freeze-v1.json",
+        "git_blob_sha1": ADR017_FREEZE_BLOB,
+        "status": "UNCHANGED_HISTORICAL_EVIDENCE",
+    }
+
+    relocated = relocation["relocations"]
     direct_blobs = freeze["direct_blobs"]
     assert isinstance(direct_blobs, dict)
-    for path, expected_blob in direct_blobs.items():
-        target = ROOT / path
-        assert target.is_file(), path
-        assert git_blob_sha1(target.read_bytes()) == expected_blob, path
+
+    for original_path, expected_blob in direct_blobs.items():
+        if original_path in relocated:
+            spec = relocated[original_path]
+            assert spec["git_blob_sha1"] == expected_blob
+            target = ROOT / spec["archive_path"]
+        else:
+            target = ROOT / original_path
+        assert target.is_file(), original_path
+        assert git_blob_sha1(target.read_bytes()) == expected_blob, original_path
 
     upstream = freeze["frozen_upstream_evidence"]
     adr016 = upstream["ADR016"]
     assert git_blob_sha1(ADR016_FREEZE.read_bytes()) == adr016["freeze_git_blob"]
+
+
+def test_adr028_allows_active_docs_to_advance_without_erasing_v1() -> None:
+    relocation = _load(RELOCATION_PATH)
+    assert relocation["status"] == "FROZEN_HISTORICAL_HANDOFF_DOCUMENTATION_RELOCATION"
+    assert relocation["active_documentation_policy"]["exact_blob_freeze_before_final_feature_freeze"] is False
+    assert relocation["active_documentation_policy"]["final_exact_documentation_freeze_required"] is True
+
+    old_readme = ROOT / relocation["relocations"]["README.md"]["archive_path"]
+    old_runbook = ROOT / relocation["relocations"]["docs/FINAL-HANDOFF-RUNBOOK.md"]["archive_path"]
+    assert git_blob_sha1(old_readme.read_bytes()) == "7298d2b4d7546b4ea93b64021faf95fb24958b0f"
+    assert git_blob_sha1(old_runbook.read_bytes()) == "c7df131f555e3b07161fd1d518965958d245555c"
+    assert git_blob_sha1((ROOT / "README.md").read_bytes()) != git_blob_sha1(old_readme.read_bytes())
+    assert git_blob_sha1((ROOT / "docs/FINAL-HANDOFF-RUNBOOK.md").read_bytes()) != git_blob_sha1(old_runbook.read_bytes())
 
 
 def test_adr017_freeze_reruns_canonical_83_row_audit() -> None:

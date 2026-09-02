@@ -36,15 +36,35 @@ The following previously mutable documents were reduced to compatibility/navigat
 
 Their previous full content remains available in Git history.
 
+## ADR-017 freeze conflict discovered by CI
+
+The first consolidation commit correctly triggered the historical final-handoff regression because ADR-017 had pinned exact bytes at mutable paths:
+
+- `README.md`;
+- `docs/FINAL-HANDOFF-RUNBOOK.md`;
+- `src/academy_tractian/handoff_audit.py`.
+
+Restoring stale `0/32` documentation or rewriting ADR-017 would both be incorrect. The conflict was resolved prospectively by ADR-028:
+
+- ADR-017/v1 freeze remains unchanged;
+- exact historical mutable-path bytes are preserved under `docs/archive/final-handoff-v1/`;
+- the historical 83-row audit continues to validate its original state;
+- active docs remain mutable/current through final implementation/testing;
+- a new exact final-documentation freeze is required only after hard feature/visual freeze and clean reproduction.
+
+Machine contract:
+
+`research/frozen/final-handoff-documentation-relocation-v2.json`
+
 ## What was deliberately not moved/rewritten
 
-- accepted/frozen ADRs;
+- accepted/frozen ADRs, including ADR-017;
 - frozen experiment artifacts/results;
 - date-stamped audits/preflight/revalidation evidence;
 - consumed/uncertain custody evidence;
 - historical progress records.
 
-Reason: the repository's evidence policy prefers logical cleanup when physical relocation could break pinned paths, references or scientific provenance.
+Reason: the repository's evidence policy prefers logical cleanup or explicit prospective supersession when physical relocation could break pinned paths, references or scientific provenance.
 
 ## Anti-drift rule
 

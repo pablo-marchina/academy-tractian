@@ -29,15 +29,9 @@ EXPECTED_REPORTS = {
     "provider_comparison_plan_sha256": "69691adff4af5c9d8928bf633089efdf4cd32c9419d10ae64b1a426df62c692f",
     "c4_required_artifact_sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
 }
-
-# ADR-017 froze reviewer documentation while those files were still treated as static
-# handoff artifacts. They later became intentionally mutable current documentation. ADR-028
-# preserves the exact historical bytes under immutable archive paths instead of requiring
-# current documentation to remain factually stale. This validator continues to validate the
-# historical 2026-08-28 audit; it does not turn that audit into current project state.
 EXPECTED_HANDOFF_BLOBS = {
-    "docs/archive/final-handoff-v1/README.md": "7298d2b4d7546b4ea93b64021faf95fb24958b0f",
-    "docs/archive/final-handoff-v1/FINAL-HANDOFF-RUNBOOK.md": "c7df131f555e3b07161fd1d518965958d245555c",
+    "README.md": "7298d2b4d7546b4ea93b64021faf95fb24958b0f",
+    "docs/FINAL-HANDOFF-RUNBOOK.md": "c7df131f555e3b07161fd1d518965958d245555c",
     "docs/RUBRIC-TO-EVIDENCE.md": "a6e540147557991547c2b3b511c727384089506d",
 }
 REQUIRED_ROW_FIELDS = {
@@ -71,12 +65,6 @@ def load_audit(root: Path) -> dict[str, Any]:
 
 
 def validate_handoff_audit(payload: dict[str, Any], root: Path) -> list[str]:
-    """Validate the historical 2026-08-28 83-row handoff audit.
-
-    Current project state is deliberately out of scope. Historical reviewer-document bytes are
-    resolved through ADR-028 archive paths so the original audit remains reproducible after the
-    active README/runbook became mutable documentation.
-    """
     failures: list[str] = []
 
     if payload.get("schema_version") != "final-handoff-acceptance-audit-v1":

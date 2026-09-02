@@ -1,0 +1,53 @@
+{
+  "schema_version": "final-handoff-documentation-relocation-v2",
+  "status": "FROZEN_HISTORICAL_HANDOFF_DOCUMENTATION_RELOCATION",
+  "date": "2026-09-02",
+  "issue": 126,
+  "pull_request": 127,
+  "reason": "ADR-017 froze mutable reviewer-document paths before D01 and later project-state changes. Exact v1 bytes are preserved under immutable archive paths so the historical audit remains reproducible while active documentation can remain factually current.",
+  "historical_freeze": {
+    "path": "research/frozen/final-handoff-acceptance-audit-freeze-v1.json",
+    "git_blob_sha1": "dec6c7e0beacd8003f65e6aedf7b45b74d99ddfd",
+    "status": "UNCHANGED_HISTORICAL_EVIDENCE"
+  },
+  "relocations": {
+    "README.md": {
+      "archive_path": "docs/archive/final-handoff-v1/README.md",
+      "git_blob_sha1": "7298d2b4d7546b4ea93b64021faf95fb24958b0f"
+    },
+    "docs/FINAL-HANDOFF-RUNBOOK.md": {
+      "archive_path": "docs/archive/final-handoff-v1/FINAL-HANDOFF-RUNBOOK.md",
+      "git_blob_sha1": "c7df131f555e3b07161fd1d518965958d245555c"
+    },
+    "src/academy_tractian/handoff_audit.py": {
+      "archive_path": "docs/archive/final-handoff-v1/handoff_audit.py",
+      "git_blob_sha1": "db5e851a93f72421c6135c7dda207615858fd8b6"
+    }
+  },
+  "unchanged_v1_direct_pins": {
+    "docs/RUBRIC-TO-EVIDENCE.md": "a6e540147557991547c2b3b511c727384089506d",
+    "research/results/final-handoff-acceptance-audit-2026-08-28.json": "699eb2ea7a92cea3367353d1db2a065c0467492d",
+    "scripts/validate_final_handoff_audit.py": "5447529066ce4afd54f84c537aec49f0b11e2850",
+    "tests/test_handoff_audit.py": "94aa99fc3d07f0f5e28f4abad076fb56c6564540",
+    ".github/workflows/final-handoff-acceptance-audit.yml": "e73e4db62385ccc8907b284b2704e078da1ecef0",
+    "docs/adr/017-final-handoff-acceptance-audit-2026-08-28.md": "9ab307d1dc049580e3f51d2d18799eebd34725a8"
+  },
+  "active_documentation_policy": {
+    "exact_blob_freeze_before_final_feature_freeze": false,
+    "current_state_owner": "docs/CURRENT-PROJECT-STATUS.md",
+    "plan_owner": "docs/DELIVERY-PLAN.md",
+    "architecture_owner": "docs/ARCHITECTURE.md",
+    "handoff_owner": "docs/FINAL-HANDOFF-RUNBOOK.md",
+    "final_exact_documentation_freeze_required": true,
+    "final_exact_documentation_freeze_timing": "after hard visual/feature freeze and clean reproduction"
+  },
+  "boundaries": {
+    "rewrites_adr017_or_v1_freeze": false,
+    "changes_runtime_semantics": false,
+    "changes_evaluator_semantics": false,
+    "changes_provider_experiment_semantics": false,
+    "authorizes_provider_call": false,
+    "authorizes_customer_mutation": false,
+    "authorizes_paid_spillover": false
+  }
+}
