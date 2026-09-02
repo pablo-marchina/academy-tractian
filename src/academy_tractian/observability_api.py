@@ -12,6 +12,7 @@ from fastapi.responses import StreamingResponse
 
 from .architecture_manifest import ProviderSelectionState, architecture_manifest
 from .observability_store import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStore
+from .operational_read_model import AnalyticsQuery, OperationalReadModel
 
 
 def _package_version() -> str:
@@ -61,7 +62,9 @@ def create_observability_app(
         lifespan=lifespan,
     )
     store = ObservabilityStore(db_path)
+    analytics = OperationalReadModel(store)
     app.state.observability_store = store
+    app.state.operational_read_model = analytics
 
     @app.get("/health")
     def health() -> dict[str, object]:
@@ -99,6 +102,37 @@ def create_observability_app(
     def overview() -> dict[str, object]:
         return store.overview()
 
+    @app.get("/api/production/health")
+    def production_health() -> dict[str, object]:
+        return analytics.production_health(provider_selection_state=provider_selection_state)
+
+    @app.get("/api/tools/metrics")
+    def tools_metrics() -> dict[str, object]:
+        return analytics.tools_metrics()
+
+    @app.get("/api/policies/metrics")
+    def policies_metrics() -> dict[str, object]:
+        return analytics.policies_metrics()
+
+    @app.get("/api/evaluations/metrics")
+    def evaluation_metrics() -> dict[str, object]:
+        return analytics.evaluation_metrics()
+
+    @app.get("/api/providers/experiments")
+    def provider_experiments() -> dict[str, object]:
+        return analytics.provider_experiments()
+
+    @app.get("/api/query/schema")
+    def query_schema() -> dict[str, object]:
+        return analytics.query_schema()
+
+    @app.post("/api/query")
+    def dynamic_query(spec: AnalyticsQuery) -> dict[str, object]:
+        try:
+            return analytics.query(spec)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     @app.get("/api/runs")
     def runs(
         limit: int = Query(default=100, ge=1, le=1000),
@@ -133,6 +167,14 @@ def create_observability_app(
         require_run(run_id)
         items = store.get_evaluation(run_id)
         return {"items": items, "count": len(items)}
+
+    @app.get("/api/runs/{run_id}/lineage")
+    def run_lineage(run_id: str) -> dict[str, object]:
+        require_run(run_id)
+        try:
+            return analytics.lineage(run_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="run_not_found") from exc
 
     @app.get("/api/stream")
     async def stream(
