@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import sys
+from tempfile import TemporaryDirectory
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -14,6 +15,9 @@ for candidate in (SRC_ROOT, REPO_ROOT):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
+from academy_tractian.cloudflare_frozen_bundle_portability import (  # noqa: E402
+    materialize_canonical_frozen_bundle,
+)
 from academy_tractian.cloudflare_live_authorization_operator_attestation_v4 import (  # noqa: E402
     CloudflareOperatorAttestationEvidenceV1,
     CloudflareOperatorAttestationReceiptV1,
@@ -66,14 +70,22 @@ def main() -> None:
         account_id=os.environ.get("CLOUDFLARE_ACCOUNT_ID", ""),
     )
     transport = build_cloudflare_one_shot_transport_v2()
-    task = GovernedCloudflareLiveTaskV2.prepare(
-        custody_root=args.custody_root,
-        secrets=secrets,
-        pre_live_evidence=pre_live_evidence,
-        transport=transport,
-        fixture_result=False,
-    )
-    result = task.execute_all()
+
+    with TemporaryDirectory(prefix="academy-tractian-cloudflare-frozen-") as temp_dir:
+        frozen_root = Path(temp_dir)
+        materialize_canonical_frozen_bundle(
+            repo_root=REPO_ROOT,
+            target_root=frozen_root,
+        )
+        task = GovernedCloudflareLiveTaskV2.prepare(
+            custody_root=args.custody_root,
+            secrets=secrets,
+            pre_live_evidence=pre_live_evidence,
+            transport=transport,
+            fixture_result=False,
+            repo_root=frozen_root,
+        )
+        result = task.execute_all()
 
     print(
         json.dumps(
