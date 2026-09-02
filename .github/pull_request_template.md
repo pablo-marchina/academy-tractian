@@ -1,10 +1,10 @@
 ## Purpose
 
-<!-- What problem does this PR solve? Keep this tied to the actual TRACTIAN × Inteli delivery. -->
+<!-- What problem does this PR solve? Keep it tied to the TRACTIAN × Inteli delivery. -->
 
 ## Delivery mapping
 
-- **Requirement / rubric / material risk:**
+- **Requirement / TAPI / rubric / material risk:**
 - **Priority:** P0 / P1 / justified P2
 - **Change class:** A documentation-only / B non-semantic engineering / C material semantic-experimental-product
 - **Current project gate:**
@@ -22,15 +22,11 @@
 
 ## Decision / implementation rationale
 
-<!-- For Class C: list the simple baseline and credible alternatives. For A/B: explain why semantics are preserved. -->
-
 - **Simple/null baseline:**
 - **Alternatives considered:**
 - **Why this change is currently justified:**
 
 ## Evidence
-
-<!-- Link exact tests, evals, artifacts, hashes, experiment results or reproducible commands. Do not make claims stronger than this evidence. -->
 
 - **Tests / regression:**
 - **Quantitative evidence:**
@@ -41,61 +37,61 @@
 
 - **Frozen/source-pinned artifacts touched:** none / list and justify
 - **Private/evaluator-only material accessed:** none / authorized source
-- **FRESH_BLIND or LEGACY_LOCKED_TEST accessed:** no / authorized source
 - **External provider/model calls:** none / authorized source and budget
 - **Secrets/credentials added to repository:** no
+- **Browser/API/SSE sensitive-field impact:** none / describe sanitizer evidence
 
 ## Canonical documentation impact
 
-Mark each as updated or explicitly not affected:
+Mark only documents whose responsibility changed:
 
-- [ ] `docs/CURRENT-PROJECT-STATUS.md` — state/authorization changed
-- [ ] latest machine checkpoint — project snapshot changed materially
-- [ ] `docs/NEXT-STEPS.md` — current gate/blocker/path changed
-- [ ] `docs/DELIVERY-ACCEPTANCE.md` — requirement/evidence coverage changed
-- [ ] `docs/ARCHITECTURE-ROADMAP.md` — durable architecture direction changed
-- [ ] `docs/PROJECT-PLAN.md` — macro phase/deadline allocation changed
-- [ ] `docs/PROJECT-PROGRESS-LOG.md` — completed material evidence/decision recorded
-- [ ] ADR — material decision made
-- [ ] none of the above are affected
+- [ ] `docs/CURRENT-PROJECT-STATUS.md` — state/authorization
+- [ ] `docs/DELIVERY-PLAN.md` — current path/priority/deadline
+- [ ] `docs/ARCHITECTURE.md` — durable architecture/stack/techniques
+- [ ] `docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md` — TAPI mapping/output definition
+- [ ] `docs/DELIVERY-ACCEPTANCE.md` — requirement/DoD coverage
+- [ ] `docs/FINAL-HANDOFF-RUNBOOK.md` — executable setup/demo/recovery
+- [ ] `docs/RUBRIC-TO-EVIDENCE.md` — reviewer evidence navigation
+- [ ] progress/evidence record — historical result
+- [ ] ADR — material decision
+- [ ] none
 
 ## Review checklist
 
 ### Development premises
 
-- [ ] I started from current canonical `main` or explicitly reconciled my branch first.
-- [ ] I reviewed `PROJECT-PRINCIPLES`, `CURRENT-PROJECT-STATUS`, `NEXT-STEPS`, `DELIVERY-ACCEPTANCE`, `ARCHITECTURE-ROADMAP` and the applicable frozen artifacts.
-- [ ] This work maps to an explicit requirement, official rubric criterion, material delivery risk or required comparison.
+- [ ] Started from current canonical `main` or explicitly reconciled branch first.
+- [ ] Reviewed `docs/README.md`, `PROJECT-PRINCIPLES`, `CURRENT-PROJECT-STATUS`, `DELIVERY-PLAN`, `ARCHITECTURE`, `DELIVERY-ACCEPTANCE` and applicable frozen artifacts.
+- [ ] Work maps to a requirement, TAPI/rubric criterion, material delivery risk or required comparison.
 - [ ] P0/P1 work was not displaced by unjustified P2 complexity.
 
 ### Governance / authorization
 
-- [ ] The current gate explicitly permits every consequential action taken by this PR.
+- [ ] Current gate permits every consequential action taken.
 - [ ] No script/workflow was treated as authorized merely because it exists.
 - [ ] No frozen artifact was silently mutated.
-- [ ] No evaluator/private/blind material leaked into the agent/runtime path.
-- [ ] Failed/consumed evidence was preserved rather than hidden or rerun silently.
+- [ ] No evaluator/private/blind material leaked into runtime.
+- [ ] Failed/consumed evidence was preserved rather than hidden/rerun.
 
 ### Evidence quality
 
-- [ ] Class C choices include a simple baseline and materially credible alternatives.
-- [ ] Improvement claims are backed by quantitative evidence where measurable.
-- [ ] Robustness/failure behavior was evaluated where material.
+- [ ] Class C choices include a simple baseline and credible alternatives.
+- [ ] Measurable improvement claims have quantitative evidence.
+- [ ] Robustness/failure behavior was checked where material.
 - [ ] Production-fit trade-offs were considered where material.
-- [ ] Any evaluator/judge used as a gate has appropriate validity evidence.
-- [ ] Claims are bounded by the actual evidence and known limitations.
+- [ ] Claims remain bounded by evidence/limitations.
 
 ### Merge readiness
 
-- [ ] Applicable regression/tests/evals pass.
+- [ ] Applicable tests/evals/regressions pass.
 - [ ] Repository navigation/provenance remains intact.
-- [ ] Canonical docs above were updated where required.
-- [ ] The PR is focused enough to review without reconstructing unrelated project history.
-- [ ] The post-merge next step is clear and does not cross an unopened gate.
+- [ ] Canonical docs above were updated only where needed.
+- [ ] PR is focused enough to review without reconstructing unrelated history.
+- [ ] Post-merge next step is clear and does not cross an unopened gate.
 
 ## Reviewer focus
 
-<!-- What should the reviewer try hardest to falsify? Examples: requirement mapping, leakage, semantic drift, unsupported claim, missing baseline, deadline risk. -->
+<!-- What should the reviewer try hardest to falsify? -->
 
 1.
 2.

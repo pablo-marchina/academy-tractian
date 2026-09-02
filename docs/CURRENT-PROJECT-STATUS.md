@@ -1,204 +1,199 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Canonical status checkpoint:** 2026-09-02 — D01 completed live; D02 governed path provider-free validated; frontend/demo visualization promoted to P0 delivery work  
-**Final delivery target:** 2026-09-08  
-**Governance:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
-**Immediate plan:** [`NEXT-STEPS.md`](NEXT-STEPS.md)  
-**Final sprint:** GitHub issue #115  
-**Frontend/test track:** GitHub issues #114, #118, #119  
-**D02 live execution:** GitHub issue #117
+**Status:** ACTIVE / sole canonical human-readable state  
+**Checkpoint:** 2026-09-02  
+**Final delivery:** 2026-09-08  
+**Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
+**Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 
-This document is the current human-readable state. Historical ADRs, frozen experiment inputs and prior result artifacts remain authoritative for their exact scopes and are not rewritten by this checkpoint.
-
-## 1. Executive state
+## 1. Executive status
 
 ```text
-external API / hosted-service project cost      USD 0 HARD CONSTRAINT
-final delivery                                   2026-09-08
+TAPI scope                                  Track A + Track B combined
+external API/hosted-service project cost    USD 0 hard constraint
+production agent runtime                    IMPLEMENTED
+production deterministic evaluator          IMPLEMENTED
+TRACTIAN typed tool registry                 18 operations
+provider-free integrated demo               IMPLEMENTED / REPRODUCIBLE
+controlled supplied/test action path         IMPLEMENTED / bounded
+standalone wheel reproduction                PROVED
 
-production runtime / evaluator                   IMPLEMENTED / REGRESSION-GREEN
-provider-free integrated demo                    VALID / PRESERVED
-structured escalation handoff                    PROVED
-standalone wheel                                 PROVED
+D01 Cloudflare live comparison               COMPLETE
+D01 attempts                                 32 / 32 completed
+D01 actual cash cost                         USD 0.00
+D01 observed Neurons                         2813.628464
+D01 selection                                NO_SELECTION
+D01 raw provider material persisted          NO
+D01 CLIENT_FAILURE at 512-token ceiling      24 / 24
 
-D01 live comparison                              COMPLETE
-D01 attempts                                     32 / 32 COMPLETED
-D01 actual cash cost                             USD 0.00
-D01 observed Neurons                             2813.628464
-D01 selection                                    NO_SELECTION
-D01 raw provider material persisted              NO
+D02 completion cap                           1024
+D02 worst-case packet                        9352.805376 Neurons
+D02 provider-free implementation             MERGED / VALIDATED
+D02 live result                              NOT YET EXECUTED
 
-D01 GLM CLIENT_FAILURE                           16 / 16 at exactly 512 output tokens
-D01 Nemotron CLIENT_FAILURE                       8 / 8 at exactly 512 output tokens
-D01 total CLIENT_FAILURE                         24 / 24 at exact 512-token ceiling
-D01 Nemotron technically accepted outputs         7, range 297..495 tokens
-D01 Nemotron RESPONSE_PAYLOAD_INVALID              1, 476 tokens
+agent topology                               SINGLE AGENT / PRESERVE
+LangGraph / multi-agent / RAG / memory       NOT AUTHORIZED BY EVIDENCE
 
-D02 completion cap                               1024
-D02 full-packet worst-case                       9352.805376 Neurons
-D02 start gate                                   >= 9352.805376 free Neurons
-D02 provider-free implementation                 MERGED / VALIDATED
-D02 governed custody/authorization               MERGED / VALIDATED
-D02 live result                                  NOT YET EXECUTED
-
-2026-09-02 UTC modeled remaining after D01        7186.371536 Neurons
-full D02 in current UTC allocation               INELIGIBLE
-next Workers AI reset                            2026-09-03 00:00 UTC
-                                                   = 2026-09-02 21:00 BRT
-
-frontend application in canonical main tree      NOT LOCATED
-frontend/demo visualization                      P0 DELIVERY GAP
-architecture expansion                           NO_CHANGE
+realtime observability backend               P0 PLANNED
+frontend control room                        P0 PLANNED
+architecture/output lineage UI               P0 PLANNED
+dynamic data explorer                        P0 PLANNED
 ```
 
-## 2. What D01 changed
+## 2. D01 result and interpretation
 
-D01 resolved the original live-provider gate but did not support a production provider selection. Both candidates failed hard quality/stability gates, so the valid frozen result is `NO_SELECTION`.
+D01 executed the frozen 8 public probes × 2 repeats × 2 candidates packet.
 
-Post-run sanitized accounting produced a strong censoring signal: every generic `CLIENT_FAILURE` occurred at exactly the frozen 512 completion-token ceiling. This supports a prospective completion-budget diagnostic, not an architecture rewrite.
+Candidates:
 
-D01 remains authoritative and is not rescored or retroactively repaired.
+- `@cf/zai-org/glm-4.7-flash`
+- `@cf/nvidia/nemotron-3-120b-a12b`
 
-## 3. D02 state
+Both failed the frozen quality/stability hard gates, therefore the valid result is `NO_SELECTION`.
 
-ADR-026 / the D02 provider-free contract changes only the variables required to test the censoring hypothesis:
+Post-run sanitized telemetry showed:
 
 ```text
-max_completion_tokens        512 -> 1024
-failure subtype visibility   generic CLIENT_FAILURE -> generic code + sanitized subtype
+GLM CLIENT_FAILURE              16 / 16 at 512 output tokens
+Nemotron CLIENT_FAILURE          8 / 8 at 512 output tokens
+all CLIENT_FAILURE              24 / 24 at exact 512 ceiling
+Nemotron accepted outputs        7, 297..495 output tokens
+Nemotron RESPONSE_PAYLOAD_INVALID 1, 476 output tokens
 ```
 
-Held constant:
+This is strong evidence that the D01 completion budget censored many outputs. It is not evidence that multi-agent/RAG/LangGraph would improve the system.
+
+## 3. D02 boundary
+
+D02 changes only the measured diagnostic variables:
 
 ```text
-Cloudflare Workers AI
-GLM 4.7 Flash + Nemotron 3 120B A12B
-8 public units × 2 repeats × 2 candidates = 32 attempts
-prompt / JSON decision schema / temperature
-typed ToolSpecs / evaluator / public rubric
-single-agent controller
-zero retries / zero fallbacks
-direct Workers AI
-USD 0 / no paid spillover
+max_completion_tokens   512 -> 1024
+failure diagnostics     generic code + sanitized subtype
 ```
 
-The D02 resource bound is derived from the frozen rates and ceilings:
+Prompt, providers, units, repeats, schemas, evaluator, tool contract, zero retry/fallback policy and USD0 constraint remain fixed.
+
+Full D02 worst case:
 
 ```text
-GLM, 16 attempts        1300.3776 Neurons
-Nemotron, 16 attempts   8052.427776 Neurons
-full packet             9352.805376 Neurons
-Workers Free daily      10000 Neurons
-max modeled headroom     647.194624 Neurons
+GLM       1300.377600 Neurons
+Nemotron  8052.427776 Neurons
+total     9352.805376 Neurons
 ```
 
-The governed D02 executor, write-ahead custody, no-replay behavior, fresh-reset authorization, CLIs and provider-free regressions are merged. No D02 live provider call has been made by that implementation work.
+The D01 allocation already consumed 2813.628464 Neurons in the 2026-09-02 UTC day, so the full D02 packet requires a fresh eligible reset/zero-use window. Governed execution is tracked by issue #117. No live D02 call has been made by the provider-free implementation work.
 
-## 4. Current D02 live boundary
+## 4. Delivered agent/evaluation architecture
 
-The current UTC allocation cannot safely guarantee the full D02 packet under the hard USD 0 constraint:
+Implemented production path:
 
 ```text
-10000 - 2813.628464 = 7186.371536 remaining modeled Neurons
-7186.371536 < 9352.805376 required D02 bound
+request
+→ ProductionRuntime
+→ DecisionSource
+→ AgentController
+→ HarnessRunner
+→ typed ToolSpec registry
+→ B1 argument validation
+→ B2 resource/action policy
+→ B3 evidence/authorization when applicable
+→ TRACTIAN transport
+→ observations
+→ FINAL / CLARIFY / ABSTAIN / ESCALATE
+→ RunTrace
+→ ProductionEvaluator
 ```
 
-Therefore the current window is blocked for the full governed D02 packet.
+The evaluator does not supply gold/private truth to runtime. Identity and seed remain runtime-owned, not model-controlled.
 
-The earliest next eligible reset is:
+## 5. Active product work: realtime observability control room
+
+There was no existing frontend. The delivery frontend is now explicitly designed as a production-style **realtime agent observability control room**, not a static dashboard.
+
+P0 workstreams:
+
+- #121 — safe telemetry projection + local analytics/read API;
+- #124 — genuine runtime event sink + SSE + reconnect/catch-up;
+- #122 — React control room;
+- #125 — architecture explorer + per-run output lineage;
+- #123 — schema-driven dynamic data explorer;
+- #119 — safe observability/realtime/frontend explanation acceptance matrix;
+- #114 — integrated frontend/realtime/security/freeze acceptance.
+
+Target path:
 
 ```text
-2026-09-03 00:00:00 UTC
-2026-09-02 21:00:00 America/Sao_Paulo
+RunTrace/event emission
+→ safe projection
+→ durable local telemetry
+→ FastAPI REST + SSE
+→ React control room
 ```
 
-The reset does not itself authorize inference. D02 still requires fresh truthful zero-use operator attestation, evidence no older than 600 seconds, receipt no older than 300 seconds, exact custody binding, direct Workers AI, Workers Paid disabled, no AI Gateway/prepaid route, and explicit launcher invocation.
+Raw `RunTrace` must never cross directly to the browser.
 
-No blind retry or replay is allowed after any attempt is durably claimed or becomes uncertain.
+## 6. Frontend/observability target stack
 
-## 5. Frontend / visualization state
+Target delivery baseline, to be frozen in actual dependency files when scaffolded:
 
-The previous plan treated rich UI as P2. That priority is superseded for final delivery.
+- FastAPI;
+- DuckDB;
+- Server-Sent Events;
+- React + TypeScript + Vite;
+- TanStack Query;
+- Apache ECharts;
+- React Flow;
+- Vitest + Testing Library + Playwright.
 
-The runtime, evaluation and delivery evidence are mature enough that interface quality, integration and demo usability now represent a material delivery risk. The canonical `main` tree does not currently expose an identifiable versioned frontend application (`package.json`, React/Vite/Next, Streamlit/dashboard source not found during the 2026-09-02 audit).
+Redis Streams is optional only if horizontal multi-instance realtime is actually configured/tested. Grafana/Phoenix/Langfuse/OpenTelemetry may be optional exports but are not primary delivery UI dependencies.
 
-Current frontend actions:
+## 7. TAPI coverage status
+
+The project explicitly combines:
+
+- **Track A:** functional industrial agent/integration;
+- **Track B:** evaluation framework/application.
+
+The active TAPI technical/output crosswalk is [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md).
+
+Required final outputs include:
+
+1. functional industrial agent;
+2. typed TRACTIAN integration;
+3. agent evaluation framework;
+4. governed experiment reports;
+5. realtime observability control room;
+6. architecture explorer;
+7. per-run output lineage;
+8. dynamic data explorer;
+9. realtime telemetry/reconnect behavior;
+10. technical documentation/reproduction package.
+
+## 8. Current blockers and risks
 
 ```text
-#118 locate/version the actual UI source or document exact external ownership
-#119 freeze the required UI state matrix
-#114 implement visual changes, integrate, test, freeze and regress
-#115 preserve a dedicated frontend test day and hard visual/feature freeze
+D02 live result                       waiting on eligible fresh authorization
+realtime observability implementation P0 open
+frontend implementation               P0 open
+frontend integrated test/freeze        P0 open
+C4 exact evaluator-side artifact       external exact-byte blocker
+production provider                    may legitimately remain NO_SELECTION
 ```
 
-Required demo-visible states include at minimum:
+The missing C4 artifact must not be reconstructed or substituted.
 
-```text
-success / orient
-clarify missing context
-abstain / unavailable evidence
-escalation + structured handoff
-action or policy blocked
-loading
-empty
-error / provider or tool failure
-```
+## 9. Current non-claims
 
-The UI must never expose credentials, account identifiers, evaluator-private truth, raw provider material or raw private observations prohibited by the runtime contracts.
+Do not claim:
 
-## 6. Architecture decision
+- a production provider is selected unless D02/frozen evidence supports it;
+- horizontal multi-instance realtime before a shared durable stream adapter is tested;
+- real-customer action authorization from the supplied/test controlled action demonstration;
+- LangGraph/multi-agent/RAG/memory benefit without a measured material gap;
+- evaluator semantic correctness beyond the evidence its contracts actually establish;
+- unconditional production readiness.
 
-D01 provides no evidence that topology caused the dominant failures. D02 is intentionally a single-variable diagnostic. Until D02 or another controlled measurement proves a material P0/P1 gap:
+## 10. State update rule
 
-```text
-single-agent controller   PRESERVE
-LangGraph                  DO NOT ADD
-multi-agent                DO NOT ADD
-RAG/vector/reranking       DO NOT ADD
-persistent memory          DO NOT ADD
-MCP migration              DO NOT ADD
-adaptive routing           DO NOT ADD
-```
-
-Issue #92 remains a materiality gate, not an instruction to add architecture.
-
-## 7. Delivery schedule
-
-```text
-2026-09-02  frontend visual changes + first test window; D02 after 21:00 reset if freshly authorized
-2026-09-03  D02 analysis/provider-state integration + frontend regression
-2026-09-04  dedicated frontend end-to-end test day
-2026-09-05  HARD VISUAL + FEATURE FREEZE
-2026-09-06  clean reproduction + full acceptance
-2026-09-07  final rehearsal + contingency buffer; P0 fixes only
-2026-09-08  delivery; no same-day feature development
-```
-
-After the hard freeze, every code/UI change requires a P0/P1 delivery justification and targeted regression.
-
-## 8. Remaining blockers / bounded gaps
-
-```text
-D02 live result                         P0 / WAITING FOR ELIGIBLE RESET + FRESH AUTHORIZATION
-frontend source ownership              P1 / #118
-frontend visual integration/testing    P0 / #114
-final sprint freeze/reproduction        P0 / #115
-C4 exact evaluator artifact             EXTERNAL EXACT-BYTE BLOCKER / NO RECONSTRUCTION
-production provider selection           MAY REMAIN NO_SELECTION
-```
-
-`NO_SELECTION` is a valid provider outcome and must not trigger a last-minute architecture rewrite.
-
-## 9. Still forbidden
-
-- paid Workers AI or paid spillover;
-- fabricated quota/use evidence;
-- credential/account probing as a readiness shortcut;
-- provider inference without the applicable governed authorization path;
-- replay of claimed/uncertain live attempts;
-- rewriting frozen D01 evidence or ADRs post hoc;
-- reconstructing the unavailable C4 artifact;
-- exposing evaluator-private truth, credentials or raw provider material in UI/demo artifacts;
-- speculative architecture expansion;
-- cosmetic redesign after the hard visual freeze;
-- claiming provider/model support beyond measured evidence.
+When evidence changes this state, update this document once. Do not copy a new status snapshot into README, project-plan compatibility files or historical audits. Machine/frozen evidence remains authoritative for its exact scope.
