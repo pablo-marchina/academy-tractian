@@ -1,0 +1,32 @@
+name: observability-api-provider-free
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  observability-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install project
+        run: python -m pip install -e '.[dev]'
+      - name: Safe observability store and API tests
+        run: >-
+          python -m pytest -q
+          tests/test_observability.py
+          tests/test_observability_store.py
+          tests/test_observability_api.py
+      - name: Compile production observability modules
+        run: >-
+          python -m py_compile
+          src/academy_tractian/observability.py
+          src/academy_tractian/observability_store.py
+          src/academy_tractian/observability_api.py
