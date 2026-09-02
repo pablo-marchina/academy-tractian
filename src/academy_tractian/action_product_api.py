@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict
 from research.e2.controller import DecisionSource
 from research.e2.transport import RequestTransport
 
-from .evaluation import ProductionEvaluator
+from .action_evaluation import ProductionActionEvaluator
 from .product_api import (
     AuthenticatedRuntimeContext,
     RuntimeContextProvider,
@@ -57,15 +57,6 @@ def create_action_capable_product_app(
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    """Production API with two-phase consequential-action execution.
-
-    Agent-time action proposals are validated and privately custodied but never sent to the
-    TRACTIAN transport. A requester later confirms an opaque action id; the server re-resolves
-    current authorization, acquires a persistent idempotency claim and executes the exact
-    custodied payload in a separate realtime trace. The base ProductionRuntime v1 stays frozen
-    and read-only.
-    """
-
     custody = PendingActionCustody(action_custody_path)
     ledger = DuckDBActionIdempotencyLedger(action_ledger_path)
 
@@ -125,15 +116,9 @@ def create_action_capable_product_app(
     def action_detail(action_id: str, request: Request) -> PendingActionSafe:
         context = trusted_context(request)
         try:
-            custody.get_private_for_requester(
-                action_id=action_id,
-                requester_user_id=context.user_id,
-            )
+            custody.get_private_for_requester(action_id=action_id, requester_user_id=context.user_id)
             return custody.get_safe(action_id)
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail="action_not_found") from exc
-        except PermissionError as exc:
-            # Deliberately do not reveal whether an action id exists for another requester.
+        except (KeyError, PermissionError) as exc:
             raise HTTPException(status_code=404, detail="action_not_found") from exc
 
     def execute_confirmed_action(execution_run_id: str, action_id: str, prepared) -> None:
@@ -141,7 +126,7 @@ def create_action_capable_product_app(
         registry.running(execution_run_id)
         try:
             trace = prepared.execute()
-            report = ProductionEvaluator().evaluate(trace)
+            report = ProductionActionEvaluator().evaluate(trace)
             store.persist_trace(trace, evaluation=report)
         except Exception:
             registry.failed(execution_run_id)
@@ -163,20 +148,14 @@ def create_action_capable_product_app(
         payload: ActionConfirmation,
         request: Request,
     ) -> ActionExecutionAccepted:
-        del payload  # Literal[True] validation is the complete public confirmation payload.
+        del payload
         context = trusted_context(request)
         if not controls.actions_enabled():
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="action_kill_switch_engaged",
-            )
+            raise HTTPException(status_code=503, detail="action_kill_switch_engaged")
 
         principal = authorization_resolver(user_id=context.user_id)
         if principal.user_id != context.user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="action_authorization_context_mismatch",
-            )
+            raise HTTPException(status_code=403, detail="action_authorization_context_mismatch")
 
         executor.set_actions_enabled(controls.actions_enabled())
         try:
@@ -185,9 +164,7 @@ def create_action_capable_product_app(
                 identity_id=context.identity_id,
                 requester_user_id=context.user_id,
             )
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail="action_not_found") from exc
-        except PermissionError as exc:
+        except (KeyError, PermissionError) as exc:
             raise HTTPException(status_code=404, detail="action_not_found") from exc
         except RuntimeError as exc:
             code = str(exc)
@@ -211,10 +188,7 @@ def create_action_capable_product_app(
                 expected_states=frozenset({"EXECUTING"}),
                 new_state="UNCERTAIN",
             )
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="action_dispatch_failed",
-            ) from exc
+            raise HTTPException(status_code=503, detail="action_dispatch_failed") from exc
         registry.bind_future(execution_run_id, future)
 
         return ActionExecutionAccepted(
