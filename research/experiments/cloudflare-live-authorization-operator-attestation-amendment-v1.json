@@ -1,0 +1,47 @@
+{
+  "schema_version": "cloudflare-live-authorization-operator-attestation-amendment-v1",
+  "historical_protocol": {
+    "adr_021_blob": "9627219e5b9c64dda83d23e0f3e99f4c9b953519",
+    "adr_022_blob": "f32bc7e3ca37c74f04fce4cc0dfd56cfab2efcd0",
+    "adr_023_blob": "b124a02e89f4f604399e6a9a01616c91ceebb491",
+    "adr_024_blob": "0e03e84027721ab170976b483e81c3d08fb73a00",
+    "preserve_adr_021": true,
+    "preserve_adr_022": true,
+    "preserve_adr_023": true,
+    "preserve_adr_024": true
+  },
+  "evidence_mode": {
+    "name": "OPERATOR_PLAN_STATE_ATTESTATION",
+    "evidence_max_age_seconds": 600,
+    "receipt_max_lifetime_seconds": 300,
+    "reset_hour_utc": 0,
+    "observation_must_be_same_utc_day_as_reset": true,
+    "workers_free_active_attestation_required": true,
+    "workers_paid_disabled_attestation_required": true,
+    "no_workers_ai_calls_since_reset_required": true,
+    "no_automated_workers_ai_consumers_since_reset_required": true,
+    "exclusive_workers_ai_account_window_until_packet_completion_required": true,
+    "direct_workers_ai_route_required": true,
+    "ai_gateway_route_required": false,
+    "prepaid_unified_billing_route_required": false,
+    "comparison_attempts_consumed_required": 0,
+    "provider_inference_used_to_obtain_evidence": false,
+    "credential_account_probe_used_to_obtain_evidence": false,
+    "external_plan_source_artifact_required": false,
+    "derived_free_neurons_at_evidence": 10000.0,
+    "minimum_required_free_neurons": 9000.0
+  },
+  "portability": {
+    "cli_adds_src_to_sys_path": true,
+    "historical_blob_validation_uses_git_object_ids": true,
+    "worktree_line_endings_do_not_define_historical_blob_identity": true
+  },
+  "future_execution_boundary": {
+    "provider_model_inference_calls_in_this_task": 0,
+    "credential_account_probes_in_this_task": 0,
+    "live_network_validation_in_this_task": 0,
+    "comparison_attempts_consumed": 0,
+    "attempt_1_authorized": false,
+    "production_provider_selected": false
+  }
+}
