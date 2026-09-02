@@ -34,6 +34,9 @@ from .realtime_runtime import PreparedRealtimeRun
 from .runtime import ProductionRequest, ProductionRuntime, ProductionRuntimeConfig, canonical_tool_registry
 
 
+ACTION_EXECUTION_CONFIG_HASH = sha256(b"prod-action-runtime-v2").hexdigest()
+
+
 class _FrozenModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -59,7 +62,15 @@ class PendingActionSafe(_FrozenModel):
     impact: str
     required_permissions: tuple[str, ...]
     confirmation_required: Literal[True] = True
-    state: Literal["PENDING_CONFIRMATION", "CONFIRMED", "EXECUTING", "ACCEPTED", "BLOCKED", "NOT_ACCEPTED", "UNCERTAIN"]
+    state: Literal[
+        "PENDING_CONFIRMATION",
+        "CONFIRMED",
+        "EXECUTING",
+        "ACCEPTED",
+        "BLOCKED",
+        "NOT_ACCEPTED",
+        "UNCERTAIN",
+    ]
     execution_run_id: str | None = None
 
 
@@ -199,7 +210,12 @@ class PendingActionCustody:
             raise KeyError(action_id)
         return item.safe
 
-    def get_private_for_requester(self, *, action_id: str, requester_user_id: str) -> _PendingActionPrivate:
+    def get_private_for_requester(
+        self,
+        *,
+        action_id: str,
+        requester_user_id: str,
+    ) -> _PendingActionPrivate:
         item = self._load_private(action_id)
         if item is None:
             raise KeyError(action_id)
@@ -245,10 +261,12 @@ class PendingActionCustody:
 
 
 class DuckDBActionIdempotencyLedger:
-    """Persistent atomic one-shot claim ledger for consequential action execution.
+    """Persistent one-shot claim ledger for consequential actions.
 
-    Claims remain consumed after ambiguous failures. This implementation is intentionally scoped
-    to the supported single product process; multi-instance action execution is not claimed.
+    The process lock plus database uniqueness guarantees exactly one claim in the supported
+    single product process, including concurrent worker threads; persistence guarantees that a
+    restart cannot silently forget a prior claim. Horizontal multi-process execution is not
+    claimed by this adapter and remains a future external-ledger boundary.
     """
 
     def __init__(self, path: str | Path) -> None:
@@ -312,7 +330,11 @@ class DuckDBActionIdempotencyLedger:
             connection.close()
         if row is None:
             return None
-        return {"action_fingerprint": str(row[0]), "action_id": str(row[1]), "state": str(row[2])}
+        return {
+            "action_fingerprint": str(row[0]),
+            "action_id": str(row[1]),
+            "state": str(row[2]),
+        }
 
 
 class PendingActionCapturePolicy(ResourcePolicy):
@@ -332,7 +354,11 @@ class PendingActionCapturePolicy(ResourcePolicy):
 
     def check(self, tool: ToolSpec, arguments: dict[str, object]) -> PolicyDecision:
         if tool.kind is not ToolKind.ACTION:
-            return PolicyDecision(allowed=True, code="ALLOWED", reason="read tool outside action capture")
+            return PolicyDecision(
+                allowed=True,
+                code="ALLOWED",
+                reason="read tool outside action capture",
+            )
         context = ProductionActionAuthorizationContext(
             execution_enabled=True,
             user_permissions=self.principal.permissions,
@@ -344,7 +370,9 @@ class PendingActionCapturePolicy(ResourcePolicy):
         )
         decision = ProductionActionSafetyPolicy(context=context).evaluate(tool, dict(arguments))
         allowed_pending_failures = {"CONFIRMATION_REQUIRED", "IDEMPOTENCY_KEY_REQUIRED"}
-        blocking_failures = [code for code in decision.failed_codes if code not in allowed_pending_failures]
+        blocking_failures = [
+            code for code in decision.failed_codes if code not in allowed_pending_failures
+        ]
         if blocking_failures:
             return PolicyDecision(
                 allowed=False,
@@ -395,7 +423,11 @@ class ClaimingProductionActionSafetyPolicy(ProductionActionSafetyPolicy):
                 reason="prod-action-safety-v2: persistent idempotency claim already exists",
             )
         self.claimed_key_sha256 = decision.idempotency_key_sha256
-        return PolicyDecision(allowed=True, code="ALLOWED", reason="prod-action-safety-v2: persistent claim acquired")
+        return PolicyDecision(
+            allowed=True,
+            code="ALLOWED",
+            reason="prod-action-safety-v2: persistent claim acquired",
+        )
 
 
 class ActionProposalRealtimeProductionRuntime(ProductionRuntime):
@@ -412,7 +444,12 @@ class ActionProposalRealtimeProductionRuntime(ProductionRuntime):
         registry: Mapping[str, ToolSpec] | None = None,
         config: ProductionRuntimeConfig | None = None,
     ) -> None:
-        super().__init__(decision_source=decision_source, transport=transport, registry=registry, config=config)
+        super().__init__(
+            decision_source=decision_source,
+            transport=transport,
+            registry=registry,
+            config=config,
+        )
         self.observability_publisher = FailIsolatedObservabilityPublisher(observability_sink)
         self.authorization_resolver = authorization_resolver
         self.custody = custody
@@ -421,7 +458,11 @@ class ActionProposalRealtimeProductionRuntime(ProductionRuntime):
         principal = self.authorization_resolver(user_id=request.user_id)
         if principal.user_id != request.user_id:
             raise RuntimeError("action_principal_user_mismatch")
-        binding = ExecutionBinding(identity_id=request.identity_id, user_id=request.user_id, seed=request.seed)
+        binding = ExecutionBinding(
+            identity_id=request.identity_id,
+            user_id=request.user_id,
+            seed=request.seed,
+        )
         policy = PendingActionCapturePolicy(
             principal=principal,
             origin_raw_run_id=request.request_id,
@@ -442,7 +483,10 @@ class ActionProposalRealtimeProductionRuntime(ProductionRuntime):
         controller = ObservableAgentController(
             runner=runner,
             decision_source=self.decision_source,
-            limits=ControllerLimits(max_turns=self.config.max_turns, max_tool_calls=self.config.max_tool_calls),
+            limits=ControllerLimits(
+                max_turns=self.config.max_turns,
+                max_tool_calls=self.config.max_tool_calls,
+            ),
             observability_publisher=self.observability_publisher,
         )
         return PreparedRealtimeRun(controller=controller, user_request=request.user_request)
@@ -482,7 +526,10 @@ class PreparedActionExecution:
             execution = self.runner.execute_tool(self.tool.name, self.arguments)
         except Exception:
             if self.policy.claimed_key_sha256 is not None:
-                self.ledger.mark(key_sha256=self.policy.claimed_key_sha256, state="UNCERTAIN")
+                self.ledger.mark(
+                    key_sha256=self.policy.claimed_key_sha256,
+                    state="UNCERTAIN",
+                )
             self.custody.transition(
                 action_id=self.action_id,
                 expected_states=frozenset({"EXECUTING"}),
@@ -529,7 +576,11 @@ class PreparedActionExecution:
                 "decision": "ORIENT" if accepted else "ABSTAIN",
                 "response_mode": "complete" if accepted else "partial",
                 "reason_code": "ACTION_ACCEPTED" if accepted else "ACTION_NOT_ACCEPTED",
-                "message": "The action was accepted by the TRACTIAN API." if accepted else "The API did not confirm accepted=true; no retry will be attempted automatically.",
+                "message": (
+                    "The action was accepted by the TRACTIAN API."
+                    if accepted
+                    else "The API did not confirm accepted=true; no retry will be attempted automatically."
+                ),
             }
         )
 
@@ -564,6 +615,8 @@ class ProductionActionExecutor:
         identity_id: str,
         requester_user_id: str,
     ) -> tuple[str, PreparedActionExecution]:
+        if not self.actions_enabled:
+            raise RuntimeError("action_kill_switch_engaged")
         item = self.custody.get_private_for_requester(
             action_id=action_id,
             requester_user_id=requester_user_id,
@@ -571,13 +624,15 @@ class ProductionActionExecutor:
         if item.safe.state not in {"PENDING_CONFIRMATION", "CONFIRMED"}:
             raise RuntimeError(f"action_not_confirmable:{item.safe.state}")
         principal = self.authorization_resolver(user_id=requester_user_id)
+        if principal.user_id != requester_user_id:
+            raise RuntimeError("action_principal_user_mismatch")
         tool = self.registry[item.safe.tool_name]
         fingerprint = action_fingerprint(tool, item.arguments)
         if fingerprint != item.safe.action_fingerprint:
             raise RuntimeError("pending_action_fingerprint_drift")
 
         context = ProductionActionAuthorizationContext(
-            execution_enabled=self.actions_enabled,
+            execution_enabled=True,
             user_permissions=principal.permissions,
             user_company_id=principal.user_company_id,
             resource_company_bindings=principal.resource_company_bindings,
@@ -606,12 +661,16 @@ class ProductionActionExecutor:
         if not transitioned:
             raise RuntimeError("action_confirmation_race_lost")
 
-        binding = ExecutionBinding(identity_id=identity_id, user_id=requester_user_id, seed=None)
+        binding = ExecutionBinding(
+            identity_id=identity_id,
+            user_id=requester_user_id,
+            seed=None,
+        )
         runner = ObservableHarnessRunner(
             observability_publisher=self.observability_publisher,
             run_id=raw_execution_id,
-            scenario_id=f"prod-action:{action_id}",
-            config_hash="prod-action-runtime-v2",
+            scenario_id=f"prod:action:{action_id}",
+            config_hash=ACTION_EXECUTION_CONFIG_HASH,
             registry=self.registry,
             binding=binding,
             transport=self.transport_factory(),
