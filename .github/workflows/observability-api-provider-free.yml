@@ -27,6 +27,7 @@ jobs:
           tests/test_architecture_manifest.py
           tests/test_architecture_api.py
           tests/test_operational_read_model_api.py
+          tests/test_cross_filter_api.py
           tests/test_realtime_observability.py
           tests/test_observability_sse.py
           tests/test_product_api.py
