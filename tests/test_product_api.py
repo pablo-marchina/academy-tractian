@@ -64,6 +64,14 @@ class BlockingToolThenFinalSource:
         )
 
 
+def _sse_data_payloads(text: str) -> list[dict[str, object]]:
+    payloads: list[dict[str, object]] = []
+    for line in text.splitlines():
+        if line.startswith("data: "):
+            payloads.append(json.loads(line.removeprefix("data: ")))
+    return payloads
+
+
 def test_post_run_persists_real_start_before_background_execution_and_evaluates_after(tmp_path) -> None:
     entered = Event()
     release = Event()
@@ -120,9 +128,10 @@ def test_post_run_persists_real_start_before_background_execution_and_evaluates_
         )
         assert replay_before.status_code == 200
         assert replay_before.text.count("event: trace_event") == 1
-        assert "run_started" in replay_before.text
-        assert "tool_call" not in replay_before.text
-        assert "final_response" not in replay_before.text
+        replay_payloads = _sse_data_payloads(replay_before.text)
+        assert [item["event_type"] for item in replay_payloads] == ["run_started"]
+        assert all(item["event_type"] != "tool_call" for item in replay_payloads)
+        assert all(item["event_type"] != "final_response" for item in replay_payloads)
 
         execution_before = client.get(accepted["execution_path"])
         assert execution_before.status_code == 200
