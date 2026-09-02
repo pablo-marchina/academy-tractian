@@ -183,7 +183,7 @@ def test_cli_bootstraps_src_without_external_pythonpath() -> None:
     assert "--workers-free-source" not in completed.stdout
 
 
-def test_capture_contract_does_not_accept_screenshot_argument() -> None:
+def test_capture_contract_does_not_accept_screenshot_argument(tmp_path: Path) -> None:
     repo_root = Path(__file__).resolve().parents[1]
     env = dict(os.environ)
     env.pop("PYTHONPATH", None)
@@ -191,6 +191,8 @@ def test_capture_contract_does_not_accept_screenshot_argument() -> None:
         [
             sys.executable,
             str(repo_root / "scripts" / "research" / "capture_cloudflare_operator_attestation_evidence_v1.py"),
+            "--output",
+            str(tmp_path / "evidence.json"),
             "--workers-free-source",
             "does-not-exist.png",
         ],
