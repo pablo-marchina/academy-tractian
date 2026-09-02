@@ -1,8 +1,11 @@
 import type {
+  ArchitectureManifest,
   ExecutionStateResponse,
   ItemsResponse,
   RunAccepted,
   SafeEvaluationCheck,
+  SafeEvent,
+  SafeEvidenceRef,
   SafeRun,
   ServiceHealth,
 } from "./types";
@@ -44,6 +47,26 @@ export function fetchRun(runPath: string): Promise<SafeRun> {
   return requestJson<SafeRun>(runPath);
 }
 
+export function fetchRunById(runId: string): Promise<SafeRun> {
+  return requestJson<SafeRun>(`/api/runs/${encodeURIComponent(runId)}`);
+}
+
+export function fetchRuns(limit = 100): Promise<ItemsResponse<SafeRun>> {
+  return requestJson<ItemsResponse<SafeRun>>(`/api/runs?limit=${limit}`);
+}
+
+export function fetchRunEvents(runId: string): Promise<ItemsResponse<SafeEvent>> {
+  return requestJson<ItemsResponse<SafeEvent>>(
+    `/api/runs/${encodeURIComponent(runId)}/events`,
+  );
+}
+
+export function fetchEvidence(runId: string): Promise<ItemsResponse<SafeEvidenceRef>> {
+  return requestJson<ItemsResponse<SafeEvidenceRef>>(
+    `/api/runs/${encodeURIComponent(runId)}/evidence`,
+  );
+}
+
 export function fetchExecution(executionPath: string): Promise<ExecutionStateResponse> {
   return requestJson<ExecutionStateResponse>(executionPath);
 }
@@ -52,6 +75,10 @@ export function fetchEvaluation(runId: string): Promise<ItemsResponse<SafeEvalua
   return requestJson<ItemsResponse<SafeEvaluationCheck>>(
     `/api/runs/${encodeURIComponent(runId)}/evaluation`,
   );
+}
+
+export function fetchArchitecture(): Promise<ArchitectureManifest> {
+  return requestJson<ArchitectureManifest>("/api/architecture");
 }
 
 export function fetchHealth(): Promise<ServiceHealth> {

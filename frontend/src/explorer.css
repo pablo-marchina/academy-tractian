@@ -1,0 +1,70 @@
+.run-explorer-panel { margin: 14px 0 0; }
+.run-table-wrap { overflow: auto; margin-top: 12px; border: 1px solid #202a37; border-radius: 9px; }
+.run-table { width: 100%; border-collapse: collapse; min-width: 760px; font-size: 11px; }
+.run-table th { color: #718095; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; text-align: left; padding: 9px 12px; background: #0b1017; border-bottom: 1px solid #202a37; }
+.run-table td { padding: 10px 12px; border-bottom: 1px solid #1d2632; color: #b9c4d2; font-variant-numeric: tabular-nums; }
+.run-table tr:last-child td { border-bottom: 0; }
+.run-table tbody tr { cursor: pointer; transition: background 120ms ease; }
+.run-table tbody tr:hover { background: #141c27; }
+.run-table tbody tr.run-row-selected { background: rgba(97, 168, 255, .08); box-shadow: inset 2px 0 0 #61a8ff; }
+.run-table code { color: #a8b7c9; font-size: 10px; }
+.run-state-pill { display: inline-flex; align-items: center; border: 1px solid #344153; border-radius: 999px; padding: 3px 7px; font-size: 9px; text-transform: uppercase; font-weight: 800; }
+.state-success { color: #50d890; border-color: rgba(80,216,144,.28); background: rgba(80,216,144,.06); }
+.state-warning { color: #f3ba4b; border-color: rgba(243,186,75,.28); background: rgba(243,186,75,.06); }
+.state-danger { color: #ff8b8b; border-color: rgba(255,107,107,.28); background: rgba(255,107,107,.06); }
+.state-live { color: #8ec7ff; border-color: rgba(97,168,255,.3); background: rgba(97,168,255,.07); }
+
+.visual-panel { margin-top: 14px; }
+.graph-canvas { width: 100%; height: 520px; margin-top: 12px; border: 1px solid #202a37; border-radius: 10px; overflow: hidden; background: #0a0f16; }
+.graph-empty { min-height: 320px; display: grid; place-content: center; }
+.react-flow__background { background: #0a0f16; }
+.react-flow__controls { border: 1px solid #2b3746; box-shadow: none; }
+.react-flow__controls-button { background: #121923; border-color: #2b3746; fill: #bdc8d6; }
+.react-flow__minimap { background: #0f151e; border: 1px solid #2b3746; }
+.react-flow__edge-path { stroke: #46576d; stroke-width: 1.25; }
+.react-flow__edge-text { fill: #8190a3; font-size: 8px; }
+.react-flow__edge-textbg { fill: #0a0f16; }
+
+.trace-node { width: 205px !important; border: 1px solid #344153 !important; border-radius: 8px !important; padding: 0 !important; background: #111823 !important; color: #d8e0ea !important; box-shadow: 0 7px 22px rgba(0,0,0,.18) !important; }
+.trace-node-label { display: grid; gap: 4px; padding: 9px 10px; text-align: left; }
+.trace-node-label span { color: #78889c; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; }
+.trace-node-label strong { font-size: 10px; }
+.trace-node-label small { color: #8695a8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 8px; overflow: hidden; text-overflow: ellipsis; }
+.trace-node-success { border-left: 3px solid #50d890 !important; }
+.trace-node-warning { border-left: 3px solid #f3ba4b !important; }
+.trace-node-danger { border-left: 3px solid #ff6b6b !important; }
+.trace-node-model { border-left: 3px solid #b593ff !important; }
+.trace-node-tool { border-left: 3px solid #45c4d6 !important; }
+.trace-node-neutral { border-left: 3px solid #65758a !important; }
+
+.architecture-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 12px; margin-top: 12px; }
+.architecture-graph { margin-top: 0; height: 610px; }
+.architecture-node { width: 185px !important; border-radius: 9px !important; padding: 0 !important; color: #d8e0ea !important; box-shadow: none !important; }
+.architecture-node-idle { border: 1px solid #2b3746 !important; background: #0e141d !important; opacity: .55; }
+.architecture-node-active { border: 1px solid rgba(80,216,144,.65) !important; background: #101b1a !important; box-shadow: 0 0 0 2px rgba(80,216,144,.06) !important; opacity: 1; }
+.architecture-node-label { display: grid; gap: 4px; padding: 10px; text-align: left; }
+.architecture-node-label span { color: #708096; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; }
+.architecture-node-label strong { font-size: 10px; }
+.architecture-node-label small { color: #8998aa; font-size: 8px; text-transform: capitalize; }
+.architecture-detail { min-width: 0; border: 1px solid #202a37; border-radius: 10px; background: #0b1017; padding: 14px; }
+.architecture-manifest-meta { padding: 9px 0; border-bottom: 1px solid #202a37; }
+.architecture-manifest-meta span { display: block; color: #6f7e92; font-size: 9px; text-transform: uppercase; letter-spacing: .07em; }
+.architecture-manifest-meta strong { display: block; margin-top: 4px; font-size: 11px; overflow-wrap: anywhere; }
+.architecture-manifest-meta code { display: block; color: #8595aa; margin-top: 4px; font-size: 9px; }
+.architecture-selected { margin-top: 16px; }
+.architecture-selected h3 { margin: 0 0 8px; font-size: 15px; }
+.architecture-selected > p { color: #a7b3c2; font-size: 11px; line-height: 1.55; }
+.architecture-selected dl { margin: 14px 0 0; }
+.architecture-selected dl > div { padding: 8px 0; border-top: 1px solid #202a37; }
+.architecture-selected dt { color: #718095; font-size: 8px; text-transform: uppercase; letter-spacing: .06em; }
+.architecture-selected dd { margin: 4px 0 0; color: #b9c5d3; font-size: 10px; line-height: 1.45; overflow-wrap: anywhere; }
+
+@media (max-width: 1100px) {
+  .architecture-layout { grid-template-columns: 1fr; }
+  .architecture-detail { min-height: 180px; }
+}
+
+@media (max-width: 650px) {
+  .graph-canvas { height: 430px; }
+  .architecture-graph { height: 520px; }
+}

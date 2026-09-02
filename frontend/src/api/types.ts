@@ -1,4 +1,5 @@
 export type ExecutionStatus = "accepted" | "running" | "completed" | "failed";
+export type ProviderSelectionState = "NO_SELECTION" | "PROVIDER_FREE" | "SELECTED";
 
 export interface RunAccepted {
   run_id: string;
@@ -58,6 +59,14 @@ export interface SafeEvent {
   message: string | null;
 }
 
+export interface SafeEvidenceRef {
+  evidence_id: string;
+  run_id: string;
+  sequence: number;
+  tool_name: string | null;
+  status_code: number | null;
+}
+
 export interface SafeEvaluationCheck {
   run_id: string;
   check_name: string;
@@ -80,4 +89,45 @@ export interface ServiceHealth {
   status: string;
   service: string;
   version: string;
+}
+
+export interface ArchitectureComponent {
+  component_id: string;
+  label: string;
+  layer:
+    | "browser"
+    | "api"
+    | "runtime"
+    | "safety"
+    | "external"
+    | "evaluator"
+    | "observability";
+  responsibility: string;
+  trust_boundary: string;
+  input_contracts: string[];
+  output_contracts: string[];
+  activates_on_event_types: string[];
+  execution_role:
+    | "presentation"
+    | "control_plane"
+    | "adaptive_intelligence"
+    | "deterministic_boundary"
+    | "external_system"
+    | "post_runtime_only"
+    | "telemetry";
+}
+
+export interface ArchitectureEdge {
+  source: string;
+  target: string;
+  label: string;
+}
+
+export interface ArchitectureManifest {
+  schema_version: "architecture-manifest-v1";
+  architecture_version: "tractian-production-architecture-v1";
+  provider_selection_state: ProviderSelectionState;
+  components: ArchitectureComponent[];
+  edges: ArchitectureEdge[];
+  manifest_sha256: string;
 }
