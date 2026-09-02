@@ -3,10 +3,15 @@ name = "academy-tractian"
 version = "0.1.0"
 description = "Production-path runtime surface for the TRACTIAN Academy project"
 requires-python = ">=3.11"
-dependencies = ["pydantic>=2.6,<3"]
+dependencies = [
+  "pydantic>=2.6,<3",
+  "fastapi>=0.141.1,<0.142",
+  "duckdb>=1.5.5,<1.6",
+  "uvicorn>=0.52.4,<0.53",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "httpx>=0.28,<1"]
 
 [build-system]
 requires = ["hatchling"]
