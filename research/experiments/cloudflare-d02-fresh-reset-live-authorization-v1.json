@@ -1,0 +1,64 @@
+{
+  "schema_version": "cloudflare-d02-fresh-reset-live-authorization-v1",
+  "status": "PROVIDER_FREE_IMPLEMENTATION_LIVE_REQUIRES_FRESH_RECEIPT",
+  "created_date": "2026-09-02",
+  "d02_plan_sha256": "e768b324baa00dd337c8e56bdfb29b9444be92619508a9fefc30e30b746d1958",
+  "authorization_source": "OPERATOR_ZERO_USE_ATTESTATION",
+  "evidence": {
+    "max_age_seconds": 600,
+    "reset_hour_utc": 0,
+    "must_be_current_utc_day": true,
+    "workers_free_active_required": true,
+    "workers_paid_disabled_required": true,
+    "no_workers_ai_calls_since_reset_required": true,
+    "no_automated_workers_ai_consumers_since_reset_required": true,
+    "exclusive_workers_ai_window_until_packet_completion_required": true,
+    "direct_workers_ai_route_required": true,
+    "ai_gateway_used": false,
+    "prepaid_unified_billing_used": false,
+    "credential_account_probe_used": false,
+    "provider_inference_used": false,
+    "external_plan_source_artifact_required": false,
+    "derived_free_neurons_required": 10000.0
+  },
+  "receipt": {
+    "max_lifetime_seconds": 300,
+    "must_not_outlive_evidence": true,
+    "custody_root_binding_required": true,
+    "plan_binding_required": true,
+    "source_blob_binding_required": true
+  },
+  "resource_gate": {
+    "workers_free_daily_neurons": 10000.0,
+    "d02_worst_case_packet_neurons": 9352.805376,
+    "minimum_numerical_capacity": 9352.805376,
+    "authorization_requires_exact_fresh_reset_zero_use_capacity": 10000.0,
+    "modeled_headroom": 647.194624,
+    "actual_cash_cost_usd": 0.0,
+    "paid_spillover_allowed": false
+  },
+  "execution": {
+    "max_attempts": 32,
+    "completion_token_cap": 1024,
+    "max_input_tokens": 8000,
+    "automatic_retries": 0,
+    "provider_fallbacks": 0,
+    "parallel_live_calls": false,
+    "warmup_calls": 0,
+    "resume_after_claimed_or_uncertain": false,
+    "raw_provider_material_recorded": false,
+    "production_selection_claim": false
+  },
+  "credential_boundary": {
+    "capture_requires_provider_credentials_absent": true,
+    "receipt_requires_provider_credentials_absent": true,
+    "launcher_reads_credentials_only_after_receipt_validation": true,
+    "credentials_recorded": false,
+    "account_identifier_recorded": false
+  },
+  "current_reset_window": {
+    "d01_already_used_workers_ai_on_2026_09_02_utc": true,
+    "d02_live_authorized_in_2026_09_02_utc_window": false,
+    "note": "This historical current-window marker documents why implementation must not be mistaken for same-day live authorization. Future evidence is valid only when its zero-use attestation is truthful for its own UTC day."
+  }
+}
