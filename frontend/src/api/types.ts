@@ -108,15 +108,126 @@ export interface ProductionHealthComponent {
   detail: string;
 }
 
+export interface LatencySummary {
+  count: number;
+  avg_ms: number | null;
+  p50_ms: number | null;
+  p95_ms: number | null;
+  max_ms: number | null;
+}
+
+export interface RuntimeHeartbeat {
+  status: string;
+  age_ms: number | null;
+  stale_after_ms: number;
+}
+
+export interface ObservabilityTelemetry {
+  publish_overhead: LatencySummary;
+  persistence_duration: LatencySummary;
+  runtime_event_to_persistence: LatencySummary;
+  runtime_event_to_persistence_boundary: string;
+  publisher_failures: number;
+}
+
+export interface SseTelemetry {
+  active_clients: number;
+  connections_opened: number;
+  connections_closed: number;
+  reconnects: number;
+  events_delivered: number;
+  keepalives: number;
+  client_disconnects: number;
+  completed_streams: number;
+  persistence_to_delivery: LatencySummary;
+  reconnect_recovery: LatencySummary;
+}
+
+export interface ExecutorPressure {
+  accepted: number;
+  running: number;
+  completed: number;
+  failed: number;
+  active_runs: number;
+  queued_runs: number;
+  inflight_runs: number;
+  max_workers: number;
+  executor_utilization: number;
+  transition_count: number;
+  last_transition_age_ms: number | null;
+}
+
+export interface ProviderKillSwitch {
+  engaged: boolean;
+  provider_calls_enabled: boolean;
+  revision: number;
+  mutation_surface: string;
+}
+
+export interface ActionKillSwitch {
+  engaged: boolean;
+  actions_enabled: boolean;
+  source: string;
+  mutation_surface: string;
+}
+
+export interface PassiveProviderOperability {
+  source: string;
+  observations: number;
+  live_calls: number;
+  failures: number;
+  failure_rate: number;
+  latency: LatencySummary;
+  last: {
+    provider_id: string | null;
+    model_id: string | null;
+    outcome: string | null;
+    failure_code: string | null;
+    latency_ms: number | null;
+  } | null;
+  external_probe_performed: false;
+}
+
+export interface PassiveAdapterOperability {
+  source: string;
+  observations: number;
+  status_observations: number;
+  http_2xx: number;
+  http_non_2xx: number;
+  http_2xx_rate: number;
+  status_codes: Record<string, number>;
+  last: { tool_name: string | null; status_code: number | null } | null;
+  external_probe_performed: false;
+}
+
+export interface ProductionHealthMeasured {
+  forbidden_field_leakage: number;
+  provider_operability: PassiveProviderOperability;
+  tractian_adapter_operability: PassiveAdapterOperability;
+  uptime_ms?: number | null;
+  startup_readiness_ms?: number | null;
+  runtime_heartbeat?: RuntimeHeartbeat | null;
+  observability?: ObservabilityTelemetry | null;
+  sse?: SseTelemetry | null;
+  executor_pressure?: ExecutorPressure;
+  controls?: {
+    schema_version: string;
+    provider_kill_switch: ProviderKillSwitch;
+    action_kill_switch: ActionKillSwitch;
+  };
+}
+
 export interface ProductionHealth {
-  schema_version: "production-health-v1";
+  schema_version: "production-health-v2";
   store_schema_version: string;
   overall_status: string;
   components: ProductionHealthComponent[];
   totals: OverviewMetrics & { incomplete_runs: number };
-  measured: { forbidden_field_leakage: number };
+  measured: ProductionHealthMeasured;
   not_measured_yet: string[];
 }
+
+export interface AnalyticsScope { run_id: string | null }
 
 export interface ToolMetric {
   tool_name: string;
@@ -128,7 +239,8 @@ export interface ToolMetric {
 }
 
 export interface ToolsMetrics {
-  schema_version: string;
+  schema_version: "tools-metrics-v2";
+  scope: AnalyticsScope;
   items: ToolMetric[];
   count: number;
 }
@@ -144,7 +256,8 @@ export interface PolicyMetric {
 }
 
 export interface PoliciesMetrics {
-  schema_version: string;
+  schema_version: "policies-metrics-v2";
+  scope: AnalyticsScope;
   items: PolicyMetric[];
   count: number;
 }
@@ -158,7 +271,8 @@ export interface EvaluationMetricCheck {
 }
 
 export interface EvaluationMetrics {
-  schema_version: string;
+  schema_version: "evaluation-metrics-v2";
+  scope: AnalyticsScope;
   checks: EvaluationMetricCheck[];
   check_count: number;
   rows: number;
@@ -248,7 +362,8 @@ export interface DynamicDatasetSchema {
 }
 
 export interface DynamicAnalyticsSchema {
-  schema_version: "dynamic-analytics-schema-v1";
+  schema_version: "dynamic-analytics-schema-v2";
+  global_scope_fields: ["run_id"];
   datasets: Record<string, DynamicDatasetSchema>;
   filter_operators: string[];
   chart_types: Record<string, { dimension_count: number[]; measures?: string[] }>;
@@ -263,6 +378,7 @@ export interface AnalyticsFilter {
 
 export interface AnalyticsQuerySpec {
   dataset: "runs" | "events" | "evaluations";
+  run_id?: string | null;
   dimensions: string[];
   measure: string;
   filters?: AnalyticsFilter[];
@@ -271,8 +387,9 @@ export interface AnalyticsQuerySpec {
 }
 
 export interface DynamicAnalyticsResult {
-  schema_version: "dynamic-analytics-result-v1";
+  schema_version: "dynamic-analytics-result-v2";
   dataset: string;
+  run_id: string | null;
   dimensions: string[];
   measure: string;
   chart_type: ChartType;
