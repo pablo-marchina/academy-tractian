@@ -5,7 +5,7 @@ from hashlib import sha256
 from importlib.metadata import PackageNotFoundError, version
 import json
 from pathlib import Path
-from typing import AsyncContextManager, Callable
+from typing import Any, AsyncContextManager, Callable
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -13,6 +13,7 @@ from fastapi.responses import StreamingResponse
 from .architecture_manifest import ProviderSelectionState, architecture_manifest
 from .observability_store import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStore
 from .operational_read_model import AnalyticsQuery, OperationalReadModel
+from .production_telemetry import CloseReason, ProductionTelemetry
 
 
 def _package_version() -> str:
@@ -53,6 +54,8 @@ def create_observability_app(
     db_path: str | Path = "./var/observability.duckdb",
     lifespan: Callable[[FastAPI], AsyncContextManager[None]] | None = None,
     provider_selection_state: ProviderSelectionState = "NO_SELECTION",
+    production_telemetry: ProductionTelemetry | None = None,
+    live_operability_supplier: Callable[[], dict[str, Any]] | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="Academy × TRACTIAN Observability API",
@@ -104,7 +107,13 @@ def create_observability_app(
 
     @app.get("/api/production/health")
     def production_health() -> dict[str, object]:
-        return analytics.production_health(provider_selection_state=provider_selection_state)
+        live_operability = (
+            None if live_operability_supplier is None else live_operability_supplier()
+        )
+        return analytics.production_health(
+            provider_selection_state=provider_selection_state,
+            live_operability=live_operability,
+        )
 
     @app.get("/api/tools/metrics")
     def tools_metrics() -> dict[str, object]:
@@ -190,32 +199,57 @@ def create_observability_app(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+        connection_id = None
+        if production_telemetry is not None:
+            connection_id = production_telemetry.sse_open(
+                reconnect=bool(last_event_id)
+            )
+
         async def event_stream():
             nonlocal after_sequence
-            while True:
-                items = store.get_events_after(
-                    run_id,
-                    after_sequence=after_sequence,
-                    limit=1000,
-                )
-                for item in items:
-                    after_sequence = int(item["sequence"])
-                    yield _sse_record(item)
+            close_reason: CloseReason = "client_disconnect"
+            try:
+                while True:
+                    items = store.get_events_after(
+                        run_id,
+                        after_sequence=after_sequence,
+                        limit=1000,
+                    )
+                    for item in items:
+                        after_sequence = int(item["sequence"])
+                        if production_telemetry is not None and connection_id is not None:
+                            production_telemetry.sse_event(
+                                connection_id=connection_id,
+                                event_id=str(item["event_id"]),
+                            )
+                        yield _sse_record(item)
 
-                current = store.get_run(run_id)
-                if current is None:
-                    return
-                if bool(current["completed"]) and after_sequence >= int(current["event_count"]) - 1:
-                    return
-                if not follow:
-                    return
-                if await request.is_disconnected():
-                    return
+                    current = store.get_run(run_id)
+                    if current is None:
+                        close_reason = "run_missing"
+                        return
+                    if bool(current["completed"]) and after_sequence >= int(current["event_count"]) - 1:
+                        close_reason = "completed"
+                        return
+                    if not follow:
+                        close_reason = "single_replay"
+                        return
+                    if await request.is_disconnected():
+                        close_reason = "client_disconnect"
+                        return
 
-                # Comment frame keeps intermediaries/connections alive without fabricating
-                # a runtime event or changing any UI state.
-                yield ": keepalive\n\n"
-                await asyncio.sleep(poll_ms / 1000.0)
+                    # Comment frame keeps intermediaries/connections alive without fabricating
+                    # a runtime event or changing any UI state.
+                    if production_telemetry is not None and connection_id is not None:
+                        production_telemetry.sse_keepalive(connection_id=connection_id)
+                    yield ": keepalive\n\n"
+                    await asyncio.sleep(poll_ms / 1000.0)
+            finally:
+                if production_telemetry is not None and connection_id is not None:
+                    production_telemetry.sse_close(
+                        connection_id=connection_id,
+                        reason=close_reason,
+                    )
 
         return StreamingResponse(
             event_stream(),
