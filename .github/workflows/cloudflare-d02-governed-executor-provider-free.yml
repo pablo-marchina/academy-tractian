@@ -1,0 +1,29 @@
+name: cloudflare-d02-governed-executor-provider-free
+
+on:
+  pull_request:
+    paths:
+      - "src/academy_tractian/cloudflare_provider_d02_executor.py"
+      - "tests/test_cloudflare_d02_governed_executor.py"
+      - ".github/workflows/cloudflare-d02-governed-executor-provider-free.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Compile
+        run: python -m py_compile src/academy_tractian/cloudflare_provider_d02_executor.py
+      - name: Governed executor regression
+        run: pytest -q tests/test_cloudflare_provider_d02.py tests/test_cloudflare_d02_governed_executor.py
+      - name: Prove no live entrypoint exists in this change
+        shell: bash
+        run: |
+          ! git diff --name-only origin/main...HEAD | grep -E '^scripts/research/.*d02.*live'
+          ! grep -R "UrllibProviderJsonTransport" src/academy_tractian/cloudflare_provider_d02_executor.py
