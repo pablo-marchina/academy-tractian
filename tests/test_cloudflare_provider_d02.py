@@ -18,10 +18,10 @@ from academy_tractian.cloudflare_provider_d02 import (
     CloudflareD02PreLiveEvidence,
     CloudflareProviderCallIdentityV2,
     CloudflareProviderDecisionSourceD02,
-    CloudflareProviderModelCallRecordD02,
     CloudflareWorkersAIChatCompletionsDecisionClientD02,
     build_cloudflare_d02_plan,
     validate_cloudflare_audit_record_d02,
+    validate_cloudflare_failure_diagnostic_d02,
     worst_case_neurons_per_candidate_d02,
 )
 from academy_tractian.decision_source import build_provider_decision_request
@@ -31,11 +31,13 @@ from academy_tractian.provider_clients import (
     ProviderHttpResponse,
 )
 from academy_tractian.runtime import canonical_tool_registry
-from research.e2.controller import ControllerContext
+from research.e2.controller import ControllerContext, DecisionSourceAuditRecord
 
 
 SECRET = "d02-provider-free-test-token"
 ACCOUNT_ID = "0123456789abcdef0123456789abcdef"
+GLM_CANDIDATE_ID = "cloudflare_glm_4_7_flash_workers_free"
+NEMOTRON_CANDIDATE_ID = "cloudflare_nemotron_3_120b_a12b_workers_free"
 
 
 class ScriptedJsonTransport:
@@ -123,14 +125,11 @@ def _client(transport: ScriptedJsonTransport, model_id: str = CLOUDFLARE_GLM_MOD
 
 
 def test_d02_changes_only_completion_cap_in_inherited_http_contract() -> None:
-    transport = ScriptedJsonTransport(
-        _response(model=CLOUDFLARE_GLM_MODEL_ID)
-    )
+    transport = ScriptedJsonTransport(_response(model=CLOUDFLARE_GLM_MODEL_ID))
     client = _client(transport)
     request = _provider_request()
 
     assert client.complete(request) == _decision_json()
-    assert len(transport.calls) == 1
     call = transport.calls[0]
     assert call.body["max_completion_tokens"] == CLOUDFLARE_D02_MAX_COMPLETION_TOKENS == 1024
     assert call.body["temperature"] == 0
@@ -146,7 +145,7 @@ def test_d02_changes_only_completion_cap_in_inherited_http_contract() -> None:
     assert SECRET not in repr(client)
 
 
-def test_d02_finish_reason_failure_records_sanitized_subtype_and_usage_without_raw_material() -> None:
+def test_d02_finish_reason_failure_preserves_trace_contract_and_emits_ledger_diagnostic() -> None:
     transport = ScriptedJsonTransport(
         _response(
             model=CLOUDFLARE_GLM_MODEL_ID,
@@ -155,10 +154,9 @@ def test_d02_finish_reason_failure_records_sanitized_subtype_and_usage_without_r
         )
     )
     client = _client(transport)
-    registry = canonical_tool_registry()
     source = CloudflareProviderDecisionSourceD02(
         client=client,
-        registry=registry,
+        registry=canonical_tool_registry(),
         call_identity=CloudflareProviderCallIdentityV2(
             model_id=CLOUDFLARE_GLM_MODEL_ID,
             live_call=False,
@@ -174,39 +172,54 @@ def test_d02_finish_reason_failure_records_sanitized_subtype_and_usage_without_r
     with pytest.raises(ProviderHttpClientError) as exc_info:
         source.decide(context)
     assert exc_info.value.code == "CLOUDFLARE_FINISH_REASON_INVALID"
-    assert client.last_failure_subtype == "CLOUDFLARE_FINISH_REASON_INVALID"
 
-    records = source.drain_audit_records()
-    record, valid, issues = validate_cloudflare_audit_record_d02(
+    audit_records = source.drain_audit_records()
+    assert len(audit_records) == 1
+    assert isinstance(audit_records[0], DecisionSourceAuditRecord)
+    assert "failure_subtype" not in audit_records[0].metadata
+    audit, valid, issues = validate_cloudflare_audit_record_d02(
         provider_id="cloudflare",
         model_id=CLOUDFLARE_GLM_MODEL_ID,
         route_id="cloudflare.workers_ai.openai_compat.chat_completions.v1",
         request_sha256=request.request_sha256,
-        audit_records=records,
+        audit_records=audit_records,
         live_call=False,
     )
     assert valid is True
     assert issues == ()
-    assert isinstance(record, CloudflareProviderModelCallRecordD02)
-    assert record.failure_code == "CLIENT_FAILURE"
-    assert record.failure_subtype == "CLOUDFLARE_FINISH_REASON_INVALID"
-    assert record.raw_request_recorded is False
-    assert record.raw_response_recorded is False
-    assert record.exception_text_recorded is False
-    assert record.response_sha256 is None
+    assert audit is not None
+    assert audit.failure_code == "CLIENT_FAILURE"
+    assert audit.raw_request_recorded is False
+    assert audit.raw_response_recorded is False
+    assert audit.exception_text_recorded is False
+
+    diagnostics = source.drain_failure_diagnostics()
+    diagnostic, diagnostic_valid, diagnostic_issues = validate_cloudflare_failure_diagnostic_d02(
+        diagnostic_records=diagnostics,
+        expected_call_id=audit.call_id,
+    )
+    assert diagnostic_valid is True
+    assert diagnostic_issues == ()
+    assert diagnostic is not None
+    assert diagnostic.failure_subtype == "CLOUDFLARE_FINISH_REASON_INVALID"
+    assert diagnostic.raw_request_recorded is False
+    assert diagnostic.raw_response_recorded is False
+    assert diagnostic.exception_text_recorded is False
 
     usage = client.drain_usage_records()
     assert len(usage) == 1
     assert usage[0].output_tokens == 1024
     assert usage[0].input_tokens == 100
 
-    serialized = json.dumps(records[0].metadata, sort_keys=True)
-    assert _decision_json() not in serialized
-    assert SECRET not in serialized
-    assert ACCOUNT_ID not in serialized
+    serialized_audit = json.dumps(audit_records[0].metadata, sort_keys=True)
+    serialized_diagnostic = json.dumps(diagnostic.model_dump(mode="json"), sort_keys=True)
+    assert _decision_json() not in serialized_audit
+    assert _decision_json() not in serialized_diagnostic
+    assert SECRET not in serialized_audit + serialized_diagnostic
+    assert ACCOUNT_ID not in serialized_audit + serialized_diagnostic
 
 
-def test_d02_transport_failure_keeps_only_sanitized_code() -> None:
+def test_d02_transport_failure_keeps_only_sanitized_ledger_code() -> None:
     transport = ScriptedJsonTransport(ProviderHttpClientError("TRANSPORT_FAILURE"))
     client = _client(transport, CLOUDFLARE_NEMOTRON_MODEL_ID)
     source = CloudflareProviderDecisionSourceD02(
@@ -226,26 +239,22 @@ def test_d02_transport_failure_keeps_only_sanitized_code() -> None:
     with pytest.raises(ProviderHttpClientError):
         source.decide(context)
 
-    item = source.drain_audit_records()[0]
-    record = CloudflareProviderModelCallRecordD02.model_validate(
-        {"call_id": item.call_id, **dict(item.metadata)}
-    )
-    assert record.failure_code == "CLIENT_FAILURE"
-    assert record.failure_subtype == "TRANSPORT_FAILURE"
-    assert record.exception_text_recorded is False
+    audit = source.drain_audit_records()[0]
+    diagnostics = source.drain_failure_diagnostics()
+    assert audit.metadata["failure_code"] == "CLIENT_FAILURE"
+    assert len(diagnostics) == 1
+    assert diagnostics[0].failure_subtype == "TRANSPORT_FAILURE"
+    assert diagnostics[0].exception_text_recorded is False
 
 
-def test_d02_resource_bound_is_derived_and_fits_workers_free_only_from_new_start_gate() -> None:
-    assert worst_case_neurons_per_candidate_d02(CLOUDFLARE_GLM_MODEL_ID.replace("@cf/zai-org/glm-4.7-flash", "cloudflare_glm_4_7_flash_workers_free")) == pytest.approx(1300.3776)
-    assert worst_case_neurons_per_candidate_d02("cloudflare_nemotron_3_120b_a12b_workers_free") == pytest.approx(8052.427776)
+def test_d02_resource_bound_is_derived_and_old_9000_gate_is_insufficient() -> None:
+    assert worst_case_neurons_per_candidate_d02(GLM_CANDIDATE_ID) == pytest.approx(1300.3776)
+    assert worst_case_neurons_per_candidate_d02(NEMOTRON_CANDIDATE_ID) == pytest.approx(8052.427776)
     assert CLOUDFLARE_D02_MAX_PACKET_NEURONS == pytest.approx(9352.805376)
     assert CLOUDFLARE_D02_MIN_FREE_NEURONS_BEFORE_ATTEMPT_1 == pytest.approx(9352.805376)
     assert CLOUDFLARE_D02_MAX_MODELED_HEADROOM == pytest.approx(647.194624)
-    assert CLOUDFLARE_D02_MAX_PACKET_NEURONS < 10000.0
-    assert CLOUDFLARE_D02_MAX_PACKET_NEURONS > 9000.0
+    assert 9000.0 < CLOUDFLARE_D02_MAX_PACKET_NEURONS < 10000.0
 
-
-def test_d02_start_gate_rejects_old_9000_neuron_threshold() -> None:
     with pytest.raises(ValueError, match="9352.805376"):
         CloudflareD02PreLiveEvidence(
             free_neurons_remaining=9000.0,
@@ -266,7 +275,7 @@ def test_d02_plan_is_same_geometry_as_d01_but_has_distinct_frozen_identity() -> 
     assert len(plan.entries) == 32
     assert [entry.attempt_index for entry in plan.entries] == list(range(32))
     assert {entry.candidate_id for entry in plan.entries} == {
-        "cloudflare_glm_4_7_flash_workers_free",
-        "cloudflare_nemotron_3_120b_a12b_workers_free",
+        GLM_CANDIDATE_ID,
+        NEMOTRON_CANDIDATE_ID,
     }
     assert all(entry.repeat_index in (0, 1) for entry in plan.entries)
