@@ -23,6 +23,7 @@ class AnalyticsFilter(_FrozenModel):
 
 class AnalyticsQuery(_FrozenModel):
     dataset: Literal["runs", "events", "evaluations"]
+    run_id: str | None = Field(default=None, min_length=1, max_length=128)
     dimensions: tuple[str, ...] = Field(default=(), max_length=2)
     measure: str
     filters: tuple[AnalyticsFilter, ...] = Field(default=(), max_length=8)
@@ -179,16 +180,23 @@ class OperationalReadModel:
     def __init__(self, store: ObservabilityStore) -> None:
         self.store = store
 
-    def _runs(self) -> list[dict[str, Any]]:
+    def _runs(self, run_id: str | None = None) -> list[dict[str, Any]]:
+        if run_id is not None:
+            item = self.store.get_run(run_id)
+            return [] if item is None else [item]
         return self.store.list_runs(limit=1000)
 
-    def _events(self) -> list[dict[str, Any]]:
+    def _events(self, run_id: str | None = None) -> list[dict[str, Any]]:
+        if run_id is not None:
+            return self.store.get_events(run_id) if self.store.get_run(run_id) is not None else []
         rows: list[dict[str, Any]] = []
         for run in self._runs():
             rows.extend(self.store.get_events(str(run["run_id"])))
         return rows
 
-    def _evaluations(self) -> list[dict[str, Any]]:
+    def _evaluations(self, run_id: str | None = None) -> list[dict[str, Any]]:
+        if run_id is not None:
+            return self.store.get_evaluation(run_id) if self.store.get_run(run_id) is not None else []
         rows: list[dict[str, Any]] = []
         for run in self._runs():
             rows.extend(self.store.get_evaluation(str(run["run_id"])))
@@ -351,8 +359,8 @@ class OperationalReadModel:
             "not_measured_yet": sorted(set(not_measured_yet)),
         }
 
-    def tools_metrics(self) -> dict[str, Any]:
-        events = self._events()
+    def tools_metrics(self, *, run_id: str | None = None) -> dict[str, Any]:
+        events = self._events(run_id)
         tool_events = [row for row in events if row.get("tool_name")]
         by_tool: dict[str, dict[str, Any]] = {}
         for tool_name in sorted({str(row["tool_name"]) for row in tool_events}):
@@ -368,10 +376,15 @@ class OperationalReadModel:
                 "observations": sum(row.get("event_type") == "observation" for row in rows),
                 "status_codes": dict(sorted(status_counts.items())),
             }
-        return {"schema_version": "tools-metrics-v1", "items": list(by_tool.values()), "count": len(by_tool)}
+        return {
+            "schema_version": "tools-metrics-v2",
+            "scope": {"run_id": run_id},
+            "items": list(by_tool.values()),
+            "count": len(by_tool),
+        }
 
-    def policies_metrics(self) -> dict[str, Any]:
-        rows = [row for row in self._events() if row.get("event_type") == "policy_check"]
+    def policies_metrics(self, *, run_id: str | None = None) -> dict[str, Any]:
+        rows = [row for row in self._events(run_id) if row.get("event_type") == "policy_check"]
         grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for row in rows:
             grouped[str(row.get("policy_stage") or "unknown")].append(row)
@@ -389,10 +402,15 @@ class OperationalReadModel:
                     "violations": dict(sorted(Counter(str(row["policy_violation"]) for row in stage_rows if row.get("policy_violation")).items())),
                 }
             )
-        return {"schema_version": "policies-metrics-v1", "items": items, "count": len(items)}
+        return {
+            "schema_version": "policies-metrics-v2",
+            "scope": {"run_id": run_id},
+            "items": items,
+            "count": len(items),
+        }
 
-    def evaluation_metrics(self) -> dict[str, Any]:
-        rows = self._evaluations()
+    def evaluation_metrics(self, *, run_id: str | None = None) -> dict[str, Any]:
+        rows = self._evaluations(run_id)
         grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for row in rows:
             grouped[str(row["check_name"])].append(row)
@@ -409,7 +427,8 @@ class OperationalReadModel:
             )
         blocking_rows = [row for row in rows if bool(row["blocking"])]
         return {
-            "schema_version": "evaluation-metrics-v1",
+            "schema_version": "evaluation-metrics-v2",
+            "scope": {"run_id": run_id},
             "checks": items,
             "check_count": len(items),
             "rows": len(rows),
@@ -464,7 +483,8 @@ class OperationalReadModel:
 
     def query_schema(self) -> dict[str, Any]:
         return {
-            "schema_version": "dynamic-analytics-schema-v1",
+            "schema_version": "dynamic-analytics-schema-v2",
+            "global_scope_fields": ["run_id"],
             "datasets": {
                 dataset: {
                     "dimensions": sorted(_DIMENSIONS[dataset]),
@@ -500,9 +520,9 @@ class OperationalReadModel:
             raise ValueError("distribution_measure_requires_histogram")
 
         source = {
-            "runs": self._runs,
-            "events": self._events,
-            "evaluations": self._evaluations,
+            "runs": lambda: self._runs(spec.run_id),
+            "events": lambda: self._events(spec.run_id),
+            "evaluations": lambda: self._evaluations(spec.run_id),
         }[spec.dataset]()
         filtered = [row for row in source if all(_filter_matches(row, item) for item in spec.filters)]
 
@@ -540,8 +560,9 @@ class OperationalReadModel:
             rows = [{"value": _aggregate_measure(spec.dataset, filtered, spec.measure)}]
 
         return {
-            "schema_version": "dynamic-analytics-result-v1",
+            "schema_version": "dynamic-analytics-result-v2",
             "dataset": spec.dataset,
+            "run_id": spec.run_id,
             "dimensions": list(spec.dimensions),
             "measure": spec.measure,
             "chart_type": spec.chart_type,

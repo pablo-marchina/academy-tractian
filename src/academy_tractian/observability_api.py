@@ -69,6 +69,16 @@ def create_observability_app(
     app.state.observability_store = store
     app.state.operational_read_model = analytics
 
+    def require_run(run_id: str) -> dict[str, object]:
+        item = store.get_run(run_id)
+        if item is None:
+            raise HTTPException(status_code=404, detail="run_not_found")
+        return item
+
+    def validate_scope(run_id: str | None) -> None:
+        if run_id is not None:
+            require_run(run_id)
+
     @app.get("/health")
     def health() -> dict[str, object]:
         return {
@@ -116,16 +126,25 @@ def create_observability_app(
         )
 
     @app.get("/api/tools/metrics")
-    def tools_metrics() -> dict[str, object]:
-        return analytics.tools_metrics()
+    def tools_metrics(
+        run_id: str | None = Query(default=None, min_length=1, max_length=128),
+    ) -> dict[str, object]:
+        validate_scope(run_id)
+        return analytics.tools_metrics(run_id=run_id)
 
     @app.get("/api/policies/metrics")
-    def policies_metrics() -> dict[str, object]:
-        return analytics.policies_metrics()
+    def policies_metrics(
+        run_id: str | None = Query(default=None, min_length=1, max_length=128),
+    ) -> dict[str, object]:
+        validate_scope(run_id)
+        return analytics.policies_metrics(run_id=run_id)
 
     @app.get("/api/evaluations/metrics")
-    def evaluation_metrics() -> dict[str, object]:
-        return analytics.evaluation_metrics()
+    def evaluation_metrics(
+        run_id: str | None = Query(default=None, min_length=1, max_length=128),
+    ) -> dict[str, object]:
+        validate_scope(run_id)
+        return analytics.evaluation_metrics(run_id=run_id)
 
     @app.get("/api/providers/experiments")
     def provider_experiments() -> dict[str, object]:
@@ -137,6 +156,7 @@ def create_observability_app(
 
     @app.post("/api/query")
     def dynamic_query(spec: AnalyticsQuery) -> dict[str, object]:
+        validate_scope(spec.run_id)
         try:
             return analytics.query(spec)
         except ValueError as exc:
@@ -148,12 +168,6 @@ def create_observability_app(
     ) -> dict[str, object]:
         items = store.list_runs(limit=limit)
         return {"items": items, "count": len(items)}
-
-    def require_run(run_id: str) -> dict[str, object]:
-        item = store.get_run(run_id)
-        if item is None:
-            raise HTTPException(status_code=404, detail="run_not_found")
-        return item
 
     @app.get("/api/runs/{run_id}")
     def run_detail(run_id: str) -> dict[str, object]:
@@ -238,8 +252,6 @@ def create_observability_app(
                         close_reason = "client_disconnect"
                         return
 
-                    # Comment frame keeps intermediaries/connections alive without fabricating
-                    # a runtime event or changing any UI state.
                     if production_telemetry is not None and connection_id is not None:
                         production_telemetry.sse_keepalive(connection_id=connection_id)
                     yield ": keepalive\n\n"

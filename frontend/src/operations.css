@@ -5,9 +5,12 @@
 .panel-copy { color: var(--muted); font-size: 11px; line-height: 1.55; margin: 8px 0 14px; }
 .operations-two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
 .mission-kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 12px 0 16px; }
-.mission-kpis > div { padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #0b1017; }
-.mission-kpis span { display: block; color: var(--muted); font-size: 10px; }
+.mission-kpis > div, .telemetry-kpis > div { padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #0b1017; }
+.mission-kpis span, .telemetry-kpis span { display: block; color: var(--muted); font-size: 10px; }
 .mission-kpis strong { display: block; font-size: 21px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.telemetry-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+.telemetry-kpis strong { display: block; font-size: 15px; margin-top: 5px; font-variant-numeric: tabular-nums; }
+.telemetry-kpis small { display: block; color: #6f7d90; font-size: 9px; margin-top: 3px; }
 .health-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .health-card { border: 1px solid var(--line); border-radius: 8px; padding: 11px; background: #0b1017; min-width: 0; }
 .health-card > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -17,9 +20,20 @@
 .health-good { color: var(--success); border-color: rgba(80,216,144,.35); }
 .health-unknown { color: var(--warning); border-color: rgba(243,186,75,.35); }
 .health-bad { color: var(--danger); border-color: rgba(255,107,107,.35); }
+.operability-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.operability-strip > div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 11px; background: #0b1017; }
+.operability-strip strong, .operability-strip span, .operability-strip small { display: block; }
+.operability-strip strong { font-size: 10px; }
+.operability-strip span { color: #b9c5d2; font-size: 10px; margin-top: 5px; line-height: 1.4; }
+.operability-strip small { color: #68778b; font-size: 9px; margin-top: 4px; }
 .instrumentation-gap { margin-top: 10px; padding: 10px 12px; border-left: 2px solid var(--warning); background: rgba(243,186,75,.05); }
 .instrumentation-gap strong { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 .instrumentation-gap span { color: var(--muted); font-size: 10px; line-height: 1.5; }
+.analytics-scope-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; padding: 9px 11px; border: 1px solid rgba(97,168,255,.24); border-radius: 8px; background: rgba(97,168,255,.04); }
+.analytics-scope-banner strong { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #9ccaff; }
+.analytics-scope-banner span { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; color: #d2deec; overflow-wrap: anywhere; }
+.analytics-scope-banner small { color: var(--muted); font-size: 9px; line-height: 1.4; }
+.global-scope { margin: -2px 0 0; }
 .evidence-list { display: grid; gap: 8px; margin-top: 12px; max-height: 420px; overflow: auto; }
 .evidence-card { border: 1px solid var(--line); border-radius: 8px; padding: 11px; background: #0b1017; }
 .evidence-card > strong { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; margin: 8px 0; overflow-wrap: anywhere; }
@@ -39,8 +53,11 @@
 .lineage-checks { display: grid; gap: 4px; margin-top: 8px; font-size: 9px; }
 .compact-data-list { display: grid; gap: 5px; margin-top: 8px; max-height: 190px; overflow: auto; }
 .compact-data-list > div { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid #202a37; padding: 7px 0; }
-.compact-data-list strong { font-size: 10px; }
+.compact-data-list > div > div { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.compact-data-list strong { font-size: 10px; overflow-wrap: anywhere; }
 .compact-data-list span { color: var(--muted); font-size: 9px; text-align: right; }
+.drilldown-button { border: 1px solid #334155; border-radius: 999px; background: transparent; color: #8ec7ff; padding: 2px 6px; font-size: 8px; text-transform: uppercase; white-space: nowrap; }
+.drilldown-button:hover { border-color: var(--accent); color: #cfe7ff; }
 .eval-summary, .experiment-kpis, .query-result-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; color: var(--muted); font-size: 10px; }
 .experiment-card { border-top: 1px solid var(--line); padding-top: 13px; margin-top: 13px; }
 .experiment-card:first-of-type { margin-top: 8px; }
@@ -64,6 +81,6 @@
 .analytics-table { width: 100%; border-collapse: collapse; font-size: 10px; }
 .analytics-table th { position: sticky; top: 0; background: #111822; color: #a8b5c5; text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }
 .analytics-table td { padding: 7px 8px; border-top: 1px solid #202a37; color: #bdc8d5; }
-@media (max-width: 1150px) { .health-grid { grid-template-columns: repeat(2, 1fr); } .mission-kpis { grid-template-columns: repeat(3, 1fr); } .query-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 850px) { .operations-two-column { grid-template-columns: 1fr; } .health-grid { grid-template-columns: 1fr; } .query-grid { grid-template-columns: repeat(2, 1fr); } .filter-row { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 560px) { .workspace-title { align-items: flex-start; flex-direction: column; } .mission-kpis { grid-template-columns: repeat(2, 1fr); } .query-grid, .filter-row { grid-template-columns: 1fr; } }
+@media (max-width: 1150px) { .health-grid { grid-template-columns: repeat(2, 1fr); } .mission-kpis, .telemetry-kpis { grid-template-columns: repeat(3, 1fr); } .query-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 850px) { .operations-two-column { grid-template-columns: 1fr; } .health-grid, .operability-strip { grid-template-columns: 1fr; } .query-grid { grid-template-columns: repeat(2, 1fr); } .filter-row { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .workspace-title { align-items: flex-start; flex-direction: column; } .mission-kpis, .telemetry-kpis { grid-template-columns: repeat(2, 1fr); } .query-grid, .filter-row { grid-template-columns: 1fr; } }

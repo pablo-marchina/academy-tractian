@@ -44,6 +44,12 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+function scopedPath(path: string, runId?: string | null): string {
+  if (!runId) return path;
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}run_id=${encodeURIComponent(runId)}`;
+}
+
 export function submitRun(userRequest: string): Promise<RunAccepted> {
   return requestJson<RunAccepted>("/api/runs", {
     method: "POST",
@@ -99,16 +105,16 @@ export function fetchProductionHealth(): Promise<ProductionHealth> {
   return requestJson<ProductionHealth>("/api/production/health");
 }
 
-export function fetchToolsMetrics(): Promise<ToolsMetrics> {
-  return requestJson<ToolsMetrics>("/api/tools/metrics");
+export function fetchToolsMetrics(runId?: string | null): Promise<ToolsMetrics> {
+  return requestJson<ToolsMetrics>(scopedPath("/api/tools/metrics", runId));
 }
 
-export function fetchPoliciesMetrics(): Promise<PoliciesMetrics> {
-  return requestJson<PoliciesMetrics>("/api/policies/metrics");
+export function fetchPoliciesMetrics(runId?: string | null): Promise<PoliciesMetrics> {
+  return requestJson<PoliciesMetrics>(scopedPath("/api/policies/metrics", runId));
 }
 
-export function fetchEvaluationMetrics(): Promise<EvaluationMetrics> {
-  return requestJson<EvaluationMetrics>("/api/evaluations/metrics");
+export function fetchEvaluationMetrics(runId?: string | null): Promise<EvaluationMetrics> {
+  return requestJson<EvaluationMetrics>(scopedPath("/api/evaluations/metrics", runId));
 }
 
 export function fetchProviderExperiments(): Promise<ProviderExperimentRegistry> {
