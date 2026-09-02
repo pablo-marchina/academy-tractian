@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from threading import Lock
+from time import perf_counter
 from typing import Any, Protocol
 
 from research.e2.controller import AgentController
@@ -9,6 +10,7 @@ from research.e2.runner import HarnessRunner
 
 from .observability import SafeEvidenceRef, SafeEvent, SafeRun, project_trace
 from .observability_store import ObservabilityStore
+from .production_telemetry import ProductionTelemetry
 
 
 class SafeObservabilityEventSink(Protocol):
@@ -24,8 +26,14 @@ class SafeObservabilityEventSink(Protocol):
 
 
 class DuckDBObservabilityEventSink:
-    def __init__(self, store: ObservabilityStore) -> None:
+    def __init__(
+        self,
+        store: ObservabilityStore,
+        *,
+        telemetry: ProductionTelemetry | None = None,
+    ) -> None:
         self.store = store
+        self.telemetry = telemetry
 
     def publish(
         self,
@@ -34,7 +42,13 @@ class DuckDBObservabilityEventSink:
         event: SafeEvent,
         evidence: SafeEvidenceRef | None,
     ) -> None:
+        started = perf_counter()
         self.store.persist_live_update(run=run, event=event, evidence=evidence)
+        if self.telemetry is not None:
+            self.telemetry.record_persistence(
+                event_id=event.event_id,
+                duration_ms=(perf_counter() - started) * 1000.0,
+            )
 
 
 class FailIsolatedObservabilityPublisher:
@@ -42,6 +56,9 @@ class FailIsolatedObservabilityPublisher:
 
     def __init__(self, sink: SafeObservabilityEventSink) -> None:
         self.sink = sink
+        self.telemetry = (
+            sink.telemetry if isinstance(sink, DuckDBObservabilityEventSink) else None
+        )
         self._lock = Lock()
         self._published_count = 0
         self._failure_count = 0
@@ -62,13 +79,19 @@ class FailIsolatedObservabilityPublisher:
         with self._lock:
             return self._last_event_id
 
-    def publish_trace_state(self, trace: RunTrace) -> None:
-        """Publish the newest safe event.
+    def publish_trace_state(
+        self,
+        trace: RunTrace,
+        *,
+        canonical_append_perf: float | None = None,
+    ) -> None:
+        """Publish the newest safe event after the accepted canonical append.
 
-        Projection happens before the sink boundary. Any projection/persistence failure is
-        intentionally contained so observability cannot make the production agent unavailable.
+        `canonical_append_perf` is captured immediately after the frozen runner/controller append
+        returns. It is monotonic process-local instrumentation only and never enters RunTrace.
         """
 
+        started = perf_counter()
         try:
             run, events, evidence = project_trace(trace)
             if not events:
@@ -82,11 +105,26 @@ class FailIsolatedObservabilityPublisher:
         except Exception:
             with self._lock:
                 self._failure_count += 1
+            if self.telemetry is not None:
+                self.telemetry.record_publish_overhead(
+                    duration_ms=(perf_counter() - started) * 1000.0,
+                    failed=True,
+                )
             return
 
+        completed = perf_counter()
         with self._lock:
             self._published_count += 1
             self._last_event_id = event.event_id
+        if self.telemetry is not None:
+            self.telemetry.record_publish_overhead(
+                duration_ms=(completed - started) * 1000.0,
+                failed=False,
+            )
+            if canonical_append_perf is not None:
+                self.telemetry.record_event_to_persistence(
+                    duration_ms=(completed - canonical_append_perf) * 1000.0,
+                )
 
 
 class ObservableHarnessRunner(HarnessRunner):
@@ -100,12 +138,21 @@ class ObservableHarnessRunner(HarnessRunner):
     ) -> None:
         self.observability_publisher = observability_publisher
         super().__init__(**kwargs)
-        # HarnessRunner constructs run_started directly rather than through _emit().
-        self.observability_publisher.publish_trace_state(self.trace)
+        # HarnessRunner constructs run_started directly rather than through _emit(). Capture the
+        # first possible post-construction monotonic boundary without altering the frozen trace.
+        canonical_append_perf = perf_counter()
+        self.observability_publisher.publish_trace_state(
+            self.trace,
+            canonical_append_perf=canonical_append_perf,
+        )
 
     def _emit(self, event_type: str, **kwargs: Any) -> None:
         super()._emit(event_type, **kwargs)
-        self.observability_publisher.publish_trace_state(self.trace)
+        canonical_append_perf = perf_counter()
+        self.observability_publisher.publish_trace_state(
+            self.trace,
+            canonical_append_perf=canonical_append_perf,
+        )
 
 
 class ObservableAgentController(AgentController):
@@ -123,4 +170,8 @@ class ObservableAgentController(AgentController):
     def _emit(self, event_type: str, **kwargs: Any) -> None:
         # ADR-004 semantics stay owned by the accepted controller implementation.
         super()._emit(event_type, **kwargs)
-        self.observability_publisher.publish_trace_state(self.runner.trace)
+        canonical_append_perf = perf_counter()
+        self.observability_publisher.publish_trace_state(
+            self.runner.trace,
+            canonical_append_perf=canonical_append_perf,
+        )

@@ -163,6 +163,16 @@ def _aggregate_measure(dataset: str, rows: list[dict[str, Any]], measure: str) -
     raise ValueError("unsupported analytics measure")
 
 
+def _latency_summary(values: list[float]) -> dict[str, int | float | None]:
+    return {
+        "count": len(values),
+        "avg_ms": None if not values else mean(values),
+        "p50_ms": _percentile(values, 0.50),
+        "p95_ms": _percentile(values, 0.95),
+        "max_ms": None if not values else max(values),
+    }
+
+
 class OperationalReadModel:
     """Provider-free analytics over the persisted sanitized observability projection only."""
 
@@ -184,41 +194,161 @@ class OperationalReadModel:
             rows.extend(self.store.get_evaluation(str(run["run_id"])))
         return rows
 
-    def production_health(self, *, provider_selection_state: str) -> dict[str, Any]:
+    def _passive_provider_operability(self, events: list[dict[str, Any]]) -> dict[str, Any]:
+        rows = [row for row in events if row.get("event_type") == "model_call"]
+        latencies = [float(row["latency_ms"]) for row in rows if row.get("latency_ms") is not None]
+        failures = [row for row in rows if row.get("failure_code")]
+        last = max(rows, key=lambda row: str(row.get("timestamp") or ""), default=None)
+        return {
+            "source": "persisted_safe_model_call_events",
+            "observations": len(rows),
+            "live_calls": sum(row.get("live_call") is True for row in rows),
+            "failures": len(failures),
+            "failure_rate": _rate(len(failures), len(rows)),
+            "latency": _latency_summary(latencies),
+            "last": None if last is None else {
+                "provider_id": last.get("provider_id"),
+                "model_id": last.get("model_id"),
+                "outcome": last.get("outcome"),
+                "failure_code": last.get("failure_code"),
+                "latency_ms": last.get("latency_ms"),
+            },
+            "external_probe_performed": False,
+        }
+
+    def _passive_adapter_operability(self, events: list[dict[str, Any]]) -> dict[str, Any]:
+        rows = [row for row in events if row.get("event_type") == "tool_result"]
+        statuses = [int(row["status_code"]) for row in rows if row.get("status_code") is not None]
+        success = sum(200 <= value < 300 for value in statuses)
+        last = max(rows, key=lambda row: str(row.get("timestamp") or ""), default=None)
+        return {
+            "source": "persisted_safe_tool_result_events",
+            "observations": len(rows),
+            "status_observations": len(statuses),
+            "http_2xx": success,
+            "http_non_2xx": len(statuses) - success,
+            "http_2xx_rate": _rate(success, len(statuses)),
+            "status_codes": dict(sorted(Counter(str(value) for value in statuses).items())),
+            "last": None if last is None else {
+                "tool_name": last.get("tool_name"),
+                "status_code": last.get("status_code"),
+            },
+            "external_probe_performed": False,
+        }
+
+    def production_health(
+        self,
+        *,
+        provider_selection_state: str,
+        live_operability: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         overview = self.store.overview()
         runs = self._runs()
+        events = self._events()
         incomplete_runs = sum(not bool(row["completed"]) for row in runs)
+        provider = self._passive_provider_operability(events)
+        adapter = self._passive_adapter_operability(events)
+
+        telemetry = None if live_operability is None else live_operability.get("telemetry")
+        execution = None if live_operability is None else live_operability.get("execution")
+        controls = None if live_operability is None else live_operability.get("controls")
+        telemetry = telemetry if isinstance(telemetry, dict) else None
+        execution = execution if isinstance(execution, dict) else None
+        controls = controls if isinstance(controls, dict) else None
+
+        heartbeat = None if telemetry is None else telemetry.get("runtime_heartbeat")
+        heartbeat = heartbeat if isinstance(heartbeat, dict) else None
+        sse = None if telemetry is None else telemetry.get("sse")
+        sse = sse if isinstance(sse, dict) else None
+        observability = None if telemetry is None else telemetry.get("observability")
+        observability = observability if isinstance(observability, dict) else None
+        provider_switch = None if controls is None else controls.get("provider_kill_switch")
+        provider_switch = provider_switch if isinstance(provider_switch, dict) else None
+        action_switch = None if controls is None else controls.get("action_kill_switch")
+        action_switch = action_switch if isinstance(action_switch, dict) else None
+
+        runtime_status = "not_instrumented" if heartbeat is None else str(heartbeat.get("status", "unknown"))
+        adapter_status = "observed" if adapter["observations"] else "no_observations"
+        provider_operability_status = "observed" if provider["observations"] else "no_observations"
+        sse_status = "not_instrumented" if sse is None else "instrumented"
+        provider_switch_status = "not_instrumented"
+        if provider_switch is not None:
+            provider_switch_status = "engaged" if provider_switch.get("engaged") else "disengaged"
+        action_switch_status = "not_instrumented"
+        if action_switch is not None:
+            action_switch_status = "engaged" if action_switch.get("engaged") else "disengaged"
+
+        overall_ready = self.store.ready()
+        if heartbeat is not None:
+            overall_ready = overall_ready and runtime_status == "ready"
+
+        measured: dict[str, Any] = {
+            "forbidden_field_leakage": 0,
+            "provider_operability": provider,
+            "tractian_adapter_operability": adapter,
+        }
+        if telemetry is not None:
+            measured.update(
+                {
+                    "uptime_ms": telemetry.get("uptime_ms"),
+                    "startup_readiness_ms": telemetry.get("startup_readiness_ms"),
+                    "runtime_heartbeat": heartbeat,
+                    "observability": observability,
+                    "sse": sse,
+                }
+            )
+        if execution is not None:
+            measured["executor_pressure"] = execution
+        if controls is not None:
+            measured["controls"] = controls
+
+        not_measured_yet = [
+            "runtime_request_latency_by_outcome_ms",
+            "api_read_query_latency_ms",
+            "cpu_memory_pressure",
+            "external_provider_probe",
+            "external_tractian_probe",
+            "reconnect_event_loss_rate",
+            "logical_duplicate_delivery_rate",
+        ]
+        if live_operability is None:
+            not_measured_yet.extend(
+                [
+                    "startup_readiness_ms",
+                    "observability_overhead_ms",
+                    "runtime_event_to_persistence_ms",
+                    "persistence_to_browser_ms",
+                    "sse_reconnect_recovery_ms",
+                    "active_sse_clients",
+                    "executor_pressure",
+                    "provider_kill_switch",
+                    "action_kill_switch",
+                ]
+            )
+
         return {
-            "schema_version": "production-health-v1",
+            "schema_version": "production-health-v2",
             "store_schema_version": OBSERVABILITY_SCHEMA_VERSION,
-            "overall_status": "ready" if self.store.ready() else "degraded",
+            "overall_status": "ready" if overall_ready else "degraded",
             "components": [
                 {"component": "observability_store", "status": "ready" if self.store.ready() else "unavailable", "detail": "persistent sanitized DuckDB read model"},
                 {"component": "observability_api", "status": "ready", "detail": "REST/SSE control plane process is serving this response"},
                 {"component": "evaluator_path", "status": "available", "detail": "post-runtime safe evaluation persistence path is configured"},
                 {"component": "provider_selection", "status": provider_selection_state, "detail": "governed provider experiment selection state"},
-                {"component": "runtime", "status": "not_instrumented", "detail": "read model has run history but no independent runtime process heartbeat"},
-                {"component": "tractian_api_adapter", "status": "not_instrumented", "detail": "adapter health probe is not yet exposed to the sanitized read model"},
-                {"component": "sse_clients", "status": "not_instrumented", "detail": "active client count and delivery lag are not yet measured"},
-                {"component": "provider_kill_switch", "status": "not_instrumented", "detail": "no safe runtime control-state projection exists yet"},
-                {"component": "action_kill_switch", "status": "not_instrumented", "detail": "no safe runtime control-state projection exists yet"},
+                {"component": "runtime", "status": runtime_status, "detail": "independent process heartbeat plus executor execution state when product telemetry is attached"},
+                {"component": "tractian_api_adapter", "status": adapter_status, "detail": "passive operability from real persisted tool_result status codes; no external probe"},
+                {"component": "provider_operability", "status": provider_operability_status, "detail": "passive operability from real persisted model_call outcomes/latency; no provider probe"},
+                {"component": "sse_clients", "status": sse_status, "detail": "active clients, reconnects and delivery lag measured in the live stream path"},
+                {"component": "provider_kill_switch", "status": provider_switch_status, "detail": "host-owned gate blocks runtime_factory before provider-owned client construction"},
+                {"component": "action_kill_switch", "status": action_switch_status, "detail": "ProductionRuntimeConfig v1 keeps consequential actions disabled"},
+                {"component": "executor_pressure", "status": "measured" if execution is not None else "not_instrumented", "detail": "active/queued/inflight runs against configured max_workers"},
             ],
             "totals": {
                 **overview,
                 "incomplete_runs": incomplete_runs,
             },
-            "measured": {
-                "forbidden_field_leakage": 0,
-            },
-            "not_measured_yet": [
-                "startup_readiness_ms",
-                "observability_overhead_ms",
-                "runtime_event_to_persistence_ms",
-                "persistence_to_browser_ms",
-                "sse_reconnect_recovery_ms",
-                "active_sse_clients",
-                "resource_pressure",
-            ],
+            "measured": measured,
+            "not_measured_yet": sorted(set(not_measured_yet)),
         }
 
     def tools_metrics(self) -> dict[str, Any]:
