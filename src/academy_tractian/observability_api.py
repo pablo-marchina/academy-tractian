@@ -63,6 +63,31 @@ def _last_sequence(run_id: str, last_event_id: str | None) -> int:
     return parsed
 
 
+def _resolve_stream_cursor(
+    *,
+    run_id: str,
+    last_event_id: str | None,
+    after_sequence: int | None,
+) -> tuple[int, bool]:
+    """Resolve one unambiguous reconnect cursor.
+
+    Native EventSource reconnects use Last-Event-ID. The browser also needs an explicit
+    sequence cursor when the application intentionally closes a stream on an offline event;
+    EventSource cannot attach custom Last-Event-ID headers to that new connection. The
+    sequence contains no private data and can only skip already-authorized events for the
+    requested run. Supplying both cursor forms is rejected rather than guessed.
+    """
+
+    if last_event_id not in {None, ""} and after_sequence is not None:
+        raise ValueError("stream reconnect cursor is ambiguous")
+    if after_sequence is not None:
+        if after_sequence < -1:
+            raise ValueError("after_sequence must be >= -1")
+        return after_sequence, True
+    resolved = _last_sequence(run_id, last_event_id)
+    return resolved, last_event_id not in {None, ""}
+
+
 def _sse_record(event: dict[str, object]) -> str:
     payload = json.dumps(event, sort_keys=True, separators=(",", ":"), default=str)
     return f"id: {event['event_id']}\nevent: trace_event\ndata: {payload}\n\n"
@@ -353,26 +378,36 @@ def create_observability_app(
         run_id: str = Query(min_length=1),
         follow: bool = Query(default=True),
         poll_ms: int = Query(default=200, ge=50, le=5000),
+        after_sequence_cursor: int | None = Query(
+            default=None,
+            alias="after_sequence",
+            ge=-1,
+            le=1_000_000,
+        ),
         last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
     ) -> StreamingResponse:
         authorize_run(request, run_id)
         require_run(run_id)
         try:
-            after_sequence = _last_sequence(run_id, last_event_id)
+            after_sequence, reconnect_requested = _resolve_stream_cursor(
+                run_id=run_id,
+                last_event_id=last_event_id,
+                after_sequence=after_sequence_cursor,
+            )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
         connection_id = None
         if production_telemetry is not None:
             connection_id = production_telemetry.sse_open(
-                reconnect=bool(last_event_id),
+                reconnect=reconnect_requested,
                 after_sequence=after_sequence,
             )
 
         async def event_stream():
             nonlocal after_sequence
             close_reason: CloseReason = "client_disconnect"
-            reconnect_catchup_pending = bool(last_event_id) and follow
+            reconnect_catchup_pending = reconnect_requested and follow
             try:
                 while True:
                     items = store.get_events_after(run_id, after_sequence=after_sequence, limit=1000)
