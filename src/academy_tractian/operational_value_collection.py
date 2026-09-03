@@ -9,6 +9,8 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 
+from research.e2.models import Decision
+
 from .operational_value_pilot import OperationalPilotCompletion, OperationalPilotTask, PilotTrialStatus
 from .product_api import (
     AuthenticatedRuntimeContext,
@@ -48,7 +50,7 @@ class PilotAssignmentSafe(_FrozenModel):
 
 
 class PilotCompletionSubmission(_FrozenModel):
-    terminal_decision: str = Field(min_length=1, max_length=256)
+    terminal_decision: Decision
     conclusion_summary: str = Field(min_length=1, max_length=10000)
 
 
@@ -353,7 +355,7 @@ def attach_operational_value_collection_api(
                 organization_id=trusted.organization_id,
                 user_id=trusted.user_id,
                 elapsed_seconds=elapsed,
-                terminal_decision=payload.terminal_decision,
+                terminal_decision=payload.terminal_decision.value,
                 conclusion_summary=payload.conclusion_summary,
             )
         except KeyError as exc:
