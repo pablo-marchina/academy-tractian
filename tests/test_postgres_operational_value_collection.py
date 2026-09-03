@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from uuid import uuid4
 
@@ -8,6 +9,7 @@ import pytest
 from fastapi import Request
 from fastapi.testclient import TestClient
 from psycopg import connect, sql
+from psycopg.errors import CheckViolation
 
 from research.e2.controller import ControllerContext, ControllerDecision, ControllerDecisionKind
 from research.e2.models import BoundRequest, Permission
@@ -191,6 +193,77 @@ def _app(tmp_path: Path, fixture: _PgFixture, *, initialize_schema: bool):
         actions_enabled=False,
         heartbeat_interval_ms=250,
     )
+
+
+def test_postgres_store_serializes_same_principal_assignment(
+    tmp_path: Path,
+    postgres_fixture: _PgFixture,
+) -> None:
+    packet, manifest = _packet()
+    app = _app(tmp_path, postgres_fixture, initialize_schema=True)
+    store = app.state.operational_value_collection_store
+    store.register_packet(organization_id="org-a", packet=packet, manifest=manifest)
+    host_session_id = app.state.operational_value_timer_registry.host_session_id
+
+    def assign():
+        return store.assign_next(
+            organization_id="org-a",
+            user_id="same-user",
+            operator_ref_sha256="f" * 64,
+            host_session_id=host_session_id,
+        )
+
+    with TestClient(app):
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            assignments = tuple(executor.map(lambda _: assign(), range(2)))
+
+        assert all(assignment is not None for assignment in assignments)
+        assert assignments[0] is not None and assignments[1] is not None
+        assert assignments[0].assignment_id == assignments[1].assignment_id
+        assert assignments[0].task.task_id == assignments[1].task.task_id
+
+
+def test_postgres_rejects_structurally_invalid_valid_measurement(
+    tmp_path: Path,
+    postgres_fixture: _PgFixture,
+) -> None:
+    packet, manifest = _packet()
+    app = _app(tmp_path, postgres_fixture, initialize_schema=True)
+    store = app.state.operational_value_collection_store
+    store.register_packet(organization_id="org-a", packet=packet, manifest=manifest)
+    task = packet.tasks[0]
+    entry = next(item for item in manifest.entries if item.task_id == task.task_id)
+    schema = postgres_fixture.schema
+
+    with TestClient(app):
+        with pytest.raises(CheckViolation):
+            with app.state.postgres_operational_database.internal_pool.connection() as connection:
+                with connection.transaction():
+                    connection.execute(
+                        f"""
+                        INSERT INTO "{schema}".operational_pilot_assignments(
+                            assignment_id, organization_id, packet_id, task_id, pair_id,
+                            user_id, operator_ref_sha256, host_session_id, state,
+                            finished_at, elapsed_seconds, terminal_decision, conclusion_summary
+                        )
+                        VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, 'VALID',
+                            CURRENT_TIMESTAMP, NULL, %s, %s
+                        )
+                        """,
+                        (
+                            "ova_" + "1" * 24,
+                            "org-a",
+                            packet.packet_id,
+                            task.task_id,
+                            entry.pair_id,
+                            "constraint-user",
+                            "2" * 64,
+                            "ovhost_" + "3" * 24,
+                            "FINAL",
+                            "This row must fail because a valid measurement has no elapsed time.",
+                        ),
+                    )
 
 
 def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
