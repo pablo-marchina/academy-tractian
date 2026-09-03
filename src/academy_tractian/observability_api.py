@@ -68,6 +68,17 @@ def _sse_record(event: dict[str, object]) -> str:
     return f"id: {event['event_id']}\nevent: trace_event\ndata: {payload}\n\n"
 
 
+def _sse_stream_state_record(*, run_id: str, state: str, after_sequence: int) -> str:
+    payload = json.dumps(
+        {"run_id": run_id, "state": state, "after_sequence": after_sequence},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    # Transport-control state deliberately carries no SSE id so the browser's Last-Event-ID
+    # remains the last persisted trace event and reconnect resumes from the canonical cursor.
+    return f"event: stream_state\ndata: {payload}\n\n"
+
+
 def _safe_route_template(request: Request) -> str:
     route = request.scope.get("route")
     template = getattr(route, "path", None)
@@ -361,6 +372,7 @@ def create_observability_app(
         async def event_stream():
             nonlocal after_sequence
             close_reason: CloseReason = "client_disconnect"
+            reconnect_catchup_pending = bool(last_event_id) and follow
             try:
                 while True:
                     items = store.get_events_after(run_id, after_sequence=after_sequence, limit=1000)
@@ -374,6 +386,14 @@ def create_observability_app(
                                 sequence=sequence,
                             )
                         yield _sse_record(item)
+
+                    if reconnect_catchup_pending:
+                        yield _sse_stream_state_record(
+                            run_id=run_id,
+                            state="caught_up",
+                            after_sequence=after_sequence,
+                        )
+                        reconnect_catchup_pending = False
 
                     current = store.get_run(run_id)
                     if current is None:
