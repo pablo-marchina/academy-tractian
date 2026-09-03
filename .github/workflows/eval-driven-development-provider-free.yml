@@ -18,17 +18,19 @@ jobs:
           cache: pip
       - name: Install project
         run: python -m pip install -e '.[dev]'
-      - name: Eval-driven, semantic-calibration, adaptive-candidate and safe-observability contract tests
+      - name: Eval-driven, semantic, human-calibration, adaptive-candidate and observability contract tests
         run: >-
           python -m pytest -q
           tests/test_eval_driven.py
           tests/test_semantic_evaluation.py
+          tests/test_semantic_human_calibration.py
           tests/test_adaptive_policy.py
           tests/test_adaptive_policy_edd.py
           tests/test_observability.py
-      - name: Compile evaluation and candidate policy modules
+      - name: Compile evaluation CLIs and adaptive candidate module
         run: >-
           python -m py_compile
           scripts/eval_driven_compare.py
           scripts/semantic_eval_calibrate.py
+          scripts/semantic_human_calibration.py
           src/academy_tractian/adaptive_policy.py
