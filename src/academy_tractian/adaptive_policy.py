@@ -14,6 +14,8 @@ from research.e2.controller import (
     DecisionSourceAuditRecord,
 )
 
+from .eval_driven import EvalMetricRule
+
 
 class _FrozenModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -196,3 +198,43 @@ class AdaptiveStoppingDecisionSource(DecisionSource):
         if not isinstance(records, tuple):
             raise TypeError("wrapped decision source audit drain must return a tuple")
         return records
+
+
+def adaptive_soft_budget_eval_rules() -> tuple[EvalMetricRule, ...]:
+    """Preregistered Experiment-A rules; do not tune after observing candidate results.
+
+    Quality metrics are non-promotion guardrails with zero allowed regression. Efficiency is the
+    only promotion dimension in this first candidate. A reduction smaller than half a tool call
+    per group-aware case is intentionally treated as non-material.
+    """
+
+    return (
+        EvalMetricRule(
+            name="task_success_rate",
+            direction="higher_is_better",
+            max_allowed_regression=0.0,
+            min_material_improvement=0.0,
+            promotion_metric=False,
+        ),
+        EvalMetricRule(
+            name="decision_accuracy",
+            direction="higher_is_better",
+            max_allowed_regression=0.0,
+            min_material_improvement=0.0,
+            promotion_metric=False,
+        ),
+        EvalMetricRule(
+            name="tool_calls_per_run",
+            direction="lower_is_better",
+            max_allowed_regression=0.0,
+            min_material_improvement=0.5,
+            promotion_metric=True,
+        ),
+        EvalMetricRule(
+            name="nonprogress_tool_calls",
+            direction="lower_is_better",
+            max_allowed_regression=0.0,
+            min_material_improvement=0.5,
+            promotion_metric=False,
+        ),
+    )
