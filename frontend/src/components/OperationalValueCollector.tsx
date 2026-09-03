@@ -9,7 +9,20 @@ import type {
   HumanPilotTerminationStatus,
   OperationalPilotAssignment,
   OperationalPilotCompletionAccepted,
+  OperationalPilotDecision,
 } from "../api/operationalValueTypes";
+
+const DECISIONS: OperationalPilotDecision[] = [
+  "ORIENT",
+  "INVESTIGATE",
+  "ACT_REPROCESS",
+  "ACT_REQUEST_SPECIALIST",
+  "ACT_UPDATE_CONFIG",
+  "ACT_REQUEST_RETRAINING",
+  "ESCALATE_HUMAN",
+  "ASK_CLARIFICATION",
+  "ABSTAIN",
+];
 
 function publicError(error: unknown): string {
   const message = error instanceof Error && error.message
@@ -32,7 +45,7 @@ function publicError(error: unknown): string {
 
 export function OperationalValueCollector() {
   const [assignment, setAssignment] = useState<OperationalPilotAssignment | null>(null);
-  const [decision, setDecision] = useState("");
+  const [decision, setDecision] = useState<OperationalPilotDecision | "">("");
   const [summary, setSummary] = useState("");
   const [completion, setCompletion] = useState<OperationalPilotCompletionAccepted | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,14 +74,13 @@ export function OperationalValueCollector() {
 
   const submitValid = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalizedDecision = decision.trim();
     const normalizedSummary = summary.trim();
-    if (!assignment || !normalizedDecision || !normalizedSummary || submitting) return;
+    if (!assignment || !decision || !normalizedSummary || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
       const accepted = await completeOperationalValueTask(assignment.assignment_id, {
-        terminal_decision: normalizedDecision,
+        terminal_decision: decision,
         conclusion_summary: normalizedSummary,
       });
       setCompletion(accepted);
@@ -194,16 +206,18 @@ export function OperationalValueCollector() {
 
           <form className="pilot-form" onSubmit={submitValid}>
             <label htmlFor="pilot-decision">Operational decision</label>
-            <input
+            <select
               id="pilot-decision"
               value={decision}
-              onChange={(event) => setDecision(event.target.value)}
-              maxLength={256}
-              autoComplete="off"
-              placeholder="Record the operational decision reached"
+              onChange={(event) => setDecision(event.target.value as OperationalPilotDecision | "")}
               disabled={submitting}
               data-testid="pilot-decision"
-            />
+            >
+              <option value="">Select the decision reached</option>
+              {DECISIONS.map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
 
             <label htmlFor="pilot-summary">Operational conclusion</label>
             <textarea
@@ -220,7 +234,7 @@ export function OperationalValueCollector() {
               <span>{summary.length.toLocaleString()} / 10,000</span>
               <button
                 type="submit"
-                disabled={submitting || !decision.trim() || !summary.trim()}
+                disabled={submitting || !decision || !summary.trim()}
                 data-testid="pilot-submit"
               >
                 {submitting ? "Persisting…" : "Record completed investigation"}
