@@ -15,7 +15,7 @@ Create the human reference layer required by #128 before any LLM-as-judge can in
 The pipeline is deliberately split into:
 
 ```text
-sanitized terminal outputs
+sanitized terminal outputs + sanitized evidence context
 → frozen split lookup
 → blind reviewer packet
 → independent pass A + pass B
@@ -27,6 +27,8 @@ sanitized terminal outputs
 ## Why this exists
 
 The semantic evaluator contract in the parent slice can measure judge↔human agreement, but a valid calibration gate requires a human-labelled reference set built without leakage or post-hoc threshold fitting. Human annotation therefore needs its own reproducible data boundary and integrity checks.
+
+A terminal answer cannot be judged independently from the evidence state. In particular, groundedness and operational usefulness can change when the evidence changes even if the final text is byte-for-byte identical. The pipeline therefore binds every review task and every final calibration reference to both the terminal-output hash and the sanitized evidence-context hash.
 
 ## Frozen split policy
 
@@ -49,10 +51,11 @@ Contains only:
 
 - scenario id;
 - hashed terminal-output identity;
+- hashed sanitized-context identity;
 - response mode;
 - rubric dimension and score anchors;
 - customer-visible terminal decision/message;
-- explicitly sanitized evidence/context digest.
+- explicitly sanitized evidence/context digest required to judge the answer.
 
 It does **not** contain:
 
@@ -67,28 +70,35 @@ It does **not** contain:
 - credentials.
 
 ### Evaluator-only annotation manifest
-Contains the deterministic mapping from task id to frozen story group/split. This is used for group-aware analysis later and is kept separate from the reviewer packet.
+Contains the deterministic mapping from task id to frozen story group/split and the same immutable output/context identities. This is used for group-aware analysis later and is kept separate from the reviewer packet.
 
 The implementation also rejects obvious forbidden evaluator/runtime material markers in supplied terminal/evidence text. This is a defense-in-depth guard, not a substitute for constructing the source from already-sanitized evaluation material.
 
-## Terminal-output identity
+## Output and context identity
 
 The output hash is deterministic over the public terminal projection:
 
 ```text
-SHA256({terminal_decision, response_mode, terminal_message})
+output_sha256 = SHA256({terminal_decision, response_mode, terminal_message})
 ```
 
-Each annotation task id additionally binds:
+The context hash is deterministic over the reviewer-visible sanitized evidence/context:
+
+```text
+context_sha256 = SHA256({safe_evidence_context})
+```
+
+Each annotation task id binds:
 
 ```text
 scenario_id
 + output_sha256
++ context_sha256
 + response_mode
 + rubric dimension
 ```
 
-This matches the calibration identity used by the semantic evaluator and prevents a label from silently moving to a different output or dimension.
+This is the same calibration identity used by the parent semantic evaluator. Two examples with identical terminal text but different evidence context are intentionally different tasks and cannot share a human or judge score.
 
 ## Rubric applicability
 
@@ -109,10 +119,14 @@ Each task has exactly two independent reviewer slots, `A` and `B`.
 Reviewer artifacts store only a one-way `reviewer_ref_sha256`, not a human name/email. For a given task:
 
 - A and B must have different reviewer references;
+- a score below `2` must include at least one structured defect reason;
+- score `2` may carry only `NO_MATERIAL_DEFECT`;
 - agreeing scores produce `resolution=AGREED`, `annotator_count=2`;
 - disagreeing scores produce **no human calibration reference** until adjudicated;
+- adjudication is accepted only for a task that already has two complete, disagreeing A/B labels;
 - adjudication must come from a third reviewer reference different from both A and B;
-- resolved disagreement produces `resolution=ADJUDICATED`, `annotator_count=3`.
+- resolved disagreement produces `resolution=ADJUDICATED`, `annotator_count=3`;
+- an adjudication attached to an agreeing, incomplete or otherwise non-disputed task is rejected rather than silently ignored.
 
 Missing labels or unresolved disagreement therefore keep `calibration_ready=false`.
 
@@ -177,9 +191,12 @@ python scripts/semantic_human_calibration.py resolve \
 - LOCKED_TEST source accepted before final: `0`;
 - task moved across frozen split/group: `0`;
 - reviewer packet contains evaluator split/group metadata: `0`;
-- duplicate output/task identity: `0`;
+- same output with different sanitized context reuses a task/calibration identity: `0`;
+- duplicate output+context/task identity: `0`;
 - same reviewer fills both independent passes for one task: `0`;
+- score below `2` without structured defect reason: `0`;
 - disagreement silently converted into a calibration reference: `0`;
+- adjudication accepted without two disagreeing reviewer scores: `0`;
 - reviewer acts as own adjudicator: `0`;
 - unresolved packet reported calibration-ready: `0`;
 - judge/model/provider invocation in this slice: `0`;
