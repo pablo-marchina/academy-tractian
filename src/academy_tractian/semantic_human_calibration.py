@@ -96,6 +96,16 @@ class SemanticAnnotationSource(_FrozenModel):
             }
         )
 
+    @property
+    def context_sha256(self) -> str:
+        """Bind semantic labels to the exact sanitized evidence/context shown to reviewers."""
+
+        return _canonical_sha256(
+            {
+                "safe_evidence_context": list(self.safe_evidence_context),
+            }
+        )
+
 
 class SemanticReviewerTask(_FrozenModel):
     """Blind reviewer-facing task. No split/group or evaluator-private truth is present."""
@@ -103,6 +113,7 @@ class SemanticReviewerTask(_FrozenModel):
     task_id: str = Field(pattern=r"^sem_[0-9a-f]{24}$")
     scenario_id: str = Field(min_length=1)
     output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    context_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     response_mode: str = Field(min_length=1)
     dimension: SemanticDimension
     terminal_decision: str = Field(min_length=1)
@@ -140,6 +151,7 @@ class SemanticAnnotationManifestEntry(_FrozenModel):
     group_id: str = Field(min_length=1)
     source_split: Literal["DEV", "VALIDATION"]
     output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    context_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     response_mode: str = Field(min_length=1)
     dimension: SemanticDimension
 
@@ -202,8 +214,10 @@ class SemanticReviewerLabel(_FrozenModel):
     def validate_reason_codes(self) -> "SemanticReviewerLabel":
         if len(set(self.reason_codes)) != len(self.reason_codes):
             raise ValueError("reason_codes must be unique")
-        if self.score == 2 and self.reason_codes and self.reason_codes != ("NO_MATERIAL_DEFECT",):
-            raise ValueError("score 2 may only carry NO_MATERIAL_DEFECT")
+        if self.score == 2 and self.reason_codes != ("NO_MATERIAL_DEFECT",):
+            raise ValueError("score 2 requires exactly NO_MATERIAL_DEFECT")
+        if self.score < 2 and not self.reason_codes:
+            raise ValueError("score below 2 requires at least one structured defect reason")
         if self.score < 2 and "NO_MATERIAL_DEFECT" in self.reason_codes:
             raise ValueError("NO_MATERIAL_DEFECT is incompatible with score below 2")
         return self
@@ -305,6 +319,7 @@ def _task_id(source: SemanticAnnotationSource, dimension: SemanticDimension) -> 
     material = {
         "scenario_id": source.scenario_id,
         "output_sha256": source.output_sha256,
+        "context_sha256": source.context_sha256,
         "response_mode": source.response_mode,
         "dimension": dimension,
     }
@@ -329,7 +344,7 @@ def build_semantic_reviewer_packet(
     )
     split_index, split_schema_version, split_sha = _split_index(frozen_split_payload)
 
-    seen_outputs: set[tuple[str, str]] = set()
+    seen_outputs: set[tuple[str, str, str]] = set()
     source_assignments: list[tuple[SemanticAnnotationSource, _SplitAssignment]] = []
     for source in sources:
         assignment = split_index.get(source.scenario_id)
@@ -341,9 +356,12 @@ def build_semantic_reviewer_packet(
             raise ValueError(
                 f"{purpose} requires {expected_split} groups; {source.scenario_id} belongs to {assignment.split}"
             )
-        output_identity = (source.scenario_id, source.output_sha256)
+        output_identity = (source.scenario_id, source.output_sha256, source.context_sha256)
         if output_identity in seen_outputs:
-            raise ValueError(f"duplicate semantic output: {source.scenario_id}|{source.output_sha256}")
+            raise ValueError(
+                "duplicate semantic output/context: "
+                f"{source.scenario_id}|{source.output_sha256}|{source.context_sha256}"
+            )
         seen_outputs.add(output_identity)
         source_assignments.append((source, assignment))
 
@@ -363,6 +381,7 @@ def build_semantic_reviewer_packet(
                 task_id=task_id,
                 scenario_id=source.scenario_id,
                 output_sha256=source.output_sha256,
+                context_sha256=source.context_sha256,
                 response_mode=source.response_mode,
                 dimension=dimension,
                 terminal_decision=source.terminal_decision,
@@ -379,6 +398,7 @@ def build_semantic_reviewer_packet(
                 group_id=assignment.group_id,
                 source_split=expected_split,
                 output_sha256=source.output_sha256,
+                context_sha256=source.context_sha256,
                 response_mode=source.response_mode,
                 dimension=dimension,
             )
@@ -494,9 +514,19 @@ def resolve_human_semantic_labels(
         raise ValueError("reviewer packet rubric hash is not the frozen rubric")
 
     task_by_id = {task.task_id: task for task in packet.tasks}
-    manifest_task_ids = {entry.task_id for entry in manifest.entries}
-    if set(task_by_id) != manifest_task_ids:
+    manifest_by_task = {entry.task_id: entry for entry in manifest.entries}
+    if set(task_by_id) != set(manifest_by_task):
         raise ValueError("reviewer packet and annotation manifest task sets differ")
+    for task_id, task in task_by_id.items():
+        entry = manifest_by_task[task_id]
+        if (
+            task.scenario_id != entry.scenario_id
+            or task.output_sha256 != entry.output_sha256
+            or task.context_sha256 != entry.context_sha256
+            or task.response_mode != entry.response_mode
+            or task.dimension != entry.dimension
+        ):
+            raise ValueError(f"reviewer packet and annotation manifest task binding differs: {task_id}")
 
     labels_by_task: dict[str, dict[ReviewerSlot, SemanticReviewerLabel]] = defaultdict(dict)
     for label in labels:
@@ -521,6 +551,20 @@ def resolve_human_semantic_labels(
         if adjudication.task_id in adjudication_by_task:
             raise ValueError(f"duplicate adjudication for task: {adjudication.task_id}")
         adjudication_by_task[adjudication.task_id] = adjudication
+
+    for task_id, adjudication in adjudication_by_task.items():
+        slots = labels_by_task.get(task_id, {})
+        label_a = slots.get("A")
+        label_b = slots.get("B")
+        if label_a is None or label_b is None:
+            raise ValueError(f"adjudication requires both independent reviewer labels: {task_id}")
+        if label_a.score == label_b.score:
+            raise ValueError(f"adjudication is invalid when reviewers already agree: {task_id}")
+        if adjudication.adjudicator_ref_sha256 in {
+            label_a.reviewer_ref_sha256,
+            label_b.reviewer_ref_sha256,
+        }:
+            raise ValueError(f"adjudicator must be distinct from both reviewers: {task_id}")
 
     references: list[HumanSemanticReference] = []
     unresolved: list[str] = []
@@ -548,11 +592,6 @@ def resolve_human_semantic_labels(
             if adjudication is None:
                 unresolved.append(task_id)
                 continue
-            if adjudication.adjudicator_ref_sha256 in {
-                label_a.reviewer_ref_sha256,
-                label_b.reviewer_ref_sha256,
-            }:
-                raise ValueError(f"adjudicator must be distinct from both reviewers: {task_id}")
             score = adjudication.score
             resolution = "ADJUDICATED"
             annotator_count = 3
@@ -562,6 +601,7 @@ def resolve_human_semantic_labels(
             HumanSemanticReference(
                 scenario_id=task.scenario_id,
                 output_sha256=task.output_sha256,
+                context_sha256=task.context_sha256,
                 response_mode=task.response_mode,
                 dimension=task.dimension,
                 score=score,
@@ -577,6 +617,7 @@ def resolve_human_semantic_labels(
             key=lambda item: (
                 item.scenario_id,
                 item.output_sha256,
+                item.context_sha256,
                 item.response_mode,
                 item.dimension,
             ),
