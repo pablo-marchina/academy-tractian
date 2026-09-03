@@ -266,6 +266,52 @@ def test_postgres_rejects_structurally_invalid_valid_measurement(
                     )
 
 
+def test_postgres_schema_reinstalls_missing_v4_state_constraint(
+    tmp_path: Path,
+    postgres_fixture: _PgFixture,
+) -> None:
+    app = _app(tmp_path, postgres_fixture, initialize_schema=True)
+    store = app.state.operational_value_collection_store
+    schema = postgres_fixture.schema
+    database = app.state.postgres_operational_database
+
+    with TestClient(app):
+        with database.internal_pool.connection() as connection:
+            with connection.transaction():
+                connection.execute(
+                    f"""
+                    ALTER TABLE "{schema}".operational_pilot_assignments
+                    DROP CONSTRAINT operational_pilot_assignment_state_shape_v4
+                    """
+                )
+                connection.execute(
+                    f"""
+                    UPDATE "{schema}".operational_meta
+                    SET value = 'operational-value-collection-v3'
+                    WHERE key = 'operational_value_collection_schema_version'
+                    """
+                )
+        assert store.ready() is False
+
+        store.initialize_schema()
+        assert store.ready() is True
+
+        with database.internal_pool.connection() as connection:
+            row = connection.execute(
+                """
+                SELECT c.convalidated
+                FROM pg_constraint c
+                JOIN pg_class t ON t.oid = c.conrelid
+                JOIN pg_namespace n ON n.oid = t.relnamespace
+                WHERE n.nspname = %s
+                  AND t.relname = 'operational_pilot_assignments'
+                  AND c.conname = 'operational_pilot_assignment_state_shape_v4'
+                """,
+                (schema,),
+            ).fetchone()
+        assert row is not None and bool(row[0]) is True
+
+
 def test_postgres_rejects_assignment_with_noncanonical_pair_binding(
     tmp_path: Path,
     postgres_fixture: _PgFixture,
