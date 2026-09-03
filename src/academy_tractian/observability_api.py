@@ -1,35 +1,66 @@
 from __future__ import annotations
 
 import asyncio
+from hashlib import sha256
+from importlib.metadata import PackageNotFoundError, version
 import json
-from typing import Literal
+from pathlib import Path
+from time import perf_counter
+from typing import Any, AsyncContextManager, Callable, Protocol
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
-from .analytics import AnalyticsReadModel
-from .architecture import architecture_manifest
-from .observability_store import ObservabilityStore
-from .operational_read_model import OperationalReadModel
-from .production_operability import ProductionTelemetry
+from .architecture_manifest import ProviderSelectionState, architecture_manifest
+from .observability_store import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStore
+from .operational_read_model import AnalyticsQuery, OperationalReadModel
+from .production_telemetry import CloseReason, ProductionTelemetry
 
 
-CloseReason = Literal["completed", "client_disconnect", "run_missing", "single_replay"]
+class ObservabilityAccessPolicy(Protocol):
+    """Optional product-owned authorization boundary for observability reads.
+
+    The standalone observability service remains unrestricted by default. Product APIs can
+    inject a fail-closed policy without teaching the analytical read model about identities.
+    """
+
+    def authorize_run(self, request: Request, run_id: str) -> None: ...
+
+    def authorize_global(self, request: Request, capability: str) -> None: ...
+
+    def filter_runs(
+        self,
+        request: Request,
+        items: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]: ...
+
+
+def _package_version() -> str:
+    try:
+        return version("academy-tractian")
+    except PackageNotFoundError:
+        return "0+unknown"
+
+
+def _safe_config_hash() -> str:
+    return sha256(
+        f"academy-tractian-observability:{OBSERVABILITY_SCHEMA_VERSION}".encode("utf-8")
+    ).hexdigest()
 
 
 def _last_sequence(run_id: str, last_event_id: str | None) -> int:
-    if last_event_id is None:
+    if last_event_id is None or last_event_id == "":
         return -1
-    prefix = f"{run_id}:"
-    if not last_event_id.startswith(prefix):
+    prefix, separator, sequence = last_event_id.rpartition(":")
+    if separator != ":" or prefix != run_id:
         raise ValueError("Last-Event-ID does not belong to requested run")
     try:
-        sequence = int(last_event_id[len(prefix) :])
+        parsed = int(sequence)
     except ValueError as exc:
-        raise ValueError("Last-Event-ID sequence must be an integer") from exc
-    if sequence < 0:
-        raise ValueError("Last-Event-ID sequence must be non-negative")
-    return sequence
+        raise ValueError("Last-Event-ID sequence is not an integer") from exc
+    if parsed < -1:
+        raise ValueError("Last-Event-ID sequence must be >= -1")
+    return parsed
 
 
 def _sse_record(event: dict[str, object]) -> str:
@@ -37,40 +68,137 @@ def _sse_record(event: dict[str, object]) -> str:
     return f"id: {event['event_id']}\nevent: trace_event\ndata: {payload}\n\n"
 
 
-def _sse_stream_state_record(*, run_id: str, state: str, after_sequence: int) -> str:
-    payload = json.dumps(
-        {"run_id": run_id, "state": state, "after_sequence": after_sequence},
-        sort_keys=True,
-        separators=(",", ":"),
-    )
-    # Transport-control state deliberately carries no SSE id so the browser's Last-Event-ID
-    # remains the last persisted trace event and reconnect resumes from the canonical cursor.
-    return f"event: stream_state\ndata: {payload}\n\n"
+def _safe_route_template(request: Request) -> str:
+    route = request.scope.get("route")
+    template = getattr(route, "path", None)
+    if isinstance(template, str) and template:
+        return template
+    path = request.url.path
+    if path.startswith("/api/runs/"):
+        suffix = path.split("/", 4)
+        tail = "" if len(suffix) < 5 else f"/{suffix[4]}"
+        return f"/api/runs/{{run_id}}{tail}"
+    if path in {
+        "/api/runs", "/api/stream", "/api/query", "/api/query/schema", "/api/overview",
+        "/api/production/health", "/api/tools/metrics", "/api/policies/metrics",
+        "/api/evaluations/metrics", "/api/providers/experiments", "/api/architecture",
+        "/health", "/ready", "/version",
+    }:
+        return path
+    return "unclassified"
+
+
+def _api_kind(method: str, route_template: str) -> str:
+    if method == "POST" and route_template == "/api/query":
+        return "analytics_query"
+    if route_template == "/api/query/schema":
+        return "analytics_schema"
+    if method == "POST" and route_template == "/api/runs":
+        return "runtime_submit"
+    if route_template == "/api/stream":
+        return "sse_handshake"
+    if route_template.startswith("/api/runs/") or route_template == "/api/runs":
+        return "run_read"
+    if route_template in {
+        "/api/overview", "/api/tools/metrics", "/api/policies/metrics", "/api/evaluations/metrics",
+        "/api/providers/experiments", "/api/architecture", "/api/production/health",
+    }:
+        return "analytics_read"
+    if route_template in {"/health", "/ready", "/version"}:
+        return "control_read"
+    return "other"
+
+
+def _augment_health_with_quantitative_telemetry(
+    health: dict[str, Any],
+    live_operability: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if live_operability is None:
+        return health
+    telemetry = live_operability.get("telemetry")
+    if not isinstance(telemetry, dict):
+        return health
+
+    measured = health.setdefault("measured", {})
+    if not isinstance(measured, dict):
+        return health
+
+    for key in ("runtime_requests", "api", "resources"):
+        value = telemetry.get(key)
+        if isinstance(value, dict):
+            measured[key] = value
+
+    sse = telemetry.get("sse")
+    if isinstance(sse, dict):
+        measured["sse"] = sse
+
+    closed_gaps = {
+        "runtime_request_latency_by_outcome_ms": "runtime_requests" in measured,
+        "api_read_query_latency_ms": "api" in measured,
+        "cpu_memory_pressure": "resources" in measured,
+        "reconnect_event_loss_rate": isinstance(sse, dict) and "detected_gap_rate" in sse,
+        "logical_duplicate_delivery_rate": isinstance(sse, dict) and "logical_duplicate_rate" in sse,
+    }
+    gaps = health.get("not_measured_yet")
+    if isinstance(gaps, list):
+        health["not_measured_yet"] = [
+            item for item in gaps if not closed_gaps.get(str(item), False)
+        ]
+    health["schema_version"] = "production-health-v3"
+    health["quantitative_measurement_contract"] = {
+        "thresholds_preregistered": False,
+        "interpretation": "measured_distributions_only; targets require provider-free baseline and EDD preregistration",
+    }
+    return health
 
 
 def create_observability_app(
     *,
-    db_path,
-    store: ObservabilityStore | None = None,
-    analytics: AnalyticsReadModel | None = None,
-    operational_read_model: OperationalReadModel | None = None,
+    db_path: str | Path = "./var/observability.duckdb",
+    lifespan: Callable[[FastAPI], AsyncContextManager[None]] | None = None,
+    provider_selection_state: ProviderSelectionState = "NO_SELECTION",
     production_telemetry: ProductionTelemetry | None = None,
-    access_policy=None,
+    live_operability_supplier: Callable[[], dict[str, Any]] | None = None,
+    access_policy: ObservabilityAccessPolicy | None = None,
 ) -> FastAPI:
-    store = store or ObservabilityStore(db_path)
-    analytics = analytics or AnalyticsReadModel(db_path)
-    operational_read_model = operational_read_model or OperationalReadModel(db_path)
-
-    app = FastAPI(title="Academy × TRACTIAN Observability API")
+    app = FastAPI(
+        title="Academy × TRACTIAN Observability API",
+        version=_package_version(),
+        docs_url="/docs",
+        redoc_url=None,
+        lifespan=lifespan,
+    )
+    store = ObservabilityStore(db_path)
+    analytics = OperationalReadModel(store)
     app.state.observability_store = store
-    app.state.analytics = analytics
-    app.state.operational_read_model = operational_read_model
-    app.state.production_telemetry = production_telemetry
-    app.state.observability_access_policy = access_policy
+    app.state.operational_read_model = analytics
+
+    if production_telemetry is not None:
+        @app.middleware("http")
+        async def measured_api_request(request: Request, call_next):
+            started = perf_counter()
+            status_code = 500
+            try:
+                response = await call_next(request)
+                status_code = int(response.status_code)
+                return response
+            finally:
+                route_template = _safe_route_template(request)
+                production_telemetry.record_api_request(
+                    method=request.method,
+                    route_template=route_template,
+                    kind=_api_kind(request.method, route_template),
+                    status_code=status_code,
+                    duration_ms=(perf_counter() - started) * 1000.0,
+                )
 
     def authorize_run(request: Request, run_id: str) -> None:
         if access_policy is not None:
             access_policy.authorize_run(request, run_id)
+
+    def authorize_global(request: Request, capability: str) -> None:
+        if access_policy is not None:
+            access_policy.authorize_global(request, capability)
 
     def require_run(run_id: str) -> dict[str, object]:
         item = store.get_run(run_id)
@@ -78,87 +206,85 @@ def create_observability_app(
             raise HTTPException(status_code=404, detail="run_not_found")
         return item
 
+    def validate_scope(request: Request, run_id: str | None) -> None:
+        if run_id is not None:
+            authorize_run(request, run_id)
+            require_run(run_id)
+        else:
+            authorize_global(request, "analytics:read:global")
+
     @app.get("/health")
     def health() -> dict[str, object]:
-        return {"status": "ok", "version": "observability-api-v1"}
+        return {"status": "ok", "service": "observability-api", "version": _package_version()}
 
     @app.get("/ready")
     def ready() -> dict[str, object]:
-        ready_status = operational_read_model.ready()
-        if not ready_status:
-            raise HTTPException(status_code=503, detail="read_model_not_ready")
-        return {"status": "ready"}
+        if not store.ready():
+            raise HTTPException(status_code=503, detail="observability_store_not_ready")
+        return {"status": "ready", "store_schema_version": OBSERVABILITY_SCHEMA_VERSION}
 
     @app.get("/version")
-    def version() -> dict[str, object]:
-        return {"version": "observability-api-v1"}
+    def version_info() -> dict[str, object]:
+        return {
+            "service": "observability-api",
+            "package_version": _package_version(),
+            "store_schema_version": OBSERVABILITY_SCHEMA_VERSION,
+            "config_hash": _safe_config_hash(),
+        }
 
     @app.get("/api/architecture")
     def architecture() -> dict[str, object]:
-        return architecture_manifest().model_dump(mode="json")
+        return architecture_manifest(provider_selection_state=provider_selection_state).model_dump(mode="json")
 
     @app.get("/api/overview")
     def overview(request: Request) -> dict[str, object]:
-        run_ids = None
-        if access_policy is not None:
-            run_ids = access_policy.visible_run_ids(request)
-        return operational_read_model.overview(run_ids=run_ids)
+        authorize_global(request, "analytics:read:global")
+        return store.overview()
 
     @app.get("/api/production/health")
     def production_health() -> dict[str, object]:
-        if production_telemetry is None:
-            return {
-                "overall_status": "not_instrumented",
-                "components": [],
-                "measured": {},
-                "not_measured_yet": ["production_telemetry"],
-            }
-        return production_telemetry.snapshot()
+        live_operability = None if live_operability_supplier is None else live_operability_supplier()
+        payload = analytics.production_health(
+            provider_selection_state=provider_selection_state,
+            live_operability=live_operability,
+        )
+        return _augment_health_with_quantitative_telemetry(payload, live_operability)
 
     @app.get("/api/tools/metrics")
-    def tools_metrics(request: Request, run_id: str | None = None) -> dict[str, object]:
-        if run_id is not None:
-            authorize_run(request, run_id)
-        elif access_policy is not None:
-            access_policy.authorize_global_analytics(request)
-        return operational_read_model.tools_metrics(run_id=run_id)
+    def tools_metrics(
+        request: Request,
+        run_id: str | None = Query(default=None, min_length=1, max_length=128),
+    ) -> dict[str, object]:
+        validate_scope(request, run_id)
+        return analytics.tools_metrics(run_id=run_id)
 
     @app.get("/api/policies/metrics")
-    def policies_metrics(request: Request, run_id: str | None = None) -> dict[str, object]:
-        if run_id is not None:
-            authorize_run(request, run_id)
-        elif access_policy is not None:
-            access_policy.authorize_global_analytics(request)
-        return operational_read_model.policies_metrics(run_id=run_id)
+    def policies_metrics(
+        request: Request,
+        run_id: str | None = Query(default=None, min_length=1, max_length=128),
+    ) -> dict[str, object]:
+        validate_scope(request, run_id)
+        return analytics.policies_metrics(run_id=run_id)
 
     @app.get("/api/evaluations/metrics")
-    def evaluation_metrics(request: Request, run_id: str | None = None) -> dict[str, object]:
-        if run_id is not None:
-            authorize_run(request, run_id)
-        elif access_policy is not None:
-            access_policy.authorize_global_analytics(request)
-        return operational_read_model.evaluation_metrics(run_id=run_id)
+    def evaluation_metrics(
+        request: Request,
+        run_id: str | None = Query(default=None, min_length=1, max_length=128),
+    ) -> dict[str, object]:
+        validate_scope(request, run_id)
+        return analytics.evaluation_metrics(run_id=run_id)
 
     @app.get("/api/providers/experiments")
-    def provider_experiments(request: Request) -> dict[str, object]:
-        if access_policy is not None:
-            access_policy.authorize_global_analytics(request)
-        return operational_read_model.provider_experiments()
+    def provider_experiments() -> dict[str, object]:
+        return analytics.provider_experiments()
 
     @app.get("/api/query/schema")
-    def query_schema(request: Request) -> dict[str, object]:
-        if access_policy is not None:
-            access_policy.authorize_global_analytics(request)
-        return analytics.schema()
+    def query_schema() -> dict[str, object]:
+        return analytics.query_schema()
 
     @app.post("/api/query")
-    def query(request: Request, spec: dict[str, object]) -> dict[str, object]:
-        if access_policy is not None:
-            run_id = spec.get("run_id")
-            if isinstance(run_id, str) and run_id:
-                authorize_run(request, run_id)
-            else:
-                access_policy.authorize_global_analytics(request)
+    def dynamic_query(spec: AnalyticsQuery, request: Request) -> dict[str, object]:
+        validate_scope(request, spec.run_id)
         try:
             return analytics.query(spec)
         except ValueError as exc:
@@ -235,7 +361,6 @@ def create_observability_app(
         async def event_stream():
             nonlocal after_sequence
             close_reason: CloseReason = "client_disconnect"
-            reconnect_catchup_pending = bool(last_event_id) and follow
             try:
                 while True:
                     items = store.get_events_after(run_id, after_sequence=after_sequence, limit=1000)
@@ -249,14 +374,6 @@ def create_observability_app(
                                 sequence=sequence,
                             )
                         yield _sse_record(item)
-
-                    if reconnect_catchup_pending:
-                        yield _sse_stream_state_record(
-                            run_id=run_id,
-                            state="caught_up",
-                            after_sequence=after_sequence,
-                        )
-                        reconnect_catchup_pending = False
 
                     current = store.get_run(run_id)
                     if current is None:
