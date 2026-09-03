@@ -1,5 +1,11 @@
 import type { ActionExecutionAccepted, PendingActionSafe } from "./actionTypes";
 import type {
+  OperationalPilotAssignment,
+  OperationalPilotCompletionAccepted,
+  OperationalPilotTerminationSubmission,
+  OperationalPilotValidSubmission,
+} from "./operationalValueTypes";
+import type {
   AnalyticsQuerySpec,
   ArchitectureManifest,
   DynamicAnalyticsResult,
@@ -103,6 +109,38 @@ export function confirmAction(actionId: string): Promise<ActionExecutionAccepted
     method: "POST",
     body: JSON.stringify({ confirm: true }),
   });
+}
+
+export function fetchOperationalValueTask(): Promise<OperationalPilotAssignment> {
+  return requestJson<OperationalPilotAssignment>("/api/operational-value/tasks/next", {
+    method: "POST",
+  });
+}
+
+export function completeOperationalValueTask(
+  assignmentId: string,
+  payload: OperationalPilotValidSubmission,
+): Promise<OperationalPilotCompletionAccepted> {
+  return requestJson<OperationalPilotCompletionAccepted>(
+    `/api/operational-value/assignments/${encodeURIComponent(assignmentId)}/complete`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function terminateOperationalValueTask(
+  assignmentId: string,
+  payload: OperationalPilotTerminationSubmission,
+): Promise<OperationalPilotCompletionAccepted> {
+  return requestJson<OperationalPilotCompletionAccepted>(
+    `/api/operational-value/assignments/${encodeURIComponent(assignmentId)}/terminate`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export function fetchArchitecture(): Promise<ArchitectureManifest> {
