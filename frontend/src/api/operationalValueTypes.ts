@@ -1,6 +1,5 @@
 export type OperationalPilotCondition = "MANUAL" | "ASSISTED";
 export type HumanPilotTerminationStatus = "INTERRUPTED" | "WITHDRAWN";
-export type OperationalPilotDecision = "FINAL" | "CLARIFY" | "ESCALATE" | "ABSTAIN";
 
 export interface OperationalPilotAssistance {
   terminal_decision: string;
@@ -30,7 +29,7 @@ export interface OperationalPilotCompletionAccepted {
 }
 
 export interface OperationalPilotValidSubmission {
-  terminal_decision: OperationalPilotDecision;
+  terminal_decision: string;
   conclusion_summary: string;
 }
 
