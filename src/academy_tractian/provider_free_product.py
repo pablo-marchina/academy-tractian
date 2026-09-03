@@ -143,7 +143,10 @@ class ProviderFreeTransport(RequestTransport):
             )
         if request.path in {"/assets/asset-e2e", "/assets/asset-slow"} and request.method == "GET":
             if request.path == "/assets/asset-slow":
-                sleep(1.5)
+                # Deliberately longer than Chromium's ordinary EventSource retry interval so the
+                # reconnect/catch-up browser gate observes an active run rather than racing a
+                # terminal replay. This delay exists only in the provider-free acceptance profile.
+                sleep(5.0)
             asset_id = request.path.rsplit("/", 1)[-1]
             return TransportResponse(
                 status_code=200,
