@@ -16,7 +16,7 @@ The pilot measures **effort and operator outputs**. It does not decide whether t
 
 `INDEPENDENT_MATCHED`
 
-For every eligible DEV case, the packet creates:
+For every eligible DEV case, the host packet creates:
 
 - one `MANUAL` task containing the sanitized ticket/request only; and
 - one `ASSISTED` task containing the same ticket/request plus the explicitly safe agent terminal projection and safe evidence context.
@@ -25,16 +25,18 @@ The two tasks in a matched case must be completed by different operator referenc
 
 A crossover design remains a valid future experiment, but it is not used in this pilot because the current objective is to establish a clean initial effort baseline with the lowest avoidable carryover risk.
 
-## Leakage boundary
+## Delivery boundary
 
-The operator-facing packet contains:
+The aggregate `OperationalPilotPacket` is **host-side experiment state**. It is not intended to be handed wholesale to a participant because it contains all randomized tasks. A collection UI/API must render only the single task assigned to the authenticated operator at that moment.
+
+Each individual task is safe to render and contains only:
 
 - opaque `task_id`;
 - condition (`MANUAL` or `ASSISTED`);
 - sanitized ticket/request;
 - safe agent assistance only for `ASSISTED`.
 
-It does **not** contain:
+An individual task does **not** contain:
 
 - scenario id;
 - asset/story group id;
@@ -72,6 +74,28 @@ Interrupted, withdrawn or technical-failure trials require an explicit invalid r
 
 Duplicate, missing and invalid tasks remain visible in the resolution report. A pair is emitted only when both arms are uniquely present and valid.
 
+## Integrity binding
+
+`prepare` creates deterministic identities over the evidence boundary:
+
+```text
+source material
+→ ticket_sha256 + assistance_sha256
+→ pair_id
+→ MANUAL/ASSISTED task_id
+→ packet_id bound to frozen split hash + protocol + shuffle seed
+```
+
+`resolve` does not trust the serialized files merely because they have valid shapes. It revalidates the packet, manifest and completion models and recomputes:
+
+- pair identities;
+- task identities;
+- ticket content hashes;
+- assisted-projection content hashes; and
+- packet identity from the evaluator manifest.
+
+A public-safe but substituted ticket or assistance therefore fails closed instead of silently becoming part of the measured experiment.
+
 ## Resolved effort pair
 
 A valid pair exposes evaluator-side lineage without operator identity:
@@ -92,7 +116,9 @@ The raw operator conclusion text is deliberately not copied into the effort-pair
 - `LOCKED_TEST`/`VALIDATION` source accepted: `0`;
 - manual task containing agent assistance: `0`;
 - same operator used for both matched arms: `0`;
+- aggregate host packet exposed as one participant's task surface: `0` in the collection product;
 - private/gold/runtime markers in sanitized public material: `0`;
+- packet/manifest content hash mismatch accepted: `0`;
 - invalid trial silently treated as valid: `0`;
 - missing/duplicate task silently ignored: `0`;
 - provider/model invocation in packet preparation/resolution: `0`;
@@ -102,6 +128,8 @@ The raw operator conclusion text is deliberately not copied into the effort-pair
 
 This implementation does not claim that the current agent saves engineer time. No real operator measurement has been collected by this slice.
 
+The contract also does not yet constitute the authenticated collection product; a host-side task-assignment/timer surface is the next implementation step before real measurements are collected.
+
 ## Next evidence step
 
-Generate safe DEV sources from actual production-path runs, create a frozen operator packet, collect host-timed independent matched completions, resolve complete effort pairs, then join those pairs with evaluator-only operational correctness labels before any business-value claim or VALIDATION threshold is selected.
+Build the authenticated host-side collection surface that serves one assigned DEV task per operator and records server-owned monotonic timing. Then generate safe DEV sources from actual production-path runs, freeze the packet, collect independent matched completions, resolve effort pairs, and join those pairs with evaluator-only operational correctness labels before any business-value claim or VALIDATION threshold is selected.
