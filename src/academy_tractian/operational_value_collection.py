@@ -222,11 +222,22 @@ def attach_operational_value_collection_api(
 
     timers = timer_registry or HostMonotonicPilotTimerRegistry()
     recovery_lock = Lock()
-    terminal_transition_lock = Lock()
+    terminal_transition_locks_guard = Lock()
+    terminal_transition_locks: dict[str, object] = {}
     recovery_complete = False
     app.state.operational_value_collection_store = store
     app.state.operational_value_timer_registry = timers
     app.state.operational_value_recovered_assignments = ()
+
+    def terminal_transition_lock(assignment_id: str):
+        # Serialize duplicate complete/terminate requests only for the same measured assignment.
+        # A global lock would add unrelated users' persistence latency to their measured effort.
+        with terminal_transition_locks_guard:
+            lock = terminal_transition_locks.get(assignment_id)
+            if lock is None:
+                lock = Lock()
+                terminal_transition_locks[assignment_id] = lock
+            return lock
 
     def context(request: Request) -> AuthenticatedRuntimeContext:
         trusted = trusted_runtime_context(context_provider, request)
@@ -351,7 +362,7 @@ def attach_operational_value_collection_api(
     ) -> PilotCompletionAccepted:
         trusted = context(request)
         ensure_host_session_reconciled()
-        with terminal_transition_lock:
+        with terminal_transition_lock(assignment_id):
             active_assignment(assignment_id=assignment_id, trusted=trusted)
             elapsed = timers.finish(assignment_id)
             if elapsed is None:
@@ -401,7 +412,7 @@ def attach_operational_value_collection_api(
     ) -> PilotCompletionAccepted:
         trusted = context(request)
         ensure_host_session_reconciled()
-        with terminal_transition_lock:
+        with terminal_transition_lock(assignment_id):
             active_assignment(assignment_id=assignment_id, trusted=trusted)
             try:
                 # Persist the human terminal state first. If PostgreSQL fails, keep the
