@@ -6,6 +6,7 @@ import App from "./App";
 import "./styles.css";
 import "./explorer.css";
 import "./operations.css";
+import "./operationalValue.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
