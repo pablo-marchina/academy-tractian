@@ -7,6 +7,10 @@ on:
     paths:
       - "scripts/diagnose_duckdb_operational_concurrency.py"
       - ".github/workflows/duckdb-operational-diagnostic.yml"
+  pull_request:
+    paths:
+      - "scripts/diagnose_duckdb_operational_concurrency.py"
+      - ".github/workflows/duckdb-operational-diagnostic.yml"
   workflow_dispatch:
 
 jobs:
