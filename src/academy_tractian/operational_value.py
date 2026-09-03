@@ -12,6 +12,7 @@ from .eval_driven import EvalMetricBundle, EvalScenarioRecord
 
 
 EvaluationSplit = Literal["DEV", "VALIDATION"]
+FrozenSplit = Literal["DEV", "VALIDATION", "LOCKED_TEST"]
 EffortMeasurementDesign = Literal[
     "INDEPENDENT_MATCHED",
     "COUNTERBALANCED_CROSSOVER",
@@ -27,8 +28,11 @@ class OperationalValueObservation(_FrozenModel):
 
     This contract deliberately carries only outcome labels and measured durations. It does not
     carry expected/gold answer text, private trajectories, prompts, chain-of-thought, reviewer
-    identity, or raw provider material. `LOCKED_TEST` is intentionally not an accepted split in
-    this prospective development/calibration contract.
+    identity, or raw provider material.
+
+    The caller-provided `split` and `group_id` are never trusted on their own. Every report/bundle
+    build rebinds `scenario_id` to the frozen split manifest, rejects group/split disagreement and
+    rejects any scenario whose authoritative split is `LOCKED_TEST`.
 
     Human-effort values must be paired by case under an explicit, preregistered measurement
     protocol. `INDEPENDENT_MATCHED` means independent operators measure manual and assisted arms
@@ -108,6 +112,7 @@ class OperationalValueObservation(_FrozenModel):
 class OperationalValueReport(_FrozenModel):
     schema_version: Literal["operational-value-report-v1"] = "operational-value-report-v1"
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    split_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     ticket_count: int = Field(ge=1)
     source_splits: tuple[EvaluationSplit, ...]
     effort_protocol_ids: tuple[str, ...]
@@ -198,12 +203,84 @@ def _hard_failures(observation: OperationalValueObservation) -> tuple[str, ...]:
     return tuple(sorted(failures))
 
 
+def _frozen_scenario_lookup(
+    frozen_split_payload: dict[str, Any],
+) -> dict[str, tuple[FrozenSplit, str]]:
+    if frozen_split_payload.get("schema_version") != "benchmark-split-v1":
+        raise ValueError("unsupported frozen split manifest schema")
+    if frozen_split_payload.get("status") != "FROZEN":
+        raise ValueError("split manifest must be FROZEN")
+
+    splits = frozen_split_payload.get("splits")
+    if not isinstance(splits, dict):
+        raise ValueError("split manifest must contain a splits object")
+
+    lookup: dict[str, tuple[FrozenSplit, str]] = {}
+    for split_name in ("DEV", "VALIDATION", "LOCKED_TEST"):
+        split_payload = splits.get(split_name)
+        if not isinstance(split_payload, dict):
+            raise ValueError(f"split manifest missing {split_name}")
+        groups = split_payload.get("groups")
+        if not isinstance(groups, list):
+            raise ValueError(f"split manifest {split_name}.groups must be a list")
+        for group in groups:
+            if not isinstance(group, dict):
+                raise ValueError("split manifest group must be an object")
+            group_id = group.get("group_id")
+            scenarios = group.get("scenarios")
+            if not isinstance(group_id, str) or not group_id:
+                raise ValueError("split manifest group_id must be a non-empty string")
+            if not isinstance(scenarios, list) or not scenarios:
+                raise ValueError("split manifest scenarios must be a non-empty list")
+            for scenario_id in scenarios:
+                if not isinstance(scenario_id, str) or not scenario_id:
+                    raise ValueError("split manifest scenario id must be a non-empty string")
+                if scenario_id in lookup:
+                    raise ValueError(f"scenario appears more than once in split manifest: {scenario_id}")
+                lookup[scenario_id] = (split_name, group_id)  # type: ignore[arg-type]
+    return lookup
+
+
+def _validate_against_frozen_split(
+    observations: Sequence[OperationalValueObservation],
+    *,
+    frozen_split_payload: dict[str, Any],
+) -> str:
+    lookup = _frozen_scenario_lookup(frozen_split_payload)
+    for item in observations:
+        binding = lookup.get(item.scenario_id)
+        if binding is None:
+            raise ValueError(f"scenario absent from frozen split manifest: {item.scenario_id}")
+        frozen_split, frozen_group = binding
+        if frozen_split == "LOCKED_TEST":
+            raise ValueError(
+                f"LOCKED_TEST scenario is forbidden in operational-value development evaluation: {item.scenario_id}"
+            )
+        if item.split != frozen_split:
+            raise ValueError(
+                f"caller split disagrees with frozen manifest for {item.scenario_id}: "
+                f"{item.split} != {frozen_split}"
+            )
+        if item.group_id != frozen_group:
+            raise ValueError(
+                f"caller group disagrees with frozen manifest for {item.scenario_id}: "
+                f"{item.group_id} != {frozen_group}"
+            )
+    return _canonical_sha256(frozen_split_payload)
+
+
 def build_operational_value_report(
     observations: Sequence[OperationalValueObservation],
+    *,
+    frozen_split_payload: dict[str, Any],
 ) -> OperationalValueReport:
     if not observations:
         raise ValueError("at least one operational-value observation is required")
 
+    split_manifest_sha = _validate_against_frozen_split(
+        observations,
+        frozen_split_payload=frozen_split_payload,
+    )
     ordered = sorted(observations, key=lambda item: (item.group_id, item.case_id, item.scenario_id))
     seen: set[tuple[str, str]] = set()
     for item in ordered:
@@ -283,6 +360,7 @@ def build_operational_value_report(
 
     return OperationalValueReport(
         dataset_sha256=dataset_sha,
+        split_manifest_sha256=split_manifest_sha,
         ticket_count=count,
         source_splits=tuple(sorted({item.split for item in ordered})),
         effort_protocol_ids=tuple(
@@ -334,6 +412,7 @@ def operational_value_metric_bundle(
     *,
     config_id: str,
     observations: Sequence[OperationalValueObservation],
+    frozen_split_payload: dict[str, Any],
     metadata: dict[str, Any] | None = None,
 ) -> EvalMetricBundle:
     """Convert measured operational/value observations into the existing group-aware EDD format.
@@ -342,7 +421,10 @@ def operational_value_metric_bundle(
     `EvalMetricRule` decision so this adapter cannot fit acceptance criteria to observed results.
     """
 
-    report = build_operational_value_report(observations)
+    report = build_operational_value_report(
+        observations,
+        frozen_split_payload=frozen_split_payload,
+    )
     records: list[EvalScenarioRecord] = []
 
     for item in observations:
@@ -379,6 +461,7 @@ def operational_value_metric_bundle(
     bundle_metadata: dict[str, Any] = {
         "contract": "operational-value-v1",
         "dataset_sha256": report.dataset_sha256,
+        "split_manifest_sha256": report.split_manifest_sha256,
         "source_splits": list(report.source_splits),
         "ticket_count": report.ticket_count,
         "paired_effort_sample_count": report.paired_effort_sample_count,
