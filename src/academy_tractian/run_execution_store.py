@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Protocol
 
 import duckdb
 
@@ -29,18 +29,36 @@ class DurableExecution:
     transition_count: int
 
 
+class RunExecutionStore(Protocol):
+    """Durable execution-state contract independent of database engine."""
+
+    def ready(self) -> bool: ...
+
+    def create_accepted(
+        self,
+        *,
+        run_id: str,
+        execution_kind: ExecutionKind = "runtime",
+        related_action_id: str | None = None,
+    ) -> None: ...
+
+    def transition(
+        self,
+        *,
+        run_id: str,
+        expected_states: frozenset[str],
+        new_state: ExecutionState,
+    ) -> bool: ...
+
+    def get(self, run_id: str) -> DurableExecution | None: ...
+
+    def reconcile_orphaned(self) -> tuple[DurableExecution, ...]: ...
+
+    def counts(self) -> dict[str, int]: ...
+
+
 class DuckDBRunExecutionStore:
-    """Durable single-node execution state for restart-safe product status.
-
-    This is the baseline operational adapter, not a claim that DuckDB is the final
-    multi-user operational database. Its contract is intentionally small so PostgreSQL can
-    be benchmarked and promoted without changing the product API or execution semantics.
-
-    On process restart, an unfinished ordinary runtime is marked ``interrupted`` because the
-    private request payload is intentionally not retained for blind replay. An unfinished
-    consequential-action execution is marked ``uncertain`` because repeating it could create
-    a duplicate side effect.
-    """
+    """Durable execution-state baseline retained for tests and bounded fallback use."""
 
     def __init__(self, path: str | Path) -> None:
         self.path = str(path)

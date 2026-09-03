@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Any, Callable, Literal
 
 from fastapi import FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict
@@ -27,6 +27,8 @@ from .production_actions_v2 import (
     ProductionActionExecutor,
 )
 from .realtime_observability import DuckDBObservabilityEventSink
+from .run_access import RunAccessStore
+from .run_execution_store import RunExecutionStore
 
 
 class _FrozenModel(BaseModel):
@@ -49,21 +51,35 @@ class ActionExecutionAccepted(_FrozenModel):
 def create_action_capable_product_app(
     *,
     db_path: str | Path,
-    action_custody_path: str | Path,
-    action_ledger_path: str | Path,
     decision_source_factory: Callable[[], DecisionSource],
     transport_factory: Callable[[], RequestTransport],
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
+    action_custody_path: str | Path | None = None,
+    action_ledger_path: str | Path | None = None,
+    custody_store: Any | None = None,
+    action_ledger: Any | None = None,
     access_db_path: str | Path | None = None,
     execution_db_path: str | Path | None = None,
+    run_access_store: RunAccessStore | None = None,
+    execution_store: RunExecutionStore | None = None,
+    operational_close: Callable[[], None] | None = None,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    custody = PendingActionCustody(action_custody_path)
-    ledger = DuckDBActionIdempotencyLedger(action_ledger_path)
+    if custody_store is not None and action_custody_path is not None:
+        raise ValueError("provide custody_store or action_custody_path, not both")
+    if action_ledger is not None and action_ledger_path is not None:
+        raise ValueError("provide action_ledger or action_ledger_path, not both")
+    if custody_store is None and action_custody_path is None:
+        raise ValueError("action custody store or path is required")
+    if action_ledger is None and action_ledger_path is None:
+        raise ValueError("action idempotency ledger or path is required")
+
+    custody = custody_store or PendingActionCustody(action_custody_path)  # type: ignore[arg-type]
+    ledger = action_ledger or DuckDBActionIdempotencyLedger(action_ledger_path)  # type: ignore[arg-type]
     action_recovery = reconcile_orphaned_actions(custody=custody, ledger=ledger)
 
     def runtime_factory(sink):
@@ -81,6 +97,9 @@ def create_action_capable_product_app(
         context_provider=context_provider,
         access_db_path=access_db_path,
         execution_db_path=execution_db_path,
+        run_access_store=run_access_store,
+        execution_store=execution_store,
+        operational_close=operational_close,
         max_workers=max_workers,
         provider_calls_enabled=provider_calls_enabled,
         heartbeat_interval_ms=heartbeat_interval_ms,
@@ -89,7 +108,7 @@ def create_action_capable_product_app(
     controls.set_actions_enabled(actions_enabled)
     store = app.state.observability_store
     telemetry = app.state.production_telemetry
-    run_access_store = app.state.run_access_store
+    active_run_access_store: RunAccessStore = app.state.run_access_store
     access_policy = app.state.product_access_policy
     sink = DuckDBObservabilityEventSink(store, telemetry=telemetry)
     executor = ProductionActionExecutor(
@@ -108,6 +127,29 @@ def create_action_capable_product_app(
     def trusted_context(request: Request) -> AuthenticatedRuntimeContext:
         return trusted_runtime_context(context_provider, request)
 
+    def authorize_action(
+        action_id: str,
+        request: Request,
+        permission: str,
+    ) -> tuple[AuthenticatedRuntimeContext, PendingActionSafe]:
+        context = trusted_context(request)
+        require_runtime_permission(context, permission)
+        try:
+            safe = custody.get_safe(action_id)
+            ownership = active_run_access_store.get_scoped(
+                run_id=safe.origin_run_id,
+                organization_id=context.organization_id,
+            )
+            if ownership is None or ownership.user_id != context.user_id:
+                raise PermissionError("action_origin_ownership_mismatch")
+            custody.get_private_for_requester(
+                action_id=action_id,
+                requester_user_id=context.user_id,
+            )
+            return context, safe
+        except (KeyError, PermissionError) as exc:
+            raise HTTPException(status_code=404, detail="action_not_found") from exc
+
     @app.get("/api/runs/{run_id}/actions")
     def run_actions(run_id: str, request: Request) -> dict[str, object]:
         access_policy.authorize_run(request, run_id)
@@ -118,13 +160,8 @@ def create_action_capable_product_app(
 
     @app.get("/api/actions/{action_id}", response_model=PendingActionSafe)
     def action_detail(action_id: str, request: Request) -> PendingActionSafe:
-        context = trusted_context(request)
-        require_runtime_permission(context, "actions:read:self")
-        try:
-            custody.get_private_for_requester(action_id=action_id, requester_user_id=context.user_id)
-            return custody.get_safe(action_id)
-        except (KeyError, PermissionError) as exc:
-            raise HTTPException(status_code=404, detail="action_not_found") from exc
+        _, safe = authorize_action(action_id, request, "actions:read:self")
+        return safe
 
     def execute_confirmed_action(execution_run_id: str, action_id: str, prepared) -> None:
         registry = app.state.run_execution_registry
@@ -162,8 +199,7 @@ def create_action_capable_product_app(
         request: Request,
     ) -> ActionExecutionAccepted:
         del payload
-        context = trusted_context(request)
-        require_runtime_permission(context, "actions:confirm:self")
+        context, _ = authorize_action(action_id, request, "actions:confirm:self")
         if not controls.actions_enabled():
             raise HTTPException(status_code=503, detail="action_kill_switch_engaged")
 
@@ -188,7 +224,7 @@ def create_action_capable_product_app(
 
         registry = app.state.run_execution_registry
         try:
-            run_access_store.claim(
+            active_run_access_store.claim(
                 run_id=execution_run_id,
                 organization_id=context.organization_id,
                 user_id=context.user_id,

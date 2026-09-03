@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import duckdb
 
@@ -13,21 +14,11 @@ class ActionRecoveryReport:
     claimed_ledger_entries_marked_uncertain: tuple[str, ...]
 
 
-
-def reconcile_orphaned_actions(
+def _duckdb_recovery(
     *,
     custody: PendingActionCustody,
     ledger: DuckDBActionIdempotencyLedger,
 ) -> ActionRecoveryReport:
-    """Fail-safe action state left by a previous single-node product process.
-
-    A process crash can happen after custody enters EXECUTING or after the idempotency
-    claim is acquired but before the TRACTIAN response is durably classified. Startup
-    therefore converts orphaned EXECUTING custody to UNCERTAIN and any CLAIMED ledger
-    record belonging to an uncertain action to UNCERTAIN. The operation is idempotent and
-    intentionally never retries a consequential action.
-    """
-
     custody_connection = duckdb.connect(custody.path)
     try:
         custody_connection.execute("BEGIN TRANSACTION")
@@ -107,3 +98,29 @@ def reconcile_orphaned_actions(
         executing_actions_marked_uncertain=executing_action_ids,
         claimed_ledger_entries_marked_uncertain=ledger_recovered,
     )
+
+
+def reconcile_orphaned_actions(*, custody: Any, ledger: Any) -> ActionRecoveryReport:
+    """Fail-safe action recovery across qualified operational backends.
+
+    PostgreSQL stores own their recovery transaction boundaries. The legacy DuckDB baseline
+    keeps its existing recovery implementation for regression tests. No backend is allowed to
+    interpret restart as permission to retry a consequential action.
+    """
+
+    recover_custody = getattr(custody, "reconcile_executing", None)
+    recover_ledger = getattr(ledger, "reconcile_claimed_for_actions", None)
+    if callable(recover_custody) and callable(recover_ledger):
+        recovered, uncertain = recover_custody()
+        ledger_recovered = recover_ledger(uncertain)
+        return ActionRecoveryReport(
+            executing_actions_marked_uncertain=tuple(recovered),
+            claimed_ledger_entries_marked_uncertain=tuple(ledger_recovered),
+        )
+
+    if isinstance(custody, PendingActionCustody) and isinstance(
+        ledger, DuckDBActionIdempotencyLedger
+    ):
+        return _duckdb_recovery(custody=custody, ledger=ledger)
+
+    raise TypeError("action operational stores do not implement a supported recovery contract")
