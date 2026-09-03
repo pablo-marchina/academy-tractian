@@ -54,14 +54,27 @@ def _assert_public_safe_text(value: str, *, field_name: str) -> str:
     return value
 
 
-class OperationalPilotSource(_FrozenModel):
-    """Evaluator-time sanitized source used to build a blind effort-measurement packet.
+def _ticket_sha256(ticket_request: str) -> str:
+    return _canonical_sha256({"ticket_request": ticket_request})
 
-    The source contains the public ticket/request plus the already-safe terminal projection that
-    the assisted operator is allowed to review. It intentionally contains no gold/private truth,
-    expected path, reviewer identity, split or group. Split/group are derived from the frozen
-    benchmark manifest using `scenario_id`.
-    """
+
+def _assistance_sha256(
+    *,
+    terminal_decision: str,
+    terminal_message: str,
+    safe_evidence_context: Sequence[str],
+) -> str:
+    return _canonical_sha256(
+        {
+            "agent_terminal_decision": terminal_decision,
+            "agent_terminal_message": terminal_message,
+            "safe_evidence_context": list(safe_evidence_context),
+        }
+    )
+
+
+class OperationalPilotSource(_FrozenModel):
+    """Sanitized evaluator-time source for one matched manual/assisted DEV case."""
 
     schema_version: Literal["operational-pilot-source-v1"] = "operational-pilot-source-v1"
     scenario_id: str = Field(min_length=1)
@@ -91,16 +104,14 @@ class OperationalPilotSource(_FrozenModel):
 
     @property
     def ticket_sha256(self) -> str:
-        return _canonical_sha256({"ticket_request": self.ticket_request})
+        return _ticket_sha256(self.ticket_request)
 
     @property
     def assistance_sha256(self) -> str:
-        return _canonical_sha256(
-            {
-                "agent_terminal_decision": self.agent_terminal_decision,
-                "agent_terminal_message": self.agent_terminal_message,
-                "safe_evidence_context": list(self.safe_evidence_context),
-            }
+        return _assistance_sha256(
+            terminal_decision=self.agent_terminal_decision,
+            terminal_message=self.agent_terminal_message,
+            safe_evidence_context=self.safe_evidence_context,
         )
 
 
@@ -109,9 +120,25 @@ class OperationalPilotAssistance(_FrozenModel):
     terminal_message: str = Field(min_length=1)
     safe_evidence_context: tuple[str, ...]
 
+    @model_validator(mode="after")
+    def validate_public_material(self) -> "OperationalPilotAssistance":
+        _assert_public_safe_text(self.terminal_decision, field_name="terminal_decision")
+        _assert_public_safe_text(self.terminal_message, field_name="terminal_message")
+        for index, item in enumerate(self.safe_evidence_context):
+            _assert_public_safe_text(item, field_name=f"safe_evidence_context[{index}]")
+        return self
+
+    @property
+    def assistance_sha256(self) -> str:
+        return _assistance_sha256(
+            terminal_decision=self.terminal_decision,
+            terminal_message=self.terminal_message,
+            safe_evidence_context=self.safe_evidence_context,
+        )
+
 
 class OperationalPilotTask(_FrozenModel):
-    """Operator-facing task. No scenario/group/split/pair/gold metadata is present."""
+    """Single task safe to render to one operator; carries no split/group/pair/gold metadata."""
 
     task_id: str = Field(pattern=r"^ovt_[0-9a-f]{24}$")
     condition: PilotCondition
@@ -120,6 +147,7 @@ class OperationalPilotTask(_FrozenModel):
 
     @model_validator(mode="after")
     def validate_condition_projection(self) -> "OperationalPilotTask":
+        _assert_public_safe_text(self.ticket_request, field_name="ticket_request")
         if self.condition == "MANUAL" and self.assistance is not None:
             raise ValueError("MANUAL task must not contain agent assistance")
         if self.condition == "ASSISTED" and self.assistance is None:
@@ -128,6 +156,8 @@ class OperationalPilotTask(_FrozenModel):
 
 
 class OperationalPilotPacket(_FrozenModel):
+    """Host-side task collection. The collection itself is not handed wholesale to an operator."""
+
     schema_version: Literal["operational-pilot-packet-v1"] = "operational-pilot-packet-v1"
     packet_id: str = Field(pattern=r"^ovpkt_[0-9a-f]{24}$")
     protocol_id: str = Field(min_length=1)
@@ -166,7 +196,7 @@ class OperationalPilotManifestEntry(_FrozenModel):
 
 
 class OperationalPilotManifest(_FrozenModel):
-    """Evaluator-only task mapping, deliberately separate from the operator packet."""
+    """Evaluator-only mapping kept separate from the host/operator task collection."""
 
     schema_version: Literal["operational-pilot-manifest-v1"] = "operational-pilot-manifest-v1"
     packet_id: str = Field(pattern=r"^ovpkt_[0-9a-f]{24}$")
@@ -188,6 +218,7 @@ class OperationalPilotManifest(_FrozenModel):
             raise ValueError("group_ids do not match entries")
         if tuple(sorted(set(entry.pair_id for entry in self.entries))) != self.pair_ids:
             raise ValueError("pair_ids do not match entries")
+
         by_pair: dict[str, list[OperationalPilotManifestEntry]] = {}
         for entry in self.entries:
             by_pair.setdefault(entry.pair_id, []).append(entry)
@@ -196,12 +227,16 @@ class OperationalPilotManifest(_FrozenModel):
                 raise ValueError(f"pair {pair_id} must contain exactly two tasks")
             if {entry.condition for entry in pair_entries} != {"MANUAL", "ASSISTED"}:
                 raise ValueError(f"pair {pair_id} must contain MANUAL and ASSISTED tasks")
-            if len({entry.scenario_id for entry in pair_entries}) != 1:
-                raise ValueError(f"pair {pair_id} mixes scenarios")
-            if len({entry.case_id for entry in pair_entries}) != 1:
-                raise ValueError(f"pair {pair_id} mixes cases")
-            if len({entry.ticket_sha256 for entry in pair_entries}) != 1:
-                raise ValueError(f"pair {pair_id} mixes ticket material")
+            for field_name in (
+                "scenario_id",
+                "case_id",
+                "group_id",
+                "ticket_sha256",
+                "assistance_sha256",
+                "agent_runtime_seconds",
+            ):
+                if len({getattr(entry, field_name) for entry in pair_entries}) != 1:
+                    raise ValueError(f"pair {pair_id} mixes {field_name}")
         return self
 
 
@@ -249,7 +284,7 @@ class OperationalPilotCompletion(_FrozenModel):
 
 
 class OperationalEffortPair(_FrozenModel):
-    """Resolved evaluator-side timing pair. Operator identities are intentionally omitted."""
+    """Resolved evaluator-side pair. Operator identities and raw conclusion text are omitted."""
 
     schema_version: Literal["operational-effort-pair-v1"] = "operational-effort-pair-v1"
     pair_id: str = Field(pattern=r"^ovpair_[0-9a-f]{24}$")
@@ -331,14 +366,40 @@ def _split_index(
     return index, schema_version, _canonical_sha256(split_payload)
 
 
-def _pair_id(source: OperationalPilotSource, *, protocol_id: str) -> str:
+def _pair_id_from_material(
+    *,
+    protocol_id: str,
+    scenario_id: str,
+    case_id: str,
+    ticket_sha256: str,
+    assistance_sha256: str,
+) -> str:
     return "ovpair_" + _canonical_sha256(
         {
             "protocol_id": protocol_id,
-            "scenario_id": source.scenario_id,
-            "case_id": source.case_id,
-            "ticket_sha256": source.ticket_sha256,
-            "assistance_sha256": source.assistance_sha256,
+            "scenario_id": scenario_id,
+            "case_id": case_id,
+            "ticket_sha256": ticket_sha256,
+            "assistance_sha256": assistance_sha256,
+        }
+    )[:24]
+
+
+def _pair_id(source: OperationalPilotSource, *, protocol_id: str) -> str:
+    return _pair_id_from_material(
+        protocol_id=protocol_id,
+        scenario_id=source.scenario_id,
+        case_id=source.case_id,
+        ticket_sha256=source.ticket_sha256,
+        assistance_sha256=source.assistance_sha256,
+    )
+
+
+def _task_id_from_pair(*, pair_id: str, condition: PilotCondition) -> str:
+    return "ovt_" + _canonical_sha256(
+        {
+            "pair_id": pair_id,
+            "condition": condition,
         }
     )[:24]
 
@@ -349,10 +410,26 @@ def _task_id(
     protocol_id: str,
     condition: PilotCondition,
 ) -> str:
-    return "ovt_" + _canonical_sha256(
+    return _task_id_from_pair(
+        pair_id=_pair_id(source, protocol_id=protocol_id),
+        condition=condition,
+    )
+
+
+def _packet_id_from_manifest_material(
+    *,
+    protocol_id: str,
+    split_sha256: str,
+    source_identities: Sequence[tuple[str, str, str, str]],
+    shuffle_seed: int,
+) -> str:
+    return "ovpkt_" + _canonical_sha256(
         {
-            "pair_id": _pair_id(source, protocol_id=protocol_id),
-            "condition": condition,
+            "protocol_id": protocol_id,
+            "measurement_design": "INDEPENDENT_MATCHED",
+            "split_sha256": split_sha256,
+            "source_identities": sorted(source_identities),
+            "shuffle_seed": shuffle_seed,
         }
     )[:24]
 
@@ -390,6 +467,14 @@ def build_operational_pilot_packet(
         seen_case_identity.add(case_identity)
         assignments.append((source, assignment))
 
+    assignments.sort(
+        key=lambda row: (
+            row[0].scenario_id,
+            row[0].case_id,
+            row[0].ticket_sha256,
+            row[0].assistance_sha256,
+        )
+    )
     group_ids = tuple(sorted({assignment.group_id for _, assignment in assignments}))
     if len(group_ids) < minimum_distinct_groups:
         raise ValueError(
@@ -401,7 +486,7 @@ def build_operational_pilot_packet(
     for source, assignment in assignments:
         pair_id = _pair_id(source, protocol_id=protocol_id)
         for condition in ("MANUAL", "ASSISTED"):
-            task_id = _task_id(source, protocol_id=protocol_id, condition=condition)
+            task_id = _task_id_from_pair(pair_id=pair_id, condition=condition)
             assistance = None
             if condition == "ASSISTED":
                 assistance = OperationalPilotAssistance(
@@ -435,22 +520,21 @@ def build_operational_pilot_packet(
     rng.shuffle(tasks)
     canonical_entries = tuple(sorted(entries, key=lambda entry: entry.task_id))
     pair_ids = tuple(sorted({entry.pair_id for entry in canonical_entries}))
-    packet_material = {
-        "protocol_id": protocol_id,
-        "measurement_design": "INDEPENDENT_MATCHED",
-        "split_sha256": split_sha,
-        "source_identities": sorted(
-            (
-                source.scenario_id,
-                source.case_id,
-                source.ticket_sha256,
-                source.assistance_sha256,
-            )
-            for source, _ in assignments
-        ),
-        "shuffle_seed": deterministic_shuffle_seed,
-    }
-    packet_id = "ovpkt_" + _canonical_sha256(packet_material)[:24]
+    source_identities = [
+        (
+            source.scenario_id,
+            source.case_id,
+            source.ticket_sha256,
+            source.assistance_sha256,
+        )
+        for source, _ in assignments
+    ]
+    packet_id = _packet_id_from_manifest_material(
+        protocol_id=protocol_id,
+        split_sha256=split_sha,
+        source_identities=source_identities,
+        shuffle_seed=deterministic_shuffle_seed,
+    )
 
     packet = OperationalPilotPacket(
         packet_id=packet_id,
@@ -472,29 +556,93 @@ def build_operational_pilot_packet(
     return packet, manifest
 
 
-def resolve_operational_pilot(
-    *,
+def _verify_packet_manifest_integrity(
     packet: OperationalPilotPacket,
     manifest: OperationalPilotManifest,
-    completions: Sequence[OperationalPilotCompletion],
-) -> OperationalPilotResolutionReport:
+) -> None:
     if packet.packet_id != manifest.packet_id:
         raise ValueError("packet/manifest packet_id mismatch")
     if packet.protocol_id != manifest.protocol_id:
         raise ValueError("packet/manifest protocol_id mismatch")
     if packet.measurement_design != manifest.measurement_design:
         raise ValueError("packet/manifest measurement design mismatch")
+    if packet.source_count != len(manifest.pair_ids):
+        raise ValueError("packet source_count does not match manifest pairs")
+    if packet.task_count != len(manifest.entries):
+        raise ValueError("packet task_count does not match manifest entries")
 
     packet_tasks = {task.task_id: task for task in packet.tasks}
     manifest_entries = {entry.task_id: entry for entry in manifest.entries}
     if set(packet_tasks) != set(manifest_entries):
         raise ValueError("packet/manifest task sets differ")
-    for task_id, task in packet_tasks.items():
-        if task.condition != manifest_entries[task_id].condition:
-            raise ValueError(f"packet/manifest condition mismatch for {task_id}")
 
+    source_identities: set[tuple[str, str, str, str]] = set()
+    for entry in manifest.entries:
+        source_identities.add(
+            (
+                entry.scenario_id,
+                entry.case_id,
+                entry.ticket_sha256,
+                entry.assistance_sha256,
+            )
+        )
+        expected_pair_id = _pair_id_from_material(
+            protocol_id=manifest.protocol_id,
+            scenario_id=entry.scenario_id,
+            case_id=entry.case_id,
+            ticket_sha256=entry.ticket_sha256,
+            assistance_sha256=entry.assistance_sha256,
+        )
+        if entry.pair_id != expected_pair_id:
+            raise ValueError(f"manifest pair identity mismatch for {entry.task_id}")
+        expected_task_id = _task_id_from_pair(
+            pair_id=entry.pair_id,
+            condition=entry.condition,
+        )
+        if entry.task_id != expected_task_id:
+            raise ValueError(f"manifest task identity mismatch for {entry.task_id}")
+
+        task = packet_tasks[entry.task_id]
+        if task.condition != entry.condition:
+            raise ValueError(f"packet/manifest condition mismatch for {entry.task_id}")
+        if _ticket_sha256(task.ticket_request) != entry.ticket_sha256:
+            raise ValueError(f"packet ticket content hash mismatch for {entry.task_id}")
+        if entry.condition == "ASSISTED":
+            if task.assistance is None:
+                raise ValueError(f"assisted packet task missing assistance: {entry.task_id}")
+            if task.assistance.assistance_sha256 != entry.assistance_sha256:
+                raise ValueError(f"packet assistance content hash mismatch for {entry.task_id}")
+
+    expected_packet_id = _packet_id_from_manifest_material(
+        protocol_id=manifest.protocol_id,
+        split_sha256=manifest.frozen_split_sha256,
+        source_identities=tuple(source_identities),
+        shuffle_seed=packet.deterministic_shuffle_seed,
+    )
+    if packet.packet_id != expected_packet_id:
+        raise ValueError("packet identity does not match manifest content")
+
+
+def resolve_operational_pilot(
+    *,
+    packet: OperationalPilotPacket,
+    manifest: OperationalPilotManifest,
+    completions: Sequence[OperationalPilotCompletion],
+) -> OperationalPilotResolutionReport:
+    # Revalidate serialized shapes in case callers created Pydantic objects using non-validating
+    # model_copy/construct paths before invoking the resolver.
+    packet = OperationalPilotPacket.model_validate(packet.model_dump(mode="json"))
+    manifest = OperationalPilotManifest.model_validate(manifest.model_dump(mode="json"))
+    validated_completions = [
+        OperationalPilotCompletion.model_validate(row.model_dump(mode="json"))
+        for row in completions
+    ]
+    _verify_packet_manifest_integrity(packet, manifest)
+
+    packet_tasks = {task.task_id: task for task in packet.tasks}
+    manifest_entries = {entry.task_id: entry for entry in manifest.entries}
     completion_rows: dict[str, list[OperationalPilotCompletion]] = {}
-    for completion in completions:
+    for completion in validated_completions:
         if completion.packet_id != packet.packet_id:
             raise ValueError("completion packet_id mismatch")
         if completion.task_id not in packet_tasks:
