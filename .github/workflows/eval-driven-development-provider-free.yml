@@ -18,10 +18,11 @@ jobs:
           cache: pip
       - name: Install project
         run: python -m pip install -e '.[dev]'
-      - name: Eval-driven, semantic-calibration and safe-observability contract tests
+      - name: Eval-driven, operational-value, semantic-calibration and safe-observability contract tests
         run: >-
           python -m pytest -q
           tests/test_eval_driven.py
+          tests/test_operational_value.py
           tests/test_semantic_evaluation.py
           tests/test_semantic_human_calibration.py
           tests/test_observability.py
