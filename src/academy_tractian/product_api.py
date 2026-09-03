@@ -14,12 +14,23 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .evaluation import ProductionEvaluator
 from .observability import safe_run_id
-from .observability_api import create_observability_app
+from .observability_api import ObservabilityAccessPolicy, create_observability_app
 from .production_controls import ProductionControlState
 from .production_telemetry import ProductionTelemetry
 from .realtime_observability import DuckDBObservabilityEventSink, SafeObservabilityEventSink
 from .realtime_runtime import PreparedRealtimeRun, RealtimeProductionRuntime
+from .run_access import DuckDBRunAccessStore
 from .runtime import ProductionRequest
+
+
+DEFAULT_RUNTIME_PERMISSIONS = frozenset(
+    {
+        "runs:create",
+        "runs:read:self",
+        "actions:read:self",
+        "actions:confirm:self",
+    }
+)
 
 
 class _FrozenModel(BaseModel):
@@ -29,8 +40,11 @@ class _FrozenModel(BaseModel):
 class AuthenticatedRuntimeContext(_FrozenModel):
     """Trusted server-side execution context; never accepted from the run payload."""
 
+    organization_id: str = Field(default="default-organization", min_length=1)
     identity_id: str = Field(min_length=1)
     user_id: str = Field(min_length=1)
+    role: str = Field(default="operator", min_length=1, max_length=64)
+    permissions: frozenset[str] = Field(default_factory=lambda: DEFAULT_RUNTIME_PERMISSIONS)
     seed: str | None = None
 
 
@@ -52,6 +66,104 @@ class RuntimeContextProvider(Protocol):
 
 class RealtimeRuntimeFactory(Protocol):
     def __call__(self, sink: SafeObservabilityEventSink) -> RealtimeProductionRuntime: ...
+
+
+def trusted_runtime_context(
+    context_provider: RuntimeContextProvider,
+    request: Request,
+) -> AuthenticatedRuntimeContext:
+    try:
+        context = context_provider(request)
+        if not isinstance(context, AuthenticatedRuntimeContext):
+            raise TypeError("runtime context provider returned an invalid type")
+        return context
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="trusted_runtime_context_unavailable",
+        ) from exc
+
+
+def require_runtime_permission(
+    context: AuthenticatedRuntimeContext,
+    permission: str,
+) -> None:
+    if permission not in context.permissions:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="insufficient_permission",
+        )
+
+
+class ProductObservabilityAccessPolicy(ObservabilityAccessPolicy):
+    """Fail-closed run authorization over trusted identity plus persistent ownership."""
+
+    def __init__(
+        self,
+        *,
+        context_provider: RuntimeContextProvider,
+        run_access_store: DuckDBRunAccessStore,
+    ) -> None:
+        self.context_provider = context_provider
+        self.run_access_store = run_access_store
+
+    def context(self, request: Request) -> AuthenticatedRuntimeContext:
+        return trusted_runtime_context(self.context_provider, request)
+
+    def authorize_run(self, request: Request, run_id: str) -> None:
+        context = self.context(request)
+        if "runs:read:any" in context.permissions:
+            return
+
+        ownership = self.run_access_store.get(run_id)
+        if ownership is None or ownership.organization_id != context.organization_id:
+            raise HTTPException(status_code=404, detail="run_not_found")
+
+        if "runs:read:org" in context.permissions:
+            return
+        if (
+            "runs:read:self" in context.permissions
+            and ownership.user_id == context.user_id
+        ):
+            return
+        raise HTTPException(status_code=404, detail="run_not_found")
+
+    def authorize_global(self, request: Request, capability: str) -> None:
+        context = self.context(request)
+        if capability not in context.permissions:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="insufficient_permission",
+            )
+
+    def filter_runs(
+        self,
+        request: Request,
+        items: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        context = self.context(request)
+        if "runs:read:any" in context.permissions:
+            return items
+
+        ownerships = self.run_access_store.get_many(
+            str(item["run_id"]) for item in items
+        )
+        visible: list[dict[str, Any]] = []
+        for item in items:
+            ownership = ownerships.get(str(item["run_id"]))
+            if ownership is None or ownership.organization_id != context.organization_id:
+                continue
+            if "runs:read:org" in context.permissions:
+                visible.append(item)
+                continue
+            if (
+                "runs:read:self" in context.permissions
+                and ownership.user_id == context.user_id
+            ):
+                visible.append(item)
+        return visible
 
 
 class RunExecutionRegistry:
@@ -119,11 +231,19 @@ class RunExecutionRegistry:
             }
 
 
+def _default_access_db_path(db_path: str | Path) -> Path:
+    path = Path(db_path)
+    if path.suffix:
+        return path.with_name(f"{path.stem}.access{path.suffix}")
+    return path.with_name(f"{path.name}.access.duckdb")
+
+
 def create_product_app(
     *,
     db_path: str | Path,
     runtime_factory: RealtimeRuntimeFactory,
     context_provider: RuntimeContextProvider,
+    access_db_path: str | Path | None = None,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     heartbeat_interval_ms: int = 1000,
@@ -133,6 +253,10 @@ def create_product_app(
     `runtime_factory` is provider-neutral and is expected to create a fresh decision-source
     runtime per request. The provider kill switch gates construction before any provider-owned
     client can be reached. Consequential actions remain disabled by ProductionRuntimeConfig v1.
+
+    Product run reads are scoped by trusted identity and persistent ownership. The ownership
+    store is deliberately replaceable so the operational database experiment can promote
+    PostgreSQL later without weakening or rewriting the authorization boundary.
     """
 
     if not 1 <= max_workers <= 64:
@@ -145,12 +269,23 @@ def create_product_app(
     telemetry = ProductionTelemetry(heartbeat_stale_after_ms=max(1000, heartbeat_interval_ms * 3))
     controls = ProductionControlState(provider_calls_enabled=provider_calls_enabled)
     registry = RunExecutionRegistry(max_workers=max_workers)
+    run_access_store = DuckDBRunAccessStore(
+        _default_access_db_path(db_path) if access_db_path is None else access_db_path
+    )
+    access_policy = ProductObservabilityAccessPolicy(
+        context_provider=context_provider,
+        run_access_store=run_access_store,
+    )
 
     def live_operability_snapshot() -> dict[str, Any]:
         return {
             "telemetry": telemetry.snapshot(),
             "execution": registry.snapshot(),
             "controls": controls.snapshot(),
+            "access": {
+                "schema_version": "product-access-operability-v1",
+                "ready": run_access_store.ready(),
+            },
         }
 
     @asynccontextmanager
@@ -178,6 +313,7 @@ def create_product_app(
             lifespan=lifespan,
             production_telemetry=telemetry,
             live_operability_supplier=live_operability_snapshot,
+            access_policy=access_policy,
         )
     except Exception:
         executor.shutdown(wait=False, cancel_futures=True)
@@ -189,6 +325,8 @@ def create_product_app(
     app.state.run_execution_registry = registry
     app.state.production_telemetry = telemetry
     app.state.production_controls = controls
+    app.state.run_access_store = run_access_store
+    app.state.product_access_policy = access_policy
 
     def execute_prepared(run_id: str, prepared: PreparedRealtimeRun) -> None:
         registry.running(run_id)
@@ -221,15 +359,8 @@ def create_product_app(
         status_code=status.HTTP_202_ACCEPTED,
     )
     def submit_run(payload: RunSubmission, request: Request) -> RunAccepted:
-        try:
-            context = context_provider(request)
-        except HTTPException:
-            raise
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="trusted_runtime_context_unavailable",
-            ) from exc
+        context = trusted_runtime_context(context_provider, request)
+        require_runtime_permission(context, "runs:create")
 
         if not controls.provider_calls_enabled():
             raise HTTPException(
@@ -264,6 +395,18 @@ def create_product_app(
                 detail="run_start_not_persisted",
             )
 
+        try:
+            run_access_store.claim(
+                run_id=run_id,
+                organization_id=context.organization_id,
+                user_id=context.user_id,
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="run_ownership_persist_failed",
+            ) from exc
+
         telemetry.runtime_request_started(run_id=run_id)
         registry.accepted(run_id)
         try:
@@ -290,7 +433,8 @@ def create_product_app(
         )
 
     @app.get("/api/runs/{run_id}/execution")
-    def execution_status(run_id: str) -> dict[str, str]:
+    def execution_status(run_id: str, request: Request) -> dict[str, str]:
+        access_policy.authorize_run(request, run_id)
         execution_state = registry.status(run_id)
         if execution_state is None:
             raise HTTPException(status_code=404, detail="run_execution_not_found")

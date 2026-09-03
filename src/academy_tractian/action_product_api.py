@@ -14,6 +14,8 @@ from .product_api import (
     AuthenticatedRuntimeContext,
     RuntimeContextProvider,
     create_product_app,
+    require_runtime_permission,
+    trusted_runtime_context,
 )
 from .production_actions_v2 import (
     ActionAuthorizationResolver,
@@ -52,6 +54,7 @@ def create_action_capable_product_app(
     transport_factory: Callable[[], RequestTransport],
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
+    access_db_path: str | Path | None = None,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
@@ -73,6 +76,7 @@ def create_action_capable_product_app(
         db_path=db_path,
         runtime_factory=runtime_factory,
         context_provider=context_provider,
+        access_db_path=access_db_path,
         max_workers=max_workers,
         provider_calls_enabled=provider_calls_enabled,
         heartbeat_interval_ms=heartbeat_interval_ms,
@@ -81,6 +85,8 @@ def create_action_capable_product_app(
     controls.set_actions_enabled(actions_enabled)
     store = app.state.observability_store
     telemetry = app.state.production_telemetry
+    run_access_store = app.state.run_access_store
+    access_policy = app.state.product_access_policy
     sink = DuckDBObservabilityEventSink(store, telemetry=telemetry)
     executor = ProductionActionExecutor(
         custody=custody,
@@ -95,18 +101,11 @@ def create_action_capable_product_app(
     app.state.production_action_executor = executor
 
     def trusted_context(request: Request) -> AuthenticatedRuntimeContext:
-        try:
-            return context_provider(request)
-        except HTTPException:
-            raise
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="trusted_runtime_context_unavailable",
-            ) from exc
+        return trusted_runtime_context(context_provider, request)
 
     @app.get("/api/runs/{run_id}/actions")
-    def run_actions(run_id: str) -> dict[str, object]:
+    def run_actions(run_id: str, request: Request) -> dict[str, object]:
+        access_policy.authorize_run(request, run_id)
         if store.get_run(run_id) is None:
             raise HTTPException(status_code=404, detail="run_not_found")
         items = [item.model_dump(mode="json") for item in custody.list_safe_for_origin(run_id)]
@@ -115,6 +114,7 @@ def create_action_capable_product_app(
     @app.get("/api/actions/{action_id}", response_model=PendingActionSafe)
     def action_detail(action_id: str, request: Request) -> PendingActionSafe:
         context = trusted_context(request)
+        require_runtime_permission(context, "actions:read:self")
         try:
             custody.get_private_for_requester(action_id=action_id, requester_user_id=context.user_id)
             return custody.get_safe(action_id)
@@ -150,6 +150,7 @@ def create_action_capable_product_app(
     ) -> ActionExecutionAccepted:
         del payload
         context = trusted_context(request)
+        require_runtime_permission(context, "actions:confirm:self")
         if not controls.actions_enabled():
             raise HTTPException(status_code=503, detail="action_kill_switch_engaged")
 
@@ -171,6 +172,23 @@ def create_action_capable_product_app(
             if code.startswith("action_not_confirmable") or code == "action_confirmation_race_lost":
                 raise HTTPException(status_code=409, detail=code) from exc
             raise HTTPException(status_code=422, detail=code) from exc
+
+        try:
+            run_access_store.claim(
+                run_id=execution_run_id,
+                organization_id=context.organization_id,
+                user_id=context.user_id,
+            )
+        except Exception as exc:
+            custody.transition(
+                action_id=action_id,
+                expected_states=frozenset({"EXECUTING"}),
+                new_state="UNCERTAIN",
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="action_execution_ownership_persist_failed",
+            ) from exc
 
         registry = app.state.run_execution_registry
         registry.accepted(execution_run_id)
