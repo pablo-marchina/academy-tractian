@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from threading import RLock
 from typing import Any
 
 import duckdb
@@ -21,6 +22,42 @@ from .observability import (
 OBSERVABILITY_SCHEMA_VERSION = "observability-store-v1"
 
 
+class _SerializedDuckDBConnection:
+    """Own one DuckDB file handle at a time for the browser-safe read model.
+
+    DuckDB remains the analytical/evaluation store, but the product frontend performs many
+    small concurrent REST/SSE reads while realtime publication writes safe events. DuckDB 1.5
+    can otherwise race while repeatedly attaching the same file from multiple Python threads
+    (`Unique file handle conflict`). Holding this process-local lock for the lifetime of each
+    short store operation removes that file-handle race without changing persisted semantics.
+
+    Mutable multi-user operational state is not routed through this lock; it lives in the
+    PostgreSQL production stores selected by OPS-STORE-001.
+    """
+
+    def __init__(self, *, path: str, lock: RLock) -> None:
+        self._lock = lock
+        self._closed = False
+        self._lock.acquire()
+        try:
+            self._connection = duckdb.connect(path)
+        except Exception:
+            self._lock.release()
+            raise
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._connection, name)
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        try:
+            self._connection.close()
+        finally:
+            self._lock.release()
+
+
 class ObservabilityStore:
     """DuckDB-backed persistence for browser-safe observability projections only.
 
@@ -36,10 +73,11 @@ class ObservabilityStore:
                 "ObservabilityStore requires a persistent DuckDB path; ':memory:' is unsupported"
             )
         Path(self.path).parent.mkdir(parents=True, exist_ok=True)
+        self._database_lock = RLock()
         self._initialize()
 
-    def _connect(self) -> duckdb.DuckDBPyConnection:
-        return duckdb.connect(self.path)
+    def _connect(self) -> _SerializedDuckDBConnection:
+        return _SerializedDuckDBConnection(path=self.path, lock=self._database_lock)
 
     def _initialize(self) -> None:
         connection = self._connect()

@@ -123,8 +123,8 @@ export default function App() {
         <RunExplorer runs={runsQuery.data?.items ?? []} selectedRunId={historicalRunId} liveRunId={live.accepted?.run_id ?? null} loading={runsQuery.isLoading} onSelect={setHistoricalRunId} />
 
         <section className="run-strip" aria-live="polite">
-          <div><span className="metric-label">View</span><strong>{viewingHistorical ? "historical" : live.accepted ? "live" : "idle"}</strong></div>
-          <div><span className="metric-label">Stream / execution</span><strong>{viewingHistorical ? "persisted" : `${live.connection} / ${executionQuery.data?.status ?? (live.accepted ? "accepted" : "—")}`}</strong></div>
+          <div><span className="metric-label">View</span><strong>{viewingHistorical ? "HISTORICAL" : live.accepted ? "LIVE" : "IDLE"}</strong></div>
+          <div><span className="metric-label">Stream / execution</span><strong>{viewingHistorical ? "HISTORICAL" : `${live.connection.toUpperCase()} / ${executionQuery.data?.status ?? (live.accepted ? "accepted" : "—")}`}</strong></div>
           <div className="run-id-cell"><span className="metric-label">Selected safe run ID</span><strong title={selectedRunId ?? undefined}>{selectedRunId ?? "No selected run"}</strong></div>
           <div><span className="metric-label">Config</span><strong title={selectedRun?.config_hash}>{selectedRun?.config_hash?.slice(0, 12) ?? "—"}</strong></div>
         </section>

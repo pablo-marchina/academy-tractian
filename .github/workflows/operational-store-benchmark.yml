@@ -1,0 +1,94 @@
+name: operational-store-benchmark
+
+on:
+  pull_request:
+    paths:
+      - "research/operational_store/**"
+      - "tests/test_operational_store_benchmark.py"
+      - "docs/OPERATIONAL-STORE-BENCHMARK-2026-09-03.md"
+      - "pyproject.toml"
+      - ".github/workflows/operational-store-benchmark.yml"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Benchmark profile"
+        required: true
+        default: "ci"
+        type: choice
+        options:
+          - ci
+          - full
+
+jobs:
+  contract-and-postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: academy_tractian
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d academy_tractian"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      OPERATIONAL_POSTGRES_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install benchmark dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,operational-store-benchmark]"
+
+      - name: Run operational-store contract and integration tests
+        run: python -m pytest -q tests/test_operational_store_benchmark.py
+
+      - name: Run preregistered paired benchmark
+        shell: bash
+        run: |
+          PROFILE="${{ github.event.inputs.profile || 'ci' }}"
+          python -m research.operational_store.benchmark \
+            --profile "$PROFILE" \
+            --output artifacts/operational-store-benchmark.json
+
+      - name: Validate benchmark artifact contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("artifacts/operational-store-benchmark.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          assert payload["decision_id"] == "OPS-STORE-001"
+          assert payload["schema_version"] == "operational-store-benchmark-v1"
+          assert payload["candidates"]["duckdb"] is not None
+          assert payload["candidates"]["postgresql"] is not None
+          assert payload["candidates"]["duckdb"]["benchmark_valid"] is True
+          assert payload["candidates"]["postgresql"]["benchmark_valid"] is True
+          assert payload["decision"]["outcome"] in {
+              "PROMOTE_POSTGRES_OPERATIONAL",
+              "KEEP_DUCKDB_SINGLE_NODE",
+              "INCONCLUSIVE",
+          }
+          print(json.dumps(payload["decision"], indent=2, sort_keys=True))
+          PY
+
+      - name: Upload quantitative evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: operational-store-benchmark-${{ github.run_id }}
+          path: artifacts/operational-store-benchmark.json
+          if-no-files-found: error
+          retention-days: 30
