@@ -5,6 +5,7 @@ export type StreamConnectionState =
   | "connecting"
   | "live"
   | "reconnecting"
+  | "caught_up"
   | "completed"
   | "failed";
 
