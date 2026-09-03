@@ -37,6 +37,7 @@ jobs:
           --health-retries 20
     env:
       POSTGRES_ADMIN_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+      POSTGRES_OPERATIONAL_TEST_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
       ACADEMY_POSTGRES_INTERNAL_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
       ACADEMY_POSTGRES_SCOPED_DSN: postgresql://academy_e2e_scoped:academy-e2e-scoped@127.0.0.1:5432/academy_tractian
       ACADEMY_POSTGRES_SCHEMA: academy_e2e
@@ -136,6 +137,13 @@ jobs:
         working-directory: frontend
         run: npm run e2e
 
+      - name: Collect product logs into workspace
+        if: always()
+        run: |
+          mkdir -p .runtime/e2e-artifacts
+          test ! -f /tmp/academy-backend.log || cp /tmp/academy-backend.log .runtime/e2e-artifacts/backend.log
+          test ! -f /tmp/academy-frontend.log || cp /tmp/academy-frontend.log .runtime/e2e-artifacts/frontend.log
+
       - name: Upload Playwright evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -144,8 +152,7 @@ jobs:
           path: |
             frontend/playwright-report
             frontend/test-results
-            /tmp/academy-backend.log
-            /tmp/academy-frontend.log
+            .runtime/e2e-artifacts
           if-no-files-found: warn
           retention-days: 14
 
