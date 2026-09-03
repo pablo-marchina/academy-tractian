@@ -9,7 +9,7 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from .operational_value_pilot import OperationalPilotCompletion, OperationalPilotTask
+from .operational_value_pilot import OperationalPilotCompletion, OperationalPilotTask, PilotTrialStatus
 from .product_api import (
     AuthenticatedRuntimeContext,
     RuntimeContextProvider,
@@ -55,11 +55,13 @@ class PilotCompletionAccepted(_FrozenModel):
     assignment_id: str = Field(pattern=r"^ova_[0-9a-f]{24}$")
     packet_id: str = Field(pattern=r"^ovpkt_[0-9a-f]{24}$")
     task_id: str = Field(pattern=r"^ovt_[0-9a-f]{24}$")
-    status: str
+    status: PilotTrialStatus
     elapsed_seconds: float | None = Field(default=None, gt=0.0)
 
 
 class OperationalPilotCollectionStore(Protocol):
+    def reconcile_active_host_session(self, host_session_id: str) -> tuple[str, ...]: ...
+
     def get_active_for_user(
         self,
         *,
@@ -173,8 +175,10 @@ def attach_operational_value_collection_api(
     """Attach the human-effort pilot to the existing authenticated product API."""
 
     timers = timer_registry or HostMonotonicPilotTimerRegistry()
+    recovered = store.reconcile_active_host_session(timers.host_session_id)
     app.state.operational_value_collection_store = store
     app.state.operational_value_timer_registry = timers
+    app.state.operational_value_recovered_assignments = recovered
 
     def context(request: Request) -> AuthenticatedRuntimeContext:
         trusted = trusted_runtime_context(context_provider, request)
