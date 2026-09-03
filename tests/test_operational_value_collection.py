@@ -64,7 +64,14 @@ class FakeStore:
         host_session_id: str,
     ):
         del operator_ref_sha256
-        if self.active is not None or self.completed is not None:
+        if self.active is not None:
+            if (
+                self.active.organization_id == organization_id
+                and self.active.user_id == user_id
+            ):
+                return self.active
+            return None
+        if self.completed is not None:
             return None
         self.active = PilotAssignmentRecord(
             assignment_id=ASSIGNMENT_ID,
@@ -142,6 +149,65 @@ def _context(request: Request) -> AuthenticatedRuntimeContext:
         user_id=user,
         permissions=frozenset(permissions),
     )
+
+
+def test_timer_start_is_idempotent_without_resetting_authoritative_start() -> None:
+    clock = ControlledClock(30.0)
+    timers = HostMonotonicPilotTimerRegistry(clock=clock)
+    assert timers.ensure_started(ASSIGNMENT_ID) is True
+
+    clock.value = 35.0
+    assert timers.ensure_started(ASSIGNMENT_ID) is False
+
+    clock.value = 40.0
+    assert timers.finish(ASSIGNMENT_ID) == 10.0
+
+
+def test_timer_that_was_started_and_lost_cannot_be_reconstructed() -> None:
+    clock = ControlledClock(50.0)
+    timers = HostMonotonicPilotTimerRegistry(clock=clock)
+    assert timers.ensure_started(ASSIGNMENT_ID) is True
+    timers.discard(ASSIGNMENT_ID)
+    clock.value = 55.0
+
+    try:
+        timers.ensure_started(ASSIGNMENT_ID)
+    except RuntimeError as exc:
+        assert str(exc) == "operational_pilot_timer_session_lost"
+    else:
+        raise AssertionError("lost authoritative timer was unexpectedly reconstructed")
+
+
+def test_collection_api_converged_retry_keeps_original_timer_start() -> None:
+    clock = ControlledClock(60.0)
+    timers = HostMonotonicPilotTimerRegistry(clock=clock)
+    store = FakeStore()
+    app = FastAPI()
+    attach_operational_value_collection_api(
+        app,
+        context_provider=_context,
+        store=store,
+        timer_registry=timers,
+    )
+
+    with TestClient(app) as client:
+        first = client.post("/api/operational-value/tasks/next")
+        assert first.status_code == 200
+        clock.value = 64.0
+        retry = client.post("/api/operational-value/tasks/next")
+        assert retry.status_code == 200
+        assert retry.json() == first.json()
+
+        clock.value = 70.0
+        completed = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
+            json={
+                "terminal_decision": "FINAL",
+                "conclusion_summary": "Converged retry must not reset the authoritative timer.",
+            },
+        )
+        assert completed.status_code == 200
+        assert completed.json()["elapsed_seconds"] == 10.0
 
 
 def test_collection_api_owns_elapsed_time_and_hides_private_assignment_material() -> None:
