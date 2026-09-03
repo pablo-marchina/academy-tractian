@@ -190,6 +190,15 @@ def _safe_ratio(numerator: int, denominator: int) -> float | None:
     return numerator / denominator
 
 
+def _canonical_observation_order(
+    observations: Sequence[OperationalValueObservation],
+) -> list[OperationalValueObservation]:
+    return sorted(
+        observations,
+        key=lambda item: (item.group_id, item.case_id, item.scenario_id, item.response_mode),
+    )
+
+
 def _hard_failures(observation: OperationalValueObservation) -> tuple[str, ...]:
     failures: list[str] = []
     if observation.premature_action:
@@ -281,7 +290,7 @@ def build_operational_value_report(
         observations,
         frozen_split_payload=frozen_split_payload,
     )
-    ordered = sorted(observations, key=lambda item: (item.group_id, item.case_id, item.scenario_id))
+    ordered = _canonical_observation_order(observations)
     seen: set[tuple[str, str]] = set()
     for item in ordered:
         key = (item.group_id, item.case_id)
@@ -419,6 +428,7 @@ def operational_value_metric_bundle(
 
     No thresholds are chosen here. Promotion/regression thresholds remain a separate prospective
     `EvalMetricRule` decision so this adapter cannot fit acceptance criteria to observed results.
+    Canonical evidence metadata cannot be overridden by caller metadata.
     """
 
     report = build_operational_value_report(
@@ -427,7 +437,7 @@ def operational_value_metric_bundle(
     )
     records: list[EvalScenarioRecord] = []
 
-    for item in observations:
+    for item in _canonical_observation_order(observations):
         metrics: dict[str, float] = {
             "operational_conclusion_accuracy": float(item.operational_conclusion_correct),
             "escalation_correctness": float(item.escalation_required == item.escalated),
@@ -470,6 +480,12 @@ def operational_value_metric_bundle(
         "effort_measurement_designs": list(report.effort_measurement_designs),
     }
     if metadata:
+        collisions = sorted(set(metadata).intersection(bundle_metadata))
+        if collisions:
+            raise ValueError(
+                "caller metadata cannot override canonical operational-value metadata: "
+                + ", ".join(collisions)
+            )
         bundle_metadata.update(metadata)
 
     return EvalMetricBundle(
