@@ -17,7 +17,7 @@ from .operational_value_pilot import (
 from .postgres_operational import PostgresOperationalDatabase, _identifier
 
 
-_OPERATIONAL_VALUE_COLLECTION_SCHEMA_VERSION = "operational-value-collection-v2"
+_OPERATIONAL_VALUE_COLLECTION_SCHEMA_VERSION = "operational-value-collection-v3"
 
 
 class PostgresOperationalPilotStore:
@@ -56,7 +56,8 @@ class PostgresOperationalPilotStore:
                         active BOOLEAN NOT NULL DEFAULT TRUE,
                         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         PRIMARY KEY (organization_id, task_id),
-                        UNIQUE (organization_id, packet_id, display_order)
+                        UNIQUE (organization_id, packet_id, display_order),
+                        UNIQUE (organization_id, task_id, packet_id, pair_id)
                     )
                     """
                 )
@@ -80,8 +81,10 @@ class PostgresOperationalPilotStore:
                         terminal_decision TEXT,
                         conclusion_summary TEXT,
                         invalid_reason TEXT,
-                        FOREIGN KEY (organization_id, task_id)
-                            REFERENCES "{schema}".operational_pilot_tasks(organization_id, task_id)
+                        FOREIGN KEY (organization_id, task_id, packet_id, pair_id)
+                            REFERENCES "{schema}".operational_pilot_tasks(
+                                organization_id, task_id, packet_id, pair_id
+                            )
                             ON DELETE RESTRICT,
                         CHECK (elapsed_seconds IS NULL OR elapsed_seconds > 0),
                         CHECK (
@@ -370,7 +373,6 @@ class PostgresOperationalPilotStore:
                           WHERE exposure.organization_id = t.organization_id
                             AND exposure.user_id = %s
                             AND exposure.pair_id = t.pair_id
-                            AND exposure.task_id <> t.task_id
                       )
                     ORDER BY t.created_at, t.packet_id, t.display_order
                     FOR UPDATE OF t SKIP LOCKED
