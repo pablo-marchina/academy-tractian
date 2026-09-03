@@ -41,14 +41,21 @@ def _split_payload() -> dict:
     }
 
 
-def _source(scenario: str, *, decision: str = "ORIENT", message: str | None = None):
+def _source(
+    scenario: str,
+    *,
+    decision: str = "ORIENT",
+    message: str | None = None,
+    evidence: str | None = None,
+):
     return SemanticAnnotationSource(
         scenario_id=scenario,
         terminal_decision=decision,
         response_mode="complete" if decision != "ESCALATE_HUMAN" else "partial",
         terminal_message=message or f"Safe operational conclusion for {scenario}.",
         safe_evidence_context=(
-            "Asset evidence was available and the measured state is represented without private fields.",
+            evidence
+            or "Asset evidence was available and the measured state is represented without private fields.",
         ),
     )
 
@@ -67,7 +74,7 @@ def _pilot_packet():
     )
 
 
-def test_packet_is_deterministic_blind_and_escalation_aware() -> None:
+def test_packet_is_deterministic_blind_context_bound_and_escalation_aware() -> None:
     first_packet, first_manifest = _pilot_packet()
     second_packet, second_manifest = _pilot_packet()
 
@@ -77,6 +84,7 @@ def test_packet_is_deterministic_blind_and_escalation_aware() -> None:
     assert first_packet.task_count == 7  # 3 normal dimensions + 4 escalation dimensions
     assert set(first_manifest.group_ids) == {"asset-dev-a", "asset-dev-b"}
     assert first_manifest.source_split == "DEV"
+    assert all(len(task.context_sha256) == 64 for task in first_packet.tasks)
 
     reviewer_json = json.dumps(first_packet.model_dump(mode="json"), sort_keys=True).lower()
     assert "group_id" not in reviewer_json
@@ -85,6 +93,11 @@ def test_packet_is_deterministic_blind_and_escalation_aware() -> None:
     assert "gold_answer" not in reviewer_json
     assert "private_truth" not in reviewer_json
     assert "chain_of_thought" not in reviewer_json
+
+    manifest_by_task = {entry.task_id: entry for entry in first_manifest.entries}
+    for task in first_packet.tasks:
+        assert manifest_by_task[task.task_id].context_sha256 == task.context_sha256
+        assert manifest_by_task[task.task_id].output_sha256 == task.output_sha256
 
     dev_a_dimensions = {
         task.dimension for task in first_packet.tasks if task.scenario_id == "CEN-DEV-A"
@@ -98,6 +111,27 @@ def test_packet_is_deterministic_blind_and_escalation_aware() -> None:
         "customer_safe_clarity",
     }
     assert dev_b_dimensions == dev_a_dimensions | {"escalation_quality"}
+
+
+def test_same_terminal_output_under_different_evidence_gets_different_context_and_task_identity() -> None:
+    first = _source("CEN-DEV-A", evidence="Evidence state A is sanitized and sufficient.")
+    second = _source("CEN-DEV-A", evidence="Evidence state B is sanitized and contradictory.")
+    assert first.output_sha256 == second.output_sha256
+    assert first.context_sha256 != second.context_sha256
+
+    first_packet, _ = build_semantic_reviewer_packet(
+        sources=[first, _source("CEN-DEV-B")],
+        frozen_split_payload=_split_payload(),
+        purpose="PILOT",
+    )
+    second_packet, _ = build_semantic_reviewer_packet(
+        sources=[second, _source("CEN-DEV-B")],
+        frozen_split_payload=_split_payload(),
+        purpose="PILOT",
+    )
+    first_ids = {task.task_id for task in first_packet.tasks if task.scenario_id == "CEN-DEV-A"}
+    second_ids = {task.task_id for task in second_packet.tasks if task.scenario_id == "CEN-DEV-A"}
+    assert first_ids.isdisjoint(second_ids)
 
 
 def test_pilot_and_holdout_are_bound_to_frozen_group_splits() -> None:
@@ -152,7 +186,21 @@ def _label(packet, task_id: str, slot: str, score: int, reviewer: str):
     )
 
 
-def test_two_agreeing_independent_passes_create_adjudicated_reference_set() -> None:
+def test_low_score_requires_structured_defect_reason() -> None:
+    packet, _ = _pilot_packet()
+    with pytest.raises(ValueError, match="requires at least one structured defect reason"):
+        SemanticReviewerLabel(
+            packet_id=packet.packet_id,
+            task_id=packet.tasks[0].task_id,
+            rubric_sha256=packet.rubric_sha256,
+            reviewer_slot="A",
+            reviewer_ref_sha256=_reviewer_ref("reviewer-a"),
+            score=1,
+            reason_codes=(),
+        )
+
+
+def test_two_agreeing_independent_passes_create_context_bound_reference_set() -> None:
     packet, manifest = _pilot_packet()
     labels = []
     for task in packet.tasks:
@@ -176,6 +224,9 @@ def test_two_agreeing_independent_passes_create_adjudicated_reference_set() -> N
     assert report.unresolved_task_ids == ()
     assert all(reference.resolution == "AGREED" for reference in report.human_references)
     assert all(reference.annotator_count == 2 for reference in report.human_references)
+    task_contexts = {(task.scenario_id, task.dimension): task.context_sha256 for task in packet.tasks}
+    for reference in report.human_references:
+        assert reference.context_sha256 == task_contexts[(reference.scenario_id, reference.dimension)]
     populated = [metric for metric in report.inter_rater if metric.paired_tasks]
     assert populated
     assert all(metric.exact_agreement == 1.0 for metric in populated)
@@ -196,7 +247,12 @@ def test_disagreement_is_unresolved_until_distinct_third_party_adjudicates() -> 
     )
     assert unresolved.calibration_ready is False
     assert task.task_id in unresolved.unresolved_task_ids
-    assert all(reference.output_sha256 != task.output_sha256 or reference.dimension != task.dimension for reference in unresolved.human_references)
+    assert all(
+        reference.output_sha256 != task.output_sha256
+        or reference.context_sha256 != task.context_sha256
+        or reference.dimension != task.dimension
+        for reference in unresolved.human_references
+    )
 
     adjudication = SemanticHumanAdjudication(
         packet_id=packet.packet_id,
@@ -214,12 +270,13 @@ def test_disagreement_is_unresolved_until_distinct_third_party_adjudicates() -> 
     resolved_task = next(
         reference
         for reference in still_incomplete.human_references
-        if reference.output_sha256 == task.output_sha256 and reference.dimension == task.dimension
+        if reference.output_sha256 == task.output_sha256
+        and reference.context_sha256 == task.context_sha256
+        and reference.dimension == task.dimension
     )
     assert resolved_task.resolution == "ADJUDICATED"
     assert resolved_task.annotator_count == 3
     assert resolved_task.score == 1
-    # The other packet tasks have not been labelled, so the full packet remains fail-closed.
     assert still_incomplete.calibration_ready is False
 
 
@@ -251,6 +308,49 @@ def test_adjudicator_must_be_distinct_from_both_reviewers() -> None:
     )
 
     with pytest.raises(ValueError, match="adjudicator must be distinct"):
+        resolve_human_semantic_labels(
+            packet=packet,
+            manifest=manifest,
+            labels=labels,
+            adjudications=[adjudication],
+        )
+
+
+def test_adjudication_is_rejected_when_reviewers_already_agree() -> None:
+    packet, manifest = _pilot_packet()
+    task = packet.tasks[0]
+    labels = [
+        _label(packet, task.task_id, "A", 2, "reviewer-a"),
+        _label(packet, task.task_id, "B", 2, "reviewer-b"),
+    ]
+    adjudication = SemanticHumanAdjudication(
+        packet_id=packet.packet_id,
+        task_id=task.task_id,
+        rubric_sha256=packet.rubric_sha256,
+        adjudicator_ref_sha256=_reviewer_ref("reviewer-c"),
+        score=1,
+    )
+    with pytest.raises(ValueError, match="reviewers already agree"):
+        resolve_human_semantic_labels(
+            packet=packet,
+            manifest=manifest,
+            labels=labels,
+            adjudications=[adjudication],
+        )
+
+
+def test_adjudication_is_rejected_without_both_independent_labels() -> None:
+    packet, manifest = _pilot_packet()
+    task = packet.tasks[0]
+    labels = [_label(packet, task.task_id, "A", 1, "reviewer-a")]
+    adjudication = SemanticHumanAdjudication(
+        packet_id=packet.packet_id,
+        task_id=task.task_id,
+        rubric_sha256=packet.rubric_sha256,
+        adjudicator_ref_sha256=_reviewer_ref("reviewer-c"),
+        score=1,
+    )
+    with pytest.raises(ValueError, match="requires both independent reviewer labels"):
         resolve_human_semantic_labels(
             packet=packet,
             manifest=manifest,
