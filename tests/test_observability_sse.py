@@ -86,6 +86,39 @@ def test_sse_last_event_id_returns_only_missing_events(tmp_path) -> None:
     assert [record["sequence"] for record in records] == [2, 3]
 
 
+def test_sse_explicit_sequence_cursor_replays_missing_events_then_emits_caught_up(tmp_path) -> None:
+    app = create_observability_app(db_path=tmp_path / "sse.duckdb")
+    trace = _completed_trace()
+    run_id = app.state.observability_store.persist_trace(trace)
+    client = TestClient(app)
+
+    response = client.get(f"/api/stream?run_id={run_id}&after_sequence=1")
+
+    assert response.status_code == 200
+    records = _data_records(response.text)
+    trace_records = [record for record in records if "sequence" in record]
+    stream_states = [record for record in records if record.get("state") == "caught_up"]
+    assert [record["sequence"] for record in trace_records] == [2, 3]
+    assert stream_states == [
+        {"run_id": run_id, "state": "caught_up", "after_sequence": 3}
+    ]
+    assert "event: stream_state" in response.text
+
+
+def test_sse_rejects_ambiguous_header_and_explicit_cursor(tmp_path) -> None:
+    app = create_observability_app(db_path=tmp_path / "sse.duckdb")
+    run_id = app.state.observability_store.persist_trace(_completed_trace())
+    client = TestClient(app)
+
+    response = client.get(
+        f"/api/stream?run_id={run_id}&after_sequence=1",
+        headers={"Last-Event-ID": f"{run_id}:1"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "stream reconnect cursor is ambiguous"
+
+
 def test_sse_rejects_cursor_from_another_run(tmp_path) -> None:
     app = create_observability_app(db_path=tmp_path / "sse.duckdb")
     trace = _completed_trace()
