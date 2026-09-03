@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Protocol
 
 import duckdb
 
@@ -17,12 +17,33 @@ class RunOwnership:
     user_id: str
 
 
+class RunAccessStore(Protocol):
+    """Operational ownership contract used by product authorization."""
+
+    def ready(self) -> bool: ...
+
+    def claim(self, *, run_id: str, organization_id: str, user_id: str) -> bool: ...
+
+    def get(self, run_id: str) -> RunOwnership | None: ...
+
+    def get_many(self, run_ids: Iterable[str]) -> dict[str, RunOwnership]: ...
+
+    def get_scoped(self, *, run_id: str, organization_id: str) -> RunOwnership | None: ...
+
+    def get_many_scoped(
+        self,
+        *,
+        run_ids: Iterable[str],
+        organization_id: str,
+    ) -> dict[str, RunOwnership]: ...
+
+
 class DuckDBRunAccessStore:
     """Persistent ownership index for product authorization.
 
-    This store is intentionally separate from the browser-safe observability read model.
-    It is a replaceable operational boundary so the DuckDB-vs-PostgreSQL production
-    decision can be evaluated without coupling API authorization to one database engine.
+    This remains the test/bounded baseline implementation. The product authorization layer
+    consumes ``RunAccessStore`` so a production backend can provide DB-native tenant scoping
+    without changing route semantics.
     """
 
     def __init__(self, path: str | Path) -> None:
@@ -167,3 +188,21 @@ class DuckDBRunAccessStore:
             }
         finally:
             connection.close()
+
+    def get_scoped(self, *, run_id: str, organization_id: str) -> RunOwnership | None:
+        item = self.get(run_id)
+        if item is None or item.organization_id != organization_id:
+            return None
+        return item
+
+    def get_many_scoped(
+        self,
+        *,
+        run_ids: Iterable[str],
+        organization_id: str,
+    ) -> dict[str, RunOwnership]:
+        return {
+            run_id: item
+            for run_id, item in self.get_many(run_ids).items()
+            if item.organization_id == organization_id
+        }
