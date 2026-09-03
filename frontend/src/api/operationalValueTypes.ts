@@ -35,7 +35,6 @@ export interface OperationalPilotCompletionAccepted {
   packet_id: string;
   task_id: string;
   status: "VALID" | "INTERRUPTED" | "TECHNICAL_FAILURE" | "WITHDRAWN";
-  elapsed_seconds: number | null;
 }
 
 export interface OperationalPilotValidSubmission {
