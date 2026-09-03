@@ -12,6 +12,10 @@ from .eval_driven import EvalMetricBundle, EvalScenarioRecord
 
 
 EvaluationSplit = Literal["DEV", "VALIDATION"]
+EffortMeasurementDesign = Literal[
+    "INDEPENDENT_MATCHED",
+    "COUNTERBALANCED_CROSSOVER",
+]
 
 
 class _FrozenModel(BaseModel):
@@ -22,9 +26,14 @@ class OperationalValueObservation(_FrozenModel):
     """Evaluator-side per-ticket outcome and measured human-effort observation.
 
     This contract deliberately carries only outcome labels and measured durations. It does not
-    carry expected/gold answer text, private trajectories, prompts, chain-of-thought, or raw
-    provider material. `LOCKED_TEST` is intentionally not an accepted split in this prospective
-    development/calibration contract.
+    carry expected/gold answer text, private trajectories, prompts, chain-of-thought, reviewer
+    identity, or raw provider material. `LOCKED_TEST` is intentionally not an accepted split in
+    this prospective development/calibration contract.
+
+    Human-effort values must be paired by case under an explicit, preregistered measurement
+    protocol. `INDEPENDENT_MATCHED` means independent operators measure manual and assisted arms
+    for the same/matched case. `COUNTERBALANCED_CROSSOVER` means order/case assignment is balanced
+    prospectively so learning/order effects are not silently treated as agent value.
     """
 
     schema_version: Literal["operational-value-observation-v1"] = "operational-value-observation-v1"
@@ -45,15 +54,30 @@ class OperationalValueObservation(_FrozenModel):
 
     manual_baseline_seconds: float | None = Field(default=None, gt=0.0)
     assisted_human_seconds: float | None = Field(default=None, ge=0.0)
+    effort_protocol_id: str | None = Field(default=None, min_length=1)
+    effort_measurement_design: EffortMeasurementDesign | None = None
     agent_runtime_seconds: float | None = Field(default=None, ge=0.0)
 
     @model_validator(mode="after")
     def validate_measurement_contract(self) -> "OperationalValueObservation":
         baseline_present = self.manual_baseline_seconds is not None
         assisted_present = self.assisted_human_seconds is not None
+        effort_present = baseline_present or assisted_present
         if baseline_present != assisted_present:
             raise ValueError(
                 "manual_baseline_seconds and assisted_human_seconds must be supplied as a paired measurement"
+            )
+        if effort_present and (
+            self.effort_protocol_id is None or self.effort_measurement_design is None
+        ):
+            raise ValueError(
+                "paired human-effort measurements require effort_protocol_id and effort_measurement_design"
+            )
+        if not effort_present and (
+            self.effort_protocol_id is not None or self.effort_measurement_design is not None
+        ):
+            raise ValueError(
+                "effort protocol metadata must not be supplied without paired human-effort measurements"
             )
         if self.escalated and self.handoff_ready_to_continue is None:
             raise ValueError("escalated observations require handoff_ready_to_continue")
@@ -86,6 +110,8 @@ class OperationalValueReport(_FrozenModel):
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     ticket_count: int = Field(ge=1)
     source_splits: tuple[EvaluationSplit, ...]
+    effort_protocol_ids: tuple[str, ...]
+    effort_measurement_designs: tuple[EffortMeasurementDesign, ...]
 
     operational_conclusion_accuracy: float = Field(ge=0.0, le=1.0)
     evidence_correctness_sample_count: int = Field(ge=0)
@@ -108,8 +134,8 @@ class OperationalValueReport(_FrozenModel):
 
     paired_effort_sample_count: int = Field(ge=0)
     effort_sample_coverage_rate: float = Field(ge=0.0, le=1.0)
-    manual_baseline_minutes_per_ticket: float | None = None
-    human_review_minutes_per_ticket: float | None = None
+    manual_baseline_minutes_per_ticket: float | None = Field(default=None, ge=0.0)
+    human_review_minutes_per_ticket: float | None = Field(default=None, ge=0.0)
     engineer_minutes_saved_per_ticket: float | None = None
     engineer_minutes_saved_total: float | None = None
     tickets_per_engineer_hour: float | None = Field(default=None, gt=0.0)
@@ -259,6 +285,18 @@ def build_operational_value_report(
         dataset_sha256=dataset_sha,
         ticket_count=count,
         source_splits=tuple(sorted({item.split for item in ordered})),
+        effort_protocol_ids=tuple(
+            sorted({item.effort_protocol_id for item in effort if item.effort_protocol_id is not None})
+        ),
+        effort_measurement_designs=tuple(
+            sorted(
+                {
+                    item.effort_measurement_design
+                    for item in effort
+                    if item.effort_measurement_design is not None
+                }
+            )
+        ),
         operational_conclusion_accuracy=conclusion_accuracy,
         evidence_correctness_sample_count=len(evidence_values),
         evidence_correctness_rate=evidence_rate,
@@ -345,6 +383,8 @@ def operational_value_metric_bundle(
         "ticket_count": report.ticket_count,
         "paired_effort_sample_count": report.paired_effort_sample_count,
         "effort_sample_coverage_rate": report.effort_sample_coverage_rate,
+        "effort_protocol_ids": list(report.effort_protocol_ids),
+        "effort_measurement_designs": list(report.effort_measurement_designs),
     }
     if metadata:
         bundle_metadata.update(metadata)
