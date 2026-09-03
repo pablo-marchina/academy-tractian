@@ -18,7 +18,14 @@ jobs:
           cache: pip
       - name: Install project
         run: python -m pip install -e '.[dev]'
-      - name: Eval-driven and safe-observability contract tests
-        run: python -m pytest -q tests/test_eval_driven.py tests/test_observability.py
-      - name: Compile comparison CLI
-        run: python -m py_compile scripts/eval_driven_compare.py
+      - name: Eval-driven, semantic-calibration and safe-observability contract tests
+        run: >-
+          python -m pytest -q
+          tests/test_eval_driven.py
+          tests/test_semantic_evaluation.py
+          tests/test_observability.py
+      - name: Compile evaluation CLIs
+        run: >-
+          python -m py_compile
+          scripts/eval_driven_compare.py
+          scripts/semantic_eval_calibrate.py
