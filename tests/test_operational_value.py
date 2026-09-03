@@ -12,6 +12,10 @@ from academy_tractian.operational_value import (
 )
 
 
+PROTOCOL_ID = "engineer-effort-pilot-v1"
+DESIGN = "INDEPENDENT_MATCHED"
+
+
 def _observations() -> list[OperationalValueObservation]:
     return [
         OperationalValueObservation(
@@ -27,6 +31,8 @@ def _observations() -> list[OperationalValueObservation]:
             auto_resolved=True,
             manual_baseline_seconds=600.0,
             assisted_human_seconds=0.0,
+            effort_protocol_id=PROTOCOL_ID,
+            effort_measurement_design=DESIGN,
             agent_runtime_seconds=5.0,
         ),
         OperationalValueObservation(
@@ -42,6 +48,8 @@ def _observations() -> list[OperationalValueObservation]:
             handoff_ready_to_continue=True,
             manual_baseline_seconds=900.0,
             assisted_human_seconds=180.0,
+            effort_protocol_id=PROTOCOL_ID,
+            effort_measurement_design=DESIGN,
             agent_runtime_seconds=8.0,
         ),
         OperationalValueObservation(
@@ -58,6 +66,8 @@ def _observations() -> list[OperationalValueObservation]:
             unsupported_conclusion=True,
             manual_baseline_seconds=600.0,
             assisted_human_seconds=300.0,
+            effort_protocol_id=PROTOCOL_ID,
+            effort_measurement_design=DESIGN,
             agent_runtime_seconds=10.0,
         ),
         OperationalValueObservation(
@@ -79,6 +89,8 @@ def test_report_makes_operational_correctness_and_engineer_value_explicit() -> N
 
     assert report.ticket_count == 4
     assert report.source_splits == ("DEV", "VALIDATION")
+    assert report.effort_protocol_ids == (PROTOCOL_ID,)
+    assert report.effort_measurement_designs == (DESIGN,)
     assert report.operational_conclusion_accuracy == pytest.approx(0.75)
     assert report.evidence_correctness_sample_count == 3
     assert report.evidence_correctness_rate == pytest.approx(2 / 3)
@@ -133,6 +145,8 @@ def test_missing_effort_measurements_remain_unavailable_not_imputed() -> None:
 
     assert report.paired_effort_sample_count == 0
     assert report.effort_sample_coverage_rate == 0.0
+    assert report.effort_protocol_ids == ()
+    assert report.effort_measurement_designs == ()
     assert report.manual_baseline_minutes_per_ticket is None
     assert report.human_review_minutes_per_ticket is None
     assert report.engineer_minutes_saved_per_ticket is None
@@ -140,7 +154,7 @@ def test_missing_effort_measurements_remain_unavailable_not_imputed() -> None:
     assert report.tickets_per_engineer_hour is None
 
 
-def test_effort_measurement_must_be_paired_and_auto_resolution_cannot_hide_human_work() -> None:
+def test_effort_measurement_requires_pair_protocol_and_design() -> None:
     with pytest.raises(ValidationError):
         OperationalValueObservation(
             scenario_id="scenario-a",
@@ -164,9 +178,41 @@ def test_effort_measurement_must_be_paired_and_auto_resolution_cannot_hide_human
             operational_conclusion_correct=True,
             escalation_required=False,
             escalated=False,
+            manual_baseline_seconds=600.0,
+            assisted_human_seconds=120.0,
+        )
+
+    with pytest.raises(ValidationError):
+        OperationalValueObservation(
+            scenario_id="scenario-c",
+            group_id="group-c",
+            case_id="case-c",
+            split="DEV",
+            response_mode="complete",
+            operational_conclusion_correct=True,
+            escalation_required=False,
+            escalated=False,
+            effort_protocol_id=PROTOCOL_ID,
+            effort_measurement_design=DESIGN,
+        )
+
+
+def test_auto_resolution_cannot_hide_human_work() -> None:
+    with pytest.raises(ValidationError):
+        OperationalValueObservation(
+            scenario_id="scenario-a",
+            group_id="group-a",
+            case_id="case-a",
+            split="DEV",
+            response_mode="complete",
+            operational_conclusion_correct=True,
+            escalation_required=False,
+            escalated=False,
             auto_resolved=True,
             manual_baseline_seconds=600.0,
             assisted_human_seconds=30.0,
+            effort_protocol_id=PROTOCOL_ID,
+            effort_measurement_design=DESIGN,
         )
 
 
@@ -224,6 +270,8 @@ def test_metric_bundle_uses_existing_group_aware_edd_and_preserves_hard_failures
     assert bundle.metadata["contract"] == "operational-value-v1"
     assert bundle.metadata["source_splits"] == ["DEV", "VALIDATION"]
     assert bundle.metadata["effort_sample_coverage_rate"] == pytest.approx(0.75)
+    assert bundle.metadata["effort_protocol_ids"] == [PROTOCOL_ID]
+    assert bundle.metadata["effort_measurement_designs"] == [DESIGN]
     assert bundle.metadata["experiment_id"] == "value-exp-001"
 
     by_case = {record.case_id: record for record in bundle.records}
@@ -251,6 +299,8 @@ def test_incorrect_auto_resolution_is_a_hard_failure_without_weighted_compensati
         auto_resolved=True,
         manual_baseline_seconds=600.0,
         assisted_human_seconds=0.0,
+        effort_protocol_id=PROTOCOL_ID,
+        effort_measurement_design=DESIGN,
     )
 
     bundle = operational_value_metric_bundle(
@@ -260,6 +310,30 @@ def test_incorrect_auto_resolution_is_a_hard_failure_without_weighted_compensati
 
     assert bundle.records[0].metrics["useful_auto_resolution_rate"] == 0.0
     assert "INCORRECT_AUTO_RESOLUTION" in bundle.records[0].hard_gate_failures
+
+
+def test_negative_engineer_minutes_saved_is_preserved_as_a_real_regression() -> None:
+    observation = OperationalValueObservation(
+        scenario_id="scenario-a",
+        group_id="group-a",
+        case_id="case-a",
+        split="DEV",
+        response_mode="escalation",
+        operational_conclusion_correct=True,
+        escalation_required=True,
+        escalated=True,
+        handoff_ready_to_continue=True,
+        manual_baseline_seconds=120.0,
+        assisted_human_seconds=180.0,
+        effort_protocol_id=PROTOCOL_ID,
+        effort_measurement_design="COUNTERBALANCED_CROSSOVER",
+    )
+
+    report = build_operational_value_report([observation])
+    bundle = operational_value_metric_bundle(config_id="candidate-v1", observations=[observation])
+
+    assert report.engineer_minutes_saved_per_ticket == pytest.approx(-1.0)
+    assert bundle.records[0].metrics["engineer_minutes_saved"] == pytest.approx(-1.0)
 
 
 def test_dataset_hash_is_deterministic_and_contract_contains_no_raw_or_gold_material() -> None:
@@ -286,5 +360,7 @@ def test_dataset_hash_is_deterministic_and_contract_contains_no_raw_or_gold_mate
         "authorization",
         "api_key",
         "user_id",
+        "reviewer_name",
+        "reviewer_email",
     ):
         assert forbidden not in serialized
