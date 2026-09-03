@@ -1,0 +1,41 @@
+name: duckdb-operational-diagnostic
+
+on:
+  push:
+    branches:
+      - exp/p0-duckdb-concurrency-diagnostic
+    paths:
+      - "scripts/diagnose_duckdb_operational_concurrency.py"
+      - ".github/workflows/duckdb-operational-diagnostic.yml"
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install production dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run direct production-store diagnostic
+        run: |
+          python scripts/diagnose_duckdb_operational_concurrency.py \
+            --operations-per-worker 50 \
+            --output artifacts/duckdb-operational-diagnostic.json
+
+      - name: Upload diagnostic artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: duckdb-operational-diagnostic-${{ github.run_id }}
+          path: artifacts/duckdb-operational-diagnostic.json
+          if-no-files-found: error
+          retention-days: 30
