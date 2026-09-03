@@ -76,6 +76,7 @@ A candidate is **ineligible for promotion** if any applicable hard gate fails:
 
 | Gate | Required |
 |---|---:|
+| unexpected operational errors inside the tested envelope | `0` |
 | conflicting ownership takeover | `0` |
 | duplicate logical ownership creation | `0` |
 | lost committed operational rows | `0` |
@@ -185,16 +186,17 @@ Secondary engineering evidence:
 1. Validate benchmark integrity.
 2. Apply hard gates before looking at aggregate speed.
 3. Remove candidates that fail a hard gate.
-4. Compare remaining candidates on the Pareto frontier of:
-   - correctness/safety;
-   - concurrent error/conflict rate;
-   - p95 latency;
-   - throughput;
-   - operational complexity.
-5. Promote PostgreSQL only if it materially improves the production-relevant frontier enough to justify the extra dependency/service.
-6. If the evidence is mixed or environment validity is insufficient, return `INCONCLUSIVE`; do not migrate by intuition.
+4. If only PostgreSQL remains eligible: `PROMOTE_POSTGRES_OPERATIONAL`.
+5. If only DuckDB remains eligible: `KEEP_DUCKDB_SINGLE_NODE`.
+6. If neither remains eligible or the experiment is invalid: `INCONCLUSIVE`.
+7. If both remain eligible, PostgreSQL is promoted only when at least one preregistered materiality condition is met **without creating a material regression**:
+   - at any concurrency `>1`, DuckDB has a nonzero operational error rate and PostgreSQL has zero; or
+   - at concurrency `25`, PostgreSQL lifecycle p95 is at least `20%` lower (`<= 0.80 × DuckDB p95`) while PostgreSQL throughput is at least `90%` of DuckDB throughput; or
+   - at concurrency `25`, PostgreSQL throughput is at least `25%` higher (`>= 1.25 × DuckDB throughput`) while PostgreSQL lifecycle p95 is no worse than `110%` of DuckDB p95.
+8. PostgreSQL single-user lifecycle p95 must be no worse than `2.0 ×` DuckDB single-user p95 for a performance-based promotion. If that guardrail fails, the outcome is `INCONCLUSIVE` unless DuckDB failed a hard gate.
+9. If both pass hard gates and no materiality condition is met, return `KEEP_DUCKDB_SINGLE_NODE`; the extra service/dependency is not justified for the bounded target.
 
-A simple weighted score must not override hard gates or a dominated Pareto position.
+A simple weighted score must not override hard gates, the preregistered thresholds, or a dominated Pareto position.
 
 ## 11. Promotion boundary
 
