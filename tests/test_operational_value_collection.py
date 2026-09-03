@@ -137,6 +137,37 @@ class FakeStore:
         self.active = None
         return self.completed
 
+    def terminate_active(
+        self,
+        *,
+        assignment_id: str,
+        organization_id: str,
+        user_id: str,
+        terminal_status: str,
+    ) -> OperationalPilotCompletion:
+        if (
+            self.active is None
+            or self.active.assignment_id != assignment_id
+            or self.active.organization_id != organization_id
+            or self.active.user_id != user_id
+        ):
+            raise KeyError(assignment_id)
+        if terminal_status == "INTERRUPTED":
+            invalid_reason = "operator_interrupted"
+        elif terminal_status == "WITHDRAWN":
+            invalid_reason = "operator_withdrew"
+        else:
+            raise ValueError("unsupported_operational_pilot_human_termination_status")
+        self.completed = OperationalPilotCompletion(
+            packet_id=self.active.packet_id,
+            task_id=self.active.task.task_id,
+            operator_ref_sha256=self.active.operator_ref_sha256,
+            status=terminal_status,  # type: ignore[arg-type]
+            invalid_reason=invalid_reason,
+        )
+        self.active = None
+        return self.completed
+
 
 def _context(request: Request) -> AuthenticatedRuntimeContext:
     user = request.headers.get("x-test-user", "user-a")
@@ -289,6 +320,75 @@ def test_collection_rejects_client_elapsed_and_requires_explicit_permission() ->
         assert tampered.status_code == 422
         assert store.completed is None
         assert timers_still_active(app, ASSIGNMENT_ID)
+
+
+def test_human_termination_is_server_classified_and_never_persists_elapsed_time() -> None:
+    clock = ControlledClock(200.0)
+    timers = HostMonotonicPilotTimerRegistry(clock=clock)
+    store = FakeStore()
+    app = FastAPI()
+    attach_operational_value_collection_api(
+        app,
+        context_provider=_context,
+        store=store,
+        timer_registry=timers,
+    )
+
+    with TestClient(app) as client:
+        assert client.post("/api/operational-value/tasks/next").status_code == 200
+        clock.value = 240.0
+        terminated = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/terminate",
+            json={"status": "WITHDRAWN"},
+        )
+        assert terminated.status_code == 200
+        assert terminated.json()["status"] == "WITHDRAWN"
+        assert terminated.json()["elapsed_seconds"] is None
+        assert store.completed is not None
+        assert store.completed.status == "WITHDRAWN"
+        assert store.completed.elapsed_seconds is None
+        assert store.completed.terminal_decision is None
+        assert store.completed.conclusion_summary is None
+        assert store.completed.invalid_reason == "operator_withdrew"
+        assert not timers.has(ASSIGNMENT_ID)
+
+
+def test_human_termination_rejects_technical_status_tampering_and_wrong_owner() -> None:
+    timers = HostMonotonicPilotTimerRegistry(clock=ControlledClock(300.0))
+    store = FakeStore()
+    app = FastAPI()
+    attach_operational_value_collection_api(
+        app,
+        context_provider=_context,
+        store=store,
+        timer_registry=timers,
+    )
+
+    with TestClient(app) as client:
+        assert client.post("/api/operational-value/tasks/next").status_code == 200
+        wrong_owner = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/terminate",
+            headers={"x-test-user": "other-user"},
+            json={"status": "INTERRUPTED"},
+        )
+        assert wrong_owner.status_code == 404
+        assert timers.has(ASSIGNMENT_ID)
+
+        forged = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/terminate",
+            json={"status": "TECHNICAL_FAILURE"},
+        )
+        assert forged.status_code == 422
+        assert store.completed is None
+        assert timers.has(ASSIGNMENT_ID)
+
+        tampered = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/terminate",
+            json={"status": "INTERRUPTED", "elapsed_seconds": 0.001},
+        )
+        assert tampered.status_code == 422
+        assert store.completed is None
+        assert timers.has(ASSIGNMENT_ID)
 
 
 def timers_still_active(app: FastAPI, assignment_id: str) -> bool:
