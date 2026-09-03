@@ -57,11 +57,12 @@ class PilotTerminationSubmission(_FrozenModel):
 
 
 class PilotCompletionAccepted(_FrozenModel):
+    """Participant-safe acknowledgement; measured duration remains evaluator/private state."""
+
     assignment_id: str = Field(pattern=r"^ova_[0-9a-f]{24}$")
     packet_id: str = Field(pattern=r"^ovpkt_[0-9a-f]{24}$")
     task_id: str = Field(pattern=r"^ovt_[0-9a-f]{24}$")
     status: PilotTrialStatus
-    elapsed_seconds: float | None = Field(default=None, gt=0.0)
 
 
 class OperationalPilotCollectionStore(Protocol):
@@ -364,7 +365,6 @@ def attach_operational_value_collection_api(
             packet_id=completion.packet_id,
             task_id=completion.task_id,
             status=completion.status,
-            elapsed_seconds=completion.elapsed_seconds,
         )
 
     @app.post(
@@ -396,7 +396,6 @@ def attach_operational_value_collection_api(
             packet_id=completion.packet_id,
             task_id=completion.task_id,
             status=completion.status,
-            elapsed_seconds=None,
         )
 
     return timers
