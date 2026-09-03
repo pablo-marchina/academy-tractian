@@ -26,11 +26,13 @@ jobs:
           tests/test_semantic_human_calibration.py
           tests/test_adaptive_policy.py
           tests/test_adaptive_policy_edd.py
+          tests/test_adaptive_experiment_preflight.py
           tests/test_observability.py
-      - name: Compile evaluation CLIs and adaptive candidate module
+      - name: Compile evaluation CLIs and adaptive candidate modules
         run: >-
           python -m py_compile
           scripts/eval_driven_compare.py
           scripts/semantic_eval_calibrate.py
           scripts/semantic_human_calibration.py
           src/academy_tractian/adaptive_policy.py
+          src/academy_tractian/adaptive_experiment_preflight.py
