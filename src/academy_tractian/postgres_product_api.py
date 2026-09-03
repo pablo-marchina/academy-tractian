@@ -9,6 +9,8 @@ from research.e2.controller import DecisionSource
 from research.e2.transport import RequestTransport
 
 from .action_product_api import create_action_capable_product_app
+from .operational_value_collection import attach_operational_value_collection_api
+from .operational_value_pilot import OperationalPilotManifest, OperationalPilotPacket
 from .postgres_action_operational import (
     PostgresActionIdempotencyLedger,
     PostgresPendingActionCustody,
@@ -18,12 +20,20 @@ from .postgres_operational import (
     PostgresRunAccessStore,
     PostgresRunExecutionStore,
 )
+from .postgres_operational_value import PostgresOperationalPilotStore
 from .product_api import RuntimeContextProvider
 from .production_actions_v2 import ActionAuthorizationResolver
 
 
 def _required_tables_ready(database: PostgresOperationalDatabase) -> bool:
-    names = ("run_ownership", "run_executions", "pending_actions", "action_claims")
+    names = (
+        "run_ownership",
+        "run_executions",
+        "pending_actions",
+        "action_claims",
+        "operational_pilot_tasks",
+        "operational_pilot_assignments",
+    )
     with database.internal_pool.connection() as connection:
         rows = connection.execute(
             """
@@ -54,8 +64,43 @@ def initialize_postgres_operational_schema(
     try:
         PostgresPendingActionCustody(database, initialize=True)
         PostgresActionIdempotencyLedger(database, initialize=True)
-        if not database.ready() or not _required_tables_ready(database):
+        pilot_store = PostgresOperationalPilotStore(database, initialize=True)
+        if (
+            not database.ready()
+            or not pilot_store.ready()
+            or not _required_tables_ready(database)
+        ):
             raise RuntimeError("postgres_operational_schema_not_ready_after_initialize")
+    finally:
+        database.close()
+
+
+def register_postgres_operational_pilot_packet(
+    *,
+    internal_dsn: str,
+    scoped_dsn: str,
+    organization_id: str,
+    packet: OperationalPilotPacket,
+    manifest: OperationalPilotManifest,
+    schema: str = "academy_operational",
+) -> None:
+    """Trusted evaluator/admin bootstrap. The manifest is never attached to the serving API."""
+
+    database = PostgresOperationalDatabase(
+        internal_dsn=internal_dsn,
+        scoped_dsn=scoped_dsn,
+        schema=schema,
+        initialize=False,
+    )
+    try:
+        store = PostgresOperationalPilotStore(database, initialize=False)
+        if not database.ready() or not store.ready() or not _required_tables_ready(database):
+            raise RuntimeError("postgres_operational_schema_not_ready")
+        store.register_packet(
+            organization_id=organization_id,
+            packet=packet,
+            manifest=manifest,
+        )
     finally:
         database.close()
 
@@ -93,7 +138,12 @@ def create_postgres_action_capable_product_app(
     try:
         custody = PostgresPendingActionCustody(database, initialize=initialize_schema)
         ledger = PostgresActionIdempotencyLedger(database, initialize=initialize_schema)
-        if not database.ready() or not _required_tables_ready(database):
+        pilot_store = PostgresOperationalPilotStore(database, initialize=initialize_schema)
+        if (
+            not database.ready()
+            or not pilot_store.ready()
+            or not _required_tables_ready(database)
+        ):
             raise RuntimeError("postgres_operational_schema_not_ready")
         app = create_action_capable_product_app(
             db_path=db_path,
@@ -111,10 +161,16 @@ def create_postgres_action_capable_product_app(
             actions_enabled=actions_enabled,
             heartbeat_interval_ms=heartbeat_interval_ms,
         )
+        attach_operational_value_collection_api(
+            app,
+            context_provider=context_provider,
+            store=pilot_store,
+        )
     except Exception:
         database.close()
         raise
 
     app.state.postgres_operational_database = database
+    app.state.operational_value_collection_store = pilot_store
     app.state.operational_backend = "postgresql"
     return app
