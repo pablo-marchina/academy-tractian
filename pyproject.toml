@@ -12,6 +12,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.28,<1"]
+operational-store-benchmark = ["psycopg[binary,pool]>=3.2,<4"]
 
 [build-system]
 requires = ["hatchling"]
