@@ -9,6 +9,24 @@ import {
   type StreamConnectionState,
 } from "../state/runEvents";
 
+interface StreamStateMessage {
+  run_id: string;
+  state: "caught_up";
+  after_sequence: number;
+}
+
+function parseStreamState(value: string): StreamStateMessage {
+  const parsed = JSON.parse(value) as Partial<StreamStateMessage>;
+  if (
+    typeof parsed.run_id !== "string" ||
+    parsed.state !== "caught_up" ||
+    typeof parsed.after_sequence !== "number"
+  ) {
+    throw new Error("invalid_stream_state");
+  }
+  return parsed as StreamStateMessage;
+}
+
 function parseSafeEvent(value: string): SafeEvent {
   const parsed = JSON.parse(value) as Partial<SafeEvent>;
   if (
@@ -67,13 +85,27 @@ export function useLiveRun(): LiveRunState {
 
       source.onopen = () => {
         setError(null);
-        setConnection("live");
+        setConnection((current) => (current === "reconnecting" ? current : "live"));
       };
+
+      source.addEventListener("stream_state", (message) => {
+        try {
+          const state = parseStreamState((message as MessageEvent<string>).data);
+          if (state.run_id !== run.run_id) throw new Error("cross_run_stream_state_rejected");
+          setConnection("caught_up");
+        } catch (cause) {
+          source.close();
+          if (sourceRef.current === source) sourceRef.current = null;
+          setConnection("failed");
+          setError(cause instanceof Error ? cause.message : "invalid_stream_state");
+        }
+      });
 
       source.addEventListener("trace_event", (message) => {
         try {
           const incoming = parseSafeEvent((message as MessageEvent<string>).data);
           if (incoming.run_id !== run.run_id) throw new Error("cross_run_event_rejected");
+          setConnection((current) => (current === "caught_up" ? "live" : current));
           setEvents((current) => {
             const next = mergeSafeEvent(current, incoming);
             if (isRunFinished(next)) {
