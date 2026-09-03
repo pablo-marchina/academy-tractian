@@ -1,0 +1,39 @@
+name: frontend-lockfile-generation
+
+on:
+  push:
+    branches:
+      - feat/p0-frontend-deterministic-lockfile
+    paths:
+      - "frontend/package.json"
+      - ".github/workflows/frontend-lockfile-generation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Generate npm lockfile only
+        working-directory: frontend
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Validate lockfile is complete
+        working-directory: frontend
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Upload generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-package-lock-${{ github.run_id }}
+          path: frontend/package-lock.json
+          if-no-files-found: error
+          retention-days: 7
