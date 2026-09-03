@@ -18,6 +18,9 @@ from .postgres_operational import PostgresOperationalDatabase, _identifier
 
 
 _OPERATIONAL_VALUE_COLLECTION_SCHEMA_VERSION = "operational-value-collection-v4"
+_TASK_PAIR_CONSTRAINT = "operational_pilot_tasks_pair_binding_v4"
+_ASSIGNMENT_PAIR_FK = "operational_pilot_assignments_task_pair_fkey_v4"
+_ASSIGNMENT_STATE_CONSTRAINT = "operational_pilot_assignment_state_shape_v4"
 
 
 class PostgresOperationalPilotStore:
@@ -57,7 +60,8 @@ class PostgresOperationalPilotStore:
                         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         PRIMARY KEY (organization_id, task_id),
                         UNIQUE (organization_id, packet_id, display_order),
-                        UNIQUE (organization_id, task_id, packet_id, pair_id)
+                        CONSTRAINT {_TASK_PAIR_CONSTRAINT}
+                            UNIQUE (organization_id, task_id, packet_id, pair_id)
                     )
                     """
                 )
@@ -81,13 +85,14 @@ class PostgresOperationalPilotStore:
                         terminal_decision TEXT,
                         conclusion_summary TEXT,
                         invalid_reason TEXT,
-                        FOREIGN KEY (organization_id, task_id, packet_id, pair_id)
+                        CONSTRAINT {_ASSIGNMENT_PAIR_FK}
+                            FOREIGN KEY (organization_id, task_id, packet_id, pair_id)
                             REFERENCES "{schema}".operational_pilot_tasks(
                                 organization_id, task_id, packet_id, pair_id
                             )
                             ON DELETE RESTRICT,
                         CHECK (elapsed_seconds IS NULL OR elapsed_seconds > 0),
-                        CHECK (
+                        CONSTRAINT {_ASSIGNMENT_STATE_CONSTRAINT} CHECK (
                             (
                                 state = 'ACTIVE'
                                 AND finished_at IS NULL
@@ -115,6 +120,103 @@ class PostgresOperationalPilotStore:
                             )
                         )
                     )
+                    """
+                )
+
+                # ``CREATE TABLE IF NOT EXISTS`` is not a migration. Explicitly install the v4
+                # invariants as named constraints so an older pilot schema cannot merely receive a
+                # new metadata version and appear production-ready. Adding a constraint validates
+                # all existing rows; incompatible historical data therefore fails closed here.
+                connection.execute(
+                    f"""
+                    DO $migration$
+                    BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1
+                            FROM pg_constraint c
+                            JOIN pg_class t ON t.oid = c.conrelid
+                            JOIN pg_namespace n ON n.oid = t.relnamespace
+                            WHERE n.nspname = '{schema}'
+                              AND t.relname = 'operational_pilot_tasks'
+                              AND c.conname = '{_TASK_PAIR_CONSTRAINT}'
+                        ) THEN
+                            ALTER TABLE "{schema}".operational_pilot_tasks
+                            ADD CONSTRAINT {_TASK_PAIR_CONSTRAINT}
+                            UNIQUE (organization_id, task_id, packet_id, pair_id);
+                        END IF;
+                    END
+                    $migration$
+                    """
+                )
+                connection.execute(
+                    f"""
+                    DO $migration$
+                    BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1
+                            FROM pg_constraint c
+                            JOIN pg_class t ON t.oid = c.conrelid
+                            JOIN pg_namespace n ON n.oid = t.relnamespace
+                            WHERE n.nspname = '{schema}'
+                              AND t.relname = 'operational_pilot_assignments'
+                              AND c.conname = '{_ASSIGNMENT_PAIR_FK}'
+                        ) THEN
+                            ALTER TABLE "{schema}".operational_pilot_assignments
+                            ADD CONSTRAINT {_ASSIGNMENT_PAIR_FK}
+                            FOREIGN KEY (organization_id, task_id, packet_id, pair_id)
+                            REFERENCES "{schema}".operational_pilot_tasks(
+                                organization_id, task_id, packet_id, pair_id
+                            )
+                            ON DELETE RESTRICT;
+                        END IF;
+                    END
+                    $migration$
+                    """
+                )
+                connection.execute(
+                    f"""
+                    DO $migration$
+                    BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1
+                            FROM pg_constraint c
+                            JOIN pg_class t ON t.oid = c.conrelid
+                            JOIN pg_namespace n ON n.oid = t.relnamespace
+                            WHERE n.nspname = '{schema}'
+                              AND t.relname = 'operational_pilot_assignments'
+                              AND c.conname = '{_ASSIGNMENT_STATE_CONSTRAINT}'
+                        ) THEN
+                            ALTER TABLE "{schema}".operational_pilot_assignments
+                            ADD CONSTRAINT {_ASSIGNMENT_STATE_CONSTRAINT} CHECK (
+                                (
+                                    state = 'ACTIVE'
+                                    AND finished_at IS NULL
+                                    AND elapsed_seconds IS NULL
+                                    AND terminal_decision IS NULL
+                                    AND conclusion_summary IS NULL
+                                    AND invalid_reason IS NULL
+                                )
+                                OR (
+                                    state = 'VALID'
+                                    AND finished_at IS NOT NULL
+                                    AND elapsed_seconds IS NOT NULL
+                                    AND elapsed_seconds > 0
+                                    AND terminal_decision IS NOT NULL
+                                    AND length(btrim(terminal_decision)) > 0
+                                    AND conclusion_summary IS NOT NULL
+                                    AND length(btrim(conclusion_summary)) > 0
+                                    AND invalid_reason IS NULL
+                                )
+                                OR (
+                                    state IN ('INTERRUPTED','TECHNICAL_FAILURE','WITHDRAWN')
+                                    AND finished_at IS NOT NULL
+                                    AND invalid_reason IS NOT NULL
+                                    AND length(btrim(invalid_reason)) > 0
+                                )
+                            );
+                        END IF;
+                    END
+                    $migration$
                     """
                 )
                 connection.execute(
@@ -182,13 +284,43 @@ class PostgresOperationalPilotStore:
     def ready(self) -> bool:
         try:
             with self.database.internal_pool.connection() as connection:
-                row = connection.execute(
+                version = connection.execute(
                     f"""
                     SELECT value FROM "{self.schema}".operational_meta
                     WHERE key = 'operational_value_collection_schema_version'
                     """
                 ).fetchone()
-            return row is not None and str(row[0]) == _OPERATIONAL_VALUE_COLLECTION_SCHEMA_VERSION
+                constraints = connection.execute(
+                    """
+                    SELECT c.conname, c.convalidated
+                    FROM pg_constraint c
+                    JOIN pg_class t ON t.oid = c.conrelid
+                    JOIN pg_namespace n ON n.oid = t.relnamespace
+                    WHERE n.nspname = %s
+                      AND (
+                          (t.relname = 'operational_pilot_tasks' AND c.conname = %s)
+                          OR
+                          (t.relname = 'operational_pilot_assignments' AND c.conname IN (%s, %s))
+                      )
+                    """,
+                    (
+                        self.schema,
+                        _TASK_PAIR_CONSTRAINT,
+                        _ASSIGNMENT_PAIR_FK,
+                        _ASSIGNMENT_STATE_CONSTRAINT,
+                    ),
+                ).fetchall()
+            validated = {str(row[0]) for row in constraints if bool(row[1])}
+            required = {
+                _TASK_PAIR_CONSTRAINT,
+                _ASSIGNMENT_PAIR_FK,
+                _ASSIGNMENT_STATE_CONSTRAINT,
+            }
+            return (
+                version is not None
+                and str(version[0]) == _OPERATIONAL_VALUE_COLLECTION_SCHEMA_VERSION
+                and required.issubset(validated)
+            )
         except Exception:
             return False
 
