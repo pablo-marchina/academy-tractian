@@ -233,12 +233,14 @@ def test_collection_api_converged_retry_keeps_original_timer_start() -> None:
         completed = client.post(
             f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "Converged retry must not reset the authoritative timer.",
             },
         )
         assert completed.status_code == 200
-        assert completed.json()["elapsed_seconds"] == 10.0
+        assert "elapsed_seconds" not in completed.json()
+        assert store.completed is not None
+        assert store.completed.elapsed_seconds == 10.0
 
 
 def test_collection_api_owns_elapsed_time_and_hides_private_assignment_material() -> None:
@@ -277,18 +279,18 @@ def test_collection_api_owns_elapsed_time_and_hides_private_assignment_material(
         completed = client.post(
             f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "The evidence supports waiting for the current analysis to finish.",
             },
         )
         assert completed.status_code == 200
-        assert completed.json()["elapsed_seconds"] == 12.75
+        assert "elapsed_seconds" not in completed.json()
         assert store.completed is not None
         assert store.completed.elapsed_seconds == 12.75
         assert store.completed.measurement_source == "HOST_MONOTONIC_TIMER"
 
 
-def test_collection_rejects_client_elapsed_and_requires_explicit_permission() -> None:
+def test_collection_rejects_client_elapsed_noncanonical_decision_and_missing_permission() -> None:
     clock = ControlledClock(10.0)
     store = FakeStore()
     app = FastAPI()
@@ -312,12 +314,23 @@ def test_collection_rejects_client_elapsed_and_requires_explicit_permission() ->
         tampered = client.post(
             f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "Recorded conclusion.",
                 "elapsed_seconds": 0.001,
             },
         )
         assert tampered.status_code == 422
+        assert store.completed is None
+        assert timers_still_active(app, ASSIGNMENT_ID)
+
+        noncanonical = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
+            json={
+                "terminal_decision": "FINAL",
+                "conclusion_summary": "A controller kind is not the canonical operational decision.",
+            },
+        )
+        assert noncanonical.status_code == 422
         assert store.completed is None
         assert timers_still_active(app, ASSIGNMENT_ID)
 
@@ -343,7 +356,7 @@ def test_human_termination_is_server_classified_and_never_persists_elapsed_time(
         )
         assert terminated.status_code == 200
         assert terminated.json()["status"] == "WITHDRAWN"
-        assert terminated.json()["elapsed_seconds"] is None
+        assert "elapsed_seconds" not in terminated.json()
         assert store.completed is not None
         assert store.completed.status == "WITHDRAWN"
         assert store.completed.elapsed_seconds is None
@@ -413,7 +426,7 @@ def test_collection_fails_closed_when_monotonic_session_is_lost() -> None:
         lost = client.post(
             f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "This result must not receive a fabricated duration.",
             },
         )
