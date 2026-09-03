@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import json
 
 import duckdb
@@ -126,3 +127,54 @@ def test_memory_database_is_rejected_to_preserve_multi_connection_semantics() ->
         assert "persistent DuckDB path" in str(exc)
     else:
         raise AssertionError("expected :memory: store to be rejected")
+
+
+def test_concurrent_frontend_polling_and_trace_persistence_share_one_safe_file_handle(tmp_path) -> None:
+    """Regress the REST/SSE + realtime writer race observed in full-product Chromium E2E."""
+
+    db_path = tmp_path / "concurrent-observability.duckdb"
+    store = ObservabilityStore(db_path)
+    trace = _trace("CONCURRENT-RAW-MATERIAL")
+    run_id = store.persist_trace(trace)
+
+    def poll_reader(worker_index: int) -> None:
+        for iteration in range(20):
+            selector = (worker_index + iteration) % 6
+            if selector == 0:
+                assert store.ready() is True
+            elif selector == 1:
+                assert store.get_run(run_id) is not None
+            elif selector == 2:
+                assert store.get_events_after(run_id, after_sequence=-1)
+            elif selector == 3:
+                assert store.get_events(run_id)
+            elif selector == 4:
+                assert store.get_evidence(run_id)
+            else:
+                assert store.overview()["total_runs"] == 1
+
+    def realtime_writer() -> None:
+        for _ in range(20):
+            assert store.persist_trace(trace) == run_id
+
+    with ThreadPoolExecutor(max_workers=13) as executor:
+        futures = [executor.submit(poll_reader, worker_index) for worker_index in range(12)]
+        futures.append(executor.submit(realtime_writer))
+        for future in futures:
+            future.result(timeout=30)
+
+    assert store.ready() is True
+    assert store.get_run(run_id) is not None
+    assert len(store.get_events(run_id)) == len(trace.events)
+    assert len(store.get_evidence(run_id)) == 1
+
+    serialized = json.dumps(
+        {
+            "run": store.get_run(run_id),
+            "events": store.get_events(run_id),
+            "evidence": store.get_evidence(run_id),
+        },
+        sort_keys=True,
+        default=str,
+    )
+    assert "CONCURRENT-RAW-MATERIAL" not in serialized

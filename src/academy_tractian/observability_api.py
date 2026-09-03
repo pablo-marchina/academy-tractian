@@ -6,7 +6,7 @@ from importlib.metadata import PackageNotFoundError, version
 import json
 from pathlib import Path
 from time import perf_counter
-from typing import Any, AsyncContextManager, Callable
+from typing import Any, AsyncContextManager, Callable, Protocol
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -15,6 +15,24 @@ from .architecture_manifest import ProviderSelectionState, architecture_manifest
 from .observability_store import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStore
 from .operational_read_model import AnalyticsQuery, OperationalReadModel
 from .production_telemetry import CloseReason, ProductionTelemetry
+
+
+class ObservabilityAccessPolicy(Protocol):
+    """Optional product-owned authorization boundary for observability reads.
+
+    The standalone observability service remains unrestricted by default. Product APIs can
+    inject a fail-closed policy without teaching the analytical read model about identities.
+    """
+
+    def authorize_run(self, request: Request, run_id: str) -> None: ...
+
+    def authorize_global(self, request: Request, capability: str) -> None: ...
+
+    def filter_runs(
+        self,
+        request: Request,
+        items: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]: ...
 
 
 def _package_version() -> str:
@@ -45,9 +63,45 @@ def _last_sequence(run_id: str, last_event_id: str | None) -> int:
     return parsed
 
 
+def _resolve_stream_cursor(
+    *,
+    run_id: str,
+    last_event_id: str | None,
+    after_sequence: int | None,
+) -> tuple[int, bool]:
+    """Resolve one unambiguous reconnect cursor.
+
+    Native EventSource reconnects use Last-Event-ID. The browser also needs an explicit
+    sequence cursor when the application intentionally closes a stream on an offline event;
+    EventSource cannot attach custom Last-Event-ID headers to that new connection. The
+    sequence contains no private data and can only skip already-authorized events for the
+    requested run. Supplying both cursor forms is rejected rather than guessed.
+    """
+
+    if last_event_id not in {None, ""} and after_sequence is not None:
+        raise ValueError("stream reconnect cursor is ambiguous")
+    if after_sequence is not None:
+        if after_sequence < -1:
+            raise ValueError("after_sequence must be >= -1")
+        return after_sequence, True
+    resolved = _last_sequence(run_id, last_event_id)
+    return resolved, last_event_id not in {None, ""}
+
+
 def _sse_record(event: dict[str, object]) -> str:
     payload = json.dumps(event, sort_keys=True, separators=(",", ":"), default=str)
     return f"id: {event['event_id']}\nevent: trace_event\ndata: {payload}\n\n"
+
+
+def _sse_stream_state_record(*, run_id: str, state: str, after_sequence: int) -> str:
+    payload = json.dumps(
+        {"run_id": run_id, "state": state, "after_sequence": after_sequence},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    # Transport-control state deliberately carries no SSE id so the browser's Last-Event-ID
+    # remains the last persisted trace event and reconnect resumes from the canonical cursor.
+    return f"event: stream_state\ndata: {payload}\n\n"
 
 
 def _safe_route_template(request: Request) -> str:
@@ -141,6 +195,7 @@ def create_observability_app(
     provider_selection_state: ProviderSelectionState = "NO_SELECTION",
     production_telemetry: ProductionTelemetry | None = None,
     live_operability_supplier: Callable[[], dict[str, Any]] | None = None,
+    access_policy: ObservabilityAccessPolicy | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="Academy × TRACTIAN Observability API",
@@ -173,15 +228,26 @@ def create_observability_app(
                     duration_ms=(perf_counter() - started) * 1000.0,
                 )
 
+    def authorize_run(request: Request, run_id: str) -> None:
+        if access_policy is not None:
+            access_policy.authorize_run(request, run_id)
+
+    def authorize_global(request: Request, capability: str) -> None:
+        if access_policy is not None:
+            access_policy.authorize_global(request, capability)
+
     def require_run(run_id: str) -> dict[str, object]:
         item = store.get_run(run_id)
         if item is None:
             raise HTTPException(status_code=404, detail="run_not_found")
         return item
 
-    def validate_scope(run_id: str | None) -> None:
+    def validate_scope(request: Request, run_id: str | None) -> None:
         if run_id is not None:
+            authorize_run(request, run_id)
             require_run(run_id)
+        else:
+            authorize_global(request, "analytics:read:global")
 
     @app.get("/health")
     def health() -> dict[str, object]:
@@ -207,7 +273,8 @@ def create_observability_app(
         return architecture_manifest(provider_selection_state=provider_selection_state).model_dump(mode="json")
 
     @app.get("/api/overview")
-    def overview() -> dict[str, object]:
+    def overview(request: Request) -> dict[str, object]:
+        authorize_global(request, "analytics:read:global")
         return store.overview()
 
     @app.get("/api/production/health")
@@ -220,18 +287,27 @@ def create_observability_app(
         return _augment_health_with_quantitative_telemetry(payload, live_operability)
 
     @app.get("/api/tools/metrics")
-    def tools_metrics(run_id: str | None = Query(default=None, min_length=1, max_length=128)) -> dict[str, object]:
-        validate_scope(run_id)
+    def tools_metrics(
+        request: Request,
+        run_id: str | None = Query(default=None, min_length=1, max_length=128),
+    ) -> dict[str, object]:
+        validate_scope(request, run_id)
         return analytics.tools_metrics(run_id=run_id)
 
     @app.get("/api/policies/metrics")
-    def policies_metrics(run_id: str | None = Query(default=None, min_length=1, max_length=128)) -> dict[str, object]:
-        validate_scope(run_id)
+    def policies_metrics(
+        request: Request,
+        run_id: str | None = Query(default=None, min_length=1, max_length=128),
+    ) -> dict[str, object]:
+        validate_scope(request, run_id)
         return analytics.policies_metrics(run_id=run_id)
 
     @app.get("/api/evaluations/metrics")
-    def evaluation_metrics(run_id: str | None = Query(default=None, min_length=1, max_length=128)) -> dict[str, object]:
-        validate_scope(run_id)
+    def evaluation_metrics(
+        request: Request,
+        run_id: str | None = Query(default=None, min_length=1, max_length=128),
+    ) -> dict[str, object]:
+        validate_scope(request, run_id)
         return analytics.evaluation_metrics(run_id=run_id)
 
     @app.get("/api/providers/experiments")
@@ -243,42 +319,53 @@ def create_observability_app(
         return analytics.query_schema()
 
     @app.post("/api/query")
-    def dynamic_query(spec: AnalyticsQuery) -> dict[str, object]:
-        validate_scope(spec.run_id)
+    def dynamic_query(spec: AnalyticsQuery, request: Request) -> dict[str, object]:
+        validate_scope(request, spec.run_id)
         try:
             return analytics.query(spec)
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     @app.get("/api/runs")
-    def runs(limit: int = Query(default=100, ge=1, le=1000)) -> dict[str, object]:
-        items = store.list_runs(limit=limit)
+    def runs(
+        request: Request,
+        limit: int = Query(default=100, ge=1, le=1000),
+    ) -> dict[str, object]:
+        fetch_limit = 1000 if access_policy is not None else limit
+        items = store.list_runs(limit=fetch_limit)
+        if access_policy is not None:
+            items = access_policy.filter_runs(request, items)[:limit]
         return {"items": items, "count": len(items)}
 
     @app.get("/api/runs/{run_id}")
-    def run_detail(run_id: str) -> dict[str, object]:
+    def run_detail(run_id: str, request: Request) -> dict[str, object]:
+        authorize_run(request, run_id)
         return require_run(run_id)
 
     @app.get("/api/runs/{run_id}/events")
-    def run_events(run_id: str) -> dict[str, object]:
+    def run_events(run_id: str, request: Request) -> dict[str, object]:
+        authorize_run(request, run_id)
         require_run(run_id)
         items = store.get_events(run_id)
         return {"items": items, "count": len(items)}
 
     @app.get("/api/runs/{run_id}/evidence")
-    def run_evidence(run_id: str) -> dict[str, object]:
+    def run_evidence(run_id: str, request: Request) -> dict[str, object]:
+        authorize_run(request, run_id)
         require_run(run_id)
         items = store.get_evidence(run_id)
         return {"items": items, "count": len(items)}
 
     @app.get("/api/runs/{run_id}/evaluation")
-    def run_evaluation(run_id: str) -> dict[str, object]:
+    def run_evaluation(run_id: str, request: Request) -> dict[str, object]:
+        authorize_run(request, run_id)
         require_run(run_id)
         items = store.get_evaluation(run_id)
         return {"items": items, "count": len(items)}
 
     @app.get("/api/runs/{run_id}/lineage")
-    def run_lineage(run_id: str) -> dict[str, object]:
+    def run_lineage(run_id: str, request: Request) -> dict[str, object]:
+        authorize_run(request, run_id)
         require_run(run_id)
         try:
             return analytics.lineage(run_id)
@@ -291,24 +378,36 @@ def create_observability_app(
         run_id: str = Query(min_length=1),
         follow: bool = Query(default=True),
         poll_ms: int = Query(default=200, ge=50, le=5000),
+        after_sequence_cursor: int | None = Query(
+            default=None,
+            alias="after_sequence",
+            ge=-1,
+            le=1_000_000,
+        ),
         last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
     ) -> StreamingResponse:
+        authorize_run(request, run_id)
         require_run(run_id)
         try:
-            after_sequence = _last_sequence(run_id, last_event_id)
+            after_sequence, reconnect_requested = _resolve_stream_cursor(
+                run_id=run_id,
+                last_event_id=last_event_id,
+                after_sequence=after_sequence_cursor,
+            )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
         connection_id = None
         if production_telemetry is not None:
             connection_id = production_telemetry.sse_open(
-                reconnect=bool(last_event_id),
+                reconnect=reconnect_requested,
                 after_sequence=after_sequence,
             )
 
         async def event_stream():
             nonlocal after_sequence
             close_reason: CloseReason = "client_disconnect"
+            reconnect_catchup_pending = reconnect_requested and follow
             try:
                 while True:
                     items = store.get_events_after(run_id, after_sequence=after_sequence, limit=1000)
@@ -322,6 +421,14 @@ def create_observability_app(
                                 sequence=sequence,
                             )
                         yield _sse_record(item)
+
+                    if reconnect_catchup_pending:
+                        yield _sse_stream_state_record(
+                            run_id=run_id,
+                            state="caught_up",
+                            after_sequence=after_sequence,
+                        )
+                        reconnect_catchup_pending = False
 
                     current = store.get_run(run_id)
                     if current is None:

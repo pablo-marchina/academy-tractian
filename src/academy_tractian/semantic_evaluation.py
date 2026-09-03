@@ -20,7 +20,7 @@ CalibrationState = Literal[
     "CALIBRATED_GATE",
 ]
 HumanResolution = Literal["AGREED", "ADJUDICATED", "UNRESOLVED"]
-CalibrationKey = tuple[str, str, str, SemanticDimension]
+CalibrationKey = tuple[str, str, str, str, SemanticDimension]
 
 
 class _FrozenModel(BaseModel):
@@ -44,10 +44,16 @@ class SemanticRubric(_FrozenModel):
 
 
 class HumanSemanticReference(_FrozenModel):
-    """Adjudicated human reference without raw response text or annotator identity."""
+    """Adjudicated human reference without raw response text or annotator identity.
+
+    `context_sha256` binds the score to the exact sanitized evidence/context material shown to
+    the reviewers. Groundedness and operational usefulness cannot be safely transferred across
+    a different evidence state just because the terminal message happens to be identical.
+    """
 
     scenario_id: str = Field(min_length=1)
     output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    context_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     response_mode: str = Field(min_length=1)
     dimension: SemanticDimension
     score: SemanticScore
@@ -56,10 +62,15 @@ class HumanSemanticReference(_FrozenModel):
 
 
 class JudgeSemanticObservation(_FrozenModel):
-    """Structured judge result only; free-form reasoning and raw prompts are intentionally absent."""
+    """Structured judge result only; free-form reasoning and raw prompts are intentionally absent.
+
+    The judge observation must carry the same sanitized-context hash as the human reference so
+    calibration cannot pair scores produced from different evidence states.
+    """
 
     scenario_id: str = Field(min_length=1)
     output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    context_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     response_mode: str = Field(min_length=1)
     dimension: SemanticDimension
     judge_id: str = Field(min_length=1)
@@ -207,14 +218,17 @@ def _key(item: HumanSemanticReference | JudgeSemanticObservation) -> Calibration
     return (
         item.scenario_id,
         item.output_sha256,
+        item.context_sha256,
         item.response_mode,
         item.dimension,
     )
 
 
 def _key_text(key: CalibrationKey) -> str:
-    scenario_id, output_sha256, response_mode, dimension = key
-    return f"{scenario_id}|{output_sha256}|{response_mode}|{dimension}"
+    scenario_id, output_sha256, context_sha256, response_mode, dimension = key
+    return (
+        f"{scenario_id}|{output_sha256}|{context_sha256}|{response_mode}|{dimension}"
+    )
 
 
 def _quadratic_weighted_kappa(pairs: Sequence[tuple[int, int]]) -> float | None:
@@ -248,7 +262,7 @@ def _dimension_metrics(
     human_by_key: dict[CalibrationKey, HumanSemanticReference],
     judge_by_key: dict[CalibrationKey, JudgeSemanticObservation],
 ) -> SemanticDimensionCalibration:
-    keys = sorted(key for key in human_by_key if key[3] == dimension)
+    keys = sorted(key for key in human_by_key if key[4] == dimension)
     pairs: list[tuple[int, int]] = []
     invalid = 0
     matrix = {str(h): {str(j): 0 for j in range(3)} for h in range(3)}

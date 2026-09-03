@@ -7,11 +7,13 @@ dependencies = [
   "pydantic>=2.6,<3",
   "fastapi>=0.141.1,<0.142",
   "duckdb>=1.5.5,<1.6",
+  "psycopg[binary,pool]>=3.2,<4",
   "uvicorn>=0.52.4,<0.53",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.28,<1"]
+operational-store-benchmark = []
 
 [build-system]
 requires = ["hatchling"]

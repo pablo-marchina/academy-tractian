@@ -1,0 +1,163 @@
+name: full-product-playwright
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "src/academy_tractian/provider_free_product.py"
+      - "src/academy_tractian/observability_api.py"
+      - "src/academy_tractian/product_api.py"
+      - "src/academy_tractian/action_product_api.py"
+      - "src/academy_tractian/postgres_*.py"
+      - "src/academy_tractian/production_actions_v2.py"
+      - "tests/test_provider_free_product.py"
+      - ".github/workflows/full-product-playwright.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-full-product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: academy_tractian
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d academy_tractian"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      POSTGRES_ADMIN_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+      POSTGRES_OPERATIONAL_TEST_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+      ACADEMY_POSTGRES_INTERNAL_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+      ACADEMY_POSTGRES_SCOPED_DSN: postgresql://academy_e2e_scoped:academy-e2e-scoped@127.0.0.1:5432/academy_tractian
+      ACADEMY_POSTGRES_SCHEMA: academy_e2e
+      ACADEMY_OBSERVABILITY_DB: .runtime/provider-free-e2e.duckdb
+      ACADEMY_INITIALIZE_SCHEMA: "1"
+      ACADEMY_HOST: 127.0.0.1
+      ACADEMY_PORT: "8000"
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:5173
+      CI: "true"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" -e "research/e2[dev]"
+
+      - name: Create non-owner scoped PostgreSQL role
+        run: |
+          python - <<'PY'
+          import os
+          from psycopg import connect
+
+          with connect(os.environ["POSTGRES_ADMIN_DSN"], autocommit=True) as connection:
+              connection.execute(
+                  "CREATE ROLE academy_e2e_scoped LOGIN PASSWORD 'academy-e2e-scoped' NOSUPERUSER NOBYPASSRLS"
+              )
+          print("Scoped RLS role created")
+          PY
+
+      - name: Validate provider-free acceptance contracts
+        run: >-
+          python -m pytest -q
+          tests/test_provider_free_product.py
+          tests/test_postgres_product_api.py
+          tests/test_multiuser_product_api.py
+          tests/test_action_product_api.py
+
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Install Chromium and system dependencies
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Frontend deterministic preflight
+        working-directory: frontend
+        run: |
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Start provider-free production backend
+        run: |
+          mkdir -p .runtime
+          nohup python -m academy_tractian.provider_free_product > /tmp/academy-backend.log 2>&1 &
+          echo $! > /tmp/academy-backend.pid
+          for attempt in $(seq 1 80); do
+            if curl --fail --silent http://127.0.0.1:8000/ready > /tmp/academy-ready.json; then
+              cat /tmp/academy-ready.json
+              exit 0
+            fi
+            sleep 0.5
+          done
+          cat /tmp/academy-backend.log
+          exit 1
+
+      - name: Start Vite product frontend
+        working-directory: frontend
+        run: |
+          nohup npm run dev -- --host 127.0.0.1 > /tmp/academy-frontend.log 2>&1 &
+          echo $! > /tmp/academy-frontend.pid
+          for attempt in $(seq 1 80); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then
+              exit 0
+            fi
+            sleep 0.5
+          done
+          cat /tmp/academy-frontend.log
+          exit 1
+
+      - name: Run full-product Playwright acceptance
+        working-directory: frontend
+        run: npm run e2e
+
+      - name: Collect product logs into workspace
+        if: always()
+        run: |
+          mkdir -p .runtime/e2e-artifacts
+          test ! -f /tmp/academy-backend.log || cp /tmp/academy-backend.log .runtime/e2e-artifacts/backend.log
+          test ! -f /tmp/academy-frontend.log || cp /tmp/academy-frontend.log .runtime/e2e-artifacts/frontend.log
+
+      - name: Upload Playwright evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-product-playwright-${{ github.run_id }}
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+            .runtime/e2e-artifacts
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Stop product processes
+        if: always()
+        run: |
+          test ! -f /tmp/academy-frontend.pid || kill "$(cat /tmp/academy-frontend.pid)" 2>/dev/null || true
+          test ! -f /tmp/academy-backend.pid || kill "$(cat /tmp/academy-backend.pid)" 2>/dev/null || true
