@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 from threading import Lock
 from time import perf_counter
-from typing import Any, Literal, Protocol
+from typing import Any, Callable, Literal, Protocol
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request, status
@@ -19,8 +19,8 @@ from .production_controls import ProductionControlState
 from .production_telemetry import ProductionTelemetry
 from .realtime_observability import DuckDBObservabilityEventSink, SafeObservabilityEventSink
 from .realtime_runtime import PreparedRealtimeRun, RealtimeProductionRuntime
-from .run_access import DuckDBRunAccessStore
-from .run_execution_store import DuckDBRunExecutionStore, ExecutionKind
+from .run_access import DuckDBRunAccessStore, RunAccessStore
+from .run_execution_store import DuckDBRunExecutionStore, ExecutionKind, RunExecutionStore
 from .runtime import ProductionRequest
 
 
@@ -105,7 +105,7 @@ class ProductObservabilityAccessPolicy(ObservabilityAccessPolicy):
         self,
         *,
         context_provider: RuntimeContextProvider,
-        run_access_store: DuckDBRunAccessStore,
+        run_access_store: RunAccessStore,
     ) -> None:
         self.context_provider = context_provider
         self.run_access_store = run_access_store
@@ -118,8 +118,13 @@ class ProductObservabilityAccessPolicy(ObservabilityAccessPolicy):
         if "runs:read:any" in context.permissions:
             return
 
-        ownership = self.run_access_store.get(run_id)
-        if ownership is None or ownership.organization_id != context.organization_id:
+        # PostgreSQL implements this through a non-owner/non-BYPASSRLS connection. The DuckDB
+        # baseline provides the same contract by application filtering for tests/fallback use.
+        ownership = self.run_access_store.get_scoped(
+            run_id=run_id,
+            organization_id=context.organization_id,
+        )
+        if ownership is None:
             raise HTTPException(status_code=404, detail="run_not_found")
 
         if "runs:read:org" in context.permissions:
@@ -148,13 +153,14 @@ class ProductObservabilityAccessPolicy(ObservabilityAccessPolicy):
         if "runs:read:any" in context.permissions:
             return items
 
-        ownerships = self.run_access_store.get_many(
-            str(item["run_id"]) for item in items
+        ownerships = self.run_access_store.get_many_scoped(
+            run_ids=(str(item["run_id"]) for item in items),
+            organization_id=context.organization_id,
         )
         visible: list[dict[str, Any]] = []
         for item in items:
             ownership = ownerships.get(str(item["run_id"]))
-            if ownership is None or ownership.organization_id != context.organization_id:
+            if ownership is None:
                 continue
             if "runs:read:org" in context.permissions:
                 visible.append(item)
@@ -168,13 +174,13 @@ class ProductObservabilityAccessPolicy(ObservabilityAccessPolicy):
 
 
 class RunExecutionRegistry:
-    """Local Future handles plus durable single-node execution state and pressure metrics."""
+    """Local Future handles plus durable execution state and pressure metrics."""
 
     def __init__(
         self,
         *,
         max_workers: int,
-        state_store: DuckDBRunExecutionStore,
+        state_store: RunExecutionStore,
     ) -> None:
         self.max_workers = max_workers
         self.state_store = state_store
@@ -284,44 +290,47 @@ def create_product_app(
     context_provider: RuntimeContextProvider,
     access_db_path: str | Path | None = None,
     execution_db_path: str | Path | None = None,
+    run_access_store: RunAccessStore | None = None,
+    execution_store: RunExecutionStore | None = None,
+    operational_close: Callable[[], None] | None = None,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    """Create the production product API over the safe observability/control plane.
+    """Create the product API over the safe observability/control plane.
 
-    `runtime_factory` is provider-neutral and is expected to create a fresh decision-source
-    runtime per request. The provider kill switch gates construction before any provider-owned
-    client can be reached. Consequential actions remain disabled by ProductionRuntimeConfig v1.
-
-    Product run reads are scoped by trusted identity and persistent ownership. Execution state
-    is persisted separately from local Future handles. At startup, unfinished ordinary runs are
-    marked interrupted and unfinished action runs are marked uncertain; neither is replayed.
-    The operational adapters remain replaceable for the planned DuckDB-vs-PostgreSQL benchmark.
+    Store injection preserves one API/runtime semantic contract while allowing the qualified
+    PostgreSQL backend to own mutable production state. If stores are not injected, persistent
+    DuckDB stores remain available for isolated tests and bounded fallback use. The safe
+    observability/evaluation read model remains DuckDB regardless of operational backend.
     """
 
     if not 1 <= max_workers <= 64:
         raise ValueError("max_workers must be within [1, 64]")
     if not 250 <= heartbeat_interval_ms <= 10000:
         raise ValueError("heartbeat_interval_ms must be within [250, 10000]")
+    if run_access_store is not None and access_db_path is not None:
+        raise ValueError("provide run_access_store or access_db_path, not both")
+    if execution_store is not None and execution_db_path is not None:
+        raise ValueError("provide execution_store or execution_db_path, not both")
 
     created_perf = perf_counter()
     executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="academy-tractian-run")
     telemetry = ProductionTelemetry(heartbeat_stale_after_ms=max(1000, heartbeat_interval_ms * 3))
     controls = ProductionControlState(provider_calls_enabled=provider_calls_enabled)
-    run_access_store = DuckDBRunAccessStore(
+    active_run_access_store: RunAccessStore = run_access_store or DuckDBRunAccessStore(
         _derived_db_path(db_path, "access") if access_db_path is None else access_db_path
     )
-    execution_store = DuckDBRunExecutionStore(
+    active_execution_store: RunExecutionStore = execution_store or DuckDBRunExecutionStore(
         _derived_db_path(db_path, "execution")
         if execution_db_path is None
         else execution_db_path
     )
-    recovered_executions = execution_store.reconcile_orphaned()
-    registry = RunExecutionRegistry(max_workers=max_workers, state_store=execution_store)
+    recovered_executions = active_execution_store.reconcile_orphaned()
+    registry = RunExecutionRegistry(max_workers=max_workers, state_store=active_execution_store)
     access_policy = ProductObservabilityAccessPolicy(
         context_provider=context_provider,
-        run_access_store=run_access_store,
+        run_access_store=active_run_access_store,
     )
 
     def live_operability_snapshot() -> dict[str, Any]:
@@ -331,11 +340,11 @@ def create_product_app(
             "controls": controls.snapshot(),
             "access": {
                 "schema_version": "product-access-operability-v1",
-                "ready": run_access_store.ready(),
+                "ready": active_run_access_store.ready(),
             },
             "recovery": {
                 "schema_version": "product-recovery-operability-v1",
-                "execution_store_ready": execution_store.ready(),
+                "execution_store_ready": active_execution_store.ready(),
                 "orphaned_executions_reconciled": len(recovered_executions),
                 "interrupted_runtime_runs": sum(
                     item.state == "interrupted" for item in recovered_executions
@@ -364,6 +373,8 @@ def create_product_app(
                 await heartbeat_task
             telemetry.mark_stopped()
             executor.shutdown(wait=True, cancel_futures=False)
+            if operational_close is not None:
+                operational_close()
 
     try:
         app = create_observability_app(
@@ -375,17 +386,19 @@ def create_product_app(
         )
     except Exception:
         executor.shutdown(wait=False, cancel_futures=True)
+        if operational_close is not None:
+            operational_close()
         raise
 
     store = app.state.observability_store
     sink = DuckDBObservabilityEventSink(store, telemetry=telemetry)
     app.state.product_executor = executor
     app.state.run_execution_registry = registry
-    app.state.run_execution_store = execution_store
+    app.state.run_execution_store = active_execution_store
     app.state.recovered_executions = recovered_executions
     app.state.production_telemetry = telemetry
     app.state.production_controls = controls
-    app.state.run_access_store = run_access_store
+    app.state.run_access_store = active_run_access_store
     app.state.product_access_policy = access_policy
 
     def execute_prepared(run_id: str, prepared: PreparedRealtimeRun) -> None:
@@ -456,7 +469,7 @@ def create_product_app(
             )
 
         try:
-            run_access_store.claim(
+            active_run_access_store.claim(
                 run_id=run_id,
                 organization_id=context.organization_id,
                 user_id=context.user_id,
