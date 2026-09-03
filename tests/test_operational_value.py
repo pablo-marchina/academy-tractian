@@ -16,6 +16,47 @@ PROTOCOL_ID = "engineer-effort-pilot-v1"
 DESIGN = "INDEPENDENT_MATCHED"
 
 
+def _frozen_manifest() -> dict[str, object]:
+    return {
+        "schema_version": "benchmark-split-v1",
+        "status": "FROZEN",
+        "splits": {
+            "DEV": {
+                "groups": [
+                    {
+                        "group_id": "group-a",
+                        "scenarios": ["scenario-a"],
+                    },
+                    {
+                        "group_id": "group-b",
+                        "scenarios": ["scenario-b"],
+                    },
+                ]
+            },
+            "VALIDATION": {
+                "groups": [
+                    {
+                        "group_id": "group-c",
+                        "scenarios": ["scenario-c"],
+                    },
+                    {
+                        "group_id": "group-d",
+                        "scenarios": ["scenario-d"],
+                    },
+                ]
+            },
+            "LOCKED_TEST": {
+                "groups": [
+                    {
+                        "group_id": "group-locked",
+                        "scenarios": ["scenario-locked"],
+                    }
+                ]
+            },
+        },
+    }
+
+
 def _observations() -> list[OperationalValueObservation]:
     return [
         OperationalValueObservation(
@@ -84,11 +125,28 @@ def _observations() -> list[OperationalValueObservation]:
     ]
 
 
+def _report(observations: list[OperationalValueObservation]):
+    return build_operational_value_report(
+        observations,
+        frozen_split_payload=_frozen_manifest(),
+    )
+
+
+def _bundle(observations: list[OperationalValueObservation], **kwargs):
+    return operational_value_metric_bundle(
+        config_id="candidate-v1",
+        observations=observations,
+        frozen_split_payload=_frozen_manifest(),
+        **kwargs,
+    )
+
+
 def test_report_makes_operational_correctness_and_engineer_value_explicit() -> None:
-    report = build_operational_value_report(_observations())
+    report = _report(_observations())
 
     assert report.ticket_count == 4
     assert report.source_splits == ("DEV", "VALIDATION")
+    assert len(report.split_manifest_sha256) == 64
     assert report.effort_protocol_ids == (PROTOCOL_ID,)
     assert report.effort_measurement_designs == (DESIGN,)
     assert report.operational_conclusion_accuracy == pytest.approx(0.75)
@@ -141,7 +199,7 @@ def test_missing_effort_measurements_remain_unavailable_not_imputed() -> None:
         escalated=False,
     )
 
-    report = build_operational_value_report([observation])
+    report = _report([observation])
 
     assert report.paired_effort_sample_count == 0
     assert report.effort_sample_coverage_rate == 0.0
@@ -187,7 +245,7 @@ def test_effort_measurement_requires_pair_protocol_and_design() -> None:
             scenario_id="scenario-c",
             group_id="group-c",
             case_id="case-c",
-            split="DEV",
+            split="VALIDATION",
             response_mode="complete",
             operational_conclusion_correct=True,
             escalation_required=False,
@@ -243,12 +301,12 @@ def test_escalation_handoff_contract_is_fail_closed() -> None:
         )
 
 
-def test_locked_test_is_not_accepted_by_the_development_measurement_contract() -> None:
+def test_model_literal_rejects_direct_locked_test_label() -> None:
     with pytest.raises(ValidationError):
         OperationalValueObservation(
-            scenario_id="scenario-a",
-            group_id="group-a",
-            case_id="case-a",
+            scenario_id="scenario-locked",
+            group_id="group-locked",
+            case_id="case-locked",
             split="LOCKED_TEST",
             response_mode="complete",
             operational_conclusion_correct=True,
@@ -257,17 +315,61 @@ def test_locked_test_is_not_accepted_by_the_development_measurement_contract() -
         )
 
 
+def test_frozen_manifest_rejects_locked_scenario_even_if_caller_lies_about_split() -> None:
+    disguised = OperationalValueObservation(
+        scenario_id="scenario-locked",
+        group_id="group-locked",
+        case_id="case-locked",
+        split="DEV",
+        response_mode="complete",
+        operational_conclusion_correct=True,
+        escalation_required=False,
+        escalated=False,
+    )
+
+    with pytest.raises(ValueError, match="LOCKED_TEST scenario"):
+        _report([disguised])
+
+
+def test_frozen_manifest_rejects_split_or_group_disagreement() -> None:
+    wrong_split = OperationalValueObservation(
+        scenario_id="scenario-c",
+        group_id="group-c",
+        case_id="case-c",
+        split="DEV",
+        response_mode="complete",
+        operational_conclusion_correct=True,
+        escalation_required=False,
+        escalated=False,
+    )
+    with pytest.raises(ValueError, match="caller split disagrees"):
+        _report([wrong_split])
+
+    wrong_group = OperationalValueObservation(
+        scenario_id="scenario-a",
+        group_id="group-b",
+        case_id="case-a",
+        split="DEV",
+        response_mode="complete",
+        operational_conclusion_correct=True,
+        escalation_required=False,
+        escalated=False,
+    )
+    with pytest.raises(ValueError, match="caller group disagrees"):
+        _report([wrong_group])
+
+
 def test_metric_bundle_uses_existing_group_aware_edd_and_preserves_hard_failures() -> None:
     observations = _observations()
-    bundle = operational_value_metric_bundle(
-        config_id="candidate-v1",
-        observations=observations,
+    bundle = _bundle(
+        observations,
         metadata={"experiment_id": "value-exp-001"},
     )
 
     assert bundle.config_id == "candidate-v1"
     assert len(bundle.records) == 4
     assert bundle.metadata["contract"] == "operational-value-v1"
+    assert len(bundle.metadata["split_manifest_sha256"]) == 64
     assert bundle.metadata["source_splits"] == ["DEV", "VALIDATION"]
     assert bundle.metadata["effort_sample_coverage_rate"] == pytest.approx(0.75)
     assert bundle.metadata["effort_protocol_ids"] == [PROTOCOL_ID]
@@ -303,10 +405,7 @@ def test_incorrect_auto_resolution_is_a_hard_failure_without_weighted_compensati
         effort_measurement_design=DESIGN,
     )
 
-    bundle = operational_value_metric_bundle(
-        config_id="candidate-v1",
-        observations=[observation],
-    )
+    bundle = _bundle([observation])
 
     assert bundle.records[0].metrics["useful_auto_resolution_rate"] == 0.0
     assert "INCORRECT_AUTO_RESOLUTION" in bundle.records[0].hard_gate_failures
@@ -329,18 +428,19 @@ def test_negative_engineer_minutes_saved_is_preserved_as_a_real_regression() -> 
         effort_measurement_design="COUNTERBALANCED_CROSSOVER",
     )
 
-    report = build_operational_value_report([observation])
-    bundle = operational_value_metric_bundle(config_id="candidate-v1", observations=[observation])
+    report = _report([observation])
+    bundle = _bundle([observation])
 
     assert report.engineer_minutes_saved_per_ticket == pytest.approx(-1.0)
     assert bundle.records[0].metrics["engineer_minutes_saved"] == pytest.approx(-1.0)
 
 
-def test_dataset_hash_is_deterministic_and_contract_contains_no_raw_or_gold_material() -> None:
-    first = build_operational_value_report(_observations())
-    second = build_operational_value_report(list(reversed(_observations())))
+def test_dataset_hash_and_manifest_hash_are_deterministic_and_no_private_material_is_serialized() -> None:
+    first = _report(_observations())
+    second = _report(list(reversed(_observations())))
 
     assert first.dataset_sha256 == second.dataset_sha256
+    assert first.split_manifest_sha256 == second.split_manifest_sha256
 
     serialized = json.dumps(
         {
