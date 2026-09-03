@@ -9,7 +9,7 @@ import pytest
 from fastapi import Request
 from fastapi.testclient import TestClient
 from psycopg import connect, sql
-from psycopg.errors import CheckViolation
+from psycopg.errors import CheckViolation, ForeignKeyViolation
 
 from research.e2.controller import ControllerContext, ControllerDecision, ControllerDecisionKind
 from research.e2.models import BoundRequest, Permission
@@ -266,6 +266,42 @@ def test_postgres_rejects_structurally_invalid_valid_measurement(
                     )
 
 
+def test_postgres_rejects_assignment_with_noncanonical_pair_binding(
+    tmp_path: Path,
+    postgres_fixture: _PgFixture,
+) -> None:
+    packet, manifest = _packet()
+    app = _app(tmp_path, postgres_fixture, initialize_schema=True)
+    store = app.state.operational_value_collection_store
+    store.register_packet(organization_id="org-a", packet=packet, manifest=manifest)
+    task = packet.tasks[0]
+    schema = postgres_fixture.schema
+
+    with TestClient(app):
+        with pytest.raises(ForeignKeyViolation):
+            with app.state.postgres_operational_database.internal_pool.connection() as connection:
+                with connection.transaction():
+                    connection.execute(
+                        f"""
+                        INSERT INTO "{schema}".operational_pilot_assignments(
+                            assignment_id, organization_id, packet_id, task_id, pair_id,
+                            user_id, operator_ref_sha256, host_session_id, state
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'ACTIVE')
+                        """,
+                        (
+                            "ova_" + "4" * 24,
+                            "org-a",
+                            packet.packet_id,
+                            task.task_id,
+                            "ovpair_" + "5" * 24,
+                            "pair-integrity-user",
+                            "6" * 64,
+                            "ovhost_" + "7" * 24,
+                        ),
+                    )
+
+
 def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
     tmp_path: Path,
     postgres_fixture: _PgFixture,
@@ -350,8 +386,8 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
         )
         assert duplicate.status_code == 404
 
-        # The same operator may continue on another pair but can never see the opposite arm of
-        # the pair already exposed to them.
+        # Any exposure to a pair removes that whole pair from future assignments to the same
+        # operator, including the same task after a non-valid trial.
         second_a = client.post(
             "/api/operational-value/tasks/next",
             headers=_headers("user-a"),
@@ -375,6 +411,7 @@ def test_postgres_collection_restart_invalidates_orphaned_monotonic_timer(
     postgres_fixture: _PgFixture,
 ) -> None:
     packet, manifest = _packet()
+    pair_by_task = {entry.task_id: entry.pair_id for entry in manifest.entries}
     first = _app(tmp_path, postgres_fixture, initialize_schema=True)
     first.state.operational_value_collection_store.register_packet(
         organization_id="org-a",
@@ -415,7 +452,20 @@ def test_postgres_collection_restart_invalidates_orphaned_monotonic_timer(
         assert failed[0].elapsed_seconds is None
         assert failed[0].invalid_reason == "host_timer_session_lost"
 
-        # The task remains eligible for a fresh independent measurement after technical failure.
+        # Exposure survives technical failure: the same human cannot re-run the same pair and
+        # contaminate the matched design with remembered evidence.
+        same_user_replacement = client.post(
+            "/api/operational-value/tasks/next",
+            headers=_headers("restart-user"),
+        )
+        assert same_user_replacement.status_code == 200
+        assert (
+            pair_by_task[same_user_replacement.json()["task"]["task_id"]]
+            != pair_by_task[orphaned_task]
+        )
+
+        # A different operator can still provide a clean replacement measurement for an invalid
+        # trial, so technical failures do not permanently consume the task.
         replacement = client.post(
             "/api/operational-value/tasks/next",
             headers=_headers("replacement-user"),
