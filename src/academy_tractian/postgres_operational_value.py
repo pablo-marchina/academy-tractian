@@ -17,7 +17,7 @@ from .operational_value_pilot import (
 from .postgres_operational import PostgresOperationalDatabase, _identifier
 
 
-_OPERATIONAL_VALUE_COLLECTION_SCHEMA_VERSION = "operational-value-collection-v3"
+_OPERATIONAL_VALUE_COLLECTION_SCHEMA_VERSION = "operational-value-collection-v4"
 
 
 class PostgresOperationalPilotStore:
@@ -99,6 +99,7 @@ class PostgresOperationalPilotStore:
                             OR (
                                 state = 'VALID'
                                 AND finished_at IS NOT NULL
+                                AND elapsed_seconds IS NOT NULL
                                 AND elapsed_seconds > 0
                                 AND terminal_decision IS NOT NULL
                                 AND length(btrim(terminal_decision)) > 0
