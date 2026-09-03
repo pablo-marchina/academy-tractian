@@ -132,24 +132,62 @@ def _payload() -> tuple[ProviderExperimentSummary, ...]:
     )
     d02 = ProviderExperimentSummary(
         experiment_id="D02",
-        status="NOT_EXECUTED",
-        selection=None,
+        status="COMPLETE",
+        selection="NO_SELECTION",
         production_selection_claim=False,
-        attempted_calls=0,
+        attempted_calls=32,
         expected_calls=32,
-        cash_cost_usd=None,
-        packet_observed_neurons=None,
+        cash_cost_usd=0.0,
+        packet_observed_neurons=3344.1308560000007,
         packet_max_neurons=9352.805376,
         completion_cap_tokens=1024,
         raw_provider_material_recorded=False,
-        resource_accounting_complete=False,
+        resource_accounting_complete=True,
         attempt_matrix_available=False,
-        candidates=(),
+        candidates=(
+            ProviderCandidateSummary(
+                candidate_id="cloudflare_glm_4_7_flash_workers_free",
+                attempts=16,
+                hard_gate_pass=False,
+                hard_gate_failures=("M1_BELOW_MINIMUM", "M4_BELOW_MINIMUM", "M7_BELOW_MINIMUM"),
+                structured_decision_adherence=0.4375,
+                public_task_quality=0.375,
+                safe_failure_behavior=1.0,
+                trace_integrity=1.0,
+                success_rate=0.4375,
+                signature_stability=0.25,
+                median_latency_ms=15329.0,
+                p95_latency_ms=38270.0,
+                observed_neurons=642.9772000000002,
+                cash_cost_usd=0.0,
+                usage_complete=True,
+            ),
+            ProviderCandidateSummary(
+                candidate_id="cloudflare_nemotron_3_120b_a12b_workers_free",
+                attempts=16,
+                hard_gate_pass=False,
+                hard_gate_failures=("M1_BELOW_MINIMUM", "M4_BELOW_MINIMUM", "M7_BELOW_MINIMUM"),
+                structured_decision_adherence=0.5625,
+                public_task_quality=0.5625,
+                safe_failure_behavior=1.0,
+                trace_integrity=1.0,
+                success_rate=0.5625,
+                signature_stability=0.5,
+                median_latency_ms=4218.5,
+                p95_latency_ms=9168.0,
+                observed_neurons=2701.153656,
+                cash_cost_usd=0.0,
+                usage_complete=True,
+            ),
+        ),
         diagnostic=None,
         note=(
-            "Prospective preregistered control only: same comparison with a 1024-token completion budget and "
-            "sanitized client failure subtype capture. No D02 live result exists until a separately authorized "
-            "zero-cost packet is actually executed."
+            "Accepted governed D02 aggregate live result from plan "
+            "e768b324baa00dd337c8e56bdfb29b9444be92619508a9fefc30e30b746d1958. "
+            "The one-shot packet completed 32/32 attempts at USD 0 with a 1024-token completion cap. "
+            "Both candidates still failed M1/M4/M7 hard gates, so selection remains NO_SELECTION. "
+            "Raw provider material was not recorded and this registry does not invent the unavailable "
+            "32-row attempt matrix or failure-subtype distribution."
         ),
     )
     return (d01, d02)

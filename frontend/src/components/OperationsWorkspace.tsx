@@ -19,6 +19,17 @@ function percent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+function percentagePoints(value: number): string {
+  const points = value * 100;
+  return `${points >= 0 ? "+" : ""}${points.toFixed(1)} pp`;
+}
+
+function relativeDelta(current: number, baseline: number): string {
+  if (baseline === 0) return current === 0 ? "0.0%" : "from 0";
+  const delta = ((current / baseline) - 1) * 100;
+  return `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}%`;
+}
+
 function milliseconds(value: number | null | undefined): string {
   return value === null || value === undefined ? "—" : `${value.toFixed(1)} ms`;
 }
@@ -64,6 +75,15 @@ export function OperationsWorkspace({ selectedRunId }: { selectedRunId: string |
   const policyOption = useMemo(() => policiesQuery.data ? policiesOption(policiesQuery.data) : null, [policiesQuery.data]);
   const evalOption = useMemo(() => evaluationMetricsQuery.data ? evaluationOption(evaluationMetricsQuery.data) : null, [evaluationMetricsQuery.data]);
   const d01Option = useMemo(() => d01 && d01.candidates.length ? providerOption(d01) : null, [d01]);
+  const d02Option = useMemo(() => d02 && d02.candidates.length ? providerOption(d02) : null, [d02]);
+  const providerDeltas = useMemo(() => {
+    if (!d01 || !d02 || d02.status !== "COMPLETE") return [];
+    return d02.candidates.flatMap((current) => {
+      const baseline = d01.candidates.find((item) => item.candidate_id === current.candidate_id);
+      if (!baseline) return [];
+      return [{ current, baseline }];
+    });
+  }, [d01, d02]);
 
   const requestDrilldown = useCallback((request: Omit<AnalyticsDrilldown, "key">) => {
     drilldownSequence.current += 1;
@@ -209,7 +229,33 @@ export function OperationsWorkspace({ selectedRunId }: { selectedRunId: string |
         <article className="panel operations-panel provider-lab">
           <div className="section-heading compact"><div><p className="eyebrow">GOVERNED PROVIDER EVIDENCE · GLOBAL</p><h2>Provider D01 / D02 Lab</h2></div>{providerQuery.data && <span className="count-pill" title={providerQuery.data.registry_sha256}>registry {providerQuery.data.registry_sha256.slice(0, 10)}</span>}</div>
           {d01 ? <div className="experiment-card"><div className="experiment-heading"><strong>D01</strong><HealthStatus status={d01.selection ?? d01.status} /></div><div className="experiment-kpis"><span>{d01.attempted_calls}/{d01.expected_calls} calls</span><span>USD {d01.cash_cost_usd?.toFixed(2) ?? "—"}</span><span>{d01.packet_observed_neurons?.toFixed(2) ?? "—"} Neurons</span><span>cap {d01.completion_cap_tokens}</span></div>{d01Option && <EChart option={d01Option} height={260} />}{d01.diagnostic && <div className="diagnostic-note"><strong>Completion-budget diagnostic</strong><p>{d01.diagnostic.interpretation}</p><span>{d01.diagnostic.client_failures_at_completion_cap}/{d01.diagnostic.client_failures} CLIENT_FAILURE at exact cap</span></div>}<p className="panel-copy">{d01.note}</p></div> : <p className="muted">D01 registry unavailable.</p>}
-          {d02 && <div className="experiment-card prospective"><div className="experiment-heading"><strong>D02</strong><HealthStatus status={d02.status} /></div><div className="experiment-kpis"><span>{d02.attempted_calls}/{d02.expected_calls} calls</span><span>cap {d02.completion_cap_tokens}</span><span>max {d02.packet_max_neurons.toFixed(3)} Neurons</span></div><p>{d02.note}</p><strong className="no-result-label">No live D02 result exists.</strong></div>}
+          {d02 && d02.status === "COMPLETE" ? (
+            <div className="experiment-card">
+              <div className="experiment-heading"><strong>D02</strong><HealthStatus status={d02.selection ?? d02.status} /></div>
+              <div className="experiment-kpis"><span>{d02.attempted_calls}/{d02.expected_calls} calls</span><span>USD {d02.cash_cost_usd?.toFixed(2) ?? "—"}</span><span>{d02.packet_observed_neurons?.toFixed(2) ?? "—"} Neurons</span><span>cap {d02.completion_cap_tokens}</span></div>
+              {d02Option && <EChart option={d02Option} height={260} />}
+              <p className="panel-copy">{d02.note}</p>
+              {d01 && d01.packet_observed_neurons !== null && d02.packet_observed_neurons !== null && (
+                <div className="diagnostic-note">
+                  <strong>Controlled D01 → D02 effect · only completion cap changed 512 → 1024</strong>
+                  <p>Packet Neurons {relativeDelta(d02.packet_observed_neurons, d01.packet_observed_neurons)} · selection {d01.selection} → {d02.selection}. Both candidates remain below frozen M1/M4/M7 gates.</p>
+                  <div className="compact-data-list">
+                    {providerDeltas.map(({ current, baseline }) => (
+                      <div key={current.candidate_id}>
+                        <strong>{current.candidate_id}</strong>
+                        <span>
+                          success {percentagePoints(current.success_rate - baseline.success_rate)} · M1 {percentagePoints(current.structured_decision_adherence - baseline.structured_decision_adherence)} · M4 {percentagePoints(current.public_task_quality - baseline.public_task_quality)} · M7 {percentagePoints(current.signature_stability - baseline.signature_stability)} · median latency {relativeDelta(current.median_latency_ms, baseline.median_latency_ms)} · Neurons {relativeDelta(current.observed_neurons, baseline.observed_neurons)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <small>Attempt-level failure-subtype distribution is not reconstructed because the accepted aggregate result does not contain the 32-row matrix.</small>
+                </div>
+              )}
+            </div>
+          ) : d02 ? (
+            <div className="experiment-card prospective"><div className="experiment-heading"><strong>D02</strong><HealthStatus status={d02.status} /></div><div className="experiment-kpis"><span>{d02.attempted_calls}/{d02.expected_calls} calls</span><span>cap {d02.completion_cap_tokens}</span><span>max {d02.packet_max_neurons.toFixed(3)} Neurons</span></div><p>{d02.note}</p><strong className="no-result-label">No live D02 result exists.</strong></div>
+          ) : null}
         </article>
       </div>
 

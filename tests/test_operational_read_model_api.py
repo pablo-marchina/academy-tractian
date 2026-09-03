@@ -197,7 +197,7 @@ def test_dynamic_analytics_is_allow_listed_and_never_accepts_sql(tmp_path) -> No
     assert invalid_heatmap.status_code == 422
 
 
-def test_provider_lab_preserves_d01_and_refuses_to_invent_d02(tmp_path) -> None:
+def test_provider_lab_integrates_d02_without_inventing_attempt_matrix(tmp_path) -> None:
     app = create_observability_app(db_path=tmp_path / "providers.duckdb")
     client = TestClient(app)
 
@@ -216,9 +216,37 @@ def test_provider_lab_preserves_d01_and_refuses_to_invent_d02(tmp_path) -> None:
     assert d01["attempt_matrix_available"] is False
 
     d02 = experiments["D02"]
-    assert d02["status"] == "NOT_EXECUTED"
-    assert d02["attempted_calls"] == 0
-    assert d02["selection"] is None
-    assert d02["cash_cost_usd"] is None
-    assert d02["packet_observed_neurons"] is None
+    assert d02["status"] == "COMPLETE"
+    assert d02["attempted_calls"] == 32
+    assert d02["expected_calls"] == 32
+    assert d02["selection"] == "NO_SELECTION"
+    assert d02["production_selection_claim"] is False
+    assert d02["cash_cost_usd"] == 0.0
+    assert d02["packet_observed_neurons"] == 3344.1308560000007
+    assert d02["completion_cap_tokens"] == 1024
+    assert d02["resource_accounting_complete"] is True
+    assert d02["raw_provider_material_recorded"] is False
     assert d02["attempt_matrix_available"] is False
+    assert d02["diagnostic"] is None
+    assert len(d02["candidates"]) == 2
+
+    candidates = {item["candidate_id"]: item for item in d02["candidates"]}
+    glm = candidates["cloudflare_glm_4_7_flash_workers_free"]
+    nemotron = candidates["cloudflare_nemotron_3_120b_a12b_workers_free"]
+
+    assert glm["success_rate"] == 0.4375
+    assert glm["structured_decision_adherence"] == 0.4375
+    assert glm["public_task_quality"] == 0.375
+    assert glm["hard_gate_pass"] is False
+
+    assert nemotron["success_rate"] == 0.5625
+    assert nemotron["structured_decision_adherence"] == 0.5625
+    assert nemotron["public_task_quality"] == 0.5625
+    assert nemotron["hard_gate_pass"] is False
+
+    assert glm["hard_gate_failures"] == ["M1_BELOW_MINIMUM", "M4_BELOW_MINIMUM", "M7_BELOW_MINIMUM"]
+    assert nemotron["hard_gate_failures"] == ["M1_BELOW_MINIMUM", "M4_BELOW_MINIMUM", "M7_BELOW_MINIMUM"]
+
+    serialized = json.dumps(d02, sort_keys=True).lower()
+    for forbidden in ("api_token", "account_id", "authorization\":", "raw_response", "raw_request", "chain_of_thought"):
+        assert forbidden not in serialized
