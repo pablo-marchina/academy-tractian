@@ -169,6 +169,36 @@ class FakeStore:
         return self.completed
 
 
+class FailOnceCompletionStore(FakeStore):
+    def __init__(self) -> None:
+        super().__init__()
+        self.completion_attempts = 0
+        self.elapsed_attempts: list[float] = []
+
+    def complete_valid(
+        self,
+        *,
+        assignment_id: str,
+        organization_id: str,
+        user_id: str,
+        elapsed_seconds: float,
+        terminal_decision: str,
+        conclusion_summary: str,
+    ) -> OperationalPilotCompletion:
+        self.completion_attempts += 1
+        self.elapsed_attempts.append(elapsed_seconds)
+        if self.completion_attempts == 1:
+            raise RuntimeError("simulated_transient_persistence_failure")
+        return super().complete_valid(
+            assignment_id=assignment_id,
+            organization_id=organization_id,
+            user_id=user_id,
+            elapsed_seconds=elapsed_seconds,
+            terminal_decision=terminal_decision,
+            conclusion_summary=conclusion_summary,
+        )
+
+
 def _context(request: Request) -> AuthenticatedRuntimeContext:
     user = request.headers.get("x-test-user", "user-a")
     permissions = {OPERATIONAL_VALUE_PARTICIPATE_PERMISSION}
@@ -192,6 +222,11 @@ def test_timer_start_is_idempotent_without_resetting_authoritative_start() -> No
 
     clock.value = 40.0
     assert timers.finish(ASSIGNMENT_ID) == 10.0
+    clock.value = 70.0
+    assert timers.finish(ASSIGNMENT_ID) == 10.0
+    assert timers.has(ASSIGNMENT_ID)
+    timers.discard(ASSIGNMENT_ID)
+    assert not timers.has(ASSIGNMENT_ID)
 
 
 def test_timer_that_was_started_and_lost_cannot_be_reconstructed() -> None:
@@ -241,6 +276,47 @@ def test_collection_api_converged_retry_keeps_original_timer_start() -> None:
         assert "elapsed_seconds" not in completed.json()
         assert store.completed is not None
         assert store.completed.elapsed_seconds == 10.0
+        assert not timers.has(ASSIGNMENT_ID)
+
+
+def test_completion_retry_reuses_first_submit_elapsed_after_persistence_failure() -> None:
+    clock = ControlledClock(100.0)
+    timers = HostMonotonicPilotTimerRegistry(clock=clock)
+    store = FailOnceCompletionStore()
+    app = FastAPI()
+    attach_operational_value_collection_api(
+        app,
+        context_provider=_context,
+        store=store,
+        timer_registry=timers,
+    )
+
+    payload = {
+        "terminal_decision": "ORIENT",
+        "conclusion_summary": "The measured submit instant must survive a persistence retry.",
+    }
+    with TestClient(app) as client:
+        assert client.post("/api/operational-value/tasks/next").status_code == 200
+        clock.value = 112.0
+        first = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
+            json=payload,
+        )
+        assert first.status_code == 409
+        assert first.json()["detail"] == "simulated_transient_persistence_failure"
+        assert timers.has(ASSIGNMENT_ID)
+        assert store.completed is None
+
+        clock.value = 250.0
+        retry = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
+            json=payload,
+        )
+        assert retry.status_code == 200
+        assert store.elapsed_attempts == [12.0, 12.0]
+        assert store.completed is not None
+        assert store.completed.elapsed_seconds == 12.0
+        assert not timers.has(ASSIGNMENT_ID)
 
 
 def test_collection_api_owns_elapsed_time_and_hides_private_assignment_material() -> None:
