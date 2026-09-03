@@ -57,7 +57,7 @@ def _sources() -> tuple[OperationalPilotSource, ...]:
             scenario_id="OV-E2E-01",
             case_id="E2E-TICKET-01",
             ticket_request="Investigate why the latest industrial analysis is still pending and record the operational conclusion.",
-            agent_terminal_decision="FINAL",
+            agent_terminal_decision="ORIENT",
             agent_terminal_message="The analysis is still processing; wait for completion before taking corrective action.",
             safe_evidence_context=(
                 "The latest analysis state is pending.",
@@ -87,7 +87,9 @@ def register_provider_free_operational_value_packet(app: FastAPI) -> None:
         sources=_sources(),
         frozen_split_payload=_frozen_split(),
         protocol_id="provider-free-operational-value-e2e-v1",
-        deterministic_shuffle_seed=20260903,
+        # With the deterministic source order this seed yields MANUAL from one pair followed by
+        # ASSISTED from the other pair for the same operator after anti-crossover is applied.
+        deterministic_shuffle_seed=42,
         minimum_distinct_groups=2,
     )
     app.state.operational_value_collection_store.register_packet(
