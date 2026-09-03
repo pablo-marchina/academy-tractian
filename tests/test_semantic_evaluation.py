@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 from academy_tractian.semantic_evaluation import (
@@ -11,15 +12,22 @@ from academy_tractian.semantic_evaluation import (
 )
 
 
-def _output_hash(seed: str) -> str:
-    import hashlib
-
+def _hash(seed: str) -> str:
     return hashlib.sha256(seed.encode("utf-8")).hexdigest()
+
+
+def _output_hash(seed: str) -> str:
+    return _hash(seed)
+
+
+def _context_hash(seed: str) -> str:
+    return _hash(f"context:{seed}")
 
 
 def _perfect_records():
     rubric = semantic_rubric_v1()
     output_sha = _output_hash("safe-output")
+    context_sha = _context_hash("safe-evidence")
     human = []
     judge = []
     for dimension in (
@@ -32,6 +40,7 @@ def _perfect_records():
             HumanSemanticReference(
                 scenario_id="public-scenario-1",
                 output_sha256=output_sha,
+                context_sha256=context_sha,
                 response_mode="escalation" if dimension == "escalation_quality" else "complete",
                 dimension=dimension,
                 score=2,
@@ -43,6 +52,7 @@ def _perfect_records():
             JudgeSemanticObservation(
                 scenario_id="public-scenario-1",
                 output_sha256=output_sha,
+                context_sha256=context_sha,
                 response_mode="escalation" if dimension == "escalation_quality" else "complete",
                 dimension=dimension,
                 judge_id="candidate-judge-v1",
@@ -158,11 +168,29 @@ def test_mismatched_response_mode_is_not_same_calibration_key() -> None:
     assert "CALIBRATION_KEY_SET_MISMATCH" in report.gate_failures
 
 
+def test_same_output_under_different_evidence_context_is_not_same_calibration_key() -> None:
+    human, judge = _perfect_records()
+    judge[0] = judge[0].model_copy(update={"context_sha256": _context_hash("different-evidence")})
+
+    report = calibrate_semantic_judge(
+        human_references=human,
+        judge_observations=judge,
+        acceptance_policy=_explicit_perfect_policy(),
+    )
+
+    assert report.state == "NOT_CALIBRATED"
+    assert report.gate_authorized is False
+    assert "CALIBRATION_KEY_SET_MISMATCH" in report.gate_failures
+    assert report.unmatched_human_keys
+    assert report.unmatched_judge_keys
+
+
 def test_invalid_judge_output_is_measured_and_cannot_pass_zero_invalid_policy() -> None:
     human, judge = _perfect_records()
     judge[2] = JudgeSemanticObservation(
         scenario_id=judge[2].scenario_id,
         output_sha256=judge[2].output_sha256,
+        context_sha256=judge[2].context_sha256,
         response_mode=judge[2].response_mode,
         dimension=judge[2].dimension,
         judge_id=judge[2].judge_id,
