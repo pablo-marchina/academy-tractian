@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from time import sleep
 
 from fastapi import Request
 
@@ -17,7 +18,7 @@ from research.e2.transport import RequestTransport, TransportResponse
 
 from .action_safety import ResourceCompanyBinding
 from .postgres_product_api import create_postgres_action_capable_product_app
-from .product_api import AuthenticatedRuntimeContext
+from .product_api import AuthenticatedRuntimeContext, DEFAULT_RUNTIME_PERMISSIONS
 from .production_actions_v2 import ProductionActionPrincipal
 
 
@@ -80,13 +81,18 @@ class ProviderFreeScenarioDecisionSource(DecisionSource):
                         evidence_id="EV-e2e-blocked-action",
                     ),
                 )
+            asset_id = (
+                "asset-error"
+                if "scenario:tool-error" in request
+                else "asset-slow"
+                if "scenario:slow" in request
+                else "asset-e2e"
+            )
             return ControllerDecision(
                 kind=ControllerDecisionKind.TOOL,
                 proposal=ToolProposal(
                     tool_name="get_asset",
-                    arguments={
-                        "asset_id": "asset-error" if "scenario:tool-error" in request else "asset-e2e"
-                    },
+                    arguments={"asset_id": asset_id},
                     evidence_id="EV-e2e-asset",
                 ),
             )
@@ -135,12 +141,15 @@ class ProviderFreeTransport(RequestTransport):
                 headers={"content-type": "application/json"},
                 body={"error": "provider_free_dependency_unavailable"},
             )
-        if request.path == "/assets/asset-e2e" and request.method == "GET":
+        if request.path in {"/assets/asset-e2e", "/assets/asset-slow"} and request.method == "GET":
+            if request.path == "/assets/asset-slow":
+                sleep(1.5)
+            asset_id = request.path.rsplit("/", 1)[-1]
             return TransportResponse(
                 status_code=200,
                 headers={"content-type": "application/json"},
                 body={
-                    "assetId": "asset-e2e",
+                    "assetId": asset_id,
                     "companyId": "company-e2e",
                     "status": "monitored",
                     "anomalyState": "stable",
@@ -167,7 +176,8 @@ def provider_free_runtime_context(request: Request) -> AuthenticatedRuntimeConte
         organization_id=organization_id,
         identity_id=f"identity:{organization_id}:{user_id}",
         user_id=user_id,
-        role="operator",
+        role="operator-e2e",
+        permissions=DEFAULT_RUNTIME_PERMISSIONS | frozenset({"analytics:read:global"}),
         seed="provider-free-e2e-seed",
     )
 
