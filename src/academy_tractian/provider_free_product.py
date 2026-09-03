@@ -17,6 +17,8 @@ from research.e2.models import BoundRequest, Permission
 from research.e2.transport import RequestTransport, TransportResponse
 
 from .action_safety import ResourceCompanyBinding
+from .operational_value_collection import OPERATIONAL_VALUE_PARTICIPATE_PERMISSION
+from .operational_value_pilot import OperationalPilotSource, build_operational_pilot_packet
 from .postgres_product_api import create_postgres_action_capable_product_app
 from .product_api import AuthenticatedRuntimeContext, DEFAULT_RUNTIME_PERMISSIONS
 from .production_actions_v2 import ProductionActionPrincipal
@@ -180,7 +182,8 @@ def provider_free_runtime_context(request: Request) -> AuthenticatedRuntimeConte
         identity_id=f"identity:{organization_id}:{user_id}",
         user_id=user_id,
         role="operator-e2e",
-        permissions=DEFAULT_RUNTIME_PERMISSIONS | frozenset({"analytics:read:global"}),
+        permissions=DEFAULT_RUNTIME_PERMISSIONS
+        | frozenset({"analytics:read:global", OPERATIONAL_VALUE_PARTICIPATE_PERMISSION}),
         seed="provider-free-e2e-seed",
     )
 
@@ -197,13 +200,68 @@ def provider_free_action_principal(*, user_id: str) -> ProductionActionPrincipal
     )
 
 
+def _provider_free_operational_pilot():
+    sources = (
+        OperationalPilotSource(
+            scenario_id="E2E-PILOT-01",
+            case_id="E2E-TICKET-01",
+            ticket_request="Investigate intermittent diagnostic confidence for asset E2E-101 and record the operational conclusion.",
+            agent_terminal_decision="ESCALATE",
+            agent_terminal_message="The available measurements are incomplete; specialist continuation is appropriate.",
+            safe_evidence_context=(
+                "Recent measurements are incomplete.",
+                "No corrective action has been executed.",
+            ),
+            agent_runtime_seconds=1.25,
+        ),
+        OperationalPilotSource(
+            scenario_id="E2E-PILOT-02",
+            case_id="E2E-TICKET-02",
+            ticket_request="Investigate why the latest analysis for asset E2E-202 is still pending and record the operational conclusion.",
+            agent_terminal_decision="FINAL",
+            agent_terminal_message="The analysis remains in processing state; wait for completion before corrective action.",
+            safe_evidence_context=("The latest analysis state is pending.",),
+            agent_runtime_seconds=0.9,
+        ),
+    )
+    split_manifest = {
+        "schema_version": "benchmark-split-v1",
+        "status": "FROZEN",
+        "splits": {
+            "DEV": {
+                "groups": [
+                    {"group_id": "asset_E2E101", "scenarios": ["E2E-PILOT-01"]},
+                    {"group_id": "asset_E2E202", "scenarios": ["E2E-PILOT-02"]},
+                ]
+            },
+            "VALIDATION": {
+                "groups": [
+                    {"group_id": "asset_E2E_VALIDATION", "scenarios": ["E2E-VALIDATION-01"]}
+                ]
+            },
+            "LOCKED_TEST": {
+                "groups": [
+                    {"group_id": "asset_E2E_LOCKED", "scenarios": ["E2E-LOCKED-01"]}
+                ]
+            },
+        },
+    }
+    return build_operational_pilot_packet(
+        sources=sources,
+        frozen_split_payload=split_manifest,
+        protocol_id="provider-free-operational-value-e2e-v1",
+        deterministic_shuffle_seed=42,
+        minimum_distinct_groups=2,
+    )
+
+
 def build_provider_free_product():
     internal_dsn = os.environ["ACADEMY_POSTGRES_INTERNAL_DSN"]
     scoped_dsn = os.environ["ACADEMY_POSTGRES_SCOPED_DSN"]
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_e2e")
     db_path = Path(os.environ.get("ACADEMY_OBSERVABILITY_DB", ".runtime/provider-free-e2e.duckdb"))
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    return create_postgres_action_capable_product_app(
+    app = create_postgres_action_capable_product_app(
         db_path=db_path,
         internal_dsn=internal_dsn,
         scoped_dsn=scoped_dsn,
@@ -218,6 +276,13 @@ def build_provider_free_product():
         max_workers=8,
         heartbeat_interval_ms=250,
     )
+    packet, manifest = _provider_free_operational_pilot()
+    app.state.operational_value_collection_store.register_packet(
+        organization_id="e2e-org-a",
+        packet=packet,
+        manifest=manifest,
+    )
+    return app
 
 
 def main() -> None:
