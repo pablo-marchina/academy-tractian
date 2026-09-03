@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import Sequence
 from uuid import uuid4
 
 from .operational_value_collection import (
@@ -18,14 +17,7 @@ from .operational_value_pilot import (
 from .postgres_operational import PostgresOperationalDatabase, _identifier
 
 
-_OPERATIONAL_VALUE_COLLECTION_SCHEMA_VERSION = "operational-value-collection-v1"
-_ASSIGNMENT_STATES = (
-    "ACTIVE",
-    "VALID",
-    "INTERRUPTED",
-    "TECHNICAL_FAILURE",
-    "WITHDRAWN",
-)
+_OPERATIONAL_VALUE_COLLECTION_SCHEMA_VERSION = "operational-value-collection-v2"
 
 
 class PostgresOperationalPilotStore:
@@ -91,9 +83,32 @@ class PostgresOperationalPilotStore:
                         FOREIGN KEY (organization_id, task_id)
                             REFERENCES "{schema}".operational_pilot_tasks(organization_id, task_id)
                             ON DELETE RESTRICT,
+                        CHECK (elapsed_seconds IS NULL OR elapsed_seconds > 0),
                         CHECK (
-                            (state = 'ACTIVE' AND finished_at IS NULL AND elapsed_seconds IS NULL)
-                            OR (state <> 'ACTIVE' AND finished_at IS NOT NULL)
+                            (
+                                state = 'ACTIVE'
+                                AND finished_at IS NULL
+                                AND elapsed_seconds IS NULL
+                                AND terminal_decision IS NULL
+                                AND conclusion_summary IS NULL
+                                AND invalid_reason IS NULL
+                            )
+                            OR (
+                                state = 'VALID'
+                                AND finished_at IS NOT NULL
+                                AND elapsed_seconds > 0
+                                AND terminal_decision IS NOT NULL
+                                AND length(btrim(terminal_decision)) > 0
+                                AND conclusion_summary IS NOT NULL
+                                AND length(btrim(conclusion_summary)) > 0
+                                AND invalid_reason IS NULL
+                            )
+                            OR (
+                                state IN ('INTERRUPTED','TECHNICAL_FAILURE','WITHDRAWN')
+                                AND finished_at IS NOT NULL
+                                AND invalid_reason IS NOT NULL
+                                AND length(btrim(invalid_reason)) > 0
+                            )
                         )
                     )
                     """
@@ -309,6 +324,13 @@ class PostgresOperationalPilotStore:
         schema = self.schema
         with self.database.internal_pool.connection() as connection:
             with connection.transaction():
+                # Serialize assignment for one trusted principal. Without this lock, two requests
+                # from the same user could each reserve a different task before the partial unique
+                # index arbitrates; that would turn an idempotent retry into an integrity error.
+                connection.execute(
+                    "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                    (f"operational-value-principal\0{organization_id}\0{user_id}",),
+                )
                 existing = connection.execute(
                     f"""
                     SELECT a.assignment_id, a.organization_id, a.packet_id, a.task_id,
