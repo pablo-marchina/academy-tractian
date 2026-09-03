@@ -137,6 +137,67 @@ class FakeStore:
         self.active = None
         return self.completed
 
+    def terminate_active(
+        self,
+        *,
+        assignment_id: str,
+        organization_id: str,
+        user_id: str,
+        terminal_status: str,
+    ) -> OperationalPilotCompletion:
+        if (
+            self.active is None
+            or self.active.assignment_id != assignment_id
+            or self.active.organization_id != organization_id
+            or self.active.user_id != user_id
+        ):
+            raise KeyError(assignment_id)
+        if terminal_status == "INTERRUPTED":
+            invalid_reason = "operator_interrupted"
+        elif terminal_status == "WITHDRAWN":
+            invalid_reason = "operator_withdrew"
+        else:
+            raise ValueError("unsupported_operational_pilot_human_termination_status")
+        self.completed = OperationalPilotCompletion(
+            packet_id=self.active.packet_id,
+            task_id=self.active.task.task_id,
+            operator_ref_sha256=self.active.operator_ref_sha256,
+            status=terminal_status,  # type: ignore[arg-type]
+            invalid_reason=invalid_reason,
+        )
+        self.active = None
+        return self.completed
+
+
+class FailOnceCompletionStore(FakeStore):
+    def __init__(self) -> None:
+        super().__init__()
+        self.completion_attempts = 0
+        self.elapsed_attempts: list[float] = []
+
+    def complete_valid(
+        self,
+        *,
+        assignment_id: str,
+        organization_id: str,
+        user_id: str,
+        elapsed_seconds: float,
+        terminal_decision: str,
+        conclusion_summary: str,
+    ) -> OperationalPilotCompletion:
+        self.completion_attempts += 1
+        self.elapsed_attempts.append(elapsed_seconds)
+        if self.completion_attempts == 1:
+            raise RuntimeError("simulated_transient_persistence_failure")
+        return super().complete_valid(
+            assignment_id=assignment_id,
+            organization_id=organization_id,
+            user_id=user_id,
+            elapsed_seconds=elapsed_seconds,
+            terminal_decision=terminal_decision,
+            conclusion_summary=conclusion_summary,
+        )
+
 
 def _context(request: Request) -> AuthenticatedRuntimeContext:
     user = request.headers.get("x-test-user", "user-a")
@@ -161,6 +222,11 @@ def test_timer_start_is_idempotent_without_resetting_authoritative_start() -> No
 
     clock.value = 40.0
     assert timers.finish(ASSIGNMENT_ID) == 10.0
+    clock.value = 70.0
+    assert timers.finish(ASSIGNMENT_ID) == 10.0
+    assert timers.has(ASSIGNMENT_ID)
+    timers.discard(ASSIGNMENT_ID)
+    assert not timers.has(ASSIGNMENT_ID)
 
 
 def test_timer_that_was_started_and_lost_cannot_be_reconstructed() -> None:
@@ -202,12 +268,55 @@ def test_collection_api_converged_retry_keeps_original_timer_start() -> None:
         completed = client.post(
             f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "Converged retry must not reset the authoritative timer.",
             },
         )
         assert completed.status_code == 200
-        assert completed.json()["elapsed_seconds"] == 10.0
+        assert "elapsed_seconds" not in completed.json()
+        assert store.completed is not None
+        assert store.completed.elapsed_seconds == 10.0
+        assert not timers.has(ASSIGNMENT_ID)
+
+
+def test_completion_retry_reuses_first_submit_elapsed_after_persistence_failure() -> None:
+    clock = ControlledClock(100.0)
+    timers = HostMonotonicPilotTimerRegistry(clock=clock)
+    store = FailOnceCompletionStore()
+    app = FastAPI()
+    attach_operational_value_collection_api(
+        app,
+        context_provider=_context,
+        store=store,
+        timer_registry=timers,
+    )
+
+    payload = {
+        "terminal_decision": "ORIENT",
+        "conclusion_summary": "The measured submit instant must survive a persistence retry.",
+    }
+    with TestClient(app) as client:
+        assert client.post("/api/operational-value/tasks/next").status_code == 200
+        clock.value = 112.0
+        first = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
+            json=payload,
+        )
+        assert first.status_code == 409
+        assert first.json()["detail"] == "simulated_transient_persistence_failure"
+        assert timers.has(ASSIGNMENT_ID)
+        assert store.completed is None
+
+        clock.value = 250.0
+        retry = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
+            json=payload,
+        )
+        assert retry.status_code == 200
+        assert store.elapsed_attempts == [12.0, 12.0]
+        assert store.completed is not None
+        assert store.completed.elapsed_seconds == 12.0
+        assert not timers.has(ASSIGNMENT_ID)
 
 
 def test_collection_api_owns_elapsed_time_and_hides_private_assignment_material() -> None:
@@ -246,18 +355,18 @@ def test_collection_api_owns_elapsed_time_and_hides_private_assignment_material(
         completed = client.post(
             f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "The evidence supports waiting for the current analysis to finish.",
             },
         )
         assert completed.status_code == 200
-        assert completed.json()["elapsed_seconds"] == 12.75
+        assert "elapsed_seconds" not in completed.json()
         assert store.completed is not None
         assert store.completed.elapsed_seconds == 12.75
         assert store.completed.measurement_source == "HOST_MONOTONIC_TIMER"
 
 
-def test_collection_rejects_client_elapsed_and_requires_explicit_permission() -> None:
+def test_collection_rejects_client_elapsed_noncanonical_decision_and_missing_permission() -> None:
     clock = ControlledClock(10.0)
     store = FakeStore()
     app = FastAPI()
@@ -281,7 +390,7 @@ def test_collection_rejects_client_elapsed_and_requires_explicit_permission() ->
         tampered = client.post(
             f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "Recorded conclusion.",
                 "elapsed_seconds": 0.001,
             },
@@ -289,6 +398,86 @@ def test_collection_rejects_client_elapsed_and_requires_explicit_permission() ->
         assert tampered.status_code == 422
         assert store.completed is None
         assert timers_still_active(app, ASSIGNMENT_ID)
+
+        noncanonical = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
+            json={
+                "terminal_decision": "FINAL",
+                "conclusion_summary": "A controller kind is not the canonical operational decision.",
+            },
+        )
+        assert noncanonical.status_code == 422
+        assert store.completed is None
+        assert timers_still_active(app, ASSIGNMENT_ID)
+
+
+def test_human_termination_is_server_classified_and_never_persists_elapsed_time() -> None:
+    clock = ControlledClock(200.0)
+    timers = HostMonotonicPilotTimerRegistry(clock=clock)
+    store = FakeStore()
+    app = FastAPI()
+    attach_operational_value_collection_api(
+        app,
+        context_provider=_context,
+        store=store,
+        timer_registry=timers,
+    )
+
+    with TestClient(app) as client:
+        assert client.post("/api/operational-value/tasks/next").status_code == 200
+        clock.value = 240.0
+        terminated = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/terminate",
+            json={"status": "WITHDRAWN"},
+        )
+        assert terminated.status_code == 200
+        assert terminated.json()["status"] == "WITHDRAWN"
+        assert "elapsed_seconds" not in terminated.json()
+        assert store.completed is not None
+        assert store.completed.status == "WITHDRAWN"
+        assert store.completed.elapsed_seconds is None
+        assert store.completed.terminal_decision is None
+        assert store.completed.conclusion_summary is None
+        assert store.completed.invalid_reason == "operator_withdrew"
+        assert not timers.has(ASSIGNMENT_ID)
+
+
+def test_human_termination_rejects_technical_status_tampering_and_wrong_owner() -> None:
+    timers = HostMonotonicPilotTimerRegistry(clock=ControlledClock(300.0))
+    store = FakeStore()
+    app = FastAPI()
+    attach_operational_value_collection_api(
+        app,
+        context_provider=_context,
+        store=store,
+        timer_registry=timers,
+    )
+
+    with TestClient(app) as client:
+        assert client.post("/api/operational-value/tasks/next").status_code == 200
+        wrong_owner = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/terminate",
+            headers={"x-test-user": "other-user"},
+            json={"status": "INTERRUPTED"},
+        )
+        assert wrong_owner.status_code == 404
+        assert timers.has(ASSIGNMENT_ID)
+
+        forged = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/terminate",
+            json={"status": "TECHNICAL_FAILURE"},
+        )
+        assert forged.status_code == 422
+        assert store.completed is None
+        assert timers.has(ASSIGNMENT_ID)
+
+        tampered = client.post(
+            f"/api/operational-value/assignments/{ASSIGNMENT_ID}/terminate",
+            json={"status": "INTERRUPTED", "elapsed_seconds": 0.001},
+        )
+        assert tampered.status_code == 422
+        assert store.completed is None
+        assert timers.has(ASSIGNMENT_ID)
 
 
 def timers_still_active(app: FastAPI, assignment_id: str) -> bool:
@@ -313,7 +502,7 @@ def test_collection_fails_closed_when_monotonic_session_is_lost() -> None:
         lost = client.post(
             f"/api/operational-value/assignments/{ASSIGNMENT_ID}/complete",
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "This result must not receive a fabricated duration.",
             },
         )

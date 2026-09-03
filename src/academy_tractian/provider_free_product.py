@@ -20,6 +20,10 @@ from .action_safety import ResourceCompanyBinding
 from .postgres_product_api import create_postgres_action_capable_product_app
 from .product_api import AuthenticatedRuntimeContext, DEFAULT_RUNTIME_PERMISSIONS
 from .production_actions_v2 import ProductionActionPrincipal
+from .provider_free_operational_value import (
+    provider_free_operational_value_permissions,
+    register_provider_free_operational_value_packet,
+)
 
 
 class ProviderFreeScenarioDecisionSource(DecisionSource):
@@ -175,12 +179,17 @@ class ProviderFreeTransport(RequestTransport):
 def provider_free_runtime_context(request: Request) -> AuthenticatedRuntimeContext:
     user_id = request.headers.get("x-e2e-user", "e2e-user-a")
     organization_id = request.headers.get("x-e2e-organization", "e2e-org-a")
+    permissions = (
+        DEFAULT_RUNTIME_PERMISSIONS
+        | frozenset({"analytics:read:global"})
+        | provider_free_operational_value_permissions()
+    )
     return AuthenticatedRuntimeContext(
         organization_id=organization_id,
         identity_id=f"identity:{organization_id}:{user_id}",
         user_id=user_id,
         role="operator-e2e",
-        permissions=DEFAULT_RUNTIME_PERMISSIONS | frozenset({"analytics:read:global"}),
+        permissions=permissions,
         seed="provider-free-e2e-seed",
     )
 
@@ -203,7 +212,7 @@ def build_provider_free_product():
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_e2e")
     db_path = Path(os.environ.get("ACADEMY_OBSERVABILITY_DB", ".runtime/provider-free-e2e.duckdb"))
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    return create_postgres_action_capable_product_app(
+    app = create_postgres_action_capable_product_app(
         db_path=db_path,
         internal_dsn=internal_dsn,
         scoped_dsn=scoped_dsn,
@@ -218,6 +227,8 @@ def build_provider_free_product():
         max_workers=8,
         heartbeat_interval_ms=250,
     )
+    register_provider_free_operational_value_packet(app)
+    return app
 
 
 def main() -> None:

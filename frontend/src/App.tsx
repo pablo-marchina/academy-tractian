@@ -14,6 +14,7 @@ import {
 import type { RunAccepted, SafeEvent } from "./api/types";
 import { ActionControl } from "./components/ActionControl";
 import { ArchitectureExplorer } from "./components/ArchitectureExplorer";
+import { OperationalValueCollector } from "./components/OperationalValueCollector";
 import { OperationsWorkspace } from "./components/OperationsWorkspace";
 import { RunExplorer } from "./components/RunExplorer";
 import { TraceGraph } from "./components/TraceGraph";
@@ -154,6 +155,7 @@ export default function App() {
 
         <ActionControl selectedRunId={selectedRunId} onFollowExecution={followActionRun} />
         <OperationsWorkspace selectedRunId={selectedRunId} />
+        <OperationalValueCollector />
       </main>
     </div>
   );

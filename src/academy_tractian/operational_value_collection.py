@@ -3,11 +3,13 @@ from __future__ import annotations
 from hashlib import sha256
 from threading import Lock
 from time import perf_counter
-from typing import Callable, Protocol
+from typing import Callable, Literal, Protocol
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
+
+from research.e2.models import Decision
 
 from .operational_value_pilot import OperationalPilotCompletion, OperationalPilotTask, PilotTrialStatus
 from .product_api import (
@@ -19,6 +21,7 @@ from .product_api import (
 
 
 OPERATIONAL_VALUE_PARTICIPATE_PERMISSION = "operational-value:participate"
+HumanPilotTerminationStatus = Literal["INTERRUPTED", "WITHDRAWN"]
 
 
 class _FrozenModel(BaseModel):
@@ -47,16 +50,21 @@ class PilotAssignmentSafe(_FrozenModel):
 
 
 class PilotCompletionSubmission(_FrozenModel):
-    terminal_decision: str = Field(min_length=1, max_length=256)
+    terminal_decision: Decision
     conclusion_summary: str = Field(min_length=1, max_length=10000)
 
 
+class PilotTerminationSubmission(_FrozenModel):
+    status: HumanPilotTerminationStatus
+
+
 class PilotCompletionAccepted(_FrozenModel):
+    """Participant-safe acknowledgement; measured duration remains evaluator/private state."""
+
     assignment_id: str = Field(pattern=r"^ova_[0-9a-f]{24}$")
     packet_id: str = Field(pattern=r"^ovpkt_[0-9a-f]{24}$")
     task_id: str = Field(pattern=r"^ovt_[0-9a-f]{24}$")
     status: PilotTrialStatus
-    elapsed_seconds: float | None = Field(default=None, gt=0.0)
 
 
 class OperationalPilotCollectionStore(Protocol):
@@ -98,6 +106,15 @@ class OperationalPilotCollectionStore(Protocol):
         conclusion_summary: str,
     ) -> OperationalPilotCompletion: ...
 
+    def terminate_active(
+        self,
+        *,
+        assignment_id: str,
+        organization_id: str,
+        user_id: str,
+        terminal_status: HumanPilotTerminationStatus,
+    ) -> OperationalPilotCompletion: ...
+
 
 class HostMonotonicPilotTimerRegistry:
     """Process-local monotonic timers with explicit session-loss invalidation semantics.
@@ -105,6 +122,11 @@ class HostMonotonicPilotTimerRegistry:
     A persisted assignment is not enough to reconstruct a monotonic interval after process loss.
     The store therefore persists ``host_session_id`` and the API invalidates an ACTIVE assignment
     if it no longer belongs to this registry session instead of fabricating elapsed time.
+
+    The first completion attempt freezes elapsed time before persistence. If persistence fails, the
+    frozen value survives for an explicit retry in this host session, preventing DB latency/retry
+    time from inflating the human-effort measurement. It is discarded only after terminal state is
+    durably persisted or the trial is invalidated.
     """
 
     def __init__(self, *, clock: Callable[[], float] = perf_counter) -> None:
@@ -112,6 +134,7 @@ class HostMonotonicPilotTimerRegistry:
         self.host_session_id = f"ovhost_{uuid4().hex[:24]}"
         self._lock = Lock()
         self._starts: dict[str, float] = {}
+        self._frozen_elapsed: dict[str, float] = {}
         # Keep process-session memory of assignments that were actually timed. This closes a
         # subtle concurrency gap: two requests may converge on one DB assignment before either
         # starts the timer, while a timer that existed and later disappeared must never be
@@ -122,7 +145,7 @@ class HostMonotonicPilotTimerRegistry:
         """Start once, converge concurrent retries, and fail if a known timer was lost."""
 
         with self._lock:
-            if assignment_id in self._starts:
+            if assignment_id in self._starts or assignment_id in self._frozen_elapsed:
                 return False
             if assignment_id in self._seen:
                 raise RuntimeError("operational_pilot_timer_session_lost")
@@ -132,23 +155,33 @@ class HostMonotonicPilotTimerRegistry:
 
     def has(self, assignment_id: str) -> bool:
         with self._lock:
-            return assignment_id in self._starts
+            return assignment_id in self._starts or assignment_id in self._frozen_elapsed
 
     def finish(self, assignment_id: str) -> float | None:
+        """Freeze elapsed time once and return the same value on persistence retries."""
+
         with self._lock:
+            frozen = self._frozen_elapsed.get(assignment_id)
+            if frozen is not None:
+                return frozen
             started = self._starts.pop(assignment_id, None)
-        if started is None:
-            return None
-        elapsed = self.clock() - started
-        if elapsed <= 0.0:
-            raise RuntimeError("operational_pilot_nonpositive_elapsed_time")
-        return elapsed
+            if started is None:
+                return None
+            elapsed = self.clock() - started
+            if elapsed <= 0.0:
+                # Restore the original start so a clock anomaly does not silently destroy the
+                # authoritative timer before the caller handles the failure.
+                self._starts[assignment_id] = started
+                raise RuntimeError("operational_pilot_nonpositive_elapsed_time")
+            self._frozen_elapsed[assignment_id] = elapsed
+            return elapsed
 
     def discard(self, assignment_id: str) -> None:
         # Intentionally preserve ``_seen`` so a lost authoritative timer cannot be restarted in
         # the same host session with a fabricated shorter duration.
         with self._lock:
             self._starts.pop(assignment_id, None)
+            self._frozen_elapsed.pop(assignment_id, None)
 
 
 def pilot_operator_ref_sha256(
@@ -189,10 +222,22 @@ def attach_operational_value_collection_api(
 
     timers = timer_registry or HostMonotonicPilotTimerRegistry()
     recovery_lock = Lock()
+    terminal_transition_locks_guard = Lock()
+    terminal_transition_locks: dict[str, object] = {}
     recovery_complete = False
     app.state.operational_value_collection_store = store
     app.state.operational_value_timer_registry = timers
     app.state.operational_value_recovered_assignments = ()
+
+    def terminal_transition_lock(assignment_id: str):
+        # Serialize duplicate complete/terminate requests only for the same measured assignment.
+        # A global lock would add unrelated users' persistence latency to their measured effort.
+        with terminal_transition_locks_guard:
+            lock = terminal_transition_locks.get(assignment_id)
+            if lock is None:
+                lock = Lock()
+                terminal_transition_locks[assignment_id] = lock
+            return lock
 
     def context(request: Request) -> AuthenticatedRuntimeContext:
         trusted = trusted_runtime_context(context_provider, request)
@@ -235,6 +280,25 @@ def attach_operational_value_collection_api(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="operational_pilot_assignment_state_conflict",
             )
+
+    def active_assignment(
+        *,
+        assignment_id: str,
+        trusted: AuthenticatedRuntimeContext,
+    ) -> PilotAssignmentRecord:
+        active = store.get_active_for_user(
+            organization_id=trusted.organization_id,
+            user_id=trusted.user_id,
+        )
+        if active is None or active.assignment_id != assignment_id:
+            raise HTTPException(status_code=404, detail="operational_pilot_assignment_not_found")
+        if active.host_session_id != timers.host_session_id or not timers.has(assignment_id):
+            fail_lost_timer(active)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="operational_pilot_timer_session_lost",
+            )
+        return active
 
     @app.post(
         "/api/operational-value/tasks/next",
@@ -298,44 +362,76 @@ def attach_operational_value_collection_api(
     ) -> PilotCompletionAccepted:
         trusted = context(request)
         ensure_host_session_reconciled()
-        active = store.get_active_for_user(
-            organization_id=trusted.organization_id,
-            user_id=trusted.user_id,
-        )
-        if active is None or active.assignment_id != assignment_id:
-            raise HTTPException(status_code=404, detail="operational_pilot_assignment_not_found")
-        if active.host_session_id != timers.host_session_id:
-            fail_lost_timer(active)
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="operational_pilot_timer_session_lost",
-            )
-        elapsed = timers.finish(assignment_id)
-        if elapsed is None:
-            fail_lost_timer(active)
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="operational_pilot_timer_session_lost",
-            )
-        try:
-            completion = store.complete_valid(
-                assignment_id=assignment_id,
-                organization_id=trusted.organization_id,
-                user_id=trusted.user_id,
-                elapsed_seconds=elapsed,
-                terminal_decision=payload.terminal_decision,
-                conclusion_summary=payload.conclusion_summary,
-            )
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail="operational_pilot_assignment_not_found") from exc
-        except RuntimeError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        with terminal_transition_lock(assignment_id):
+            active_assignment(assignment_id=assignment_id, trusted=trusted)
+            elapsed = timers.finish(assignment_id)
+            if elapsed is None:
+                # ``active_assignment`` already proved the timer existed. Reaching this branch is
+                # therefore a registry invariant failure, not permission to fabricate a duration.
+                active = store.get_active_for_user(
+                    organization_id=trusted.organization_id,
+                    user_id=trusted.user_id,
+                )
+                if active is not None and active.assignment_id == assignment_id:
+                    fail_lost_timer(active)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="operational_pilot_timer_session_lost",
+                )
+            try:
+                completion = store.complete_valid(
+                    assignment_id=assignment_id,
+                    organization_id=trusted.organization_id,
+                    user_id=trusted.user_id,
+                    elapsed_seconds=elapsed,
+                    terminal_decision=payload.terminal_decision.value,
+                    conclusion_summary=payload.conclusion_summary,
+                )
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail="operational_pilot_assignment_not_found") from exc
+            except RuntimeError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+            # The duration was already persisted by the store; only now may process-local custody
+            # be discarded. If persistence raised, the frozen elapsed value remains retryable.
+            timers.discard(assignment_id)
         return PilotCompletionAccepted(
             assignment_id=assignment_id,
             packet_id=completion.packet_id,
             task_id=completion.task_id,
             status=completion.status,
-            elapsed_seconds=completion.elapsed_seconds,
+        )
+
+    @app.post(
+        "/api/operational-value/assignments/{assignment_id}/terminate",
+        response_model=PilotCompletionAccepted,
+    )
+    def terminate_operational_value_task(
+        assignment_id: str,
+        payload: PilotTerminationSubmission,
+        request: Request,
+    ) -> PilotCompletionAccepted:
+        trusted = context(request)
+        ensure_host_session_reconciled()
+        with terminal_transition_lock(assignment_id):
+            active_assignment(assignment_id=assignment_id, trusted=trusted)
+            try:
+                # Persist the human terminal state first. If PostgreSQL fails, keep the
+                # authoritative timer alive so the operator can recover instead of silently
+                # discarding a valid trial.
+                completion = store.terminate_active(
+                    assignment_id=assignment_id,
+                    organization_id=trusted.organization_id,
+                    user_id=trusted.user_id,
+                    terminal_status=payload.status,
+                )
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail="operational_pilot_assignment_not_found") from exc
+            timers.discard(assignment_id)
+        return PilotCompletionAccepted(
+            assignment_id=assignment_id,
+            packet_id=completion.packet_id,
+            task_id=completion.task_id,
+            status=completion.status,
         )
 
     return timers

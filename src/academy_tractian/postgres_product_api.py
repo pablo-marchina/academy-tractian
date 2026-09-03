@@ -20,7 +20,7 @@ from .postgres_operational import (
     PostgresRunAccessStore,
     PostgresRunExecutionStore,
 )
-from .postgres_operational_value import PostgresOperationalPilotStore
+from .postgres_operational_value_v5 import PostgresOperationalPilotStoreV5
 from .product_api import RuntimeContextProvider
 from .production_actions_v2 import ActionAuthorizationResolver
 
@@ -64,7 +64,7 @@ def initialize_postgres_operational_schema(
     try:
         PostgresPendingActionCustody(database, initialize=True)
         PostgresActionIdempotencyLedger(database, initialize=True)
-        pilot_store = PostgresOperationalPilotStore(database, initialize=True)
+        pilot_store = PostgresOperationalPilotStoreV5(database, initialize=True)
         if (
             not database.ready()
             or not pilot_store.ready()
@@ -93,7 +93,7 @@ def register_postgres_operational_pilot_packet(
         initialize=False,
     )
     try:
-        store = PostgresOperationalPilotStore(database, initialize=False)
+        store = PostgresOperationalPilotStoreV5(database, initialize=False)
         if not database.ready() or not store.ready() or not _required_tables_ready(database):
             raise RuntimeError("postgres_operational_schema_not_ready")
         store.register_packet(
@@ -138,7 +138,7 @@ def create_postgres_action_capable_product_app(
     try:
         custody = PostgresPendingActionCustody(database, initialize=initialize_schema)
         ledger = PostgresActionIdempotencyLedger(database, initialize=initialize_schema)
-        pilot_store = PostgresOperationalPilotStore(database, initialize=initialize_schema)
+        pilot_store = PostgresOperationalPilotStoreV5(database, initialize=initialize_schema)
         if (
             not database.ready()
             or not pilot_store.ready()

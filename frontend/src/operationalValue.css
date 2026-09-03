@@ -1,0 +1,195 @@
+.pilot-panel {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pilot-intro,
+.pilot-empty p,
+.pilot-completion p,
+.pilot-invalid-actions p {
+  margin: 0;
+  color: var(--muted, #6b7280);
+  line-height: 1.55;
+}
+
+.pilot-empty,
+.pilot-completion,
+.pilot-manual-note,
+.pilot-ticket,
+.pilot-assistance,
+.pilot-invalid-actions {
+  border: 1px solid var(--border, #d9dee8);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--panel-soft, rgba(255, 255, 255, 0.55));
+}
+
+.pilot-empty {
+  display: grid;
+  justify-items: start;
+  gap: 0.65rem;
+}
+
+.pilot-completion {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: center;
+}
+
+.pilot-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 7rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.pilot-status-valid {
+  color: #16734a;
+}
+
+.pilot-status-interrupted,
+.pilot-status-withdrawn {
+  color: #935f08;
+}
+
+.pilot-status-technical_failure {
+  color: #a33636;
+}
+
+.pilot-task {
+  display: grid;
+  gap: 1rem;
+}
+
+.pilot-ticket > p:last-child,
+.pilot-assistance-message {
+  margin: 0.45rem 0 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.pilot-assistance {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pilot-assistance-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pilot-assistance-heading span {
+  border: 1px solid var(--border, #d9dee8);
+  border-radius: 999px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.pilot-assistance ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.35rem;
+  line-height: 1.5;
+}
+
+.pilot-manual-note {
+  color: var(--muted, #6b7280);
+}
+
+.pilot-form {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.pilot-form label {
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.pilot-form select,
+.pilot-form input,
+.pilot-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border, #d9dee8);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: inherit;
+  font: inherit;
+  padding: 0.8rem 0.9rem;
+}
+
+.pilot-form textarea {
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.pilot-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pilot-form-footer span {
+  color: var(--muted, #6b7280);
+  font-size: 0.8rem;
+}
+
+.pilot-invalid-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pilot-invalid-actions strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.pilot-invalid-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.danger-button {
+  border-color: rgba(163, 54, 54, 0.45) !important;
+  color: #a33636 !important;
+}
+
+.pilot-error {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .pilot-completion,
+  .pilot-invalid-actions {
+    grid-template-columns: 1fr;
+    display: grid;
+    align-items: start;
+  }
+
+  .pilot-form-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pilot-invalid-buttons {
+    justify-content: flex-start;
+  }
+}
