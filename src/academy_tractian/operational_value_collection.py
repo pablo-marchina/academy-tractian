@@ -113,11 +113,14 @@ class HostMonotonicPilotTimerRegistry:
         self._lock = Lock()
         self._starts: dict[str, float] = {}
 
-    def start(self, assignment_id: str) -> None:
+    def ensure_started(self, assignment_id: str) -> bool:
+        """Atomically start once; return True only for the request that created the timer."""
+
         with self._lock:
             if assignment_id in self._starts:
-                raise RuntimeError("operational_pilot_timer_already_started")
+                return False
             self._starts[assignment_id] = self.clock()
+            return True
 
     def has(self, assignment_id: str) -> bool:
         with self._lock:
@@ -236,16 +239,11 @@ def attach_operational_value_collection_api(
         )
         if assigned is None:
             raise HTTPException(status_code=404, detail="operational_pilot_no_task_available")
-        try:
-            timers.start(assigned.assignment_id)
-        except Exception:
-            store.fail_active(
-                assignment_id=assigned.assignment_id,
-                organization_id=trusted.organization_id,
-                user_id=trusted.user_id,
-                reason="host_timer_start_failed",
-            )
-            raise
+
+        # Concurrent requests for the same trusted principal can legitimately converge on the
+        # same DB assignment. Timer creation must therefore be idempotent as well; whichever
+        # request wins starts the authoritative interval and all others return the same task.
+        timers.ensure_started(assigned.assignment_id)
         return _safe_assignment(assigned)
 
     @app.post(
