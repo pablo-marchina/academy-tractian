@@ -188,15 +188,40 @@ def attach_operational_value_collection_api(
     """Attach the human-effort pilot to the existing authenticated product API."""
 
     timers = timer_registry or HostMonotonicPilotTimerRegistry()
-    recovered = store.reconcile_active_host_session(timers.host_session_id)
+    recovery_lock = Lock()
+    recovery_complete = False
     app.state.operational_value_collection_store = store
     app.state.operational_value_timer_registry = timers
-    app.state.operational_value_recovered_assignments = recovered
+    app.state.operational_value_recovered_assignments = ()
 
     def context(request: Request) -> AuthenticatedRuntimeContext:
         trusted = trusted_runtime_context(context_provider, request)
         require_runtime_permission(trusted, OPERATIONAL_VALUE_PARTICIPATE_PERMISSION)
         return trusted
+
+    def ensure_host_session_reconciled() -> None:
+        """Reconcile lazily on the first authorized pilot request, never at app construction.
+
+        Constructing/importing a FastAPI application is not evidence that a new collector session
+        has actually entered service. Delaying the mutation prevents a dry-run or validation-only
+        app construction from invalidating an active human measurement.
+        """
+
+        nonlocal recovery_complete
+        if recovery_complete:
+            return
+        with recovery_lock:
+            if recovery_complete:
+                return
+            try:
+                recovered = store.reconcile_active_host_session(timers.host_session_id)
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="operational_pilot_recovery_unavailable",
+                ) from exc
+            app.state.operational_value_recovered_assignments = recovered
+            recovery_complete = True
 
     def fail_lost_timer(record: PilotAssignmentRecord) -> None:
         timers.discard(record.assignment_id)
@@ -217,6 +242,7 @@ def attach_operational_value_collection_api(
     )
     def next_operational_value_task(request: Request) -> PilotAssignmentSafe:
         trusted = context(request)
+        ensure_host_session_reconciled()
 
         # Every request goes through the store allocator. PostgreSQL serializes one trusted
         # principal with an advisory transaction lock and returns the existing ACTIVE assignment
@@ -271,6 +297,7 @@ def attach_operational_value_collection_api(
         request: Request,
     ) -> PilotCompletionAccepted:
         trusted = context(request)
+        ensure_host_session_reconciled()
         active = store.get_active_for_user(
             organization_id=trusted.organization_id,
             user_id=trusted.user_id,
