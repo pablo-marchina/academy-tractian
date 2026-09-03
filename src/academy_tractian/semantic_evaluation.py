@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from hashlib import sha256
 import json
 from typing import Literal, Sequence
@@ -21,6 +20,7 @@ CalibrationState = Literal[
     "CALIBRATED_GATE",
 ]
 HumanResolution = Literal["AGREED", "ADJUDICATED", "UNRESOLVED"]
+CalibrationKey = tuple[str, str, str, SemanticDimension]
 
 
 class _FrozenModel(BaseModel):
@@ -203,15 +203,18 @@ def semantic_rubric_v1() -> SemanticRubric:
     return SEMANTIC_RUBRIC_V1
 
 
-def _key(
-    item: HumanSemanticReference | JudgeSemanticObservation,
-) -> tuple[str, str, str]:
-    return (item.scenario_id, item.output_sha256, item.dimension)
+def _key(item: HumanSemanticReference | JudgeSemanticObservation) -> CalibrationKey:
+    return (
+        item.scenario_id,
+        item.output_sha256,
+        item.response_mode,
+        item.dimension,
+    )
 
 
-def _key_text(key: tuple[str, str, str]) -> str:
-    scenario_id, output_sha256, dimension = key
-    return f"{scenario_id}|{output_sha256}|{dimension}"
+def _key_text(key: CalibrationKey) -> str:
+    scenario_id, output_sha256, response_mode, dimension = key
+    return f"{scenario_id}|{output_sha256}|{response_mode}|{dimension}"
 
 
 def _quadratic_weighted_kappa(pairs: Sequence[tuple[int, int]]) -> float | None:
@@ -242,10 +245,10 @@ def _quadratic_weighted_kappa(pairs: Sequence[tuple[int, int]]) -> float | None:
 
 def _dimension_metrics(
     dimension: SemanticDimension,
-    human_by_key: dict[tuple[str, str, str], HumanSemanticReference],
-    judge_by_key: dict[tuple[str, str, str], JudgeSemanticObservation],
+    human_by_key: dict[CalibrationKey, HumanSemanticReference],
+    judge_by_key: dict[CalibrationKey, JudgeSemanticObservation],
 ) -> SemanticDimensionCalibration:
-    keys = sorted(key for key in human_by_key if key[2] == dimension)
+    keys = sorted(key for key in human_by_key if key[3] == dimension)
     pairs: list[tuple[int, int]] = []
     invalid = 0
     matrix = {str(h): {str(j): 0 for j in range(3)} for h in range(3)}
@@ -312,7 +315,7 @@ def calibrate_semantic_judge(
 ) -> SemanticCalibrationReport:
     rubric = rubric or SEMANTIC_RUBRIC_V1
 
-    human_by_key: dict[tuple[str, str, str], HumanSemanticReference] = {}
+    human_by_key: dict[CalibrationKey, HumanSemanticReference] = {}
     duplicate_human: list[str] = []
     for item in human_references:
         key = _key(item)
@@ -320,7 +323,7 @@ def calibrate_semantic_judge(
             duplicate_human.append(_key_text(key))
         human_by_key[key] = item
 
-    judge_by_key: dict[tuple[str, str, str], JudgeSemanticObservation] = {}
+    judge_by_key: dict[CalibrationKey, JudgeSemanticObservation] = {}
     duplicate_judge: list[str] = []
     for item in judge_observations:
         key = _key(item)
@@ -353,8 +356,14 @@ def calibrate_semantic_judge(
 
     dataset_payload = {
         "rubric_sha256": rubric.rubric_sha256,
-        "human": [item.model_dump(mode="json") for item in sorted(human_references, key=lambda item: _key(item))],
-        "judge": [item.model_dump(mode="json") for item in sorted(judge_observations, key=lambda item: _key(item))],
+        "human": [
+            item.model_dump(mode="json")
+            for item in sorted(human_references, key=_key)
+        ],
+        "judge": [
+            item.model_dump(mode="json")
+            for item in sorted(judge_observations, key=_key)
+        ],
     }
     dataset_sha = _canonical_sha256(dataset_payload)
 
@@ -380,7 +389,10 @@ def calibrate_semantic_judge(
             prefix = metric.dimension.upper()
             if metric.expected_observations < acceptance_policy.minimum_pairs_per_dimension:
                 gate_failures.append(f"{prefix}_INSUFFICIENT_PAIRS")
-            if metric.exact_agreement is None or metric.exact_agreement < acceptance_policy.minimum_exact_agreement:
+            if (
+                metric.exact_agreement is None
+                or metric.exact_agreement < acceptance_policy.minimum_exact_agreement
+            ):
                 gate_failures.append(f"{prefix}_EXACT_AGREEMENT_BELOW_MINIMUM")
             if (
                 metric.quadratic_weighted_kappa is None
@@ -427,6 +439,8 @@ def calibrate_semantic_judge(
         unmatched_human_keys=unmatched_human,
         unmatched_judge_keys=unmatched_judge,
         dimension_metrics=metrics,
-        acceptance_policy_id=(None if acceptance_policy is None else acceptance_policy.policy_id),
+        acceptance_policy_id=(
+            None if acceptance_policy is None else acceptance_policy.policy_id
+        ),
         gate_failures=tuple(sorted(set(gate_failures))),
     )
