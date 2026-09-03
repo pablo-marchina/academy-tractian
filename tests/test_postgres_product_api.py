@@ -21,6 +21,7 @@ from research.e2.transport import TransportResponse
 
 from academy_tractian.action_recovery import reconcile_orphaned_actions
 from academy_tractian.action_safety import ResourceCompanyBinding
+from academy_tractian.observability import safe_run_id
 from academy_tractian.postgres_action_operational import (
     PostgresActionIdempotencyLedger,
     PostgresPendingActionCustody,
@@ -329,7 +330,11 @@ def test_postgres_orphaned_action_recovery_never_replays(postgres_fixture) -> No
     )
     try:
         access = PostgresRunAccessStore(database)
-        access.claim(run_id="origin-run", organization_id="org-a", user_id="user-a")
+        access.claim(
+            run_id=safe_run_id("origin-run"),
+            organization_id="org-a",
+            user_id="user-a",
+        )
         custody = PostgresPendingActionCustody(database, initialize=True)
         ledger = PostgresActionIdempotencyLedger(database, initialize=True)
         tool = canonical_tool_registry()["reprocess_analysis"]
