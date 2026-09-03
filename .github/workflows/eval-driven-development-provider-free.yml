@@ -21,6 +21,7 @@ jobs:
       - name: Eval-driven, semantic, human-calibration, adaptive-candidate and observability contract tests
         run: >-
           python -m pytest -q
+          --junitxml=artifacts/eval-driven-contract.xml
           tests/test_eval_driven.py
           tests/test_semantic_evaluation.py
           tests/test_semantic_human_calibration.py
@@ -28,6 +29,14 @@ jobs:
           tests/test_adaptive_policy_edd.py
           tests/test_adaptive_experiment_preflight.py
           tests/test_observability.py
+      - name: Upload EDD contract diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-driven-contract-junit
+          path: artifacts/eval-driven-contract.xml
+          if-no-files-found: error
+          retention-days: 14
       - name: Compile evaluation CLIs and adaptive candidate modules
         run: >-
           python -m py_compile
