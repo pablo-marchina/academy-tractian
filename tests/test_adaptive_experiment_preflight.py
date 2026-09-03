@@ -208,6 +208,13 @@ def test_full_canonical_source_projects_exactly_eight_dev_cases_across_five_grou
         split_manifest_path=manifest,
     )
 
+    protected_tickets = {
+        ticket
+        for mapping in (VALIDATION_CASES, LOCKED_CASES)
+        for tickets in mapping.values()
+        for ticket in tickets
+    }
+
     assert first.execution_status == "READY"
     assert first.decision == "INCONCLUSIVE"
     assert first.reason is None
@@ -218,7 +225,7 @@ def test_full_canonical_source_projects_exactly_eight_dev_cases_across_five_grou
     assert first.required_dev_groups == DEV_GROUPS
     assert set(first.observed_group_ids) == set(DEV_GROUPS)
     assert set(first.selected_dev_ticket_ids) == set(DEV_TICKETS)
-    assert not (set(first.selected_dev_ticket_ids) & set(ticket for tickets in LOCKED_CASES.values() for ticket in tickets))
+    assert set(first.selected_dev_ticket_ids).isdisjoint(protected_tickets)
     assert first.source_sha256 is not None and len(first.source_sha256) == 64
     assert first.manifest_sha256 is not None and len(first.manifest_sha256) == 64
     assert first.dev_projection_sha256 is not None and len(first.dev_projection_sha256) == 64
@@ -239,9 +246,7 @@ def test_safe_result_never_exposes_case_messages_or_protected_ticket_ids(tmp_pat
     assert "private-locked-message" not in serialized
     assert "public message" not in serialized
     assert "oracle" not in serialized
-    for tickets in LOCKED_CASES.values():
-        for ticket_id in tickets:
-            assert ticket_id not in serialized
-    for tickets in VALIDATION_CASES.values():
-        for ticket_id in tickets:
-            assert ticket_id not in serialized
+    for mapping in (LOCKED_CASES, VALIDATION_CASES):
+        for tickets in mapping.values():
+            for ticket_id in tickets:
+                assert json.dumps(ticket_id) not in serialized
