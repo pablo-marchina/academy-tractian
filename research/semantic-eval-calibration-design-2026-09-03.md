@@ -40,18 +40,21 @@ Each uses an ordinal 0/1/2 scale with explicit anchors. This keeps the judge tas
 
 ## Calibration data boundary
 
-Calibration records intentionally contain no raw prompt, raw response, chain-of-thought, credentials, identity, seed, account identifiers or private evaluator gold.
+Calibration records intentionally contain no raw prompt, raw response, chain-of-thought, credentials, identity, seed, account identifiers or private evaluator gold. Human reviewers and semantic judges may receive only the explicitly sanitized evidence/context required to judge the terminal output.
 
 Pairing identity is:
 
 ```text
 scenario_id
 + SHA256(terminal output)
++ SHA256(sanitized reviewer-visible evidence/context)
 + response_mode
 + rubric dimension
 ```
 
-Human reference records store only adjudicated score, resolution state and annotator count. Judge observations store only structured score/validity/error code and rubric hash. The agent/runtime never receives human labels.
+The context hash is a hard integrity binding, not descriptive metadata. Groundedness and operational usefulness depend on the evidence state: the same terminal text can be well-grounded under one evidence set and unsupported under another. A human score or judge score therefore cannot be reused merely because the output text is identical. Human references and judge observations must carry the same `context_sha256` to form a calibration pair.
+
+Human reference records store only the hashes/identity above plus adjudicated score, resolution state and annotator count. Judge observations store only the same calibration identity, structured score/validity/error code, judge id and rubric hash. The agent/runtime never receives human labels.
 
 ## Metrics
 
@@ -100,7 +103,8 @@ This prevents choosing thresholds after seeing held-out judge performance.
 
 ## Human-label requirements before gating
 
-- public/sanitized outputs only;
+- public/sanitized outputs and evidence context only;
+- every label is bound to the exact terminal-output hash **and** sanitized-context hash;
 - representative complete/partial/inconclusive/conflicting/unavailable and escalation cases;
 - include deliberately bad outputs so discrimination is measured;
 - at least two independent labels where feasible, with unresolved disagreements explicitly marked and adjudicated before calibration;
@@ -110,7 +114,7 @@ This prevents choosing thresholds after seeing held-out judge performance.
 
 ## Judge-candidate experiment, later slice
 
-No judge provider/model is selected by this design. Candidate judges must be compared under the same rubric, same frozen labelled set and same structured-output schema. Selection metrics include agreement/error above plus latency/resource/cost and invalid-output rate. `NO_SELECTION` is valid.
+No judge provider/model is selected by this design. Candidate judges must be compared under the same rubric, same frozen labelled set, same sanitized context and same structured-output schema. Selection metrics include agreement/error above plus latency/resource/cost and invalid-output rate. `NO_SELECTION` is valid.
 
 ## Production integration rule
 
@@ -133,6 +137,7 @@ Recalibrate or demote a judge from `CALIBRATED_GATE` to descriptive-only if any 
 - rubric version/hash;
 - judge model/provider/configuration;
 - structured-output schema;
+- sanitized evidence/context construction or canonicalization;
 - observed failure distribution;
 - production response modes/use cases;
 - human disagreement profile;
