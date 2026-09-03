@@ -20,6 +20,7 @@ from .production_telemetry import ProductionTelemetry
 from .realtime_observability import DuckDBObservabilityEventSink, SafeObservabilityEventSink
 from .realtime_runtime import PreparedRealtimeRun, RealtimeProductionRuntime
 from .run_access import DuckDBRunAccessStore
+from .run_execution_store import DuckDBRunExecutionStore, ExecutionKind
 from .runtime import ProductionRequest
 
 
@@ -167,41 +168,78 @@ class ProductObservabilityAccessPolicy(ObservabilityAccessPolicy):
 
 
 class RunExecutionRegistry:
-    """Safe process-local execution state plus bounded executor pressure metrics."""
+    """Local Future handles plus durable single-node execution state and pressure metrics."""
 
-    def __init__(self, *, max_workers: int) -> None:
+    def __init__(
+        self,
+        *,
+        max_workers: int,
+        state_store: DuckDBRunExecutionStore,
+    ) -> None:
         self.max_workers = max_workers
+        self.state_store = state_store
         self._lock = Lock()
         self._status: dict[str, str] = {}
         self._futures: dict[str, Future[object]] = {}
         self._last_transition_perf: float | None = None
         self._transition_count = 0
 
-    def _transition(self, run_id: str, state: str) -> None:
+    def _local_transition(self, run_id: str, state: str) -> None:
         with self._lock:
             self._status[run_id] = state
             self._last_transition_perf = perf_counter()
             self._transition_count += 1
 
-    def accepted(self, run_id: str) -> None:
-        self._transition(run_id, "accepted")
+    def accepted(
+        self,
+        run_id: str,
+        *,
+        execution_kind: ExecutionKind = "runtime",
+        related_action_id: str | None = None,
+    ) -> None:
+        self.state_store.create_accepted(
+            run_id=run_id,
+            execution_kind=execution_kind,
+            related_action_id=related_action_id,
+        )
+        self._local_transition(run_id, "accepted")
 
     def running(self, run_id: str) -> None:
-        self._transition(run_id, "running")
+        if not self.state_store.transition(
+            run_id=run_id,
+            expected_states=frozenset({"accepted"}),
+            new_state="running",
+        ):
+            raise RuntimeError("run_execution_running_transition_failed")
+        self._local_transition(run_id, "running")
 
     def completed(self, run_id: str) -> None:
-        self._transition(run_id, "completed")
+        if not self.state_store.transition(
+            run_id=run_id,
+            expected_states=frozenset({"running"}),
+            new_state="completed",
+        ):
+            raise RuntimeError("run_execution_completed_transition_failed")
+        self._local_transition(run_id, "completed")
 
     def failed(self, run_id: str) -> None:
-        self._transition(run_id, "failed")
+        if not self.state_store.transition(
+            run_id=run_id,
+            expected_states=frozenset({"accepted", "running"}),
+            new_state="failed",
+        ):
+            current = self.state_store.get(run_id)
+            if current is None or current.state != "failed":
+                raise RuntimeError("run_execution_failed_transition_failed")
+        self._local_transition(run_id, "failed")
 
     def bind_future(self, run_id: str, future: Future[object]) -> None:
         with self._lock:
             self._futures[run_id] = future
 
     def status(self, run_id: str) -> str | None:
-        with self._lock:
-            return self._status.get(run_id)
+        item = self.state_store.get(run_id)
+        return None if item is None else item.state
 
     def future(self, run_id: str) -> Future[object] | None:
         with self._lock:
@@ -217,7 +255,7 @@ class RunExecutionRegistry:
             active = counts["running"]
             queued = counts["accepted"]
             return {
-                "schema_version": "run-execution-operability-v1",
+                "schema_version": "run-execution-operability-v2",
                 **counts,
                 "active_runs": active,
                 "queued_runs": queued,
@@ -228,14 +266,15 @@ class RunExecutionRegistry:
                 "last_transition_age_ms": None
                 if self._last_transition_perf is None
                 else max(0.0, (now - self._last_transition_perf) * 1000.0),
+                "durable_state_counts": self.state_store.counts(),
             }
 
 
-def _default_access_db_path(db_path: str | Path) -> Path:
+def _derived_db_path(db_path: str | Path, infix: str) -> Path:
     path = Path(db_path)
     if path.suffix:
-        return path.with_name(f"{path.stem}.access{path.suffix}")
-    return path.with_name(f"{path.name}.access.duckdb")
+        return path.with_name(f"{path.stem}.{infix}{path.suffix}")
+    return path.with_name(f"{path.name}.{infix}.duckdb")
 
 
 def create_product_app(
@@ -244,6 +283,7 @@ def create_product_app(
     runtime_factory: RealtimeRuntimeFactory,
     context_provider: RuntimeContextProvider,
     access_db_path: str | Path | None = None,
+    execution_db_path: str | Path | None = None,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     heartbeat_interval_ms: int = 1000,
@@ -254,9 +294,10 @@ def create_product_app(
     runtime per request. The provider kill switch gates construction before any provider-owned
     client can be reached. Consequential actions remain disabled by ProductionRuntimeConfig v1.
 
-    Product run reads are scoped by trusted identity and persistent ownership. The ownership
-    store is deliberately replaceable so the operational database experiment can promote
-    PostgreSQL later without weakening or rewriting the authorization boundary.
+    Product run reads are scoped by trusted identity and persistent ownership. Execution state
+    is persisted separately from local Future handles. At startup, unfinished ordinary runs are
+    marked interrupted and unfinished action runs are marked uncertain; neither is replayed.
+    The operational adapters remain replaceable for the planned DuckDB-vs-PostgreSQL benchmark.
     """
 
     if not 1 <= max_workers <= 64:
@@ -268,10 +309,16 @@ def create_product_app(
     executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="academy-tractian-run")
     telemetry = ProductionTelemetry(heartbeat_stale_after_ms=max(1000, heartbeat_interval_ms * 3))
     controls = ProductionControlState(provider_calls_enabled=provider_calls_enabled)
-    registry = RunExecutionRegistry(max_workers=max_workers)
     run_access_store = DuckDBRunAccessStore(
-        _default_access_db_path(db_path) if access_db_path is None else access_db_path
+        _derived_db_path(db_path, "access") if access_db_path is None else access_db_path
     )
+    execution_store = DuckDBRunExecutionStore(
+        _derived_db_path(db_path, "execution")
+        if execution_db_path is None
+        else execution_db_path
+    )
+    recovered_executions = execution_store.reconcile_orphaned()
+    registry = RunExecutionRegistry(max_workers=max_workers, state_store=execution_store)
     access_policy = ProductObservabilityAccessPolicy(
         context_provider=context_provider,
         run_access_store=run_access_store,
@@ -285,6 +332,17 @@ def create_product_app(
             "access": {
                 "schema_version": "product-access-operability-v1",
                 "ready": run_access_store.ready(),
+            },
+            "recovery": {
+                "schema_version": "product-recovery-operability-v1",
+                "execution_store_ready": execution_store.ready(),
+                "orphaned_executions_reconciled": len(recovered_executions),
+                "interrupted_runtime_runs": sum(
+                    item.state == "interrupted" for item in recovered_executions
+                ),
+                "uncertain_action_runs": sum(
+                    item.state == "uncertain" for item in recovered_executions
+                ),
             },
         }
 
@@ -323,6 +381,8 @@ def create_product_app(
     sink = DuckDBObservabilityEventSink(store, telemetry=telemetry)
     app.state.product_executor = executor
     app.state.run_execution_registry = registry
+    app.state.run_execution_store = execution_store
+    app.state.recovered_executions = recovered_executions
     app.state.production_telemetry = telemetry
     app.state.production_controls = controls
     app.state.run_access_store = run_access_store
@@ -401,14 +461,14 @@ def create_product_app(
                 organization_id=context.organization_id,
                 user_id=context.user_id,
             )
+            registry.accepted(run_id)
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="run_ownership_persist_failed",
+                detail="run_operational_state_persist_failed",
             ) from exc
 
         telemetry.runtime_request_started(run_id=run_id)
-        registry.accepted(run_id)
         try:
             future = executor.submit(execute_prepared, run_id, prepared)
         except Exception as exc:
