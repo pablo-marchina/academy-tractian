@@ -112,14 +112,22 @@ class HostMonotonicPilotTimerRegistry:
         self.host_session_id = f"ovhost_{uuid4().hex[:24]}"
         self._lock = Lock()
         self._starts: dict[str, float] = {}
+        # Keep process-session memory of assignments that were actually timed. This closes a
+        # subtle concurrency gap: two requests may converge on one DB assignment before either
+        # starts the timer, while a timer that existed and later disappeared must never be
+        # silently recreated with a shorter interval.
+        self._seen: set[str] = set()
 
     def ensure_started(self, assignment_id: str) -> bool:
-        """Atomically start once; return True only for the request that created the timer."""
+        """Start once, converge concurrent retries, and fail if a known timer was lost."""
 
         with self._lock:
             if assignment_id in self._starts:
                 return False
+            if assignment_id in self._seen:
+                raise RuntimeError("operational_pilot_timer_session_lost")
             self._starts[assignment_id] = self.clock()
+            self._seen.add(assignment_id)
             return True
 
     def has(self, assignment_id: str) -> bool:
@@ -137,6 +145,8 @@ class HostMonotonicPilotTimerRegistry:
         return elapsed
 
     def discard(self, assignment_id: str) -> None:
+        # Intentionally preserve ``_seen`` so a lost authoritative timer cannot be restarted in
+        # the same host session with a fabricated shorter duration.
         with self._lock:
             self._starts.pop(assignment_id, None)
 
@@ -207,21 +217,11 @@ def attach_operational_value_collection_api(
     )
     def next_operational_value_task(request: Request) -> PilotAssignmentSafe:
         trusted = context(request)
-        active = store.get_active_for_user(
-            organization_id=trusted.organization_id,
-            user_id=trusted.user_id,
-        )
-        if active is not None:
-            if (
-                active.host_session_id == timers.host_session_id
-                and timers.has(active.assignment_id)
-            ):
-                return _safe_assignment(active)
-            fail_lost_timer(active)
 
-        # The allocator owns pair-level anti-crossover and row-locking semantics. We do not know
-        # packet_id until it chooses a task, so operator pseudonym derivation is completed by the
-        # store from this trusted principal marker and the selected packet.
+        # Every request goes through the store allocator. PostgreSQL serializes one trusted
+        # principal with an advisory transaction lock and returns the existing ACTIVE assignment
+        # when a concurrent/retry request converges on it. Avoiding a separate pre-read closes the
+        # DB-commit -> in-memory-timer race.
         principal_marker = sha256(
             "\0".join(
                 (
@@ -239,11 +239,26 @@ def attach_operational_value_collection_api(
         )
         if assigned is None:
             raise HTTPException(status_code=404, detail="operational_pilot_no_task_available")
+        if assigned.host_session_id != timers.host_session_id:
+            fail_lost_timer(assigned)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="operational_pilot_timer_session_lost",
+            )
 
-        # Concurrent requests for the same trusted principal can legitimately converge on the
-        # same DB assignment. Timer creation must therefore be idempotent as well; whichever
-        # request wins starts the authoritative interval and all others return the same task.
-        timers.ensure_started(assigned.assignment_id)
+        try:
+            # The first converged request starts the interval; later concurrent requests return the
+            # same task without resetting it. A timer that was previously started and disappeared
+            # in this host session raises instead of being reconstructed.
+            timers.ensure_started(assigned.assignment_id)
+        except RuntimeError as exc:
+            if str(exc) != "operational_pilot_timer_session_lost":
+                raise
+            fail_lost_timer(assigned)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="operational_pilot_timer_session_lost",
+            ) from exc
         return _safe_assignment(assigned)
 
     @app.post(
