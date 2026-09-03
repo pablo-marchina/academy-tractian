@@ -9,19 +9,30 @@ import type {
   HumanPilotTerminationStatus,
   OperationalPilotAssignment,
   OperationalPilotCompletionAccepted,
-  OperationalPilotDecision,
 } from "../api/operationalValueTypes";
 
-const DECISIONS: OperationalPilotDecision[] = ["FINAL", "CLARIFY", "ESCALATE", "ABSTAIN"];
-
 function publicError(error: unknown): string {
-  if (error instanceof Error && error.message) return error.message;
-  return "operational_pilot_request_failed";
+  const message = error instanceof Error && error.message
+    ? error.message
+    : "operational_pilot_request_failed";
+  if (message === "operational_pilot_no_task_available") {
+    return "No eligible measured task is available for this operator right now.";
+  }
+  if (message === "operational_pilot_timer_session_lost") {
+    return "The authoritative server timer was lost, so this trial was invalidated instead of receiving a fabricated duration. Start another task to continue.";
+  }
+  if (message === "operational_pilot_assignment_not_found") {
+    return "This measured assignment is no longer active. Start another task to continue.";
+  }
+  if (message === "operational_pilot_recovery_unavailable") {
+    return "The measured-task service cannot safely reconcile its timing state right now.";
+  }
+  return message;
 }
 
 export function OperationalValueCollector() {
   const [assignment, setAssignment] = useState<OperationalPilotAssignment | null>(null);
-  const [decision, setDecision] = useState<OperationalPilotDecision>("FINAL");
+  const [decision, setDecision] = useState("");
   const [summary, setSummary] = useState("");
   const [completion, setCompletion] = useState<OperationalPilotCompletionAccepted | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,9 +45,11 @@ export function OperationalValueCollector() {
     setError(null);
     setCompletion(null);
     try {
+      // This explicit operator action is the only browser path that starts a measurement. The
+      // browser never keeps an authoritative timer and never auto-loads a study task on mount.
       const next = await fetchOperationalValueTask();
       setAssignment(next);
-      setDecision("FINAL");
+      setDecision("");
       setSummary("");
     } catch (loadError) {
       setAssignment(null);
@@ -48,17 +61,19 @@ export function OperationalValueCollector() {
 
   const submitValid = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const normalized = summary.trim();
-    if (!assignment || !normalized || submitting) return;
+    const normalizedDecision = decision.trim();
+    const normalizedSummary = summary.trim();
+    if (!assignment || !normalizedDecision || !normalizedSummary || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
       const accepted = await completeOperationalValueTask(assignment.assignment_id, {
-        terminal_decision: decision,
-        conclusion_summary: normalized,
+        terminal_decision: normalizedDecision,
+        conclusion_summary: normalizedSummary,
       });
       setCompletion(accepted);
       setAssignment(null);
+      setDecision("");
       setSummary("");
     } catch (submitError) {
       // Never auto-retry a measurement completion. The server owns assignment/timer state and
@@ -77,8 +92,11 @@ export function OperationalValueCollector() {
       const accepted = await terminateOperationalValueTask(assignment.assignment_id, { status });
       setCompletion(accepted);
       setAssignment(null);
+      setDecision("");
       setSummary("");
     } catch (terminationError) {
+      // Persist-first server semantics keep the authoritative timer alive if the database write
+      // fails. The UI therefore surfaces the error and never guesses whether termination worked.
       setError(publicError(terminationError));
     } finally {
       setSubmitting(false);
@@ -105,37 +123,56 @@ export function OperationalValueCollector() {
       {!assignment && !completion && (
         <div className="pilot-empty">
           <strong>No active study task in this browser.</strong>
-          <p>Loading a task starts the authoritative server-side measurement interval.</p>
-          <button type="button" onClick={loadNext} disabled={loading || submitting}>
-            {loading ? "Assigning…" : "Load next assigned task"}
+          <p>
+            Starting a task creates the authenticated assignment and begins the authoritative
+            server-side measurement interval. Opening this page does not start a timer.
+          </p>
+          <button
+            type="button"
+            onClick={loadNext}
+            disabled={loading || submitting}
+            data-testid="pilot-start"
+          >
+            {loading ? "Assigning…" : "Start measured task"}
           </button>
         </div>
       )}
 
       {completion && !assignment && (
-        <div className="pilot-completion" aria-live="polite">
+        <div className="pilot-completion" aria-live="polite" data-testid="pilot-completion">
           <span className={`pilot-status pilot-status-${completion.status.toLowerCase()}`}>
             {completion.status}
           </span>
           <div>
             <strong>Trial state persisted.</strong>
-            <p>No study score or elapsed-time feedback is shown between tasks.</p>
+            <p>
+              No study score or elapsed-time feedback is shown between tasks, so later trials are
+              not influenced by knowledge of earlier measured performance.
+            </p>
           </div>
-          <button type="button" className="ghost-button" onClick={loadNext} disabled={loading}>
-            {loading ? "Assigning…" : "Load another task"}
-          </button>
+          {completion.status !== "WITHDRAWN" && (
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={loadNext}
+              disabled={loading}
+              data-testid="pilot-next"
+            >
+              {loading ? "Assigning…" : "Start another task"}
+            </button>
+          )}
         </div>
       )}
 
       {assignment && (
-        <div className="pilot-task" data-testid="operational-value-task">
+        <div className="pilot-task" data-testid="pilot-active-task">
           <article className="pilot-ticket">
             <p className="eyebrow">CUSTOMER TICKET</p>
             <p>{assignment.task.ticket_request}</p>
           </article>
 
           {assistance ? (
-            <article className="pilot-assistance" data-testid="operational-value-assistance">
+            <article className="pilot-assistance" data-testid="pilot-assistance">
               <div className="pilot-assistance-heading">
                 <p className="eyebrow">SAFE AGENT ASSISTANCE</p>
                 <span>{assistance.terminal_decision}</span>
@@ -150,23 +187,23 @@ export function OperationalValueCollector() {
               )}
             </article>
           ) : (
-            <div className="pilot-manual-note" data-testid="operational-value-manual">
+            <div className="pilot-manual-note" data-testid="pilot-manual">
               Complete this investigation without agent assistance.
             </div>
           )}
 
           <form className="pilot-form" onSubmit={submitValid}>
             <label htmlFor="pilot-decision">Operational decision</label>
-            <select
+            <input
               id="pilot-decision"
               value={decision}
-              onChange={(event) => setDecision(event.target.value as OperationalPilotDecision)}
+              onChange={(event) => setDecision(event.target.value)}
+              maxLength={256}
+              autoComplete="off"
+              placeholder="Record the operational decision reached"
               disabled={submitting}
-            >
-              {DECISIONS.map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
+              data-testid="pilot-decision"
+            />
 
             <label htmlFor="pilot-summary">Operational conclusion</label>
             <textarea
@@ -177,10 +214,15 @@ export function OperationalValueCollector() {
               rows={5}
               placeholder="Record the conclusion an engineer should act on, grounded only in the evidence available in this task."
               disabled={submitting}
+              data-testid="pilot-summary"
             />
             <div className="pilot-form-footer">
               <span>{summary.length.toLocaleString()} / 10,000</span>
-              <button type="submit" disabled={submitting || !summary.trim()}>
+              <button
+                type="submit"
+                disabled={submitting || !decision.trim() || !summary.trim()}
+                data-testid="pilot-submit"
+              >
                 {submitting ? "Persisting…" : "Record completed investigation"}
               </button>
             </div>
@@ -189,7 +231,10 @@ export function OperationalValueCollector() {
           <div className="pilot-invalid-actions">
             <div>
               <strong>Trial became invalid?</strong>
-              <p>Use interruption for an external disruption; withdraw if you want to stop this trial.</p>
+              <p>
+                Mark interruption for an external disruption. Withdraw if you want to stop this
+                measured trial. Invalid trials are persisted without duration or conclusion.
+              </p>
             </div>
             <div className="pilot-invalid-buttons">
               <button
@@ -197,6 +242,7 @@ export function OperationalValueCollector() {
                 type="button"
                 disabled={submitting}
                 onClick={() => terminate("INTERRUPTED")}
+                data-testid="pilot-interrupt"
               >
                 Mark interrupted
               </button>
@@ -205,6 +251,7 @@ export function OperationalValueCollector() {
                 type="button"
                 disabled={submitting}
                 onClick={() => terminate("WITHDRAWN")}
+                data-testid="pilot-withdraw"
               >
                 Withdraw trial
               </button>
@@ -213,7 +260,11 @@ export function OperationalValueCollector() {
         </div>
       )}
 
-      {error && <div className="error-banner pilot-error" role="alert">{error}</div>}
+      {error && (
+        <div className="error-banner pilot-error" role="alert" data-testid="pilot-error">
+          {error}
+        </div>
+      )}
     </section>
   );
 }
