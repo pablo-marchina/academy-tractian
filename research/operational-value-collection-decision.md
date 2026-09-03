@@ -16,12 +16,13 @@ The collection path must:
 2. require an explicit `operational-value:participate` permission rather than granting pilot access through default runtime permissions;
 3. never accept `elapsed_seconds`, operator identity, pair identity, scenario/group/split labels, gold answers, private truth, or evaluator oracle material from the browser;
 4. expose only one opaque operator task at a time;
-5. enforce the independent-matched anti-crossover rule so the same operator cannot complete both arms of one pair;
+5. enforce the independent-matched anti-crossover rule so the same operator cannot be exposed to more than one task from the same pair, including after an interrupted or technical-failure trial;
 6. reserve a task atomically under concurrent requests and permit at most one valid measurement per task;
-7. keep organization isolation enforced by the existing restricted `NOSUPERUSER NOBYPASSRLS` PostgreSQL role plus RLS for scoped reads;
-8. never reconstruct a lost authoritative timer after process restart;
-9. preserve interrupted/technical trials as non-valid observations rather than silently imputing effort;
-10. keep `LOCKED_TEST` unavailable to pilot preparation and collection.
+7. bind every persisted assignment to the canonical `(organization_id, task_id, packet_id, pair_id)` registered from the verified packet/manifest pair;
+8. keep organization isolation enforced by the existing restricted `NOSUPERUSER NOBYPASSRLS` PostgreSQL role plus RLS for scoped reads;
+9. never reconstruct a lost authoritative timer after process restart;
+10. preserve interrupted/technical trials as non-valid observations rather than silently imputing effort;
+11. keep `LOCKED_TEST` unavailable to pilot preparation and collection.
 
 Any violation of these invariants is a hard failure, not a metric to average against speed or convenience.
 
@@ -45,11 +46,13 @@ PostgreSQL atomically owns assignment/reservation and completion custody. The se
 
 **Selected as the DEV pilot baseline.** This is an invariant-driven baseline selection, not an empirical performance victory. It minimizes measurement ambiguity for the first human pilot while preserving durable assignment state and deterministic failure semantics.
 
-## Implemented concurrency semantics
+## Implemented concurrency and integrity semantics
 
 - PostgreSQL serializes assignment for `(organization_id, user_id)` with a transaction-scoped advisory lock.
 - Eligible task reservation uses `FOR UPDATE ... SKIP LOCKED`.
 - Partial unique indexes enforce one ACTIVE assignment per user, one ACTIVE assignment per task, and one VALID measurement per task.
+- A composite foreign key binds an assignment's packet/pair identity to the canonical task record; application code cannot persist a different pair identity for a task without the database rejecting it.
+- Once an operator has any persisted exposure to a pair, no later task from that pair is eligible for that operator. A technical failure therefore does not create a biased same-human retry; a different operator must supply the replacement measurement.
 - The host timer uses an atomic `ensure_started` operation. Concurrent retries that converge on the same database assignment keep the original start time.
 - The timer registry remembers assignments that were already started. If such a timer disappears within the same host session, it cannot be recreated with a shorter interval.
 - Database state constraints reject a `VALID` trial unless it has positive elapsed time, a non-empty terminal decision, a non-empty conclusion summary and no invalid reason.
@@ -67,7 +70,8 @@ Before changing the collection mechanism, freeze the comparison protocol and eva
 - authoritative/reference timer agreement;
 - lost/invalid trial rate;
 - duplicate valid measurement count (hard target: zero);
-- same-pair same-operator exposure count (hard target: zero);
+- repeated same-pair same-operator exposure count (hard target: zero);
+- assignment/task pair-binding violation count (hard target: zero);
 - cross-tenant disclosure count (hard target: zero);
 - p50/p95 assignment and completion overhead;
 - concurrent operator throughput and saturation point;
@@ -97,6 +101,8 @@ As of this implementation record:
 - authenticated/permissioned API: implemented;
 - server-owned monotonic timing: implemented;
 - same-principal concurrency controls: implemented;
+- canonical task/pair database binding: implemented;
+- post-failure anti-reexposure rule: implemented;
 - restart invalidation semantics: implemented;
 - human DEV measurements: **not collected**;
 - engineer-minutes-saved result: **not available**;
