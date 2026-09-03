@@ -155,30 +155,47 @@ def test_two_users_cannot_cross_read_run_surfaces_or_sse(tmp_path) -> None:
         assert client.get("/api/overview", headers=_headers("admin")).status_code == 200
 
 
-def test_run_ownership_survives_product_restart(tmp_path) -> None:
+def test_run_ownership_and_completed_execution_status_survive_product_restart(tmp_path) -> None:
     db_path = tmp_path / "restart.duckdb"
     access_path = tmp_path / "restart-access.duckdb"
+    execution_path = tmp_path / "restart-execution.duckdb"
 
     first_app = create_product_app(
         db_path=db_path,
         access_db_path=access_path,
+        execution_db_path=execution_path,
         runtime_factory=_runtime_factory,
         context_provider=_context_provider,
     )
     with TestClient(first_app) as client:
         run_id = _submit_and_wait(client, first_app, "user-a")
         assert client.get(f"/api/runs/{run_id}", headers=_headers("user-a")).status_code == 200
+        execution = client.get(
+            f"/api/runs/{run_id}/execution",
+            headers=_headers("user-a"),
+        )
+        assert execution.status_code == 200
+        assert execution.json()["status"] == "completed"
 
     second_app = create_product_app(
         db_path=db_path,
         access_db_path=access_path,
+        execution_db_path=execution_path,
         runtime_factory=_runtime_factory,
         context_provider=_context_provider,
     )
     with TestClient(second_app) as client:
         assert second_app.state.run_access_store.ready() is True
+        assert second_app.state.run_execution_store.ready() is True
         assert client.get(f"/api/runs/{run_id}", headers=_headers("user-a")).status_code == 200
+        execution = client.get(
+            f"/api/runs/{run_id}/execution",
+            headers=_headers("user-a"),
+        )
+        assert execution.status_code == 200
+        assert execution.json()["status"] == "completed"
         assert client.get(f"/api/runs/{run_id}", headers=_headers("user-b")).status_code == 404
+        assert second_app.state.recovered_executions == ()
 
 
 def test_browser_cannot_override_tenant_role_or_permissions(tmp_path) -> None:
