@@ -5,93 +5,126 @@
 **Issue:** #156  
 **Status:** `IMPLEMENTED CONTRACT / NO PROJECT HUMAN-EFFORT MEASUREMENTS COLLECTED / NO VALUE CLAIM AUTHORIZED`
 
-## 1. Problem
+## 1. Decision target
 
-The project already measures structural/safety properties, task-quality signals and semantic-response dimensions, but TRACTIAN's kickoff target is more operational:
+TRACTIAN's kickoff target is operational rather than textual: reach the same useful conclusion a competent engineer would reach, investigate with evidence, escalate when necessary with useful context, and reduce engineer time spent resolving tickets.
 
-1. reach the same operational conclusion a competent engineer would reach;
-2. escalate when evidence is insufficient or contradictory;
-3. make escalation useful by carrying forward the investigation context; and
-4. reduce engineer time spent investigating/responding to tickets.
+The project therefore needs a first-class evaluator-side layer for:
 
-A single aggregate task-quality score cannot establish those properties. Historical project evidence has already shown why: an apparently strong aggregate score can coexist with materially weaker escalation behavior.
+- operational conclusion correctness;
+- evidence correctness when evaluator labels exist;
+- escalation correctness;
+- unsafe/premature action behavior;
+- usefulness of human handoff; and
+- measured human effort.
 
-This decision therefore creates a separate evaluator-side contract for **operational correctness + measured human effort** and connects it to the existing group-aware Eval-Driven Development comparison layer.
+This layer complements, rather than replaces, the deterministic trace evaluator and calibrated semantic-response evaluator.
 
-## 2. Constraints
+## 2. Hard constraints
 
-Hard constraints for this slice:
+For this slice:
 
 - provider/model calls: `0`;
 - runtime/agent behavior changes: `0`;
-- `LOCKED_TEST` accepted by the development measurement contract: `0`;
+- authoritative `LOCKED_TEST` scenarios accepted: `0`;
 - fabricated or imputed engineer time: `0`;
-- raw private truth / gold answer text / chain-of-thought in this contract: `0`;
-- personal reviewer identity in report artifacts: `0`;
-- safety failures compensated by a weighted business-value score: `0`.
+- raw private truth / gold answer text / chain-of-thought in the value artifact: `0`;
+- reviewer personal identity in report artifacts: `0`;
+- safety failures compensated by a weighted efficiency score: `0`.
 
-Human semantic calibration remains a separate layer. This slice does not select a semantic judge or acceptance threshold.
+No semantic judge, business-value threshold or production promotion threshold is selected here.
 
 ## 3. Alternatives considered
 
-### A — Keep aggregate task quality only
+### A. Aggregate task-quality score only
 
-**Rejected.** It cannot directly answer whether the operational conclusion is correct, whether escalation is appropriate, or whether engineer effort falls. It can also hide critical failure classes behind a mean.
+**Rejected.** A mean can hide weak escalation or action behavior and cannot quantify engineer effort.
 
-### B — Compare unpaired average manual time with average assisted time
+### B. Compare unpaired grand means for manual vs assisted tickets
 
-**Rejected as the primary design.** Ticket difficulty is a major confounder. Different ticket mixes can create an apparent time improvement even when assistance has no causal operational value.
+**Rejected as the primary design.** Ticket difficulty becomes a major confounder; different ticket mixes can manufacture an apparent benefit.
 
-### C — Have the same engineer solve the exact same ticket manually and then with assistance
+### C. Same engineer solves the exact same ticket manually and immediately repeats it with assistance
 
-**Rejected as an uncontrolled design.** The second attempt is contaminated by learning/memory from the first attempt. A crossover can be useful only when order/case assignment is explicitly balanced and carryover is treated as a design risk.
+**Rejected as an uncontrolled design.** Learning/memory contaminates the second attempt.
 
-### D — Case-paired measurement under an explicit preregistered design
+### D. Case-paired measurement under a preregistered design
 
-**Selected.** Each effort observation must contain a manual and assisted measurement for the same/matched case under one of two explicit designs:
+**Selected.** Effort measurements must be paired at case/comparison level under one explicit design:
 
 - `INDEPENDENT_MATCHED`: independent operators/arms measure manual and assisted handling on the same or prospectively matched case; or
-- `COUNTERBALANCED_CROSSOVER`: assignments/order are prospectively balanced so order/learning effects are not silently attributed to the agent.
+- `COUNTERBALANCED_CROSSOVER`: assignment/order is prospectively balanced so learning/order effects are not silently attributed to the agent.
 
-Every paired effort record must also carry an `effort_protocol_id`. Missing effort remains missing; the reporting layer never imputes it.
+Every measured pair carries an `effort_protocol_id`. Missing effort remains missing.
 
-## 4. Research basis for the design choice
+## 4. Research basis
 
-This is a comparative experiment: the a-priori factor of interest is assistance by the agent. NIST's Engineering Statistics Handbook recommends selecting experimental design from the experimental objective and treats this as a comparative-design problem when the goal is to estimate the effect of an important factor in the presence of other factors.
+The experiment has a comparative objective: quantify the effect of agent assistance while controlling other sources of variation. NIST's Engineering Statistics Handbook recommends choosing an experimental design from the experiment's objective and treats estimation of an a-priori factor effect as a comparative-design problem.
 
-Source: NIST/SEMATECH e-Handbook of Statistical Methods, “How do you select an experimental design?”  
+Source: NIST/SEMATECH e-Handbook of Statistical Methods — “How do you select an experimental design?”  
 https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm
 
-Crossover designs can improve efficiency because each subject can act as their own control, but they introduce carryover/order risks. ICH E9 explicitly notes carryover as a principal problem that can bias direct treatment comparisons when unequal across sequences. The application here is not clinical; the methodological implication is the relevant one: a repeated-task crossover must control order/learning rather than treating the second attempt as an independent observation.
+Crossover designs can be efficient because the same participant can contribute to both conditions, but order/carryover can bias treatment comparisons. ICH E9 explicitly identifies carryover as a principal crossover-design risk. The application here is not clinical; the transferable methodological point is that repeated-task comparisons must control order/learning effects.
 
-Source: ICH E9 Statistical Principles for Clinical Trials, section 3.1.2 (hosted by FDA).  
+Source: ICH E9 Statistical Principles for Clinical Trials, section 3.1.2, hosted by FDA.  
 https://www.fda.gov/media/71336/download
 
-The project therefore does **not** assume that “paired” means “same person repeats the same ticket immediately.” Pairing is at the case/comparison level under a declared design.
+The implementation therefore does not interpret “paired” as permission to let someone repeat the same ticket immediately without experimental control.
 
-## 5. Measurement unit
+## 5. Atomic observation
 
-The atomic unit is one evaluator-side ticket/case observation:
+One record represents one evaluator-side ticket/case outcome:
 
 ```text
 scenario_id
 + group_id
 + case_id
-+ split
++ declared split
 + response_mode
 + operational outcome labels
-+ optional measured effort pair under protocol
++ optional measured effort pair + protocol/design
 + optional agent runtime duration
 ```
 
-No expected-answer text is serialized in the operational-value artifact.
+The record does not contain expected-answer text.
 
-## 6. Operational metrics
+## 6. Frozen split integrity
 
-Per-ticket outcomes feed the following aggregate metrics:
+Caller-provided `split` and `group_id` are not trusted.
+
+Every report/bundle build requires the frozen benchmark split manifest and reconstructs:
+
+```text
+scenario_id
+→ authoritative group_id
+→ authoritative split
+```
+
+The build fails if:
+
+- the manifest is not `benchmark-split-v1` and `FROZEN`;
+- DEV / VALIDATION / LOCKED_TEST sections are incomplete;
+- a scenario appears more than once;
+- an observation's scenario is absent;
+- caller group disagrees with the manifest;
+- caller split disagrees with the manifest; or
+- the authoritative split is `LOCKED_TEST`.
+
+This blocks a caller from disguising a locked scenario as `DEV`.
+
+The report stores both:
+
+- `dataset_sha256`; and
+- `split_manifest_sha256`.
+
+Bundle record order is canonicalized, and caller metadata cannot overwrite canonical evidence metadata or hashes.
+
+## 7. Operational metrics
+
+The report exposes:
 
 - `operational_conclusion_accuracy`;
-- `evidence_correctness_rate` when evidence labels exist;
+- `evidence_correctness_rate` when labelled;
 - `escalation_correctness_rate`;
 - `escalation_precision`;
 - `escalation_recall`;
@@ -102,11 +135,11 @@ Per-ticket outcomes feed the following aggregate metrics:
 - `ready_to_continue_escalation_rate`;
 - `restart_from_zero_escalation_rate`.
 
-The primary conceptual target is operational conclusion correctness, not textual similarity to a reference response.
+The conceptual primary target is operational conclusion correctness, not textual similarity to a reference answer.
 
-## 7. Human-effort metrics
+## 8. Human-effort metrics
 
-When a valid paired effort measurement exists:
+When a valid measured pair exists:
 
 ```text
 engineer_minutes_saved =
@@ -118,100 +151,94 @@ The report exposes:
 
 - paired effort sample count;
 - effort coverage rate;
+- protocol/design identities;
 - manual baseline minutes/ticket;
 - assisted human-review minutes/ticket;
 - engineer minutes saved/ticket;
 - engineer minutes saved total;
-- tickets per engineer-hour when assisted human time is non-zero.
+- tickets per engineer-hour when finite.
 
-A negative value is preserved as a real regression. It is never clipped to zero.
+Negative savings are preserved as regressions rather than clipped to zero. Agent wall-clock runtime remains a separate quantity because machine elapsed time and human attention are not interchangeable.
 
-Agent wall-clock runtime is reported separately because machine time and human attention are not interchangeable.
+## 9. Hard failure semantics
 
-## 8. Hard failure semantics
-
-The EDD adapter marks these per-case hard failures independently from efficiency metrics:
+The EDD adapter independently records:
 
 - `PREMATURE_ACTION`;
 - `UNSUPPORTED_OPERATIONAL_CONCLUSION`;
 - `MISSED_REQUIRED_ESCALATION`;
 - `INCORRECT_AUTO_RESOLUTION`.
 
-A configuration with a hard operational failure cannot earn promotion merely by saving engineer minutes.
+A candidate cannot offset one of these failures merely by saving human time.
 
-Absolute production thresholds are intentionally **not** selected in this implementation slice. Choosing thresholds after inspecting results would be post-hoc fitting. Thresholds must be preregistered from DEV/pilot evidence before the held-out VALIDATION decision.
+No absolute production threshold is selected in this slice. Thresholds must be preregistered from DEV/pilot evidence before a held-out VALIDATION promotion decision.
 
-## 9. Split policy
+## 10. Measurement protocol before any value claim
 
-The typed development contract accepts only:
+Before claiming “saves X minutes per ticket”:
 
-- `DEV`;
-- `VALIDATION`.
-
-`LOCKED_TEST` is absent from the type and rejected during validation. It remains unavailable for protocol tuning, threshold selection, model/runtime selection or optimizer feedback.
-
-Recommended sequence:
-
-```text
-DEV pilot
-→ inspect measurement quality / difficulty balance / missingness
-→ freeze effort protocol + metric rules + acceptance thresholds
-→ VALIDATION comparison
-→ PROMOTE | REJECT | INCONCLUSIVE
-```
-
-## 10. Data-collection protocol before any value claim
-
-Before recording a project claim such as “saves X minutes per ticket”:
-
-1. freeze an `effort_protocol_id`;
-2. define eligibility/exclusion rules before timing starts;
-3. define whether the design is `INDEPENDENT_MATCHED` or `COUNTERBALANCED_CROSSOVER`;
-4. assign cases/operators prospectively rather than selecting successful examples afterward;
-5. use the same start/stop definition for manual and assisted arms;
-6. record interruptions and invalid trials under a predefined rule;
+1. freeze one `effort_protocol_id` for the experiment;
+2. define eligibility/exclusion before timing;
+3. select `INDEPENDENT_MATCHED` or `COUNTERBALANCED_CROSSOVER` prospectively;
+4. assign cases/operators prospectively;
+5. use identical start/stop definitions for both arms;
+6. predefine interruption/invalid-trial handling;
 7. preserve missing measurements as missing;
-8. balance ticket classes/complexity across arms;
-9. report sample count and coverage next to every time metric;
-10. analyze paired case-level differences rather than comparing only two grand means;
-11. keep operational correctness/safety gates active during the value comparison;
-12. do not expose reviewer identity or evaluator-only truth to runtime/frontend.
+8. balance ticket class/complexity across arms;
+9. report sample count and coverage beside time metrics;
+10. analyze paired case-level differences, not only grand means;
+11. keep correctness/safety gates active during value comparison;
+12. keep reviewer identity/evaluator truth outside runtime and frontend.
 
-For a counterbalanced crossover, the protocol must additionally define assignment order and how learning/carryover is assessed. If this cannot be done credibly, use the independent matched design instead.
+For crossover measurement, the protocol must additionally define order assignment and carryover/learning handling. If that cannot be defended, use independent matched measurement.
 
 ## 11. EDD integration
 
-`operational_value_metric_bundle()` maps the observations to the project's existing `EvalMetricBundle` so candidate-vs-baseline comparisons reuse:
+`operational_value_metric_bundle()` reuses the existing `EvalMetricBundle` / comparison stack, including:
 
 - group-aware pairing;
 - response-mode slices;
 - deterministic comparison identity;
 - paired bootstrap confidence intervals;
-- hard-gate rejection;
+- independent hard-gate rejection; and
 - `PROMOTE | REJECT | INCONCLUSIVE` semantics.
 
-This slice deliberately does not create a second comparison framework.
+A second comparison framework was intentionally not introduced.
 
-## 12. Outputs implemented
+## 12. Implemented outputs
 
-- `src/academy_tractian/operational_value.py` — typed contract, aggregate report and EDD adapter;
-- `scripts/operational_value_report.py` — provider-free report/bundle CLI;
-- `tests/test_operational_value.py` — contract, leakage, edge-case and KPI tests;
+- `src/academy_tractian/operational_value.py` — typed contract, frozen-split verification, report and EDD adapter;
+- `scripts/operational_value_report.py` — provider-free CLI requiring the frozen split manifest;
+- `tests/test_operational_value.py` — KPI, measurement, leakage and split-binding tests;
+- `tests/test_operational_value_integrity.py` — canonical ordering, metadata integrity and manifest validation tests;
 - `.github/workflows/eval-driven-development-provider-free.yml` — CI gate integration.
 
-## 13. Current non-claims
+## 13. Validation state
 
-Until real measurements are collected, do **not** claim:
+On PR #157 head `f509734996edcdf96d5972b008549b256900c395`, the relevant project gates passed, including:
+
+- eval-driven development;
+- benchmark split audit;
+- E9 scorer audits;
+- frontend provider-free;
+- observability provider-free;
+- production runtime;
+- final delivery provider-free reproduction; and
+- final handoff acceptance audit.
+
+The decision record describes capability, not measured business benefit.
+
+## 14. Current non-claims
+
+Until real measurements are collected, do not claim:
 
 - that the current agent saves engineer time;
 - a specific minutes/ticket improvement;
 - a productivity multiplier;
-- that auto-resolution is operationally useful at production scale;
-- that any operational-value threshold has been calibrated;
-- that VALIDATION evidence authorizes a final production policy.
+- production-scale useful auto-resolution;
+- a calibrated operational-value threshold; or
+- a final production policy selected from VALIDATION.
 
-The implemented state is a measurement/evaluation capability, not a fabricated positive result.
+## 15. Next evidence step
 
-## 14. Next evidence step
-
-The next value slice is to produce a DEV pilot packet from real project cases under a frozen `effort_protocol_id`, collect operational labels and measured manual/assisted durations, then use the resulting distribution to preregister the candidate-vs-baseline metric rules before VALIDATION.
+Produce a DEV pilot packet from real project cases under a frozen effort protocol, collect operational labels and measured manual/assisted durations, inspect measurement quality/missingness, then preregister candidate-vs-baseline metric rules before VALIDATION.
