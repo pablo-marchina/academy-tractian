@@ -311,7 +311,7 @@ test.describe("provider-free full product acceptance", () => {
           return response.status;
         }, accepted.run_id);
         expect(deniedStream).toBe(404);
-        await expect(deniedPage.locator(".run-table")).not.toContainText(accepted.run_id.slice(0, 18));
+        await expect(deniedPage.locator("main")).not.toContainText(accepted.run_id.slice(0, 18));
       }
     } finally {
       await otherUser.context.close();
