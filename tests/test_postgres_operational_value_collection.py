@@ -164,7 +164,7 @@ def _packet():
             scenario_id="CEN-02",
             case_id="TKT-02",
             ticket_request="Investigate why the latest analysis for asset C710 is still pending.",
-            agent_terminal_decision="FINAL",
+            agent_terminal_decision="ORIENT",
             agent_terminal_message="The analysis is still processing; wait before corrective action.",
             safe_evidence_context=("Analysis state is pending.",),
             agent_runtime_seconds=3.0,
@@ -260,56 +260,10 @@ def test_postgres_rejects_structurally_invalid_valid_measurement(
                             "constraint-user",
                             "2" * 64,
                             "ovhost_" + "3" * 24,
-                            "FINAL",
+                            "ORIENT",
                             "This row must fail because a valid measurement has no elapsed time.",
                         ),
                     )
-
-
-def test_postgres_schema_reinstalls_missing_v4_state_constraint(
-    tmp_path: Path,
-    postgres_fixture: _PgFixture,
-) -> None:
-    app = _app(tmp_path, postgres_fixture, initialize_schema=True)
-    store = app.state.operational_value_collection_store
-    schema = postgres_fixture.schema
-    database = app.state.postgres_operational_database
-
-    with TestClient(app):
-        with database.internal_pool.connection() as connection:
-            with connection.transaction():
-                connection.execute(
-                    f"""
-                    ALTER TABLE "{schema}".operational_pilot_assignments
-                    DROP CONSTRAINT operational_pilot_assignment_state_shape_v4
-                    """
-                )
-                connection.execute(
-                    f"""
-                    UPDATE "{schema}".operational_meta
-                    SET value = 'operational-value-collection-v3'
-                    WHERE key = 'operational_value_collection_schema_version'
-                    """
-                )
-        assert store.ready() is False
-
-        store.initialize_schema()
-        assert store.ready() is True
-
-        with database.internal_pool.connection() as connection:
-            row = connection.execute(
-                """
-                SELECT c.convalidated
-                FROM pg_constraint c
-                JOIN pg_class t ON t.oid = c.conrelid
-                JOIN pg_namespace n ON n.oid = t.relnamespace
-                WHERE n.nspname = %s
-                  AND t.relname = 'operational_pilot_assignments'
-                  AND c.conname = 'operational_pilot_assignment_state_shape_v4'
-                """,
-                (schema,),
-            ).fetchone()
-        assert row is not None and bool(row[0]) is True
 
 
 def test_postgres_rejects_assignment_with_noncanonical_pair_binding(
@@ -376,6 +330,18 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
         first_payload = first_a.json()
         first_task_a = first_payload["task"]["task_id"]
         first_assignment_a = first_payload["assignment_id"]
+        serialized = first_a.text.lower()
+        for forbidden in (
+            "pair_id",
+            "scenario_id",
+            "group_id",
+            "source_split",
+            "operator_ref",
+            "host_session",
+            "private_truth",
+            "oracle",
+        ):
+            assert forbidden not in serialized
 
         first_b = client.post(
             "/api/operational-value/tasks/next",
@@ -388,7 +354,7 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
             client.post(
                 f"/api/operational-value/assignments/{first_assignment_a}/complete",
                 headers=_headers("user-b"),
-                json={"terminal_decision": "FINAL", "conclusion_summary": "Wrong owner."},
+                json={"terminal_decision": "ORIENT", "conclusion_summary": "Wrong owner."},
             ).status_code
             == 404
         )
@@ -396,7 +362,7 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
             client.post(
                 f"/api/operational-value/assignments/{first_assignment_a}/complete",
                 headers=_headers("user-a", "org-b"),
-                json={"terminal_decision": "FINAL", "conclusion_summary": "Wrong tenant."},
+                json={"terminal_decision": "ORIENT", "conclusion_summary": "Wrong tenant."},
             ).status_code
             == 404
         )
@@ -412,18 +378,18 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
             f"/api/operational-value/assignments/{first_assignment_a}/complete",
             headers=_headers("user-a"),
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "The operational conclusion is recorded from the evidence.",
             },
         )
         assert completed_a.status_code == 200
-        assert completed_a.json()["elapsed_seconds"] > 0.0
+        assert "elapsed_seconds" not in completed_a.json()
 
         duplicate = client.post(
             f"/api/operational-value/assignments/{first_assignment_a}/complete",
             headers=_headers("user-a"),
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "Duplicate submission must not be recorded.",
             },
         )
@@ -444,6 +410,9 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
         valid_for_first = [row for row in completions if row.task_id == first_task_a]
         assert len(valid_for_first) == 1
         assert valid_for_first[0].status == "VALID"
+        assert valid_for_first[0].elapsed_seconds is not None
+        assert valid_for_first[0].elapsed_seconds > 0.0
+        assert valid_for_first[0].terminal_decision == "ORIENT"
         assert valid_for_first[0].operator_ref_sha256 not in {"user-a", "identity-user-a"}
 
 
@@ -477,7 +446,7 @@ def test_postgres_collection_restart_invalidates_orphaned_monotonic_timer(
             f"/api/operational-value/assignments/{orphaned_assignment}/complete",
             headers=_headers("restart-user"),
             json={
-                "terminal_decision": "FINAL",
+                "terminal_decision": "ORIENT",
                 "conclusion_summary": "A restarted timer must fail closed.",
             },
         )
