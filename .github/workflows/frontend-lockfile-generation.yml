@@ -1,6 +1,10 @@
 name: frontend-lockfile-generation
 
 on:
+  pull_request:
+    paths:
+      - "frontend/package.json"
+      - ".github/workflows/frontend-lockfile-generation.yml"
   push:
     branches:
       - feat/p0-frontend-deterministic-lockfile
