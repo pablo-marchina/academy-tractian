@@ -10,6 +10,7 @@ from research.e2.controller import DecisionSource
 from research.e2.transport import RequestTransport
 
 from .action_evaluation import ProductionActionEvaluator
+from .action_recovery import reconcile_orphaned_actions
 from .product_api import (
     AuthenticatedRuntimeContext,
     RuntimeContextProvider,
@@ -55,6 +56,7 @@ def create_action_capable_product_app(
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
     access_db_path: str | Path | None = None,
+    execution_db_path: str | Path | None = None,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
@@ -62,6 +64,7 @@ def create_action_capable_product_app(
 ) -> FastAPI:
     custody = PendingActionCustody(action_custody_path)
     ledger = DuckDBActionIdempotencyLedger(action_ledger_path)
+    action_recovery = reconcile_orphaned_actions(custody=custody, ledger=ledger)
 
     def runtime_factory(sink):
         return ActionProposalRealtimeProductionRuntime(
@@ -77,6 +80,7 @@ def create_action_capable_product_app(
         runtime_factory=runtime_factory,
         context_provider=context_provider,
         access_db_path=access_db_path,
+        execution_db_path=execution_db_path,
         max_workers=max_workers,
         provider_calls_enabled=provider_calls_enabled,
         heartbeat_interval_ms=heartbeat_interval_ms,
@@ -99,6 +103,7 @@ def create_action_capable_product_app(
     app.state.pending_action_custody = custody
     app.state.action_idempotency_ledger = ledger
     app.state.production_action_executor = executor
+    app.state.action_recovery_report = action_recovery
 
     def trusted_context(request: Request) -> AuthenticatedRuntimeContext:
         return trusted_runtime_context(context_provider, request)
@@ -123,7 +128,15 @@ def create_action_capable_product_app(
 
     def execute_confirmed_action(execution_run_id: str, action_id: str, prepared) -> None:
         registry = app.state.run_execution_registry
-        registry.running(execution_run_id)
+        try:
+            registry.running(execution_run_id)
+        except Exception:
+            custody.transition(
+                action_id=action_id,
+                expected_states=frozenset({"EXECUTING"}),
+                new_state="UNCERTAIN",
+            )
+            return
         try:
             trace = prepared.execute()
             report = ProductionActionEvaluator().evaluate(trace)
@@ -173,11 +186,17 @@ def create_action_capable_product_app(
                 raise HTTPException(status_code=409, detail=code) from exc
             raise HTTPException(status_code=422, detail=code) from exc
 
+        registry = app.state.run_execution_registry
         try:
             run_access_store.claim(
                 run_id=execution_run_id,
                 organization_id=context.organization_id,
                 user_id=context.user_id,
+            )
+            registry.accepted(
+                execution_run_id,
+                execution_kind="action",
+                related_action_id=action_id,
             )
         except Exception as exc:
             custody.transition(
@@ -187,11 +206,9 @@ def create_action_capable_product_app(
             )
             raise HTTPException(
                 status_code=503,
-                detail="action_execution_ownership_persist_failed",
+                detail="action_execution_operational_state_persist_failed",
             ) from exc
 
-        registry = app.state.run_execution_registry
-        registry.accepted(execution_run_id)
         try:
             future = app.state.product_executor.submit(
                 execute_confirmed_action,
