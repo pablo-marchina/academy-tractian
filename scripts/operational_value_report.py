@@ -34,10 +34,11 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Aggregate evaluator-side operational correctness and measured engineer-effort "
-            "observations. This command never imputes missing effort and does not accept LOCKED_TEST."
+            "observations. Scenario split/group identity is verified against a frozen manifest."
         )
     )
     parser.add_argument("--observations", required=True, type=Path)
+    parser.add_argument("--split-manifest", required=True, type=Path)
     parser.add_argument("--report", required=True, type=Path)
     parser.add_argument("--bundle", type=Path)
     parser.add_argument("--config-id")
@@ -50,9 +51,15 @@ def main() -> int:
     raw = _load_json(args.observations)
     if not isinstance(raw, list):
         raise SystemExit("--observations must contain a JSON array")
+    split_manifest = _load_json(args.split_manifest)
+    if not isinstance(split_manifest, dict):
+        raise SystemExit("--split-manifest must contain a JSON object")
 
     observations = [OperationalValueObservation.model_validate(item) for item in raw]
-    report = build_operational_value_report(observations)
+    report = build_operational_value_report(
+        observations,
+        frozen_split_payload=split_manifest,
+    )
     _write_json(args.report, report.model_dump(mode="json"))
 
     if args.bundle is not None:
@@ -67,6 +74,7 @@ def main() -> int:
         bundle = operational_value_metric_bundle(
             config_id=args.config_id,
             observations=observations,
+            frozen_split_payload=split_manifest,
             metadata=metadata,
         )
         _write_json(args.bundle, bundle.model_dump(mode="json"))
@@ -83,6 +91,7 @@ def main() -> int:
                 "engineer_minutes_saved_per_ticket": report.engineer_minutes_saved_per_ticket,
                 "hard_failure_counts": report.hard_failure_counts,
                 "dataset_sha256": report.dataset_sha256,
+                "split_manifest_sha256": report.split_manifest_sha256,
             },
             sort_keys=True,
         )
