@@ -118,7 +118,7 @@
   font-weight: 750;
 }
 
-.pilot-form select,
+.pilot-form input,
 .pilot-form textarea {
   width: 100%;
   box-sizing: border-box;
