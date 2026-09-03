@@ -327,12 +327,17 @@ class PostgresOperationalPilotStore:
         schema = self.schema
         with self.database.internal_pool.connection() as connection:
             with connection.transaction():
-                # Serialize assignment for one trusted principal. Without this lock, two requests
-                # from the same user could each reserve a different task before the partial unique
-                # index arbitrates; that would turn an idempotent retry into an integrity error.
+                # Serialize assignment for one trusted principal. JSON gives the lock namespace
+                # an unambiguous, NUL-free text representation even if principal fields contain
+                # delimiter-like characters. PostgreSQL then hashes that canonical text to bigint.
+                advisory_lock_key = json.dumps(
+                    ["operational-value-principal-v1", organization_id, user_id],
+                    ensure_ascii=True,
+                    separators=(",", ":"),
+                )
                 connection.execute(
                     "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
-                    (f"operational-value-principal\0{organization_id}\0{user_id}",),
+                    (advisory_lock_key,),
                 )
                 existing = connection.execute(
                     f"""
