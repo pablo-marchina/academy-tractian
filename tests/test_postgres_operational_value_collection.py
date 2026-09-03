@@ -331,7 +331,6 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
         first_task_a = first_payload["task"]["task_id"]
         first_assignment_a = first_payload["assignment_id"]
 
-        # A second principal cannot receive the row already reserved by user-a.
         first_b = client.post(
             "/api/operational-value/tasks/next",
             headers=_headers("user-b"),
@@ -339,7 +338,6 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
         assert first_b.status_code == 200
         assert first_b.json()["task"]["task_id"] != first_task_a
 
-        # Tenant and owner boundaries fail closed with no assignment disclosure.
         assert (
             client.post(
                 f"/api/operational-value/assignments/{first_assignment_a}/complete",
@@ -375,7 +373,6 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
         assert completed_a.status_code == 200
         assert completed_a.json()["elapsed_seconds"] > 0.0
 
-        # Replaying the completion never creates a second valid measurement.
         duplicate = client.post(
             f"/api/operational-value/assignments/{first_assignment_a}/complete",
             headers=_headers("user-a"),
@@ -386,8 +383,6 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
         )
         assert duplicate.status_code == 404
 
-        # Any exposure to a pair removes that whole pair from future assignments to the same
-        # operator, including the same task after a non-valid trial.
         second_a = client.post(
             "/api/operational-value/tasks/next",
             headers=_headers("user-a"),
@@ -429,9 +424,9 @@ def test_postgres_collection_restart_invalidates_orphaned_monotonic_timer(
         orphaned_task = assigned.json()["task"]["task_id"]
 
     second = _app(tmp_path, postgres_fixture, initialize_schema=False)
-    assert orphaned_assignment in second.state.operational_value_recovered_assignments
+    # Merely constructing/importing the replacement app is not enough to invalidate a human trial.
+    assert second.state.operational_value_recovered_assignments == ()
     with TestClient(second) as client:
-        # The old assignment is not resumed with a reconstructed wall-clock duration.
         stale_completion = client.post(
             f"/api/operational-value/assignments/{orphaned_assignment}/complete",
             headers=_headers("restart-user"),
@@ -441,6 +436,7 @@ def test_postgres_collection_restart_invalidates_orphaned_monotonic_timer(
             },
         )
         assert stale_completion.status_code == 404
+        assert orphaned_assignment in second.state.operational_value_recovered_assignments
 
         recovered = second.state.operational_value_collection_store.list_completions(
             organization_id="org-a",
@@ -452,8 +448,6 @@ def test_postgres_collection_restart_invalidates_orphaned_monotonic_timer(
         assert failed[0].elapsed_seconds is None
         assert failed[0].invalid_reason == "host_timer_session_lost"
 
-        # Exposure survives technical failure: the same human cannot re-run the same pair and
-        # contaminate the matched design with remembered evidence.
         same_user_replacement = client.post(
             "/api/operational-value/tasks/next",
             headers=_headers("restart-user"),
@@ -464,8 +458,6 @@ def test_postgres_collection_restart_invalidates_orphaned_monotonic_timer(
             != pair_by_task[orphaned_task]
         )
 
-        # A different operator can still provide a clean replacement measurement for an invalid
-        # trial, so technical failures do not permanently consume the task.
         replacement = client.post(
             "/api/operational-value/tasks/next",
             headers=_headers("replacement-user"),
