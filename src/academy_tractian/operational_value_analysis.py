@@ -13,16 +13,22 @@ from research.e2.models import Decision
 
 
 OperationalPilotCondition = Literal["MANUAL", "ASSISTED"]
-OperationalValueEvidenceStatus = Literal[
+OperationalValueTimeSignalStatus = Literal[
     "NOT_READY",
-    "EVIDENCE_POSITIVE",
-    "EVIDENCE_INCONCLUSIVE",
-    "EVIDENCE_NEGATIVE",
+    "POSITIVE_TIME_SIGNAL",
+    "INCONCLUSIVE_TIME_SIGNAL",
+    "NEGATIVE_TIME_SIGNAL",
 ]
 
 
 class _FrozenModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class OperationalValueTaskSlot(_FrozenModel):
+    task_id: str = Field(pattern=r"^ovt_[0-9a-f]{24}$")
+    pair_id: str = Field(pattern=r"^ovpair_[0-9a-f]{24}$")
+    condition: OperationalPilotCondition
 
 
 class OperationalValueValidMeasurement(_FrozenModel):
@@ -35,12 +41,13 @@ class OperationalValueValidMeasurement(_FrozenModel):
 
 
 class OperationalValueCollectionSnapshot(_FrozenModel):
-    schema_version: Literal["operational-value-snapshot-v1"] = "operational-value-snapshot-v1"
+    schema_version: Literal["operational-value-snapshot-v2"] = "operational-value-snapshot-v2"
     organization_id: str = Field(min_length=1)
     packet_id: str = Field(pattern=r"^ovpkt_[0-9a-f]{24}$")
     collection_closed: bool
     active_assignment_count: int = Field(ge=0)
     invalid_trial_count: int = Field(ge=0)
+    task_slots: tuple[OperationalValueTaskSlot, ...]
     valid_measurements: tuple[OperationalValueValidMeasurement, ...]
     snapshot_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
@@ -52,6 +59,7 @@ class OperationalValueCollectionSnapshot(_FrozenModel):
             collection_closed=self.collection_closed,
             active_assignment_count=self.active_assignment_count,
             invalid_trial_count=self.invalid_trial_count,
+            task_slots=self.task_slots,
             valid_measurements=self.valid_measurements,
         )
         if self.snapshot_sha256 != expected:
@@ -79,14 +87,17 @@ class OperationalValuePairResult(_FrozenModel):
 
 
 class OperationalValueAnalysisResult(_FrozenModel):
-    schema_version: Literal["operational-value-analysis-v1"] = "operational-value-analysis-v1"
-    status: OperationalValueEvidenceStatus
+    schema_version: Literal["operational-value-analysis-v2"] = "operational-value-analysis-v2"
+    status: OperationalValueTimeSignalStatus
+    business_claim_ready: Literal[False] = False
+    requires_operational_quality_gate: Literal[True] = True
     protocol_id: str
     protocol_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     snapshot_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     collection_closed: bool
     active_assignment_count: int = Field(ge=0)
     invalid_trial_count: int = Field(ge=0)
+    registered_pair_count: int = Field(ge=0)
     valid_measurement_count: int = Field(ge=0)
     complete_pair_count: int = Field(ge=0)
     incomplete_pair_count: int = Field(ge=0)
@@ -128,20 +139,26 @@ def operational_value_snapshot_sha256(
     collection_closed: bool,
     active_assignment_count: int,
     invalid_trial_count: int,
+    task_slots: tuple[OperationalValueTaskSlot, ...],
     valid_measurements: tuple[OperationalValueValidMeasurement, ...],
 ) -> str:
-    ordered = sorted(
+    ordered_slots = sorted(
+        (slot.model_dump(mode="json") for slot in task_slots),
+        key=lambda item: (str(item["pair_id"]), str(item["condition"]), str(item["task_id"])),
+    )
+    ordered_measurements = sorted(
         (measurement.model_dump(mode="json") for measurement in valid_measurements),
         key=lambda item: (str(item["pair_id"]), str(item["condition"]), str(item["task_id"])),
     )
     payload = {
-        "schema_version": "operational-value-snapshot-v1",
+        "schema_version": "operational-value-snapshot-v2",
         "organization_id": organization_id,
         "packet_id": packet_id,
         "collection_closed": collection_closed,
         "active_assignment_count": active_assignment_count,
         "invalid_trial_count": invalid_trial_count,
-        "valid_measurements": ordered,
+        "task_slots": ordered_slots,
+        "valid_measurements": ordered_measurements,
     }
     return sha256(_canonical_json(payload).encode("utf-8")).hexdigest()
 
@@ -153,6 +170,7 @@ def build_operational_value_snapshot(
     collection_closed: bool,
     active_assignment_count: int,
     invalid_trial_count: int,
+    task_slots: tuple[OperationalValueTaskSlot, ...],
     valid_measurements: tuple[OperationalValueValidMeasurement, ...],
 ) -> OperationalValueCollectionSnapshot:
     snapshot_hash = operational_value_snapshot_sha256(
@@ -161,6 +179,7 @@ def build_operational_value_snapshot(
         collection_closed=collection_closed,
         active_assignment_count=active_assignment_count,
         invalid_trial_count=invalid_trial_count,
+        task_slots=task_slots,
         valid_measurements=valid_measurements,
     )
     return OperationalValueCollectionSnapshot(
@@ -169,6 +188,7 @@ def build_operational_value_snapshot(
         collection_closed=collection_closed,
         active_assignment_count=active_assignment_count,
         invalid_trial_count=invalid_trial_count,
+        task_slots=task_slots,
         valid_measurements=valid_measurements,
         snapshot_sha256=snapshot_hash,
     )
@@ -211,28 +231,48 @@ def _paired_bootstrap_mean_delta_ci(
 
 
 def _pair_measurements(
+    *,
+    task_slots: tuple[OperationalValueTaskSlot, ...],
     measurements: tuple[OperationalValueValidMeasurement, ...],
-) -> tuple[tuple[OperationalValuePairResult, ...], int]:
-    grouped: dict[str, dict[str, OperationalValueValidMeasurement]] = {}
+) -> tuple[tuple[OperationalValuePairResult, ...], int, int]:
+    registered: dict[str, dict[str, OperationalValueTaskSlot]] = {}
+    task_lookup: dict[str, OperationalValueTaskSlot] = {}
+    for slot in task_slots:
+        if slot.task_id in task_lookup:
+            raise ValueError("operational_value_duplicate_task_slot")
+        task_lookup[slot.task_id] = slot
+        conditions = registered.setdefault(slot.pair_id, {})
+        if slot.condition in conditions:
+            raise ValueError("operational_value_duplicate_registered_condition_for_pair")
+        conditions[slot.condition] = slot
+
+    for conditions in registered.values():
+        if set(conditions) != {"MANUAL", "ASSISTED"}:
+            raise ValueError("operational_value_incomplete_registered_pair")
+
+    valid_by_pair: dict[str, dict[str, OperationalValueValidMeasurement]] = {}
     for measurement in measurements:
-        conditions = grouped.setdefault(measurement.pair_id, {})
+        slot = task_lookup.get(measurement.task_id)
+        if slot is None:
+            raise ValueError("operational_value_measurement_task_not_registered")
+        if slot.pair_id != measurement.pair_id or slot.condition != measurement.condition:
+            raise ValueError("operational_value_measurement_slot_binding_mismatch")
+        conditions = valid_by_pair.setdefault(measurement.pair_id, {})
         if measurement.condition in conditions:
             raise ValueError("operational_value_duplicate_valid_condition_for_pair")
         conditions[measurement.condition] = measurement
 
     complete: list[tuple[str, OperationalValueValidMeasurement, OperationalValueValidMeasurement]] = []
-    incomplete = 0
-    for pair_id, conditions in grouped.items():
+    for pair_id in sorted(registered):
+        conditions = valid_by_pair.get(pair_id, {})
         manual = conditions.get("MANUAL")
         assisted = conditions.get("ASSISTED")
         if manual is None or assisted is None:
-            incomplete += 1
             continue
         if manual.operator_ref_sha256 == assisted.operator_ref_sha256:
             raise ValueError("operational_value_pair_operator_crossover")
         complete.append((pair_id, manual, assisted))
 
-    complete.sort(key=lambda row: row[0])
     paired_results = tuple(
         OperationalValuePairResult(
             pair_index=index,
@@ -242,7 +282,9 @@ def _pair_measurements(
         )
         for index, (_pair_id, manual, assisted) in enumerate(complete, start=1)
     )
-    return paired_results, incomplete
+    registered_pair_count = len(registered)
+    incomplete_pair_count = registered_pair_count - len(paired_results)
+    return paired_results, incomplete_pair_count, registered_pair_count
 
 
 def analyze_operational_value(
@@ -250,8 +292,18 @@ def analyze_operational_value(
     snapshot: OperationalValueCollectionSnapshot,
     protocol: OperationalValueAnalysisProtocol,
 ) -> OperationalValueAnalysisResult:
+    """Analyze human effort only; operational correctness remains a separate hard gate.
+
+    A positive result here is deliberately not a business claim by itself. The caller must combine
+    this frozen time signal with the separately calibrated operational-quality evidence before
+    claiming useful engineer time saved.
+    """
+
     protocol_hash = operational_value_protocol_sha256(protocol)
-    paired_results, incomplete_pair_count = _pair_measurements(snapshot.valid_measurements)
+    paired_results, incomplete_pair_count, registered_pair_count = _pair_measurements(
+        task_slots=snapshot.task_slots,
+        measurements=snapshot.valid_measurements,
+    )
     complete_pair_count = len(paired_results)
 
     mean_manual_seconds: float | None = None
@@ -292,27 +344,31 @@ def analyze_operational_value(
         snapshot.collection_closed
         and snapshot.active_assignment_count == 0
         and complete_pair_count >= protocol.minimum_complete_pairs
+        and incomplete_pair_count == 0
         and ci_lower is not None
         and ci_upper is not None
     )
     if not ready:
-        evidence_status: OperationalValueEvidenceStatus = "NOT_READY"
+        time_status: OperationalValueTimeSignalStatus = "NOT_READY"
     elif ci_lower > 0.0:
-        evidence_status = "EVIDENCE_POSITIVE"
+        time_status = "POSITIVE_TIME_SIGNAL"
     elif ci_upper < 0.0:
-        evidence_status = "EVIDENCE_NEGATIVE"
+        time_status = "NEGATIVE_TIME_SIGNAL"
     else:
-        evidence_status = "EVIDENCE_INCONCLUSIVE"
+        time_status = "INCONCLUSIVE_TIME_SIGNAL"
 
     result_payload = {
-        "schema_version": "operational-value-analysis-v1",
-        "status": evidence_status,
+        "schema_version": "operational-value-analysis-v2",
+        "status": time_status,
+        "business_claim_ready": False,
+        "requires_operational_quality_gate": True,
         "protocol_id": protocol.protocol_id,
         "protocol_sha256": protocol_hash,
         "snapshot_sha256": snapshot.snapshot_sha256,
         "collection_closed": snapshot.collection_closed,
         "active_assignment_count": snapshot.active_assignment_count,
         "invalid_trial_count": snapshot.invalid_trial_count,
+        "registered_pair_count": registered_pair_count,
         "valid_measurement_count": len(snapshot.valid_measurements),
         "complete_pair_count": complete_pair_count,
         "incomplete_pair_count": incomplete_pair_count,
