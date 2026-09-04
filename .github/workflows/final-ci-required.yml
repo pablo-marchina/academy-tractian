@@ -2,13 +2,49 @@ name: final-ci-required
 
 on:
   pull_request:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "scripts/**"
+      - "frontend/**"
+      - "research/e2/**"
+      - "research/frozen/**"
+      - "research/results/**"
+      - "research/*decision*.md"
+      - "docs/**"
+      - "README.md"
+      - "pyproject.toml"
+      - "requirements.lock"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/**"
   push:
     branches:
       - main
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "scripts/**"
+      - "frontend/**"
+      - "research/e2/**"
+      - "research/frozen/**"
+      - "research/results/**"
+      - "research/*decision*.md"
+      - "docs/**"
+      - "README.md"
+      - "pyproject.toml"
+      - "requirements.lock"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/**"
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: final-ci-required-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   clean-clone:
