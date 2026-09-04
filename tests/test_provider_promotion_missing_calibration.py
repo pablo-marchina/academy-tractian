@@ -17,6 +17,7 @@ def test_missing_human_calibration_is_representable_and_fails_closed() -> None:
             candidate_id=candidate_id,
             provider_id=candidate_id.split(":", 1)[0],
             model_id=candidate_id.split(":", 1)[1],
+            config_hash=f"cfg-{candidate_id}",
             scenario_count=60,
             repeat_count=3,
             human_calibration=None,
