@@ -26,6 +26,7 @@ from .postgres_operational_value_v5 import PostgresOperationalPilotStoreV5
 from .postgres_semantic_review import PostgresSemanticReviewStore
 from .product_api import RuntimeContextProvider
 from .production_actions_v2 import ActionAuthorizationResolver
+from .runtime import RuntimeConfigurationIdentity
 from .semantic_human_calibration import SemanticAnnotationManifest, SemanticReviewerPacket
 from .semantic_review_collection import attach_semantic_review_collection_api
 
@@ -174,13 +175,15 @@ def create_postgres_action_capable_product_app(
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
+    runtime_configuration_identity: RuntimeConfigurationIdentity | None = None,
 ) -> FastAPI:
     """Create the production topology with qualified mutable PostgreSQL state.
 
     ``observability_backend='duckdb'`` preserves historical isolated reproduction. The hosted-only
     product selects ``postgresql`` so browser-safe traces/evaluations and safe integration evidence
     persist in managed PostgreSQL and the serving instance does not depend on a durable local
-    filesystem.
+    filesystem. ``runtime_configuration_identity`` is public experimental provenance only; it
+    contains no credentials and makes provider/model candidates produce distinct config hashes.
     """
 
     database = PostgresOperationalDatabase(
@@ -241,6 +244,7 @@ def create_postgres_action_capable_product_app(
             provider_calls_enabled=provider_calls_enabled,
             actions_enabled=actions_enabled,
             heartbeat_interval_ms=heartbeat_interval_ms,
+            runtime_configuration_identity=runtime_configuration_identity,
         )
         attach_operational_value_collection_api(
             app,
