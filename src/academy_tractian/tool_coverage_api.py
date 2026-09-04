@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
+from .product_api import RuntimeContextProvider, trusted_runtime_context
 from .tool_coverage import build_tractian_tool_coverage
 from .tractian_integration_evidence import IntegrationEvidenceLedger
 
@@ -15,14 +16,23 @@ def attach_tool_coverage_api(
     app: FastAPI,
     *,
     hosted_evidence_provider: HostedEvidenceProvider | None = None,
+    context_provider: RuntimeContextProvider | None = None,
 ) -> None:
-    """Attach the public, evidence-bounded TRACTIAN tool-coverage surface once."""
+    """Attach the evidence-bounded TRACTIAN tool-coverage surface once.
+
+    The generic helper may remain unauthenticated for isolated provider-free tests.
+    Hosted production supplies ``context_provider`` so infrastructure/evidence state
+    is never exposed to an unauthenticated browser.
+    """
 
     if any(getattr(route, "path", None) == "/api/tools/coverage" for route in app.routes):
         raise ValueError("tool coverage API is already attached")
 
     @app.get("/api/tools/coverage")
-    def tool_coverage() -> dict[str, object]:
+    def tool_coverage(request: Request) -> dict[str, object]:
+        if context_provider is not None:
+            trusted_runtime_context(context_provider, request)
+
         hosted_evidence: IntegrationEvidenceLedger | None = None
         if hosted_evidence_provider is not None:
             try:
