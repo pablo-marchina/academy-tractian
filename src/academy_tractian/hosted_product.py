@@ -111,6 +111,11 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
         actions_enabled=False,
         heartbeat_interval_ms=active.heartbeat_interval_ms,
     )
+    persistent_evidence = app.state.tractian_integration_evidence_store
+    if persistent_evidence is None:
+        raise RuntimeError("hosted_postgres_integration_evidence_store_missing")
+    live_evidence.attach_persistent_store(persistent_evidence)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(active.cors_origins),
@@ -131,7 +136,7 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
     app.state.hosted_action_block_reason = "RESOURCE_AUTHORIZATION_NOT_YET_QUALIFIED"
     app.state.hosted_local_persistent_state_required = False
     app.state.tractian_live_evidence_recorder = live_evidence
-    app.state.tractian_live_evidence_persistence = "process-local-bounded-safe-metadata"
+    app.state.tractian_live_evidence_persistence = "managed-postgresql-bounded-safe-metadata"
     return app
 
 
