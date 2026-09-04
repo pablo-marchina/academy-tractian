@@ -150,11 +150,13 @@ The container healthcheck queries `/ready`. A platform should also use `/health`
 
 ## Consequential actions
 
-Hosted actions are intentionally fail-closed in this baseline. The hosted entrypoint supplies an
-authorization resolver with zero action permissions and starts the action kill switch disabled.
+Hosted product actions are intentionally fail-closed in this baseline. The hosted entrypoint supplies
+an authorization resolver with zero action permissions and starts the action kill switch disabled.
 
-This is not a permanent product decision. It prevents a cloud deployment from gaining mutation
-capability before hosted resource/company authorization has independent integration evidence.
+This is not a permanent product decision. It prevents an internet-facing deployment from gaining
+mutation capability before hosted resource/company authorization has independent integration
+evidence. Controlled integration-campaign probes are a separate experiment surface and do not grant
+product-runtime action authorization.
 
 ## Frontend authentication and SSE
 
@@ -194,9 +196,9 @@ Transport completion for one operation requires all of the following empirical o
 
 Semantic completion is independent. It requires explicit proof that:
 
-- invalid parameters are rejected;
-- the response is normalized correctly;
-- agent/evaluator behavior is correct for the operation.
+- invalid parameters are rejected before transport;
+- the live response is normalized correctly by the runtime boundary;
+- agent/evaluator behavior is correct for that operation and observed response.
 
 A route definition, registered schema, mock, synthetic fixture or transport success can never
 substitute for those semantic dimensions. The API only emits `TRANSPORT_COMPLETE_18_OF_18` or
@@ -223,18 +225,58 @@ cardinality to at most **90 operation/outcome aggregates**, independent of user 
 
 Semantic campaign proof is persisted separately with primary key `(operation, dimension, passed)`.
 With 18 operations, three semantic dimensions and PASS/FAIL states, the logical semantic evidence is
-bounded to at most **108 aggregates**. PASS and FAIL are intentionally separate rows. A later PASS
-cannot erase a previously observed FAIL, and the campaign gate treats any persisted FAIL for a
-dimension as dominant until the evidence protocol is explicitly revised.
+bounded to at most **108 aggregates**. PASS and FAIL remain separate historical aggregates. The
+active certification state is determined by the newest controlled observation for each
+operation/dimension; a newer PASS can recertify a corrected implementation after an older FAIL, and
+a newer FAIL revokes an older PASS. If PASS and FAIL share the newest timestamp, the gate fails
+closed because ordering is ambiguous. Historical counts are never deleted to manufacture a pass.
 
 Persistent transport rows are revalidated against the canonical method/path contract when read.
 Semantic rows are revalidated against the canonical operation and strict campaign schema. A
 corrupted or unknown operation invalidates the corresponding ledger and makes the public campaign
 fail closed instead of inflating coverage.
 
-### Importing semantic campaign proof
+### Live transport + semantic certification
 
-The application never manufactures semantic proof from transport telemetry. After a controlled
+The bounded campaign command performs the real transport probe and then derives semantic proof from
+the **same already-observed live response**:
+
+```bash
+python scripts/run_tractian_transport_campaign.py path/to/campaign.json \
+  --persist \
+  --persist-semantic \
+  --require-gate runner
+```
+
+The semantic certifier keeps the exact live response only in process memory and immediately replays
+the already-observed request/response through the frozen `HarnessRunner`, `AgentController` and
+default `EvaluationSuite`. This replay does not make another TRACTIAN request. Invalid-parameter
+certification uses a transport that fails if called, so that dimension passes only when deterministic
+validation rejects the proposal with **zero network calls**.
+
+For consequential operations, the valid live mutation requires all of the following:
+
+1. `action_execution_approved=true` in that operation's manifest fixture;
+2. a non-empty `action_approval_ref` in that fixture;
+3. the invocation-level `--allow-actions` flag.
+
+An action HTTP-error probe is another mutation attempt and therefore additionally requires
+`action_error_probe_approved=true`. `--allow-actions` by itself never authorizes either mutation.
+Semantic replay of an approved live action never sends the action again.
+
+The CLI has explicit release-gate scopes:
+
+- `--require-gate runner`: campaign execution has no unexpected outcomes; **not an 18/18 claim**;
+- `--require-gate transport`: requires the empirical transport gate for all 18 operations;
+- `--require-gate semantic`: requires all three semantic dimensions for all 18 operations;
+- `--require-gate end_to_end`: requires both transport and semantic 18/18 gates.
+
+For the final release candidate, use `--require-gate end_to_end` only after all required read fixtures
+and explicitly authorized action fixtures exist. A partial campaign must remain visibly partial.
+
+### Importing externally produced semantic campaign proof
+
+The application never manufactures semantic proof from transport telemetry. If a separate controlled
 experiment produces a `tractian-campaign-evidence-v1` document, import only that validated bounded
 artifact:
 
@@ -272,7 +314,7 @@ This baseline does **not** yet claim:
 - a winning cloud vendor;
 - a production-selected provider/model;
 - a selected/validated external OIDC vendor deployment;
-- hosted consequential actions;
+- hosted consequential actions in the product runtime;
 - a controlled semantic integration certification for all 18 TRACTIAN operations;
 - production SLO/capacity from CI measurements;
 - all 18 TRACTIAN routes have hosted-live execution evidence.
