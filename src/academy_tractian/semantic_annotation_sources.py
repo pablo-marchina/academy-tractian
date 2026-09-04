@@ -86,7 +86,7 @@ class SemanticAnnotationSourceManifest(_FrozenModel):
             raise ValueError("semantic source manifest contains duplicate run ids")
         if len({item.scenario_id for item in self.bindings}) != len(self.bindings):
             raise ValueError("semantic source manifest contains duplicate scenarios")
-        expected = _manifest_hash(
+        expected = semantic_annotation_source_manifest_sha256(
             split_schema_version=self.frozen_split_schema_version,
             split_sha256=self.frozen_split_sha256,
             selection_sha256=self.selection_sha256,
@@ -157,13 +157,15 @@ def _evidence_context(store: ObservabilityStore, run_id: str) -> tuple[str, ...]
     return tuple(context)
 
 
-def _manifest_hash(
+def semantic_annotation_source_manifest_sha256(
     *,
     split_schema_version: str,
     split_sha256: str,
     selection_sha256: str,
     bindings: Sequence[SemanticSourceBinding],
 ) -> str:
+    """Return the canonical integrity hash for a v2 source manifest."""
+
     return _canonical_sha256(
         {
             "schema_version": "semantic-annotation-source-manifest-v2",
@@ -253,7 +255,7 @@ def build_validation_semantic_annotation_sources(
         selection_sha256=selection.selection_sha256,
         source_count=len(sources),
         bindings=ordered_bindings,
-        manifest_sha256=_manifest_hash(
+        manifest_sha256=semantic_annotation_source_manifest_sha256(
             split_schema_version=split_schema_version,
             split_sha256=split_sha256,
             selection_sha256=selection.selection_sha256,
