@@ -9,6 +9,8 @@ Historical DuckDB/provider-free paths remain available only for bounded reproduc
 
 ```text
 hosted browser
+  -> hosted OIDC identity provider
+  -> bearer-authenticated REST + fetch-stream SSE
   -> hosted FastAPI container
   -> managed PostgreSQL
        - operational ownership/execution/action custody/idempotency
@@ -30,7 +32,6 @@ It fails closed unless serving-required configuration is present.
 ```text
 ACADEMY_POSTGRES_INTERNAL_DSN
 ACADEMY_POSTGRES_SCOPED_DSN
-ACADEMY_RUNTIME_IDENTITY_SECRET
 ACADEMY_RUNTIME_IDENTITY_ISSUER
 ACADEMY_RUNTIME_IDENTITY_AUDIENCE
 ACADEMY_CORS_ORIGINS
@@ -47,6 +48,48 @@ ACADEMY_MAX_WORKERS=4
 ACADEMY_HEARTBEAT_INTERVAL_MS=1000
 ```
 
+## Identity backend
+
+The hosted configuration supports two explicit identity backends without changing the agent/runtime
+contract.
+
+### OIDC/JWKS — hosted browser target
+
+```text
+ACADEMY_IDENTITY_BACKEND=oidc
+ACADEMY_RUNTIME_IDENTITY_ISSUER=https://<issuer>
+ACADEMY_RUNTIME_IDENTITY_AUDIENCE=<api-audience>
+ACADEMY_OIDC_JWKS_URL=https://<issuer-or-jwks-host>/.well-known/jwks.json
+ACADEMY_OIDC_ALGORITHMS=RS256
+ACADEMY_OIDC_AUTHORIZED_PARTIES=<optional-azp-allow-list>
+```
+
+Optional claim names default to:
+
+```text
+ACADEMY_OIDC_ORGANIZATION_CLAIM=organization_id
+ACADEMY_OIDC_ROLE_CLAIM=role
+ACADEMY_OIDC_PERMISSIONS_CLAIM=permissions
+ACADEMY_OIDC_IDENTITY_CLAIM=sid
+```
+
+Only explicitly configured asymmetric JWT algorithms are accepted. The application validates
+issuer, audience, signature, expiry, issued-at time, optional authorized party and the mandatory
+organization claim. External permission claims do not automatically become application privileges;
+the hosted entrypoint currently starts with an empty claim-permission allow-list.
+
+### Signed bearer — bounded regression/back-end baseline
+
+```text
+ACADEMY_IDENTITY_BACKEND=signed_bearer
+ACADEMY_RUNTIME_IDENTITY_SECRET=<at-least-32-bytes>
+ACADEMY_RUNTIME_IDENTITY_ISSUER=...
+ACADEMY_RUNTIME_IDENTITY_AUDIENCE=...
+```
+
+This preserves reproducible regression paths. It is not the preferred internet-facing browser IAM
+claim once a hosted OIDC provider is provisioned.
+
 ## Serving-ready configuration
 
 The agent-serving entrypoint additionally requires:
@@ -60,7 +103,8 @@ ACADEMY_TRACTIAN_BEARER_TOKEN=...   # only if required by the supplied API
 ```
 
 `ACADEMY_PROVIDER` is an explicit deployment input, not proof that the provider/model has won the
-project's EDD promotion gates. Final provider/model promotion remains a separate frozen experiment.
+project's EDD promotion gates. Final provider/model promotion remains a separate controlled
+experiment.
 
 ## Secret-safe validation
 
@@ -76,8 +120,8 @@ Require agent-serving readiness with:
 python scripts/validate_hosted_environment.py --serving-ready
 ```
 
-The validator emits only a sanitized summary and never prints DSNs, provider keys, identity secrets
-or TRACTIAN bearer tokens.
+The validator emits only a sanitized summary and never prints DSNs, provider keys, signing secrets,
+JWKS contents or TRACTIAN bearer tokens.
 
 ## Database migration
 
@@ -106,7 +150,7 @@ authorization resolver with zero action permissions and starts the action kill s
 This is not a permanent product decision. It prevents a cloud deployment from gaining mutation
 capability before hosted resource/company authorization has independent integration evidence.
 
-## Frontend
+## Frontend authentication and SSE
 
 A separately hosted frontend sets:
 
@@ -114,12 +158,18 @@ A separately hosted frontend sets:
 VITE_API_BASE_URL=https://<hosted-api-origin>
 ```
 
-REST and SSE paths then resolve to the hosted backend. Build-time API URLs must never contain
-credentials.
+The frontend exposes a provider-neutral in-memory `AccessTokenProvider` boundary. A selected hosted
+OIDC client supplies its current access token through `setAccessTokenProvider(...)`; the core does
+not require a Supabase/Clerk/Auth0-specific SDK and does not place tokens in URLs.
 
-Browser authentication is a separate P0 workstream. The current project-owned signed bearer remains
-the backend baseline; external OIDC/session integration must be selected and tested before an
-internet-facing multi-user production claim is made.
+Both REST and live SSE use `fetch` and attach the same `Authorization: Bearer ...` header. Native
+`EventSource` is deliberately not used because it cannot set the required custom Authorization
+header. The streaming transport preserves `after_sequence` reconnect/catch-up semantics and checks
+that persisted SSE `id` values match the safe event payload.
+
+Build-time API URLs must never contain credentials. The frontend auth core does not persist access
+tokens to local storage by itself; token lifecycle remains owned by the selected hosted identity
+adapter.
 
 ## Non-claims
 
@@ -127,7 +177,7 @@ This baseline does **not** yet claim:
 
 - a winning cloud vendor;
 - a production-selected provider/model;
-- enterprise OIDC/SSO;
+- a selected/validated external OIDC vendor deployment;
 - hosted consequential actions;
 - production SLO/capacity from CI measurements;
 - all 18 TRACTIAN routes have integrated execution evidence.
