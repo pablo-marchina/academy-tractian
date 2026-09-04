@@ -5,11 +5,8 @@ from academy_tractian.hosted_provider import (
     create_hosted_decision_source,
     hosted_runtime_configuration_identity,
 )
-from academy_tractian.runtime import (
-    ProductionRuntimeConfig,
-    canonical_tool_registry,
-    production_runtime_config_hash,
-)
+from academy_tractian.runtime import ProductionRuntimeConfig, canonical_tool_registry
+from academy_tractian.runtime_configuration_identity import production_runtime_config_hash
 
 
 @pytest.mark.parametrize(
