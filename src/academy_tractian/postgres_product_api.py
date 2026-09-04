@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Literal
 
 from fastapi import FastAPI
 
@@ -15,6 +15,7 @@ from .postgres_action_operational import (
     PostgresActionIdempotencyLedger,
     PostgresPendingActionCustody,
 )
+from .postgres_observability_store import PostgresObservabilityStore
 from .postgres_operational import (
     PostgresOperationalDatabase,
     PostgresRunAccessStore,
@@ -57,8 +58,9 @@ def initialize_postgres_operational_schema(
     internal_dsn: str,
     scoped_dsn: str,
     schema: str = "academy_operational",
+    observability_schema: str = "academy_observability",
 ) -> None:
-    """Explicit migration/bootstrap entrypoint for mutable operational state."""
+    """Explicit migration/bootstrap entrypoint for hosted mutable and safe read-model state."""
 
     database = PostgresOperationalDatabase(
         internal_dsn=internal_dsn,
@@ -71,10 +73,16 @@ def initialize_postgres_operational_schema(
         PostgresActionIdempotencyLedger(database, initialize=True)
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=True)
         semantic_store = PostgresSemanticReviewStore(database, initialize=True)
+        observability_store = PostgresObservabilityStore(
+            database,
+            schema=observability_schema,
+            initialize=True,
+        )
         if (
             not database.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
+            or not observability_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready_after_initialize")
@@ -152,17 +160,19 @@ def create_postgres_action_capable_product_app(
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
     schema: str = "academy_operational",
+    observability_schema: str = "academy_observability",
+    observability_backend: Literal["duckdb", "postgresql"] = "duckdb",
     initialize_schema: bool = False,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    """Create the promoted production topology.
+    """Create the production topology with qualified mutable PostgreSQL state.
 
-    PostgreSQL owns mutable multi-user operational state. DuckDB still owns the sanitized
-    observability/evaluation read model at ``db_path``. Serving with ``initialize_schema=False``
-    is the recommended production path after an explicit migration step.
+    ``observability_backend='duckdb'`` preserves historical isolated reproduction. The hosted-only
+    product selects ``postgresql`` so browser-safe traces/evaluations also persist in managed
+    PostgreSQL and the serving instance does not depend on a durable local filesystem.
     """
 
     database = PostgresOperationalDatabase(
@@ -177,10 +187,20 @@ def create_postgres_action_capable_product_app(
         ledger = PostgresActionIdempotencyLedger(database, initialize=initialize_schema)
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=initialize_schema)
         semantic_store = PostgresSemanticReviewStore(database, initialize=initialize_schema)
+        observability_store = (
+            PostgresObservabilityStore(
+                database,
+                schema=observability_schema,
+                initialize=initialize_schema,
+            )
+            if observability_backend == "postgresql"
+            else None
+        )
         if (
             not database.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
+            or (observability_store is not None and not observability_store.ready())
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
@@ -190,6 +210,7 @@ def create_postgres_action_capable_product_app(
             transport_factory=transport_factory,
             context_provider=context_provider,
             authorization_resolver=authorization_resolver,
+            observability_store=observability_store,
             custody_store=custody,
             action_ledger=ledger,
             run_access_store=PostgresRunAccessStore(database),
@@ -218,4 +239,5 @@ def create_postgres_action_capable_product_app(
     app.state.operational_value_collection_store = pilot_store
     app.state.semantic_review_collection_store = semantic_store
     app.state.operational_backend = "postgresql"
+    app.state.observability_backend = observability_backend
     return app
