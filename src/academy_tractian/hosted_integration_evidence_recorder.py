@@ -5,6 +5,7 @@ from hashlib import sha256
 import json
 import re
 from threading import Lock
+from typing import Protocol
 from uuid import uuid4
 
 from research.e2.models import BoundRequest
@@ -12,9 +13,16 @@ from research.e2.tool_registry import TOOLS
 from research.e2.transport import RequestTransport, TransportResponse
 
 from .tractian_integration_evidence import (
+    EvidenceOutcome,
     IntegrationEvidenceLedger,
     OperationEvidence,
 )
+
+
+class PersistentIntegrationEvidenceStore(Protocol):
+    def persist(self, evidence: OperationEvidence) -> None: ...
+
+    def ledger(self) -> IntegrationEvidenceLedger: ...
 
 
 def _compile_path_template(template: str) -> re.Pattern[str]:
@@ -39,12 +47,12 @@ def _resolve_canonical_tool(request: BoundRequest):
 
 
 class HostedIntegrationEvidenceRecorder:
-    """Thread-safe, bounded, safe live-evidence accumulator.
+    """Thread-safe, bounded, safe hosted integration-evidence accumulator.
 
     Only canonical operation metadata is retained. Request arguments, query values,
     headers, bodies and response bodies are intentionally never stored. Records are
-    coalesced by operation/outcome, so multi-user traffic cannot grow memory without
-    bound. The accumulator is process-local live telemetry, not persistent proof.
+    coalesced by operation/outcome, so multi-user traffic cannot grow process memory
+    without bound. A managed persistent store can be attached before serving.
     """
 
     def __init__(self) -> None:
@@ -52,17 +60,37 @@ class HostedIntegrationEvidenceRecorder:
         self._records: dict[tuple[str, str], OperationEvidence] = {}
         self._invalid = False
         self._validation_errors: set[str] = set()
+        self._persistent_store: PersistentIntegrationEvidenceStore | None = None
 
     def _mark_invalid(self, reason: str) -> None:
         with self._lock:
             self._invalid = True
             self._validation_errors.add(reason)
 
+    def attach_persistent_store(self, store: PersistentIntegrationEvidenceStore) -> None:
+        """Attach exactly one managed store and backfill any pre-attachment safe records."""
+
+        with self._lock:
+            if self._persistent_store is not None:
+                raise ValueError("persistent integration evidence store is already attached")
+            records = tuple(self._records.values())
+            self._persistent_store = store
+
+        try:
+            for record in records:
+                store.persist(record)
+            persistent = store.ledger()
+        except Exception:
+            self._mark_invalid("runtime:persistent_evidence_store_unavailable")
+            return
+        if not persistent.valid:
+            self._mark_invalid("runtime:persistent_evidence_store_invalid")
+
     def record(
         self,
         request: BoundRequest,
         *,
-        outcome: str,
+        outcome: EvidenceOutcome,
         http_status: int | None = None,
     ) -> None:
         tool = _resolve_canonical_tool(request)
@@ -105,6 +133,13 @@ class HostedIntegrationEvidenceRecorder:
 
         with self._lock:
             self._records[(tool.name, evidence.outcome)] = evidence
+            persistent_store = self._persistent_store
+
+        if persistent_store is not None:
+            try:
+                persistent_store.persist(evidence)
+            except Exception:
+                self._mark_invalid("runtime:persistent_evidence_write_failed")
 
     def ledger(self) -> IntegrationEvidenceLedger:
         with self._lock:
@@ -114,10 +149,22 @@ class HostedIntegrationEvidenceRecorder:
                     state="INVALID",
                     validation_errors=tuple(sorted(self._validation_errors)),
                 )
-            records = tuple(
-                self._records[key]
-                for key in sorted(self._records)
-            )
+            persistent_store = self._persistent_store
+            records = tuple(self._records[key] for key in sorted(self._records))
+
+        if persistent_store is not None:
+            try:
+                persistent = persistent_store.ledger()
+            except Exception:
+                return IntegrationEvidenceLedger(
+                    source_label="hosted_live:persistent_store",
+                    state="INVALID",
+                    validation_errors=("runtime:persistent_evidence_store_unavailable",),
+                )
+            if not persistent.valid:
+                return persistent
+            return persistent
+
         return IntegrationEvidenceLedger(
             source_label="hosted_live:runtime_transport",
             state="VALID",
