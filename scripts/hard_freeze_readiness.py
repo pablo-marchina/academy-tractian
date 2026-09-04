@@ -20,8 +20,11 @@ from academy_tractian.final_freeze_bundle import (  # noqa: E402
     validate_final_freeze_manifest,
 )
 from academy_tractian.hard_freeze_readiness import (  # noqa: E402
+    REQUIRED_STATUS_CONTEXT,
     HardFreezeReadinessObservation,
     evaluate_hard_freeze_readiness,
+    extract_classic_required_status_contexts,
+    extract_ruleset_required_status_contexts,
 )
 
 
@@ -29,49 +32,63 @@ API_ROOT = "https://api.github.com"
 FINAL_CI_WORKFLOW = "final-ci-required.yml"
 
 
-def _request_json(url: str, token: str) -> dict[str, Any]:
-    request = Request(
-        url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "User-Agent": "academy-tractian-hard-freeze-readiness",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-    )
+def _request_payload(url: str, token: str | None) -> Any:
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "academy-tractian-hard-freeze-readiness",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    request = Request(url, headers=headers)
     try:
         with urlopen(request, timeout=20) as response:  # noqa: S310 - fixed GitHub API root
-            payload = json.loads(response.read().decode("utf-8"))
+            return json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
         raise RuntimeError(f"github_readiness_query_http_{exc.code}") from exc
     except (URLError, TimeoutError, json.JSONDecodeError) as exc:
         raise RuntimeError("github_readiness_query_failed") from exc
+
+
+def _request_json(url: str, token: str | None) -> dict[str, Any]:
+    payload = _request_payload(url, token)
     if not isinstance(payload, dict):
         raise RuntimeError("github_readiness_query_non_object")
     return payload
 
 
-def _required_status_contexts(branch_payload: dict[str, Any]) -> tuple[str, ...]:
-    protection = branch_payload.get("protection")
-    if not isinstance(protection, dict):
-        return ()
-    required = protection.get("required_status_checks")
-    if not isinstance(required, dict):
-        return ()
+def _request_list(url: str, token: str | None) -> list[dict[str, Any]]:
+    payload = _request_payload(url, token)
+    if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
+        raise RuntimeError("github_readiness_query_non_list")
+    return payload
 
-    contexts: set[str] = set()
-    raw_contexts = required.get("contexts")
-    if isinstance(raw_contexts, list):
-        contexts.update(item for item in raw_contexts if isinstance(item, str) and item)
 
-    raw_checks = required.get("checks")
-    if isinstance(raw_checks, list):
-        for item in raw_checks:
-            if isinstance(item, dict):
-                context = item.get("context")
-                if isinstance(context, str) and context:
-                    contexts.add(context)
-    return tuple(sorted(contexts))
+def _ruleset_details(encoded_repo: str, token: str) -> tuple[dict[str, Any], ...]:
+    url = f"{API_ROOT}/repos/{encoded_repo}/rulesets?includes_parents=true"
+    try:
+        summaries = _request_list(url, token)
+        effective_token: str | None = token
+    except RuntimeError as exc:
+        if str(exc) != "github_readiness_query_http_403":
+            raise
+        # Public repository ruleset metadata may be readable without auth even when
+        # GITHUB_TOKEN lacks Administration(read). A second read-only attempt is safe.
+        summaries = _request_list(url, None)
+        effective_token = None
+
+    details: list[dict[str, Any]] = []
+    for summary in summaries:
+        ruleset_id = summary.get("id")
+        if not isinstance(ruleset_id, int) or ruleset_id <= 0:
+            raise RuntimeError("github_ruleset_id_invalid")
+        details.append(
+            _request_json(
+                f"{API_ROOT}/repos/{encoded_repo}/rulesets/{ruleset_id}?includes_parents=true",
+                effective_token,
+            )
+        )
+    return tuple(details)
 
 
 def _select_final_ci_run(
@@ -96,7 +113,7 @@ def _required_gate_conclusion(jobs_payload: dict[str, Any]) -> str | None:
     if not isinstance(jobs, list):
         return None
     for job in jobs:
-        if isinstance(job, dict) and job.get("name") == "required-gate":
+        if isinstance(job, dict) and job.get("name") == REQUIRED_STATUS_CONTEXT:
             conclusion = job.get("conclusion")
             return conclusion if isinstance(conclusion, str) else None
     return None
@@ -143,6 +160,18 @@ def main() -> int:
         print("HARD_FREEZE_READINESS=BLOCKED reason=main_sha_unavailable")
         return 2
 
+    required_contexts = set(extract_classic_required_status_contexts(branch_payload))
+    if branch_payload.get("protected") is True and REQUIRED_STATUS_CONTEXT not in required_contexts:
+        try:
+            required_contexts.update(
+                extract_ruleset_required_status_contexts(
+                    _ruleset_details(encoded_repo, token)
+                )
+            )
+        except RuntimeError as exc:
+            print(f"HARD_FREEZE_READINESS=BLOCKED reason={exc}")
+            return 2
+
     selected_run = _select_final_ci_run(workflow_runs, args.candidate_sha)
     final_ci_run_id: int | None = None
     final_ci_head_sha: str | None = None
@@ -181,7 +210,7 @@ def main() -> int:
         observed_main_sha=observed_main_sha,
         observed_at_utc=datetime.now(timezone.utc),
         branch_protected=branch_payload.get("protected") is True,
-        required_status_contexts=_required_status_contexts(branch_payload),
+        required_status_contexts=tuple(sorted(required_contexts)),
         final_ci_run_id=final_ci_run_id,
         final_ci_head_sha=final_ci_head_sha,
         final_ci_conclusion=final_ci_conclusion,
