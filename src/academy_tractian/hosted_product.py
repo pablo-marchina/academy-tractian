@@ -125,7 +125,11 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
         expose_headers=["Content-Type"],
         max_age=600,
     )
-    attach_tool_coverage_api(app, hosted_evidence_provider=live_evidence.ledger)
+    attach_tool_coverage_api(
+        app,
+        hosted_evidence_provider=live_evidence.ledger,
+        context_provider=context_provider,
+    )
     app.state.hosted_config = active.sanitized_summary()
     app.state.runtime_identity_backend = (
         "oidc-jwks-v1" if active.identity_backend == "oidc" else "signed-bearer-hmac-sha256-v1"
