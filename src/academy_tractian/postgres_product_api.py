@@ -15,6 +15,7 @@ from .postgres_action_operational import (
     PostgresActionIdempotencyLedger,
     PostgresPendingActionCustody,
 )
+from .postgres_integration_evidence_store import PostgresIntegrationEvidenceStore
 from .postgres_observability_store import PostgresObservabilityStore
 from .postgres_operational import (
     PostgresOperationalDatabase,
@@ -78,11 +79,17 @@ def initialize_postgres_operational_schema(
             schema=observability_schema,
             initialize=True,
         )
+        integration_evidence_store = PostgresIntegrationEvidenceStore(
+            database,
+            schema=observability_schema,
+            initialize=True,
+        )
         if (
             not database.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
             or not observability_store.ready()
+            or not integration_evidence_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready_after_initialize")
@@ -171,8 +178,9 @@ def create_postgres_action_capable_product_app(
     """Create the production topology with qualified mutable PostgreSQL state.
 
     ``observability_backend='duckdb'`` preserves historical isolated reproduction. The hosted-only
-    product selects ``postgresql`` so browser-safe traces/evaluations also persist in managed
-    PostgreSQL and the serving instance does not depend on a durable local filesystem.
+    product selects ``postgresql`` so browser-safe traces/evaluations and safe integration evidence
+    persist in managed PostgreSQL and the serving instance does not depend on a durable local
+    filesystem.
     """
 
     database = PostgresOperationalDatabase(
@@ -196,11 +204,24 @@ def create_postgres_action_capable_product_app(
             if observability_backend == "postgresql"
             else None
         )
+        integration_evidence_store = (
+            PostgresIntegrationEvidenceStore(
+                database,
+                schema=observability_schema,
+                initialize=initialize_schema,
+            )
+            if observability_backend == "postgresql"
+            else None
+        )
         if (
             not database.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
             or (observability_store is not None and not observability_store.ready())
+            or (
+                integration_evidence_store is not None
+                and not integration_evidence_store.ready()
+            )
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
@@ -238,6 +259,7 @@ def create_postgres_action_capable_product_app(
     app.state.postgres_operational_database = database
     app.state.operational_value_collection_store = pilot_store
     app.state.semantic_review_collection_store = semantic_store
+    app.state.tractian_integration_evidence_store = integration_evidence_store
     app.state.operational_backend = "postgresql"
     app.state.observability_backend = observability_backend
     return app
