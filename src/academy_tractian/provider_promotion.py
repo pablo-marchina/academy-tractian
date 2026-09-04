@@ -57,17 +57,20 @@ class ProviderCandidateEvidence(_StrictModel):
     candidate_id: str = Field(min_length=1, max_length=128)
     provider_id: str = Field(min_length=1, max_length=64)
     model_id: str = Field(min_length=1, max_length=128)
+    config_hash: str = Field(min_length=1, max_length=256)
     scenario_count: int = Field(ge=1)
     repeat_count: int = Field(ge=1)
     human_calibration: ProviderHumanCalibrationEvidence | None = None
 
     @model_validator(mode="after")
     def bind_candidate_to_human_artifact(self) -> "ProviderCandidateEvidence":
-        if (
-            self.human_calibration is not None
-            and self.human_calibration.candidate_id != self.candidate_id
-        ):
+        calibration = self.human_calibration
+        if calibration is None:
+            return self
+        if calibration.candidate_id != self.candidate_id:
             raise ValueError("human_calibration_candidate_id_mismatch")
+        if calibration.config_hash != self.config_hash:
+            raise ValueError("human_calibration_config_hash_mismatch")
         return self
 
 
@@ -92,6 +95,9 @@ class ProviderBenchmarkEvidence(_StrictModel):
         ids = [candidate.candidate_id for candidate in self.candidates]
         if len(ids) != len(set(ids)):
             raise ValueError("duplicate_candidate_id")
+        config_hashes = [candidate.config_hash for candidate in self.candidates]
+        if len(config_hashes) != len(set(config_hashes)):
+            raise ValueError("duplicate_candidate_config_hash")
         for candidate in self.candidates:
             calibration = candidate.human_calibration
             if calibration is None:
