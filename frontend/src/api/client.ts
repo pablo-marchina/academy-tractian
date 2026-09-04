@@ -100,7 +100,7 @@ export function fetchExecution(executionPath: string): Promise<ExecutionStateRes
 }
 
 export function fetchEvaluation(runId: string): Promise<ItemsResponse<SafeEvaluationCheck>> {
-  return requestJson<ItemsResponse<SafeEvaluationCheck>(`/api/runs/${encodeURIComponent(runId)}/evaluation`);
+  return requestJson<ItemsResponse<SafeEvaluationCheck>>(`/api/runs/${encodeURIComponent(runId)}/evaluation`);
 }
 
 export function fetchRunActions(runId: string): Promise<ItemsResponse<PendingActionSafe>> {
