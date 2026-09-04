@@ -7,7 +7,10 @@ from .decision_source import (
     ProviderCallIdentity,
     ProviderDecisionSource,
 )
-from .google_v1_provider_client import GOOGLE_V1_PROVIDER_ID, GoogleV1InteractionsDecisionClient
+from .google_interactions_provider_client import (
+    GOOGLE_HOSTED_PROVIDER_ID,
+    GoogleHostedInteractionsDecisionClient,
+)
 from .groq_provider_client import GROQ_PROVIDER_ID, GroqChatCompletionsDecisionClient
 from .hosted_candidate_registry import (
     HOSTED_CANDIDATE_SPECS,
@@ -23,7 +26,7 @@ from .runtime import canonical_tool_registry
 from .runtime_configuration_identity import RuntimeConfigurationIdentity
 
 
-HOSTED_PROVIDER_CLIENTS_VERSION = "hosted-provider-clients-v2"
+HOSTED_PROVIDER_CLIENTS_VERSION = "hosted-provider-clients-v3"
 SUPPORTED_HOSTED_CANDIDATES = frozenset(
     (spec.provider_id, spec.model_id) for spec in HOSTED_CANDIDATE_SPECS
 )
@@ -54,8 +57,8 @@ def create_hosted_decision_source(*, provider: str, model: str, api_key: str) ->
     transport = UrllibProviderJsonTransport()
     if spec.provider_id == OPENAI_PROVIDER_ID:
         client = OpenAIResponsesDecisionClient(api_key=api_key, transport=transport)
-    elif spec.provider_id == GOOGLE_V1_PROVIDER_ID:
-        client = GoogleV1InteractionsDecisionClient(
+    elif spec.provider_id == GOOGLE_HOSTED_PROVIDER_ID:
+        client = GoogleHostedInteractionsDecisionClient(
             api_key=api_key,
             model_id=spec.model_id,
             transport=transport,
