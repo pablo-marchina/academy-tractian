@@ -28,6 +28,8 @@ RULES = (
     ),
 )
 PROTOCOL = build_provider_human_calibration_protocol(protocol_id="provider-human-oca-v1")
+OPENAI_CANDIDATE = ("openai", "gpt-5.6-sol")
+GOOGLE_37_CANDIDATE = ("google", "gemini-3.7-flash")
 
 
 def _observations(values: tuple[float, float, float, float, float, float]):
@@ -73,11 +75,12 @@ def _observations(values: tuple[float, float, float, float, float, float]):
 
 def _input(
     provider: str,
+    model: str,
     values: tuple[float, float, float, float, float, float],
     *,
     runtime_hash: str | None = None,
 ) -> ProviderCandidateBenchmarkInput:
-    identity = hosted_runtime_configuration_identity(provider)
+    identity = hosted_runtime_configuration_identity(provider, model)
     config_hash = production_runtime_config_hash(
         RUNTIME_CONFIG,
         canonical_tool_registry(),
@@ -88,6 +91,15 @@ def _input(
         runtime_config_hash=runtime_hash or config_hash,
         observations=_observations(values),
     )
+
+
+def _candidate_input(
+    candidate: tuple[str, str],
+    values: tuple[float, float, float, float, float, float],
+    *,
+    runtime_hash: str | None = None,
+) -> ProviderCandidateBenchmarkInput:
+    return _input(candidate[0], candidate[1], values, runtime_hash=runtime_hash)
 
 
 def _assemble(*candidates: ProviderCandidateBenchmarkInput):
@@ -108,8 +120,8 @@ def _assemble(*candidates: ProviderCandidateBenchmarkInput):
 
 def test_assembly_recomputes_runtime_hashes_maturity_and_full_pairwise_matrix() -> None:
     assembly = _assemble(
-        _input("openai", (0.8, 0.8, 0.8, 0.8, 0.8, 0.8)),
-        _input("google", (0.9, 0.9, 0.9, 0.9, 0.9, 0.9)),
+        _candidate_input(OPENAI_CANDIDATE, (0.8, 0.8, 0.8, 0.8, 0.8, 0.8)),
+        _candidate_input(GOOGLE_37_CANDIDATE, (0.9, 0.9, 0.9, 0.9, 0.9, 0.9)),
     )
 
     evidence = assembly.evidence
@@ -136,8 +148,8 @@ def test_assembly_recomputes_runtime_hashes_maturity_and_full_pairwise_matrix() 
 
 
 def test_runtime_hash_is_recomputed_not_trusted_from_input() -> None:
-    bad = _input(
-        "openai",
+    bad = _candidate_input(
+        OPENAI_CANDIDATE,
         (0.8, 0.8, 0.8, 0.8, 0.8, 0.8),
         runtime_hash="0" * 64,
     )
@@ -145,25 +157,25 @@ def test_runtime_hash_is_recomputed_not_trusted_from_input() -> None:
     with pytest.raises(ValueError, match="runtime_config_hash_mismatch"):
         _assemble(
             bad,
-            _input("google", (0.9, 0.9, 0.9, 0.9, 0.9, 0.9)),
+            _candidate_input(GOOGLE_37_CANDIDATE, (0.9, 0.9, 0.9, 0.9, 0.9, 0.9)),
         )
 
 
 def test_candidate_coverage_must_be_identical_for_paired_comparison() -> None:
-    google = _input("google", (0.9, 0.9, 0.9, 0.9, 0.9, 0.9))
+    google = _candidate_input(GOOGLE_37_CANDIDATE, (0.9, 0.9, 0.9, 0.9, 0.9, 0.9))
     payload = google.model_dump(mode="json")
     payload["observations"] = payload["observations"][:-1]
     incomplete = ProviderCandidateBenchmarkInput.model_validate(payload)
 
     with pytest.raises(ValueError, match="candidate_coverage_mismatch"):
         _assemble(
-            _input("openai", (0.8, 0.8, 0.8, 0.8, 0.8, 0.8)),
+            _candidate_input(OPENAI_CANDIDATE, (0.8, 0.8, 0.8, 0.8, 0.8, 0.8)),
             incomplete,
         )
 
 
 def test_scenario_cannot_cross_independent_story_groups() -> None:
-    item = _input("openai", (0.8, 0.8, 0.8, 0.8, 0.8, 0.8))
+    item = _candidate_input(OPENAI_CANDIDATE, (0.8, 0.8, 0.8, 0.8, 0.8, 0.8))
     payload = item.model_dump(mode="json")
     payload["observations"][1]["group_id"] = "asset-other"
 
@@ -172,7 +184,7 @@ def test_scenario_cannot_cross_independent_story_groups() -> None:
 
 
 def test_duplicate_scenario_repeat_is_rejected() -> None:
-    item = _input("openai", (0.8, 0.8, 0.8, 0.8, 0.8, 0.8))
+    item = _candidate_input(OPENAI_CANDIDATE, (0.8, 0.8, 0.8, 0.8, 0.8, 0.8))
     payload = item.model_dump(mode="json")
     payload["observations"][1]["repeat_index"] = 1
 
@@ -181,7 +193,7 @@ def test_duplicate_scenario_repeat_is_rejected() -> None:
 
 
 def test_eval_bundle_preserves_independent_groups_while_cases_are_scenario_repeats() -> None:
-    item = _input("openai", (0.8, 0.8, 0.8, 0.8, 0.8, 0.8))
+    item = _candidate_input(OPENAI_CANDIDATE, (0.8, 0.8, 0.8, 0.8, 0.8, 0.8))
     bundle = item.eval_bundle()
 
     assert bundle.config_id == "openai:gpt-5.6-sol"
