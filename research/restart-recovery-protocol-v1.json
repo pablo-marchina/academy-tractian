@@ -1,0 +1,17 @@
+{
+  "schema_version": "restart-recovery-protocol-v1",
+  "status": "FROZEN",
+  "protocol_id": "authenticated-postgres-restart-v1",
+  "case_ids": [
+    "RR-01",
+    "RR-02",
+    "RR-03",
+    "RR-04",
+    "RR-05",
+    "RR-06",
+    "RR-07",
+    "RR-08",
+    "RR-09",
+    "RR-10"
+  ]
+}
