@@ -14,11 +14,8 @@ from academy_tractian.provider_benchmark_assembly import (
     eval_rule_set_sha256,
 )
 from academy_tractian.provider_human_calibration import build_provider_human_calibration_protocol
-from academy_tractian.runtime import (
-    ProductionRuntimeConfig,
-    canonical_tool_registry,
-    production_runtime_config_hash,
-)
+from academy_tractian.runtime import ProductionRuntimeConfig, canonical_tool_registry
+from academy_tractian.runtime_configuration_identity import production_runtime_config_hash
 
 
 RUNTIME_CONFIG = ProductionRuntimeConfig()
