@@ -19,6 +19,7 @@ class ProviderCandidateEvidence(_StrictModel):
     scenario_count: int = Field(ge=1)
     repeat_count: int = Field(ge=1)
     human_semantic_calibrated: bool
+    human_calibration_artifact_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     human_calibration_case_count: int = Field(ge=0)
     human_agreement_rate: float = Field(ge=0.0, le=1.0)
     operational_conclusion_accuracy: float = Field(ge=0.0, le=1.0)
@@ -131,7 +132,8 @@ def decide_provider_promotion(
     as a correctness substitute. All metric thresholds, regressions, response-mode
     slices, bootstrap confidence intervals, and hard gates are inherited from the
     existing ``EvalDrivenDecisionReport`` objects. Human semantic readiness is an
-    additional preregistered quantitative maturity gate.
+    additional preregistered quantitative maturity gate whose candidate metrics are
+    bound to a hash-addressed human calibration artifact.
     """
 
     provenance_reasons: list[str] = []
