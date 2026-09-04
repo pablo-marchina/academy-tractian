@@ -24,6 +24,18 @@ def validate_arguments(tool: ToolSpec, arguments: dict[str, Any]) -> tuple[Valid
     for parameter in tool.parameters:
         if parameter.required and parameter.name not in arguments:
             issues.append(ValidationIssue("MISSING_REQUIRED_ARGUMENT", f"missing required argument '{parameter.name}'", parameter.name))
+            continue
+        if parameter.name not in arguments:
+            continue
+        declared_enum = parameter.parameter_schema.get("enum")
+        if isinstance(declared_enum, list) and arguments[parameter.name] not in declared_enum:
+            issues.append(
+                ValidationIssue(
+                    "INVALID_ENUM",
+                    f"argument '{parameter.name}' is outside the declared enum",
+                    parameter.name,
+                )
+            )
     if tool.justification_required:
         body = arguments.get("body")
         if not isinstance(body, dict):
