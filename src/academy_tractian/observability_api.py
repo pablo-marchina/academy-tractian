@@ -12,6 +12,7 @@ from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
 from .architecture_manifest import ProviderSelectionState, architecture_manifest
+from .observability_backend import ObservabilityStoreBackend
 from .observability_store import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStore
 from .operational_read_model import AnalyticsQuery, OperationalReadModel
 from .production_telemetry import CloseReason, ProductionTelemetry
@@ -191,6 +192,7 @@ def _augment_health_with_quantitative_telemetry(
 def create_observability_app(
     *,
     db_path: str | Path = "./var/observability.duckdb",
+    store_backend: ObservabilityStoreBackend | None = None,
     lifespan: Callable[[FastAPI], AsyncContextManager[None]] | None = None,
     provider_selection_state: ProviderSelectionState = "NO_SELECTION",
     production_telemetry: ProductionTelemetry | None = None,
@@ -204,9 +206,10 @@ def create_observability_app(
         redoc_url=None,
         lifespan=lifespan,
     )
-    store = ObservabilityStore(db_path)
-    analytics = OperationalReadModel(store)
+    store: ObservabilityStoreBackend = store_backend or ObservabilityStore(db_path)
+    analytics = OperationalReadModel(store)  # type: ignore[arg-type]
     app.state.observability_store = store
+    app.state.observability_backend = type(store).__name__
     app.state.operational_read_model = analytics
 
     if production_telemetry is not None:
