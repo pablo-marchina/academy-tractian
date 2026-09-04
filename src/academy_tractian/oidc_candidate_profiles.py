@@ -41,7 +41,6 @@ class OIDCCandidateProfile:
             "ACADEMY_OIDC_ROLE_CLAIM": self.role_claim,
             "ACADEMY_OIDC_PERMISSIONS_CLAIM": self.permissions_claim,
             "ACADEMY_OIDC_IDENTITY_CLAIM": self.identity_claim,
-            "ACADEMY_OIDC_REQUIRED_CLAIMS": ",".join(self.required_custom_claims),
         }
 
 
