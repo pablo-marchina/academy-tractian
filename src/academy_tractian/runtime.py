@@ -191,6 +191,26 @@ class ProductionRuntime:
             self.configuration_identity,
         )
 
+    def bind_configuration_identity(
+        self,
+        configuration_identity: RuntimeConfigurationIdentity,
+    ) -> None:
+        """Bind one candidate identity before a factory exposes this runtime for execution.
+
+        A runtime constructed without an identity exists for provider-free historical reproduction.
+        Hosted factories may bind exactly once immediately after construction. Rebinding is rejected
+        so one runtime object cannot silently change experimental identity between requests.
+        """
+
+        if self.configuration_identity is not None:
+            raise RuntimeError("runtime_configuration_identity_already_bound")
+        self.configuration_identity = configuration_identity
+        self.config_hash = production_runtime_config_hash(
+            self.config,
+            self.registry,
+            self.configuration_identity,
+        )
+
     def run(self, request: ProductionRequest) -> RunTrace:
         """Execute one production request through the validated provider-free controller."""
 
