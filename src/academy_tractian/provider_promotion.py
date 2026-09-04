@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
+from hashlib import sha256
+import json
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -12,23 +14,57 @@ class _StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+def _canonical_sha256(payload: object) -> str:
+    return sha256(
+        json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+class ProviderHumanCalibrationEvidence(_StrictModel):
+    """Hash-bound, candidate-specific human operational-conclusion calibration evidence."""
+
+    schema_version: Literal["provider-human-calibration-v1"] = "provider-human-calibration-v1"
+    candidate_id: str = Field(min_length=1, max_length=128)
+    config_hash: str = Field(min_length=1, max_length=256)
+    protocol_id: str = Field(min_length=1, max_length=128)
+    protocol_hash: str = Field(min_length=1, max_length=256)
+    source_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    annotation_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    resolution_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    calibration_ready: bool
+    case_count: int = Field(ge=0)
+    human_agreement_rate: float = Field(ge=0.0, le=1.0)
+    operational_conclusion_accuracy: float = Field(ge=0.0, le=1.0)
+    operational_conclusion_accuracy_ci_low: float = Field(ge=0.0, le=1.0)
+    artifact_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_integrity(self) -> "ProviderHumanCalibrationEvidence":
+        if self.operational_conclusion_accuracy_ci_low > self.operational_conclusion_accuracy:
+            raise ValueError("oca_ci_low_cannot_exceed_point_estimate")
+        material = self.model_dump(mode="json", exclude={"artifact_sha256"})
+        if self.artifact_sha256 != _canonical_sha256(material):
+            raise ValueError("provider_human_calibration_artifact_hash_mismatch")
+        return self
+
+
 class ProviderCandidateEvidence(_StrictModel):
     candidate_id: str = Field(min_length=1, max_length=128)
     provider_id: str = Field(min_length=1, max_length=64)
     model_id: str = Field(min_length=1, max_length=128)
     scenario_count: int = Field(ge=1)
     repeat_count: int = Field(ge=1)
-    human_semantic_calibrated: bool
-    human_calibration_artifact_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
-    human_calibration_case_count: int = Field(ge=0)
-    human_agreement_rate: float = Field(ge=0.0, le=1.0)
-    operational_conclusion_accuracy: float = Field(ge=0.0, le=1.0)
-    operational_conclusion_accuracy_ci_low: float = Field(ge=0.0, le=1.0)
+    human_calibration: ProviderHumanCalibrationEvidence
 
     @model_validator(mode="after")
-    def validate_calibration_statistics(self) -> "ProviderCandidateEvidence":
-        if self.operational_conclusion_accuracy_ci_low > self.operational_conclusion_accuracy:
-            raise ValueError("oca_ci_low_cannot_exceed_point_estimate")
+    def bind_candidate_to_human_artifact(self) -> "ProviderCandidateEvidence":
+        if self.human_calibration.candidate_id != self.candidate_id:
+            raise ValueError("human_calibration_candidate_id_mismatch")
         return self
 
 
@@ -53,6 +89,13 @@ class ProviderBenchmarkEvidence(_StrictModel):
         ids = [candidate.candidate_id for candidate in self.candidates]
         if len(ids) != len(set(ids)):
             raise ValueError("duplicate_candidate_id")
+        for candidate in self.candidates:
+            calibration = candidate.human_calibration
+            if calibration.protocol_id != self.human_calibration_protocol_id:
+                raise ValueError("candidate_human_calibration_protocol_id_mismatch")
+            if calibration.protocol_hash != self.human_calibration_protocol_hash:
+                raise ValueError("candidate_human_calibration_protocol_hash_mismatch")
+
         known = set(ids)
         pairs: set[tuple[str, str]] = set()
         for report in self.pairwise_reports:
@@ -70,10 +113,9 @@ class ProviderBenchmarkEvidence(_StrictModel):
 class ProviderPromotionPolicy(_StrictModel):
     """Preregistered provenance and maturity gates for provider/model promotion.
 
-    Statistical metric thresholds remain in ``EvalMetricRule`` and are evaluated
-    by ``compare_eval_bundles``. Human calibration is deliberately quantitative:
-    sample size, human agreement, OCA and the OCA lower confidence bound are hard
-    maturity gates rather than a subjective production-readiness label.
+    Statistical metric thresholds remain in ``EvalMetricRule`` and are evaluated by
+    ``compare_eval_bundles``. Human calibration is deliberately quantitative and hash-bound:
+    held-out case count, human agreement, OCA and OCA lower confidence bound are hard gates.
     """
 
     schema_version: Literal["provider-promotion-policy-v1"] = "provider-promotion-policy-v1"
@@ -127,13 +169,12 @@ def decide_provider_promotion(
 ) -> ProviderPromotionDecision:
     """Select only a unique candidate that EDD promoted against every peer.
 
-    The function is deliberately fail-closed. It never creates a composite score,
-    never promotes the first candidate that passes, and never treats latency/cost
-    as a correctness substitute. All metric thresholds, regressions, response-mode
-    slices, bootstrap confidence intervals, and hard gates are inherited from the
-    existing ``EvalDrivenDecisionReport`` objects. Human semantic readiness is an
-    additional preregistered quantitative maturity gate whose candidate metrics are
-    bound to a hash-addressed human calibration artifact.
+    The function is deliberately fail-closed. It never creates a composite score, never promotes
+    the first candidate that passes, and never treats latency/cost as a correctness substitute.
+    Metric thresholds, regressions, response-mode slices, bootstrap confidence intervals and hard
+    gates remain inherited from the existing ``EvalDrivenDecisionReport`` objects. Human semantic
+    readiness is an additional preregistered quantitative maturity gate backed by a verifiable,
+    candidate-specific held-out human calibration artifact.
     """
 
     provenance_reasons: list[str] = []
@@ -175,19 +216,20 @@ def decide_provider_promotion(
     maturity_reasons: list[str] = []
     for candidate_id in policy.required_candidate_ids:
         candidate = candidates[candidate_id]
-        if not candidate.human_semantic_calibrated:
+        calibration = candidate.human_calibration
+        if not calibration.calibration_ready:
             maturity_reasons.append("HUMAN_SEMANTIC_CALIBRATION_REQUIRED")
-        if candidate.human_calibration_case_count < policy.min_human_calibration_cases:
+        if calibration.case_count < policy.min_human_calibration_cases:
             maturity_reasons.append("INSUFFICIENT_HUMAN_CALIBRATION_CASES")
-        if candidate.human_agreement_rate < policy.min_human_agreement_rate:
+        if calibration.human_agreement_rate < policy.min_human_agreement_rate:
             maturity_reasons.append("HUMAN_AGREEMENT_BELOW_THRESHOLD")
         if (
-            candidate.operational_conclusion_accuracy
+            calibration.operational_conclusion_accuracy
             < policy.min_operational_conclusion_accuracy
         ):
             maturity_reasons.append("OCA_BELOW_THRESHOLD")
         if (
-            candidate.operational_conclusion_accuracy_ci_low
+            calibration.operational_conclusion_accuracy_ci_low
             < policy.min_operational_conclusion_accuracy_ci_low
         ):
             maturity_reasons.append("OCA_CONFIDENCE_LOWER_BOUND_BELOW_THRESHOLD")
@@ -259,4 +301,42 @@ def decide_provider_promotion(
         selected_candidate_id=evidence_backed_winners[0],
         comparison_ready_candidate_ids=comparison_ready,
         reason_codes=("UNIQUE_CANDIDATE_PROMOTED_AGAINST_EVERY_REQUIRED_PEER",),
+    )
+
+
+def build_provider_human_calibration_artifact(
+    *,
+    candidate_id: str,
+    config_hash: str,
+    protocol_id: str,
+    protocol_hash: str,
+    source_manifest_sha256: str,
+    annotation_manifest_sha256: str,
+    resolution_report_sha256: str,
+    calibration_ready: bool,
+    case_count: int,
+    human_agreement_rate: float,
+    operational_conclusion_accuracy: float,
+    operational_conclusion_accuracy_ci_low: float,
+) -> ProviderHumanCalibrationEvidence:
+    material = {
+        "schema_version": "provider-human-calibration-v1",
+        "candidate_id": candidate_id,
+        "config_hash": config_hash,
+        "protocol_id": protocol_id,
+        "protocol_hash": protocol_hash,
+        "source_manifest_sha256": source_manifest_sha256,
+        "annotation_manifest_sha256": annotation_manifest_sha256,
+        "resolution_report_sha256": resolution_report_sha256,
+        "calibration_ready": calibration_ready,
+        "case_count": case_count,
+        "human_agreement_rate": human_agreement_rate,
+        "operational_conclusion_accuracy": operational_conclusion_accuracy,
+        "operational_conclusion_accuracy_ci_low": operational_conclusion_accuracy_ci_low,
+    }
+    return ProviderHumanCalibrationEvidence.model_validate(
+        {
+            **material,
+            "artifact_sha256": _canonical_sha256(material),
+        }
     )
