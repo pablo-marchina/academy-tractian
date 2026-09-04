@@ -9,7 +9,7 @@ The Live Run Cockpit consumes only the real safe product API:
 ```text
 POST /api/runs
   -> safe run id
-  -> GET /api/stream (SSE)
+  -> GET /api/stream (fetch SSE)
   -> idempotent event reducer
   -> terminal run snapshot
   -> execution completed
@@ -28,7 +28,31 @@ VITE_API_BASE_URL=https://api.example.com
 
 REST requests and SSE streams resolve through this base URL. The value must be an absolute `http` or `https` URL with no embedded credentials, query string or fragment. Omit it to keep same-origin behavior.
 
-A production deployment should use HTTPS and a backend CORS allow-list for the exact frontend origin. Authentication is intentionally not encoded in this URL; bearer/session credentials must come from the selected identity integration rather than build-time URL secrets.
+A production deployment should use HTTPS and a backend CORS allow-list for the exact frontend origin. Authentication is intentionally not encoded in this URL.
+
+## Browser identity boundary
+
+The core frontend is identity-provider-neutral. The selected hosted OIDC adapter supplies the current
+access token through:
+
+```ts
+import { setAccessTokenProvider } from "./src/api/auth";
+
+setAccessTokenProvider(async () => currentAccessTokenOrNull);
+```
+
+The token provider may be backed by Supabase, Clerk, Auth0 or another hosted OIDC implementation;
+the API layer itself does not depend on a vendor SDK. The core does not persist the access token to
+local storage or place it in URLs.
+
+The same provider is used by REST and SSE. Live streaming uses `fetch` rather than native
+`EventSource` so the browser can send `Authorization: Bearer ...`. The SSE decoder preserves
+`after_sequence` reconnect/catch-up semantics, ignores keepalives, rejects malformed/truncated
+frames, rejects cross-run data, and checks SSE ids against safe event ids.
+
+When no access-token provider is configured, requests remain unauthenticated. That behavior is kept
+only for bounded provider-free CI/development topologies whose backend supplies its own controlled
+test identity boundary.
 
 ## Development-only proxy
 
@@ -56,7 +80,7 @@ npm test
 npm run build
 ```
 
-Reducer and API-boundary tests cover canonical sequence ordering, transport replay deduplication, conflicting event-id containment, runtime KPI derivation, real `run_finished` terminal semantics, and hosted API URL validation.
+Reducer and API-boundary tests cover canonical sequence ordering, transport replay deduplication, conflicting event-id containment, runtime KPI derivation, real `run_finished` terminal semantics, hosted API URL validation, bearer-token validation and SSE framing/integrity.
 
 ## Product surfaces
 
