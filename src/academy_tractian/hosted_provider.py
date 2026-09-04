@@ -7,23 +7,15 @@ from .decision_source import (
     ProviderCallIdentity,
     ProviderDecisionSource,
 )
-from .google_v1_provider_client import (
-    GOOGLE_37_MODEL_ID,
-    GOOGLE_38_MODEL_ID,
-    GOOGLE_V1_PROVIDER_ID,
-    GOOGLE_V1_ROUTE_ID,
-    GoogleV1InteractionsDecisionClient,
-)
-from .groq_provider_client import (
-    GROQ_MODEL_ID,
-    GROQ_PROVIDER_ID,
-    GROQ_ROUTE_ID,
-    GroqChatCompletionsDecisionClient,
+from .google_v1_provider_client import GOOGLE_V1_PROVIDER_ID, GoogleV1InteractionsDecisionClient
+from .groq_provider_client import GROQ_PROVIDER_ID, GroqChatCompletionsDecisionClient
+from .hosted_candidate_registry import (
+    HOSTED_CANDIDATE_SPECS,
+    SUPPORTED_HOSTED_PROVIDERS,
+    resolve_hosted_candidate,
 )
 from .provider_clients import (
-    OPENAI_MODEL_ID,
     OPENAI_PROVIDER_ID,
-    OPENAI_ROUTE_ID,
     OpenAIResponsesDecisionClient,
     UrllibProviderJsonTransport,
 )
@@ -33,21 +25,8 @@ from .runtime_configuration_identity import RuntimeConfigurationIdentity
 
 HOSTED_PROVIDER_CLIENTS_VERSION = "hosted-provider-clients-v2"
 SUPPORTED_HOSTED_CANDIDATES = frozenset(
-    {
-        (OPENAI_PROVIDER_ID, OPENAI_MODEL_ID),
-        (GOOGLE_V1_PROVIDER_ID, GOOGLE_37_MODEL_ID),
-        (GOOGLE_V1_PROVIDER_ID, GOOGLE_38_MODEL_ID),
-        (GROQ_PROVIDER_ID, GROQ_MODEL_ID),
-    }
+    (spec.provider_id, spec.model_id) for spec in HOSTED_CANDIDATE_SPECS
 )
-SUPPORTED_HOSTED_PROVIDERS = frozenset(provider for provider, _ in SUPPORTED_HOSTED_CANDIDATES)
-
-
-def _normalize_candidate(provider: str, model: str) -> tuple[str, str]:
-    candidate = (provider.strip().lower(), model.strip())
-    if candidate not in SUPPORTED_HOSTED_CANDIDATES:
-        raise ValueError("unsupported_hosted_candidate")
-    return candidate
 
 
 def hosted_runtime_configuration_identity(provider: str, model: str) -> RuntimeConfigurationIdentity:
@@ -57,19 +36,12 @@ def hosted_runtime_configuration_identity(provider: str, model: str) -> RuntimeC
     semantics. API keys, request content and responses never enter the identity.
     """
 
-    provider_id, model_id = _normalize_candidate(provider, model)
-    if provider_id == OPENAI_PROVIDER_ID:
-        route_id = OPENAI_ROUTE_ID
-    elif provider_id == GOOGLE_V1_PROVIDER_ID:
-        route_id = GOOGLE_V1_ROUTE_ID
-    else:
-        route_id = GROQ_ROUTE_ID
-
+    spec = resolve_hosted_candidate(provider, model)
     return RuntimeConfigurationIdentity(
-        candidate_id=f"{provider_id}:{model_id}",
-        provider_id=provider_id,
-        model_id=model_id,
-        route_id=route_id,
+        candidate_id=spec.candidate_id,
+        provider_id=spec.provider_id,
+        model_id=spec.model_id,
+        route_id=spec.route_id,
         adapter_version=PROVIDER_DECISION_ADAPTER_VERSION,
         client_version=HOSTED_PROVIDER_CLIENTS_VERSION,
     )
@@ -78,21 +50,23 @@ def hosted_runtime_configuration_identity(provider: str, model: str) -> RuntimeC
 def create_hosted_decision_source(*, provider: str, model: str, api_key: str) -> DecisionSource:
     """Build one explicit live candidate without changing application-owned agent semantics."""
 
-    provider_id, model_id = _normalize_candidate(provider, model)
+    spec = resolve_hosted_candidate(provider, model)
     transport = UrllibProviderJsonTransport()
-    if provider_id == OPENAI_PROVIDER_ID:
+    if spec.provider_id == OPENAI_PROVIDER_ID:
         client = OpenAIResponsesDecisionClient(api_key=api_key, transport=transport)
-    elif provider_id == GOOGLE_V1_PROVIDER_ID:
+    elif spec.provider_id == GOOGLE_V1_PROVIDER_ID:
         client = GoogleV1InteractionsDecisionClient(
             api_key=api_key,
-            model_id=model_id,
+            model_id=spec.model_id,
             transport=transport,
         )
-    else:
+    elif spec.provider_id == GROQ_PROVIDER_ID:
         client = GroqChatCompletionsDecisionClient(api_key=api_key, transport=transport)
+    else:  # pragma: no cover - registry construction makes this unreachable.
+        raise ValueError("unsupported_hosted_provider")
 
-    if client.model_id != model_id:
-        raise ValueError("hosted_candidate_client_model_mismatch")
+    if client.model_id != spec.model_id or client.route_id != spec.route_id:
+        raise ValueError("hosted_candidate_client_identity_mismatch")
 
     return ProviderDecisionSource(
         client=client,
