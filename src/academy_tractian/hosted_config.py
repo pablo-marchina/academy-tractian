@@ -6,12 +6,18 @@ import os
 from typing import Mapping
 from urllib.parse import urlsplit
 
+from .hosted_candidate_registry import SUPPORTED_HOSTED_PROVIDERS, resolve_hosted_candidate
 
-_SUPPORTED_PROVIDERS = frozenset({"openai", "google", "groq"})
+
 _SUPPORTED_IDENTITY_BACKENDS = frozenset({"signed_bearer", "oidc"})
 _SUPPORTED_OIDC_ALGORITHMS = frozenset(
     {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "EdDSA"}
 )
+_PROVIDER_KEY_ENV = {
+    "openai": "OPENAI_API_KEY",
+    "google": "GOOGLE_API_KEY",
+    "groq": "GROQ_API_KEY",
+}
 _LOCAL_HOST_ALIASES = frozenset(
     {
         "localhost",
@@ -112,9 +118,9 @@ def _cors_origins(environment: Mapping[str, str]) -> tuple[str, ...]:
 class HostedProductConfig:
     """Fail-closed configuration contract for the hosted-only production path.
 
-    Secrets are stored only as private process values and are deliberately omitted from
-    ``sanitized_summary``. HMAC bearer identity remains a bounded regression/development backend;
-    production serving requires OIDC/JWKS and rejects loopback/local-machine dependencies.
+    Provider and model are independent explicit inputs: changing a model is a new candidate and can
+    never happen through a provider-side implicit default. HMAC bearer identity remains a bounded
+    regression/development backend; production serving requires OIDC/JWKS and non-local endpoints.
     """
 
     postgres_internal_dsn: str
@@ -136,6 +142,7 @@ class HostedProductConfig:
     tractian_base_url: str | None
     tractian_bearer_token: str | None
     provider: str | None
+    model: str | None
     provider_api_key: str | None
     max_workers: int
     heartbeat_interval_ms: int
@@ -185,15 +192,17 @@ class HostedProductConfig:
         provider = _optional(env, "ACADEMY_PROVIDER")
         if provider is not None:
             provider = provider.lower()
-            if provider not in _SUPPORTED_PROVIDERS:
+            if provider not in SUPPORTED_HOSTED_PROVIDERS:
                 raise ValueError("unsupported_hosted_provider")
+        model = _optional(env, "ACADEMY_MODEL")
+        if model is not None and provider is None:
+            raise ValueError("hosted_model_without_provider")
+        if provider is not None and model is not None:
+            resolve_hosted_candidate(provider, model)
+
         provider_api_key = None
-        if provider == "openai":
-            provider_api_key = _optional(env, "OPENAI_API_KEY")
-        elif provider == "google":
-            provider_api_key = _optional(env, "GOOGLE_API_KEY")
-        elif provider == "groq":
-            provider_api_key = _optional(env, "GROQ_API_KEY")
+        if provider is not None:
+            provider_api_key = _optional(env, _PROVIDER_KEY_ENV[provider])
 
         tractian_raw = _optional(env, "ACADEMY_TRACTIAN_BASE_URL")
         tractian_base_url = (
@@ -222,6 +231,7 @@ class HostedProductConfig:
             tractian_base_url=tractian_base_url,
             tractian_bearer_token=_optional(env, "ACADEMY_TRACTIAN_BEARER_TOKEN"),
             provider=provider,
+            model=model,
             provider_api_key=provider_api_key,
             max_workers=_positive_int(env, "ACADEMY_MAX_WORKERS", 4),
             heartbeat_interval_ms=_positive_int(env, "ACADEMY_HEARTBEAT_INTERVAL_MS", 1000),
@@ -241,6 +251,9 @@ class HostedProductConfig:
             raise ValueError("hosted_oidc_configuration_incomplete")
         if self.provider is None:
             raise ValueError("hosted_provider_not_selected")
+        if self.model is None:
+            raise ValueError("hosted_model_not_selected")
+        resolve_hosted_candidate(self.provider, self.model)
         if not self.provider_api_key:
             raise ValueError("hosted_provider_api_key_missing")
         if self.tractian_base_url is None:
@@ -281,8 +294,11 @@ class HostedProductConfig:
         else:
             identity["secret_configured"] = bool(self.runtime_identity_secret)
 
+        candidate_id = (
+            None if self.provider is None or self.model is None else f"{self.provider}:{self.model}"
+        )
         return {
-            "schema_version": "hosted-product-config-v3",
+            "schema_version": "hosted-product-config-v4",
             "deployment": {
                 "contract_profile": "hosted-only-v1",
                 "required_local_components": 0,
@@ -304,6 +320,8 @@ class HostedProductConfig:
             "identity": identity,
             "provider": {
                 "selection": self.provider or "NO_SELECTION",
+                "model": self.model or "NO_SELECTION",
+                "candidate_id": candidate_id or "NO_SELECTION",
                 "api_key_configured": self.provider_api_key is not None,
             },
             "runtime": {
