@@ -171,6 +171,44 @@ Build-time API URLs must never contain credentials. The frontend auth core does 
 tokens to local storage by itself; token lifecycle remains owned by the selected hosted identity
 adapter.
 
+## TRACTIAN integration evidence
+
+`GET /api/tools/coverage` exposes the canonical 18-operation matrix with separate claim layers:
+
+- contract registration and implementation-route presence;
+- packaged frozen route evidence;
+- hosted-live route observation;
+- hosted-live success;
+- hosted HTTP errors, transport failures, unavailable observations and safety blocks.
+
+The packaged frozen artifact is `research/e2/frozen_tool_integration_evidence.json`. It currently
+contains explicit historical route-execution evidence for `get_asset` only. A fresh hosted process
+therefore starts with **1/18 aggregate historical evidence but 0/18 hosted-live exercised**. The
+remaining operations are never inferred from route existence, mocks or synthetic fixtures.
+
+The hosted transport is wrapped by a bounded, thread-safe evidence recorder. It stores only the
+canonical operation, method/path template, outcome, optional HTTP status, timestamp and a safe
+fingerprint. It deliberately never stores request arguments, query values, headers, request bodies,
+response bodies, credentials or DSNs. A real 2xx/3xx response counts as hosted-live success; a real
+4xx/5xx response proves the route was observed but does not count as success; transport failure does
+not prove route execution. Safety-blocked actions also do not count as live execution.
+
+The runtime recorder coalesces evidence by operation/outcome and is intentionally process-local. It
+is useful for live UI/diagnostics but is **not** claimed as persistent audit proof. Persistent hosted
+integration evidence must be promoted separately to managed storage or a controlled experiment
+artifact before it is used for final 18/18 evidence.
+
+A controlled experiment artifact can be checked without printing raw evidence:
+
+```bash
+python scripts/validate_tractian_integration_evidence.py path/to/evidence.json \
+  --environment hosted_live
+```
+
+The validator is fail-closed: unknown operations, route mismatches, wrong environments, schema
+version mismatches, extra fields or malformed HTTP semantics invalidate the whole document and
+produce zero trusted records.
+
 ## Non-claims
 
 This baseline does **not** yet claim:
@@ -179,6 +217,7 @@ This baseline does **not** yet claim:
 - a production-selected provider/model;
 - a selected/validated external OIDC vendor deployment;
 - hosted consequential actions;
+- persistent hosted TRACTIAN integration proof across process restarts;
 - production SLO/capacity from CI measurements;
 - all 18 TRACTIAN routes have integrated execution evidence.
 
