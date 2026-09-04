@@ -6,13 +6,13 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .authenticated_postgres_product_api import (
-    create_authenticated_postgres_action_capable_product_app,
-)
 from .hosted_config import HostedProductConfig
 from .hosted_provider import create_hosted_decision_source
 from .hosted_tractian_transport import HostedTractianTransport
+from .oidc_runtime_identity import OIDCClaimMapping, OIDCRuntimeContextProvider
+from .postgres_product_api import create_postgres_action_capable_product_app
 from .production_actions_v2 import ProductionActionPrincipal
+from .runtime_identity import SignedBearerRuntimeContextProvider
 from .tool_coverage_api import attach_tool_coverage_api
 
 
@@ -30,6 +30,38 @@ def _deny_unqualified_hosted_actions(*, user_id: str) -> ProductionActionPrincip
         user_company_id="hosted-unbound-company",
         permissions=frozenset(),
         resource_company_bindings=(),
+    )
+
+
+def _runtime_context_provider(config: HostedProductConfig):
+    if config.identity_backend == "oidc":
+        if config.oidc_jwks_url is None or not config.oidc_algorithms:
+            raise ValueError("hosted_oidc_configuration_incomplete")
+        return OIDCRuntimeContextProvider(
+            issuer=config.runtime_identity_issuer,
+            audience=config.runtime_identity_audience,
+            jwks_url=config.oidc_jwks_url,
+            algorithms=config.oidc_algorithms,
+            claim_mapping=OIDCClaimMapping(
+                organization_claim=config.oidc_organization_claim,
+                role_claim=config.oidc_role_claim,
+                permissions_claim=config.oidc_permissions_claim,
+                identity_claim=config.oidc_identity_claim,
+            ),
+            # Production starts from the application-owned least-privilege permissions. Claims from
+            # the external IdP do not gain extra runtime permissions until a separate authorization
+            # experiment explicitly promotes an allow-list.
+            allowed_claim_permissions=(),
+            allowed_privileged_permissions=(),
+            authorized_parties=config.oidc_authorized_parties,
+        )
+
+    if not config.runtime_identity_secret:
+        raise ValueError("hosted_signed_bearer_secret_missing")
+    return SignedBearerRuntimeContextProvider(
+        secret=config.runtime_identity_secret,
+        issuer=config.runtime_identity_issuer,
+        audience=config.runtime_identity_audience,
     )
 
 
@@ -54,16 +86,15 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
             bearer_token=active.tractian_bearer_token,
         )
 
-    app = create_authenticated_postgres_action_capable_product_app(
+    context_provider = _runtime_context_provider(active)
+    app = create_postgres_action_capable_product_app(
         db_path=_UNUSED_LOCAL_STATE_PATH,
         internal_dsn=active.postgres_internal_dsn,
         scoped_dsn=active.postgres_scoped_dsn,
         decision_source_factory=decision_source_factory,
         transport_factory=transport_factory,
+        context_provider=context_provider,
         authorization_resolver=_deny_unqualified_hosted_actions,
-        runtime_identity_secret=active.runtime_identity_secret,
-        runtime_identity_issuer=active.runtime_identity_issuer,
-        runtime_identity_audience=active.runtime_identity_audience,
         schema=active.postgres_schema,
         observability_schema=active.observability_schema,
         observability_backend="postgresql",
@@ -84,6 +115,11 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
     )
     attach_tool_coverage_api(app)
     app.state.hosted_config = active.sanitized_summary()
+    app.state.runtime_identity_backend = (
+        "oidc-jwks-v1" if active.identity_backend == "oidc" else "signed-bearer-hmac-sha256-v1"
+    )
+    app.state.runtime_identity_issuer = active.runtime_identity_issuer
+    app.state.runtime_identity_audience = active.runtime_identity_audience
     app.state.hosted_actions_qualified = False
     app.state.hosted_action_block_reason = "RESOURCE_AUTHORIZATION_NOT_YET_QUALIFIED"
     app.state.hosted_local_persistent_state_required = False
