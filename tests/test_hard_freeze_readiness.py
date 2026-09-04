@@ -10,6 +10,9 @@ from academy_tractian.hard_freeze_readiness import (
     HardFreezeReadinessObservation,
     HardFreezeReadinessReport,
     evaluate_hard_freeze_readiness,
+    extract_classic_required_status_contexts,
+    extract_ruleset_required_status_contexts,
+    ruleset_targets_main,
 )
 
 
@@ -33,6 +36,30 @@ def _observation(**overrides) -> HardFreezeReadinessObservation:
     }
     values.update(overrides)
     return HardFreezeReadinessObservation(**values)
+
+
+def _ruleset(*, includes=None, excludes=None, enforcement="active", checks=None):
+    return {
+        "id": 42,
+        "target": "branch",
+        "enforcement": enforcement,
+        "conditions": {
+            "ref_name": {
+                "include": includes or ["~DEFAULT_BRANCH"],
+                "exclude": excludes or [],
+            }
+        },
+        "rules": [
+            {
+                "type": "required_status_checks",
+                "parameters": {
+                    "required_status_checks": checks
+                    or [{"context": "required-gate", "integration_id": 1}],
+                    "strict_required_status_checks_policy": True,
+                },
+            }
+        ],
+    }
 
 
 def test_ready_attestation_is_hash_bound_and_never_activates_freeze() -> None:
@@ -113,3 +140,47 @@ def test_report_rejects_hash_tampering() -> None:
 def test_naive_observation_time_is_rejected() -> None:
     with pytest.raises(ValidationError, match="timezone-aware"):
         _observation(observed_at_utc=datetime(2026, 9, 6, 3, 5))
+
+
+def test_classic_branch_protection_contexts_are_extracted() -> None:
+    branch = {
+        "protection": {
+            "required_status_checks": {
+                "contexts": ["required-gate", "lint"],
+                "checks": [{"context": "required-gate"}, {"context": "unit"}],
+            }
+        }
+    }
+    assert extract_classic_required_status_contexts(branch) == (
+        "lint",
+        "required-gate",
+        "unit",
+    )
+
+
+def test_active_default_branch_ruleset_exposes_required_gate() -> None:
+    ruleset = _ruleset()
+    assert ruleset_targets_main(ruleset) is True
+    assert extract_ruleset_required_status_contexts((ruleset,)) == ("required-gate",)
+
+
+def test_ruleset_exact_and_glob_main_patterns_are_supported() -> None:
+    exact = _ruleset(includes=["refs/heads/main"])
+    globbed = _ruleset(includes=["refs/heads/m*"])
+    assert ruleset_targets_main(exact) is True
+    assert ruleset_targets_main(globbed) is True
+
+
+def test_ruleset_exclusion_or_nonactive_enforcement_fails_closed() -> None:
+    excluded = _ruleset(includes=["~ALL"], excludes=["refs/heads/main"])
+    evaluate_only = _ruleset(enforcement="evaluate")
+    assert ruleset_targets_main(excluded) is False
+    assert ruleset_targets_main(evaluate_only) is False
+    assert extract_ruleset_required_status_contexts((excluded, evaluate_only)) == ()
+
+
+def test_non_status_rules_do_not_manufacture_required_contexts() -> None:
+    ruleset = _ruleset()
+    ruleset["rules"] = [{"type": "non_fast_forward"}, {"type": "pull_request"}]
+    assert ruleset_targets_main(ruleset) is True
+    assert extract_ruleset_required_status_contexts((ruleset,)) == ()
