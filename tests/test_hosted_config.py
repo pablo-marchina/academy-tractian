@@ -16,12 +16,29 @@ def _base_env() -> dict[str, str]:
     }
 
 
+def _oidc_env() -> dict[str, str]:
+    env = _base_env()
+    env.pop("ACADEMY_RUNTIME_IDENTITY_SECRET")
+    env.update(
+        {
+            "ACADEMY_IDENTITY_BACKEND": "oidc",
+            "ACADEMY_RUNTIME_IDENTITY_ISSUER": "https://identity.example.com",
+            "ACADEMY_RUNTIME_IDENTITY_AUDIENCE": "academy-api",
+            "ACADEMY_OIDC_JWKS_URL": "https://identity.example.com/.well-known/jwks.json",
+            "ACADEMY_OIDC_ALGORITHMS": "RS256, ES256,RS256",
+            "ACADEMY_OIDC_AUTHORIZED_PARTIES": "https://app.example.com,academy-mobile",
+        }
+    )
+    return env
+
+
 def test_hosted_config_allows_infrastructure_validation_before_provider_selection() -> None:
     env = _base_env()
     config = HostedProductConfig.from_environment(env)
     summary = config.sanitized_summary()
 
     assert config.provider is None
+    assert config.identity_backend == "signed_bearer"
     assert summary["provider"] == {
         "selection": "NO_SELECTION",
         "api_key_configured": False,
@@ -32,6 +49,29 @@ def test_hosted_config_allows_infrastructure_validation_before_provider_selectio
     assert env["ACADEMY_POSTGRES_INTERNAL_DSN"] not in rendered
     assert env["ACADEMY_POSTGRES_SCOPED_DSN"] not in rendered
     assert env["ACADEMY_RUNTIME_IDENTITY_SECRET"] not in rendered
+
+
+def test_hosted_config_accepts_provider_neutral_oidc_without_application_signing_secret() -> None:
+    env = _oidc_env()
+    config = HostedProductConfig.from_environment(env)
+    summary = config.sanitized_summary()
+
+    assert config.identity_backend == "oidc"
+    assert config.runtime_identity_secret is None
+    assert config.oidc_algorithms == ("RS256", "ES256")
+    assert summary["identity"] == {
+        "backend": "oidc-jwks-v1",
+        "issuer": "https://identity.example.com",
+        "audience": "academy-api",
+        "jwks_url_configured": True,
+        "algorithms": ["RS256", "ES256"],
+        "organization_claim": "organization_id",
+        "role_claim": "role",
+        "permissions_claim": "permissions",
+        "identity_claim": "sid",
+        "authorized_parties": ["https://app.example.com", "academy-mobile"],
+    }
+    assert env["ACADEMY_OIDC_JWKS_URL"] not in repr(summary)
 
 
 def test_hosted_config_requires_provider_and_tractian_endpoint_for_serving() -> None:
@@ -66,6 +106,26 @@ def test_hosted_config_rejects_unsafe_or_ambiguous_network_configuration() -> No
 
     with pytest.raises(ValueError, match="unsupported_hosted_provider"):
         HostedProductConfig.from_environment({**env, "ACADEMY_PROVIDER": "local-ollama"})
+
+    with pytest.raises(ValueError, match="unsupported_identity_backend"):
+        HostedProductConfig.from_environment({**env, "ACADEMY_IDENTITY_BACKEND": "browser_headers"})
+
+
+def test_hosted_config_rejects_incomplete_or_symmetric_oidc_configuration() -> None:
+    env = _oidc_env()
+    env.pop("ACADEMY_OIDC_JWKS_URL")
+    with pytest.raises(ValueError, match="ACADEMY_OIDC_JWKS_URL"):
+        HostedProductConfig.from_environment(env)
+
+    env = _oidc_env()
+    env["ACADEMY_OIDC_ALGORITHMS"] = ""
+    with pytest.raises(ValueError, match="ACADEMY_OIDC_ALGORITHMS"):
+        HostedProductConfig.from_environment(env)
+
+    env = _oidc_env()
+    env["ACADEMY_OIDC_ALGORITHMS"] = "HS256"
+    with pytest.raises(ValueError, match="unsupported_oidc_algorithm"):
+        HostedProductConfig.from_environment(env)
 
 
 def test_hosted_config_rejects_short_identity_secret_and_invalid_runtime_bounds() -> None:
