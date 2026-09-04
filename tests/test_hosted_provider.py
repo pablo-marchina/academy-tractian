@@ -11,7 +11,11 @@ from academy_tractian.runtime_configuration_identity import production_runtime_c
 
 @pytest.mark.parametrize(
     ("provider", "expected_model"),
-    [("openai", "gpt-5.6-sol"), ("google", "gemini-3.7-flash")],
+    [
+        ("openai", "gpt-5.6-sol"),
+        ("google", "gemini-3.7-flash"),
+        ("groq", "openai/gpt-oss-120b"),
+    ],
 )
 def test_hosted_provider_factory_builds_audited_live_decision_source(
     provider: str,
@@ -29,7 +33,7 @@ def test_hosted_provider_factory_builds_audited_live_decision_source(
 
 
 def test_hosted_runtime_identity_matches_provider_client_identity_without_secret_material() -> None:
-    for provider in ("openai", "google"):
+    for provider in ("openai", "google", "groq"):
         source = create_hosted_decision_source(provider=provider, api_key="SECRET-API-KEY")
         identity = hosted_runtime_configuration_identity(provider)
         assert source.call_identity is not None
@@ -40,19 +44,22 @@ def test_hosted_runtime_identity_matches_provider_client_identity_without_secret
         assert "SECRET-API-KEY" not in identity.model_dump_json()
 
 
-def test_openai_and_google_hosted_candidates_produce_distinct_runtime_hashes() -> None:
+def test_all_hosted_candidates_produce_distinct_runtime_hashes() -> None:
     registry = canonical_tool_registry()
     config = ProductionRuntimeConfig()
-    openai = hosted_runtime_configuration_identity("openai")
-    google = hosted_runtime_configuration_identity("google")
+    identities = {
+        provider: hosted_runtime_configuration_identity(provider)
+        for provider in ("openai", "google", "groq")
+    }
 
-    assert openai.candidate_id == "openai:gpt-5.6-sol"
-    assert google.candidate_id == "google:gemini-3.7-flash"
-    assert production_runtime_config_hash(config, registry, openai) != production_runtime_config_hash(
-        config,
-        registry,
-        google,
-    )
+    assert identities["openai"].candidate_id == "openai:gpt-5.6-sol"
+    assert identities["google"].candidate_id == "google:gemini-3.7-flash"
+    assert identities["groq"].candidate_id == "groq:openai/gpt-oss-120b"
+    hashes = {
+        production_runtime_config_hash(config, registry, identity)
+        for identity in identities.values()
+    }
+    assert len(hashes) == 3
 
 
 def test_hosted_provider_factory_rejects_unselected_or_local_provider() -> None:
