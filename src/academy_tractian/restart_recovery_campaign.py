@@ -75,7 +75,7 @@ class RestartRecoveryReport(_FrozenModel):
     real_customer_mutations: Literal[0] = 0
     authenticated_tenant_isolation_preserved: bool
     second_restart_idempotent: bool
-    production_recovery_claim_ready: Literal[True] = True
+    promoted_topology_recovery_contract_ready: Literal[True] = True
     cases: tuple[RecoveryCaseObservation, ...] = Field(min_length=1)
     evidence_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
@@ -154,7 +154,7 @@ def build_restart_recovery_report(
         "real_customer_mutations": 0,
         "authenticated_tenant_isolation_preserved": True,
         "second_restart_idempotent": True,
-        "production_recovery_claim_ready": True,
+        "promoted_topology_recovery_contract_ready": True,
         "cases": [item.model_dump(mode="json") for item in ordered],
     }
     return RestartRecoveryReport(
