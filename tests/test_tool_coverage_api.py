@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 import pytest
 
+from academy_tractian.product_api import AuthenticatedRuntimeContext
 from academy_tractian.tool_coverage_api import attach_tool_coverage_api
 from academy_tractian.tractian_integration_evidence import (
     IntegrationEvidenceLedger,
@@ -33,6 +34,16 @@ def _hosted_success() -> IntegrationEvidenceLedger:
         },
         source_label="test:hosted",
         expected_environment="hosted_live",
+    )
+
+
+def _authenticated_context(request: Request) -> AuthenticatedRuntimeContext:
+    if request.headers.get("authorization") != "Bearer test-coverage-token":
+        raise ValueError("missing trusted test identity")
+    return AuthenticatedRuntimeContext(
+        organization_id="org-test",
+        identity_id="identity-test",
+        user_id="user-test",
     )
 
 
@@ -77,6 +88,27 @@ def test_tool_coverage_api_fails_closed_when_evidence_provider_raises() -> None:
         "provider:evidence_unavailable"
     ]
     assert "SUPER-SECRET-PROVIDER-FAILURE" not in str(payload)
+
+
+def test_tool_coverage_api_can_require_trusted_runtime_identity() -> None:
+    app = FastAPI()
+    attach_tool_coverage_api(
+        app,
+        hosted_evidence_provider=_hosted_success,
+        context_provider=_authenticated_context,
+    )
+    client = TestClient(app)
+
+    unauthenticated = client.get("/api/tools/coverage")
+    assert unauthenticated.status_code == 401
+    assert unauthenticated.json() == {"detail": "trusted_runtime_context_unavailable"}
+
+    authenticated = client.get(
+        "/api/tools/coverage",
+        headers={"Authorization": "Bearer test-coverage-token"},
+    )
+    assert authenticated.status_code == 200
+    assert authenticated.json()["summary"]["hosted_live_exercised"] == 1
 
 
 def test_tool_coverage_api_rejects_double_attachment() -> None:
