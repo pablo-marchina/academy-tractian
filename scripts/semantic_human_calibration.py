@@ -11,6 +11,9 @@ for candidate in (SRC_ROOT, REPO_ROOT):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
+from academy_tractian.semantic_calibration_freeze import (  # noqa: E402
+    build_semantic_calibration_evidence_manifest,
+)
 from academy_tractian.semantic_human_calibration import (  # noqa: E402
     SemanticAnnotationManifest,
     SemanticAnnotationSource,
@@ -70,6 +73,14 @@ def _parser() -> argparse.ArgumentParser:
     resolve.add_argument("--adjudications", type=Path)
     resolve.add_argument("--human-references", required=True, type=Path)
     resolve.add_argument("--resolution-report", required=True, type=Path)
+    resolve.add_argument(
+        "--calibration-evidence-manifest",
+        type=Path,
+        help=(
+            "For a complete HELD_OUT_CALIBRATION packet, write the hash-bound VALIDATION "
+            "evidence manifest required by the frozen v2 calibration gate."
+        ),
+    )
     resolve.add_argument("--require-complete", action="store_true")
     return parser
 
@@ -124,6 +135,20 @@ def _resolve(args: argparse.Namespace) -> None:
         [reference.model_dump(mode="json") for reference in report.human_references],
     )
     _write_json(args.resolution_report, report.model_dump(mode="json"))
+
+    evidence_manifest_sha256 = None
+    if args.calibration_evidence_manifest is not None:
+        evidence_manifest = build_semantic_calibration_evidence_manifest(
+            packet=packet,
+            annotation_manifest=manifest,
+            resolution_report=report,
+        )
+        _write_json(
+            args.calibration_evidence_manifest,
+            evidence_manifest.model_dump(mode="json"),
+        )
+        evidence_manifest_sha256 = evidence_manifest.evidence_manifest_sha256
+
     print(
         json.dumps(
             {
@@ -134,6 +159,7 @@ def _resolve(args: argparse.Namespace) -> None:
                 "agreed_count": report.agreed_count,
                 "adjudicated_count": report.adjudicated_count,
                 "calibration_ready": report.calibration_ready,
+                "calibration_evidence_manifest_sha256": evidence_manifest_sha256,
             },
             sort_keys=True,
         )
