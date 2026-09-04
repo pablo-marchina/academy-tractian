@@ -27,12 +27,18 @@ export function ToolCampaignPanel({ campaign }: { campaign: ToolCampaignResponse
       <p className="coverage-claim">{campaign.claim_boundary}</p>
 
       <section className="coverage-metrics" aria-label="Integration campaign metrics">
-        <div className="coverage-metric"><span>Complete</span><strong>{campaign.complete_operations}</strong></div>
-        <div className="coverage-metric"><span>Incomplete</span><strong>{campaign.incomplete_operations}</strong></div>
+        <div className="coverage-metric"><span>Transport gate</span><strong>{campaign.transport_complete_operations}/18</strong></div>
+        <div className="coverage-metric"><span>Semantic gate</span><strong>{campaign.semantic_complete_operations}/18</strong></div>
+        <div className="coverage-metric"><span>End-to-end complete</span><strong>{campaign.complete_operations}/18</strong></div>
         <div className="coverage-metric"><span>Reads</span><strong>{campaign.reads}</strong></div>
         <div className="coverage-metric"><span>Actions</span><strong>{campaign.actions}</strong></div>
         <div className="coverage-metric"><span>Transport evidence</span><strong>{campaign.transport_evidence_state}</strong></div>
         <div className="coverage-metric"><span>Semantic evidence</span><strong>{campaign.semantic_evidence_state}</strong></div>
+      </section>
+
+      <section className="coverage-metrics" aria-label="Integration completion gates">
+        <div className="coverage-metric"><span>Transport status</span><strong>{campaign.transport_completion_status}</strong></div>
+        <div className="coverage-metric"><span>Semantic status</span><strong>{campaign.semantic_completion_status}</strong></div>
       </section>
 
       <div className="coverage-table-wrap">
@@ -41,6 +47,8 @@ export function ToolCampaignPanel({ campaign }: { campaign: ToolCampaignResponse
             <tr>
               <th>Operation</th>
               <th>Route</th>
+              <th>Transport</th>
+              <th>Semantic</th>
               <th>Proof</th>
               <th>Open / failed dimensions</th>
             </tr>
@@ -57,6 +65,8 @@ export function ToolCampaignPanel({ campaign }: { campaign: ToolCampaignResponse
                     </span>
                   </td>
                   <td className="coverage-route"><b>{operation.method}</b> {operation.path_template}</td>
+                  <td>{operation.transport_complete ? "PASS" : "OPEN"}</td>
+                  <td>{operation.semantic_complete ? "PASS" : "OPEN"}</td>
                   <td>{passedDimensions(operation)}/{operation.dimensions.length}</td>
                   <td>
                     {open.length === 0
