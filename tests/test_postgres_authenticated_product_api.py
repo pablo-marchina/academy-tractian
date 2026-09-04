@@ -140,7 +140,6 @@ def test_signed_bearer_identity_and_postgres_rls_close_tenant_boundary(
         runtime_identity_audience=AUDIENCE,
         schema=postgres_fixture.schema,
         initialize_schema=True,
-        provider_calls_enabled=False,
         actions_enabled=False,
     )
 
