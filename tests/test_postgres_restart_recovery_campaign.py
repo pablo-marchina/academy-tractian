@@ -48,12 +48,15 @@ pytestmark = pytest.mark.skipif(
 SECRET = "restart-recovery-secret-that-is-at-least-32-bytes"
 ISSUER = "academy-restart-recovery"
 AUDIENCE = "academy-product"
-ACTION_ARGS = {
-    "analysis_id": "analysis-recovery",
-    "body": {
-        "justification": "Synthetic restart-recovery custody state. It must never be replayed during startup."
-    },
-}
+
+
+def _action_args(resource: str) -> dict[str, object]:
+    return {
+        "analysis_id": resource,
+        "body": {
+            "justification": "Synthetic restart-recovery custody state. It must never be replayed during startup."
+        },
+    }
 
 
 class FinalSource:
@@ -217,19 +220,19 @@ def test_promoted_authenticated_postgres_restart_recovery_is_fail_safe_and_idemp
             origin_raw_run_id=pending_origin_raw,
             requester_user_id="user-a",
             tool=tool,
-            arguments=ACTION_ARGS,
+            arguments=_action_args("analysis-recovery-pending"),
         )
         executing = custody.create_or_get(
             origin_raw_run_id=executing_origin_raw,
             requester_user_id="user-a",
             tool=tool,
-            arguments=ACTION_ARGS,
+            arguments=_action_args("analysis-recovery-executing"),
         )
         accepted = custody.create_or_get(
             origin_raw_run_id=accepted_origin_raw,
             requester_user_id="user-a",
             tool=tool,
-            arguments=ACTION_ARGS,
+            arguments=_action_args("analysis-recovery-accepted"),
         )
 
         executing_private = custody.get_private_for_requester(
