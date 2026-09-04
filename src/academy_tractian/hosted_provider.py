@@ -7,6 +7,12 @@ from .decision_source import (
     ProviderCallIdentity,
     ProviderDecisionSource,
 )
+from .groq_provider_client import (
+    GROQ_MODEL_ID,
+    GROQ_PROVIDER_ID,
+    GROQ_ROUTE_ID,
+    GroqResponsesDecisionClient,
+)
 from .provider_clients import (
     GOOGLE_MODEL_ID,
     GOOGLE_PROVIDER_ID,
@@ -23,7 +29,7 @@ from .runtime import canonical_tool_registry
 from .runtime_configuration_identity import RuntimeConfigurationIdentity
 
 
-SUPPORTED_HOSTED_PROVIDERS = frozenset({"openai", "google"})
+SUPPORTED_HOSTED_PROVIDERS = frozenset({"openai", "google", "groq"})
 
 
 def hosted_runtime_configuration_identity(provider: str) -> RuntimeConfigurationIdentity:
@@ -43,6 +49,10 @@ def hosted_runtime_configuration_identity(provider: str) -> RuntimeConfiguration
         provider_id = GOOGLE_PROVIDER_ID
         model_id = GOOGLE_MODEL_ID
         route_id = GOOGLE_ROUTE_ID
+    elif normalized == "groq":
+        provider_id = GROQ_PROVIDER_ID
+        model_id = GROQ_MODEL_ID
+        route_id = GROQ_ROUTE_ID
     else:
         raise ValueError("unsupported_hosted_provider")
 
@@ -57,7 +67,7 @@ def hosted_runtime_configuration_identity(provider: str) -> RuntimeConfiguration
 
 
 def create_hosted_decision_source(*, provider: str, api_key: str) -> DecisionSource:
-    """Build the live hosted decision source without changing application-owned agent semantics."""
+    """Build one live hosted decision source without changing application-owned agent semantics."""
 
     normalized = provider.strip().lower()
     if normalized not in SUPPORTED_HOSTED_PROVIDERS:
@@ -65,8 +75,10 @@ def create_hosted_decision_source(*, provider: str, api_key: str) -> DecisionSou
     transport = UrllibProviderJsonTransport()
     if normalized == "openai":
         client = OpenAIResponsesDecisionClient(api_key=api_key, transport=transport)
-    else:
+    elif normalized == "google":
         client = GoogleInteractionsDecisionClient(api_key=api_key, transport=transport)
+    else:
+        client = GroqResponsesDecisionClient(api_key=api_key, transport=transport)
 
     return ProviderDecisionSource(
         client=client,
