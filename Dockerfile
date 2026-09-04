@@ -13,6 +13,7 @@ RUN groupadd --system academy \
 COPY pyproject.toml ./
 COPY src ./src
 COPY research/e2 ./research/e2
+COPY scripts ./scripts
 
 RUN python -m pip install --no-cache-dir --upgrade pip \
     && python -m pip install --no-cache-dir .
