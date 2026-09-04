@@ -14,6 +14,7 @@ from .hosted_integration_evidence_recorder import (
 from .hosted_provider import create_hosted_decision_source
 from .hosted_tractian_transport import HostedTractianTransport
 from .oidc_runtime_identity import OIDCClaimMapping, OIDCRuntimeContextProvider
+from .postgres_campaign_evidence_store import PostgresCampaignEvidenceStore
 from .postgres_product_api import create_postgres_action_capable_product_app
 from .production_actions_v2 import ProductionActionPrincipal
 from .runtime_identity import SignedBearerRuntimeContextProvider
@@ -116,6 +117,14 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
         raise RuntimeError("hosted_postgres_integration_evidence_store_missing")
     live_evidence.attach_persistent_store(persistent_evidence)
 
+    campaign_evidence_store = PostgresCampaignEvidenceStore(
+        app.state.postgres_operational_database,
+        schema=active.observability_schema,
+        initialize=False,
+    )
+    if not campaign_evidence_store.ready():
+        raise RuntimeError("hosted_postgres_campaign_evidence_store_missing")
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(active.cors_origins),
@@ -128,6 +137,7 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
     attach_tool_coverage_api(
         app,
         hosted_evidence_provider=live_evidence.ledger,
+        campaign_evidence_provider=campaign_evidence_store.ledger,
         context_provider=context_provider,
     )
     app.state.hosted_config = active.sanitized_summary()
@@ -141,6 +151,8 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
     app.state.hosted_local_persistent_state_required = False
     app.state.tractian_live_evidence_recorder = live_evidence
     app.state.tractian_live_evidence_persistence = "managed-postgresql-bounded-safe-metadata"
+    app.state.tractian_campaign_evidence_store = campaign_evidence_store
+    app.state.tractian_campaign_evidence_persistence = "managed-postgresql-bounded-semantic-proof"
     return app
 
 
