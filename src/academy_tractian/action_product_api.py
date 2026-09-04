@@ -30,7 +30,10 @@ from .production_actions_v2 import (
 from .realtime_observability import DuckDBObservabilityEventSink
 from .run_access import RunAccessStore
 from .run_execution_store import RunExecutionStore
-from .runtime import RuntimeConfigurationIdentity
+from .runtime_configuration_identity import (
+    RuntimeConfigurationIdentity,
+    bind_runtime_configuration_identity,
+)
 
 
 class _FrozenModel(BaseModel):
@@ -95,7 +98,7 @@ def create_action_capable_product_app(
             custody=custody,
         )
         if runtime_configuration_identity is not None:
-            runtime.bind_configuration_identity(runtime_configuration_identity)
+            bind_runtime_configuration_identity(runtime, runtime_configuration_identity)
         return runtime
 
     app = create_product_app(
