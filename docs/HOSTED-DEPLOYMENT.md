@@ -15,7 +15,8 @@ hosted browser
   -> managed PostgreSQL
        - operational ownership/execution/action custody/idempotency
        - browser-safe observability/evaluation read model
-       - bounded hosted TRACTIAN integration evidence
+       - bounded hosted TRACTIAN transport evidence
+       - bounded semantic 18-operation campaign proof
   -> selected hosted provider/model
   -> supplied hosted TRACTIAN HTTPS API
 ```
@@ -132,14 +133,17 @@ Schema creation is explicit and separate from serving:
 python scripts/migrate_hosted_postgres.py
 ```
 
-The migration initializes operational state, browser-safe observability and the bounded TRACTIAN
-integration-evidence store. The serving process uses `initialize_schema=False`; deployment must run
-the migration before the new application version is marked ready.
+The migration initializes operational state, browser-safe observability, bounded hosted TRACTIAN
+transport evidence and the bounded semantic campaign-evidence store. The serving process uses
+`initialize_schema=False`; deployment must run this migration before the new application version is
+marked ready. An empty semantic table is valid and means `0/18` semantic proof, while a missing table
+makes hosted startup fail closed.
 
 ## Container
 
-The root `Dockerfile` builds only the production Python package and its frozen E2 runtime contract.
-It runs as a non-root user and starts `academy_tractian.hosted_product`.
+The root `Dockerfile` builds the production Python package, frozen E2 runtime contract and the
+bounded operational scripts required for validation, migration and evidence import. It runs as a
+non-root user and starts `academy_tractian.hosted_product`.
 
 The container healthcheck queries `/ready`. A platform should also use `/health` for liveness and
 `/ready` for dependency/readiness gating.
@@ -175,44 +179,78 @@ adapter.
 
 ## TRACTIAN integration evidence
 
-`GET /api/tools/coverage` exposes the canonical 18-operation matrix with separate claim layers:
+The hosted product exposes two authenticated and deliberately separate evidence surfaces:
 
-- contract registration and implementation-route presence;
-- packaged frozen route evidence;
-- hosted-live route observation;
-- hosted-live success;
-- hosted HTTP errors, transport failures, unavailable observations and safety blocks.
+- `GET /api/tools/coverage` reports contract/route registration and bounded transport observations;
+- `GET /api/tools/campaign` reports the empirical 18-operation transport gate, semantic gate and
+  combined end-to-end completion state.
+
+Transport completion for one operation requires all of the following empirical observations:
+
+- canonical route reached;
+- a valid request succeeded;
+- HTTP-error behavior was observed;
+- for consequential actions, an explicit safety block was also observed.
+
+Semantic completion is independent. It requires explicit proof that:
+
+- invalid parameters are rejected;
+- the response is normalized correctly;
+- agent/evaluator behavior is correct for the operation.
+
+A route definition, registered schema, mock, synthetic fixture or transport success can never
+substitute for those semantic dimensions. The API only emits `TRANSPORT_COMPLETE_18_OF_18` or
+`SEMANTIC_COMPLETE_18_OF_18` when every canonical operation independently passes the respective
+gate. End-to-end completion requires both gates.
 
 The packaged frozen artifact is `research/e2/frozen_tool_integration_evidence.json`. It currently
 contains explicit historical route-execution evidence for `get_asset` only. A fresh hosted database
-therefore starts with **1/18 aggregate historical evidence but 0/18 hosted-live exercised**. The
-remaining operations are never inferred from route existence, mocks or synthetic fixtures.
+therefore starts with **1/18 aggregate historical evidence but 0/18 hosted-live transport complete
+and 0/18 semantic complete**. The remaining operations are never inferred from route existence.
 
 The hosted transport is wrapped by a bounded, thread-safe evidence recorder. It stores only the
 canonical operation, method/path template, outcome, optional HTTP status, timestamp and a safe
 fingerprint. It deliberately never stores request arguments, query values, headers, request bodies,
 response bodies, credentials or DSNs. A real 2xx/3xx response counts as hosted-live success; a real
 4xx/5xx response proves the route was observed but does not count as success; transport failure does
-not prove route execution. Safety-blocked actions also do not count as live execution.
+not prove route execution. Safety-blocked actions also do not count as route execution by themselves.
 
-Hosted runtime evidence is persisted in managed PostgreSQL under the observability schema. Storage
-is deliberately bounded by the primary key `(operation, outcome)`: the table keeps the first/last
+Hosted transport evidence is persisted in managed PostgreSQL under the observability schema. Storage
+is deliberately bounded by the primary key `(operation, outcome)`: the table keeps first/last
 observation, latest safe metadata and an observation count instead of one row per request. With 18
-canonical operations and five allowed outcomes this bounds the logical evidence cardinality to at
-most **90 operation/outcome aggregates**, independent of user or request volume. The evidence
-survives serving-process restarts without a persistent local filesystem.
+canonical operations and five allowed outcomes this bounds the logical transport-evidence
+cardinality to at most **90 operation/outcome aggregates**, independent of user or request volume.
 
-Persistent rows are revalidated against the same canonical method/path contract when read. A
-corrupted, unknown or mismatched route invalidates the whole hosted ledger and returns zero trusted
-hosted records rather than inflating coverage. This persistent safe metadata is evidence of route
-observation and outcome; it is still not a substitute for a controlled semantic integration study or
-qualified consequential-action execution.
+Semantic campaign proof is persisted separately with primary key `(operation, dimension, passed)`.
+With 18 operations, three semantic dimensions and PASS/FAIL states, the logical semantic evidence is
+bounded to at most **108 aggregates**. PASS and FAIL are intentionally separate rows. A later PASS
+cannot erase a previously observed FAIL, and the campaign gate treats any persisted FAIL for a
+dimension as dominant until the evidence protocol is explicitly revised.
 
-The production frontend polls the same authenticated coverage endpoint and renders all 18 operations,
-including the evidence source state, contract/implementation status, hosted execution, hosted success
-and degraded/safety outcomes. If the endpoint is unavailable, the UI shows no inferred coverage.
+Persistent transport rows are revalidated against the canonical method/path contract when read.
+Semantic rows are revalidated against the canonical operation and strict campaign schema. A
+corrupted or unknown operation invalidates the corresponding ledger and makes the public campaign
+fail closed instead of inflating coverage.
 
-A controlled experiment artifact can also be checked without printing raw evidence:
+### Importing semantic campaign proof
+
+The application never manufactures semantic proof from transport telemetry. After a controlled
+experiment produces a `tractian-campaign-evidence-v1` document, import only that validated bounded
+artifact:
+
+```bash
+python scripts/import_tractian_campaign_evidence.py path/to/campaign-evidence.json
+```
+
+The importer requires the configured managed PostgreSQL DSNs and a previously migrated schema. It
+validates the entire document atomically, persists only bounded proof metadata and emits only counts,
+status and safe validation codes. It never prints raw requests, responses, prompts, provider output,
+credentials, evidence payloads or fingerprints. Import success means the evidence was accepted; it
+does **not** imply that the semantic 18/18 gate passed.
+
+### Transport artifact validation
+
+A controlled transport experiment artifact can be checked without printing raw evidence:
 
 ```bash
 python scripts/validate_tractian_integration_evidence.py path/to/evidence.json \
@@ -222,6 +260,10 @@ python scripts/validate_tractian_integration_evidence.py path/to/evidence.json \
 The validator is fail-closed: unknown operations, route mismatches, wrong environments, schema
 version mismatches, extra fields or malformed HTTP semantics invalidate the whole document and
 produce zero trusted records.
+
+The production frontend polls both authenticated evidence surfaces and renders all 18 operations,
+including independent transport and semantic completion columns, open/failed dimensions and the
+combined gate. If either endpoint/evidence provider is unavailable, the UI does not infer proof.
 
 ## Non-claims
 
