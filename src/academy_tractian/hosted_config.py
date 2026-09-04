@@ -7,6 +7,10 @@ from urllib.parse import urlsplit
 
 
 _SUPPORTED_PROVIDERS = frozenset({"openai", "google"})
+_SUPPORTED_IDENTITY_BACKENDS = frozenset({"signed_bearer", "oidc"})
+_SUPPORTED_OIDC_ALGORITHMS = frozenset(
+    {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "EdDSA"}
+)
 
 
 def _required(environment: Mapping[str, str], name: str) -> str:
@@ -32,6 +36,12 @@ def _positive_int(environment: Mapping[str, str], name: str, default: int) -> in
     if value <= 0:
         raise ValueError(f"non_positive_integer_environment:{name}")
     return value
+
+
+def _csv(environment: Mapping[str, str], name: str) -> tuple[str, ...]:
+    raw = environment.get(name, "")
+    values = tuple(item.strip() for item in raw.split(",") if item.strip())
+    return tuple(dict.fromkeys(values))
 
 
 def _http_url(value: str, *, name: str, require_https: bool) -> str:
@@ -74,9 +84,8 @@ class HostedProductConfig:
     """Fail-closed configuration contract for the hosted-only production path.
 
     Secrets are stored only as private process values and are deliberately omitted from
-    ``sanitized_summary``. The config distinguishes infrastructure readiness from agent-serving
-    readiness so cloud resources can be validated before a provider/model is scientifically
-    promoted.
+    ``sanitized_summary``. HMAC bearer identity remains a bounded regression/development backend;
+    OIDC/JWKS is the provider-neutral hosted browser identity boundary.
     """
 
     postgres_internal_dsn: str
@@ -84,9 +93,17 @@ class HostedProductConfig:
     postgres_schema: str
     observability_schema: str
     cors_origins: tuple[str, ...]
-    runtime_identity_secret: str
+    identity_backend: str
+    runtime_identity_secret: str | None
     runtime_identity_issuer: str
     runtime_identity_audience: str
+    oidc_jwks_url: str | None
+    oidc_algorithms: tuple[str, ...]
+    oidc_organization_claim: str
+    oidc_role_claim: str
+    oidc_permissions_claim: str
+    oidc_identity_claim: str
+    oidc_authorized_parties: tuple[str, ...]
     tractian_base_url: str | None
     tractian_bearer_token: str | None
     provider: str | None
@@ -110,9 +127,32 @@ class HostedProductConfig:
             _required(env, "ACADEMY_POSTGRES_SCOPED_DSN"),
             name="ACADEMY_POSTGRES_SCOPED_DSN",
         )
-        secret = _required(env, "ACADEMY_RUNTIME_IDENTITY_SECRET")
-        if len(secret.encode("utf-8")) < 32:
-            raise ValueError("runtime_identity_secret_too_short")
+
+        identity_backend = (_optional(env, "ACADEMY_IDENTITY_BACKEND") or "signed_bearer").lower()
+        if identity_backend not in _SUPPORTED_IDENTITY_BACKENDS:
+            raise ValueError("unsupported_identity_backend")
+
+        secret = _optional(env, "ACADEMY_RUNTIME_IDENTITY_SECRET")
+        oidc_jwks_url: str | None = None
+        oidc_algorithms: tuple[str, ...] = ()
+        if identity_backend == "signed_bearer":
+            if secret is None:
+                raise ValueError("missing_required_environment:ACADEMY_RUNTIME_IDENTITY_SECRET")
+            if len(secret.encode("utf-8")) < 32:
+                raise ValueError("runtime_identity_secret_too_short")
+        else:
+            # OIDC never shares a symmetric browser/server signing secret with this application.
+            secret = None
+            oidc_jwks_url = _http_url(
+                _required(env, "ACADEMY_OIDC_JWKS_URL"),
+                name="ACADEMY_OIDC_JWKS_URL",
+                require_https=True,
+            )
+            oidc_algorithms = _csv(env, "ACADEMY_OIDC_ALGORITHMS")
+            if not oidc_algorithms:
+                raise ValueError("missing_required_environment:ACADEMY_OIDC_ALGORITHMS")
+            if not set(oidc_algorithms).issubset(_SUPPORTED_OIDC_ALGORITHMS):
+                raise ValueError("unsupported_oidc_algorithm")
 
         provider = _optional(env, "ACADEMY_PROVIDER")
         if provider is not None:
@@ -136,12 +176,19 @@ class HostedProductConfig:
             postgres_internal_dsn=internal_dsn,
             postgres_scoped_dsn=scoped_dsn,
             postgres_schema=_optional(env, "ACADEMY_POSTGRES_SCHEMA") or "academy_operational",
-            observability_schema=_optional(env, "ACADEMY_OBSERVABILITY_SCHEMA")
-            or "academy_observability",
+            observability_schema=_optional(env, "ACADEMY_OBSERVABILITY_SCHEMA") or "academy_observability",
             cors_origins=_cors_origins(env),
+            identity_backend=identity_backend,
             runtime_identity_secret=secret,
             runtime_identity_issuer=_required(env, "ACADEMY_RUNTIME_IDENTITY_ISSUER"),
             runtime_identity_audience=_required(env, "ACADEMY_RUNTIME_IDENTITY_AUDIENCE"),
+            oidc_jwks_url=oidc_jwks_url,
+            oidc_algorithms=oidc_algorithms,
+            oidc_organization_claim=_optional(env, "ACADEMY_OIDC_ORGANIZATION_CLAIM") or "organization_id",
+            oidc_role_claim=_optional(env, "ACADEMY_OIDC_ROLE_CLAIM") or "role",
+            oidc_permissions_claim=_optional(env, "ACADEMY_OIDC_PERMISSIONS_CLAIM") or "permissions",
+            oidc_identity_claim=_optional(env, "ACADEMY_OIDC_IDENTITY_CLAIM") or "sid",
+            oidc_authorized_parties=_csv(env, "ACADEMY_OIDC_AUTHORIZED_PARTIES"),
             tractian_base_url=tractian_base_url,
             tractian_bearer_token=_optional(env, "ACADEMY_TRACTIAN_BEARER_TOKEN"),
             provider=provider,
@@ -158,6 +205,10 @@ class HostedProductConfig:
         return config
 
     def assert_serving_ready(self) -> None:
+        if self.identity_backend == "oidc" and (self.oidc_jwks_url is None or not self.oidc_algorithms):
+            raise ValueError("hosted_oidc_configuration_incomplete")
+        if self.identity_backend == "signed_bearer" and not self.runtime_identity_secret:
+            raise ValueError("hosted_signed_bearer_secret_missing")
         if self.provider is None:
             raise ValueError("hosted_provider_not_selected")
         if not self.provider_api_key:
@@ -166,8 +217,26 @@ class HostedProductConfig:
             raise ValueError("tractian_base_url_missing")
 
     def sanitized_summary(self) -> dict[str, object]:
+        identity: dict[str, object] = {
+            "backend": "oidc-jwks-v1" if self.identity_backend == "oidc" else "signed-bearer-hmac-sha256-v1",
+            "issuer": self.runtime_identity_issuer,
+            "audience": self.runtime_identity_audience,
+        }
+        if self.identity_backend == "oidc":
+            identity.update(
+                jwks_url_configured=self.oidc_jwks_url is not None,
+                algorithms=list(self.oidc_algorithms),
+                organization_claim=self.oidc_organization_claim,
+                role_claim=self.oidc_role_claim,
+                permissions_claim=self.oidc_permissions_claim,
+                identity_claim=self.oidc_identity_claim,
+                authorized_parties=list(self.oidc_authorized_parties),
+            )
+        else:
+            identity["secret_configured"] = bool(self.runtime_identity_secret)
+
         return {
-            "schema_version": "hosted-product-config-v1",
+            "schema_version": "hosted-product-config-v2",
             "persistence": {
                 "operational": "postgresql",
                 "observability": "postgresql",
@@ -181,12 +250,7 @@ class HostedProductConfig:
                 "tractian_base_url_configured": self.tractian_base_url is not None,
                 "tractian_bearer_configured": self.tractian_bearer_token is not None,
             },
-            "identity": {
-                "backend": "signed-bearer-hmac-sha256-v1",
-                "issuer": self.runtime_identity_issuer,
-                "audience": self.runtime_identity_audience,
-                "secret_configured": bool(self.runtime_identity_secret),
-            },
+            "identity": identity,
             "provider": {
                 "selection": self.provider or "NO_SELECTION",
                 "api_key_configured": self.provider_api_key is not None,
