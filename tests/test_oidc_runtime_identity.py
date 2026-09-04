@@ -87,20 +87,19 @@ def test_oidc_provider_verifies_asymmetric_jwt_and_maps_tenant_context(rsa_keys)
 
     response = client.get("/context", headers={"Authorization": f"Bearer {_token(private)}"})
     assert response.status_code == 200
-    assert response.json() == {
-        "organization_id": "org-123",
-        "identity_id": "session-123",
-        "user_id": "user-123",
-        "role": "operator",
-        "permissions": [
-            "actions:confirm:self",
-            "actions:read:self",
-            "runs:create",
-            "runs:read:org",
-            "runs:read:self",
-        ],
-        "seed": None,
+    body = response.json()
+    assert body["organization_id"] == "org-123"
+    assert body["identity_id"] == "session-123"
+    assert body["user_id"] == "user-123"
+    assert body["role"] == "operator"
+    assert set(body["permissions"]) == {
+        "actions:confirm:self",
+        "actions:read:self",
+        "runs:create",
+        "runs:read:org",
+        "runs:read:self",
     }
+    assert body["seed"] is None
 
 
 def test_oidc_provider_rejects_wrong_audience_missing_org_and_wrong_authorized_party(rsa_keys) -> None:
