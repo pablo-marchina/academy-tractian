@@ -1,0 +1,136 @@
+{
+  "schema_version": "managed-state-identity-source-manifest-v1",
+  "collected_at": "2026-09-04T20:00:00Z",
+  "decision_scope": "static admission to hosted managed PostgreSQL and hosted identity pilots; not production selection",
+  "sources": [
+    {
+      "id": "supabase-pricing",
+      "url": "https://supabase.com/pricing",
+      "facts": [
+        "Free is $0",
+        "50,000 MAU",
+        "500 MB database",
+        "Free projects can pause after one week inactivity",
+        "automatic backups and PITR are not included on Free"
+      ]
+    },
+    {
+      "id": "supabase-connections",
+      "url": "https://supabase.com/docs/guides/database/connecting-to-postgres",
+      "facts": [
+        "Postgres connection strings are supported",
+        "shared Supavisor session and transaction poolers are available on Free",
+        "TLS/Postgres client connectivity is supported"
+      ]
+    },
+    {
+      "id": "supabase-jwt",
+      "url": "https://supabase.com/docs/guides/auth/jwts",
+      "facts": [
+        "JWT includes iss, exp, sub and role",
+        "JWKS is derived from issuer",
+        "custom access token hooks can change claims"
+      ]
+    },
+    {
+      "id": "supabase-oauth",
+      "url": "https://supabase.com/docs/guides/auth/oauth-server",
+      "facts": [
+        "OAuth 2.1 and OpenID Connect supported",
+        "JWKS supported",
+        "custom access token hook can customize audience and permissions"
+      ]
+    },
+    {
+      "id": "neon-pricing",
+      "url": "https://neon.com/pricing",
+      "facts": [
+        "Free is $0 with no credit card required",
+        "100 CU-hours per project as currently published",
+        "0.5 GB storage per project",
+        "6-hour time travel/restores",
+        "Neon Auth 60K MAU"
+      ]
+    },
+    {
+      "id": "neon-scale-to-zero",
+      "url": "https://neon.com/docs/introduction/scale-to-zero",
+      "facts": [
+        "Free compute scales to zero after inactivity",
+        "a new query reactivates compute automatically",
+        "manual intervention is not required"
+      ]
+    },
+    {
+      "id": "neon-pooling",
+      "url": "https://neon.com/docs/connect/connection-pooling",
+      "facts": [
+        "PgBouncer pooling supported",
+        "pooled URLs use sslmode=require",
+        "up to 10,000 client connections documented"
+      ]
+    },
+    {
+      "id": "neon-free-egress-guardrail",
+      "url": "https://neon.com/docs/introduction/network-transfer",
+      "facts": [
+        "Free includes 5 GB monthly public network transfer",
+        "exceeding Free transfer suspends compute rather than charging until upgrade/next cycle"
+      ]
+    },
+    {
+      "id": "neon-auth-rebuild",
+      "url": "https://neon.com/docs/changelog/2025-12-12",
+      "facts": [
+        "Neon Auth was rebuilt on Better Auth",
+        "users, sessions, organizations, configuration and JWKS live in neon_auth schema"
+      ]
+    },
+    {
+      "id": "clerk-pricing",
+      "url": "https://clerk.com/pricing",
+      "facts": [
+        "Hobby is free and requires no credit card",
+        "50,000 retained users per app",
+        "100 retained organizations per app",
+        "20 members per organization on included B2B tier",
+        "roles and custom permissions supported"
+      ]
+    },
+    {
+      "id": "clerk-session-tokens",
+      "url": "https://clerk.com/docs/guides/sessions/session-tokens",
+      "facts": [
+        "Clerk session tokens are JWTs",
+        "issuer, subject, session and organization context are represented",
+        "organization roles and permissions are supported"
+      ]
+    },
+    {
+      "id": "clerk-jwt-templates",
+      "url": "https://clerk.com/docs/guides/sessions/jwt-templates",
+      "facts": [
+        "custom JWT templates can set a static aud claim",
+        "token lifetime is configurable",
+        "custom claims can be emitted"
+      ]
+    },
+    {
+      "id": "auth0-pricing",
+      "url": "https://auth0.com/pricing",
+      "facts": [
+        "Free is $0 without credit card signup",
+        "up to 25,000 MAU",
+        "5 organizations on Free"
+      ]
+    },
+    {
+      "id": "workos-production",
+      "url": "https://workos.com/docs/authkit/environments",
+      "facts": [
+        "AuthKit production requires billing information",
+        "AuthKit is free up to 1 million MAU before usage pricing"
+      ]
+    }
+  ]
+}
