@@ -11,7 +11,7 @@ export function normalizeApiBaseUrl(value: string | undefined): string {
     throw new Error("invalid_api_base_url");
   }
 
-  if (!['http:', 'https:'].includes(parsed.protocol)) {
+  if (!["http:", "https:"].includes(parsed.protocol)) {
     throw new Error("invalid_api_base_url_protocol");
   }
   if (parsed.username || parsed.password) {
@@ -27,9 +27,13 @@ export function normalizeApiBaseUrl(value: string | undefined): string {
 
 export const API_BASE_URL = normalizeApiBaseUrl(RAW_API_BASE_URL);
 
-export function apiUrl(path: string): string {
+export function resolveApiUrl(path: string, baseUrl: string): string {
   if (!path.startsWith("/")) {
     throw new Error("api_path_must_be_absolute");
   }
-  return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
+  return baseUrl ? `${baseUrl}${path}` : path;
+}
+
+export function apiUrl(path: string): string {
+  return resolveApiUrl(path, API_BASE_URL);
 }
