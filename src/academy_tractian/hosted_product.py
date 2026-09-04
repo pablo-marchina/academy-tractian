@@ -11,7 +11,10 @@ from .hosted_integration_evidence_recorder import (
     EvidenceRecordingTractianTransport,
     HostedIntegrationEvidenceRecorder,
 )
-from .hosted_provider import create_hosted_decision_source
+from .hosted_provider import (
+    create_hosted_decision_source,
+    hosted_runtime_configuration_identity,
+)
 from .hosted_tractian_transport import HostedTractianTransport
 from .oidc_runtime_identity import OIDCClaimMapping, OIDCRuntimeContextProvider
 from .postgres_campaign_evidence_store import PostgresCampaignEvidenceStore
@@ -80,6 +83,7 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
     assert active.tractian_base_url is not None
 
     live_evidence = HostedIntegrationEvidenceRecorder()
+    runtime_configuration_identity = hosted_runtime_configuration_identity(active.provider)
 
     def decision_source_factory():
         return create_hosted_decision_source(
@@ -111,6 +115,7 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
         provider_calls_enabled=True,
         actions_enabled=False,
         heartbeat_interval_ms=active.heartbeat_interval_ms,
+        runtime_configuration_identity=runtime_configuration_identity,
     )
     persistent_evidence = app.state.tractian_integration_evidence_store
     if persistent_evidence is None:
@@ -146,6 +151,8 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
     )
     app.state.runtime_identity_issuer = active.runtime_identity_issuer
     app.state.runtime_identity_audience = active.runtime_identity_audience
+    app.state.hosted_candidate_id = runtime_configuration_identity.candidate_id
+    app.state.hosted_runtime_config_identity = runtime_configuration_identity.model_dump(mode="json")
     app.state.hosted_actions_qualified = False
     app.state.hosted_action_block_reason = "RESOURCE_AUTHORIZATION_NOT_YET_QUALIFIED"
     app.state.hosted_local_persistent_state_required = False
