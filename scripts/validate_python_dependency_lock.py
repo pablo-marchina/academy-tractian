@@ -47,20 +47,22 @@ def validate_lock(
     locked: dict[str, tuple[str, str]],
     installed: dict[str, str],
     *,
-    require_complete_environment: bool,
+    require_all_locked: bool,
 ) -> list[str]:
     violations: list[str] = []
+
     for key, (_, expected_version) in sorted(locked.items()):
         actual = installed.get(key)
         if actual is None:
-            violations.append(f"missing:{key}")
-        elif actual != expected_version:
+            if require_all_locked:
+                violations.append(f"missing:{key}")
+            continue
+        if actual != expected_version:
             violations.append(f"version_mismatch:{key}:{expected_version}:{actual}")
 
-    if require_complete_environment:
-        allowed_unlocked = _BOOTSTRAP_ALLOWLIST | _PROJECT_DISTRIBUTIONS
-        unexpected = sorted(set(installed) - set(locked) - allowed_unlocked)
-        violations.extend(f"unlocked_installed_distribution:{name}" for name in unexpected)
+    allowed_unlocked = _BOOTSTRAP_ALLOWLIST | _PROJECT_DISTRIBUTIONS
+    unexpected = sorted(set(installed) - set(locked) - allowed_unlocked)
+    violations.extend(f"unlocked_installed_distribution:{name}" for name in unexpected)
     return violations
 
 
@@ -72,26 +74,21 @@ def main() -> int:
     parser.add_argument(
         "--allow-subset",
         action="store_true",
-        help="Validate locked versions that are installed without requiring every lock entry to be present.",
+        help=(
+            "Allow lock entries that are not installed (for production-only environments) while still "
+            "rejecting any installed non-bootstrap distribution absent from the lock."
+        ),
     )
     args = parser.parse_args()
 
     try:
         locked = load_lock(args.lock)
         installed = installed_versions()
-        if args.allow_subset:
-            locked_for_validation = {key: value for key, value in locked.items() if key in installed}
-            violations = validate_lock(
-                locked_for_validation,
-                installed,
-                require_complete_environment=False,
-            )
-        else:
-            violations = validate_lock(
-                locked,
-                installed,
-                require_complete_environment=True,
-            )
+        violations = validate_lock(
+            locked,
+            installed,
+            require_all_locked=not args.allow_subset,
+        )
     except (OSError, ValueError) as exc:
         print("PYTHON_DEPENDENCY_LOCK=FAIL")
         print(f"PYTHON_DEPENDENCY_LOCK_ERROR={exc}")
@@ -107,7 +104,7 @@ def main() -> int:
     print("PYTHON_DEPENDENCY_LOCK=PASS")
     print(f"PYTHON_DEPENDENCY_LOCK_ENTRIES={len(locked)}")
     print(f"PYTHON_INSTALLED_DISTRIBUTIONS={len(installed)}")
-    print(f"PYTHON_DEPENDENCY_LOCK_COMPLETE_ENVIRONMENT={str(not args.allow_subset).lower()}")
+    print(f"PYTHON_DEPENDENCY_LOCK_REQUIRE_ALL={str(not args.allow_subset).lower()}")
     return 0
 
 
