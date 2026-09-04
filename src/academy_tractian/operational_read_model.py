@@ -174,6 +174,29 @@ def _latency_summary(values: list[float]) -> dict[str, int | float | None]:
     }
 
 
+def _safe_access_projection(value: Any) -> dict[str, bool] | None:
+    if not isinstance(value, dict):
+        return None
+    return {"ready": value.get("ready") is True}
+
+
+def _safe_recovery_projection(value: Any) -> dict[str, int] | None:
+    if not isinstance(value, dict):
+        return None
+    keys = (
+        "orphaned_executions_reconciled",
+        "interrupted_runtime_runs",
+        "uncertain_action_runs",
+    )
+    projected: dict[str, int] = {}
+    for key in keys:
+        raw = value.get(key)
+        if isinstance(raw, bool) or not isinstance(raw, int) or raw < 0:
+            return None
+        projected[key] = raw
+    return projected
+
+
 class OperationalReadModel:
     """Provider-free analytics over the persisted sanitized observability projection only."""
 
@@ -260,6 +283,12 @@ class OperationalReadModel:
         telemetry = None if live_operability is None else live_operability.get("telemetry")
         execution = None if live_operability is None else live_operability.get("execution")
         controls = None if live_operability is None else live_operability.get("controls")
+        access = _safe_access_projection(
+            None if live_operability is None else live_operability.get("access")
+        )
+        recovery = _safe_recovery_projection(
+            None if live_operability is None else live_operability.get("recovery")
+        )
         telemetry = telemetry if isinstance(telemetry, dict) else None
         execution = execution if isinstance(execution, dict) else None
         controls = controls if isinstance(controls, dict) else None
@@ -285,10 +314,14 @@ class OperationalReadModel:
         action_switch_status = "not_instrumented"
         if action_switch is not None:
             action_switch_status = "engaged" if action_switch.get("engaged") else "disengaged"
+        access_status = "not_instrumented" if access is None else ("ready" if access["ready"] else "unavailable")
+        recovery_status = "not_instrumented" if recovery is None else "measured"
 
         overall_ready = self.store.ready()
         if heartbeat is not None:
             overall_ready = overall_ready and runtime_status == "ready"
+        if access is not None:
+            overall_ready = overall_ready and access["ready"]
 
         measured: dict[str, Any] = {
             "forbidden_field_leakage": 0,
@@ -309,6 +342,10 @@ class OperationalReadModel:
             measured["executor_pressure"] = execution
         if controls is not None:
             measured["controls"] = controls
+        if access is not None:
+            measured["access"] = access
+        if recovery is not None:
+            measured["recovery"] = recovery
 
         not_measured_yet = [
             "runtime_request_latency_by_outcome_ms",
@@ -331,6 +368,8 @@ class OperationalReadModel:
                     "executor_pressure",
                     "provider_kill_switch",
                     "action_kill_switch",
+                    "operational_access",
+                    "startup_recovery",
                 ]
             )
 
@@ -350,6 +389,8 @@ class OperationalReadModel:
                 {"component": "provider_kill_switch", "status": provider_switch_status, "detail": "host-owned gate blocks runtime_factory before provider-owned client construction"},
                 {"component": "action_kill_switch", "status": action_switch_status, "detail": "ProductionRuntimeConfig v1 keeps consequential actions disabled"},
                 {"component": "executor_pressure", "status": "measured" if execution is not None else "not_instrumented", "detail": "active/queued/inflight runs against configured max_workers"},
+                {"component": "operational_access", "status": access_status, "detail": "persistent run ownership/access store readiness without principal identifiers"},
+                {"component": "startup_recovery", "status": recovery_status, "detail": "aggregate orphaned execution reconciliation counts; no run/action identifiers"},
             ],
             "totals": {
                 **overview,
@@ -405,7 +446,7 @@ class OperationalReadModel:
         return {
             "schema_version": "policies-metrics-v2",
             "scope": {"run_id": run_id},
-            "items": items,
+            "items": list(items),
             "count": len(items),
         }
 
