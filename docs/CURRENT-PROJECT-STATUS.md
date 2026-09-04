@@ -19,7 +19,8 @@ hosted FastAPI product path                IMPLEMENTED / candidate
 hosted OIDC/JWKS boundary                  IMPLEMENTED / provider-neutral
 managed PostgreSQL production state        IMPLEMENTED / candidate
 PostgreSQL tenant RLS                      IMPLEMENTED / repository-tested
-hosted PostgreSQL live preflight           IMPLEMENTED / live execution pending
+hosted deployment live attestation         IMPLEMENTED / Railway connected path FAIL
+hosted PostgreSQL live preflight           IMPLEMENTED / live execution blocked by deployment attestation
 hosted TRACTIAN transport                  IMPLEMENTED / 18/18 proof pending
 hosted semantic certification              IMPLEMENTED / 18/18 proof pending
 hosted provider/model frontier             IMPLEMENTED / promotion pending
@@ -30,7 +31,7 @@ full-product Playwright                    IMPLEMENTED / hosted-live run pending
 Python dependency lock                     IMPLEMENTED / gated
 frontend lockfile + npm ci                 IMPLEMENTED / gated
 current clean-clone reproduction           PASS / gated
-final required CI                          PASS on current PR head
+final required CI                          current head revalidating
 
 human semantic calibration                 NOT READY — real labels required
 business-value MANUAL vs ASSISTED           NOT READY — real human data required
@@ -138,15 +139,43 @@ Live pilot findings already observed:
 
 This is qualification evidence, not a Neon production promotion decision.
 
-## 6. Hosted PostgreSQL preflight
+The database was intentionally **not migrated by the failed Railway deployment**. The deployment attestation failed before PostgreSQL preflight/migration, preserving the clean experimental boundary.
 
-The repository now contains a read-only, secret-safe preflight:
+## 6. Hosted deployment attestation and PostgreSQL preflight
+
+The hosted deployment chain is now explicitly non-compensatory:
+
+```text
+static feasibility
+→ live deployment source/build/runtime attestation
+→ hosted PostgreSQL preflight
+→ explicit migration
+→ RLS/isolation verification
+→ readiness
+```
+
+A provider's documentation or feature matrix can only admit it to a pilot. It cannot prove what source revision or build path actually executed.
+
+The repository contains the hash-bound live attestation gate:
+
+```bash
+python scripts/check_live_deployment_attestation.py <evidence.json>
+```
+
+It requires, by default:
+
+- exact expected source revision;
+- exact expected branch;
+- approved build contract (`root-dockerfile`);
+- approved Python runtime contract (`3.11`).
+
+Only after that gate passes may the read-only PostgreSQL preflight run:
 
 ```bash
 python scripts/check_hosted_postgres_preflight.py
 ```
 
-It validates before migration/serving that:
+The PostgreSQL preflight validates before migration/serving that:
 
 - both endpoints are non-local;
 - internal and scoped connections resolve to distinct identities;
@@ -155,30 +184,38 @@ It validates before migration/serving that:
 - both real application sessions use TLS;
 - database identity is coherent.
 
-The evidence output contains bounded/fingerprinted metadata only and must not expose DSNs, passwords or raw secrets.
+Both evidence paths are secret-safe and must not expose DSNs, passwords or raw credentials.
 
-## 7. Hosted deployment challenger
+## 7. Railway live deployment result
 
-An isolated Railway project now exists only as a deployment/executor challenger:
-
-```text
-project        academy-tractian-hosted-pilot
-purpose        run exact PR SHA with hosted secrets and current Docker/FastAPI path
-promotion      NONE
-```
-
-The immediate experiment is:
+An isolated Railway project was created only as a deployment/executor challenger. The connected deployment path was instructed to use the PR branch and the repository's root Dockerfile contract, but empirical deployment metadata/logs showed:
 
 ```text
-Railway exact PR branch
-→ secret-injected Neon internal/scoped DSNs
-→ hosted PostgreSQL preflight
-→ explicit migration
-→ RLS/isolation verification
-→ readiness
+candidate                     railway
+expected branch               feat/cloud-production-baseline
+observed branch               main
+expected source revision      PR candidate revision
+observed source revision      acb786e3a4cf45500fd68741e1ecedba1f624e5d
+expected build contract       root-dockerfile
+observed build contract       railpack
+expected Python               3.11
+observed Python               3.13.15
+live attestation outcome      LIVE_ATTESTATION_FAIL
 ```
 
-Railway must not be described as the winning cloud vendor until the preregistered deployment evidence closes.
+The deploy then could not find `scripts/check_hosted_postgres_preflight.py`, consistent with having executed the older `main` revision rather than the intended PR source.
+
+Consequences:
+
+- Railway is **not qualified through the currently connected Git-source path**;
+- the run is not counted as hosted PostgreSQL evidence;
+- PostgreSQL preflight and migration were not credited or executed as valid evidence;
+- Neon remained unmodified by the wrong source revision;
+- Railway is not globally declared impossible: it may be reconsidered only through a path that independently proves exact immutable source/build provenance, such as an approved OCI image pinned by digest.
+
+The sanitized, hash-bound artifact is:
+
+`research/results/railway-live-deployment-attestation-2026-09-04.json`.
 
 ## 8. Provider/model state
 
@@ -248,7 +285,8 @@ Implemented:
 - provider promotion decision gates;
 - semantic review collection/adjudication machinery;
 - paired MANUAL × ASSISTED business-value analysis machinery;
-- evaluator-only adaptive stopping diagnostics.
+- evaluator-only adaptive stopping diagnostics;
+- live deployment source/build/runtime attestation as a non-compensatory infrastructure gate.
 
 Still intentionally not claimed:
 
@@ -287,23 +325,17 @@ Visual density must improve understanding rather than turn the product into disc
 
 ## 13. Current CI and reproducibility
 
-On PR head `bf053129dea8293ca750dae52c00ddfe985d36d5`, the central gates returned green, including:
+The pre-attestation baseline head `bf053129dea8293ca750dae52c00ddfe985d36d5` was fully green across the central required gates. The current head contains the new live deployment attestation module, tests, CLI and bound Railway artifact and is undergoing normal required-CI revalidation.
 
-- `production-runtime`;
-- PostgreSQL operational/restart checks;
-- load/concurrency benchmark;
-- frontend;
-- observability;
-- EDD;
-- final-delivery reproduction;
-- final-handoff acceptance;
-- `final-ci-required`.
+Completed current-head jobs observed so far include green results for PostgreSQL operational/restart checks, frontend, observability, EDD, load/concurrency, final-delivery reproduction, final-handoff acceptance and provider comparison design. No production-readiness claim is upgraded until `final-ci-required` completes for the current head.
 
 The current clean-clone gate validates the canonical `FREEZE_REOPENED` state instead of demanding byte identity with a superseded freeze candidate.
 
 ## 14. Remaining P0 gates before a new hard freeze
 
 ```text
+HOSTED_EXACT_SOURCE_ATTESTATION
+HOSTED_APPROVED_BUILD_RUNTIME
 HOSTED_POSTGRES_PREFLIGHT
 HOSTED_POSTGRES_MIGRATION
 HOSTED_POSTGRES_RLS_ISOLATION
@@ -330,6 +362,7 @@ Do not claim:
 - the hard freeze is currently effective;
 - unconditional production readiness;
 - Neon or Railway has won the cloud decision;
+- Railway's currently connected Git-source deployment path is qualified;
 - a production provider/model has been selected;
 - hosted OIDC has been live-validated end to end;
 - TRACTIAN transport or semantic coverage is 18/18 before empirical proof;
