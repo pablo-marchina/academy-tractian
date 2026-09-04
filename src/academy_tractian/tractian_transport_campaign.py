@@ -37,7 +37,10 @@ class TransportProbeFixture(_StrictModel):
 
     @model_validator(mode="after")
     def validate_action_approval_shape(self) -> "TransportProbeFixture":
-        tool = get_tool(self.operation)
+        try:
+            tool = get_tool(self.operation)
+        except KeyError as exc:
+            raise ValueError("unknown_transport_probe_operation") from exc
         if tool.kind is ToolKind.READ:
             if self.action_execution_approved or self.action_approval_ref is not None:
                 raise ValueError("read_fixture_cannot_carry_action_approval")
