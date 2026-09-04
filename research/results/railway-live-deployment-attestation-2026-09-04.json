@@ -1,0 +1,15 @@
+{
+  "schema_version": "live-deployment-attestation-v1",
+  "candidate_id": "railway",
+  "deployment_id": "80aeaf72-8146-4fb6-a159-e4e1e4177482",
+  "collected_at": "2026-09-04T20:59:09Z",
+  "expected_source_revision": "b1e951479568ebba5e93a7194b22965868403fbe",
+  "observed_source_revision": "acb786e3a4cf45500fd68741e1ecedba1f624e5d",
+  "expected_branch": "feat/cloud-production-baseline",
+  "observed_branch": "main",
+  "expected_build_contract": "root-dockerfile",
+  "observed_build_contract": "railpack",
+  "expected_python_major_minor": "3.11",
+  "observed_python_version": "3.13.15",
+  "artifact_sha256": "27f91195cd3978d78b8bd3a6d14b1b64f3682310b346931062e8ca878b67f003"
+}
