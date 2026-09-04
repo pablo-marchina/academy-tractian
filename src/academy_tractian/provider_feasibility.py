@@ -30,11 +30,15 @@ def _canonical_datetime(value: datetime) -> str:
     return rendered[:-6] + "Z" if rendered.endswith("+00:00") else rendered
 
 
+ZeroCostStatus = Literal["available", "unavailable", "unknown"]
+
+
 class ProviderFeasibilityEvidence(_StrictModel):
     """Timestamped external-feasibility facts for one explicit provider+model candidate.
 
     Stable identity/maturity facts are recomputed from the code-owned registry. Volatile facts
-    such as free-tier eligibility, metered price and account capacity are hash-bound here.
+    such as free-tier eligibility, metered price and account capacity are hash-bound here. Unknown
+    is explicit: absence of account-level proof is never silently converted to false or true.
     """
 
     schema_version: Literal["provider-feasibility-evidence-v1"] = "provider-feasibility-evidence-v1"
@@ -43,7 +47,7 @@ class ProviderFeasibilityEvidence(_StrictModel):
     source_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     hosted_service: bool
     required_local_components: int = Field(ge=0)
-    zero_cost_execution_available: bool
+    zero_cost_execution_status: ZeroCostStatus
     metered_input_usd_per_million: float | None = Field(default=None, ge=0.0)
     metered_output_usd_per_million: float | None = Field(default=None, ge=0.0)
     structured_output_supported: bool
@@ -129,8 +133,11 @@ def decide_provider_feasibility(
         reasons.append("HOSTED_SERVICE_REQUIRED")
     if evidence.required_local_components > policy.max_required_local_components:
         reasons.append("LOCAL_COMPONENT_LIMIT_EXCEEDED")
-    if policy.require_zero_cost_execution and not evidence.zero_cost_execution_available:
-        reasons.append("ZERO_COST_EXECUTION_REQUIRED")
+    if policy.require_zero_cost_execution:
+        if evidence.zero_cost_execution_status == "unknown":
+            reasons.append("ZERO_COST_EXECUTION_UNKNOWN")
+        elif evidence.zero_cost_execution_status != "available":
+            reasons.append("ZERO_COST_EXECUTION_REQUIRED")
     if policy.require_structured_output and not evidence.structured_output_supported:
         reasons.append("STRUCTURED_OUTPUT_REQUIRED")
 
@@ -179,7 +186,7 @@ def build_provider_feasibility_evidence(
     source_manifest_sha256: str,
     hosted_service: bool,
     required_local_components: int,
-    zero_cost_execution_available: bool,
+    zero_cost_execution_status: ZeroCostStatus,
     metered_input_usd_per_million: float | None,
     metered_output_usd_per_million: float | None,
     structured_output_supported: bool,
@@ -193,7 +200,7 @@ def build_provider_feasibility_evidence(
         "source_manifest_sha256": source_manifest_sha256,
         "hosted_service": hosted_service,
         "required_local_components": required_local_components,
-        "zero_cost_execution_available": zero_cost_execution_available,
+        "zero_cost_execution_status": zero_cost_execution_status,
         "metered_input_usd_per_million": metered_input_usd_per_million,
         "metered_output_usd_per_million": metered_output_usd_per_million,
         "structured_output_supported": structured_output_supported,
