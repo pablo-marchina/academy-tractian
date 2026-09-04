@@ -18,15 +18,20 @@ A entrega é uma solução única com duas capacidades integradas:
 - identidade promovida: **bearer assinado HMAC-SHA256**, tenant/user/identity server-trusted; não é OAuth/OIDC/JWT;
 - estado operacional mutável: **PostgreSQL** com RLS tenant-scoped; DuckDB permanece analytics/read model;
 - Playwright full-product E2E + frontend lockfile: **implementados e gated**;
+- clean-clone current-product reproduction: **verde e gated**;
+- final CI: **`required-gate` verde no merged `main` `b86b15ef…`**;
+- branch protection: **CI pronta, enforcement externo ainda pendente**;
 - human semantic-review collector + source generation: **implementados**, mas labels humanos reais/calibração ainda não podem ser fabricados;
 - operational-value collector + frozen paired analysis: **implementados**, mas não há business-value claim sem medições humanas reais;
 - adaptive stopping: **evaluator-only diagnostic**; nenhuma política adaptativa foi promovida ao runtime;
 - load/concurrency: **campanha provider-free medida**, interpretação descritiva, sem claim de capacidade de produção;
 - restart/recovery: **campanha PostgreSQL integrada verificada**, sem replay/retry automático e sem claim de RTO/RPO/availability;
 - D01/D02 provider experiments: **USD 0 / `NO_SELECTION`**;
+- final evidence state: **`READY_FOR_HARD_FREEZE` candidate**;
+- hard feature/visual/architecture freeze: **programado para o fim de 2026-09-05**, ainda não tratado como efetivo;
 - entrega final: **2026-09-08**.
 
-A fonte humana canônica do estado atual é [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md).
+A fonte humana canônica do estado atual é [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md). A decisão de freeze candidata está em [`research/final-freeze-decision-2026-09-04.md`](research/final-freeze-decision-2026-09-04.md), com manifesto verificável em [`research/results/final-freeze-evidence-bundle-2026-09-04.json`](research/results/final-freeze-evidence-bundle-2026-09-04.json).
 
 ## Arquitetura promovida
 
@@ -123,7 +128,7 @@ requirement
 
 Complexidade arquitetural não entra por convenção. RAG/GraphRAG/vector DB, Kubernetes, Kafka, Redis, multi-agent, Temporal, MCP migration ou framework swap continuam fora sem gap medido e challenger vencedor.
 
-## Reprodução provider-free
+## Reprodução e CI final
 
 Há duas superfícies deliberadamente distintas:
 
@@ -139,14 +144,15 @@ PostgreSQL 18
 → explicit identity/RLS + load + restart P0 checks
 → ADR-004 controller regression
 → frozen EV-007 / EV-008 / EV-011
-→ final delivery demo/evidence validation
+→ historical delivery/evidence validation
 → final handoff audit
+→ final freeze bundle validation
 → npm ci from committed lockfile
 → frontend typecheck / tests / production build
 → git diff cleanliness check
 ```
 
-O full-browser acceptance permanece separado e obrigatório em `.github/workflows/full-product-playwright.yml`.
+O full-browser acceptance permanece separado em `.github/workflows/full-product-playwright.yml`. O always-on `.github/workflows/final-ci-required.yml` chama os dois contratos e expõe um único status estável: **`required-gate`**.
 
 Para reprodução manual, veja [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md).
 
@@ -158,24 +164,32 @@ Para reprodução manual, veja [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HAND
 - nenhum ganho de stopping adaptativo é reivindicado antes de challenger oracle-free;
 - nenhum número do CI de load é capacidade de produção;
 - recovery em CI não prova RTO/RPO, HA, multi-region ou uptime de deployment;
-- LangGraph ou qualquer framework alternativo não é necessário/superior sem comparação medida.
+- branch protection não é reivindicada antes de o GitHub reportar enforcement ativo;
+- LangGraph ou qualquer framework alternativo não é necessário/superior sem comparação medida;
+- o artifact científico C4 ausente não é reconstruído, substituído ou reavaliado.
 
-## Próximos gates
+## Critical path
 
-1. fechar **clean-clone full reproduction** (#174);
-2. branch protection + final CI P0;
-3. final freeze + benchmark/evidence bundle P0;
-4. coletar/calibrar evidência humana real quando os revisores estiverem disponíveis;
-5. P1 somente com tempo/evidência: runtime LangGraph comparison, final provider/model benchmark, adaptive model routing, OpenTelemetry standardization e frontend consolidation.
+1. validar/mergear o **final freeze evidence bundle** (#114);
+2. 2026-09-05: apenas integrated test/fix da candidata;
+3. fim de 2026-09-05: hard feature/visual/architecture freeze;
+4. aplicar e verificar branch protection no GitHub Settings quando disponível;
+5. 2026-09-06/07: reprodução/rehearsal/buffer;
+6. 2026-09-08: entrega.
+
+Evidência humana real pode ser coletada quando revisores/operadores estiverem disponíveis. Sem esses dados, o estado correto continua `NOT READY`, não uma claim fabricada.
 
 ## Documentação ativa
 
 1. [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md)
-2. [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md)
-3. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-4. [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md)
-5. [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md)
-6. [`docs/RUBRIC-TO-EVIDENCE.md`](docs/RUBRIC-TO-EVIDENCE.md)
-7. [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md)
+2. [`research/final-freeze-decision-2026-09-04.md`](research/final-freeze-decision-2026-09-04.md)
+3. [`research/results/final-freeze-evidence-bundle-2026-09-04.json`](research/results/final-freeze-evidence-bundle-2026-09-04.json)
+4. [`docs/BRANCH-PROTECTION.md`](docs/BRANCH-PROTECTION.md)
+5. [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md)
+6. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+7. [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md)
+8. [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md)
+9. [`docs/RUBRIC-TO-EVIDENCE.md`](docs/RUBRIC-TO-EVIDENCE.md)
+10. [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md)
 
 Frozen experiment artifacts permanecem imutáveis e autoritativos para seus próprios escopos históricos.
