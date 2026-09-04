@@ -25,6 +25,11 @@ def _canonical_sha256(payload: object) -> str:
     ).hexdigest()
 
 
+def _canonical_datetime(value: datetime) -> str:
+    rendered = value.isoformat()
+    return rendered[:-6] + "Z" if rendered.endswith("+00:00") else rendered
+
+
 class ProviderFeasibilityEvidence(_StrictModel):
     """Timestamped external-feasibility facts for one explicit provider+model candidate.
 
@@ -181,7 +186,7 @@ def build_provider_feasibility_evidence(
     material = {
         "schema_version": "provider-feasibility-evidence-v1",
         "candidate_id": candidate_id,
-        "collected_at": collected_at.isoformat(),
+        "collected_at": _canonical_datetime(collected_at),
         "source_manifest_sha256": source_manifest_sha256,
         "hosted_service": hosted_service,
         "required_local_components": required_local_components,
