@@ -7,8 +7,9 @@ import { ToolCampaignPanel } from "./ToolCampaignExplorer";
 
 function campaign(): ToolCampaignResponse {
   return {
-    schema_version: "tractian-integration-campaign-v1",
-    evidence_state: "VALID",
+    schema_version: "tractian-integration-campaign-v2",
+    transport_evidence_state: "VALID",
+    semantic_evidence_state: "VALID",
     normalized_operations: 18,
     reads: 13,
     actions: 5,
@@ -43,8 +44,10 @@ describe("ToolCampaignPanel", () => {
     expect(html).toContain("0/18 complete");
     expect(html).toContain("INCOMPLETE");
     expect(html).toContain("2/6");
-    expect(html).toContain("response normalization verified");
-    expect(html).toContain("agent evaluator behavior verified");
+    expect(html).toContain("response normalization verified [UNPROVEN]");
+    expect(html).toContain("agent evaluator behavior verified [UNPROVEN]");
+    expect(html).toContain("Transport evidence");
+    expect(html).toContain("Semantic evidence");
     expect(html).toContain("Transport telemetry is not semantic integration proof.");
   });
 
@@ -73,5 +76,22 @@ describe("ToolCampaignPanel", () => {
     expect(html).toContain("1/18 complete");
     expect(html).toContain("COMPLETE");
     expect(html).toContain("6/6");
+  });
+
+  it("shows semantic proof failures as failures rather than missing evidence", () => {
+    const base = campaign();
+    const failedOperation = {
+      ...base.operations[0],
+      dimensions: base.operations[0].dimensions.map((dimension) =>
+        dimension.name === "response_normalization_verified"
+          ? { ...dimension, state: "FAIL" as const, evidence_source: "campaign:test" }
+          : dimension,
+      ),
+    };
+    const html = renderToStaticMarkup(
+      <ToolCampaignPanel campaign={{ ...base, operations: [failedOperation] }} />,
+    );
+
+    expect(html).toContain("response normalization verified [FAIL]");
   });
 });
