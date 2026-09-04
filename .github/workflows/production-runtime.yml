@@ -18,6 +18,10 @@ on:
       - "research/e2/**"
       - ".github/workflows/production-runtime.yml"
 
+concurrency:
+  group: production-runtime-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   production-runtime-unit:
     runs-on: ubuntu-latest
