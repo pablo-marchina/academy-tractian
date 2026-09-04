@@ -108,11 +108,16 @@ def test_next_task_is_blind_even_for_adjudication() -> None:
     payload = response.json()
     assert payload["assignment_id"] == store.record.assignment_id
     assert payload["task"]["dimension"] == "operational_usefulness"
+    assert payload["task"]["terminal_message"].startswith("Escalate")
     serialized = str(payload).lower()
     for forbidden in (
         "phase",
         "reviewer_slot",
         "adjudication",
+        "scenario_id",
+        "val-a",
+        "output_sha256",
+        "context_sha256",
         "source_split",
         "group_id",
         "reviewer_ref_sha256",

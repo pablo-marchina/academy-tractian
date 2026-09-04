@@ -24,6 +24,10 @@ from .provider_free_operational_value import (
     provider_free_operational_value_permissions,
     register_provider_free_operational_value_packet,
 )
+from .provider_free_semantic_review import (
+    provider_free_semantic_review_permissions,
+    register_provider_free_semantic_review_packet,
+)
 
 
 class ProviderFreeScenarioDecisionSource(DecisionSource):
@@ -183,6 +187,7 @@ def provider_free_runtime_context(request: Request) -> AuthenticatedRuntimeConte
         DEFAULT_RUNTIME_PERMISSIONS
         | frozenset({"analytics:read:global"})
         | provider_free_operational_value_permissions()
+        | provider_free_semantic_review_permissions()
     )
     return AuthenticatedRuntimeContext(
         organization_id=organization_id,
@@ -228,6 +233,7 @@ def build_provider_free_product():
         heartbeat_interval_ms=250,
     )
     register_provider_free_operational_value_packet(app)
+    register_provider_free_semantic_review_packet(app)
     return app
 
 

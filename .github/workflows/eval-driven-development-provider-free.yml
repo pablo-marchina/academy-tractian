@@ -32,6 +32,7 @@ jobs:
           tests/test_semantic_human_calibration.py
           tests/test_semantic_calibration_freeze.py
           tests/test_semantic_review_collection.py
+          tests/test_semantic_annotation_sources.py
           tests/test_observability.py
       - name: Compile evaluation CLIs
         run: >-
@@ -43,3 +44,4 @@ jobs:
           scripts/semantic_eval_calibrate.py
           scripts/semantic_human_calibration.py
           scripts/semantic_review_collect.py
+          scripts/semantic_annotation_sources.py

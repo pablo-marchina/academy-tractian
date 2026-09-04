@@ -6,6 +6,12 @@ import type {
   OperationalPilotValidSubmission,
 } from "./operationalValueTypes";
 import type {
+  SemanticReviewAccepted,
+  SemanticReviewAssignment,
+  SemanticReviewSubmission,
+  SemanticReviewWithdrawn,
+} from "./semanticReviewTypes";
+import type {
   AnalyticsQuerySpec,
   ArchitectureManifest,
   DynamicAnalyticsResult,
@@ -140,6 +146,32 @@ export function terminateOperationalValueTask(
       method: "POST",
       body: JSON.stringify(payload),
     },
+  );
+}
+
+export function fetchSemanticReviewTask(): Promise<SemanticReviewAssignment> {
+  return requestJson<SemanticReviewAssignment>("/api/semantic-review/tasks/next", {
+    method: "POST",
+  });
+}
+
+export function completeSemanticReview(
+  assignmentId: string,
+  payload: SemanticReviewSubmission,
+): Promise<SemanticReviewAccepted> {
+  return requestJson<SemanticReviewAccepted>(
+    `/api/semantic-review/assignments/${encodeURIComponent(assignmentId)}/complete`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function withdrawSemanticReview(assignmentId: string): Promise<SemanticReviewWithdrawn> {
+  return requestJson<SemanticReviewWithdrawn>(
+    `/api/semantic-review/assignments/${encodeURIComponent(assignmentId)}/withdraw`,
+    { method: "POST" },
   );
 }
 
