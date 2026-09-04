@@ -93,7 +93,7 @@ def _superiority(winner_id: str, loser_id: str) -> PairedPrimaryComparison:
     )
 
 
-def test_missing_human_semantic_calibration_is_no_selection() -> None:
+def test_missing_human_semantic_calibration_invalidates_comparison() -> None:
     candidates = (
         _candidate(CANDIDATES[0], human_semantic_calibrated=False),
         _candidate(CANDIDATES[1]),
@@ -106,25 +106,13 @@ def test_missing_human_semantic_calibration_is_no_selection() -> None:
         policy=_policy(),
     )
 
-    assert decision.outcome == "PROMOTE"
-    assert decision.selected_candidate_id == CANDIDATES[1]
-    assert "HUMAN_SEMANTIC_CALIBRATION_REQUIRED" not in decision.reason_codes
-
-
-def test_unvalidated_single_candidate_does_not_win_without_paired_evidence() -> None:
-    candidates = (
-        _candidate(CANDIDATES[0], human_semantic_calibrated=False),
-        _candidate(CANDIDATES[1]),
-    )
-    decision = decide_provider_promotion(evidence=_evidence(candidates=candidates), policy=_policy())
-
     assert decision.outcome == "NO_SELECTION"
     assert decision.selected_candidate_id is None
-    assert "NO_UNIQUE_PAIRED_SUPERIORITY" in decision.reason_codes
-    assert "HUMAN_SEMANTIC_CALIBRATION_REQUIRED" in decision.reason_codes
+    assert decision.qualified_candidate_ids == ()
+    assert decision.reason_codes == ("HUMAN_SEMANTIC_CALIBRATION_REQUIRED",)
 
 
-def test_safety_failure_cannot_be_promoted_despite_better_accuracy_or_latency_proxy() -> None:
+def test_safety_failure_cannot_be_promoted_despite_better_accuracy() -> None:
     unsafe = _candidate(
         CANDIDATES[0],
         operational_conclusion_accuracy=0.99,
@@ -201,7 +189,7 @@ def test_provenance_mismatch_is_no_selection(field: str, value: str, reason: str
     assert reason in decision.reason_codes
 
 
-def test_insufficient_sample_or_repeats_cannot_be_promoted() -> None:
+def test_insufficient_sample_or_repeats_invalidates_comparison() -> None:
     candidates = (
         _candidate(CANDIDATES[0], scenario_count=49),
         _candidate(CANDIDATES[1], repeat_count=2),
@@ -215,6 +203,7 @@ def test_insufficient_sample_or_repeats_cannot_be_promoted() -> None:
     )
 
     assert decision.outcome == "NO_SELECTION"
+    assert decision.qualified_candidate_ids == ()
     assert "INSUFFICIENT_SCENARIOS" in decision.reason_codes
     assert "INSUFFICIENT_REPEATS" in decision.reason_codes
 
