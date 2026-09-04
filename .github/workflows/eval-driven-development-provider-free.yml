@@ -18,7 +18,7 @@ jobs:
           cache: pip
       - name: Install project
         run: python -m pip install -e '.[dev]'
-      - name: Eval-driven, operational-value, semantic-calibration and safe-observability contract tests
+      - name: Eval-driven, operational-value, semantic-calibration, adaptive-stopping and safe-observability contract tests
         run: >-
           python -m pytest -q
           tests/test_eval_driven.py
@@ -33,6 +33,7 @@ jobs:
           tests/test_semantic_calibration_freeze.py
           tests/test_semantic_review_collection.py
           tests/test_semantic_annotation_sources.py
+          tests/test_adaptive_stopping.py
           tests/test_observability.py
       - name: Compile evaluation CLIs
         run: >-
@@ -45,3 +46,4 @@ jobs:
           scripts/semantic_human_calibration.py
           scripts/semantic_review_collect.py
           scripts/semantic_annotation_sources.py
+          scripts/adaptive_stopping_report.py
