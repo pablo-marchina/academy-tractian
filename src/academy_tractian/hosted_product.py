@@ -55,6 +55,7 @@ def _runtime_context_provider(config: HostedProductConfig):
                 role_claim=config.oidc_role_claim,
                 permissions_claim=config.oidc_permissions_claim,
                 identity_claim=config.oidc_identity_claim,
+                required_claims=(config.oidc_role_claim,),
             ),
             allowed_claim_permissions=(),
             allowed_privileged_permissions=(),
