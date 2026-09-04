@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from fnmatch import fnmatchcase
 from hashlib import sha256
 import json
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -84,6 +85,98 @@ class HardFreezeReadinessReport(BaseModel):
 def compute_evidence_sha256(payload: dict[str, object]) -> str:
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def extract_classic_required_status_contexts(
+    branch_payload: dict[str, Any],
+) -> tuple[str, ...]:
+    """Extract required checks exposed by classic branch-protection metadata."""
+
+    protection = branch_payload.get("protection")
+    if not isinstance(protection, dict):
+        return ()
+    required = protection.get("required_status_checks")
+    if not isinstance(required, dict):
+        return ()
+
+    contexts: set[str] = set()
+    raw_contexts = required.get("contexts")
+    if isinstance(raw_contexts, list):
+        contexts.update(item for item in raw_contexts if isinstance(item, str) and item)
+
+    raw_checks = required.get("checks")
+    if isinstance(raw_checks, list):
+        for item in raw_checks:
+            if isinstance(item, dict):
+                context = item.get("context")
+                if isinstance(context, str) and context:
+                    contexts.add(context)
+    return tuple(sorted(contexts))
+
+
+def _ref_pattern_matches_main(pattern: str) -> bool:
+    if pattern in {"~DEFAULT_BRANCH", "~ALL"}:
+        return True
+    return fnmatchcase("refs/heads/main", pattern) or fnmatchcase("main", pattern)
+
+
+def ruleset_targets_main(ruleset: dict[str, Any]) -> bool:
+    """Return true only for an active branch ruleset whose ref condition covers main."""
+
+    if ruleset.get("target") != "branch" or ruleset.get("enforcement") != "active":
+        return False
+
+    conditions = ruleset.get("conditions")
+    if not isinstance(conditions, dict):
+        return False
+    ref_name = conditions.get("ref_name")
+    if not isinstance(ref_name, dict):
+        return False
+
+    includes = ref_name.get("include")
+    excludes = ref_name.get("exclude")
+    if not isinstance(includes, list) or not includes:
+        return False
+
+    include_match = any(
+        isinstance(pattern, str) and _ref_pattern_matches_main(pattern)
+        for pattern in includes
+    )
+    exclude_match = isinstance(excludes, list) and any(
+        isinstance(pattern, str) and _ref_pattern_matches_main(pattern)
+        for pattern in excludes
+    )
+    return include_match and not exclude_match
+
+
+def extract_ruleset_required_status_contexts(
+    rulesets: tuple[dict[str, Any], ...],
+) -> tuple[str, ...]:
+    """Extract required status contexts from active rulesets that target main."""
+
+    contexts: set[str] = set()
+    for ruleset in rulesets:
+        if not ruleset_targets_main(ruleset):
+            continue
+        rules = ruleset.get("rules")
+        if not isinstance(rules, list):
+            continue
+        for rule in rules:
+            if not isinstance(rule, dict) or rule.get("type") != "required_status_checks":
+                continue
+            parameters = rule.get("parameters")
+            if not isinstance(parameters, dict):
+                continue
+            checks = parameters.get("required_status_checks")
+            if not isinstance(checks, list):
+                continue
+            for check in checks:
+                if not isinstance(check, dict):
+                    continue
+                context = check.get("context")
+                if isinstance(context, str) and context:
+                    contexts.add(context)
+    return tuple(sorted(contexts))
 
 
 def evaluate_hard_freeze_readiness(
