@@ -1,7 +1,7 @@
 {
   "schema_version": "managed-state-identity-static-screening-v1",
   "generated_at": "2026-09-04T20:00:00Z",
-  "source_manifest_sha256": "75f222c18980bde999d2cd93082a5357b0e9094c3d629f004c4e3a368adfec35",
+  "source_manifest_sha256": "3449bcd5ba596c44e72b43314ee69cd368402f19aa51b949aff855346fb82def",
   "database_policy": {
     "max_evidence_age_days": 7,
     "allowed_service_maturities": ["ga"],
@@ -26,7 +26,7 @@
       "schema_version": "managed-postgres-evidence-v1",
       "candidate_id": "supabase-free",
       "collected_at": "2026-09-04T20:00:00Z",
-      "source_manifest_sha256": "75f222c18980bde999d2cd93082a5357b0e9094c3d629f004c4e3a368adfec35",
+      "source_manifest_sha256": "3449bcd5ba596c44e72b43314ee69cd368402f19aa51b949aff855346fb82def",
       "hosted_service": true,
       "required_local_components": 0,
       "zero_cost_guardrail": "yes",
@@ -42,13 +42,13 @@
       "automatic_backups": "no",
       "free_storage_mb": 500,
       "migration_class": "none",
-      "artifact_sha256": "177a529cbb83b6201afe2d978c0ef9deb1aa05c21a503efcdab2a75d61ce8cb2"
+      "artifact_sha256": "eeec200ca92d5ac4da6e6607cdf03f6e04cadf9ae41e0986a2def6d4f56dbe92"
     },
     {
       "schema_version": "managed-postgres-evidence-v1",
       "candidate_id": "neon-free",
       "collected_at": "2026-09-04T20:00:00Z",
-      "source_manifest_sha256": "75f222c18980bde999d2cd93082a5357b0e9094c3d629f004c4e3a368adfec35",
+      "source_manifest_sha256": "3449bcd5ba596c44e72b43314ee69cd368402f19aa51b949aff855346fb82def",
       "hosted_service": true,
       "required_local_components": 0,
       "zero_cost_guardrail": "yes",
@@ -64,7 +64,7 @@
       "automatic_backups": "yes",
       "free_storage_mb": 500,
       "migration_class": "none",
-      "artifact_sha256": "8b117e61b6badc69531bca19e51fa8e2e73e75407f542e763d78ec8d4cbeea56"
+      "artifact_sha256": "9eafb2486772add30135817af9ba1c57876431c6b98f72b1171159a747caa3d6"
     }
   ],
   "identity_candidates": [
@@ -72,7 +72,7 @@
       "schema_version": "hosted-identity-evidence-v1",
       "candidate_id": "supabase-auth-free",
       "collected_at": "2026-09-04T20:00:00Z",
-      "source_manifest_sha256": "75f222c18980bde999d2cd93082a5357b0e9094c3d629f004c4e3a368adfec35",
+      "source_manifest_sha256": "3449bcd5ba596c44e72b43314ee69cd368402f19aa51b949aff855346fb82def",
       "hosted_service": true,
       "required_local_components": 0,
       "zero_cost_guardrail": "yes",
@@ -92,13 +92,13 @@
       "free_organizations": null,
       "inactivity_requires_manual_reactivation": "yes",
       "migration_class": "minor",
-      "artifact_sha256": "19911fed88f10e4affdbeeab6d47f35b18020359e5ecadbf40e96da1f8e683d9"
+      "artifact_sha256": "3f9a0bca438a426a3466887e9c963c7f28facf94279f5b8b46cf63e0acbb899c"
     },
     {
       "schema_version": "hosted-identity-evidence-v1",
       "candidate_id": "clerk-hobby",
       "collected_at": "2026-09-04T20:00:00Z",
-      "source_manifest_sha256": "75f222c18980bde999d2cd93082a5357b0e9094c3d629f004c4e3a368adfec35",
+      "source_manifest_sha256": "3449bcd5ba596c44e72b43314ee69cd368402f19aa51b949aff855346fb82def",
       "hosted_service": true,
       "required_local_components": 0,
       "zero_cost_guardrail": "yes",
@@ -118,13 +118,13 @@
       "free_organizations": 100,
       "inactivity_requires_manual_reactivation": "no",
       "migration_class": "minor",
-      "artifact_sha256": "b14898b54cbfe848b10d0e0613ff916ae3e98cc4c2c48d0df7791f09370891dc"
+      "artifact_sha256": "0040bab6bdc2da7b5dd8c0d3ff7b3224dcd1c0556a4b808e583e8a51138e2df6"
     },
     {
       "schema_version": "hosted-identity-evidence-v1",
       "candidate_id": "auth0-free",
       "collected_at": "2026-09-04T20:00:00Z",
-      "source_manifest_sha256": "75f222c18980bde999d2cd93082a5357b0e9094c3d629f004c4e3a368adfec35",
+      "source_manifest_sha256": "3449bcd5ba596c44e72b43314ee69cd368402f19aa51b949aff855346fb82def",
       "hosted_service": true,
       "required_local_components": 0,
       "zero_cost_guardrail": "yes",
@@ -144,13 +144,13 @@
       "free_organizations": 5,
       "inactivity_requires_manual_reactivation": "no",
       "migration_class": "minor",
-      "artifact_sha256": "c684f5009a395bda5965d650dea5a4ab4099138be162bc3c4e627faac6642161"
+      "artifact_sha256": "d58f0f37fcd76bbb6ec69b746d41c394cd6c9487d61963935399f0beb9b25baa"
     },
     {
       "schema_version": "hosted-identity-evidence-v1",
       "candidate_id": "neon-auth-free",
       "collected_at": "2026-09-04T20:00:00Z",
-      "source_manifest_sha256": "75f222c18980bde999d2cd93082a5357b0e9094c3d629f004c4e3a368adfec35",
+      "source_manifest_sha256": "3449bcd5ba596c44e72b43314ee69cd368402f19aa51b949aff855346fb82def",
       "hosted_service": true,
       "required_local_components": 0,
       "zero_cost_guardrail": "yes",
@@ -170,13 +170,13 @@
       "free_organizations": null,
       "inactivity_requires_manual_reactivation": "no",
       "migration_class": "minor",
-      "artifact_sha256": "996b90027f44fdf02798c678d4f6d78b0e1e221fa38b906dff8b2d665c4fe693"
+      "artifact_sha256": "8c2a8c7136553143e24f92d95543509ac78a1f89a69e694752c0da00ebd184c5"
     },
     {
       "schema_version": "hosted-identity-evidence-v1",
       "candidate_id": "workos-authkit-free",
       "collected_at": "2026-09-04T20:00:00Z",
-      "source_manifest_sha256": "75f222c18980bde999d2cd93082a5357b0e9094c3d629f004c4e3a368adfec35",
+      "source_manifest_sha256": "3449bcd5ba596c44e72b43314ee69cd368402f19aa51b949aff855346fb82def",
       "hosted_service": true,
       "required_local_components": 0,
       "zero_cost_guardrail": "unknown",
@@ -196,7 +196,7 @@
       "free_organizations": null,
       "inactivity_requires_manual_reactivation": "no",
       "migration_class": "minor",
-      "artifact_sha256": "e84ae0eaa1365a0dd6f06185ef174d250079d14489a2159a11dffa9b7d7330d7"
+      "artifact_sha256": "6e0938a652cfe95a24262d7d223aac09a5197d55bac7270527b38ba2fdfa2600"
     }
   ],
   "expected_static_decisions": {
