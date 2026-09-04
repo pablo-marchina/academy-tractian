@@ -17,7 +17,8 @@ def _base_env() -> dict[str, str]:
 
 
 def test_hosted_config_allows_infrastructure_validation_before_provider_selection() -> None:
-    config = HostedProductConfig.from_environment(_base_env())
+    env = _base_env()
+    config = HostedProductConfig.from_environment(env)
     summary = config.sanitized_summary()
 
     assert config.provider is None
@@ -27,7 +28,10 @@ def test_hosted_config_allows_infrastructure_validation_before_provider_selectio
     }
     assert summary["persistence"]["operational"] == "postgresql"  # type: ignore[index]
     assert summary["persistence"]["observability"] == "postgresql"  # type: ignore[index]
-    assert "secret" not in repr(summary).lower()
+    rendered = repr(summary)
+    assert env["ACADEMY_POSTGRES_INTERNAL_DSN"] not in rendered
+    assert env["ACADEMY_POSTGRES_SCOPED_DSN"] not in rendered
+    assert env["ACADEMY_RUNTIME_IDENTITY_SECRET"] not in rendered
 
 
 def test_hosted_config_requires_provider_and_tractian_endpoint_for_serving() -> None:
@@ -47,6 +51,7 @@ def test_hosted_config_requires_provider_and_tractian_endpoint_for_serving() -> 
         require_serving_ready=True,
     )
     assert ready.provider == "openai"
+    assert "test-provider-key" not in repr(ready.sanitized_summary())
 
 
 def test_hosted_config_rejects_unsafe_or_ambiguous_network_configuration() -> None:
