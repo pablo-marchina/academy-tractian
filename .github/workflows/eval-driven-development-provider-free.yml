@@ -30,6 +30,7 @@ jobs:
           tests/test_operational_value_analysis.py
           tests/test_semantic_evaluation.py
           tests/test_semantic_human_calibration.py
+          tests/test_semantic_calibration_freeze.py
           tests/test_observability.py
       - name: Compile evaluation CLIs
         run: >-
