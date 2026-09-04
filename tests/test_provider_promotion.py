@@ -27,6 +27,10 @@ def _candidate(candidate_id: str, **overrides: object) -> ProviderCandidateEvide
         "scenario_count": 60,
         "repeat_count": 3,
         "human_semantic_calibrated": True,
+        "human_calibration_case_count": 60,
+        "human_agreement_rate": 0.95,
+        "operational_conclusion_accuracy": 0.93,
+        "operational_conclusion_accuracy_ci_low": 0.86,
     }
     payload.update(overrides)
     return ProviderCandidateEvidence.model_validate(payload)
@@ -65,10 +69,16 @@ def _policy(**overrides: object) -> ProviderPromotionPolicy:
         "expected_evaluator_version": "production-evaluator-v1",
         "expected_rule_set_id": "provider-rules-v1",
         "expected_rule_set_hash": "sha256:rules",
+        "expected_human_calibration_protocol_id": "human-calibration-v1",
+        "expected_human_calibration_protocol_hash": "sha256:human-calibration-v1",
         "expected_code_sha": CODE_SHA,
         "min_scenarios": 50,
         "min_repeats": 3,
         "min_paired_groups": 50,
+        "min_human_calibration_cases": 50,
+        "min_human_agreement_rate": 0.90,
+        "min_operational_conclusion_accuracy": 0.90,
+        "min_operational_conclusion_accuracy_ci_low": 0.80,
     }
     payload.update(overrides)
     return ProviderPromotionPolicy.model_validate(payload)
@@ -86,6 +96,8 @@ def _evidence(
         "evaluator_version": "production-evaluator-v1",
         "rule_set_id": "provider-rules-v1",
         "rule_set_hash": "sha256:rules",
+        "human_calibration_protocol_id": "human-calibration-v1",
+        "human_calibration_protocol_hash": "sha256:human-calibration-v1",
         "code_sha": CODE_SHA,
         "generated_at": datetime(2026, 9, 4, tzinfo=UTC),
         "candidates": candidates
@@ -96,17 +108,20 @@ def _evidence(
     return ProviderBenchmarkEvidence.model_validate(payload)
 
 
+def _winning_reports() -> tuple[EvalDrivenDecisionReport, ...]:
+    return (
+        _report(CANDIDATES[1], CANDIDATES[0], decision="PROMOTE"),
+        _report(CANDIDATES[0], CANDIDATES[1], decision="INCONCLUSIVE"),
+    )
+
+
 def test_missing_human_semantic_calibration_invalidates_comparison() -> None:
     candidates = (
         _candidate(CANDIDATES[0], human_semantic_calibrated=False),
         _candidate(CANDIDATES[1]),
     )
-    reports = (
-        _report(CANDIDATES[1], CANDIDATES[0], decision="PROMOTE"),
-        _report(CANDIDATES[0], CANDIDATES[1], decision="INCONCLUSIVE"),
-    )
     decision = decide_provider_promotion(
-        evidence=_evidence(candidates=candidates, reports=reports),
+        evidence=_evidence(candidates=candidates, reports=_winning_reports()),
         policy=_policy(),
     )
 
@@ -114,6 +129,34 @@ def test_missing_human_semantic_calibration_invalidates_comparison() -> None:
     assert decision.selected_candidate_id is None
     assert decision.comparison_ready_candidate_ids == ()
     assert decision.reason_codes == ("HUMAN_SEMANTIC_CALIBRATION_REQUIRED",)
+
+
+@pytest.mark.parametrize(
+    ("candidate_override", "reason"),
+    [
+        ({"human_calibration_case_count": 49}, "INSUFFICIENT_HUMAN_CALIBRATION_CASES"),
+        ({"human_agreement_rate": 0.89}, "HUMAN_AGREEMENT_BELOW_THRESHOLD"),
+        ({"operational_conclusion_accuracy": 0.89, "operational_conclusion_accuracy_ci_low": 0.79}, "OCA_BELOW_THRESHOLD"),
+        ({"operational_conclusion_accuracy_ci_low": 0.79}, "OCA_CONFIDENCE_LOWER_BOUND_BELOW_THRESHOLD"),
+    ],
+)
+def test_quantitative_human_calibration_gates_block_promotion(
+    candidate_override: dict[str, object],
+    reason: str,
+) -> None:
+    candidates = (
+        _candidate(CANDIDATES[0], **candidate_override),
+        _candidate(CANDIDATES[1]),
+    )
+    decision = decide_provider_promotion(
+        evidence=_evidence(candidates=candidates, reports=_winning_reports()),
+        policy=_policy(),
+    )
+
+    assert decision.outcome == "NO_SELECTION"
+    assert decision.selected_candidate_id is None
+    assert decision.comparison_ready_candidate_ids == ()
+    assert reason in decision.reason_codes
 
 
 def test_candidate_hard_gate_failure_cannot_be_promoted() -> None:
@@ -150,11 +193,10 @@ def test_two_ready_candidates_without_unique_edd_promotion_are_no_selection() ->
 
 
 def test_unique_candidate_promoted_against_every_peer_is_selected() -> None:
-    reports = (
-        _report(CANDIDATES[1], CANDIDATES[0], decision="PROMOTE"),
-        _report(CANDIDATES[0], CANDIDATES[1], decision="INCONCLUSIVE"),
+    decision = decide_provider_promotion(
+        evidence=_evidence(reports=_winning_reports()),
+        policy=_policy(),
     )
-    decision = decide_provider_promotion(evidence=_evidence(reports=reports), policy=_policy())
 
     assert decision.outcome == "PROMOTE"
     assert decision.selected_candidate_id == CANDIDATES[0]
@@ -182,6 +224,16 @@ def test_promotion_report_below_preregistered_pair_count_does_not_qualify() -> N
         ("evaluator_version", "other-evaluator", "EVALUATOR_VERSION_MISMATCH"),
         ("rule_set_id", "other-rules", "RULE_SET_ID_MISMATCH"),
         ("rule_set_hash", "sha256:other-rules", "RULE_SET_HASH_MISMATCH"),
+        (
+            "human_calibration_protocol_id",
+            "other-human-protocol",
+            "HUMAN_CALIBRATION_PROTOCOL_ID_MISMATCH",
+        ),
+        (
+            "human_calibration_protocol_hash",
+            "sha256:other-human-protocol",
+            "HUMAN_CALIBRATION_PROTOCOL_HASH_MISMATCH",
+        ),
         ("code_sha", "1234567", "CODE_SHA_MISMATCH"),
     ],
 )
@@ -221,6 +273,15 @@ def test_incomplete_pairwise_matrix_never_promotes_a_candidate() -> None:
 
     assert decision.outcome == "NO_SELECTION"
     assert "PAIRWISE_REPORT_MATRIX_INCOMPLETE" in decision.reason_codes
+
+
+def test_invalid_oca_confidence_bound_is_rejected_by_schema() -> None:
+    with pytest.raises(ValidationError, match="oca_ci_low_cannot_exceed_point_estimate"):
+        _candidate(
+            CANDIDATES[0],
+            operational_conclusion_accuracy=0.80,
+            operational_conclusion_accuracy_ci_low=0.81,
+        )
 
 
 def test_strict_artifacts_reject_unknown_fields_instead_of_raw_payloads() -> None:
