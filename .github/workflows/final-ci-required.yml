@@ -1,0 +1,39 @@
+name: final-ci-required
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clean-clone:
+    name: clean-clone
+    uses: ./.github/workflows/clean-clone-full-product-reproduction.yml
+
+  full-product-browser:
+    name: full-product-browser
+    uses: ./.github/workflows/full-product-playwright.yml
+
+  required-gate:
+    name: required-gate
+    if: ${{ always() }}
+    needs:
+      - clean-clone
+      - full-product-browser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require clean clone and full browser acceptance
+        env:
+          CLEAN_CLONE_RESULT: ${{ needs.clean-clone.result }}
+          FULL_PRODUCT_BROWSER_RESULT: ${{ needs.full-product-browser.result }}
+        run: |
+          echo "clean-clone=${CLEAN_CLONE_RESULT}"
+          echo "full-product-browser=${FULL_PRODUCT_BROWSER_RESULT}"
+          test "${CLEAN_CLONE_RESULT}" = "success"
+          test "${FULL_PRODUCT_BROWSER_RESULT}" = "success"
+          echo "FINAL_REQUIRED_CI=PASS"
