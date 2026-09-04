@@ -109,7 +109,7 @@ class ProviderPromotionDecision(_StrictModel):
     primary_metric: Literal["operational_conclusion_accuracy"] = PRIMARY_METRIC
 
 
-def _candidate_threshold_failures(
+def _benchmark_maturity_failures(
     candidate: CandidateBenchmark,
     policy: ProviderPromotionPolicy,
 ) -> tuple[str, ...]:
@@ -120,6 +120,14 @@ def _candidate_threshold_failures(
         failures.append("INSUFFICIENT_SCENARIOS")
     if candidate.repeat_count < policy.min_repeats:
         failures.append("INSUFFICIENT_REPEATS")
+    return tuple(failures)
+
+
+def _candidate_hard_gate_failures(
+    candidate: CandidateBenchmark,
+    policy: ProviderPromotionPolicy,
+) -> tuple[str, ...]:
+    failures: list[str] = []
     if candidate.critical_safety_failures:
         failures.append("CRITICAL_SAFETY_FAILURE")
     if candidate.high_impact_action_failures:
@@ -148,7 +156,9 @@ def decide_provider_promotion(
 
     There is deliberately no composite score. Safety is a hard constraint, the
     primary correctness comparison is paired by scenario, and ambiguity resolves
-    to ``NO_SELECTION`` rather than an arbitrary winner.
+    to ``NO_SELECTION`` rather than an arbitrary winner. Benchmark maturity is a
+    property of the comparison: every required candidate must have the required
+    human calibration, scenario count, and repeats before any promotion is legal.
     """
 
     reason_codes: list[str] = []
@@ -175,22 +185,35 @@ def decide_provider_promotion(
             reason_codes=tuple(dict.fromkeys(reason_codes)),
         )
 
-    threshold_failures: dict[str, tuple[str, ...]] = {}
+    maturity_failures = [
+        reason
+        for candidate_id in policy.required_candidate_ids
+        for reason in _benchmark_maturity_failures(candidates[candidate_id], policy)
+    ]
+    if maturity_failures:
+        return ProviderPromotionDecision(
+            outcome="NO_SELECTION",
+            selected_candidate_id=None,
+            qualified_candidate_ids=(),
+            reason_codes=tuple(dict.fromkeys(maturity_failures)),
+        )
+
+    hard_gate_failures: dict[str, tuple[str, ...]] = {}
     for candidate_id in policy.required_candidate_ids:
-        failures = _candidate_threshold_failures(candidates[candidate_id], policy)
+        failures = _candidate_hard_gate_failures(candidates[candidate_id], policy)
         if failures:
-            threshold_failures[candidate_id] = failures
+            hard_gate_failures[candidate_id] = failures
 
     qualified = tuple(
         candidate_id
         for candidate_id in policy.required_candidate_ids
-        if candidate_id not in threshold_failures
+        if candidate_id not in hard_gate_failures
     )
     if not qualified:
         candidate_reasons = [
             reason
             for candidate_id in policy.required_candidate_ids
-            for reason in threshold_failures.get(candidate_id, ())
+            for reason in hard_gate_failures.get(candidate_id, ())
         ]
         return ProviderPromotionDecision(
             outcome="NO_SELECTION",
@@ -223,11 +246,11 @@ def decide_provider_promotion(
 
     if len(evidence_backed_winners) != 1:
         reasons = ["NO_UNIQUE_PAIRED_SUPERIORITY"]
-        if threshold_failures:
+        if hard_gate_failures:
             reasons.extend(
                 reason
                 for candidate_id in policy.required_candidate_ids
-                for reason in threshold_failures.get(candidate_id, ())
+                for reason in hard_gate_failures.get(candidate_id, ())
             )
         return ProviderPromotionDecision(
             outcome="NO_SELECTION",
