@@ -5,18 +5,64 @@ from typing import Any
 from research.e2.models import ToolKind
 from research.e2.tool_registry import NORMALIZED_OPERATION_COUNT, TOOLS
 
-
-TOOL_COVERAGE_SCHEMA_VERSION = "tractian-tool-coverage-v1"
-
-# Evidence from the frozen 2026-08-27 conformance artifact. Do not expand this set merely because
-# a route exists in the implementation: explicit integrated route execution evidence is a stronger
-# claim than contract/implementation conformance.
-_EXPLICIT_INTEGRATED_ROUTE_EVIDENCE = frozenset({"get_asset"})
+from .tractian_integration_evidence import (
+    IntegrationEvidenceLedger,
+    empty_hosted_integration_evidence,
+    load_frozen_integration_evidence,
+)
 
 
-def build_tractian_tool_coverage() -> dict[str, Any]:
+TOOL_COVERAGE_SCHEMA_VERSION = "tractian-tool-coverage-v2"
+
+
+def _coverage_status(
+    *,
+    frozen: IntegrationEvidenceLedger,
+    hosted: IntegrationEvidenceLedger,
+    hosted_exercised: int,
+    integrated: int,
+) -> str:
+    if not frozen.valid or not hosted.valid:
+        return "EVIDENCE_INVALID_FAIL_CLOSED"
+    if hosted_exercised == NORMALIZED_OPERATION_COUNT:
+        return "HOSTED_LIVE_FULLY_EXERCISED"
+    if hosted_exercised > 0:
+        return "PARTIAL_HOSTED_LIVE_EVIDENCE"
+    if integrated > 0:
+        return "PARTIAL_INTEGRATED_ROUTE_EVIDENCE"
+    return "NO_INTEGRATION_EVIDENCE"
+
+
+def build_tractian_tool_coverage(
+    *,
+    frozen_evidence: IntegrationEvidenceLedger | None = None,
+    hosted_evidence: IntegrationEvidenceLedger | None = None,
+) -> dict[str, Any]:
+    """Build the canonical 18-operation coverage matrix from trusted evidence.
+
+    Contract registration and implementation-route presence come from the frozen
+    canonical registry. Integration execution is a stronger claim and is derived
+    only from validated evidence ledgers; route existence, mocks and synthetic
+    fixtures cannot silently promote hosted-live coverage.
+    """
+
+    frozen = frozen_evidence or load_frozen_integration_evidence()
+    hosted = hosted_evidence or empty_hosted_integration_evidence()
+
+    frozen_observed = frozen.unique_route_observed_operations("frozen")
+    hosted_observed = hosted.unique_route_observed_operations("hosted_live")
+    hosted_success = hosted.unique_success_operations("hosted_live")
+    hosted_http_error = hosted.unique_outcome_operations("hosted_live", "http_error_observed")
+    hosted_transport_failure = hosted.unique_outcome_operations("hosted_live", "transport_failure")
+    hosted_unavailable = hosted.unique_outcome_operations("hosted_live", "unavailable")
+    hosted_blocked = hosted.unique_outcome_operations("hosted_live", "blocked_by_safety")
+    integrated_observed = frozen_observed | hosted_observed
+
     operations: list[dict[str, Any]] = []
     for tool in TOOLS:
+        hosted_records = hosted.records_for(tool.name, "hosted_live")
+        hosted_outcomes = sorted({item.outcome for item in hosted_records})
+        integrated_evidenced = tool.name in integrated_observed
         operations.append(
             {
                 "tool_name": tool.name,
@@ -33,33 +79,70 @@ def build_tractian_tool_coverage() -> dict[str, Any]:
                 "seed_supported": tool.seed_supported,
                 "contract_registered": True,
                 "implementation_route_present": True,
-                "integrated_route_execution_evidenced": tool.name
-                in _EXPLICIT_INTEGRATED_ROUTE_EVIDENCE,
+                # Backward-compatible aggregate claim: historical frozen evidence
+                # and hosted-live route observations may satisfy this field.
+                "integrated_route_execution_evidenced": integrated_evidenced,
                 "integration_evidence_scope": (
-                    "frozen_route_test_evidence"
-                    if tool.name in _EXPLICIT_INTEGRATED_ROUTE_EVIDENCE
-                    else "not_yet_explicitly_evidenced"
+                    "hosted_live_route_evidence"
+                    if tool.name in hosted_observed
+                    else (
+                        "frozen_route_test_evidence"
+                        if tool.name in frozen_observed
+                        else "not_yet_explicitly_evidenced"
+                    )
                 ),
+                "frozen_route_execution_evidenced": tool.name in frozen_observed,
+                "hosted_live_exercised": tool.name in hosted_observed,
+                "hosted_live_success": tool.name in hosted_success,
+                "hosted_live_blocked_by_safety": tool.name in hosted_blocked,
+                "hosted_live_outcomes": hosted_outcomes,
             }
         )
 
     registered = len(operations)
-    integrated = sum(item["integrated_route_execution_evidenced"] for item in operations)
+    integrated = len(integrated_observed)
+    hosted_exercised = len(hosted_observed)
     actions = sum(item["kind"] == ToolKind.ACTION.value for item in operations)
     return {
         "schema_version": TOOL_COVERAGE_SCHEMA_VERSION,
-        "status": "PARTIAL_INTEGRATED_ROUTE_EVIDENCE",
+        "status": _coverage_status(
+            frozen=frozen,
+            hosted=hosted,
+            hosted_exercised=hosted_exercised,
+            integrated=integrated,
+        ),
         "claim_boundary": (
             "All 18 normalized operations are contract-registered and present in the executable "
-            "implementation; only explicitly recorded route execution is counted as integrated "
-            "route evidence."
+            "implementation. Hosted-live coverage increases only when a validated hosted_live "
+            "evidence record observes the canonical route; implementation presence, mocks, "
+            "synthetic fixtures and safety-blocked actions do not count as hosted-live execution."
         ),
+        "evidence": {
+            "frozen": {
+                "state": frozen.state,
+                "source": frozen.source_label,
+                "validation_errors": list(frozen.validation_errors),
+            },
+            "hosted_live": {
+                "state": hosted.state,
+                "source": hosted.source_label,
+                "validation_errors": list(hosted.validation_errors),
+            },
+        },
         "summary": {
             "normalized_operations": NORMALIZED_OPERATION_COUNT,
             "contract_registered": registered,
             "implementation_routes_present": registered,
             "integrated_route_execution_evidenced": integrated,
             "integrated_route_execution_not_yet_evidenced": registered - integrated,
+            "frozen_route_execution_evidenced": len(frozen_observed),
+            "hosted_live_exercised": hosted_exercised,
+            "hosted_live_success": len(hosted_success),
+            "hosted_live_http_error_observed": len(hosted_http_error),
+            "hosted_live_transport_failure": len(hosted_transport_failure),
+            "hosted_live_unavailable": len(hosted_unavailable),
+            "hosted_live_blocked_by_safety": len(hosted_blocked),
+            "hosted_live_not_exercised": registered - hosted_exercised,
             "actions": actions,
             "reads": registered - actions,
         },
