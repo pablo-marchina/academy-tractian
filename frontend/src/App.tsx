@@ -18,6 +18,7 @@ import { OperationalValueCollector } from "./components/OperationalValueCollecto
 import { OperationsWorkspace } from "./components/OperationsWorkspace";
 import { RunExplorer } from "./components/RunExplorer";
 import { SemanticReviewCollector } from "./components/SemanticReviewCollector";
+import { ToolCoverageExplorer } from "./components/ToolCoverageExplorer";
 import { TraceGraph } from "./components/TraceGraph";
 import { useLiveRun } from "./hooks/useLiveRun";
 import { deriveRunEventMetrics, eventDisplayLabel } from "./state/runEvents";
@@ -154,6 +155,7 @@ export default function App() {
           {architectureQuery.data ? <ArchitectureExplorer manifest={architectureQuery.data} events={selectedEvents} hasRun={Boolean(selectedRunId)} hasEvaluation={Boolean(selectedEvaluation?.count)} /> : <div className="empty-state graph-empty"><strong>Architecture manifest unavailable</strong><p>The UI will not substitute hard-coded architecture when the backend manifest is missing.</p></div>}
         </article>
 
+        <ToolCoverageExplorer />
         <ActionControl selectedRunId={selectedRunId} onFollowExecution={followActionRun} />
         <OperationsWorkspace selectedRunId={selectedRunId} />
         <OperationalValueCollector />
