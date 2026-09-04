@@ -21,8 +21,11 @@ from .postgres_operational import (
     PostgresRunExecutionStore,
 )
 from .postgres_operational_value_v5 import PostgresOperationalPilotStoreV5
+from .postgres_semantic_review import PostgresSemanticReviewStore
 from .product_api import RuntimeContextProvider
 from .production_actions_v2 import ActionAuthorizationResolver
+from .semantic_human_calibration import SemanticAnnotationManifest, SemanticReviewerPacket
+from .semantic_review_collection import attach_semantic_review_collection_api
 
 
 def _required_tables_ready(database: PostgresOperationalDatabase) -> bool:
@@ -33,6 +36,8 @@ def _required_tables_ready(database: PostgresOperationalDatabase) -> bool:
         "action_claims",
         "operational_pilot_tasks",
         "operational_pilot_assignments",
+        "semantic_review_tasks",
+        "semantic_review_assignments",
     )
     with database.internal_pool.connection() as connection:
         rows = connection.execute(
@@ -65,9 +70,11 @@ def initialize_postgres_operational_schema(
         PostgresPendingActionCustody(database, initialize=True)
         PostgresActionIdempotencyLedger(database, initialize=True)
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=True)
+        semantic_store = PostgresSemanticReviewStore(database, initialize=True)
         if (
             not database.ready()
             or not pilot_store.ready()
+            or not semantic_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready_after_initialize")
@@ -94,6 +101,36 @@ def register_postgres_operational_pilot_packet(
     )
     try:
         store = PostgresOperationalPilotStoreV5(database, initialize=False)
+        if not database.ready() or not store.ready() or not _required_tables_ready(database):
+            raise RuntimeError("postgres_operational_schema_not_ready")
+        store.register_packet(
+            organization_id=organization_id,
+            packet=packet,
+            manifest=manifest,
+        )
+    finally:
+        database.close()
+
+
+def register_postgres_semantic_review_packet(
+    *,
+    internal_dsn: str,
+    scoped_dsn: str,
+    organization_id: str,
+    packet: SemanticReviewerPacket,
+    manifest: SemanticAnnotationManifest,
+    schema: str = "academy_operational",
+) -> None:
+    """Trusted held-out reviewer bootstrap; private manifest never enters serving responses."""
+
+    database = PostgresOperationalDatabase(
+        internal_dsn=internal_dsn,
+        scoped_dsn=scoped_dsn,
+        schema=schema,
+        initialize=False,
+    )
+    try:
+        store = PostgresSemanticReviewStore(database, initialize=False)
         if not database.ready() or not store.ready() or not _required_tables_ready(database):
             raise RuntimeError("postgres_operational_schema_not_ready")
         store.register_packet(
@@ -139,9 +176,11 @@ def create_postgres_action_capable_product_app(
         custody = PostgresPendingActionCustody(database, initialize=initialize_schema)
         ledger = PostgresActionIdempotencyLedger(database, initialize=initialize_schema)
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=initialize_schema)
+        semantic_store = PostgresSemanticReviewStore(database, initialize=initialize_schema)
         if (
             not database.ready()
             or not pilot_store.ready()
+            or not semantic_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
@@ -166,11 +205,17 @@ def create_postgres_action_capable_product_app(
             context_provider=context_provider,
             store=pilot_store,
         )
+        attach_semantic_review_collection_api(
+            app,
+            context_provider=context_provider,
+            store=semantic_store,
+        )
     except Exception:
         database.close()
         raise
 
     app.state.postgres_operational_database = database
     app.state.operational_value_collection_store = pilot_store
+    app.state.semantic_review_collection_store = semantic_store
     app.state.operational_backend = "postgresql"
     return app
