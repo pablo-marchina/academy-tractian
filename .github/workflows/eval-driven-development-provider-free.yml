@@ -42,3 +42,4 @@ jobs:
           scripts/operational_value_analyze.py
           scripts/semantic_eval_calibrate.py
           scripts/semantic_human_calibration.py
+          scripts/semantic_review_collect.py
