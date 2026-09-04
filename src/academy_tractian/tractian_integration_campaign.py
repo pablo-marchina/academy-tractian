@@ -7,13 +7,18 @@ from pydantic import BaseModel, ConfigDict
 from research.e2.models import ToolKind
 from research.e2.tool_registry import NORMALIZED_OPERATION_COUNT, TOOLS
 
+from .tractian_campaign_evidence import (
+    CampaignEvidenceLedger,
+    CampaignProofDimension,
+    empty_campaign_evidence,
+)
 from .tractian_integration_evidence import (
     IntegrationEvidenceLedger,
     empty_hosted_integration_evidence,
 )
 
 
-CampaignDimensionState = Literal["PASS", "UNPROVEN"]
+CampaignDimensionState = Literal["PASS", "FAIL", "UNPROVEN"]
 
 
 class _StrictModel(BaseModel):
@@ -37,8 +42,9 @@ class OperationCampaignStatus(_StrictModel):
 
 
 class TractianIntegrationCampaignReport(_StrictModel):
-    schema_version: Literal["tractian-integration-campaign-v1"] = "tractian-integration-campaign-v1"
-    evidence_state: str
+    schema_version: Literal["tractian-integration-campaign-v2"] = "tractian-integration-campaign-v2"
+    transport_evidence_state: str
+    semantic_evidence_state: str
     normalized_operations: int
     reads: int
     actions: int
@@ -56,23 +62,44 @@ _BASE_DIMENSIONS = (
     "response_normalization_verified",
     "agent_evaluator_behavior_verified",
 )
+_SEMANTIC_DIMENSIONS: tuple[CampaignProofDimension, ...] = (
+    "invalid_parameters_rejected",
+    "response_normalization_verified",
+    "agent_evaluator_behavior_verified",
+)
 _ACTION_DIMENSION = "safe_action_control_observed"
+
+
+def _semantic_dimension_state(
+    *,
+    ledger: CampaignEvidenceLedger,
+    operation: str,
+    dimension: CampaignProofDimension,
+) -> tuple[CampaignDimensionState, str]:
+    if not ledger.valid:
+        return "UNPROVEN", "semantic_evidence_invalid"
+    records = ledger.records_for(operation, dimension)
+    if any(not record.passed for record in records):
+        return "FAIL", ledger.source_label
+    if any(record.passed for record in records):
+        return "PASS", ledger.source_label
+    return "UNPROVEN", "campaign_proof_required"
 
 
 def build_tractian_integration_campaign_report(
     *,
     hosted_evidence: IntegrationEvidenceLedger | None = None,
+    campaign_evidence: CampaignEvidenceLedger | None = None,
 ) -> TractianIntegrationCampaignReport:
     """Expose exactly what remains to prove for each of the 18 TRACTIAN operations.
 
-    The transport ledger can prove route/success/error observations and an action
-    safety block. It intentionally cannot prove parameter validation, response
-    normalization, or end-to-end agent/evaluator behavior. Those dimensions stay
-    ``UNPROVEN`` until a dedicated campaign runner emits bounded evidence for them;
-    this report therefore cannot inflate transport telemetry into 18/18 integration.
+    Transport evidence and semantic campaign evidence have separate trust units.
+    A semantic failure dominates a prior pass for the same operation/dimension,
+    and either invalid ledger fails closed without increasing completion claims.
     """
 
     hosted = hosted_evidence or empty_hosted_integration_evidence()
+    semantic = campaign_evidence or empty_campaign_evidence()
     route_observed = hosted.unique_route_observed_operations("hosted_live")
     successes = hosted.unique_success_operations("hosted_live")
     http_errors = hosted.unique_outcome_operations("hosted_live", "http_error_observed")
@@ -93,10 +120,14 @@ def build_tractian_integration_campaign_report(
                 "PASS" if tool.name in http_errors else "UNPROVEN",
                 "hosted_transport_ledger" if tool.name in http_errors else "not_observed",
             ),
-            "invalid_parameters_rejected": ("UNPROVEN", "campaign_proof_required"),
-            "response_normalization_verified": ("UNPROVEN", "campaign_proof_required"),
-            "agent_evaluator_behavior_verified": ("UNPROVEN", "campaign_proof_required"),
         }
+        for dimension in _SEMANTIC_DIMENSIONS:
+            dimension_states[dimension] = _semantic_dimension_state(
+                ledger=semantic,
+                operation=tool.name,
+                dimension=dimension,
+            )
+
         names = list(_BASE_DIMENSIONS)
         if tool.kind is ToolKind.ACTION:
             names.append(_ACTION_DIMENSION)
@@ -128,7 +159,8 @@ def build_tractian_integration_campaign_report(
     complete = sum(operation.complete for operation in operations)
     actions = sum(operation.kind == ToolKind.ACTION.value for operation in operations)
     return TractianIntegrationCampaignReport(
-        evidence_state=hosted.state,
+        transport_evidence_state=hosted.state,
+        semantic_evidence_state=semantic.state,
         normalized_operations=NORMALIZED_OPERATION_COUNT,
         reads=NORMALIZED_OPERATION_COUNT - actions,
         actions=actions,
@@ -136,9 +168,9 @@ def build_tractian_integration_campaign_report(
         incomplete_operations=NORMALIZED_OPERATION_COUNT - complete,
         operations=tuple(operations),
         claim_boundary=(
-            "Transport evidence proves only canonical route observations, successful HTTP responses, "
-            "HTTP error behavior, and explicit safety blocks. Invalid-parameter handling, normalized "
-            "response contracts, and agent/evaluator behavior require separate campaign evidence and "
-            "remain unproven here; therefore transport coverage alone can never become a false 18/18 claim."
+            "Transport evidence proves route/success/error observations and explicit safety blocks; "
+            "bounded semantic campaign evidence separately proves invalid-parameter handling, response "
+            "normalization, and agent/evaluator behavior. A missing, invalid, or failing proof never "
+            "increases the 18/18 claim."
         ),
     )
