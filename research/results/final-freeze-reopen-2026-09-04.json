@@ -1,0 +1,43 @@
+{
+  "schema_version": "final-freeze-reopen-v1",
+  "state": "FREEZE_REOPENED",
+  "date": "2026-09-04",
+  "superseded_manifest_path": "research/results/final-freeze-evidence-bundle-2026-09-04.json",
+  "superseded_manifest_git_blob_sha1": "3ff7cd2b88d86b9031e1c39e671908e41def0b13",
+  "superseded_manifest_sha256": "bd3d4df0cb74b88f602b371873c89ff22db49c355a472568783b41a37af5a793",
+  "reopen_reason": "New hard cloud-only production constraint requires zero local runtime dependencies and live hosted revalidation before hard freeze.",
+  "hard_constraints": {
+    "local_required_components_target": 0,
+    "production_path_hosted_only": true,
+    "multi_user_required": true,
+    "no_demo_only_path": true
+  },
+  "blocking_gates": [
+    "HOSTED_POSTGRES_PREFLIGHT",
+    "HOSTED_POSTGRES_MIGRATION",
+    "HOSTED_POSTGRES_RLS_ISOLATION",
+    "HOSTED_OIDC_LIVE",
+    "HOSTED_PROVIDER_SELECTION",
+    "TRACTIAN_TRANSPORT_18_OF_18",
+    "TRACTIAN_SEMANTIC_18_OF_18",
+    "HOSTED_ACTION_AUTHORIZATION",
+    "HOSTED_FULL_PRODUCT_PLAYWRIGHT",
+    "HUMAN_SEMANTIC_CALIBRATION",
+    "BRANCH_PROTECTION_ENFORCEMENT",
+    "CURRENT_DOCUMENTATION_RECONCILIATION"
+  ],
+  "non_claims": [
+    "hard_freeze_currently_effective",
+    "unconditional_production_readiness",
+    "hosted_postgres_pilot_passed",
+    "hosted_oidc_vendor_selected",
+    "production_provider_selected",
+    "tractian_transport_18_of_18_proven",
+    "tractian_semantic_18_of_18_proven",
+    "hosted_consequential_actions_qualified",
+    "hosted_full_product_e2e_passed",
+    "human_semantic_calibration_complete",
+    "branch_protection_enforced"
+  ],
+  "manifest_sha256": "cb0ce519f49a7f5aea299b257ee31ce9e037f132df5843d8787aebc71cc22bed"
+}

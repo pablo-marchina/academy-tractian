@@ -93,8 +93,8 @@ jobs:
       - name: Validate final handoff audit
         run: python scripts/validate_final_handoff_audit.py
 
-      - name: Validate final freeze evidence bundle
-        run: python scripts/validate_final_freeze_bundle.py
+      - name: Validate current freeze-reopened state
+        run: python scripts/validate_final_freeze_reopen.py
 
       - name: Install locked frontend dependencies
         working-directory: frontend
@@ -116,8 +116,9 @@ jobs:
         run: |
           printf '%s\n' \
             'CLEAN_CLONE_REPRODUCTION=PASS' \
-            'FINAL_FREEZE_BUNDLE=PASS' \
-            'FROZEN_DELIVERY_WORKFLOW_BLOB=PRESERVED' \
+            'FINAL_FREEZE_STATE=FREEZE_REOPENED' \
+            'SUPERSEDED_FREEZE_BUNDLE_BLOB=PRESERVED' \
+            'LOCAL_REQUIRED_COMPONENTS_TARGET=0' \
             'POSTGRES_PRODUCT_TESTS=EXECUTED' \
             'FROZEN_CAMPAIGNS=REPRODUCED' \
             'PYTHON_DEPENDENCY_LOCK=PASS' \
