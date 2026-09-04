@@ -27,6 +27,7 @@ jobs:
           tests/test_operational_value_pilot.py
           tests/test_operational_value_pilot_integrity.py
           tests/test_operational_value_collection.py
+          tests/test_operational_value_analysis.py
           tests/test_semantic_evaluation.py
           tests/test_semantic_human_calibration.py
           tests/test_observability.py
@@ -36,5 +37,6 @@ jobs:
           scripts/eval_driven_compare.py
           scripts/operational_value_report.py
           scripts/operational_value_pilot.py
+          scripts/operational_value_analyze.py
           scripts/semantic_eval_calibrate.py
           scripts/semantic_human_calibration.py
