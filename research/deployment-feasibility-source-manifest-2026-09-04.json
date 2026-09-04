@@ -1,0 +1,126 @@
+{
+  "collected_at": "2026-09-04T19:50:00Z",
+  "schema_version": "deployment-feasibility-source-manifest-v1",
+  "sources": [
+    {
+      "facts": {
+        "active_cpu_hours": 4,
+        "function_invocations": 1000000,
+        "function_max_duration_seconds": 60,
+        "over_limit_behavior": "feature_wait_or_account_pause",
+        "overage_billing": false,
+        "plan": "hobby",
+        "price_usd_per_month": 0
+      },
+      "source_id": "vercel-hobby",
+      "url": "https://vercel.com/docs/plans/hobby"
+    },
+    {
+      "facts": {
+        "fastapi_supported": true,
+        "python_runtime_maturity": "beta"
+      },
+      "source_id": "vercel-python-runtime",
+      "url": "https://vercel.com/docs/functions/runtimes/python"
+    },
+    {
+      "facts": {
+        "free_gib_seconds_per_month": 360000,
+        "free_requests_per_month": 2000000,
+        "free_vcpu_seconds_per_month": 180000,
+        "usage_above_free_tier_billed": true
+      },
+      "source_id": "cloud-run-pricing",
+      "url": "https://cloud.google.com/run/pricing"
+    },
+    {
+      "facts": {
+        "free_cpu_ms_per_request": 10,
+        "free_requests_per_day": 100000,
+        "memory_mb": 128
+      },
+      "source_id": "cloudflare-workers-limits",
+      "url": "https://developers.cloudflare.com/workers/platform/limits/"
+    },
+    {
+      "facts": {
+        "fastapi_supported": true,
+        "required_python": ">=3.13",
+        "runtime": "pyodide-wasm"
+      },
+      "source_id": "cloudflare-python-fastapi",
+      "url": "https://developers.cloudflare.com/workers/languages/python/packages/fastapi/"
+    },
+    {
+      "facts": {
+        "free_plan_available": true,
+        "postgres_supported": true
+      },
+      "source_id": "cloudflare-hyperdrive",
+      "url": "https://developers.cloudflare.com/hyperdrive/"
+    },
+    {
+      "facts": {
+        "a1_gb_hours_per_month": 9000,
+        "a1_memory_gb": 12,
+        "a1_ocpu_hours_per_month": 1500,
+        "a1_ocpus": 2,
+        "always_free": true,
+        "free_load_balancer_mbps": 10
+      },
+      "source_id": "oracle-always-free",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm"
+    },
+    {
+      "facts": {
+        "always_free_does_not_expire": true,
+        "card_not_charged_without_upgrade": true
+      },
+      "source_id": "oracle-free-tier-lifecycle",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier.htm"
+    },
+    {
+      "facts": {
+        "architecture": "arm64",
+        "containerized_applications_supported": true
+      },
+      "source_id": "oracle-arm-containers",
+      "url": "https://docs.oracle.com/en-us/iaas/Content/Compute/References/arm.htm"
+    },
+    {
+      "facts": {
+        "free_credit_usd_per_month": 1,
+        "free_plan_positioning": "small_apps",
+        "price_usd_per_month": 0
+      },
+      "source_id": "railway-free-plan",
+      "url": "https://docs.railway.com/pricing/plans"
+    },
+    {
+      "facts": {
+        "dockerfile_supported": true,
+        "fastapi_supported": true
+      },
+      "source_id": "railway-docker-fastapi",
+      "url": "https://docs.railway.com/guides/fastapi"
+    },
+    {
+      "facts": {
+        "free_best_for": "experimentation",
+        "pro_best_for": "production_apps_and_teams"
+      },
+      "source_id": "railway-pricing-positioning",
+      "url": "https://docs.railway.com/pricing"
+    },
+    {
+      "facts": {
+        "explicit_not_for_production": true,
+        "free_instance": true,
+        "ram_mb": 512,
+        "vcpu": 0.1
+      },
+      "source_id": "koyeb-free-instance",
+      "url": "https://www.koyeb.com/docs/reference/instances"
+    }
+  ]
+}
