@@ -125,6 +125,31 @@ def test_oidc_provider_rejects_wrong_audience_missing_org_and_wrong_authorized_p
     assert wrong_party.status_code == 401
 
 
+def test_oidc_provider_enforces_configured_required_claims_without_vendor_logic(rsa_keys) -> None:
+    private, public = rsa_keys
+    provider = OIDCRuntimeContextProvider(
+        issuer=ISSUER,
+        audience=AUDIENCE,
+        jwks_url=JWKS_URL,
+        algorithms=("RS256",),
+        claim_mapping=OIDCClaimMapping(required_claims=("role",)),
+        signing_key_provider=_StaticSigningKeyProvider(public),
+    )
+    client = _client(provider)
+
+    accepted = client.get(
+        "/context",
+        headers={"Authorization": f"Bearer {_token(private)}"},
+    )
+    assert accepted.status_code == 200
+
+    rejected = client.get(
+        "/context",
+        headers={"Authorization": f"Bearer {_token(private, role=None)}"},
+    )
+    assert rejected.status_code == 401
+
+
 def test_oidc_provider_rejects_excessive_ttl_and_privileged_configuration_without_second_gate(
     rsa_keys,
 ) -> None:
