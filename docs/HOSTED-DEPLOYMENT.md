@@ -15,6 +15,7 @@ hosted browser
   -> managed PostgreSQL
        - operational ownership/execution/action custody/idempotency
        - browser-safe observability/evaluation read model
+       - bounded hosted TRACTIAN integration evidence
   -> selected hosted provider/model
   -> supplied hosted TRACTIAN HTTPS API
 ```
@@ -131,8 +132,9 @@ Schema creation is explicit and separate from serving:
 python scripts/migrate_hosted_postgres.py
 ```
 
-The serving process uses `initialize_schema=False`; deployment must run the migration before the new
-application version is marked ready.
+The migration initializes operational state, browser-safe observability and the bounded TRACTIAN
+integration-evidence store. The serving process uses `initialize_schema=False`; deployment must run
+the migration before the new application version is marked ready.
 
 ## Container
 
@@ -182,7 +184,7 @@ adapter.
 - hosted HTTP errors, transport failures, unavailable observations and safety blocks.
 
 The packaged frozen artifact is `research/e2/frozen_tool_integration_evidence.json`. It currently
-contains explicit historical route-execution evidence for `get_asset` only. A fresh hosted process
+contains explicit historical route-execution evidence for `get_asset` only. A fresh hosted database
 therefore starts with **1/18 aggregate historical evidence but 0/18 hosted-live exercised**. The
 remaining operations are never inferred from route existence, mocks or synthetic fixtures.
 
@@ -193,12 +195,24 @@ response bodies, credentials or DSNs. A real 2xx/3xx response counts as hosted-l
 4xx/5xx response proves the route was observed but does not count as success; transport failure does
 not prove route execution. Safety-blocked actions also do not count as live execution.
 
-The runtime recorder coalesces evidence by operation/outcome and is intentionally process-local. It
-is useful for live UI/diagnostics but is **not** claimed as persistent audit proof. Persistent hosted
-integration evidence must be promoted separately to managed storage or a controlled experiment
-artifact before it is used for final 18/18 evidence.
+Hosted runtime evidence is persisted in managed PostgreSQL under the observability schema. Storage
+is deliberately bounded by the primary key `(operation, outcome)`: the table keeps the first/last
+observation, latest safe metadata and an observation count instead of one row per request. With 18
+canonical operations and five allowed outcomes this bounds the logical evidence cardinality to at
+most **90 operation/outcome aggregates**, independent of user or request volume. The evidence
+survives serving-process restarts without a persistent local filesystem.
 
-A controlled experiment artifact can be checked without printing raw evidence:
+Persistent rows are revalidated against the same canonical method/path contract when read. A
+corrupted, unknown or mismatched route invalidates the whole hosted ledger and returns zero trusted
+hosted records rather than inflating coverage. This persistent safe metadata is evidence of route
+observation and outcome; it is still not a substitute for a controlled semantic integration study or
+qualified consequential-action execution.
+
+The production frontend polls the same authenticated coverage endpoint and renders all 18 operations,
+including the evidence source state, contract/implementation status, hosted execution, hosted success
+and degraded/safety outcomes. If the endpoint is unavailable, the UI shows no inferred coverage.
+
+A controlled experiment artifact can also be checked without printing raw evidence:
 
 ```bash
 python scripts/validate_tractian_integration_evidence.py path/to/evidence.json \
@@ -217,8 +231,8 @@ This baseline does **not** yet claim:
 - a production-selected provider/model;
 - a selected/validated external OIDC vendor deployment;
 - hosted consequential actions;
-- persistent hosted TRACTIAN integration proof across process restarts;
+- a controlled semantic integration certification for all 18 TRACTIAN operations;
 - production SLO/capacity from CI measurements;
-- all 18 TRACTIAN routes have integrated execution evidence.
+- all 18 TRACTIAN routes have hosted-live execution evidence.
 
 Those claims require their respective controlled evidence and promotion gates.
