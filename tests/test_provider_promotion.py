@@ -53,6 +53,7 @@ def _candidate(
         "candidate_id": candidate_id,
         "provider_id": provider_id,
         "model_id": model_id,
+        "config_hash": f"cfg-{candidate_id}",
         "scenario_count": 60,
         "repeat_count": 3,
         "human_calibration": _human_calibration(
@@ -350,11 +351,26 @@ def test_candidate_cannot_reference_another_candidates_human_artifact() -> None:
                 "candidate_id": CANDIDATES[0],
                 "provider_id": "openai",
                 "model_id": "gpt-5.6-sol",
+                "config_hash": f"cfg-{CANDIDATES[0]}",
                 "scenario_count": 60,
                 "repeat_count": 3,
                 "human_calibration": _human_calibration(CANDIDATES[1]).model_dump(mode="json"),
             }
         )
+
+
+def test_candidate_config_hash_must_match_human_artifact() -> None:
+    with pytest.raises(ValidationError, match="human_calibration_config_hash_mismatch"):
+        _candidate(CANDIDATES[0], config_hash="cfg-different-runtime")
+
+
+def test_duplicate_candidate_config_hashes_are_rejected() -> None:
+    candidates = (
+        _candidate(CANDIDATES[0], human_calibration=None, config_hash="cfg-shared"),
+        _candidate(CANDIDATES[1], human_calibration=None, config_hash="cfg-shared"),
+    )
+    with pytest.raises(ValidationError, match="duplicate_candidate_config_hash"):
+        _evidence(candidates=candidates)
 
 
 def test_strict_artifacts_reject_unknown_fields_instead_of_raw_payloads() -> None:
