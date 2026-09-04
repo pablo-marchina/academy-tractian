@@ -92,9 +92,16 @@ def _semantic_dimension_state(
     if not ledger.valid:
         return "UNPROVEN", "semantic_evidence_invalid"
     records = ledger.records_for(operation, dimension)
-    if any(not record.passed for record in records):
+    if not records:
+        return "UNPROVEN", "campaign_proof_required"
+
+    # EDD recertification semantics: the newest controlled observation governs the active gate.
+    # If PASS and FAIL share the newest timestamp, fail closed because ordering is ambiguous.
+    latest_observed_at = max(record.observed_at for record in records)
+    latest = tuple(record for record in records if record.observed_at == latest_observed_at)
+    if any(not record.passed for record in latest):
         return "FAIL", ledger.source_label
-    if any(record.passed for record in records):
+    if any(record.passed for record in latest):
         return "PASS", ledger.source_label
     return "UNPROVEN", "campaign_proof_required"
 
@@ -126,7 +133,10 @@ def build_tractian_integration_campaign_report(
     requires observed canonical route behavior, successful valid execution and HTTP-error behavior;
     hosted actions additionally require an observed safety block. Semantic completion independently
     requires invalid-parameter rejection, response normalization and agent/evaluator behavior. Any
-    invalid ledger fails closed, and any semantic FAIL dominates an earlier PASS for that dimension.
+    invalid ledger fails closed. Semantic recertification uses the newest controlled observation for
+    each operation/dimension, with timestamp ties containing any FAIL resolved fail-closed. This lets
+    EDD fixes be recertified without deleting historical pass/fail aggregates. Neither route
+    registration nor transport telemetry can substitute for semantic proof.
     """
 
     hosted = hosted_evidence or empty_hosted_integration_evidence()
@@ -227,7 +237,9 @@ def build_tractian_integration_campaign_report(
             "TRANSPORT_COMPLETE_18_OF_18 is emitted only when every canonical operation has empirical "
             "route, valid-success and HTTP-error evidence, with explicit safety control for actions. "
             "SEMANTIC_COMPLETE_18_OF_18 is independent and requires invalid-parameter rejection, response "
-            "normalization and agent/evaluator proof for every operation. Neither route registration nor "
-            "transport telemetry can substitute for semantic proof."
+            "normalization and agent/evaluator proof for every operation. The active semantic state is "
+            "the newest controlled observation per operation/dimension; timestamp ties containing a FAIL "
+            "fail closed. Neither route registration nor transport telemetry can substitute for semantic "
+            "proof."
         ),
     )
