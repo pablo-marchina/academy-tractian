@@ -54,6 +54,28 @@ When no access-token provider is configured, requests remain unauthenticated. Th
 only for bounded provider-free CI/development topologies whose backend supplies its own controlled
 test identity boundary.
 
+## TRACTIAN integration coverage
+
+The production UI polls the authenticated `GET /api/tools/coverage` surface and renders the canonical
+18-operation integration matrix. It keeps these claims visually separate:
+
+- contract registration;
+- executable implementation-route presence;
+- historical frozen route evidence;
+- hosted-live route observation;
+- hosted-live success;
+- hosted HTTP errors, transport failures, unavailable outcomes and safety blocks.
+
+A fresh hosted environment therefore shows `18/18` contract and implementation while remaining
+`0/18` hosted-live until validated runtime evidence exists. An HTTP error can prove that a real route
+was reached, but it is never displayed as success. Safety-blocked consequential actions also remain
+explicitly different from executed actions.
+
+If the evidence endpoint is unavailable, malformed or fail-closed, the frontend does not infer a
+coverage percentage. It displays the evidence state and safe validation codes supplied by the
+backend instead. The UI receives no raw requests, tool bodies, response bodies, credentials,
+fingerprints or probe payloads.
+
 ## Development-only proxy
 
 For isolated development and CI browser acceptance, Vite can still proxy the API. Start the backend on `127.0.0.1:8000`, then:
@@ -80,8 +102,8 @@ npm test
 npm run build
 ```
 
-Reducer and API-boundary tests cover canonical sequence ordering, transport replay deduplication, conflicting event-id containment, runtime KPI derivation, real `run_finished` terminal semantics, hosted API URL validation, bearer-token validation and SSE framing/integrity.
+Reducer and API-boundary tests cover canonical sequence ordering, transport replay deduplication, conflicting event-id containment, runtime KPI derivation, real `run_finished` terminal semantics, hosted API URL validation, bearer-token validation, SSE framing/integrity and fail-closed TRACTIAN integration-coverage rendering.
 
 ## Product surfaces
 
-The frontend currently includes the connected operator/product areas defined by the project acceptance contract, including live execution, historical inspection, architecture, evidence/lineage, actions, evaluation/provider views and quantitative production health. New surfaces must consume real safe backend data rather than introduce demo-only state.
+The frontend currently includes the connected operator/product areas defined by the project acceptance contract, including live execution, historical inspection, architecture, TRACTIAN operation evidence, evidence/lineage, actions, evaluation/provider views and quantitative production health. New surfaces must consume real safe backend data rather than introduce demo-only state.
