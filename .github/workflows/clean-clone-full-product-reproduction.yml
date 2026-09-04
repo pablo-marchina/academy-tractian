@@ -1,6 +1,7 @@
 name: clean-clone-full-product-reproduction
 
 on:
+  workflow_call:
   pull_request:
     paths:
       - "src/academy_tractian/**"
