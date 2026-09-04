@@ -56,9 +56,6 @@ def _runtime_context_provider(config: HostedProductConfig):
                 permissions_claim=config.oidc_permissions_claim,
                 identity_claim=config.oidc_identity_claim,
             ),
-            # Production starts from the application-owned least-privilege permissions. Claims from
-            # the external IdP do not gain extra runtime permissions until a separate authorization
-            # experiment explicitly promotes an allow-list.
             allowed_claim_permissions=(),
             allowed_privileged_permissions=(),
             authorized_parties=config.oidc_authorized_parties,
@@ -79,15 +76,20 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
     active = config or HostedProductConfig.from_environment(require_serving_ready=True)
     active.assert_serving_ready()
     assert active.provider is not None
+    assert active.model is not None
     assert active.provider_api_key is not None
     assert active.tractian_base_url is not None
 
     live_evidence = HostedIntegrationEvidenceRecorder()
-    runtime_configuration_identity = hosted_runtime_configuration_identity(active.provider)
+    runtime_configuration_identity = hosted_runtime_configuration_identity(
+        active.provider,
+        active.model,
+    )
 
     def decision_source_factory():
         return create_hosted_decision_source(
             provider=active.provider or "",
+            model=active.model or "",
             api_key=active.provider_api_key or "",
         )
 
