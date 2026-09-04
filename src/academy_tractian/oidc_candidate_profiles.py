@@ -29,6 +29,7 @@ class OIDCCandidateProfile:
             role_claim=self.role_claim,
             permissions_claim=self.permissions_claim,
             identity_claim=self.identity_claim,
+            required_claims=self.required_custom_claims,
         )
 
     def environment_overrides(self) -> Mapping[str, str]:
@@ -40,6 +41,7 @@ class OIDCCandidateProfile:
             "ACADEMY_OIDC_ROLE_CLAIM": self.role_claim,
             "ACADEMY_OIDC_PERMISSIONS_CLAIM": self.permissions_claim,
             "ACADEMY_OIDC_IDENTITY_CLAIM": self.identity_claim,
+            "ACADEMY_OIDC_REQUIRED_CLAIMS": ",".join(self.required_custom_claims),
         }
 
 
