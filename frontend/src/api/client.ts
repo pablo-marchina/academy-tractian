@@ -1,3 +1,4 @@
+import { authorizationHeaders } from "./auth";
 import { apiUrl } from "./baseUrl";
 import type { ActionExecutionAccepted, PendingActionSafe } from "./actionTypes";
 import type {
@@ -35,12 +36,14 @@ import type {
 } from "./types";
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const authHeaders = await authorizationHeaders();
   const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       Accept: "application/json",
       ...(init?.body ? { "Content-Type": "application/json" } : {}),
       ...init?.headers,
+      ...authHeaders,
     },
   });
 
