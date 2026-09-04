@@ -87,6 +87,15 @@
       ]
     },
     {
+      "id": "neon-rls",
+      "url": "https://neon.com/docs/manage/projects",
+      "facts": [
+        "Neon RLS can validate third-party JWT providers such as Clerk and Auth0",
+        "expected audience can be configured",
+        "Postgres RLS policies are supported"
+      ]
+    },
+    {
       "id": "clerk-pricing",
       "url": "https://clerk.com/pricing",
       "facts": [
@@ -116,12 +125,35 @@
       ]
     },
     {
+      "id": "clerk-audience",
+      "url": "https://clerk.com/docs/guides/sessions/jwt-templates",
+      "facts": [
+        "JWT templates support a static aud claim",
+        "token lifetime is configurable as low as the chosen template lifetime"
+      ]
+    },
+    {
       "id": "auth0-pricing",
       "url": "https://auth0.com/pricing",
       "facts": [
         "Free is $0 without credit card signup",
         "up to 25,000 MAU",
         "5 organizations on Free"
+      ]
+    },
+    {
+      "id": "auth0-token-orgs",
+      "url": "https://auth0.com/docs/manage-users/organizations/using-tokens",
+      "facts": [
+        "access tokens can contain iss, sub, aud, azp, org_id and permissions",
+        "organization-scoped tokens are supported"
+      ]
+    },
+    {
+      "id": "auth0-token-lifetime",
+      "url": "https://auth0.com/docs/secure/tokens/access-tokens/update-access-token-lifetime",
+      "facts": [
+        "custom API access-token lifetime is configurable in seconds"
       ]
     },
     {
