@@ -8,13 +8,17 @@ on:
       - "src/academy_tractian/action_product_api.py"
       - "src/academy_tractian/operational_value_collection.py"
       - "src/academy_tractian/operational_value_pilot.py"
+      - "src/academy_tractian/operational_value_analysis.py"
       - "src/academy_tractian/action_recovery.py"
       - "src/academy_tractian/run_access.py"
       - "src/academy_tractian/run_execution_store.py"
+      - "scripts/operational_value_analyze.py"
       - "tests/test_postgres_product_api.py"
       - "tests/test_postgres_operational_value_collection.py"
       - "tests/test_postgres_operational_value_v5.py"
+      - "tests/test_postgres_operational_value_analysis.py"
       - "tests/test_operational_value_collection.py"
+      - "tests/test_operational_value_analysis.py"
       - "pyproject.toml"
       - ".github/workflows/postgres-production-operational.yml"
   workflow_dispatch:
@@ -58,11 +62,13 @@ jobs:
           tests/test_postgres_product_api.py
           tests/test_postgres_operational_value_collection.py
           tests/test_postgres_operational_value_v5.py
+          tests/test_postgres_operational_value_analysis.py
 
       - name: Regress existing operational product contracts
         run: >-
           python -m pytest -q
           tests/test_operational_value_collection.py
+          tests/test_operational_value_analysis.py
           tests/test_multiuser_product_api.py
           tests/test_product_api.py
           tests/test_production_operability.py
@@ -78,8 +84,12 @@ jobs:
               initialize_postgres_operational_schema,
               register_postgres_operational_pilot_packet,
           )
+          from academy_tractian.postgres_operational_value_analysis import (
+              PostgresOperationalValueAnalysisStore,
+          )
           assert callable(create_postgres_action_capable_product_app)
           assert callable(initialize_postgres_operational_schema)
           assert callable(register_postgres_operational_pilot_packet)
+          assert PostgresOperationalValueAnalysisStore is not None
           print("PostgreSQL production constructor import passed")
           PY
