@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS runtime
+FROM python:3.11.16-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -10,13 +10,14 @@ WORKDIR /app
 RUN groupadd --system academy \
     && useradd --system --gid academy --create-home academy
 
-COPY pyproject.toml ./
+COPY pyproject.toml requirements.lock ./
 COPY src ./src
 COPY research/e2 ./research/e2
 COPY scripts ./scripts
 
-RUN python -m pip install --no-cache-dir --upgrade pip \
-    && python -m pip install --no-cache-dir .
+RUN python -m pip install --no-cache-dir "pip==26.2.1" \
+    && PIP_CONSTRAINT=/app/requirements.lock python -m pip install --no-cache-dir . \
+    && python scripts/validate_python_dependency_lock.py --allow-subset
 
 USER academy
 
