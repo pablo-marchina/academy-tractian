@@ -33,10 +33,12 @@ The live readiness check may return `READY_FOR_ACTIVATION` only when all of the 
 1. current UTC time is at or after `2026-09-06T03:00:00Z` (end of 2026-09-05 in America/Sao_Paulo);
 2. the checked-out candidate SHA equals the GitHub-observed `main` SHA;
 3. `main.protected=true`;
-4. branch metadata exposes `required-gate` as a required status context;
+4. `required-gate` is observed as a required status context through either classic branch-protection metadata or an active repository/parent ruleset whose ref condition targets `main`;
 5. the latest completed `final-ci-required` run for that exact SHA concluded `success`;
 6. that run contains a successful `required-gate` job;
 7. the current final freeze evidence bundle validates with zero failures.
+
+For rulesets, only `enforcement=active` branch rulesets whose include/exclude conditions actually cover `main` contribute required checks. Evaluate/disabled rulesets, rulesets targeting other refs, and excluded `main` refs do not count. If the ruleset metadata cannot be read, readiness blocks rather than falling back to an operator assertion.
 
 Any missing observation blocks readiness. There is no fallback from missing protection metadata to an operator assertion.
 
@@ -55,7 +57,7 @@ The emitted report is aggregate-only and hash-bound. It records:
 
 It does not persist GitHub tokens, authorization headers, users, tenants, runtime identities, prompts, traces, action arguments or raw API response bodies.
 
-Raw GitHub branch/run/job responses are used transiently by the CLI and are not uploaded as artifacts.
+Raw GitHub branch/ruleset/run/job responses are used transiently by the CLI and are not uploaded as artifacts.
 
 ## State semantics
 
