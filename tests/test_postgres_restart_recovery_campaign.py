@@ -310,9 +310,19 @@ def test_promoted_postgres_restart_recovery_is_fail_safe_and_idempotent(
     assert first_executions.get(action_execution_run).state == "uncertain"  # type: ignore[union-attr]
     assert first_custody.get_safe(executing_action.action_id).state == "UNCERTAIN"
     assert first_ledger.get(key_sha256)["state"] == "UNCERTAIN"  # type: ignore[index]
-    assert first_custody.get_safe(pending_action.action_id).state == "PENDING_CONFIRMATION"
-    assert first_executions.get(runtime_completed).state == "completed"  # type: ignore[union-attr]
-    assert first_executions.get(runtime_failed).state == "failed"  # type: ignore[union-attr]
+
+    pending_preserved = (
+        first_custody.get_safe(pending_action.action_id).state == "PENDING_CONFIRMATION"
+    )
+    completed_preserved = (
+        first_executions.get(runtime_completed).state == "completed"  # type: ignore[union-attr]
+    )
+    failed_preserved = (
+        first_executions.get(runtime_failed).state == "failed"  # type: ignore[union-attr]
+    )
+    assert pending_preserved
+    assert completed_preserved
+    assert failed_preserved
 
     with TestClient(first) as client:
         accepted = client.post(
@@ -361,15 +371,9 @@ def test_promoted_postgres_restart_recovery_is_fail_safe_and_idempotent(
             first_restart_ledger_uncertain=len(
                 first_action_recovery.claimed_ledger_entries_marked_uncertain
             ),
-            pending_confirmation_preserved=(
-                first_custody.get_safe(pending_action.action_id).state == "PENDING_CONFIRMATION"
-            ),
-            completed_runtime_preserved=(
-                first_executions.get(runtime_completed).state == "completed"  # type: ignore[union-attr]
-            ),
-            failed_runtime_preserved=(
-                first_executions.get(runtime_failed).state == "failed"  # type: ignore[union-attr]
-            ),
+            pending_confirmation_preserved=pending_preserved,
+            completed_runtime_preserved=completed_preserved,
+            failed_runtime_preserved=failed_preserved,
             fresh_runtime_completed_after_recovery=fresh_completed,
             cross_tenant_visibility_blocked=cross_tenant_blocked,
             first_restart_provider_calls=0,
