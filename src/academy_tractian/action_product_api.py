@@ -11,6 +11,7 @@ from research.e2.transport import RequestTransport
 
 from .action_evaluation import ProductionActionEvaluator
 from .action_recovery import reconcile_orphaned_actions
+from .observability_backend import ObservabilityStoreBackend
 from .product_api import (
     AuthenticatedRuntimeContext,
     RuntimeContextProvider,
@@ -55,6 +56,7 @@ def create_action_capable_product_app(
     transport_factory: Callable[[], RequestTransport],
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
+    observability_store: ObservabilityStoreBackend | None = None,
     action_custody_path: str | Path | None = None,
     action_ledger_path: str | Path | None = None,
     custody_store: Any | None = None,
@@ -95,6 +97,7 @@ def create_action_capable_product_app(
         db_path=db_path,
         runtime_factory=runtime_factory,
         context_provider=context_provider,
+        observability_store=observability_store,
         access_db_path=access_db_path,
         execution_db_path=execution_db_path,
         run_access_store=run_access_store,
@@ -106,7 +109,7 @@ def create_action_capable_product_app(
     )
     controls = app.state.production_controls
     controls.set_actions_enabled(actions_enabled)
-    store = app.state.observability_store
+    store: ObservabilityStoreBackend = app.state.observability_store
     telemetry = app.state.production_telemetry
     active_run_access_store: RunAccessStore = app.state.run_access_store
     access_policy = app.state.product_access_policy
