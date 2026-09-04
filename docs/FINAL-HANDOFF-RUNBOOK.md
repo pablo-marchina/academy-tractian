@@ -2,56 +2,134 @@
 
 **Status:** ACTIVE operational runbook  
 **Authority:** subordinate to [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md), accepted ADRs and frozen experiment evidence.  
-**Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)
+**Final delivery:** 2026-09-08
 
-This runbook separates **what works now** from **what becomes the final handoff once the realtime observability/frontend P0 work is merged**.
-
-## 1. Current supported provider-free path
+## 1. Promoted provider-free product path
 
 ```text
-request
-→ ProductionRuntime
+signed bearer identity
+→ FastAPI product API
+→ PostgreSQL mutable operational state + tenant RLS
+→ RealtimeProductionRuntime
 → DecisionSource
 → AgentController
 → HarnessRunner
-→ typed TRACTIAN tools
-→ B1/B2/B3 safety boundaries as applicable
-→ RunTrace
-→ deterministic evaluator
+→ 18 typed TRACTIAN tools
+→ B1/B2/B3 boundaries
+→ normalized evidence
+→ terminal/action proposal
+→ RunTrace + evaluator
+→ safe DuckDB read model
+→ REST/SSE
+→ React operator control room
 ```
 
-The default production runtime is action-disabled. The controlled supplied/test action profile is separately governed and does not authorize real-customer mutation.
+The provider-free profile performs no live provider call and no real-customer mutation.
 
-## 2. Backend prerequisites
+Consequential actions are separately governed by persistent custody, explicit confirmation, current authorization, a host kill switch and a persistent one-shot idempotency claim. Ambiguous post-claim outcomes become `UNCERTAIN` and are never blindly retried.
 
-- Python 3.11+
-- `pydantic>=2.6,<3`
-- `pytest>=8` for development/test
+## 2. Prerequisites
 
-From repository root:
+Canonical CI versions:
+
+- Python 3.11
+- Node 24
+- PostgreSQL 18
+- npm dependencies from committed `frontend/package-lock.json`
+
+Python install from repository root:
 
 ```bash
-python --version
+python -m pip install --upgrade pip
 python -m pip install -e ".[dev]" -e "research/e2[dev]"
 ```
 
-No provider secret is needed for provider-free reproduction.
+Frontend locked install:
 
-## 3. Current clean provider-free reproduction
+```bash
+cd frontend
+npm ci --ignore-scripts --no-audit --no-fund
+cd ..
+```
+
+No provider secret is required for provider-free reproduction.
+
+## 3. Canonical clean-clone reproduction
+
+The authoritative automated path is:
+
+`.github/workflows/final-delivery-provider-free-reproduction.yml`
+
+It starts from a clean `actions/checkout`, starts PostgreSQL 18 and runs:
+
+```text
+1. verify tracked checkout is clean
+2. install Python + E2 dependencies
+3. run complete `tests` suite with POSTGRES_OPERATIONAL_TEST_DSN set
+4. explicitly rerun promoted identity/RLS + load + restart P0 Postgres tests
+5. regress ADR-004 controller boundary
+6. reproduce frozen EV-007
+7. reproduce frozen EV-008
+8. reproduce frozen EV-011
+9. validate final-delivery demo/evidence index
+10. validate final-handoff audit
+11. npm ci from package-lock
+12. frontend typecheck
+13. frontend unit tests
+14. frontend production build
+15. verify no tracked repository mutation
+```
+
+This is the P0 clean-checkout reproduction contract. Do not change frozen expected identities merely to make this gate pass; diagnose the implementation/evidence mismatch.
+
+## 4. Manual provider-free reproduction
+
+Start a local PostgreSQL 18 instance and expose an admin DSN only to the test process, for example:
+
+```text
+POSTGRES_OPERATIONAL_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+```
+
+Then run from repository root:
 
 ```bash
 python -m pytest -q tests
+python -m pytest -q \
+  tests/test_postgres_authenticated_product_api.py \
+  tests/test_postgres_load_concurrency_benchmark.py \
+  tests/test_postgres_restart_recovery_campaign.py
 python -m pytest -q research/e2/tests/test_controller.py
 python scripts/validate_ev007_failure_campaign.py
 python scripts/validate_ev008_stability_campaign.py
 python scripts/validate_ev011_communication_campaign.py
 python scripts/validate_delivery_reproduction.py
 python scripts/validate_final_handoff_audit.py
+cd frontend
+npm ci --ignore-scripts --no-audit --no-fund
+npm run typecheck
+npm test
+npm run build
 ```
 
-Do not change frozen expected identities to make a regression pass. Diagnose the implementation/evidence change instead.
+On PowerShell, set the DSN with:
 
-Historical frozen campaign identities include:
+```powershell
+$env:POSTGRES_OPERATIONAL_TEST_DSN = "postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian"
+```
+
+## 5. Full browser acceptance
+
+Chromium full-product acceptance remains a separate mandatory gate:
+
+`.github/workflows/full-product-playwright.yml`
+
+It starts PostgreSQL, the provider-free backend and Vite frontend, then exercises the real browser path. It also proves deterministic `npm ci`, typecheck, unit tests and build before Playwright.
+
+Browser acceptance covers realtime run growth, safe drill-down, semantic-review/operational-value participant surfaces and responsive behavior without exposing raw private evaluator/runtime material.
+
+## 6. Frozen provider-free campaigns
+
+Historical expected identities remain immutable for their original scopes:
 
 ```text
 EV-007  7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9
@@ -60,199 +138,132 @@ EV-011  cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
 DEMO    43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445
 ```
 
-## 4. Provider-free demonstration
+EV-007 covers failure safety, EV-008 repeated stability and EV-011 communication behavior. The final demo validates representative integrated outcomes and one controlled synthetic action path.
 
-`python scripts/validate_delivery_reproduction.py` exercises representative integrated paths including:
+## 7. Current production-safety evidence
 
-- investigate/read → orient/final;
-- missing context → clarification;
-- no safe path → abstention;
-- human review → escalation;
-- controlled supplied/test action with local transport/idempotency custody.
+Additional P0 evidence is intentionally separate from frozen historical identities:
 
-This is synthetic/provider-free delivery evidence and performs no real customer mutation.
+- authenticated identity + PostgreSQL RLS integration;
+- blinded semantic-review and operational-value collection contracts;
+- evaluator-only adaptive stopping diagnostic;
+- load/concurrency aggregate campaign;
+- PostgreSQL restart/recovery aggregate campaign.
 
-## 5. D01 historical live evidence
+Load evidence is descriptive only and does not establish production capacity/SLOs. Restart evidence verifies conservative persisted-state semantics only and does not establish RTO/RPO/HA/uptime.
 
-D01 has already executed:
-
-```text
-Cloudflare Workers AI
-GLM 4.7 Flash + Nemotron 3 120B A12B
-32 / 32 completed attempts
-USD 0.00
-2813.628464 observed Neurons
-NO_SELECTION
-24 / 24 CLIENT_FAILURE at exact 512 output-token ceiling
-```
-
-Do not rerun D01 or alter its frozen semantics.
-
-## 6. D02 governed live boundary
-
-D02 is a prospective diagnostic with:
-
-```text
-same providers/probes/repeats/prompt/schema/evaluator
-completion cap 1024
-sanitized failure subtype
-worst-case packet 9352.805376 Neurons
-USD0 / no retries / no fallbacks
-```
-
-Operational rule:
-
-1. start from exact current `main`;
-2. provider credentials absent;
-3. wait for an eligible Workers AI UTC reset;
-4. make a fresh truthful zero-use operator attestation;
-5. capture fresh evidence (<=600 s);
-6. issue fresh receipt (<=300 s) bound to exact custody root;
-7. only then provision token/account ID in environment;
-8. execute the governed D02 launcher once;
-9. clear credentials immediately;
-10. inspect custody/ledger/result;
-11. if any attempt is `CLAIMED`/`UNCERTAIN`, never blind-rerun it;
-12. analyze D02 vs D01 and apply frozen hard-gate/Pareto rules.
-
-Never paste tokens/account identifiers into documentation or chat logs.
-
-## 7. Failure behavior
+## 8. Failure/recovery behavior
 
 ### Invalid arguments
 
-B1 blocks before transport. Preserve the failure; do not convert it into success.
+B1 blocks before transport. Never convert the denied operation into invented success.
 
-### Policy/authorization denial
+### Authorization/policy denial
 
-Denied actions stop before transport and remain visible as contained policy events.
-
-### Tool boundary failure
-
-Fail closed to a safe terminal path where implemented. Do not invent successful external state.
-
-### Decision-source/provider failure
-
-Malformed/unusable provider output must not become an invented action or answer. Sanitized failure/provenance metadata may be recorded; raw material remains private.
+Stop before consequential transport and preserve the denial in safe telemetry.
 
 ### Missing/conflicting evidence
 
-Clarify, abstain or escalate; do not fabricate certainty.
+Clarify, abstain or escalate. Do not fabricate certainty.
+
+### Provider/decision-source failure
+
+Do not manufacture a conclusion or action from malformed/unavailable output. Raw provider material remains private.
 
 ### Consequential action uncertainty
 
-Once a durable idempotency/attempt claim is consumed, do not delete/reuse it to manufacture retry eligibility.
+Once a durable idempotency claim is consumed, never delete/reuse it to manufacture retry eligibility. Ambiguity becomes `UNCERTAIN` pending external reconciliation.
 
-## 8. Realtime observability/frontend handoff contract
+### Process restart
 
-Once #121/#124/#122/#125/#123 are merged, the final clean setup must additionally document exact commands for:
+Startup reconciliation is conservative:
 
 ```text
-backend/observability install
-frontend install from lockfile
-frontend build
-observability API start
-React control-room start
-provider-independent live demo
-frontend/unit/E2E test suite
+orphan runtime accepted/running    → interrupted
+orphan action execution            → uncertain
+custody EXECUTING                  → UNCERTAIN
+ledger CLAIMED                     → UNCERTAIN
+PENDING_CONFIRMATION               → preserved
+completed / failed                 → preserved
 ```
 
-Do not add placeholder commands before the actual package/scripts exist. This runbook must be updated from committed executable commands, not from planned names.
+A second startup is expected to perform zero additional recovery transitions. Restart never authorizes automatic replay.
 
-Final realtime behavior must show:
+## 9. Security/privacy
 
-- `LIVE / RECONNECTING / CAUGHT_UP / HISTORICAL` state;
-- real event-driven timeline/trace graph updates;
-- reconnect/cursor catch-up;
-- safe drill-down;
-- architecture/output lineage;
-- no raw/private telemetry in browser.
+Never expose through browser/API/SSE/artifacts:
 
-## 9. Observability diagnosis
+- provider secrets/tokens;
+- account/auth headers;
+- raw identity binding or signing secrets;
+- benchmark/evaluator seed;
+- raw provider prompt/response material;
+- forbidden raw tool/observation bodies;
+- private action arguments/idempotency keys;
+- evaluator gold/oracles/private labels;
+- hidden chain-of-thought.
 
-For any run, diagnose the earliest failing boundary:
+The project-owned signed bearer is not an enterprise SSO/OIDC claim.
+
+## 10. Operational diagnosis order
+
+Diagnose the earliest failing boundary:
 
 ```text
-request/context
+request/auth context
+→ tenant ownership/RLS
+→ runtime preparation
 → decision source
 → controller decision
 → tool proposal
 → B1 validation
 → B2/B3 policy
-→ tool transport
-→ observation
+→ transport
+→ normalized observation/evidence
 → terminal outcome
 → trace validation
 → evaluator
 → safe projection
 → persistence
-→ SSE transport
+→ SSE
 → browser reducer/render
 ```
 
-Do not mask one boundary with retry/fallback from another.
+Do not mask one layer with retries/fallbacks from another.
 
-## 10. Security/privacy
+## 11. Final presentation sequence
 
-Never persist or expose through handoff/frontend/API/SSE:
-
-- provider secrets/tokens;
-- account/auth identifiers/headers;
-- identity binding/user ID/seed;
-- raw provider prompt/response material;
-- forbidden raw tool/observation bodies;
-- hidden chain-of-thought;
-- evaluator-private gold/oracles/blind outcomes.
-
-## 11. Rollback/reversal
-
-- code/runtime regression: return to last validated Git commit and rerun clean reproduction;
-- frontend/observability regression: revert to last validated frozen frontend/backend build and rerun affected tests;
-- controlled action uncertainty: reconcile external state, never auto-replay consumed claim;
-- provider experiment: preserve custody/ledger; no alternate root to reset attempts;
-- scientific evidence: frozen artifacts remain immutable;
-- privacy/evaluation leak: treat as evidence-integrity incident, not a documentation cleanup opportunity.
-
-A documented code/config reversal path is not equivalent to proof of infrastructure rollback in a horizontally deployed production environment.
-
-## 12. Final presentation sequence
-
-The target final demo flow is:
+Recommended provider-independent demo:
 
 ```text
-1. Mission Control / system state
+1. Mission Control / production state
 2. submit representative industrial request
-3. run appears LIVE
-4. architecture path activates from real events
-5. model/decision metadata
-6. typed tool proposal
-7. validation/policy result
-8. TRACTIAN tool/API metadata
-9. safe observation/evidence
-10. terminal response
-11. runtime trace completes
-12. evaluator appears after runtime completion
-13. Explain This Run / output lineage
-14. dynamic data explorer
-15. Tools & Policy / failure behavior
-16. D01 vs D02 / provider quality/resource evidence
-17. one clarification/abstain/escalation/blocked/failure case
+3. observe LIVE run + architecture/trace growth
+4. inspect tool/policy/evidence path
+5. inspect terminal operational conclusion
+6. inspect evaluator after runtime completion
+7. inspect output lineage / dynamic explorer
+8. show clarification/abstain/escalation example
+9. show governed pending action + explicit confirmation using synthetic profile
+10. show provider evidence state: D01/D02 = NO_SELECTION
+11. explain load and restart evidence with their explicit non-claim boundaries
 ```
 
-Maintain a provider-independent fallback demo so live provider availability is not a single presentation point of failure.
+Never make live provider availability a single point of presentation failure.
 
-## 13. Final completion checklist
+## 12. Final completion checklist
 
 Before delivery:
 
-- clean backend install/reproduction passes;
-- frontend/observability clean install/build/start passes once implemented;
-- all P0 acceptance rows in `DELIVERY-ACCEPTANCE.md` pass or are explicitly bounded;
-- D02 is resolved or its blocker is explicitly documented;
-- no open P0 frontend/observability defect;
-- documentation links/commands match committed code;
-- no secrets/private evaluator material are present;
-- hard visual/feature freeze respected;
-- exact final demo rehearsed on the presentation environment.
+- clean-clone reproduction green on exact final SHA;
+- full-product Playwright green on exact final SHA;
+- branch protection/final CI configured and verified;
+- final benchmark/evidence bundle frozen;
+- documentation commands match committed code;
+- no secrets/private evaluator material in repo/artifacts/frontend;
+- human-dependent claims remain marked `NOT READY` unless real data exists;
+- provider state remains truthful (`NO_SELECTION` unless a frozen challenger actually wins);
+- no last-minute framework/feature expansion without measured need;
+- exact demo rehearsed on the presentation environment.
 
-If any item fails, report the exact boundary and limitation rather than broadening claims.
+If a gate is not closed, report the exact boundary and limitation instead of broadening the claim.
