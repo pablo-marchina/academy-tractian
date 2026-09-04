@@ -1,0 +1,21 @@
+{
+  "allowed_migration_classes": [
+    "none",
+    "minor"
+  ],
+  "allowed_runtime_maturities": [
+    "ga"
+  ],
+  "forbid_persistent_local_disk_requirement": true,
+  "max_evidence_age_days": 7,
+  "max_required_local_components": 0,
+  "reject_provider_discouraged_production": true,
+  "require_dockerfile_compatibility": true,
+  "require_hosted_service": true,
+  "require_managed_postgres_connectivity": true,
+  "require_outbound_https": true,
+  "require_python_3_11_compatibility": true,
+  "require_streaming_http": true,
+  "require_zero_cost_guardrail": true,
+  "schema_version": "deployment-feasibility-policy-v1"
+}
