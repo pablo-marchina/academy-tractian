@@ -36,6 +36,7 @@ def _serving_env() -> dict[str, str]:
     return {
         **_oidc_env(),
         "ACADEMY_PROVIDER": "openai",
+        "ACADEMY_MODEL": "gpt-5.6-sol",
         "OPENAI_API_KEY": "test-provider-key",
         "ACADEMY_TRACTIAN_BASE_URL": "https://tractian.example.com",
     }
@@ -47,9 +48,12 @@ def test_hosted_config_allows_infrastructure_validation_before_provider_selectio
     summary = config.sanitized_summary()
 
     assert config.provider is None
+    assert config.model is None
     assert config.identity_backend == "signed_bearer"
     assert summary["provider"] == {
         "selection": "NO_SELECTION",
+        "model": "NO_SELECTION",
+        "candidate_id": "NO_SELECTION",
         "api_key_configured": False,
     }
     assert summary["deployment"] == {
@@ -88,27 +92,61 @@ def test_hosted_config_accepts_provider_neutral_oidc_without_application_signing
     assert env["ACADEMY_OIDC_JWKS_URL"] not in repr(summary)
 
 
-def test_hosted_config_requires_provider_and_tractian_endpoint_for_serving() -> None:
+def test_hosted_config_requires_provider_model_and_tractian_endpoint_for_serving() -> None:
     with pytest.raises(ValueError, match="hosted_provider_not_selected"):
         HostedProductConfig.from_environment(_oidc_env(), require_serving_ready=True)
 
-    env = {
+    provider_only = {
         **_oidc_env(),
         "ACADEMY_PROVIDER": "openai",
         "OPENAI_API_KEY": "test-provider-key",
+        "ACADEMY_TRACTIAN_BASE_URL": "https://tractian.example.com",
+    }
+    with pytest.raises(ValueError, match="hosted_model_not_selected"):
+        HostedProductConfig.from_environment(provider_only, require_serving_ready=True)
+
+    candidate = {
+        **_oidc_env(),
+        "ACADEMY_PROVIDER": "openai",
+        "ACADEMY_MODEL": "gpt-5.6-sol",
+        "OPENAI_API_KEY": "test-provider-key",
     }
     with pytest.raises(ValueError, match="tractian_base_url_missing"):
-        HostedProductConfig.from_environment(env, require_serving_ready=True)
+        HostedProductConfig.from_environment(candidate, require_serving_ready=True)
 
     ready = HostedProductConfig.from_environment(_serving_env(), require_serving_ready=True)
     assert ready.provider == "openai"
+    assert ready.model == "gpt-5.6-sol"
+    assert ready.sanitized_summary()["provider"] == {
+        "selection": "openai",
+        "model": "gpt-5.6-sol",
+        "candidate_id": "openai:gpt-5.6-sol",
+        "api_key_configured": True,
+    }
     assert "test-provider-key" not in repr(ready.sanitized_summary())
+
+
+def test_hosted_config_rejects_model_without_provider_or_invalid_pair() -> None:
+    with pytest.raises(ValueError, match="hosted_model_without_provider"):
+        HostedProductConfig.from_environment(
+            {**_oidc_env(), "ACADEMY_MODEL": "gemini-3.8-flash"}
+        )
+
+    with pytest.raises(ValueError, match="unsupported_hosted_candidate"):
+        HostedProductConfig.from_environment(
+            {
+                **_oidc_env(),
+                "ACADEMY_PROVIDER": "google",
+                "ACADEMY_MODEL": "gpt-5.6-sol",
+            }
+        )
 
 
 def test_signed_bearer_remains_regression_only_and_cannot_claim_hosted_production_ready() -> None:
     env = {
         **_base_env(),
         "ACADEMY_PROVIDER": "openai",
+        "ACADEMY_MODEL": "gpt-5.6-sol",
         "OPENAI_API_KEY": "test-provider-key",
         "ACADEMY_TRACTIAN_BASE_URL": "https://tractian.example.com",
     }
