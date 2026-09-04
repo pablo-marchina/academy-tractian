@@ -3,6 +3,9 @@ from __future__ import annotations
 from collections import deque
 from datetime import UTC, datetime, timedelta
 
+import pytest
+from pydantic import ValidationError
+
 from academy_tractian.tractian_semantic_certification import run_tractian_semantic_certification
 from academy_tractian.tractian_transport_campaign import (
     TractianTransportCampaignManifest,
@@ -177,30 +180,19 @@ def test_approved_action_live_response_is_replayed_semantically_without_second_m
     assert summary.semantic_record_count == 3
 
 
-def test_b0_valid_but_runtime_invalid_action_fails_agent_evaluator_certification() -> None:
-    transport = _FakeTransport(TransportResponse(202, {}, {"accepted": True}))
-    manifest = _manifest(
-        TransportProbeFixture(
-            operation="update_asset_config",
-            valid_arguments={
-                "asset_id": "asset-action-invalid-runtime",
-                "body": {"changes": {"criticality": "high"}},
-            },
-            action_execution_approved=True,
-            action_approval_ref="approval-semantic-action-002",
-        )
+def test_b1_invalid_action_manifest_is_rejected_before_any_live_execution() -> None:
+    fixture = TransportProbeFixture(
+        operation="update_asset_config",
+        valid_arguments={
+            "asset_id": "asset-action-invalid-runtime",
+            "body": {"changes": {"criticality": "high"}},
+        },
+        action_execution_approved=True,
+        action_approval_ref="approval-semantic-action-002",
     )
 
-    _, _, semantic_ledger, summary = run_tractian_semantic_certification(
-        manifest=manifest,
-        transport=transport,
-        allow_actions=True,
-        now=_Clock(),
-    )
-
-    assert len(transport.requests) == 1
-    states = _states(semantic_ledger, "update_asset_config")
-    assert states["invalid_parameters_rejected"] is True
-    assert states["response_normalization_verified"] is False
-    assert states["agent_evaluator_behavior_verified"] is False
-    assert summary.agent_evaluator_passes == 0
+    with pytest.raises(
+        ValidationError,
+        match="invalid_valid_probe_arguments:update_asset_config",
+    ):
+        _manifest(fixture)
