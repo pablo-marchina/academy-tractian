@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Current Project Status
 
 **Status:** ACTIVE / sole canonical human-readable state  
-**Checkpoint:** 2026-09-02 22:54 BRT / 2026-09-03 01:54 UTC  
+**Checkpoint:** 2026-09-04 BRT  
 **Final delivery:** 2026-09-08  
 **Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
 **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
@@ -9,333 +9,234 @@
 ## 1. Executive status
 
 ```text
-UPDATED TAPI scope                          Agent + Evaluation in one solution
-external API/hosted-service project cost   USD 0 hard constraint
-production agent runtime                   IMPLEMENTED
-production deterministic evaluator         IMPLEMENTED
-EDD baseline/candidate gate                IMPLEMENTED
-TRACTIAN typed tool registry               18 operations
-standalone wheel reproduction              PROVED
+updated TAPI scope                         Agent + Evaluation in one solution
+external API/hosted-service cash cost     USD 0 hard constraint
+production agent runtime                  IMPLEMENTED
+production deterministic evaluator        IMPLEMENTED
+TRACTIAN typed tool registry              18 operations
+safe realtime observability               IMPLEMENTED
+React operator control room               IMPLEMENTED
+full-product Playwright E2E                IMPLEMENTED / gated
+frontend lockfile + npm ci                 IMPLEMENTED / gated
 
-safe observability projection              IMPLEMENTED
-DuckDB telemetry/read model                IMPLEMENTED
-FastAPI product/read API                   IMPLEMENTED
-POST /api/runs request→evaluation path     IMPLEMENTED
-runtime-time SSE + reconnect/catch-up      IMPLEMENTED
-Live Run Cockpit                           IMPLEMENTED
-Run Explorer / Trace Graph                 IMPLEMENTED
-Architecture Explorer                      IMPLEMENTED
-Evidence Explorer / Output Lineage         IMPLEMENTED
-Mission Control / Production Health        IMPLEMENTED
-Tools & Policy / Eval Lab                  IMPLEMENTED
-Provider D01/D02 Lab                       IMPLEMENTED
-Dynamic Data Explorer + cross-filter       IMPLEMENTED
-quant runtime/API/resource/SSE telemetry   IMPLEMENTED
+production consequential actions          IMPLEMENTED
+custody + explicit confirmation            IMPLEMENTED
+persistent idempotency/no blind replay     IMPLEMENTED
 
-production consequential actions          IMPLEMENTED / merged #143
-action custody + explicit confirmation     IMPLEMENTED
-action idempotency + no blind replay       IMPLEMENTED
-action realtime trace/evaluator            IMPLEMENTED
+request authentication                    SIGNED BEARER HMAC-SHA256 V1
+enterprise OIDC/SSO claim                  FALSE
+mutable operational state                 PostgreSQL
+analytics/read model                       DuckDB
+PostgreSQL tenant RLS                      IMPLEMENTED / tested
 
-D01 Cloudflare live comparison             COMPLETE
-D01 attempts                               32 / 32
-D01 cash cost                              USD 0.00
-D01 observed Neurons                       2813.628464
-D01 selection                              NO_SELECTION
-D01 512-token censoring diagnostic         24 / 24 CLIENT_FAILURE at cap
+human semantic-review collector            IMPLEMENTED
+VALIDATION source generation               IMPLEMENTED
+human semantic calibration claim           NOT READY — real labels required
 
-D02 controlled 1024-token comparison       COMPLETE
-D02 attempts                               32 / 32
-D02 cash cost                              USD 0.00
-D02 observed Neurons                       3344.130856
-D02 packet Neuron delta vs D01             +18.85%
-D02 selection                              NO_SELECTION
-D02 production selection claim             FALSE
-D02 raw provider material persisted        NO
+operational-value collector                IMPLEMENTED
+frozen paired time analysis                IMPLEMENTED
+engineer-minutes-saved business claim      NOT READY — real human data required
 
-semantic response-quality calibration      NEXT P0/P1 GATE / #128
-adaptive evidence/stopping policy          P1 EXPERIMENT / #129
-runtime/HITL final architecture            REVALIDATION REQUIRED / #92
-operational storage topology               REVALIDATION REQUIRED / #131
-Playwright full-product E2E                 NOT YET CLOSED / #114
-frontend lockfile deterministic install    NOT YET CLOSED
-production deployment/restart path         NOT YET CLOSED / #131
-final integrated freeze                    NOT YET DONE / #114
+adaptive stopping replay diagnostic        IMPLEMENTED / evaluator-only
+adaptive runtime stopping promoted         NO
+
+load/concurrency campaign                  MEASURED / descriptive only
+production capacity claim                  FALSE
+restart/recovery campaign                  VERIFIED safety contract
+RTO/RPO/availability claim                 FALSE
+
+D01/D02 provider comparison                COMPLETE
+D01/D02 cash cost                          USD 0.00
+provider selection                         NO_SELECTION
+
+clean-clone full reproduction              ACTIVE P0 / #174
+branch protection + final CI               NEXT P0
+final benchmark/evidence freeze            NEXT P0
 ```
 
-## 2. Updated-TAPI interpretation
-
-The latest TAPI is the formal source for scope. The project is one integrated solution containing:
-
-- a functional industrial agent that interprets requests, obtains evidence from the provided TRACTIAN API and chooses safe operational outcomes/actions; and
-- a framework/process/application for evaluating agent quality and reliability.
-
-The delivery also includes API integration, technical experiments and documented results. Agent + Evaluation are therefore one P0 product, not independent optional tracks.
-
-## 3. Delivered production path
+## 2. Promoted product path
 
 ```text
-user request
-→ POST /api/runs
-→ trusted RuntimeContextProvider
+browser request
+→ signed RuntimeContextProvider
+→ organization/user/identity/permissions
+→ FastAPI product API
+→ PostgreSQL ownership + tenant RLS
 → RealtimeProductionRuntime.prepare()
-→ genuine persisted run_started
 → provider-neutral DecisionSource
 → AgentController
 → HarnessRunner
-→ typed 18-operation ToolSpec registry
-→ deterministic B1/B2/B3
-→ TRACTIAN transport
-→ normalized observation/evidence
+→ 18 typed TRACTIAN tools
+→ deterministic B1/B2/B3 boundaries
+→ normalized evidence
 → FINAL / CLARIFY / ABSTAIN / ESCALATE / action proposal
 → RunTrace
 → ProductionEvaluator
 → safe projection
-→ DuckDB
-→ FastAPI REST/SSE
+→ DuckDB analytics/read model
+→ REST/SSE
 → React operator control room
 ```
 
-Consequential actions use a separate two-phase production path:
+Consequential action path:
 
 ```text
 agent proposes exact action
-→ deterministic permission/scope/schema/justification validation
-→ private persistent action custody
+→ deterministic scope/schema/permission validation
+→ private PostgreSQL custody
 → PENDING_CONFIRMATION
 → authenticated operator confirms opaque action_id
-→ current authorization + host kill switch revalidated
-→ persistent atomic idempotency claim
-→ exact custodied action executes through the existing safety/tool boundary
-→ accepted=true semantics
-→ separate realtime action RunTrace
+→ authorization + kill switch revalidated
+→ atomic persistent idempotency claim
+→ exact custodied action executes
+→ separate action execution/run trace
 → ProductionActionEvaluator
-→ same safe REST/SSE/frontend path
+→ safe REST/SSE/frontend projection
 ```
 
-The browser cannot inject action arguments, identity, permissions, resource scope or idempotency material. Ambiguous post-claim failures become `UNCERTAIN` and are never automatically retried.
+Ambiguous post-claim outcomes become `UNCERTAIN`. Restart is never permission to automatically replay a runtime execution or retry a consequential action.
 
-## 4. Safe realtime product surface
+## 3. Identity and tenant isolation
 
-Delivered operator surfaces:
+The promoted entrypoint uses the project-owned `academy-runtime-v1` signed bearer envelope:
 
-- Live Run Cockpit;
-- historical Run Explorer;
-- canonical-event Timeline;
-- Trace Graph;
-- versioned Architecture Explorer with active path;
-- Evidence Explorer;
-- Output Lineage;
-- Action Control;
-- Mission Control / Production Health;
-- Tools analytics;
-- Policy analytics;
-- post-runtime Eval Lab;
-- Provider D01/D02 Lab;
-- Dynamic Data Explorer with allow-listed queries;
-- global run cross-filter + drill-down.
+- HMAC-SHA256 signature;
+- constant-time signature comparison;
+- issuer/audience validation;
+- explicit token lifetime;
+- explicit organization, identity and user claims;
+- no fallback to browser-controlled identity headers;
+- no benchmark `seed` claim;
+- privileged global capabilities require separate server opt-in.
 
-Measured production telemetry includes runtime request/execution latency, API/query latency, CPU/load/RSS, executor pressure, runtime heartbeat, observability overhead, event→persistence latency, persistence→SSE latency, SSE reconnect/integrity signals, passive provider/TRACTIAN operability and host-owned kill switches.
+This is deliberately **not** described as OAuth/OIDC/JWT or enterprise SSO.
 
-All browser-facing state is projected through the safe observability boundary. Raw RunTrace, credentials, identity binding, evaluator seed/private truth, provider raw material and chain-of-thought are not browser-visible.
+PostgreSQL provides a second independent tenant boundary. Scoped reads use a non-superuser, non-`BYPASSRLS`, non-owner role and transaction-local `academy.organization_id`. Direct SQL integration tests prove tenant B cannot read a known tenant-A ownership row.
 
-## 5. D01 → D02 controlled provider result
+## 4. Evaluation and human evidence state
 
-D01 established a strong completion-budget censoring signal at 512 completion tokens:
+Delivered:
+
+- deterministic structural/safety/trajectory evaluation;
+- operational-conclusion/value contract;
+- blinded human operational-value pilot packet + authenticated collector UI;
+- frozen paired MANUAL × ASSISTED time analysis;
+- semantic rubric + frozen calibration protocol v2;
+- blinded semantic review A/B + third adjudicator custody;
+- trusted VALIDATION source generation from the sanitized read model;
+- evaluator-only adaptive evidence/stopping replay.
+
+Still human-dependent:
+
+- real semantic labels/adjudication;
+- measured semantic evaluator agreement/error profile;
+- real manual vs assisted engineer-time observations;
+- useful auto-resolution/business-value claim.
+
+These data must not be fabricated. `LOCKED_TEST` remains excluded from tuning/calibration.
+
+## 5. Adaptive stopping state
+
+The replay diagnostic measures where an evaluator-time evidence oracle says sufficiency first occurred and how much trajectory remained afterwards.
+
+Important boundary:
+
+- predicates are explicit evaluator judgments;
+- the oracle never enters runtime;
+- headroom is diagnostic, not automatically waste;
+- no runtime stopping rule was promoted;
+- any future challenger must be oracle-free at execution time and win under EDD/hard gates.
+
+## 6. Load/concurrency evidence
+
+The provider-free authenticated PostgreSQL campaign is reproducible and hash-bound. CI exercised concurrency levels 1 and 4 with 12 synthetic requests total.
+
+Observed on the CI runner:
 
 ```text
-all sanitized CLIENT_FAILURE at exact 512 cap  24 / 24
-GLM success rate                              0.0000
-Nemotron success rate                         0.4375
-selection                                     NO_SELECTION
+concurrency 1  6/6 completed, 0 errors, peak executor utilization 0.5
+concurrency 4  6/6 completed, 0 errors, peak active 2, peak queued 2,
+               peak inflight 4, executor utilization 1.0
 ```
 
-D02 changed the completion budget to 1024 under the frozen governed plan:
+Latency, throughput, persistence, CPU and RSS aggregates are recorded in the campaign artifact. Interpretation remains `descriptive_only`; no CI measurement is presented as deployment capacity or an SLO.
 
-`e768b324baa00dd337c8e56bdfb29b9444be92619508a9fefc30e30b746d1958`
+## 7. Restart/recovery evidence
 
-The one-shot D02 packet completed 32/32 attempts at USD 0.00 with complete resource accounting and no raw provider material recorded.
+The promoted PostgreSQL topology now has an integrated restart campaign.
 
-### GLM controlled delta
+Verified first-start behavior:
 
 ```text
-M1 structured adherence     0.0000 → 0.4375   +43.75 pp
-M4 public task quality      0.0000 → 0.3750   +37.50 pp
-M7 success rate             0.0000 → 0.4375   +43.75 pp
-M7 signature stability      0.0000 → 0.2500   +25.00 pp
-median latency              8959.5 → 15329 ms +71.09%
-observed Neurons            450.3848 → 642.9772 +42.76%
-hard gates                  FAIL M1/M4/M7 → FAIL M1/M4/M7
+2 orphaned runtime executions              → interrupted
+1 orphaned action execution                → uncertain
+1 custody EXECUTING row                    → UNCERTAIN
+1 ledger CLAIMED row                       → UNCERTAIN
+PENDING_CONFIRMATION                       preserved
+completed / failed executions              preserved
+provider calls during recovery             0
+action transport calls during recovery     0
 ```
 
-### Nemotron controlled delta
+A fresh authenticated run completes after recovery and remains tenant-isolated. A second startup produces zero new recovery transitions. The artifact explicitly states `production_availability_claim_ready=false`; no RTO/RPO/HA/uptime claim follows from this repository-level test.
 
-```text
-M1 structured adherence     0.4375 → 0.5625   +12.50 pp
-M4 public task quality      0.3750 → 0.5625   +18.75 pp
-M7 success rate             0.4375 → 0.5625   +12.50 pp
-M7 signature stability      0.3750 → 0.5000   +12.50 pp
-median latency              6214.0 → 4218.5 ms -32.11%
-observed Neurons            2363.243664 → 2701.153656 +14.30%
-hard gates                  FAIL M1/M4/M7 → FAIL M1/M4/M7
-```
+## 8. Provider state
 
-Packet observed Neurons increased from `2813.628464` to `3344.130856` (+18.85%). Safety/trace aggregates remained intact, but neither candidate crossed the frozen quality/stability gates. Therefore the evidence-backed decision is still:
+D01 and D02 are complete governed USD-zero experiments. Neither candidate crossed the frozen quality/stability gates, so the evidence-backed state remains:
 
 **`NO_SELECTION` / no production provider claim.**
 
-The accepted D02 aggregate does not expose the full 32-row failure-subtype matrix, so no precise residual censoring rate at 1024 is claimed or reconstructed.
+Historical frozen evidence must not be rewritten or replayed merely to improve the narrative.
 
-Canonical D02 evidence:
+## 9. Reproduction state
 
-- `research/cloudflare-d02-live-result-2026-09-03.json`
-- `research/cloudflare-d01-d02-controlled-comparison-2026-09-03.md`
+The previous reproduction workflow started from a clean checkout but did not provide PostgreSQL, which meant promoted Postgres tests could be skipped there even though separate Postgres workflows were green.
 
-D02 is complete and must not be replayed.
-
-## 6. Evaluation state and next gate
-
-Strong delivered layers:
-
-- deterministic structural/safety/trajectory evaluation;
-- tool selection and argument validation;
-- evidence/provenance checks;
-- failure and repeated-run stability campaigns;
-- provider public-rubric experiments;
-- group-aware baseline/candidate EDD comparison;
-- hard safety/integrity merge gates;
-- separate read-only and consequential-action evaluators.
-
-The next material TAPI gap is semantic response quality where deterministic traces alone cannot prove usefulness, groundedness or communication quality.
-
-Issue #128 must close this with:
+Issue #174 closes this by consolidating one provider-free clean-checkout workflow that runs:
 
 ```text
-Layer 1  deterministic checks first
-Layer 2  semantic evaluator only where needed
-Layer 3  human-labelled calibration / disagreement analysis
+PostgreSQL 18
+→ complete Python test suite with Postgres enabled
+→ explicit identity/RLS + load + recovery P0 checks
+→ ADR-004 controller regression
+→ frozen EV-007 / EV-008 / EV-011
+→ final delivery demo/evidence validation
+→ final handoff audit
+→ npm ci from committed package-lock
+→ TypeScript typecheck / Vitest / production build
+→ tracked repository cleanliness check
 ```
 
-No LLM judge may become a promotion gate until its agreement/error profile against human labels is measured and accepted.
+The full Chromium path remains separately gated by `full-product-playwright` and is not duplicated inside the clean-clone workflow.
 
-## 7. Adaptive policy gate
-
-Issue #129 remains a prospective experiment, not a preselected architecture change.
-
-Candidate adaptive behavior may cover:
-
-- evidence sufficiency / marginal evidence gain;
-- adaptive investigation budget;
-- stopping;
-- clarify / abstain / escalate thresholds.
-
-The following remain deterministic regardless of experiment outcome:
-
-- schema validation;
-- identity;
-- authorization/permissions;
-- resource scope;
-- explicit confirmation;
-- idempotency;
-- privacy projection;
-- hard resource/safety caps.
-
-Promote adaptivity only on measured Pareto improvement under the #128 evaluator without critical safety/integrity regression.
-
-## 8. Runtime/HITL revalidation
-
-ADR-004 remains authoritative for the original controller scope. The action-custody workflow creates a new materiality question for durable HITL/restart recovery.
-
-Issue #92 must compare, with provider/tools/safety/scenarios/evaluator held constant:
+## 10. Current critical path
 
 ```text
-current custom controller + persistent action custody
-vs
-LangGraph-compatible persistent checkpoint/HITL candidate
+1. close clean-clone full reproduction       #174 / CURRENT P0
+2. branch protection + final CI              NEXT P0
+3. final freeze + benchmark/evidence bundle  NEXT P0
+4. real human calibration/value collection   when reviewers/operators are available
+5. runtime LangGraph comparison              P1 only if time/materiality justify
+6. final provider/model benchmark            P1; USD0 and hard gates remain
+7. adaptive model routing                    P1 only after measured benefit
+8. OpenTelemetry standardization             P1 only if it improves handoff/ops
+9. final frontend consolidation              P1 / final polish, no feature sprawl
 ```
 
-No migration is implied. `NO_CHANGE` is the correct result if the current controller remains on the best measured production Pareto frontier.
-
-## 9. Operational persistence and deployment
-
-DuckDB remains the accepted analytical store for sanitized telemetry.
-
-Issue #131 must explicitly freeze the final operational claim:
-
-```text
-single-process/single-node production
-or
-multi-process durable production
-```
-
-If stronger multi-process/restart guarantees are required, compare current operational DuckDB custody/idempotency against local PostgreSQL under controlled concurrency/recovery tests. Do not migrate based on convention alone.
-
-Still required:
-
-- one documented production startup path;
-- deterministic environment/config validation;
-- environment-only secret injection;
-- graceful shutdown/restart;
-- tested persistence/recovery semantics;
-- schema lifecycle where applicable;
-- clean checkout → running full product.
-
-## 10. Browser/E2E and final reproduction
-
-Current frontend CI proves strict TypeScript, Vitest and a production Vite build.
-
-Before freeze, #114/#131 must additionally prove with Playwright against a real provider-free executing product path:
-
-```text
-request
-→ run_started
-→ live SSE growth
-→ disconnect/reconnect/Last-Event-ID catch-up
-→ terminal
-→ evaluation
-→ trace/architecture/evidence/lineage
-→ dynamic drill-down
-→ pending consequential action
-→ explicit confirmation
-→ action execution follow-run
-→ action evaluation
-```
-
-Also required before final freeze:
-
-- committed frontend lockfile;
-- deterministic `npm ci` (or equivalent lockfile install);
-- clean-clone reproduction;
-- baseline-derived production thresholds defined prospectively, never post-hoc;
-- documentation/rehearsal freeze.
-
-## 11. Current critical path
-
-```text
-1. integrate D02 result + regression gate        CURRENT
-2. close #117 after merged evidence              CURRENT
-3. semantic response-quality calibration         #128
-4. adaptive stopping/evidence experiment         #129, if evaluator ready
-5. runtime/HITL revalidation                     #92
-6. operational storage/deployment hardening      #131
-7. Playwright + lockfile + full E2E              #114/#131
-8. baseline-derived thresholds                   after baseline freeze
-9. clean reproduction + final acceptance/freeze  #114
-```
-
-## 12. Current non-claims
+## 11. Current non-claims
 
 Do not claim:
 
-- a production provider has been selected; D02 explicitly ended `NO_SELECTION`;
-- the exact residual D02 failure/censoring distribution without attempt-level sanitized evidence;
-- adaptive policy improves the product before #129 passes EDD;
-- LangGraph is needed or superior before #92;
-- PostgreSQL is needed before #131 comparison;
-- multi-process/horizontal production before shared durable state is tested;
-- semantic correctness beyond validated evaluator evidence;
-- unconditional production readiness before clean startup/restart/browser E2E acceptance.
+- a production provider has been selected;
+- human semantic calibration is complete;
+- engineer minutes saved without real human observations;
+- adaptive stopping improves runtime behavior before an oracle-free challenger wins;
+- the CI load campaign establishes production capacity/SLOs;
+- restart safety establishes deployment RTO/RPO, HA, multi-region failover or uptime;
+- enterprise IAM/SSO is implemented;
+- LangGraph or another framework is needed/superior before a controlled comparison;
+- RAG/GraphRAG/vector DB/Kubernetes/Kafka/Redis/multi-agent/Temporal/MCP migration is justified without a measured gap and challenger win.
 
-## 13. State update rule
+## 12. State update rule
 
-When accepted evidence changes current project state, update this document once. Historical ADRs and experiment evidence remain immutable and authoritative for their original scopes. Never rewrite frozen history merely to make the current architecture appear simpler.
+This file is the mutable current-state summary. Accepted changes update it; historical ADRs, frozen experiment evidence and prior campaign artifacts remain immutable and authoritative for their original scopes.
