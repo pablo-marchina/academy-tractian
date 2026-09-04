@@ -100,6 +100,9 @@ jobs:
       - name: Validate final handoff audit
         run: python scripts/validate_final_handoff_audit.py
 
+      - name: Validate final freeze evidence bundle
+        run: python scripts/validate_final_freeze_bundle.py
+
       - name: Install locked frontend dependencies
         working-directory: frontend
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -120,6 +123,7 @@ jobs:
         run: |
           printf '%s\n' \
             'CLEAN_CLONE_REPRODUCTION=PASS' \
+            'FINAL_FREEZE_BUNDLE=PASS' \
             'FROZEN_DELIVERY_WORKFLOW_BLOB=PRESERVED' \
             'POSTGRES_PRODUCT_TESTS=EXECUTED' \
             'FROZEN_CAMPAIGNS=REPRODUCED' \
