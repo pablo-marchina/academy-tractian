@@ -319,3 +319,9 @@ def test_authenticated_postgres_load_campaign_measures_saturation_without_capaci
             "Synthetic load request",
         ):
             assert private_fragment not in serialized
+
+        output_path = os.environ.get("LOAD_BENCHMARK_OUTPUT")
+        if output_path:
+            output = Path(output_path)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
