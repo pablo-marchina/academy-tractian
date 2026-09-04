@@ -1,10 +1,10 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Status:** ACTIVE / sole canonical human-readable state  
+**Status:** `READY_FOR_HARD_FREEZE` candidate / sole canonical human-readable state  
 **Checkpoint:** 2026-09-04 BRT  
+**Scheduled hard feature/visual/architecture freeze:** end of 2026-09-05  
 **Final delivery:** 2026-09-08  
-**Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
-**Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
+**Freeze decision:** [`../research/final-freeze-decision-2026-09-04.md`](../research/final-freeze-decision-2026-09-04.md)
 
 ## 1. Executive status
 
@@ -16,8 +16,10 @@ production deterministic evaluator        IMPLEMENTED
 TRACTIAN typed tool registry              18 operations
 safe realtime observability               IMPLEMENTED
 React operator control room               IMPLEMENTED
-full-product Playwright E2E                IMPLEMENTED / gated
-frontend lockfile + npm ci                 IMPLEMENTED / gated
+full-product Playwright E2E                PASS / gated
+frontend lockfile + npm ci                 PASS / gated
+current clean-clone reproduction           PASS / gated
+stable final required CI                   PASS / required-gate
 
 production consequential actions          IMPLEMENTED
 custody + explicit confirmation            IMPLEMENTED
@@ -49,12 +51,34 @@ D01/D02 provider comparison                COMPLETE
 D01/D02 cash cost                          USD 0.00
 provider selection                         NO_SELECTION
 
-clean-clone full reproduction              ACTIVE P0 / #174
-branch protection + final CI               NEXT P0
-final benchmark/evidence freeze            NEXT P0
+main branch CI contract                    READY / one required-gate
+GitHub branch-protection enforcement       PENDING EXTERNAL
+last observed main.protected               false
+last observed repository rulesets          []
+
+final evidence bundle                      CURRENT P0 / READY candidate
+hard freeze effective now                  NO — scheduled end 2026-09-05
 ```
 
-## 2. Promoted product path
+## 2. Exact current integration evidence
+
+Repository-side final CI is integrated on merged `main` commit:
+
+`b86b15ef32762e5bc3cd474421c177eaa3f56787`
+
+Post-merge `final-ci-required` run `33834299439` completed successfully on that exact SHA:
+
+```text
+clean-clone / reproduce-current-product     success
+full-product-browser / chromium-full-product success
+required-gate                               success
+```
+
+`required-gate` is the stable, always-triggered status context intended for branch protection. It runs on every PR and push to `main` and succeeds only if current clean-clone reproduction and Chromium full-product acceptance both succeed.
+
+GitHub enforcement is a separate external control. Until GitHub reports protection active, the project must not claim that direct pushes/merges are technically blocked by a ruleset.
+
+## 3. Promoted product path
 
 ```text
 browser request
@@ -96,134 +120,152 @@ agent proposes exact action
 
 Ambiguous post-claim outcomes become `UNCERTAIN`. Restart is never permission to automatically replay a runtime execution or retry a consequential action.
 
-## 3. Identity and tenant isolation
+## 4. Identity and tenant isolation
 
-The promoted entrypoint uses the project-owned `academy-runtime-v1` signed bearer envelope:
-
-- HMAC-SHA256 signature;
-- constant-time signature comparison;
-- issuer/audience validation;
-- explicit token lifetime;
-- explicit organization, identity and user claims;
-- no fallback to browser-controlled identity headers;
-- no benchmark `seed` claim;
-- privileged global capabilities require separate server opt-in.
+The promoted entrypoint uses the project-owned `academy-runtime-v1` signed bearer envelope with HMAC-SHA256 verification, issuer/audience/lifetime checks and explicit organization/user/identity/permission claims. Browser payloads cannot provide tenant, identity, role, permissions or benchmark seed.
 
 This is deliberately **not** described as OAuth/OIDC/JWT or enterprise SSO.
 
-PostgreSQL provides a second independent tenant boundary. Scoped reads use a non-superuser, non-`BYPASSRLS`, non-owner role and transaction-local `academy.organization_id`. Direct SQL integration tests prove tenant B cannot read a known tenant-A ownership row.
+PostgreSQL provides an independent tenant boundary. Scoped reads use a non-superuser, non-`BYPASSRLS`, non-owner role and transaction-local `academy.organization_id`; direct SQL integration proves tenant B cannot read a known tenant-A ownership row.
 
-## 4. Evaluation and human evidence state
+## 5. Operational storage decision
+
+`OPS-STORE-001` selected `PROMOTE_POSTGRES_OPERATIONAL` after PostgreSQL passed every hard gate while the previous DuckDB operational-state baseline produced concurrent operational errors.
+
+The promoted split is:
+
+```text
+PostgreSQL  mutable ownership/execution/action custody/idempotency
+DuckDB      sanitized observability/evaluation/analytics read model
+```
+
+This supports the tested authenticated multi-user durable single-node product. Horizontal multi-instance execution, distributed queues and shared cross-instance SSE are not claimed.
+
+## 6. Evaluation and human evidence state
 
 Delivered:
 
 - deterministic structural/safety/trajectory evaluation;
 - operational-conclusion/value contract;
-- blinded human operational-value pilot packet + authenticated collector UI;
-- frozen paired MANUAL × ASSISTED time analysis;
+- blinded operational-value collection + server-owned timing;
+- frozen paired MANUAL × ASSISTED analysis;
 - semantic rubric + frozen calibration protocol v2;
-- blinded semantic review A/B + third adjudicator custody;
-- trusted VALIDATION source generation from the sanitized read model;
+- blinded semantic review A/B + independent adjudication custody;
+- trusted VALIDATION source generation from sanitized read model;
 - evaluator-only adaptive evidence/stopping replay.
 
-Still human-dependent:
+Still human-dependent and therefore **not ready**:
 
 - real semantic labels/adjudication;
-- measured semantic evaluator agreement/error profile;
+- measured judge-vs-human agreement/error profile;
 - real manual vs assisted engineer-time observations;
+- Engineer Minutes Saved per Ticket;
 - useful auto-resolution/business-value claim.
 
-These data must not be fabricated. `LOCKED_TEST` remains excluded from tuning/calibration.
+These values must not be fabricated. `LOCKED_TEST` remains excluded from tuning/calibration.
 
-## 5. Adaptive stopping state
+## 7. Adaptive/runtime topology state
 
-The replay diagnostic measures where an evaluator-time evidence oracle says sufficiency first occurred and how much trajectory remained afterwards.
+The merged adaptive stopping work is DEV-only and evaluator-only. It may quantify replay headroom but cannot authorize a runtime policy change; no oracle-free adaptive challenger has won EDD.
 
-Important boundary:
+The P0 topology therefore remains **`NO_CHANGE`**:
 
-- predicates are explicit evaluator judgments;
-- the oracle never enters runtime;
-- headroom is diagnostic, not automatically waste;
-- no runtime stopping rule was promoted;
-- any future challenger must be oracle-free at execution time and win under EDD/hard gates.
+`custom AgentController + HarnessRunner + PostgreSQL durable action custody/idempotency + conservative restart recovery`.
 
-## 6. Load/concurrency evidence
+Current evidence does not identify a LangGraph/multi-agent/RAG/memory/MCP topology bottleneck. Any LangGraph comparison is P1 and must demonstrate a material Pareto improvement without bypassing application-owned safety/tool boundaries.
 
-The provider-free authenticated PostgreSQL campaign is reproducible and hash-bound. CI exercised concurrency levels 1 and 4 with 12 synthetic requests total.
+## 8. Load/concurrency and recovery evidence
 
-Observed on the CI runner:
+### Load
 
-```text
-concurrency 1  6/6 completed, 0 errors, peak executor utilization 0.5
-concurrency 4  6/6 completed, 0 errors, peak active 2, peak queued 2,
-               peak inflight 4, executor utilization 1.0
-```
+The provider-free authenticated PostgreSQL campaign exercised concurrency 1 and 4 with 12 synthetic measured requests. All completed without errors and higher concurrency visibly saturated the two-worker executor. Latency/throughput/persistence/resource values are preserved in the aggregate artifact.
 
-Latency, throughput, persistence, CPU and RSS aggregates are recorded in the campaign artifact. Interpretation remains `descriptive_only`; no CI measurement is presented as deployment capacity or an SLO.
+Interpretation remains `descriptive_only`; CI data is not a production capacity/SLO/worker-sizing claim.
 
-## 7. Restart/recovery evidence
+### Restart/recovery
 
-The promoted PostgreSQL topology now has an integrated restart campaign.
-
-Verified first-start behavior:
+Integrated PostgreSQL recovery proves:
 
 ```text
-2 orphaned runtime executions              → interrupted
-1 orphaned action execution                → uncertain
-1 custody EXECUTING row                    → UNCERTAIN
-1 ledger CLAIMED row                       → UNCERTAIN
-PENDING_CONFIRMATION                       preserved
-completed / failed executions              preserved
-provider calls during recovery             0
-action transport calls during recovery     0
+2 orphan runtime executions       → interrupted
+1 orphan action execution         → uncertain
+1 custody EXECUTING row           → UNCERTAIN
+1 ledger CLAIMED row              → UNCERTAIN
+PENDING_CONFIRMATION              preserved
+completed / failed                preserved
+provider/action replay            0
+second-start new recoveries       0
 ```
 
-A fresh authenticated run completes after recovery and remains tenant-isolated. A second startup produces zero new recovery transitions. The artifact explicitly states `production_availability_claim_ready=false`; no RTO/RPO/HA/uptime claim follows from this repository-level test.
+A fresh authenticated run completes after recovery and remains tenant-isolated. This is a repository safety contract, not RTO/RPO/HA/uptime evidence.
 
-## 8. Provider state
+## 9. Provider state
 
-D01 and D02 are complete governed USD-zero experiments. Neither candidate crossed the frozen quality/stability gates, so the evidence-backed state remains:
+D01 and D02 are complete governed USD-zero experiments. D02 improved multiple public metrics after the 512→1024 completion-budget change, but neither candidate crossed frozen M1/M4/M7 promotion gates.
+
+Final provider state remains:
 
 **`NO_SELECTION` / no production provider claim.**
 
-Historical frozen evidence must not be rewritten or replayed merely to improve the narrative.
+The consumed governed D02 packet must not be replayed merely to seek a preferable result.
 
-## 9. Reproduction state
+## 10. Reproduction and browser acceptance
 
-The previous reproduction workflow started from a clean checkout but did not provide PostgreSQL, which meant promoted Postgres tests could be skipped there even though separate Postgres workflows were green.
-
-Issue #174 closes this by consolidating one provider-free clean-checkout workflow that runs:
+Current clean-clone reproduction proves from one fresh checkout:
 
 ```text
 PostgreSQL 18
-→ complete Python test suite with Postgres enabled
-→ explicit identity/RLS + load + recovery P0 checks
+→ complete Python suite with Postgres enabled
+→ identity/RLS + load + recovery P0 checks
 → ADR-004 controller regression
 → frozen EV-007 / EV-008 / EV-011
-→ final delivery demo/evidence validation
+→ historical delivery/evidence validation
 → final handoff audit
+→ final freeze-bundle validation
 → npm ci from committed package-lock
 → TypeScript typecheck / Vitest / production build
-→ tracked repository cleanliness check
+→ zero tracked repository mutation
 ```
 
-The full Chromium path remains separately gated by `full-product-playwright` and is not duplicated inside the clean-clone workflow.
+Full Chromium acceptance remains a separate reusable workflow and proves genuine backend/frontend/PostgreSQL execution, SSE reconnect/catch-up, post-runtime evaluation, action confirmation/follow-run, tenant isolation, safe browser projections and responsive product behavior.
 
-## 10. Current critical path
+The historical final-delivery reproduction workflow remains immutable evidence and is intentionally distinct from the current-product reproduction contract.
+
+## 11. External blockers / explicit bounded state
+
+### Branch protection
+
+Repository CI is branch-protection-ready, but enforcement remains external. Last observed state on 2026-09-04:
 
 ```text
-1. close clean-clone full reproduction       #174 / CURRENT P0
-2. branch protection + final CI              NEXT P0
-3. final freeze + benchmark/evidence bundle  NEXT P0
-4. real human calibration/value collection   when reviewers/operators are available
-5. runtime LangGraph comparison              P1 only if time/materiality justify
-6. final provider/model benchmark            P1; USD0 and hard gates remain
-7. adaptive model routing                    P1 only after measured benefit
-8. OpenTelemetry standardization             P1 only if it improves handoff/ops
-9. final frontend consolidation              P1 / final polish, no feature sprawl
+main.protected = false
+repository rulesets = []
 ```
 
-## 11. Current non-claims
+Required settings and verification procedure are documented in `docs/BRANCH-PROTECTION.md`.
+
+### Historical C4 exact artifact
+
+The required evaluator-side artifact with SHA-256
+`b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`
+remains externally unavailable. Reconstruction, substitution or rescoring is forbidden. The blocker remains visible in final handoff and does not become resolved because current product CI is green.
+
+## 12. Critical path to delivery
+
+```text
+1. merge final freeze/evidence bundle candidate       CURRENT P0
+2. 2026-09-05 integrated test/fix only                scheduled
+3. hard feature/visual/architecture freeze            end 2026-09-05
+4. apply + verify GitHub branch protection            external control
+5. final rehearsal/evidence inspection                2026-09-06/07
+6. delivery                                           2026-09-08
+```
+
+Human semantic/value collection can proceed when reviewers/operators are available, but absent real data the final delivery must preserve `NOT READY` rather than manufacture a claim.
+
+P1 work — LangGraph comparison, additional provider/model benchmark, adaptive routing, OpenTelemetry standardization or frontend consolidation — must not displace the final P0 freeze/rehearsal path and requires measured materiality.
+
+## 13. Current non-claims
 
 Do not claim:
 
@@ -231,12 +273,13 @@ Do not claim:
 - human semantic calibration is complete;
 - engineer minutes saved without real human observations;
 - adaptive stopping improves runtime behavior before an oracle-free challenger wins;
-- the CI load campaign establishes production capacity/SLOs;
+- CI load measurements establish production capacity/SLOs;
 - restart safety establishes deployment RTO/RPO, HA, multi-region failover or uptime;
 - enterprise IAM/SSO is implemented;
 - LangGraph or another framework is needed/superior before a controlled comparison;
+- GitHub branch protection is enforced before GitHub reports it active;
 - RAG/GraphRAG/vector DB/Kubernetes/Kafka/Redis/multi-agent/Temporal/MCP migration is justified without a measured gap and challenger win.
 
-## 12. State update rule
+## 14. State update rule
 
-This file is the mutable current-state summary. Accepted changes update it; historical ADRs, frozen experiment evidence and prior campaign artifacts remain immutable and authoritative for their original scopes.
+This file is the mutable current-state summary. Accepted changes update it. Historical ADRs, frozen experiment evidence, prior campaign artifacts and the historical delivery reproduction workflow remain immutable and authoritative for their original scopes.

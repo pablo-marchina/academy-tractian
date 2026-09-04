@@ -1,0 +1,249 @@
+{
+  "schema_version": "final-freeze-evidence-bundle-v1",
+  "bundle_state": "READY_FOR_HARD_FREEZE",
+  "bundle_date": "2026-09-04",
+  "hard_freeze_effective_date": "2026-09-05",
+  "final_delivery_date": "2026-09-08",
+  "required_gate_name": "required-gate",
+  "branch_protection_enforced": false,
+  "artifacts": [
+    {
+      "path": ".github/workflows/final-ci-required.yml",
+      "git_blob_sha1": "8be8121a4a70571fd0de8e4add0ea8b7c8171cc5",
+      "role": "current_ci",
+      "description": "Always-on final CI aggregator exposing required-gate."
+    },
+    {
+      "path": ".github/workflows/clean-clone-full-product-reproduction.yml",
+      "git_blob_sha1": "54d2aadfaa52acc5d06a5a13ac06d42d990185f9",
+      "role": "current_reproduction",
+      "description": "Current clean-checkout product reproduction including final freeze validation."
+    },
+    {
+      "path": ".github/workflows/full-product-playwright.yml",
+      "git_blob_sha1": "46ceab493869ec99abb4aed113b3bda45d91add7",
+      "role": "current_reproduction",
+      "description": "Reusable Chromium full-product acceptance workflow."
+    },
+    {
+      "path": "docs/PLAYWRIGHT-ACCEPTANCE.md",
+      "git_blob_sha1": "4c7e4729695d9bbac9badeb199614e9326e5d85f",
+      "role": "current_contract",
+      "description": "Full-product browser acceptance contract and tested topology."
+    },
+    {
+      "path": "research/identity-tenant-production-closure-2026-09-03.md",
+      "git_blob_sha1": "3b7c164cbc1c1477af280c5938bb9b2ac24357e1",
+      "role": "current_decision",
+      "description": "Signed identity and PostgreSQL RLS production boundary decision."
+    },
+    {
+      "path": "docs/OPERATIONAL-STORE-RESULT-2026-09-03.md",
+      "git_blob_sha1": "ba811006b846a68d364195f6b9b6b09e8e913824",
+      "role": "current_decision",
+      "description": "OPS-STORE-001 hard-gate result selecting PostgreSQL for mutable operational state."
+    },
+    {
+      "path": "research/postgres-restart-recovery-decision-2026-09-04.md",
+      "git_blob_sha1": "467b1bb108d0e1e5ab88371a521a3f5c22a7821b",
+      "role": "current_decision",
+      "description": "Integrated PostgreSQL restart/recovery safety contract."
+    },
+    {
+      "path": "research/load-concurrency-ci-result-2026-09-03.md",
+      "git_blob_sha1": "5f2a7c12360e826afd534749853d539588795127",
+      "role": "current_decision",
+      "description": "Sanitized provider-free load/concurrency measurements and capacity non-claim."
+    },
+    {
+      "path": "research/cloudflare-d01-d02-controlled-comparison-2026-09-03.md",
+      "git_blob_sha1": "316acb348f39db847b604737529ee28f673489fd",
+      "role": "current_decision",
+      "description": "Governed D01 to D02 provider comparison ending NO_SELECTION."
+    },
+    {
+      "path": "research/semantic-calibration-freeze-decision-2026-09-03.md",
+      "git_blob_sha1": "1bafba58df6d8c3df2c6c20f812b8ecfe9d80768",
+      "role": "current_decision",
+      "description": "Semantic calibration v2 freeze boundary and real-human-data dependency."
+    },
+    {
+      "path": "research/operational-value-analysis-decision-2026-09-03.md",
+      "git_blob_sha1": "639efa314c62ae7a6837e265cecebcd5d1ac9149",
+      "role": "current_decision",
+      "description": "Frozen MANUAL versus ASSISTED analysis path and no-business-claim boundary."
+    },
+    {
+      "path": "research/adaptive-stopping-evaluator-decision-2026-09-03.md",
+      "git_blob_sha1": "3c3422860264dcd9a8cc125cecdab4eb06bb795a",
+      "role": "current_decision",
+      "description": "DEV evaluator-only stopping diagnostic with runtime promotion forbidden."
+    },
+    {
+      "path": "docs/BRANCH-PROTECTION.md",
+      "git_blob_sha1": "39c2b21d4add1ef6ebf825d66e3a9c426afd405e",
+      "role": "current_contract",
+      "description": "Stable required-gate branch protection contract and external enforcement boundary."
+    },
+    {
+      "path": "research/results/final-handoff-acceptance-audit-2026-08-28.json",
+      "git_blob_sha1": "699eb2ea7a92cea3367353d1db2a065c0467492d",
+      "role": "frozen_historical_evidence",
+      "description": "Historical handoff audit preserving the exact C4 external blocker."
+    },
+    {
+      "path": "research/clean-clone-reproduction-decision-2026-09-04.md",
+      "git_blob_sha1": "f3ffde135b16aa65dff129e4955cbbed98083073",
+      "role": "current_decision",
+      "description": "Decision separating immutable historical reproduction from current clean-clone gate."
+    },
+    {
+      "path": "research/final-freeze-decision-2026-09-04.md",
+      "git_blob_sha1": "5eda9ddfa9b005c2a5f63d153ae79842f6726562",
+      "role": "current_decision",
+      "description": "Final READY_FOR_HARD_FREEZE candidate decision and bounded delivery state."
+    },
+    {
+      "path": "docs/CURRENT-PROJECT-STATUS.md",
+      "git_blob_sha1": "0327434d22991f86e55f67bcee9b6ae0aacd9551",
+      "role": "current_contract",
+      "description": "Canonical mutable human-readable state synchronized to the freeze candidate."
+    }
+  ],
+  "decisions": [
+    {
+      "decision_id": "FINAL_REQUIRED_CI",
+      "status": "PASS_EVIDENCED",
+      "evidence_paths": [
+        ".github/workflows/final-ci-required.yml",
+        "research/final-freeze-decision-2026-09-04.md"
+      ],
+      "claim_boundary": "The stable required-gate passed on the merged main integration SHA; GitHub branch protection enforcement is a separate external control."
+    },
+    {
+      "decision_id": "CLEAN_CLONE_REPRODUCTION",
+      "status": "PASS_EVIDENCED",
+      "evidence_paths": [
+        ".github/workflows/clean-clone-full-product-reproduction.yml",
+        "research/clean-clone-reproduction-decision-2026-09-04.md"
+      ],
+      "claim_boundary": "Proves deterministic repository install/test/build/evidence reproduction with PostgreSQL enabled; it is not deployment infrastructure proof."
+    },
+    {
+      "decision_id": "FULL_PRODUCT_BROWSER",
+      "status": "PASS_EVIDENCED",
+      "evidence_paths": [
+        ".github/workflows/full-product-playwright.yml",
+        "docs/PLAYWRIGHT-ACCEPTANCE.md"
+      ],
+      "claim_boundary": "Proves the provider-free production product path in Chromium, including realtime, isolation, actions and safe projections; external provider availability is substituted."
+    },
+    {
+      "decision_id": "IDENTITY_TENANT",
+      "status": "PASS_EVIDENCED",
+      "evidence_paths": [
+        "research/identity-tenant-production-closure-2026-09-03.md"
+      ],
+      "claim_boundary": "Closes signed request identity plus tenant/RLS isolation for the promoted product; does not claim enterprise OIDC/SSO or external IdP operations."
+    },
+    {
+      "decision_id": "OPERATIONAL_STORAGE",
+      "status": "PASS_EVIDENCED",
+      "evidence_paths": [
+        "docs/OPERATIONAL-STORE-RESULT-2026-09-03.md"
+      ],
+      "claim_boundary": "Promotes PostgreSQL for mutable operational state while retaining DuckDB analytics; does not prove horizontal multi-instance execution."
+    },
+    {
+      "decision_id": "RESTART_RECOVERY",
+      "status": "PASS_BOUNDED",
+      "evidence_paths": [
+        "research/postgres-restart-recovery-decision-2026-09-04.md"
+      ],
+      "claim_boundary": "Proves conservative repository-level persisted-state recovery with zero blind replay; does not establish RTO/RPO/HA/uptime."
+    },
+    {
+      "decision_id": "LOAD_CAPACITY",
+      "status": "PASS_BOUNDED",
+      "evidence_paths": [
+        "research/load-concurrency-ci-result-2026-09-03.md"
+      ],
+      "claim_boundary": "Proves measurable queue/latency/throughput/resource behavior and tenant isolation in CI; does not establish production capacity, SLO or optimal sizing."
+    },
+    {
+      "decision_id": "PROVIDER_SELECTION",
+      "status": "NO_SELECTION",
+      "evidence_paths": [
+        "research/cloudflare-d01-d02-controlled-comparison-2026-09-03.md"
+      ],
+      "claim_boundary": "D01/D02 are complete USD0 experiments, but no candidate crossed frozen promotion gates and the consumed packet must not be replayed."
+    },
+    {
+      "decision_id": "SEMANTIC_CALIBRATION",
+      "status": "NOT_READY_HUMAN_DATA",
+      "evidence_paths": [
+        "research/semantic-calibration-freeze-decision-2026-09-03.md"
+      ],
+      "claim_boundary": "Calibration protocol and collection infrastructure exist, but no real human labels/adjudication or validated judge agreement profile exists."
+    },
+    {
+      "decision_id": "ENGINEER_TIME_VALUE",
+      "status": "NOT_READY_HUMAN_DATA",
+      "evidence_paths": [
+        "research/operational-value-analysis-decision-2026-09-03.md"
+      ],
+      "claim_boundary": "Collection and paired analysis exist, but no real human timing observations support Engineer Minutes Saved or a business-value claim."
+    },
+    {
+      "decision_id": "ADAPTIVE_RUNTIME_STOPPING",
+      "status": "NOT_PROMOTED",
+      "evidence_paths": [
+        "research/adaptive-stopping-evaluator-decision-2026-09-03.md"
+      ],
+      "claim_boundary": "The merged diagnostic is DEV/evaluator-only; no oracle-free runtime challenger has won EDD or authorized a production stopping change."
+    },
+    {
+      "decision_id": "RUNTIME_HITL_TOPOLOGY",
+      "status": "NO_CHANGE",
+      "evidence_paths": [
+        "research/final-freeze-decision-2026-09-04.md",
+        "docs/CURRENT-PROJECT-STATUS.md"
+      ],
+      "claim_boundary": "The current custom controller plus persistent custody/recovery remains the proven P0 baseline; no LangGraph challenger has shown material Pareto improvement."
+    },
+    {
+      "decision_id": "BRANCH_PROTECTION",
+      "status": "PENDING_EXTERNAL_ENFORCEMENT",
+      "evidence_paths": [
+        "docs/BRANCH-PROTECTION.md",
+        "research/final-freeze-decision-2026-09-04.md"
+      ],
+      "claim_boundary": "Repository CI exposes a stable required-gate, but GitHub last reported main.protected=false and rulesets empty; enforcement must not be claimed yet."
+    },
+    {
+      "decision_id": "C4_SCIENTIFIC_ARTIFACT",
+      "status": "EXTERNALLY_BLOCKED",
+      "evidence_paths": [
+        "research/results/final-handoff-acceptance-audit-2026-08-28.json",
+        "research/final-freeze-decision-2026-09-04.md"
+      ],
+      "claim_boundary": "The exact required C4 artifact remains unavailable; reconstruction, substitution and rescoring are forbidden."
+    }
+  ],
+  "non_claims": [
+    "adaptive_runtime_stopping_improves_product",
+    "branch_protection_enforced",
+    "c4_scientific_artifact_reconstructed",
+    "ci_load_equals_production_capacity",
+    "engineer_minutes_saved_measured",
+    "enterprise_oidc_sso_implemented",
+    "hard_freeze_already_effective",
+    "horizontal_multi_instance_proven",
+    "human_semantic_calibration_complete",
+    "langgraph_superior_or_required",
+    "production_provider_selected",
+    "restart_ci_proves_rto_rpo_ha",
+    "unconditional_production_readiness"
+  ],
+  "manifest_sha256": "bd3d4df0cb74b88f602b371873c89ff22db49c355a472568783b41a37af5a793"
+}
