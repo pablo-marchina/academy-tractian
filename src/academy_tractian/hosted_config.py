@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import ipaddress
 import os
 from typing import Mapping
 from urllib.parse import urlsplit
@@ -10,6 +11,15 @@ _SUPPORTED_PROVIDERS = frozenset({"openai", "google"})
 _SUPPORTED_IDENTITY_BACKENDS = frozenset({"signed_bearer", "oidc"})
 _SUPPORTED_OIDC_ALGORITHMS = frozenset(
     {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "EdDSA"}
+)
+_LOCAL_HOST_ALIASES = frozenset(
+    {
+        "localhost",
+        "localhost.localdomain",
+        "host.docker.internal",
+        "gateway.docker.internal",
+        "kubernetes.docker.internal",
+    }
 )
 
 
@@ -63,6 +73,25 @@ def _postgres_dsn(value: str, *, name: str) -> str:
     return value
 
 
+def _hostname_is_local(hostname: str | None) -> bool:
+    if hostname is None:
+        return True
+    normalized = hostname.rstrip(".").lower()
+    if normalized in _LOCAL_HOST_ALIASES or normalized.endswith(".localhost"):
+        return True
+    address_literal = normalized.split("%", 1)[0]
+    try:
+        address = ipaddress.ip_address(address_literal)
+    except ValueError:
+        return False
+    return address.is_loopback or address.is_unspecified
+
+
+def _assert_non_local_endpoint(value: str, *, name: str) -> None:
+    if _hostname_is_local(urlsplit(value).hostname):
+        raise ValueError(f"local_endpoint_forbidden:{name}")
+
+
 def _cors_origins(environment: Mapping[str, str]) -> tuple[str, ...]:
     raw = environment.get("ACADEMY_CORS_ORIGINS", "")
     origins = tuple(item.strip().rstrip("/") for item in raw.split(",") if item.strip())
@@ -85,7 +114,7 @@ class HostedProductConfig:
 
     Secrets are stored only as private process values and are deliberately omitted from
     ``sanitized_summary``. HMAC bearer identity remains a bounded regression/development backend;
-    OIDC/JWKS is the provider-neutral hosted browser identity boundary.
+    production serving requires OIDC/JWKS and rejects loopback/local-machine dependencies.
     """
 
     postgres_internal_dsn: str
@@ -205,16 +234,32 @@ class HostedProductConfig:
         return config
 
     def assert_serving_ready(self) -> None:
-        if self.identity_backend == "oidc" and (self.oidc_jwks_url is None or not self.oidc_algorithms):
+        if self.identity_backend != "oidc":
+            raise ValueError("hosted_production_requires_oidc")
+        if self.oidc_jwks_url is None or not self.oidc_algorithms:
             raise ValueError("hosted_oidc_configuration_incomplete")
-        if self.identity_backend == "signed_bearer" and not self.runtime_identity_secret:
-            raise ValueError("hosted_signed_bearer_secret_missing")
         if self.provider is None:
             raise ValueError("hosted_provider_not_selected")
         if not self.provider_api_key:
             raise ValueError("hosted_provider_api_key_missing")
         if self.tractian_base_url is None:
             raise ValueError("tractian_base_url_missing")
+
+        _http_url(
+            self.runtime_identity_issuer,
+            name="ACADEMY_RUNTIME_IDENTITY_ISSUER",
+            require_https=True,
+        )
+        _assert_non_local_endpoint(
+            self.runtime_identity_issuer,
+            name="ACADEMY_RUNTIME_IDENTITY_ISSUER",
+        )
+        _assert_non_local_endpoint(self.oidc_jwks_url, name="ACADEMY_OIDC_JWKS_URL")
+        _assert_non_local_endpoint(self.postgres_internal_dsn, name="ACADEMY_POSTGRES_INTERNAL_DSN")
+        _assert_non_local_endpoint(self.postgres_scoped_dsn, name="ACADEMY_POSTGRES_SCOPED_DSN")
+        _assert_non_local_endpoint(self.tractian_base_url, name="ACADEMY_TRACTIAN_BASE_URL")
+        for origin in self.cors_origins:
+            _assert_non_local_endpoint(origin, name="ACADEMY_CORS_ORIGINS")
 
     def sanitized_summary(self) -> dict[str, object]:
         identity: dict[str, object] = {
@@ -236,7 +281,12 @@ class HostedProductConfig:
             identity["secret_configured"] = bool(self.runtime_identity_secret)
 
         return {
-            "schema_version": "hosted-product-config-v2",
+            "schema_version": "hosted-product-config-v3",
+            "deployment": {
+                "contract_profile": "hosted-only-v1",
+                "required_local_components": 0,
+                "production_identity": "oidc-jwks-v1",
+            },
             "persistence": {
                 "operational": "postgresql",
                 "observability": "postgresql",
