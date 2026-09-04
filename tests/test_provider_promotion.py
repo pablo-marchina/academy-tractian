@@ -27,6 +27,7 @@ def _candidate(candidate_id: str, **overrides: object) -> ProviderCandidateEvide
         "scenario_count": 60,
         "repeat_count": 3,
         "human_semantic_calibrated": True,
+        "human_calibration_artifact_hash": "c" * 64,
         "human_calibration_case_count": 60,
         "human_agreement_rate": 0.95,
         "operational_conclusion_accuracy": 0.93,
@@ -136,8 +137,17 @@ def test_missing_human_semantic_calibration_invalidates_comparison() -> None:
     [
         ({"human_calibration_case_count": 49}, "INSUFFICIENT_HUMAN_CALIBRATION_CASES"),
         ({"human_agreement_rate": 0.89}, "HUMAN_AGREEMENT_BELOW_THRESHOLD"),
-        ({"operational_conclusion_accuracy": 0.89, "operational_conclusion_accuracy_ci_low": 0.79}, "OCA_BELOW_THRESHOLD"),
-        ({"operational_conclusion_accuracy_ci_low": 0.79}, "OCA_CONFIDENCE_LOWER_BOUND_BELOW_THRESHOLD"),
+        (
+            {
+                "operational_conclusion_accuracy": 0.89,
+                "operational_conclusion_accuracy_ci_low": 0.79,
+            },
+            "OCA_BELOW_THRESHOLD",
+        ),
+        (
+            {"operational_conclusion_accuracy_ci_low": 0.79},
+            "OCA_CONFIDENCE_LOWER_BOUND_BELOW_THRESHOLD",
+        ),
     ],
 )
 def test_quantitative_human_calibration_gates_block_promotion(
@@ -282,6 +292,11 @@ def test_invalid_oca_confidence_bound_is_rejected_by_schema() -> None:
             operational_conclusion_accuracy=0.80,
             operational_conclusion_accuracy_ci_low=0.81,
         )
+
+
+def test_calibration_artifact_hash_must_be_sha256_hex() -> None:
+    with pytest.raises(ValidationError):
+        _candidate(CANDIDATES[0], human_calibration_artifact_hash="not-a-sha256")
 
 
 def test_strict_artifacts_reject_unknown_fields_instead_of_raw_payloads() -> None:
