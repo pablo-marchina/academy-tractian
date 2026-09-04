@@ -59,11 +59,14 @@ class ProviderCandidateEvidence(_StrictModel):
     model_id: str = Field(min_length=1, max_length=128)
     scenario_count: int = Field(ge=1)
     repeat_count: int = Field(ge=1)
-    human_calibration: ProviderHumanCalibrationEvidence
+    human_calibration: ProviderHumanCalibrationEvidence | None = None
 
     @model_validator(mode="after")
     def bind_candidate_to_human_artifact(self) -> "ProviderCandidateEvidence":
-        if self.human_calibration.candidate_id != self.candidate_id:
+        if (
+            self.human_calibration is not None
+            and self.human_calibration.candidate_id != self.candidate_id
+        ):
             raise ValueError("human_calibration_candidate_id_mismatch")
         return self
 
@@ -91,6 +94,8 @@ class ProviderBenchmarkEvidence(_StrictModel):
             raise ValueError("duplicate_candidate_id")
         for candidate in self.candidates:
             calibration = candidate.human_calibration
+            if calibration is None:
+                continue
             if calibration.protocol_id != self.human_calibration_protocol_id:
                 raise ValueError("candidate_human_calibration_protocol_id_mismatch")
             if calibration.protocol_hash != self.human_calibration_protocol_hash:
@@ -217,22 +222,25 @@ def decide_provider_promotion(
     for candidate_id in policy.required_candidate_ids:
         candidate = candidates[candidate_id]
         calibration = candidate.human_calibration
-        if not calibration.calibration_ready:
+        if calibration is None:
             maturity_reasons.append("HUMAN_SEMANTIC_CALIBRATION_REQUIRED")
-        if calibration.case_count < policy.min_human_calibration_cases:
-            maturity_reasons.append("INSUFFICIENT_HUMAN_CALIBRATION_CASES")
-        if calibration.human_agreement_rate < policy.min_human_agreement_rate:
-            maturity_reasons.append("HUMAN_AGREEMENT_BELOW_THRESHOLD")
-        if (
-            calibration.operational_conclusion_accuracy
-            < policy.min_operational_conclusion_accuracy
-        ):
-            maturity_reasons.append("OCA_BELOW_THRESHOLD")
-        if (
-            calibration.operational_conclusion_accuracy_ci_low
-            < policy.min_operational_conclusion_accuracy_ci_low
-        ):
-            maturity_reasons.append("OCA_CONFIDENCE_LOWER_BOUND_BELOW_THRESHOLD")
+        else:
+            if not calibration.calibration_ready:
+                maturity_reasons.append("HUMAN_SEMANTIC_CALIBRATION_REQUIRED")
+            if calibration.case_count < policy.min_human_calibration_cases:
+                maturity_reasons.append("INSUFFICIENT_HUMAN_CALIBRATION_CASES")
+            if calibration.human_agreement_rate < policy.min_human_agreement_rate:
+                maturity_reasons.append("HUMAN_AGREEMENT_BELOW_THRESHOLD")
+            if (
+                calibration.operational_conclusion_accuracy
+                < policy.min_operational_conclusion_accuracy
+            ):
+                maturity_reasons.append("OCA_BELOW_THRESHOLD")
+            if (
+                calibration.operational_conclusion_accuracy_ci_low
+                < policy.min_operational_conclusion_accuracy_ci_low
+            ):
+                maturity_reasons.append("OCA_CONFIDENCE_LOWER_BOUND_BELOW_THRESHOLD")
         if candidate.scenario_count < policy.min_scenarios:
             maturity_reasons.append("INSUFFICIENT_SCENARIOS")
         if candidate.repeat_count < policy.min_repeats:
