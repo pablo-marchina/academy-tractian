@@ -129,11 +129,21 @@ def _evidence(
         "human_calibration_protocol_hash": "sha256:human-calibration-v1",
         "code_sha": CODE_SHA,
         "generated_at": datetime(2026, 9, 4, tzinfo=UTC),
-        "candidates": candidates
-        or tuple(_candidate(candidate_id) for candidate_id in CANDIDATES),
         "pairwise_reports": reports,
     }
     payload.update(overrides)
+
+    if candidates is None:
+        human_overrides: dict[str, object] = {}
+        if "human_calibration_protocol_id" in overrides:
+            human_overrides["protocol_id"] = overrides["human_calibration_protocol_id"]
+        if "human_calibration_protocol_hash" in overrides:
+            human_overrides["protocol_hash"] = overrides["human_calibration_protocol_hash"]
+        candidates = tuple(
+            _candidate(candidate_id, human_overrides=human_overrides)
+            for candidate_id in CANDIDATES
+        )
+    payload["candidates"] = candidates
     return ProviderBenchmarkEvidence.model_validate(payload)
 
 
