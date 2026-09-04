@@ -120,9 +120,38 @@ python scripts/validate_hosted_environment.py --serving-ready
 
 The validator emits only a sanitized summary and never prints DSNs, provider keys, signing secrets, JWKS contents or TRACTIAN bearer tokens.
 
+## Hosted deployment evidence chain
+
+Provider documentation is only a static feasibility admission. It does not prove what source or runtime actually executed. Hosted evidence therefore follows this mandatory sequence:
+
+```text
+static provider feasibility
+→ live source/build/runtime attestation
+→ hosted PostgreSQL preflight
+→ explicit migration
+→ RLS/isolation verification
+→ readiness
+→ hosted product E2E
+```
+
+The live attestation gate is:
+
+```bash
+python scripts/check_live_deployment_attestation.py <evidence.json>
+```
+
+The default production policy requires:
+
+- exact expected source revision;
+- exact expected branch;
+- approved build contract (`root-dockerfile`);
+- approved Python runtime (`3.11`).
+
+The attestation artifact is hash-bound. A mismatch is a hard, non-compensatory failure and blocks database mutation or readiness claims.
+
 ## Hosted PostgreSQL preflight
 
-Before migration, execute the read-only application-connection preflight:
+Only after live deployment attestation passes, execute the read-only application-connection preflight:
 
 ```bash
 python scripts/check_hosted_postgres_preflight.py
@@ -167,22 +196,37 @@ Observed pilot facts include:
 
 Sanitized evidence is documented in `research/neon-hosted-pilot-live-baseline-2026-09-04.md`.
 
-## Deployment challenger pilot
+The database was intentionally not migrated after the connected Railway deployment failed live source/build attestation. This preserves experimental integrity: wrong code cannot create schema and then be counted as evidence for the intended SHA.
 
-An isolated Railway project named `academy-tractian-hosted-pilot` is currently used only as a hosted Docker/executor challenger. It receives secrets through the deployment environment rather than GitHub or repository files.
+## Railway deployment challenger result
 
-The first infrastructure sequence is intentionally narrower than full serving:
+An isolated Railway project named `academy-tractian-hosted-pilot` was used only as a hosted executor challenger. Secrets were injected through Railway environment variables rather than GitHub or repository files.
+
+The connected Git-source deployment was requested against the PR branch, but observed deployment metadata/logs showed:
 
 ```text
-exact PR branch/container
-→ hosted secrets
-→ PostgreSQL preflight
-→ explicit migration
-→ RLS/isolation verification
-→ readiness
+expected branch             feat/cloud-production-baseline
+observed branch             main
+observed source revision    acb786e3a4cf45500fd68741e1ecedba1f624e5d
+expected build              root-dockerfile
+observed build              railpack
+expected Python             3.11
+observed Python             3.13.15
+outcome                     LIVE_ATTESTATION_FAIL
 ```
 
-A successful pilot qualifies the deployment path; it does not by itself select Railway as the final vendor or establish production SLO/availability.
+The older source revision did not contain `scripts/check_hosted_postgres_preflight.py`, so the process failed before a valid preflight could run.
+
+The evidence is stored in:
+
+`research/results/railway-live-deployment-attestation-2026-09-04.json`.
+
+Current decision:
+
+- Railway is **not qualified through the connected Git-source path**;
+- this deployment does not count as PostgreSQL, RLS, readiness or full-product evidence;
+- no cloud-vendor winner is selected;
+- Railway can be reconsidered only if a future path independently proves immutable source/build provenance, for example an approved OCI image pinned by digest.
 
 ## Container
 
@@ -298,6 +342,8 @@ The UI must not infer completion from missing/unavailable evidence.
 The current freeze remains reopened until at least the following hosted gates close:
 
 ```text
+HOSTED_EXACT_SOURCE_ATTESTATION
+HOSTED_APPROVED_BUILD_RUNTIME
 HOSTED_POSTGRES_PREFLIGHT
 HOSTED_POSTGRES_MIGRATION
 HOSTED_POSTGRES_RLS_ISOLATION
@@ -317,6 +363,7 @@ BRANCH_PROTECTION_ENFORCEMENT
 This candidate does **not** yet claim:
 
 - a winning cloud vendor;
+- Railway qualification through the currently connected Git-source path;
 - a production-selected provider/model;
 - a selected/live-validated external OIDC deployment;
 - hosted consequential-action authorization;
