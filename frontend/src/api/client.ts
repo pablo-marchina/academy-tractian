@@ -1,3 +1,4 @@
+import { apiUrl } from "./baseUrl";
 import type { ActionExecutionAccepted, PendingActionSafe } from "./actionTypes";
 import type {
   OperationalPilotAssignment,
@@ -34,7 +35,7 @@ import type {
 } from "./types";
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       Accept: "application/json",
@@ -99,7 +100,7 @@ export function fetchExecution(executionPath: string): Promise<ExecutionStateRes
 }
 
 export function fetchEvaluation(runId: string): Promise<ItemsResponse<SafeEvaluationCheck>> {
-  return requestJson<ItemsResponse<SafeEvaluationCheck>>(`/api/runs/${encodeURIComponent(runId)}/evaluation`);
+  return requestJson<ItemsResponse<SafeEvaluationCheck>(`/api/runs/${encodeURIComponent(runId)}/evaluation`);
 }
 
 export function fetchRunActions(runId: string): Promise<ItemsResponse<PendingActionSafe>> {
