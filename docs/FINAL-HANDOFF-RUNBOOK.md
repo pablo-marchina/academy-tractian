@@ -56,11 +56,13 @@ No provider secret is required for provider-free reproduction.
 
 ## 3. Canonical clean-clone reproduction
 
-The authoritative automated path is:
+The authoritative **current-product** automated path is:
 
-`.github/workflows/final-delivery-provider-free-reproduction.yml`
+`.github/workflows/clean-clone-full-product-reproduction.yml`
 
-It starts from a clean `actions/checkout`, starts PostgreSQL 18 and runs:
+The older `.github/workflows/final-delivery-provider-free-reproduction.yml` is historical frozen evidence. Its exact blob is intentionally preserved and must not be edited merely to extend current coverage.
+
+The current-product workflow starts from a clean `actions/checkout`, starts PostgreSQL 18 and runs:
 
 ```text
 1. verify tracked checkout is clean
@@ -80,7 +82,7 @@ It starts from a clean `actions/checkout`, starts PostgreSQL 18 and runs:
 15. verify no tracked repository mutation
 ```
 
-This is the P0 clean-checkout reproduction contract. Do not change frozen expected identities merely to make this gate pass; diagnose the implementation/evidence mismatch.
+This is the P0 clean-checkout reproduction contract. Do not change frozen expected identities or frozen workflow blobs merely to make this gate pass; diagnose the implementation/evidence mismatch.
 
 ## 4. Manual provider-free reproduction
 
@@ -255,7 +257,8 @@ Never make live provider availability a single point of presentation failure.
 
 Before delivery:
 
-- clean-clone reproduction green on exact final SHA;
+- current-product clean-clone reproduction green on exact final SHA;
+- historical frozen reproduction blob remains unchanged;
 - full-product Playwright green on exact final SHA;
 - branch protection/final CI configured and verified;
 - final benchmark/evidence bundle frozen;
