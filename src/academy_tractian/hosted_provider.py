@@ -11,7 +11,7 @@ from .groq_provider_client import (
     GROQ_MODEL_ID,
     GROQ_PROVIDER_ID,
     GROQ_ROUTE_ID,
-    GroqResponsesDecisionClient,
+    GroqChatCompletionsDecisionClient,
 )
 from .provider_clients import (
     GOOGLE_MODEL_ID,
@@ -78,7 +78,7 @@ def create_hosted_decision_source(*, provider: str, api_key: str) -> DecisionSou
     elif normalized == "google":
         client = GoogleInteractionsDecisionClient(api_key=api_key, transport=transport)
     else:
-        client = GroqResponsesDecisionClient(api_key=api_key, transport=transport)
+        client = GroqChatCompletionsDecisionClient(api_key=api_key, transport=transport)
 
     return ProviderDecisionSource(
         client=client,
