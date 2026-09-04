@@ -45,7 +45,7 @@ def _database(**overrides):
         "pooled_connections": "yes",
         "row_level_security": "yes",
         "transaction_support": "yes",
-        "automatic_inactivity_suspension": "no",
+        "inactivity_requires_manual_reactivation": "no",
         "restore_supported": "yes",
         "restore_window_hours": 6.0,
         "automatic_backups": "yes",
@@ -78,7 +78,7 @@ def _identity(**overrides):
         "first_class_organizations": "yes",
         "free_active_users": 50_000,
         "free_organizations": 100,
-        "automatic_inactivity_suspension": "no",
+        "inactivity_requires_manual_reactivation": "no",
         "migration_class": "minor",
     }
     values.update(overrides)
@@ -112,7 +112,7 @@ def test_database_and_identity_are_independently_admissible() -> None:
         ({"pooled_connections": "no"}, "POOLED_CONNECTIONS_REQUIRED"),
         ({"row_level_security": "no"}, "ROW_LEVEL_SECURITY_REQUIRED"),
         ({"transaction_support": "no"}, "TRANSACTION_SUPPORT_REQUIRED"),
-        ({"automatic_inactivity_suspension": "yes"}, "AUTOMATIC_INACTIVITY_SUSPENSION_FORBIDDEN"),
+        ({"inactivity_requires_manual_reactivation": "yes"}, "MANUAL_INACTIVITY_REACTIVATION_FORBIDDEN"),
         ({"restore_supported": "no"}, "RESTORE_SUPPORT_REQUIRED"),
         ({"restore_window_hours": 5.9}, "RESTORE_WINDOW_INSUFFICIENT"),
         ({"free_storage_mb": 499}, "FREE_STORAGE_INSUFFICIENT"),
@@ -142,7 +142,7 @@ def test_database_hard_gates_are_non_compensatory(overrides, reason: str) -> Non
         ({"first_class_organizations": "no"}, "FIRST_CLASS_ORGANIZATIONS_REQUIRED"),
         ({"free_active_users": 999}, "FREE_USER_CAPACITY_INSUFFICIENT"),
         ({"free_organizations": 9}, "FREE_ORGANIZATION_CAPACITY_INSUFFICIENT"),
-        ({"automatic_inactivity_suspension": "yes"}, "AUTOMATIC_INACTIVITY_SUSPENSION_FORBIDDEN"),
+        ({"inactivity_requires_manual_reactivation": "yes"}, "MANUAL_INACTIVITY_REACTIVATION_FORBIDDEN"),
         ({"service_maturity": "beta"}, "SERVICE_MATURITY_NOT_ALLOWED"),
     ],
 )
@@ -173,7 +173,7 @@ def test_database_strength_cannot_compensate_identity_failure() -> None:
 
 def test_identity_strength_cannot_compensate_database_failure() -> None:
     database = decide_managed_postgres_feasibility(
-        evidence=_database(automatic_inactivity_suspension="yes"),
+        evidence=_database(inactivity_requires_manual_reactivation="yes"),
         policy=DB_POLICY,
         evaluated_at=NOW,
     )
@@ -185,7 +185,16 @@ def test_identity_strength_cannot_compensate_database_failure() -> None:
     )
     assert identity.outcome == "PILOT_ADMISSIBLE"
     assert bundle.outcome == "STATIC_REJECT"
-    assert "DATABASE:AUTOMATIC_INACTIVITY_SUSPENSION_FORBIDDEN" in bundle.reason_codes
+    assert "DATABASE:MANUAL_INACTIVITY_REACTIVATION_FORBIDDEN" in bundle.reason_codes
+
+
+def test_scale_to_zero_is_allowed_when_reactivation_is_automatic() -> None:
+    decision = decide_managed_postgres_feasibility(
+        evidence=_database(inactivity_requires_manual_reactivation="no"),
+        policy=DB_POLICY,
+        evaluated_at=NOW,
+    )
+    assert decision.outcome == "PILOT_ADMISSIBLE"
 
 
 def test_stale_and_future_evidence_fail_closed() -> None:
