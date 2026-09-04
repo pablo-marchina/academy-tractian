@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI
 
@@ -28,18 +29,18 @@ def create_authenticated_postgres_action_capable_product_app(
     runtime_identity_clock_skew_seconds: int = 30,
     runtime_identity_allowed_privileged_permissions: Iterable[str] = (),
     schema: str = "academy_operational",
+    observability_schema: str = "academy_observability",
+    observability_backend: Literal["duckdb", "postgresql"] = "duckdb",
     initialize_schema: bool = False,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    """Create the promoted Postgres topology with cryptographically authenticated identity.
+    """Create the authenticated Postgres topology with a selectable safe read-model backend.
 
-    Unlike the generic factory used by tests and embedding applications, this entrypoint does not
-    accept an arbitrary `RuntimeContextProvider`. Tenant, user, identity and permissions must come
-    from a verified signed bearer envelope. Benchmark/replay seed claims are impossible on this
-    production identity path.
+    The hosted-only path uses ``observability_backend='postgresql'``. Historical provider-free
+    reproduction may retain DuckDB without changing runtime or API semantics.
     """
 
     context_provider = SignedBearerRuntimeContextProvider(
@@ -59,6 +60,8 @@ def create_authenticated_postgres_action_capable_product_app(
         context_provider=context_provider,
         authorization_resolver=authorization_resolver,
         schema=schema,
+        observability_schema=observability_schema,
+        observability_backend=observability_backend,
         initialize_schema=initialize_schema,
         max_workers=max_workers,
         provider_calls_enabled=provider_calls_enabled,
