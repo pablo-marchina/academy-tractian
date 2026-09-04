@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+import json
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from academy_tractian.live_deployment_attestation import (
+    LiveDeploymentAttestation,
     LiveDeploymentPolicy,
     build_live_deployment_attestation,
     decide_live_deployment_attestation,
@@ -90,3 +93,18 @@ def test_attestation_is_hash_bound() -> None:
     payload["observed_branch"] = "main"
     with pytest.raises(ValidationError, match="live_deployment_attestation_hash_mismatch"):
         type(evidence).model_validate(payload)
+
+
+def test_railway_live_pilot_artifact_is_valid_and_fails_expected_hard_gates() -> None:
+    path = Path("research/results/railway-live-deployment-attestation-2026-09-04.json")
+    evidence = LiveDeploymentAttestation.model_validate(json.loads(path.read_text(encoding="utf-8")))
+    decision = decide_live_deployment_attestation(evidence=evidence, policy=POLICY)
+
+    assert decision.outcome == "LIVE_ATTESTATION_FAIL"
+    assert set(decision.reason_codes) >= {
+        "SOURCE_REVISION_MISMATCH",
+        "SOURCE_BRANCH_MISMATCH",
+        "OBSERVED_BUILD_CONTRACT_NOT_APPROVED",
+        "BUILD_CONTRACT_MISMATCH",
+        "PYTHON_RUNTIME_MISMATCH",
+    }
