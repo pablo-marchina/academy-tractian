@@ -7,6 +7,13 @@ from .decision_source import (
     ProviderCallIdentity,
     ProviderDecisionSource,
 )
+from .google_v1_provider_client import (
+    GOOGLE_37_MODEL_ID,
+    GOOGLE_38_MODEL_ID,
+    GOOGLE_V1_PROVIDER_ID,
+    GOOGLE_V1_ROUTE_ID,
+    GoogleV1InteractionsDecisionClient,
+)
 from .groq_provider_client import (
     GROQ_MODEL_ID,
     GROQ_PROVIDER_ID,
@@ -14,14 +21,9 @@ from .groq_provider_client import (
     GroqChatCompletionsDecisionClient,
 )
 from .provider_clients import (
-    GOOGLE_MODEL_ID,
-    GOOGLE_PROVIDER_ID,
-    GOOGLE_ROUTE_ID,
     OPENAI_MODEL_ID,
     OPENAI_PROVIDER_ID,
     OPENAI_ROUTE_ID,
-    PROVIDER_HTTP_CLIENTS_VERSION,
-    GoogleInteractionsDecisionClient,
     OpenAIResponsesDecisionClient,
     UrllibProviderJsonTransport,
 )
@@ -29,32 +31,39 @@ from .runtime import canonical_tool_registry
 from .runtime_configuration_identity import RuntimeConfigurationIdentity
 
 
-SUPPORTED_HOSTED_PROVIDERS = frozenset({"openai", "google", "groq"})
+HOSTED_PROVIDER_CLIENTS_VERSION = "hosted-provider-clients-v2"
+SUPPORTED_HOSTED_CANDIDATES = frozenset(
+    {
+        (OPENAI_PROVIDER_ID, OPENAI_MODEL_ID),
+        (GOOGLE_V1_PROVIDER_ID, GOOGLE_37_MODEL_ID),
+        (GOOGLE_V1_PROVIDER_ID, GOOGLE_38_MODEL_ID),
+        (GROQ_PROVIDER_ID, GROQ_MODEL_ID),
+    }
+)
+SUPPORTED_HOSTED_PROVIDERS = frozenset(provider for provider, _ in SUPPORTED_HOSTED_CANDIDATES)
 
 
-def hosted_runtime_configuration_identity(provider: str) -> RuntimeConfigurationIdentity:
-    """Return the public candidate identity bound into hosted runtime config hashes.
+def _normalize_candidate(provider: str, model: str) -> tuple[str, str]:
+    candidate = (provider.strip().lower(), model.strip())
+    if candidate not in SUPPORTED_HOSTED_CANDIDATES:
+        raise ValueError("unsupported_hosted_candidate")
+    return candidate
 
-    The identity is derived only from code-owned provider/model/route/version constants. API keys,
-    endpoints with credentials, request content and responses cannot enter it. Deployment choice is
-    therefore observable provenance but is still not evidence that a candidate won promotion.
+
+def hosted_runtime_configuration_identity(provider: str, model: str) -> RuntimeConfigurationIdentity:
+    """Return a public provider+model identity bound into hosted runtime config hashes.
+
+    Provider and model are both explicit so a provider release cannot silently change production
+    semantics. API keys, request content and responses never enter the identity.
     """
 
-    normalized = provider.strip().lower()
-    if normalized == "openai":
-        provider_id = OPENAI_PROVIDER_ID
-        model_id = OPENAI_MODEL_ID
+    provider_id, model_id = _normalize_candidate(provider, model)
+    if provider_id == OPENAI_PROVIDER_ID:
         route_id = OPENAI_ROUTE_ID
-    elif normalized == "google":
-        provider_id = GOOGLE_PROVIDER_ID
-        model_id = GOOGLE_MODEL_ID
-        route_id = GOOGLE_ROUTE_ID
-    elif normalized == "groq":
-        provider_id = GROQ_PROVIDER_ID
-        model_id = GROQ_MODEL_ID
-        route_id = GROQ_ROUTE_ID
+    elif provider_id == GOOGLE_V1_PROVIDER_ID:
+        route_id = GOOGLE_V1_ROUTE_ID
     else:
-        raise ValueError("unsupported_hosted_provider")
+        route_id = GROQ_ROUTE_ID
 
     return RuntimeConfigurationIdentity(
         candidate_id=f"{provider_id}:{model_id}",
@@ -62,23 +71,28 @@ def hosted_runtime_configuration_identity(provider: str) -> RuntimeConfiguration
         model_id=model_id,
         route_id=route_id,
         adapter_version=PROVIDER_DECISION_ADAPTER_VERSION,
-        client_version=PROVIDER_HTTP_CLIENTS_VERSION,
+        client_version=HOSTED_PROVIDER_CLIENTS_VERSION,
     )
 
 
-def create_hosted_decision_source(*, provider: str, api_key: str) -> DecisionSource:
-    """Build one live hosted decision source without changing application-owned agent semantics."""
+def create_hosted_decision_source(*, provider: str, model: str, api_key: str) -> DecisionSource:
+    """Build one explicit live candidate without changing application-owned agent semantics."""
 
-    normalized = provider.strip().lower()
-    if normalized not in SUPPORTED_HOSTED_PROVIDERS:
-        raise ValueError("unsupported_hosted_provider")
+    provider_id, model_id = _normalize_candidate(provider, model)
     transport = UrllibProviderJsonTransport()
-    if normalized == "openai":
+    if provider_id == OPENAI_PROVIDER_ID:
         client = OpenAIResponsesDecisionClient(api_key=api_key, transport=transport)
-    elif normalized == "google":
-        client = GoogleInteractionsDecisionClient(api_key=api_key, transport=transport)
+    elif provider_id == GOOGLE_V1_PROVIDER_ID:
+        client = GoogleV1InteractionsDecisionClient(
+            api_key=api_key,
+            model_id=model_id,
+            transport=transport,
+        )
     else:
         client = GroqChatCompletionsDecisionClient(api_key=api_key, transport=transport)
+
+    if client.model_id != model_id:
+        raise ValueError("hosted_candidate_client_model_mismatch")
 
     return ProviderDecisionSource(
         client=client,
