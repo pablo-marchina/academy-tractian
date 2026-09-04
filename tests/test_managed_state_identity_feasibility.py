@@ -48,7 +48,6 @@ def _database(**overrides):
         "inactivity_requires_manual_reactivation": "no",
         "restore_supported": "yes",
         "restore_window_hours": 6.0,
-        "automatic_backups": "yes",
         "free_storage_mb": 512,
         "migration_class": "none",
     }
