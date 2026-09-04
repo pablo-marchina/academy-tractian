@@ -31,7 +31,8 @@ export function ToolCampaignPanel({ campaign }: { campaign: ToolCampaignResponse
         <div className="coverage-metric"><span>Incomplete</span><strong>{campaign.incomplete_operations}</strong></div>
         <div className="coverage-metric"><span>Reads</span><strong>{campaign.reads}</strong></div>
         <div className="coverage-metric"><span>Actions</span><strong>{campaign.actions}</strong></div>
-        <div className="coverage-metric"><span>Evidence state</span><strong>{campaign.evidence_state}</strong></div>
+        <div className="coverage-metric"><span>Transport evidence</span><strong>{campaign.transport_evidence_state}</strong></div>
+        <div className="coverage-metric"><span>Semantic evidence</span><strong>{campaign.semantic_evidence_state}</strong></div>
       </section>
 
       <div className="coverage-table-wrap">
@@ -41,12 +42,12 @@ export function ToolCampaignPanel({ campaign }: { campaign: ToolCampaignResponse
               <th>Operation</th>
               <th>Route</th>
               <th>Proof</th>
-              <th>Unproven dimensions</th>
+              <th>Open / failed dimensions</th>
             </tr>
           </thead>
           <tbody>
             {campaign.operations.map((operation) => {
-              const unproven = operation.dimensions.filter((dimension) => dimension.state !== "PASS");
+              const open = operation.dimensions.filter((dimension) => dimension.state !== "PASS");
               return (
                 <tr key={operation.operation} data-campaign-tool={operation.operation}>
                   <td>
@@ -58,9 +59,11 @@ export function ToolCampaignPanel({ campaign }: { campaign: ToolCampaignResponse
                   <td className="coverage-route"><b>{operation.method}</b> {operation.path_template}</td>
                   <td>{passedDimensions(operation)}/{operation.dimensions.length}</td>
                   <td>
-                    {unproven.length === 0
+                    {open.length === 0
                       ? "—"
-                      : unproven.map((dimension) => dimensionLabel(dimension.name)).join(", ")}
+                      : open
+                          .map((dimension) => `${dimensionLabel(dimension.name)} [${dimension.state}]`)
+                          .join(", ")}
                   </td>
                 </tr>
               );
