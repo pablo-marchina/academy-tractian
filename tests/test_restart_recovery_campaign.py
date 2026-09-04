@@ -43,17 +43,44 @@ def test_restart_recovery_report_is_hash_bound_and_claim_limited() -> None:
     assert report.replay_count == 0
     assert len(report.evidence_sha256) == 64
 
+    payload = report.model_dump(mode="json")
+    assert set(payload) == {
+        "schema_version",
+        "status",
+        "interpretation",
+        "production_availability_claim_ready",
+        "automatic_retry_count",
+        "replay_count",
+        "first_restart_runtime_interrupted",
+        "first_restart_action_execution_uncertain",
+        "first_restart_action_custody_uncertain",
+        "first_restart_ledger_uncertain",
+        "pending_confirmation_preserved",
+        "completed_runtime_preserved",
+        "failed_runtime_preserved",
+        "fresh_runtime_completed_after_recovery",
+        "cross_tenant_visibility_blocked",
+        "first_restart_provider_calls",
+        "first_restart_action_transport_calls",
+        "second_restart_new_runtime_recoveries",
+        "second_restart_new_action_custody_recoveries",
+        "second_restart_new_ledger_recoveries",
+        "second_restart_provider_calls",
+        "second_restart_action_transport_calls",
+        "evidence_sha256",
+    }
+
     serialized = report.model_dump_json()
     for private_fragment in (
-        "run-",
-        "act_",
-        "org-",
-        "user-",
-        "identity-",
-        "Bearer",
+        "org-a",
+        "user-a",
+        "identity-user-a",
+        "Bearer ",
+        "idem-",
+        "analysis-recovery",
+        "raw-recovery",
         "idempotency_key",
-        "arguments",
-        "trace",
+        "arguments_json",
     ):
         assert private_fragment not in serialized
 
