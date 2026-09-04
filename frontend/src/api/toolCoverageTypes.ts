@@ -67,7 +67,7 @@ export interface ToolCoverageResponse {
   operations: ToolCoverageOperation[];
 }
 
-export type CampaignDimensionState = "PASS" | "UNPROVEN";
+export type CampaignDimensionState = "PASS" | "FAIL" | "UNPROVEN";
 
 export interface ToolCampaignDimension {
   name: string;
@@ -86,8 +86,9 @@ export interface ToolCampaignOperation {
 }
 
 export interface ToolCampaignResponse {
-  schema_version: "tractian-integration-campaign-v1";
-  evidence_state: IntegrationEvidenceState;
+  schema_version: "tractian-integration-campaign-v2";
+  transport_evidence_state: IntegrationEvidenceState;
+  semantic_evidence_state: IntegrationEvidenceState;
   normalized_operations: number;
   reads: number;
   actions: number;
