@@ -120,6 +120,15 @@ def _strict_json_object(raw: bytes) -> dict[str, object]:
     return value
 
 
+def _canonical_claim_bytes(claims: SignedRuntimeIdentityClaims) -> bytes:
+    return json.dumps(
+        claims.model_dump(mode="json"),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+
 def issue_signed_runtime_token(
     *,
     secret: bytes | str,
@@ -128,13 +137,7 @@ def issue_signed_runtime_token(
     """Trusted issuer helper used by deployment tooling/tests, never by the browser API."""
 
     key = _secret_bytes(secret)
-    payload = json.dumps(
-        claims.model_dump(mode="json"),
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-    ).encode("utf-8")
-    encoded_payload = _b64url_encode(payload)
+    encoded_payload = _b64url_encode(_canonical_claim_bytes(claims))
     signing_input = f"{_TOKEN_PREFIX}.{encoded_payload}".encode("ascii")
     signature = hmac.new(key, signing_input, sha256).digest()
     return f"{_TOKEN_PREFIX}.{encoded_payload}.{_b64url_encode(signature)}"
@@ -217,8 +220,11 @@ class SignedBearerRuntimeContextProvider:
             raise self._unauthorized()
 
         try:
-            payload = _strict_json_object(_b64url_decode(encoded_payload, label="payload"))
+            raw_payload = _b64url_decode(encoded_payload, label="payload")
+            payload = _strict_json_object(raw_payload)
             claims = SignedRuntimeIdentityClaims.model_validate(payload)
+            if raw_payload != _canonical_claim_bytes(claims):
+                raise ValueError("runtime identity JSON is not canonical")
         except Exception as exc:
             raise self._unauthorized() from exc
         if claims.issuer != self._issuer or claims.audience != self._audience:
