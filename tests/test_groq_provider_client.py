@@ -7,10 +7,10 @@ import pytest
 
 from academy_tractian.decision_source import ProviderDecisionSource, build_provider_decision_request
 from academy_tractian.groq_provider_client import (
+    GROQ_CHAT_COMPLETIONS_ENDPOINT,
     GROQ_MODEL_ID,
-    GROQ_RESPONSES_ENDPOINT,
     GROQ_ROUTE_ID,
-    GroqResponsesDecisionClient,
+    GroqChatCompletionsDecisionClient,
 )
 from academy_tractian.provider_clients import (
     ProviderHttpClientError,
@@ -69,51 +69,53 @@ def _groq_response(
     text: str,
     *,
     model: str = GROQ_MODEL_ID,
-    status: str = "completed",
+    finish_reason: str = "stop",
+    reasoning: str | None = None,
 ) -> ProviderHttpResponse:
+    message: dict[str, Any] = {"role": "assistant", "content": text}
+    if reasoning is not None:
+        message["reasoning"] = reasoning
     return ProviderHttpResponse(
         status_code=200,
         body={
-            "object": "response",
-            "status": status,
+            "object": "chat.completion",
             "model": model,
-            "output": [
-                {"type": "reasoning", "status": "completed", "content": []},
+            "choices": [
                 {
-                    "type": "message",
-                    "status": "completed",
-                    "role": "assistant",
-                    "content": [{"type": "output_text", "text": text}],
-                },
+                    "index": 0,
+                    "finish_reason": finish_reason,
+                    "message": message,
+                }
             ],
             "usage": {
-                "input_tokens": 111,
-                "output_tokens": 23,
+                "prompt_tokens": 111,
+                "completion_tokens": 23,
                 "total_tokens": 134,
-                "output_tokens_details": {"reasoning_tokens": 9},
+                "completion_tokens_details": {"reasoning_tokens": 9},
             },
         },
     )
 
 
-def test_groq_builds_one_stateless_structured_responses_request_without_secret_payload() -> None:
+def test_groq_builds_one_stateless_structured_production_request_without_secret_payload() -> None:
     transport = ScriptedJsonTransport(_groq_response(_decision_json()))
-    client = GroqResponsesDecisionClient(api_key=SECRET, transport=transport)
+    client = GroqChatCompletionsDecisionClient(api_key=SECRET, transport=transport)
 
     assert client.complete(_provider_request()) == _decision_json()
     assert len(transport.calls) == 1
     call = transport.calls[0]
     assert call.method == "POST"
-    assert call.url == GROQ_RESPONSES_ENDPOINT
+    assert call.url == GROQ_CHAT_COMPLETIONS_ENDPOINT
     assert call.headers["Authorization"] == f"Bearer {SECRET}"
     assert call.body["model"] == GROQ_MODEL_ID
-    assert call.body["reasoning"] == {"effort": "medium"}
-    assert call.body["text"]["format"]["type"] == "json_schema"
-    assert call.body["text"]["format"]["name"] == "provider_decision_payload"
+    assert call.body["reasoning_effort"] == "medium"
+    assert call.body["include_reasoning"] is False
+    assert call.body["response_format"]["type"] == "json_schema"
+    assert call.body["response_format"]["json_schema"]["name"] == "provider_decision_payload"
+    assert call.body["response_format"]["json_schema"]["strict"] is False
     assert "store" not in call.body
     assert "background" not in call.body
     assert "tools" not in call.body
-    assert "previous_response_id" not in call.body
     assert "seed" not in call.body
     serialized = json.dumps(call.body, sort_keys=True)
     assert SECRET not in serialized
@@ -137,7 +139,7 @@ def test_groq_response_integrates_with_strict_provider_decision_source() -> None
     )
     transport = ScriptedJsonTransport(response)
     source = ProviderDecisionSource(
-        client=GroqResponsesDecisionClient(api_key=SECRET, transport=transport),
+        client=GroqChatCompletionsDecisionClient(api_key=SECRET, transport=transport),
         registry=canonical_tool_registry(),
     )
 
@@ -154,13 +156,16 @@ def test_groq_response_integrates_with_strict_provider_decision_source() -> None
 @pytest.mark.parametrize(
     "response",
     [
-        _groq_response(_decision_json(), status="incomplete"),
+        _groq_response(_decision_json(), finish_reason="length"),
         _groq_response(_decision_json(), model="openai/gpt-oss-120b-mutated"),
+        _groq_response(_decision_json(), reasoning="private reasoning leaked"),
     ],
 )
-def test_groq_status_or_model_drift_fails_closed_without_retry(response: ProviderHttpResponse) -> None:
+def test_groq_drift_or_reasoning_exposure_fails_closed_without_retry(
+    response: ProviderHttpResponse,
+) -> None:
     transport = ScriptedJsonTransport(response)
-    client = GroqResponsesDecisionClient(api_key=SECRET, transport=transport)
+    client = GroqChatCompletionsDecisionClient(api_key=SECRET, transport=transport)
     with pytest.raises(ProviderHttpClientError):
         client.complete(_provider_request())
     assert len(transport.calls) == 1
@@ -168,7 +173,7 @@ def test_groq_status_or_model_drift_fails_closed_without_retry(response: Provide
 
 def test_groq_transport_failure_is_sanitized_without_retry() -> None:
     transport = ScriptedJsonTransport(RuntimeError(f"provider leaked {SECRET}"))
-    client = GroqResponsesDecisionClient(api_key=SECRET, transport=transport)
+    client = GroqChatCompletionsDecisionClient(api_key=SECRET, transport=transport)
     with pytest.raises(ProviderHttpClientError) as exc_info:
         client.complete(_provider_request())
     assert str(exc_info.value) == "TRANSPORT_FAILURE"
@@ -178,7 +183,7 @@ def test_groq_transport_failure_is_sanitized_without_retry() -> None:
 
 def test_groq_usage_is_sanitized_separate_and_drainable() -> None:
     transport = ScriptedJsonTransport(_groq_response(_decision_json()))
-    client = GroqResponsesDecisionClient(api_key=SECRET, transport=transport)
+    client = GroqChatCompletionsDecisionClient(api_key=SECRET, transport=transport)
     request = _provider_request()
     client.complete(request)
     records = client.drain_usage_records()
@@ -200,4 +205,4 @@ def test_groq_usage_is_sanitized_separate_and_drainable() -> None:
 
 def test_groq_requires_explicit_credentials() -> None:
     with pytest.raises(ValueError, match="explicit non-empty api_key"):
-        GroqResponsesDecisionClient(api_key="", transport=ScriptedJsonTransport())
+        GroqChatCompletionsDecisionClient(api_key="", transport=ScriptedJsonTransport())
