@@ -43,6 +43,8 @@ def _failure(reason: str) -> int:
             {
                 "schema_version": "tractian-transport-campaign-cli-v1",
                 "status": "FAIL",
+                "status_scope": "runner_execution_only_not_18_of_18",
+                "transport_gate_passed": False,
                 "reason": reason,
             },
             sort_keys=True,
@@ -54,15 +56,21 @@ def _failure(reason: str) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Run bounded hosted TRACTIAN transport probes. Actions require both per-fixture approval "
-            "and --allow-actions. Raw arguments and response bodies are never printed."
+            "Run bounded hosted TRACTIAN transport probes. A consequential valid probe requires "
+            "per-fixture approval, an approval reference and --allow-actions. A consequential "
+            "HTTP-error probe is a second mutation and additionally requires "
+            "action_error_probe_approved=true in that fixture. Raw arguments and response bodies "
+            "are never printed."
         )
     )
     parser.add_argument("manifest", help="tractian-transport-campaign-manifest-v1 JSON file")
     parser.add_argument(
         "--allow-actions",
         action="store_true",
-        help="second explicit gate for action fixtures already approved in the manifest",
+        help=(
+            "invocation-level gate for action fixtures already approved in the manifest; this does "
+            "not by itself authorize an action error probe"
+        ),
     )
     parser.add_argument(
         "--persist",
@@ -122,11 +130,22 @@ def main() -> int:
             if result.valid_probe not in {"success", "blocked_by_safety"}
             or result.error_probe not in {"http_error_observed", "not_configured"}
         ]
+        runner_passed = not unexpected
+        transport_gate_passed = campaign.transport_complete_operations == campaign.normalized_operations
+        approved_action_error_probes = sum(
+            fixture.action_error_probe_approved for fixture in manifest.fixtures
+        )
+        executed_action_error_probes = sum(
+            result.action_error_probe_enabled for result in run.results
+        )
         payload = {
             "schema_version": "tractian-transport-campaign-cli-v1",
-            "status": "PASS" if not unexpected else "FAIL",
+            "status": "PASS" if runner_passed else "FAIL",
+            "status_scope": "runner_execution_only_not_18_of_18",
             "persisted": bool(args.persist),
             "actions_invocation_gate_enabled": bool(args.allow_actions),
+            "approved_action_error_probes": approved_action_error_probes,
+            "executed_action_error_probes": executed_action_error_probes,
             "configured_operations": run.configured_operations,
             "executed_operations": run.executed_operations,
             "safety_blocked_actions": run.safety_blocked_actions,
@@ -135,6 +154,7 @@ def main() -> int:
             "transport_complete_operations": campaign.transport_complete_operations,
             "transport_incomplete_operations": campaign.transport_incomplete_operations,
             "transport_completion_status": campaign.transport_completion_status,
+            "transport_gate_passed": transport_gate_passed,
             "unexpected_probe_operation_count": len(unexpected),
             "unexpected_probe_operations": sorted(unexpected),
             "results": [
@@ -144,12 +164,13 @@ def main() -> int:
                     "valid_probe": result.valid_probe,
                     "error_probe": result.error_probe,
                     "action_live_execution_enabled": result.action_live_execution_enabled,
+                    "action_error_probe_enabled": result.action_error_probe_enabled,
                 }
                 for result in run.results
             ],
         }
         print(json.dumps(payload, sort_keys=True))
-        return 0 if not unexpected else 2
+        return 0 if runner_passed else 2
     except ValueError as exc:
         reason = str(exc)
         if not reason.startswith("missing_required_environment:"):
