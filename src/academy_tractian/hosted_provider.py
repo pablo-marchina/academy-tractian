@@ -2,16 +2,57 @@ from __future__ import annotations
 
 from research.e2.controller import DecisionSource
 
-from .decision_source import ProviderCallIdentity, ProviderDecisionSource
+from .decision_source import (
+    PROVIDER_DECISION_ADAPTER_VERSION,
+    ProviderCallIdentity,
+    ProviderDecisionSource,
+)
 from .provider_clients import (
+    GOOGLE_MODEL_ID,
+    GOOGLE_PROVIDER_ID,
+    GOOGLE_ROUTE_ID,
+    OPENAI_MODEL_ID,
+    OPENAI_PROVIDER_ID,
+    OPENAI_ROUTE_ID,
+    PROVIDER_HTTP_CLIENTS_VERSION,
     GoogleInteractionsDecisionClient,
     OpenAIResponsesDecisionClient,
     UrllibProviderJsonTransport,
 )
-from .runtime import canonical_tool_registry
+from .runtime import RuntimeConfigurationIdentity, canonical_tool_registry
 
 
 SUPPORTED_HOSTED_PROVIDERS = frozenset({"openai", "google"})
+
+
+def hosted_runtime_configuration_identity(provider: str) -> RuntimeConfigurationIdentity:
+    """Return the public candidate identity bound into hosted runtime config hashes.
+
+    The identity is derived only from code-owned provider/model/route/version constants. API keys,
+    endpoints with credentials, request content and responses cannot enter it. Deployment choice is
+    therefore observable provenance but is still not evidence that a candidate won promotion.
+    """
+
+    normalized = provider.strip().lower()
+    if normalized == "openai":
+        provider_id = OPENAI_PROVIDER_ID
+        model_id = OPENAI_MODEL_ID
+        route_id = OPENAI_ROUTE_ID
+    elif normalized == "google":
+        provider_id = GOOGLE_PROVIDER_ID
+        model_id = GOOGLE_MODEL_ID
+        route_id = GOOGLE_ROUTE_ID
+    else:
+        raise ValueError("unsupported_hosted_provider")
+
+    return RuntimeConfigurationIdentity(
+        candidate_id=f"{provider_id}:{model_id}",
+        provider_id=provider_id,
+        model_id=model_id,
+        route_id=route_id,
+        adapter_version=PROVIDER_DECISION_ADAPTER_VERSION,
+        client_version=PROVIDER_HTTP_CLIENTS_VERSION,
+    )
 
 
 def create_hosted_decision_source(*, provider: str, api_key: str) -> DecisionSource:
