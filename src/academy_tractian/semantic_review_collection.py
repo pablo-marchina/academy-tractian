@@ -48,11 +48,10 @@ class SemanticReviewAssignmentRecord(_FrozenModel):
 
 
 class SemanticReviewAssignmentSafe(_FrozenModel):
-    """Blind reviewer payload: no slot, split, group, labels, identities or private manifest."""
+    """Blind reviewer payload: no phase/slot/split/group/labels/identity/private manifest."""
 
     assignment_id: str = Field(pattern=r"^semassign_[0-9a-f]{24}$")
     packet_id: str = Field(pattern=r"^sempkt_[0-9a-f]{24}$")
-    phase: SemanticReviewPhase
     task: SemanticReviewerTask
 
 
@@ -77,7 +76,6 @@ class SemanticReviewAccepted(_FrozenModel):
     assignment_id: str = Field(pattern=r"^semassign_[0-9a-f]{24}$")
     packet_id: str = Field(pattern=r"^sempkt_[0-9a-f]{24}$")
     task_id: str = Field(pattern=r"^sem_[0-9a-f]{24}$")
-    phase: SemanticReviewPhase
     state: Literal["COMPLETED"] = "COMPLETED"
 
 
@@ -85,7 +83,6 @@ class SemanticReviewWithdrawn(_FrozenModel):
     assignment_id: str = Field(pattern=r"^semassign_[0-9a-f]{24}$")
     packet_id: str = Field(pattern=r"^sempkt_[0-9a-f]{24}$")
     task_id: str = Field(pattern=r"^sem_[0-9a-f]{24}$")
-    phase: SemanticReviewPhase
     state: Literal["WITHDRAWN"] = "WITHDRAWN"
 
 
@@ -144,7 +141,6 @@ def _safe(record: SemanticReviewAssignmentRecord) -> SemanticReviewAssignmentSaf
     return SemanticReviewAssignmentSafe(
         assignment_id=record.assignment_id,
         packet_id=record.packet_id,
-        phase=record.phase,
         task=record.task,
     )
 
@@ -223,7 +219,6 @@ def attach_semantic_review_collection_api(
             assignment_id=completed.assignment_id,
             packet_id=completed.packet_id,
             task_id=completed.task.task_id,
-            phase=completed.phase,
         )
 
     @app.post(
@@ -250,5 +245,4 @@ def attach_semantic_review_collection_api(
             assignment_id=withdrawn.assignment_id,
             packet_id=withdrawn.packet_id,
             task_id=withdrawn.task.task_id,
-            phase=withdrawn.phase,
         )
