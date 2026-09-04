@@ -7,6 +7,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .hosted_config import HostedProductConfig
+from .hosted_integration_evidence_recorder import (
+    EvidenceRecordingTractianTransport,
+    HostedIntegrationEvidenceRecorder,
+)
 from .hosted_provider import create_hosted_decision_source
 from .hosted_tractian_transport import HostedTractianTransport
 from .oidc_runtime_identity import OIDCClaimMapping, OIDCRuntimeContextProvider
@@ -74,6 +78,8 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
     assert active.provider_api_key is not None
     assert active.tractian_base_url is not None
 
+    live_evidence = HostedIntegrationEvidenceRecorder()
+
     def decision_source_factory():
         return create_hosted_decision_source(
             provider=active.provider or "",
@@ -81,10 +87,11 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
         )
 
     def transport_factory():
-        return HostedTractianTransport(
+        transport = HostedTractianTransport(
             base_url=active.tractian_base_url or "",
             bearer_token=active.tractian_bearer_token,
         )
+        return EvidenceRecordingTractianTransport(transport, live_evidence)
 
     context_provider = _runtime_context_provider(active)
     app = create_postgres_action_capable_product_app(
@@ -113,7 +120,7 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
         expose_headers=["Content-Type"],
         max_age=600,
     )
-    attach_tool_coverage_api(app)
+    attach_tool_coverage_api(app, hosted_evidence_provider=live_evidence.ledger)
     app.state.hosted_config = active.sanitized_summary()
     app.state.runtime_identity_backend = (
         "oidc-jwks-v1" if active.identity_backend == "oidc" else "signed-bearer-hmac-sha256-v1"
@@ -123,6 +130,8 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
     app.state.hosted_actions_qualified = False
     app.state.hosted_action_block_reason = "RESOURCE_AUTHORIZATION_NOT_YET_QUALIFIED"
     app.state.hosted_local_persistent_state_required = False
+    app.state.tractian_live_evidence_recorder = live_evidence
+    app.state.tractian_live_evidence_persistence = "process-local-bounded-safe-metadata"
     return app
 
 
