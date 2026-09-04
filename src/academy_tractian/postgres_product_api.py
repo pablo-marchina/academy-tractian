@@ -26,7 +26,7 @@ from .postgres_operational_value_v5 import PostgresOperationalPilotStoreV5
 from .postgres_semantic_review import PostgresSemanticReviewStore
 from .product_api import RuntimeContextProvider
 from .production_actions_v2 import ActionAuthorizationResolver
-from .runtime import RuntimeConfigurationIdentity
+from .runtime_configuration_identity import RuntimeConfigurationIdentity
 from .semantic_human_calibration import SemanticAnnotationManifest, SemanticReviewerPacket
 from .semantic_review_collection import attach_semantic_review_collection_api
 
