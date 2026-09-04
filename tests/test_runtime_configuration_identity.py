@@ -11,8 +11,11 @@ from academy_tractian.runtime import (
     ProductionRequest,
     ProductionRuntime,
     ProductionRuntimeConfig,
-    RuntimeConfigurationIdentity,
     canonical_tool_registry,
+)
+from academy_tractian.runtime_configuration_identity import (
+    RuntimeConfigurationIdentity,
+    bind_runtime_configuration_identity,
     production_runtime_config_hash,
 )
 from research.e2.controller import ControllerDecision, ControllerDecisionKind, ControllerContext
@@ -110,18 +113,15 @@ def test_same_runtime_with_different_provider_identity_has_different_config_hash
     assert google_hash != production_runtime_config_hash(config, registry)
 
 
-def test_trace_carries_candidate_bound_runtime_hash() -> None:
+def test_trace_carries_candidate_bound_runtime_hash_without_modifying_frozen_runtime() -> None:
     identity = _identity(
         candidate_id="openai:gpt-5.6-sol",
         provider_id="openai",
         model_id="gpt-5.6-sol",
         route_id="openai.responses.v1.standard",
     )
-    runtime = ProductionRuntime(
-        decision_source=_FinalSource(),
-        transport=_NoopTransport(),
-        configuration_identity=identity,
-    )
+    runtime = ProductionRuntime(decision_source=_FinalSource(), transport=_NoopTransport())
+    bind_runtime_configuration_identity(runtime, identity)
     trace = runtime.run(
         ProductionRequest(
             request_id="candidate-run-1",
@@ -145,12 +145,12 @@ def test_factory_style_binding_is_one_shot_and_changes_hash_before_execution() -
         route_id="google.interactions.v1beta.stateless",
     )
 
-    runtime.bind_configuration_identity(identity)
+    bind_runtime_configuration_identity(runtime, identity)
 
     assert runtime.config_hash != legacy_hash
     assert runtime.configuration_identity == identity
     with pytest.raises(RuntimeError, match="already_bound"):
-        runtime.bind_configuration_identity(identity)
+        bind_runtime_configuration_identity(runtime, identity)
 
 
 @pytest.mark.parametrize(
