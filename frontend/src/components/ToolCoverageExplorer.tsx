@@ -6,6 +6,7 @@ import type {
   ToolCoverageOperation,
   ToolCoverageResponse,
 } from "../api/toolCoverageTypes";
+import { ToolCampaignExplorer } from "./ToolCampaignExplorer";
 
 function yesNo(value: boolean): string {
   return value ? "YES" : "NO";
@@ -183,5 +184,10 @@ export function ToolCoverageExplorer() {
     );
   }
 
-  return <ToolCoveragePanel coverage={coverageQuery.data} />;
+  return (
+    <>
+      <ToolCoveragePanel coverage={coverageQuery.data} />
+      <ToolCampaignExplorer />
+    </>
+  );
 }
