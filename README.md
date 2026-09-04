@@ -125,11 +125,12 @@ Complexidade arquitetural não entra por convenção. RAG/GraphRAG/vector DB, Ku
 
 ## Reprodução provider-free
 
-A reprodução canônica de clone limpo é o workflow:
+Há duas superfícies deliberadamente distintas:
 
-`.github/workflows/final-delivery-provider-free-reproduction.yml`
+- `.github/workflows/final-delivery-provider-free-reproduction.yml` — **workflow histórico congelado**, preservado byte-for-byte porque seu blob faz parte do freeze de evidência;
+- `.github/workflows/clean-clone-full-product-reproduction.yml` — **reprodução canônica do produto atual** a partir de checkout limpo.
 
-Ele executa, a partir de checkout limpo e sem provider secrets:
+O workflow atual executa, sem provider secrets:
 
 ```text
 PostgreSQL 18
