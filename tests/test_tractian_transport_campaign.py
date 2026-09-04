@@ -36,6 +36,13 @@ def _manifest(*fixtures: TransportProbeFixture) -> TractianTransportCampaignMani
     )
 
 
+def _action_body(justification: str = "Controlled campaign fixture with explicit justification.") -> dict:
+    return {
+        "justification": justification,
+        "changes": {"criticality": "medium"},
+    }
+
+
 def test_fixture_rejects_unknown_operation_as_controlled_contract_error() -> None:
     with pytest.raises(ValidationError, match="unknown_transport_probe_operation"):
         TransportProbeFixture(
@@ -50,6 +57,34 @@ def test_manifest_rejects_missing_required_valid_arguments_before_network() -> N
         valid_arguments={},
     )
     with pytest.raises(ValidationError, match="invalid_valid_probe_arguments:get_asset"):
+        _manifest(fixture)
+
+
+def test_manifest_rejects_b1_invalid_action_before_network_can_be_constructed() -> None:
+    fixture = TransportProbeFixture(
+        operation="update_asset_config",
+        valid_arguments={
+            "asset_id": "asset-action",
+            "body": {"changes": {"criticality": "high"}},
+        },
+        action_execution_approved=True,
+        action_approval_ref="approval-invalid-action-001",
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="invalid_valid_probe_arguments:update_asset_config",
+    ):
+        _manifest(fixture)
+
+
+def test_manifest_rejects_declared_enum_violation_for_live_read() -> None:
+    fixture = TransportProbeFixture(
+        operation="list_analyses",
+        valid_arguments={"asset_id": "asset-1", "status": "invented-status"},
+    )
+
+    with pytest.raises(ValidationError, match="invalid_valid_probe_arguments:list_analyses"):
         _manifest(fixture)
 
 
@@ -108,7 +143,7 @@ def test_action_without_manifest_approval_is_safety_blocked_with_zero_network_ca
             operation="update_asset_config",
             valid_arguments={
                 "asset_id": "asset-action",
-                "body": {"reason": "controlled campaign fixture only"},
+                "body": _action_body(),
             },
         )
     )
@@ -138,7 +173,7 @@ def test_action_manifest_approval_still_requires_invocation_level_allow_actions(
             operation="update_asset_config",
             valid_arguments={
                 "asset_id": "asset-action",
-                "body": {"reason": "approved campaign fixture with explicit justification"},
+                "body": _action_body("Approved campaign fixture with explicit justification."),
             },
             action_execution_approved=True,
             action_approval_ref="approval-ticket-123",
@@ -167,7 +202,7 @@ def test_action_reaches_transport_only_when_both_valid_probe_approval_gates_are_
             operation="update_asset_config",
             valid_arguments={
                 "asset_id": "asset-action-approved",
-                "body": {"reason": "approved controlled live integration campaign"},
+                "body": _action_body("Approved controlled live integration campaign justification."),
             },
             action_execution_approved=True,
             action_approval_ref="approval-ticket-456",
@@ -196,11 +231,11 @@ def test_action_error_probe_is_rejected_without_its_own_explicit_approval() -> N
             operation="update_asset_config",
             valid_arguments={
                 "asset_id": "asset-action-approved",
-                "body": {"reason": "approved valid mutation"},
+                "body": _action_body("Approved valid mutation with explicit justification."),
             },
             error_arguments={
                 "asset_id": "asset-action-error-target",
-                "body": {"reason": "separate error mutation"},
+                "body": _action_body("Separate error mutation with explicit justification."),
             },
             action_execution_approved=True,
             action_approval_ref="approval-ticket-789",
@@ -213,11 +248,11 @@ def test_action_error_probe_requires_valid_action_approval_too() -> None:
             operation="update_asset_config",
             valid_arguments={
                 "asset_id": "asset-action-approved",
-                "body": {"reason": "valid mutation"},
+                "body": _action_body("Valid mutation with explicit justification for campaign."),
             },
             error_arguments={
                 "asset_id": "asset-action-error-target",
-                "body": {"reason": "error mutation"},
+                "body": _action_body("Error mutation with explicit justification for campaign."),
             },
             action_error_probe_approved=True,
         )
@@ -229,11 +264,11 @@ def test_action_error_probe_reaches_network_only_with_all_three_gates() -> None:
             operation="update_asset_config",
             valid_arguments={
                 "asset_id": "asset-action-approved",
-                "body": {"reason": "approved controlled live integration campaign"},
+                "body": _action_body("Approved controlled live integration campaign justification."),
             },
             error_arguments={
                 "asset_id": "asset-action-error-target",
-                "body": {"reason": "approved controlled error probe"},
+                "body": _action_body("Approved controlled error probe with explicit justification."),
             },
             action_execution_approved=True,
             action_error_probe_approved=True,
