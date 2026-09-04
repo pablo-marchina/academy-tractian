@@ -62,6 +62,13 @@ def test_read_fixture_cannot_smuggle_action_approval_metadata() -> None:
             action_approval_ref="approval-read-1",
         )
 
+    with pytest.raises(ValidationError, match="read_fixture_cannot_carry_action_approval"):
+        TransportProbeFixture(
+            operation="get_asset",
+            valid_arguments={"asset_id": "asset-1"},
+            action_error_probe_approved=True,
+        )
+
 
 def test_read_campaign_records_real_success_and_http_error_without_raw_payloads() -> None:
     manifest = _manifest(
@@ -85,6 +92,7 @@ def test_read_campaign_records_real_success_and_http_error_without_raw_payloads(
     assert run.observed_http_error_probes == 1
     assert run.results[0].valid_probe == "success"
     assert run.results[0].error_probe == "http_error_observed"
+    assert run.results[0].action_error_probe_enabled is False
     assert ledger.unique_success_operations("hosted_live") == {"get_asset"}
     assert ledger.unique_outcome_operations("hosted_live", "http_error_observed") == {"get_asset"}
     safe_output = run.model_dump_json()
@@ -117,6 +125,7 @@ def test_action_without_manifest_approval_is_safety_blocked_with_zero_network_ca
     assert run.safety_blocked_actions == 1
     assert run.results[0].valid_probe == "blocked_by_safety"
     assert run.results[0].action_live_execution_enabled is False
+    assert run.results[0].action_error_probe_enabled is False
     assert ledger.unique_outcome_operations("hosted_live", "blocked_by_safety") == {
         "update_asset_config"
     }
@@ -146,12 +155,13 @@ def test_action_manifest_approval_still_requires_invocation_level_allow_actions(
     assert transport.requests == []
     assert run.safety_blocked_actions == 1
     assert run.results[0].action_live_execution_enabled is False
+    assert run.results[0].action_error_probe_enabled is False
     assert ledger.unique_outcome_operations("hosted_live", "blocked_by_safety") == {
         "update_asset_config"
     }
 
 
-def test_action_reaches_transport_only_when_both_approval_gates_are_explicit() -> None:
+def test_action_reaches_transport_only_when_both_valid_probe_approval_gates_are_explicit() -> None:
     manifest = _manifest(
         TransportProbeFixture(
             operation="update_asset_config",
@@ -176,7 +186,80 @@ def test_action_reaches_transport_only_when_both_approval_gates_are_explicit() -
     assert run.safety_blocked_actions == 0
     assert run.successful_valid_probes == 1
     assert run.results[0].action_live_execution_enabled is True
+    assert run.results[0].action_error_probe_enabled is False
     assert ledger.unique_success_operations("hosted_live") == {"update_asset_config"}
+
+
+def test_action_error_probe_is_rejected_without_its_own_explicit_approval() -> None:
+    with pytest.raises(ValidationError, match="action_error_probe_requires_explicit_approval"):
+        TransportProbeFixture(
+            operation="update_asset_config",
+            valid_arguments={
+                "asset_id": "asset-action-approved",
+                "body": {"reason": "approved valid mutation"},
+            },
+            error_arguments={
+                "asset_id": "asset-action-error-target",
+                "body": {"reason": "separate error mutation"},
+            },
+            action_execution_approved=True,
+            action_approval_ref="approval-ticket-789",
+        )
+
+
+def test_action_error_probe_requires_valid_action_approval_too() -> None:
+    with pytest.raises(ValidationError, match="action_error_probe_requires_execution_approval"):
+        TransportProbeFixture(
+            operation="update_asset_config",
+            valid_arguments={
+                "asset_id": "asset-action-approved",
+                "body": {"reason": "valid mutation"},
+            },
+            error_arguments={
+                "asset_id": "asset-action-error-target",
+                "body": {"reason": "error mutation"},
+            },
+            action_error_probe_approved=True,
+        )
+
+
+def test_action_error_probe_reaches_network_only_with_all_three_gates() -> None:
+    manifest = _manifest(
+        TransportProbeFixture(
+            operation="update_asset_config",
+            valid_arguments={
+                "asset_id": "asset-action-approved",
+                "body": {"reason": "approved controlled live integration campaign"},
+            },
+            error_arguments={
+                "asset_id": "asset-action-error-target",
+                "body": {"reason": "approved controlled error probe"},
+            },
+            action_execution_approved=True,
+            action_error_probe_approved=True,
+            action_approval_ref="approval-ticket-999",
+        )
+    )
+    transport = _FakeTransport(
+        TransportResponse(202, {}, {"accepted": True}),
+        TransportResponse(404, {}, {"error": "expected"}),
+    )
+
+    run, ledger = run_tractian_transport_campaign(
+        manifest=manifest,
+        transport=transport,
+        allow_actions=True,
+    )
+
+    assert len(transport.requests) == 2
+    assert run.results[0].action_live_execution_enabled is True
+    assert run.results[0].action_error_probe_enabled is True
+    assert run.results[0].valid_probe == "success"
+    assert run.results[0].error_probe == "http_error_observed"
+    assert ledger.unique_success_operations("hosted_live") == {"update_asset_config"}
+    assert ledger.unique_outcome_operations("hosted_live", "http_error_observed") == {
+        "update_asset_config"
+    }
 
 
 def test_transport_failure_is_recorded_without_exposing_exception_text() -> None:
