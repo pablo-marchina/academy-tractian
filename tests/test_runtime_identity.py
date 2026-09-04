@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import base64
+from hashlib import sha256
+import hmac
+import json
+
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 import pytest
@@ -48,6 +53,17 @@ def _app(provider: SignedBearerRuntimeContextProvider) -> FastAPI:
 
 def _authorization(claims: SignedRuntimeIdentityClaims) -> dict[str, str]:
     return {"Authorization": f"Bearer {issue_signed_runtime_token(secret=SECRET, claims=claims)}"}
+
+
+def _b64url(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
+
+
+def _sign_raw_payload(payload: bytes) -> str:
+    encoded = _b64url(payload)
+    signing_input = f"academy-runtime-v1.{encoded}".encode("ascii")
+    signature = hmac.new(SECRET.encode("utf-8"), signing_input, sha256).digest()
+    return f"academy-runtime-v1.{encoded}.{_b64url(signature)}"
 
 
 def test_signed_identity_round_trip_produces_explicit_tenant_context_without_seed():
@@ -121,6 +137,25 @@ def test_identity_rejects_missing_malformed_tampered_wrong_scope_and_expired_tok
             headers=_authorization(_claims(issued_at=NOW, expires_at=NOW + 7200)),
         )
         assert excessive_ttl.status_code == 401
+
+
+def test_valid_signature_over_noncanonical_json_is_rejected():
+    provider = SignedBearerRuntimeContextProvider(
+        secret=SECRET,
+        issuer=ISSUER,
+        audience=AUDIENCE,
+        now=lambda: NOW,
+    )
+    payload = json.dumps(
+        _claims().model_dump(mode="json"),
+        sort_keys=False,
+        indent=2,
+    ).encode("utf-8")
+    token = _sign_raw_payload(payload)
+    with TestClient(_app(provider)) as client:
+        response = client.get("/whoami", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 401
+    assert response.json()["detail"] == "invalid_runtime_identity"
 
 
 def test_global_permissions_are_server_opt_in_not_role_derived():
