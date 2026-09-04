@@ -15,6 +15,9 @@ on:
       - "docs/**"
       - "README.md"
       - "pyproject.toml"
+      - "requirements.lock"
+      - "Dockerfile"
+      - ".dockerignore"
       - ".github/workflows/clean-clone-full-product-reproduction.yml"
   workflow_dispatch:
 
@@ -27,7 +30,7 @@ jobs:
     timeout-minutes: 30
     services:
       postgres:
-        image: postgres:18
+        image: postgres:18@sha256:4ef4dbc939d61acea57712655ddb4b4ab27419c913f94cca0cd57cb3ea3c2280
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -41,6 +44,7 @@ jobs:
           --health-retries 20
     env:
       POSTGRES_OPERATIONAL_TEST_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+      PIP_CONSTRAINT: requirements.lock
       CI: "true"
     steps:
       - name: Check out clean repository
@@ -57,8 +61,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.11.16"
           cache: pip
+          cache-dependency-path: requirements.lock
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -67,10 +72,15 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install production and E2 dependencies
+      - name: Install frozen production and E2 dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install "pip==26.2.1"
           python -m pip install -e ".[dev]" -e "research/e2[dev]"
+          python -m pip check
+          python scripts/validate_python_dependency_lock.py
+
+      - name: Build production container from frozen Python dependency set
+        run: docker build --tag academy-tractian-hosted:${{ github.sha }} .
 
       - name: Run full Python product suite with PostgreSQL enabled
         run: python -m pytest -q tests
@@ -127,5 +137,7 @@ jobs:
             'FROZEN_DELIVERY_WORKFLOW_BLOB=PRESERVED' \
             'POSTGRES_PRODUCT_TESTS=EXECUTED' \
             'FROZEN_CAMPAIGNS=REPRODUCED' \
+            'PYTHON_DEPENDENCY_LOCK=PASS' \
+            'PRODUCTION_CONTAINER_BUILD=PASS' \
             'FRONTEND_LOCKED_BUILD=PASS' \
             'TRACKED_REPOSITORY_MUTATIONS=0'
