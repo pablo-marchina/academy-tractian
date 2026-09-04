@@ -54,15 +54,21 @@ class SemanticSourceSelection(_FrozenModel):
 class SemanticSourceBinding(_FrozenModel):
     scenario_id: str = Field(min_length=1)
     run_id: str = Field(min_length=1)
+    config_hash: str = Field(min_length=1, max_length=256)
     output_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     context_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class SemanticAnnotationSourceManifest(_FrozenModel):
-    """Evaluator-private integrity manifest for generated VALIDATION sources."""
+    """Evaluator-private integrity manifest for generated VALIDATION sources.
 
-    schema_version: Literal["semantic-annotation-source-manifest-v1"] = (
-        "semantic-annotation-source-manifest-v1"
+    `config_hash` is retained per binding so later candidate-level OCA evidence cannot relabel a
+    mixed set of runs as one provider/model configuration. Human reviewer packets remain blind and
+    never receive this evaluator-private field.
+    """
+
+    schema_version: Literal["semantic-annotation-source-manifest-v2"] = (
+        "semantic-annotation-source-manifest-v2"
     )
     source_split: Literal["VALIDATION"] = "VALIDATION"
     frozen_split_schema_version: str = Field(min_length=1)
@@ -160,7 +166,7 @@ def _manifest_hash(
 ) -> str:
     return _canonical_sha256(
         {
-            "schema_version": "semantic-annotation-source-manifest-v1",
+            "schema_version": "semantic-annotation-source-manifest-v2",
             "source_split": "VALIDATION",
             "frozen_split_schema_version": split_schema_version,
             "frozen_split_sha256": split_sha256,
@@ -181,6 +187,8 @@ def build_validation_semantic_annotation_sources(
     Raw RunTrace/provider payloads are intentionally not accepted. The exact safe run IDs must be
     frozen in ``selection`` and every persisted scenario must belong to VALIDATION in the frozen
     benchmark split. DEV and LOCKED_TEST therefore fail closed before reviewer packet creation.
+    Candidate `config_hash` is retained only in the evaluator-private manifest; reviewer material
+    remains provider/model blind.
     """
 
     if not store.ready():
@@ -197,6 +205,9 @@ def build_validation_semantic_annotation_sources(
         if row is None:
             raise KeyError(f"safe observability run not found: {run_id}")
         scenario_id = str(row.get("scenario_id") or "")
+        config_hash = str(row.get("config_hash") or "").strip()
+        if not config_hash:
+            raise ValueError(f"semantic source run has no config_hash: {run_id}")
         if scenario_id not in validation_scenarios:
             raise ValueError(
                 f"semantic held-out source requires VALIDATION scenario; {scenario_id or '<missing>'} is not eligible"
@@ -228,6 +239,7 @@ def build_validation_semantic_annotation_sources(
             SemanticSourceBinding(
                 scenario_id=scenario_id,
                 run_id=run_id,
+                config_hash=config_hash,
                 output_sha256=source.output_sha256,
                 context_sha256=source.context_sha256,
             )
