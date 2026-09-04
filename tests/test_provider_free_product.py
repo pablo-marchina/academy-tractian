@@ -7,6 +7,11 @@ from academy_tractian.provider_free_product import (
     ProviderFreeScenarioDecisionSource,
     ProviderFreeTransport,
 )
+from academy_tractian.provider_free_semantic_review import (
+    provider_free_semantic_review_enabled,
+    provider_free_semantic_review_permissions,
+)
+from academy_tractian.semantic_review_collection import SEMANTIC_REVIEW_PERMISSION
 
 
 def _context(user_request: str) -> ControllerContext:
@@ -88,3 +93,17 @@ def test_provider_free_transport_has_bounded_routes_and_failure_case() -> None:
         BoundRequest(method="GET", path="/unconfigured", query={}, headers=headers)
     )
     assert unknown.status_code == 404
+
+
+def test_semantic_review_acceptance_permission_is_explicitly_fixture_gated(monkeypatch) -> None:
+    monkeypatch.delenv("ACADEMY_E2E_SEMANTIC_REVIEW", raising=False)
+    assert provider_free_semantic_review_enabled() is False
+    assert provider_free_semantic_review_permissions() == frozenset()
+
+    monkeypatch.setenv("ACADEMY_E2E_SEMANTIC_REVIEW", "1")
+    assert provider_free_semantic_review_enabled() is True
+    assert provider_free_semantic_review_permissions() == frozenset({SEMANTIC_REVIEW_PERMISSION})
+
+    monkeypatch.setenv("ACADEMY_E2E_SEMANTIC_REVIEW", "0")
+    assert provider_free_semantic_review_enabled() is False
+    assert provider_free_semantic_review_permissions() == frozenset()
