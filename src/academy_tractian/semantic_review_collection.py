@@ -12,7 +12,7 @@ from .product_api import (
     require_runtime_permission,
     trusted_runtime_context,
 )
-from .semantic_evaluation import SemanticScore
+from .semantic_evaluation import SemanticDimension, SemanticScore
 from .semantic_human_calibration import HumanLabelReason, SemanticReviewerTask
 
 
@@ -47,12 +47,31 @@ class SemanticReviewAssignmentRecord(_FrozenModel):
         return self
 
 
+class SemanticReviewerTaskSafe(_FrozenModel):
+    """Minimum task projection needed for blind human scoring.
+
+    Scenario identity and evaluator binding hashes remain private. They are useful for evaluator
+    integrity but provide no benefit to the reviewer and can create cross-task correlation cues.
+    """
+
+    task_id: str = Field(pattern=r"^sem_[0-9a-f]{24}$")
+    response_mode: str = Field(min_length=1)
+    dimension: SemanticDimension
+    terminal_decision: str = Field(min_length=1)
+    terminal_message: str = Field(min_length=1)
+    safe_evidence_context: tuple[str, ...]
+    criterion_description: str = Field(min_length=1)
+    score_0_anchor: str = Field(min_length=1)
+    score_1_anchor: str = Field(min_length=1)
+    score_2_anchor: str = Field(min_length=1)
+
+
 class SemanticReviewAssignmentSafe(_FrozenModel):
-    """Blind reviewer payload: no phase/slot/split/group/labels/identity/private manifest."""
+    """Blind reviewer payload with evaluator-only binding metadata removed."""
 
     assignment_id: str = Field(pattern=r"^semassign_[0-9a-f]{24}$")
     packet_id: str = Field(pattern=r"^sempkt_[0-9a-f]{24}$")
-    task: SemanticReviewerTask
+    task: SemanticReviewerTaskSafe
 
 
 class SemanticReviewSubmission(_FrozenModel):
@@ -137,11 +156,26 @@ def semantic_reviewer_ref_sha256(
     return sha256(material.encode("utf-8")).hexdigest()
 
 
+def _safe_task(task: SemanticReviewerTask) -> SemanticReviewerTaskSafe:
+    return SemanticReviewerTaskSafe(
+        task_id=task.task_id,
+        response_mode=task.response_mode,
+        dimension=task.dimension,
+        terminal_decision=task.terminal_decision,
+        terminal_message=task.terminal_message,
+        safe_evidence_context=task.safe_evidence_context,
+        criterion_description=task.criterion_description,
+        score_0_anchor=task.score_0_anchor,
+        score_1_anchor=task.score_1_anchor,
+        score_2_anchor=task.score_2_anchor,
+    )
+
+
 def _safe(record: SemanticReviewAssignmentRecord) -> SemanticReviewAssignmentSafe:
     return SemanticReviewAssignmentSafe(
         assignment_id=record.assignment_id,
         packet_id=record.packet_id,
-        task=record.task,
+        task=_safe_task(record.task),
     )
 
 
