@@ -19,7 +19,8 @@ from .provider_clients import (
     OpenAIResponsesDecisionClient,
     UrllibProviderJsonTransport,
 )
-from .runtime import RuntimeConfigurationIdentity, canonical_tool_registry
+from .runtime import canonical_tool_registry
+from .runtime_configuration_identity import RuntimeConfigurationIdentity
 
 
 SUPPORTED_HOSTED_PROVIDERS = frozenset({"openai", "google"})
