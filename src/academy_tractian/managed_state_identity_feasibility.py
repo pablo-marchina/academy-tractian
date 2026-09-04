@@ -61,7 +61,7 @@ class ManagedPostgresEvidence(_StrictModel):
     pooled_connections: TriState
     row_level_security: TriState
     transaction_support: TriState
-    automatic_inactivity_suspension: TriState
+    inactivity_requires_manual_reactivation: TriState
     restore_supported: TriState
     restore_window_hours: float | None = Field(default=None, ge=0.0)
     automatic_backups: TriState
@@ -88,7 +88,7 @@ class ManagedPostgresPolicy(_StrictModel):
     require_pooled_connections: bool = True
     require_row_level_security: bool = True
     require_transactions: bool = True
-    forbid_automatic_inactivity_suspension: bool = True
+    forbid_manual_inactivity_reactivation: bool = True
     require_restore: bool = True
     min_restore_window_hours: float = Field(default=0.0, ge=0.0)
     min_free_storage_mb: int = Field(default=0, ge=0)
@@ -148,11 +148,11 @@ def decide_managed_postgres_feasibility(
         if required:
             _require_yes(value, unknown=unknown, negative=negative, reasons=reasons)
 
-    if policy.forbid_automatic_inactivity_suspension:
-        if evidence.automatic_inactivity_suspension == "unknown":
-            reasons.append("INACTIVITY_SUSPENSION_UNKNOWN")
-        elif evidence.automatic_inactivity_suspension == "yes":
-            reasons.append("AUTOMATIC_INACTIVITY_SUSPENSION_FORBIDDEN")
+    if policy.forbid_manual_inactivity_reactivation:
+        if evidence.inactivity_requires_manual_reactivation == "unknown":
+            reasons.append("INACTIVITY_REACTIVATION_UNKNOWN")
+        elif evidence.inactivity_requires_manual_reactivation == "yes":
+            reasons.append("MANUAL_INACTIVITY_REACTIVATION_FORBIDDEN")
 
     if policy.require_restore:
         _require_yes(
@@ -205,7 +205,7 @@ class HostedIdentityEvidence(_StrictModel):
     first_class_organizations: TriState
     free_active_users: int | None = Field(default=None, ge=0)
     free_organizations: int | None = Field(default=None, ge=0)
-    automatic_inactivity_suspension: TriState
+    inactivity_requires_manual_reactivation: TriState
     migration_class: MigrationClass
     artifact_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
@@ -233,7 +233,7 @@ class HostedIdentityPolicy(_StrictModel):
     require_first_class_organizations: bool = True
     min_free_active_users: int = Field(default=0, ge=0)
     min_free_organizations: int = Field(default=0, ge=0)
-    forbid_automatic_inactivity_suspension: bool = True
+    forbid_manual_inactivity_reactivation: bool = True
     allowed_migration_classes: tuple[MigrationClass, ...] = ("none", "minor")
 
 
@@ -309,11 +309,11 @@ def decide_hosted_identity_feasibility(
             reasons.append("FREE_ORGANIZATION_CAPACITY_UNKNOWN")
     elif evidence.free_organizations < policy.min_free_organizations:
         reasons.append("FREE_ORGANIZATION_CAPACITY_INSUFFICIENT")
-    if policy.forbid_automatic_inactivity_suspension:
-        if evidence.automatic_inactivity_suspension == "unknown":
-            reasons.append("INACTIVITY_SUSPENSION_UNKNOWN")
-        elif evidence.automatic_inactivity_suspension == "yes":
-            reasons.append("AUTOMATIC_INACTIVITY_SUSPENSION_FORBIDDEN")
+    if policy.forbid_manual_inactivity_reactivation:
+        if evidence.inactivity_requires_manual_reactivation == "unknown":
+            reasons.append("INACTIVITY_REACTIVATION_UNKNOWN")
+        elif evidence.inactivity_requires_manual_reactivation == "yes":
+            reasons.append("MANUAL_INACTIVITY_REACTIVATION_FORBIDDEN")
     if evidence.migration_class not in policy.allowed_migration_classes:
         reasons.append("MIGRATION_CLASS_NOT_ALLOWED")
 
