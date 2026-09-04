@@ -4,7 +4,7 @@ from hashlib import sha256
 import json
 from typing import Literal, Mapping
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from research.e2.controller import AgentController, ControllerLimits, DecisionSource
 from research.e2.models import ExecutionBinding, RunTrace, ToolKind, ToolSpec
@@ -39,55 +39,6 @@ class ProductionRuntimeConfig(_FrozenModel):
     max_tool_calls: int = Field(default=6, ge=0, le=64)
 
 
-class RuntimeConfigurationIdentity(_FrozenModel):
-    """Public, provider-neutral identity for one empirically comparable runtime candidate.
-
-    This object contains no credential, endpoint token, prompt body or provider response. When it
-    is present, its exact public identity becomes part of ``config_hash`` so traces produced by
-    different provider/model/route configurations cannot be merged during held-out evaluation.
-    The core runtime intentionally knows only generic strings and imports no provider SDK/module.
-    """
-
-    schema_version: Literal["runtime-configuration-identity-v1"] = (
-        "runtime-configuration-identity-v1"
-    )
-    candidate_id: str = Field(min_length=1, max_length=128)
-    provider_id: str = Field(min_length=1, max_length=64)
-    model_id: str = Field(min_length=1, max_length=128)
-    route_id: str = Field(min_length=1, max_length=192)
-    adapter_version: str = Field(min_length=1, max_length=128)
-    client_version: str = Field(min_length=1, max_length=128)
-
-    @field_validator(
-        "candidate_id",
-        "provider_id",
-        "model_id",
-        "route_id",
-        "adapter_version",
-        "client_version",
-    )
-    @classmethod
-    def reject_secret_like_or_control_characters(cls, value: str) -> str:
-        normalized = value.strip()
-        if normalized != value or not normalized:
-            raise ValueError("runtime configuration identity fields must be trimmed and non-empty")
-        lowered = normalized.lower()
-        forbidden = (
-            "bearer ",
-            "api_key",
-            "api-key",
-            "authorization:",
-            "password=",
-            "token=",
-            "secret=",
-        )
-        if any(marker in lowered for marker in forbidden):
-            raise ValueError("runtime configuration identity contains secret-like material")
-        if any(ord(character) < 32 for character in normalized):
-            raise ValueError("runtime configuration identity contains control characters")
-        return normalized
-
-
 class ProductionRequest(_FrozenModel):
     """Runtime-owned request context.
 
@@ -111,19 +62,10 @@ def canonical_tool_registry() -> dict[str, ToolSpec]:
     return {tool.name: tool for tool in TOOLS}
 
 
-def production_runtime_config_hash(
+def _config_hash(
     config: ProductionRuntimeConfig,
     registry: Mapping[str, ToolSpec],
-    configuration_identity: RuntimeConfigurationIdentity | None = None,
 ) -> str:
-    """Hash the executable runtime configuration with optional candidate identity.
-
-    When ``configuration_identity`` is absent, the payload is deliberately identical to the
-    historical v1 implementation. This preserves accepted provider-free/frozen hashes. Hosted or
-    provider-comparison paths must supply an identity so provider/model/route drift changes the
-    resulting hash and is visible to evaluation provenance.
-    """
-
     payload = {
         "runtime": config.model_dump(mode="json"),
         "action_safety_policy_version": ACTION_SAFETY_POLICY_VERSION,
@@ -137,19 +79,8 @@ def production_runtime_config_hash(
             for name in sorted(registry)
         ],
     }
-    if configuration_identity is not None:
-        payload["configuration_identity"] = configuration_identity.model_dump(mode="json")
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return sha256(canonical.encode("utf-8")).hexdigest()
-
-
-# Private compatibility alias for modules/tests that historically referenced the internal helper.
-def _config_hash(
-    config: ProductionRuntimeConfig,
-    registry: Mapping[str, ToolSpec],
-    configuration_identity: RuntimeConfigurationIdentity | None = None,
-) -> str:
-    return production_runtime_config_hash(config, registry, configuration_identity)
 
 
 class ProductionRuntime:
@@ -168,13 +99,11 @@ class ProductionRuntime:
         transport: RequestTransport,
         registry: Mapping[str, ToolSpec] | None = None,
         config: ProductionRuntimeConfig | None = None,
-        configuration_identity: RuntimeConfigurationIdentity | None = None,
     ) -> None:
         self.decision_source = decision_source
         self.transport = transport
         self.registry = dict(registry or canonical_tool_registry())
         self.config = config or ProductionRuntimeConfig()
-        self.configuration_identity = configuration_identity
 
         action_tools = [
             tool for tool in self.registry.values() if tool.kind is ToolKind.ACTION
@@ -185,31 +114,7 @@ class ProductionRuntime:
                 "a deterministic permission"
             )
 
-        self.config_hash = production_runtime_config_hash(
-            self.config,
-            self.registry,
-            self.configuration_identity,
-        )
-
-    def bind_configuration_identity(
-        self,
-        configuration_identity: RuntimeConfigurationIdentity,
-    ) -> None:
-        """Bind one candidate identity before a factory exposes this runtime for execution.
-
-        A runtime constructed without an identity exists for provider-free historical reproduction.
-        Hosted factories may bind exactly once immediately after construction. Rebinding is rejected
-        so one runtime object cannot silently change experimental identity between requests.
-        """
-
-        if self.configuration_identity is not None:
-            raise RuntimeError("runtime_configuration_identity_already_bound")
-        self.configuration_identity = configuration_identity
-        self.config_hash = production_runtime_config_hash(
-            self.config,
-            self.registry,
-            self.configuration_identity,
-        )
+        self.config_hash = _config_hash(self.config, self.registry)
 
     def run(self, request: ProductionRequest) -> RunTrace:
         """Execute one production request through the validated provider-free controller."""
