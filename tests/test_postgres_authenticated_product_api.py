@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from time import time
 from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
 
@@ -105,7 +106,7 @@ def postgres_fixture():
 
 
 def _headers(*, user_id: str, organization_id: str) -> dict[str, str]:
-    now = 2_000_000_000
+    now = int(time())
     token = issue_signed_runtime_token(
         secret=SECRET,
         claims=SignedRuntimeIdentityClaims(
@@ -126,9 +127,7 @@ def _headers(*, user_id: str, organization_id: str) -> dict[str, str]:
 def test_signed_bearer_identity_and_postgres_rls_close_tenant_boundary(
     tmp_path: Path,
     postgres_fixture,
-    monkeypatch,
 ) -> None:
-    monkeypatch.setattr("academy_tractian.runtime_identity.time", lambda: 2_000_000_000)
     app = create_authenticated_postgres_action_capable_product_app(
         db_path=tmp_path / "authenticated-postgres.duckdb",
         internal_dsn=postgres_fixture.admin_dsn,
