@@ -33,9 +33,8 @@ def _canonical_datetime(value: datetime) -> str:
 class ProviderFeasibilityEvidence(_StrictModel):
     """Timestamped external-feasibility facts for one explicit provider+model candidate.
 
-    Stable code-owned identity/maturity facts are not accepted from external evidence: they are
-    recomputed from ``hosted_candidate_registry``. Volatile facts such as free-tier capacity and
-    required cash cost are hash-bound here so a dated research snapshot can be audited later.
+    Stable identity/maturity facts are recomputed from the code-owned registry. Volatile facts
+    such as free-tier eligibility, metered price and account capacity are hash-bound here.
     """
 
     schema_version: Literal["provider-feasibility-evidence-v1"] = "provider-feasibility-evidence-v1"
@@ -44,7 +43,9 @@ class ProviderFeasibilityEvidence(_StrictModel):
     source_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     hosted_service: bool
     required_local_components: int = Field(ge=0)
-    required_cash_cost_usd: float = Field(ge=0.0)
+    zero_cost_execution_available: bool
+    metered_input_usd_per_million: float | None = Field(default=None, ge=0.0)
+    metered_output_usd_per_million: float | None = Field(default=None, ge=0.0)
     structured_output_supported: bool
     free_requests_per_day: int | None = Field(default=None, ge=0)
     free_tokens_per_day: int | None = Field(default=None, ge=0)
@@ -67,7 +68,7 @@ class ProviderFeasibilityPolicy(_StrictModel):
     allowed_api_maturities: tuple[Maturity, ...] = ("ga",)
     require_hosted_service: bool = True
     max_required_local_components: int = Field(default=0, ge=0)
-    max_required_cash_cost_usd: float = Field(default=0.0, ge=0.0)
+    require_zero_cost_execution: bool = True
     require_structured_output: bool = True
     min_free_requests_per_day: int = Field(default=0, ge=0)
     min_free_tokens_per_day: int = Field(default=0, ge=0)
@@ -128,8 +129,8 @@ def decide_provider_feasibility(
         reasons.append("HOSTED_SERVICE_REQUIRED")
     if evidence.required_local_components > policy.max_required_local_components:
         reasons.append("LOCAL_COMPONENT_LIMIT_EXCEEDED")
-    if evidence.required_cash_cost_usd > policy.max_required_cash_cost_usd:
-        reasons.append("REQUIRED_CASH_COST_EXCEEDED")
+    if policy.require_zero_cost_execution and not evidence.zero_cost_execution_available:
+        reasons.append("ZERO_COST_EXECUTION_REQUIRED")
     if policy.require_structured_output and not evidence.structured_output_supported:
         reasons.append("STRUCTURED_OUTPUT_REQUIRED")
 
@@ -178,7 +179,9 @@ def build_provider_feasibility_evidence(
     source_manifest_sha256: str,
     hosted_service: bool,
     required_local_components: int,
-    required_cash_cost_usd: float,
+    zero_cost_execution_available: bool,
+    metered_input_usd_per_million: float | None,
+    metered_output_usd_per_million: float | None,
     structured_output_supported: bool,
     free_requests_per_day: int | None,
     free_tokens_per_day: int | None,
@@ -190,7 +193,9 @@ def build_provider_feasibility_evidence(
         "source_manifest_sha256": source_manifest_sha256,
         "hosted_service": hosted_service,
         "required_local_components": required_local_components,
-        "required_cash_cost_usd": required_cash_cost_usd,
+        "zero_cost_execution_available": zero_cost_execution_available,
+        "metered_input_usd_per_million": metered_input_usd_per_million,
+        "metered_output_usd_per_million": metered_output_usd_per_million,
         "structured_output_supported": structured_output_supported,
         "free_requests_per_day": free_requests_per_day,
         "free_tokens_per_day": free_tokens_per_day,
