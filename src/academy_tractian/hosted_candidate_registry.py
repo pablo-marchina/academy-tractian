@@ -3,11 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from .google_v1_provider_client import (
+from .google_interactions_provider_client import (
     GOOGLE_37_MODEL_ID,
     GOOGLE_38_MODEL_ID,
-    GOOGLE_V1_PROVIDER_ID,
-    GOOGLE_V1_ROUTE_ID,
+    GOOGLE_HOSTED_PROVIDER_ID,
+    GOOGLE_INTERACTIONS_ROUTE_ID,
 )
 from .groq_provider_client import GROQ_MODEL_ID, GROQ_PROVIDER_ID, GROQ_ROUTE_ID
 from .provider_clients import OPENAI_MODEL_ID, OPENAI_PROVIDER_ID, OPENAI_ROUTE_ID
@@ -40,17 +40,17 @@ HOSTED_CANDIDATE_SPECS = (
         api_maturity="ga",
     ),
     HostedCandidateSpec(
-        provider_id=GOOGLE_V1_PROVIDER_ID,
+        provider_id=GOOGLE_HOSTED_PROVIDER_ID,
         model_id=GOOGLE_37_MODEL_ID,
-        route_id=GOOGLE_V1_ROUTE_ID,
+        route_id=GOOGLE_INTERACTIONS_ROUTE_ID,
         api_key_environment="GOOGLE_API_KEY",
         model_maturity="ga",
         api_maturity="ga",
     ),
     HostedCandidateSpec(
-        provider_id=GOOGLE_V1_PROVIDER_ID,
+        provider_id=GOOGLE_HOSTED_PROVIDER_ID,
         model_id=GOOGLE_38_MODEL_ID,
-        route_id=GOOGLE_V1_ROUTE_ID,
+        route_id=GOOGLE_INTERACTIONS_ROUTE_ID,
         api_key_environment="GOOGLE_API_KEY",
         model_maturity="ga",
         api_maturity="ga",
