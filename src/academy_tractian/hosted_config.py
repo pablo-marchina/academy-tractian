@@ -7,7 +7,7 @@ from typing import Mapping
 from urllib.parse import urlsplit
 
 
-_SUPPORTED_PROVIDERS = frozenset({"openai", "google"})
+_SUPPORTED_PROVIDERS = frozenset({"openai", "google", "groq"})
 _SUPPORTED_IDENTITY_BACKENDS = frozenset({"signed_bearer", "oidc"})
 _SUPPORTED_OIDC_ALGORITHMS = frozenset(
     {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "EdDSA"}
@@ -170,7 +170,6 @@ class HostedProductConfig:
             if len(secret.encode("utf-8")) < 32:
                 raise ValueError("runtime_identity_secret_too_short")
         else:
-            # OIDC never shares a symmetric browser/server signing secret with this application.
             secret = None
             oidc_jwks_url = _http_url(
                 _required(env, "ACADEMY_OIDC_JWKS_URL"),
@@ -193,6 +192,8 @@ class HostedProductConfig:
             provider_api_key = _optional(env, "OPENAI_API_KEY")
         elif provider == "google":
             provider_api_key = _optional(env, "GOOGLE_API_KEY")
+        elif provider == "groq":
+            provider_api_key = _optional(env, "GROQ_API_KEY")
 
         tractian_raw = _optional(env, "ACADEMY_TRACTIAN_BASE_URL")
         tractian_base_url = (
