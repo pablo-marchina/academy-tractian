@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from academy_tractian.tractian_campaign_evidence import (
     CampaignEvidenceLedger,
@@ -122,7 +122,7 @@ def test_transport_plus_three_semantic_proofs_can_complete_a_read_operation() ->
     assert report.complete_operations == 1
 
 
-def test_failed_semantic_proof_dominates_an_older_pass() -> None:
+def test_failed_semantic_proof_dominates_a_pass_at_the_same_timestamp() -> None:
     semantic = CampaignEvidenceLedger(
         source_label="test:semantic",
         state="VALID",
@@ -136,6 +136,45 @@ def test_failed_semantic_proof_dominates_an_older_pass() -> None:
 
     assert _dimension(report, "response_normalization_verified").state == "FAIL"
     assert report.complete_operations == 0
+
+
+def test_newer_pass_recertifies_an_older_failure_without_deleting_history() -> None:
+    older_failure = _semantic("response_normalization_verified", passed=False)
+    newer_pass = _semantic("response_normalization_verified", passed=True).model_copy(
+        update={
+            "observed_at": NOW + timedelta(minutes=1),
+            "probe_id": "semantic-response-normalization-recertified",
+        }
+    )
+    semantic = CampaignEvidenceLedger(
+        source_label="test:semantic",
+        state="VALID",
+        records=(older_failure, newer_pass),
+    )
+
+    report = build_tractian_integration_campaign_report(campaign_evidence=semantic)
+
+    assert _dimension(report, "response_normalization_verified").state == "PASS"
+    assert len(semantic.records) == 2
+
+
+def test_newer_failure_revokes_an_older_pass() -> None:
+    older_pass = _semantic("response_normalization_verified", passed=True)
+    newer_failure = _semantic("response_normalization_verified", passed=False).model_copy(
+        update={
+            "observed_at": NOW + timedelta(minutes=1),
+            "probe_id": "semantic-response-normalization-regressed",
+        }
+    )
+    semantic = CampaignEvidenceLedger(
+        source_label="test:semantic",
+        state="VALID",
+        records=(older_pass, newer_failure),
+    )
+
+    report = build_tractian_integration_campaign_report(campaign_evidence=semantic)
+
+    assert _dimension(report, "response_normalization_verified").state == "FAIL"
 
 
 def test_invalid_semantic_ledger_never_contributes_a_pass() -> None:
