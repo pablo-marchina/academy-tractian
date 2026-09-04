@@ -13,6 +13,7 @@ import type {
   SemanticReviewSubmission,
   SemanticReviewWithdrawn,
 } from "./semanticReviewTypes";
+import type { ToolCoverageResponse } from "./toolCoverageTypes";
 import type {
   AnalyticsQuerySpec,
   ArchitectureManifest,
@@ -197,6 +198,10 @@ export function fetchProductionHealth(): Promise<ProductionHealth> {
 
 export function fetchToolsMetrics(runId?: string | null): Promise<ToolsMetrics> {
   return requestJson<ToolsMetrics>(scopedPath("/api/tools/metrics", runId));
+}
+
+export function fetchToolCoverage(): Promise<ToolCoverageResponse> {
+  return requestJson<ToolCoverageResponse>("/api/tools/coverage");
 }
 
 export function fetchPoliciesMetrics(runId?: string | null): Promise<PoliciesMetrics> {
