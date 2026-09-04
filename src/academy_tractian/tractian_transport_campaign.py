@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from research.e2.models import ExecutionBinding, ToolKind
 from research.e2.tool_registry import TOOLS, get_tool
 from research.e2.transport import RequestTransport, build_b0_request
+from research.e2.validation import validate_arguments
 
 from .hosted_integration_evidence_recorder import (
     EvidenceRecordingTractianTransport,
@@ -91,14 +92,22 @@ class TractianTransportCampaignManifest(_StrictModel):
         )
         for fixture in self.fixtures:
             tool = get_tool(fixture.operation)
+            valid_issues = validate_arguments(tool, fixture.valid_arguments)
+            if valid_issues:
+                raise ValueError(f"invalid_valid_probe_arguments:{fixture.operation}")
             try:
                 build_b0_request(tool, fixture.valid_arguments, binding)
             except Exception as exc:
                 raise ValueError(f"invalid_valid_probe_arguments:{fixture.operation}") from exc
+
             if fixture.error_arguments is not None:
+                # Error probes must still be product-valid requests. They are expected to exercise a
+                # real upstream HTTP error (for example a non-existent resource), not bypass B1 with
+                # malformed client-side arguments.
+                error_issues = validate_arguments(tool, fixture.error_arguments)
+                if error_issues:
+                    raise ValueError(f"invalid_error_probe_arguments:{fixture.operation}")
                 try:
-                    # Error probes are contract-valid requests expected to exercise a real HTTP error
-                    # (for example a non-existent resource), not malformed client-side requests.
                     build_b0_request(tool, fixture.error_arguments, binding)
                 except Exception as exc:
                     raise ValueError(f"invalid_error_probe_arguments:{fixture.operation}") from exc
@@ -156,14 +165,15 @@ def run_tractian_transport_campaign(
     allow_actions: bool = False,
     recorder: HostedIntegrationEvidenceRecorder | None = None,
 ) -> tuple[TractianTransportCampaignRun, IntegrationEvidenceLedger]:
-    """Execute bounded live transport probes without converting them into semantic proof.
+    """Execute bounded B1-valid live transport probes without manufacturing semantic proof.
 
-    Consequential valid probes require two independent gates: per-fixture action approval and the
-    invocation-level ``allow_actions=True`` switch. A consequential error probe is an additional
-    mutation attempt and therefore requires a third, explicit ``action_error_probe_approved`` gate.
-    Without the valid-action gates, no action request reaches the delegate transport and the attempt
-    is recorded only as a runner safety block. Raw arguments and response bodies never enter the
-    result.
+    Every manifest request must pass both the frozen product argument validator and B0 request
+    binding before execution. Consequential valid probes require two independent gates: per-fixture
+    action approval and the invocation-level ``allow_actions=True`` switch. A consequential error
+    probe is an additional mutation attempt and therefore requires a third, explicit
+    ``action_error_probe_approved`` gate. Without the valid-action gates, no action request reaches
+    the delegate transport and the attempted campaign step is recorded only as a real safety block.
+    Raw arguments and response bodies never enter the campaign result.
     """
 
     active_recorder = recorder or HostedIntegrationEvidenceRecorder()
