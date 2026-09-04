@@ -36,13 +36,15 @@ def _read_json_object(path: Path) -> Mapping[str, Any]:
     return payload
 
 
-def _failure(reason: str) -> int:
+def _failure(reason: str, *, required_gate: str = "runner") -> int:
     print(
         json.dumps(
             {
                 "schema_version": "tractian-transport-campaign-cli-v1",
                 "status": "FAIL",
-                "status_scope": "runner_execution_only_not_18_of_18",
+                "status_scope": f"required_gate:{required_gate}",
+                "required_gate": required_gate,
+                "required_gate_satisfied": False,
                 "transport_gate_passed": False,
                 "semantic_gate_passed": False,
                 "end_to_end_gate_passed": False,
@@ -87,6 +89,15 @@ def main() -> int:
             "runs in-memory and does not add live TRACTIAN calls"
         ),
     )
+    parser.add_argument(
+        "--require-gate",
+        choices=("runner", "transport", "semantic", "end_to_end"),
+        default="runner",
+        help=(
+            "exit non-zero unless the selected gate passes: runner only checks campaign execution; "
+            "transport and semantic require their independent 18/18 gates; end_to_end requires both"
+        ),
+    )
     args = parser.parse_args()
 
     database: PostgresOperationalDatabase | None = None
@@ -97,7 +108,10 @@ def main() -> int:
                 _read_json_object(Path(args.manifest))
             )
         except ValidationError:
-            return _failure("transport_campaign_manifest_validation_failed")
+            return _failure(
+                "transport_campaign_manifest_validation_failed",
+                required_gate=args.require_gate,
+            )
 
         transport = HostedTractianTransport(
             base_url=_required_environment("ACADEMY_TRACTIAN_BASE_URL"),
@@ -123,10 +137,16 @@ def main() -> int:
                 initialize=False,
             )
             if not transport_store.ready():
-                return _failure("postgres_integration_evidence_store_not_ready")
+                return _failure(
+                    "postgres_integration_evidence_store_not_ready",
+                    required_gate=args.require_gate,
+                )
             recorder.attach_persistent_store(transport_store)
             if not recorder.ledger().valid:
-                return _failure("postgres_integration_evidence_store_invalid")
+                return _failure(
+                    "postgres_integration_evidence_store_invalid",
+                    required_gate=args.require_gate,
+                )
 
         if args.persist_semantic:
             assert database is not None
@@ -138,7 +158,10 @@ def main() -> int:
                 initialize=False,
             )
             if not semantic_store.ready():
-                return _failure("postgres_campaign_evidence_store_not_ready")
+                return _failure(
+                    "postgres_campaign_evidence_store_not_ready",
+                    required_gate=args.require_gate,
+                )
 
         run, transport_ledger, semantic_ledger, semantic_summary = (
             run_tractian_semantic_certification(
@@ -149,16 +172,25 @@ def main() -> int:
             )
         )
         if not transport_ledger.valid:
-            return _failure("transport_campaign_evidence_invalid")
+            return _failure(
+                "transport_campaign_evidence_invalid",
+                required_gate=args.require_gate,
+            )
         if not semantic_ledger.valid:
-            return _failure("semantic_campaign_evidence_invalid")
+            return _failure(
+                "semantic_campaign_evidence_invalid",
+                required_gate=args.require_gate,
+            )
 
         aggregate_semantic_ledger = semantic_ledger
         if semantic_store is not None:
             semantic_store.persist_ledger(semantic_ledger)
             aggregate_semantic_ledger = semantic_store.ledger()
             if not aggregate_semantic_ledger.valid:
-                return _failure("postgres_campaign_evidence_store_invalid")
+                return _failure(
+                    "postgres_campaign_evidence_store_invalid",
+                    required_gate=args.require_gate,
+                )
 
         campaign = build_tractian_integration_campaign_report(
             hosted_evidence=transport_ledger,
@@ -174,6 +206,13 @@ def main() -> int:
         transport_gate_passed = campaign.transport_complete_operations == campaign.normalized_operations
         semantic_gate_passed = campaign.semantic_complete_operations == campaign.normalized_operations
         end_to_end_gate_passed = campaign.complete_operations == campaign.normalized_operations
+        gate_results = {
+            "runner": runner_passed,
+            "transport": runner_passed and transport_gate_passed,
+            "semantic": runner_passed and semantic_gate_passed,
+            "end_to_end": runner_passed and end_to_end_gate_passed,
+        }
+        required_gate_satisfied = gate_results[args.require_gate]
         approved_action_error_probes = sum(
             fixture.action_error_probe_approved for fixture in manifest.fixtures
         )
@@ -182,8 +221,11 @@ def main() -> int:
         )
         payload = {
             "schema_version": "tractian-transport-campaign-cli-v1",
-            "status": "PASS" if runner_passed else "FAIL",
-            "status_scope": "runner_execution_only_not_18_of_18",
+            "status": "PASS" if required_gate_satisfied else "FAIL",
+            "status_scope": f"required_gate:{args.require_gate}",
+            "required_gate": args.require_gate,
+            "required_gate_satisfied": required_gate_satisfied,
+            "runner_gate_passed": runner_passed,
             "transport_persisted": bool(args.persist),
             "semantic_persisted": bool(args.persist_semantic),
             "actions_invocation_gate_enabled": bool(args.allow_actions),
@@ -224,14 +266,14 @@ def main() -> int:
             ],
         }
         print(json.dumps(payload, sort_keys=True))
-        return 0 if runner_passed else 2
+        return 0 if required_gate_satisfied else 2
     except ValueError as exc:
         reason = str(exc)
         if not reason.startswith("missing_required_environment:"):
             reason = "transport_campaign_rejected"
-        return _failure(reason)
+        return _failure(reason, required_gate=args.require_gate)
     except Exception:
-        return _failure("transport_campaign_failed")
+        return _failure("transport_campaign_failed", required_gate=args.require_gate)
     finally:
         if database is not None:
             database.close()
