@@ -2,92 +2,96 @@
 
 Produção e avaliação de agentes industriais sobre a API didática da TRACTIAN.
 
-A versão atualizada do TAPI define a entrega como uma solução contendo **duas capacidades integradas**:
+A entrega é uma solução única com duas capacidades integradas:
 
-- **Agente industrial:** interpreta solicitações, usa tools tipadas sobre a API TRACTIAN e decide entre contextualizar, investigar, perguntar, orientar, abstain/escalar ou propor uma ação governada;
-- **Framework de avaliação:** mede qualidade, confiabilidade, trajetória, uso de evidência, segurança, falhas, estabilidade, ações de maior impacto e qualidade do output.
-
-Toda entrega também inclui integração com a API, experimento técnico e documentação dos resultados.
+- **Agente industrial:** interpreta solicitações, consulta tools tipadas da TRACTIAN, reúne evidência e decide entre orientar, esclarecer, abstain/escalar ou propor uma ação governada;
+- **Framework de avaliação:** mede conclusão operacional, evidência, trajetória, segurança, falhas, estabilidade, ações e valor operacional sem expor material privado do avaliador.
 
 ## Estado atual
 
-- runtime provider-neutral + evaluator: **implementados e reproduzíveis**;
+- runtime provider-neutral + deterministic evaluator: **implementados**;
 - integração TRACTIAN: **18 operações tipadas**;
-- `POST /api/runs`: **request → runtime → tools/policy → RunTrace → avaliação** implementado;
-- observabilidade realtime: **implementada**, com safe projection, persistência DuckDB, FastAPI REST/SSE e reconnect/catch-up;
-- frontend React: **implementado**, com Live Run Cockpit, Run Explorer, Trace/Architecture Graph, Evidence/Lineage, Mission Control, Tools/Policy, Eval Lab, Provider Lab e Dynamic Data Explorer;
-- Production Health: **instrumentado quantitativamente** para runtime/API/resource/SSE/adapter/provider signals;
-- production actions: **PR #143**, two-phase custody/confirmation/idempotency, com gate completo verde e merge ainda pendente;
-- D01 Cloudflare: **32/32 live attempts**, **USD 0**, `NO_SELECTION`;
-- D01: **24/24 `CLIENT_FAILURE` no teto exato de 512 output tokens**;
-- D02: protocolo equivalente com **1024 completion tokens** + failure subtype sanitizado; live execution ainda pendente;
+- produto multiusuário `POST /api/runs` + REST/SSE: **implementado**;
+- observabilidade segura: **DuckDB read model + realtime telemetry**;
+- frontend React operator control room: **implementado**;
+- production actions: **custody → confirmação → idempotency → execução**, sem blind retry;
+- identidade promovida: **bearer assinado HMAC-SHA256**, tenant/user/identity server-trusted; não é OAuth/OIDC/JWT;
+- estado operacional mutável: **PostgreSQL** com RLS tenant-scoped; DuckDB permanece analytics/read model;
+- Playwright full-product E2E + frontend lockfile: **implementados e gated**;
+- human semantic-review collector + source generation: **implementados**, mas labels humanos reais/calibração ainda não podem ser fabricados;
+- operational-value collector + frozen paired analysis: **implementados**, mas não há business-value claim sem medições humanas reais;
+- adaptive stopping: **evaluator-only diagnostic**; nenhuma política adaptativa foi promovida ao runtime;
+- load/concurrency: **campanha provider-free medida**, interpretação descritiva, sem claim de capacidade de produção;
+- restart/recovery: **campanha PostgreSQL integrada verificada**, sem replay/retry automático e sem claim de RTO/RPO/availability;
+- D01/D02 provider experiments: **USD 0 / `NO_SELECTION`**;
 - entrega final: **2026-09-08**.
 
-## Comece aqui
+A fonte humana canônica do estado atual é [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md).
 
-Leia a documentação ativa nesta ordem:
-
-1. [`docs/README.md`](docs/README.md) — índice e política de documentação;
-2. [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — única fonte humana do estado atual;
-3. [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md) — plano rebaselined até a entrega;
-4. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — arquitetura, stack, técnicas e estados de decisão;
-5. [`docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md`](docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md) — TAPI → técnica/stack/output/evidência;
-6. [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) — Definition of Done;
-7. [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md) — reprodução/handoff;
-8. [`docs/RUBRIC-TO-EVIDENCE.md`](docs/RUBRIC-TO-EVIDENCE.md) — navegação acadêmica;
-9. [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) — governança P1–P4.
-
-ADRs e artefatos congelados permanecem evidência histórica imutável; um freeze histórico não implica que uma escolha ainda seja a decisão final do produto se um novo requisito material surgir.
-
-## Arquitetura atual
+## Arquitetura promovida
 
 ```text
 React Operator Control Room
         ↑ REST + genuine SSE
 FastAPI Product / Observability API
-        ↑ safe telemetry / DuckDB
-RealtimeProductionRuntime
+        ↑ trusted signed runtime identity
+PostgreSQL mutable operational state + tenant RLS
+        ↑
+RealtimeProductionRuntime.prepare()/execute()
         ↓
-DecisionSource / provider
+provider-neutral DecisionSource
         ↓
-AgentController
-        ↓
-HarnessRunner
+AgentController → HarnessRunner
         ↓
 18-operation typed ToolSpec registry
         ↓
-B1 / B2 / B3 deterministic boundaries
+B1 / B2 / B3 deterministic safety boundaries
         ↓
-TRACTIAN API
+TRACTIAN transport
         ↓
-normalized observations / evidence
+normalized evidence
         ↓
-FINAL | CLARIFY | ABSTAIN | ESCALATE
+FINAL | CLARIFY | ABSTAIN | ESCALATE | action proposal
         ↓
-RunTrace
+RunTrace → ProductionEvaluator
         ↓
-ProductionEvaluator
+safe projection → DuckDB analytics/read model
         ↓
-safe evaluation + analytics + frontend
+REST/SSE/frontend
 ```
 
-O `RunTrace` bruto nunca cruza a fronteira web. Credenciais, identity binding, evaluation seed, raw provider material, forbidden raw tool/observation bodies e evaluator-private/gold permanecem fora do browser.
+Ação consequencial:
 
-## Stack implementada
+```text
+proposal
+→ deterministic validation
+→ private persistent custody
+→ PENDING_CONFIRMATION
+→ authenticated operator confirms opaque action_id
+→ authorization + kill switch revalidated
+→ atomic idempotency claim
+→ exact custodied action executes
+→ action RunTrace + evaluator
+```
+
+Falha ambígua após claim vira `UNCERTAIN`; restart nunca concede permissão para retry/replay.
+
+## Fronteira de privacidade
+
+O browser nunca recebe raw `RunTrace`, credenciais, identity binding, evaluator seed/private truth, raw provider material, raw action arguments/idempotency material ou chain-of-thought. Observabilidade e artifacts de CI usam projeções sanitizadas/agregadas.
+
+## Stack
 
 ### Backend/runtime
 
 - Python 3.11+
 - Pydantic 2.x
-- FastAPI
-- Uvicorn
-- DuckDB
-- `AgentController` próprio
-- `HarnessRunner`
+- FastAPI / Uvicorn
+- PostgreSQL + psycopg para estado operacional mutável
+- DuckDB para telemetry/analytics/read model
+- custom `AgentController` + `HarnessRunner`
 - typed `ToolSpec` registry
 - pytest
-- hatchling/wheel
-- Cloudflare Workers AI clients/experiments governados
 
 ### Frontend
 
@@ -98,34 +102,8 @@ O `RunTrace` bruto nunca cruza a fronteira web. Credenciais, identity binding, e
 - Apache ECharts
 - React Flow (`@xyflow/react`)
 - Vitest
-
-Playwright/full-browser E2E e o lockfile transitive freeze ainda fazem parte do gate final de produção/reprodução.
-
-## Princípio de escolha tecnológica
-
-O projeto não otimiza para quantidade de frameworks.
-
-Toda escolha material deve passar por:
-
-```text
-decision question
-→ TAPI / risk mapping
-→ systematic research
-→ credible alternatives + simple/NO_CHANGE baseline
-→ preregistered metrics/hard gates
-→ controlled experiment
-→ uncertainty/failure/production-fit analysis
-→ Pareto decision
-→ ADR + regression
-```
-
-Consequências atuais:
-
-- native typed tools permanecem preferidos a MCP sem um gap de interoperabilidade;
-- RAG/vector/reranking e persistent memory permanecem fora do produto sem um gap de retrieval/state medido;
-- adaptive investigation/stopping/escalation será avaliado sob #129 e só entra se vencer quantitativamente;
-- o custom AgentController permanece baseline, mas será revalidado contra um runtime HITL/checkpoint como LangGraph devido ao novo two-phase action flow;
-- DuckDB permanece preferido para analytics; mutable operational state será revalidado contra PostgreSQL apenas se a produção reivindicar durabilidade/concurrency além do single-process testado.
+- Playwright
+- `package-lock.json` + deterministic `npm ci`
 
 ## EDD
 
@@ -138,47 +116,65 @@ requirement
 → hypothesis
 → candidate
 → repeated/sliced evaluation
-→ PROMOTE / REJECT / INCONCLUSIVE
+→ hard gates + uncertainty
+→ PROMOTE / REJECT / INCONCLUSIVE / NO_CHANGE
 → regression
 ```
 
-A avaliação final é deterministic-first. Uma camada semântica só poderá virar gate após calibração contra labels humanos para dimensões como operational conclusion, groundedness, handoff usefulness e customer-safe communication.
+Complexidade arquitetural não entra por convenção. RAG/GraphRAG/vector DB, Kubernetes, Kafka, Redis, multi-agent, Temporal, MCP migration ou framework swap continuam fora sem gap medido e challenger vencedor.
 
-## Provider-free reprodução atual
+## Reprodução provider-free
 
-```bash
-python -m pip install -e ".[dev]" -e "research/e2[dev]"
-python -m pytest -q tests
-python -m pytest -q research/e2/tests/test_controller.py
-python scripts/validate_ev007_failure_campaign.py
-python scripts/validate_ev008_stability_campaign.py
-python scripts/validate_ev011_communication_campaign.py
-python scripts/validate_delivery_reproduction.py
-python scripts/validate_final_handoff_audit.py
+A reprodução canônica de clone limpo é o workflow:
+
+`.github/workflows/final-delivery-provider-free-reproduction.yml`
+
+Ele executa, a partir de checkout limpo e sem provider secrets:
+
+```text
+PostgreSQL 18
+→ install Python/E2
+→ full pytest suite with PostgreSQL enabled
+→ explicit identity/RLS + load + restart P0 checks
+→ ADR-004 controller regression
+→ frozen EV-007 / EV-008 / EV-011
+→ final delivery demo/evidence validation
+→ final handoff audit
+→ npm ci from committed lockfile
+→ frontend typecheck / tests / production build
+→ git diff cleanliness check
 ```
 
-Essa sequência não requer provider secrets nem live provider calls.
+O full-browser acceptance permanece separado e obrigatório em `.github/workflows/full-product-playwright.yml`.
+
+Para reprodução manual, veja [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md).
+
+## Claims que permanecem bloqueados
+
+- nenhum provider de produção foi selecionado;
+- nenhuma economia de minutos de engenharia é reivindicada sem dados humanos reais;
+- nenhuma calibração semântica é reivindicada antes dos labels humanos/adjudicação;
+- nenhum ganho de stopping adaptativo é reivindicado antes de challenger oracle-free;
+- nenhum número do CI de load é capacidade de produção;
+- recovery em CI não prova RTO/RPO, HA, multi-region ou uptime de deployment;
+- LangGraph ou qualquer framework alternativo não é necessário/superior sem comparação medida.
 
 ## Próximos gates
 
-1. merge #143;
-2. D02 somente após reset + fresh governed authorization;
-3. integrate D02 result;
-4. semantic-quality evaluator calibration (#128);
-5. adaptive investigation/stopping/escalation experiment (#129);
-6. runtime/HITL materiality revalidation (#92);
-7. operational storage + deployment/restart hardening (#131);
-8. Playwright + dependency lock + full integrated E2E (#114/#131);
-9. clean checkout reproduction + documentation/evidence freeze;
-10. delivery em 2026-09-08.
+1. fechar **clean-clone full reproduction** (#174);
+2. branch protection + final CI P0;
+3. final freeze + benchmark/evidence bundle P0;
+4. coletar/calibrar evidência humana real quando os revisores estiverem disponíveis;
+5. P1 somente com tempo/evidência: runtime LangGraph comparison, final provider/model benchmark, adaptive model routing, OpenTelemetry standardization e frontend consolidation.
 
-## Regras de evidência
+## Documentação ativa
 
-- USD 0 para serviços externos; paid spillover proibido.
-- Não inventar provider/quota/result/production readiness.
-- Não reexecutar live attempt `CLAIMED`/`UNCERTAIN`.
-- Não modificar frozen historical evidence para alinhar narrativa posterior.
-- `NO_SELECTION`, `REJECT` e `NO_CHANGE` são resultados válidos.
-- Framework complexity precisa derrotar o baseline quantitativamente antes de entrar no produto.
+1. [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md)
+2. [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md)
+3. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+4. [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md)
+5. [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md)
+6. [`docs/RUBRIC-TO-EVIDENCE.md`](docs/RUBRIC-TO-EVIDENCE.md)
+7. [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md)
 
-Para desenvolvimento, leia também [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Frozen experiment artifacts permanecem imutáveis e autoritativos para seus próprios escopos históricos.
