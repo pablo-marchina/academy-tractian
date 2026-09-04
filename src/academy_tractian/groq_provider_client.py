@@ -17,8 +17,8 @@ from .provider_clients import (
 
 GROQ_PROVIDER_ID = "groq"
 GROQ_MODEL_ID = "openai/gpt-oss-120b"
-GROQ_ROUTE_ID = "groq.responses.beta.stateless"
-GROQ_RESPONSES_ENDPOINT = "https://api.groq.com/openai/v1/responses"
+GROQ_ROUTE_ID = "groq.chat.completions.v1.stateless"
+GROQ_CHAT_COMPLETIONS_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
 
 
 def _nonnegative_int_or_none(value: Any) -> int | None:
@@ -40,12 +40,15 @@ def _schema_copy() -> dict[str, Any]:
     return json.loads(json.dumps(PROVIDER_DECISION_JSON_SCHEMA))
 
 
-class GroqResponsesDecisionClient:
-    """One-shot Groq Responses client for the governed hosted provider challenger.
+class GroqChatCompletionsDecisionClient:
+    """One-shot Groq production-route client for the hosted provider challenger.
 
-    The client deliberately uses the provider-neutral application decision schema rather than
-    Groq-hosted tools. Tool execution remains exclusively application-owned. There are no retries,
-    fallbacks, environment credential lookups, response persistence, or hidden provider SDKs.
+    GPT-OSS-120B is a Groq production model, while Groq's Responses API remains beta. This client
+    therefore uses the stable Chat Completions route with JSON Schema output and keeps strict
+    relational validation in the application-owned ProviderDecisionPayload boundary.
+
+    Tool execution remains exclusively application-owned. There are no retries, fallbacks,
+    environment credential lookups, response persistence, or hidden provider SDKs.
     """
 
     provider_id = GROQ_PROVIDER_ID
@@ -77,20 +80,24 @@ class GroqResponsesDecisionClient:
     def build_http_request(self, request: ProviderDecisionRequest) -> ProviderHttpRequest:
         body: dict[str, Any] = {
             "model": self.model_id,
-            "reasoning": {"effort": "medium"},
-            "instructions": PROVIDER_DECISION_SYSTEM_INSTRUCTION,
-            "input": _provider_request_text(request),
-            "text": {
-                "format": {
-                    "type": "json_schema",
+            "messages": [
+                {"role": "system", "content": PROVIDER_DECISION_SYSTEM_INSTRUCTION},
+                {"role": "user", "content": _provider_request_text(request)},
+            ],
+            "reasoning_effort": "medium",
+            "include_reasoning": False,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
                     "name": "provider_decision_payload",
+                    "strict": False,
                     "schema": _schema_copy(),
-                }
+                },
             },
         }
         return ProviderHttpRequest(
             method="POST",
-            url=GROQ_RESPONSES_ENDPOINT,
+            url=GROQ_CHAT_COMPLETIONS_ENDPOINT,
             headers={
                 "Authorization": f"Bearer {self._api_key}",
                 "Content-Type": "application/json",
@@ -116,18 +123,18 @@ class GroqResponsesDecisionClient:
 
         usage = response.body.get("usage")
         usage_map = usage if isinstance(usage, Mapping) else {}
-        output_details = usage_map.get("output_tokens_details")
-        output_details_map = output_details if isinstance(output_details, Mapping) else {}
+        completion_details = usage_map.get("completion_tokens_details")
+        completion_details_map = completion_details if isinstance(completion_details, Mapping) else {}
         self._usage_records.append(
             ProviderUsageRecord(
                 provider_id=self.provider_id,
                 model_id=self.model_id,
                 route_id=self.route_id,
                 request_sha256=request.request_sha256,
-                input_tokens=_nonnegative_int_or_none(usage_map.get("input_tokens")),
-                output_tokens=_nonnegative_int_or_none(usage_map.get("output_tokens")),
+                input_tokens=_nonnegative_int_or_none(usage_map.get("prompt_tokens")),
+                output_tokens=_nonnegative_int_or_none(usage_map.get("completion_tokens")),
                 total_tokens=_nonnegative_int_or_none(usage_map.get("total_tokens")),
-                reasoning_tokens=_nonnegative_int_or_none(output_details_map.get("reasoning_tokens")),
+                reasoning_tokens=_nonnegative_int_or_none(completion_details_map.get("reasoning_tokens")),
             )
         )
         return _extract_groq_output(response.body)
@@ -139,38 +146,27 @@ class GroqResponsesDecisionClient:
 
 
 def _extract_groq_output(response: Mapping[str, Any]) -> str:
-    if response.get("object") != "response":
+    if response.get("object") not in (None, "chat.completion"):
         raise ProviderHttpClientError("GROQ_OBJECT_INVALID")
-    if response.get("status") != "completed":
-        raise ProviderHttpClientError("GROQ_STATUS_NOT_COMPLETED")
     if response.get("model") != GROQ_MODEL_ID:
         raise ProviderHttpClientError("GROQ_MODEL_MISMATCH")
-    output = response.get("output")
-    if not isinstance(output, list):
-        raise ProviderHttpClientError("GROQ_OUTPUT_INVALID")
-
-    texts: list[str] = []
-    for item in output:
-        if not isinstance(item, Mapping):
-            raise ProviderHttpClientError("GROQ_OUTPUT_ITEM_INVALID")
-        item_type = item.get("type")
-        if item_type == "reasoning":
-            continue
-        if item_type != "message":
-            raise ProviderHttpClientError("GROQ_UNEXPECTED_OUTPUT_ITEM")
-        if item.get("status") not in (None, "completed"):
-            raise ProviderHttpClientError("GROQ_MESSAGE_NOT_COMPLETED")
-        content = item.get("content")
-        if not isinstance(content, list):
-            raise ProviderHttpClientError("GROQ_CONTENT_INVALID")
-        for part in content:
-            if not isinstance(part, Mapping) or part.get("type") != "output_text":
-                raise ProviderHttpClientError("GROQ_UNEXPECTED_CONTENT")
-            text = part.get("text")
-            if not isinstance(text, str) or not text.strip():
-                raise ProviderHttpClientError("GROQ_OUTPUT_TEXT_INVALID")
-            texts.append(text)
-
-    if len(texts) != 1:
-        raise ProviderHttpClientError("GROQ_OUTPUT_TEXT_COUNT")
-    return texts[0]
+    choices = response.get("choices")
+    if not isinstance(choices, list) or len(choices) != 1:
+        raise ProviderHttpClientError("GROQ_CHOICES_INVALID")
+    choice = choices[0]
+    if not isinstance(choice, Mapping):
+        raise ProviderHttpClientError("GROQ_CHOICE_INVALID")
+    if choice.get("finish_reason") != "stop":
+        raise ProviderHttpClientError("GROQ_FINISH_REASON_INVALID")
+    message = choice.get("message")
+    if not isinstance(message, Mapping) or message.get("role") != "assistant":
+        raise ProviderHttpClientError("GROQ_MESSAGE_INVALID")
+    if message.get("tool_calls") not in (None, []):
+        raise ProviderHttpClientError("GROQ_UNEXPECTED_TOOL_CALL")
+    reasoning = message.get("reasoning")
+    if isinstance(reasoning, str) and reasoning.strip():
+        raise ProviderHttpClientError("GROQ_REASONING_EXPOSED")
+    text = message.get("content")
+    if not isinstance(text, str) or not text.strip():
+        raise ProviderHttpClientError("GROQ_OUTPUT_TEXT_INVALID")
+    return text
