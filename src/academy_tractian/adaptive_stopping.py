@@ -524,7 +524,9 @@ def analyze_adaptive_stopping_experiment(
         "observed_tool_call_count": total_calls,
         "post_sufficiency_tool_call_count": post_calls,
         "mean_post_sufficiency_tool_calls": (
-            mean(item.post_sufficiency_tool_calls or 0 for item in sufficient) if sufficient else None
+            float(mean(item.post_sufficiency_tool_calls or 0 for item in sufficient))
+            if sufficient
+            else None
         ),
         "observed_headroom_fraction": (post_calls / sufficient_calls) if sufficient_calls else None,
         "required_before_action_violation_count": sum(
