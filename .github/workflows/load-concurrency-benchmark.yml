@@ -38,6 +38,7 @@ jobs:
           --health-retries 20
     env:
       POSTGRES_OPERATIONAL_TEST_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+      LOAD_BENCHMARK_OUTPUT: load-concurrency-ci-report.json
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -64,3 +65,10 @@ jobs:
           assert callable(analyze_load_benchmark)
           print("load concurrency benchmark imports passed")
           PY
+      - name: Publish aggregate benchmark evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-concurrency-ci-report
+          path: load-concurrency-ci-report.json
+          if-no-files-found: error
+          retention-days: 30
