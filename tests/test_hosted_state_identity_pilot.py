@@ -112,15 +112,20 @@ def test_multiple_failures_are_preserved_in_one_decision() -> None:
     }
 
 
-def test_live_pilot_artifact_is_hash_bound_and_contains_no_secret_fields() -> None:
+def test_live_pilot_artifact_is_hash_bound_and_contains_no_secret_material_fields() -> None:
     evidence = _evidence()
     payload = evidence.model_dump(mode="json")
-    assert not any(
-        marker in key.lower()
-        for key in payload
-        for marker in ("token", "password", "secret", "dsn", "credential")
-        if key != "token_ttl_verified"
+    forbidden_markers = (
+        "raw_token",
+        "bearer",
+        "password",
+        "secret",
+        "dsn",
+        "credential",
+        "api_key",
+        "private_key",
     )
+    assert not any(marker in key.lower() for key in payload for marker in forbidden_markers)
 
     payload["cross_tenant_read_denied"] = False
     with pytest.raises(ValidationError, match="hosted_state_identity_pilot_artifact_hash_mismatch"):
