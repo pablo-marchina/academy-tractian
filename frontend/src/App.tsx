@@ -17,6 +17,7 @@ import { ArchitectureExplorer } from "./components/ArchitectureExplorer";
 import { OperationalValueCollector } from "./components/OperationalValueCollector";
 import { OperationsWorkspace } from "./components/OperationsWorkspace";
 import { RunExplorer } from "./components/RunExplorer";
+import { SemanticReviewCollector } from "./components/SemanticReviewCollector";
 import { TraceGraph } from "./components/TraceGraph";
 import { useLiveRun } from "./hooks/useLiveRun";
 import { deriveRunEventMetrics, eventDisplayLabel } from "./state/runEvents";
@@ -156,6 +157,7 @@ export default function App() {
         <ActionControl selectedRunId={selectedRunId} onFollowExecution={followActionRun} />
         <OperationsWorkspace selectedRunId={selectedRunId} />
         <OperationalValueCollector />
+        <SemanticReviewCollector />
       </main>
     </div>
   );
