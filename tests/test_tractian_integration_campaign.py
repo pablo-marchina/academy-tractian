@@ -63,6 +63,8 @@ def test_campaign_enumerates_exact_canonical_18_and_never_assumes_integration() 
     assert report.actions == 5
     assert report.complete_operations == 0
     assert report.incomplete_operations == 18
+    assert report.transport_evidence_state == "VALID"
+    assert report.semantic_evidence_state == "VALID"
     assert len({item.operation for item in report.operations}) == 18
 
 
@@ -137,7 +139,7 @@ def test_invalid_evidence_ledger_fails_closed_to_zero_transport_claims() -> None
         )
     )
 
-    assert report.evidence_state == "INVALID"
+    assert report.transport_evidence_state == "INVALID"
     assert report.complete_operations == 0
     assert all(
         _dimension(operation, "canonical_route_observed").state == "UNPROVEN"
