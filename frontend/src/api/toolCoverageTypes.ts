@@ -82,16 +82,24 @@ export interface ToolCampaignOperation {
   method: string;
   path_template: string;
   dimensions: ToolCampaignDimension[];
+  transport_complete: boolean;
+  semantic_complete: boolean;
   complete: boolean;
 }
 
 export interface ToolCampaignResponse {
-  schema_version: "tractian-integration-campaign-v2";
+  schema_version: "tractian-integration-campaign-v3";
   transport_evidence_state: IntegrationEvidenceState;
   semantic_evidence_state: IntegrationEvidenceState;
+  transport_completion_status: string;
+  semantic_completion_status: string;
   normalized_operations: number;
   reads: number;
   actions: number;
+  transport_complete_operations: number;
+  transport_incomplete_operations: number;
+  semantic_complete_operations: number;
+  semantic_incomplete_operations: number;
   complete_operations: number;
   incomplete_operations: number;
   operations: ToolCampaignOperation[];
