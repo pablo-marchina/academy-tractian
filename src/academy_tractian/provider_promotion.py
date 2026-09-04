@@ -19,6 +19,16 @@ class ProviderCandidateEvidence(_StrictModel):
     scenario_count: int = Field(ge=1)
     repeat_count: int = Field(ge=1)
     human_semantic_calibrated: bool
+    human_calibration_case_count: int = Field(ge=0)
+    human_agreement_rate: float = Field(ge=0.0, le=1.0)
+    operational_conclusion_accuracy: float = Field(ge=0.0, le=1.0)
+    operational_conclusion_accuracy_ci_low: float = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def validate_calibration_statistics(self) -> "ProviderCandidateEvidence":
+        if self.operational_conclusion_accuracy_ci_low > self.operational_conclusion_accuracy:
+            raise ValueError("oca_ci_low_cannot_exceed_point_estimate")
+        return self
 
 
 class ProviderBenchmarkEvidence(_StrictModel):
@@ -30,6 +40,8 @@ class ProviderBenchmarkEvidence(_StrictModel):
     evaluator_version: str = Field(min_length=1, max_length=128)
     rule_set_id: str = Field(min_length=1, max_length=128)
     rule_set_hash: str = Field(min_length=1, max_length=256)
+    human_calibration_protocol_id: str = Field(min_length=1, max_length=128)
+    human_calibration_protocol_hash: str = Field(min_length=1, max_length=256)
     code_sha: str = Field(min_length=7, max_length=64)
     generated_at: datetime
     candidates: tuple[ProviderCandidateEvidence, ...] = Field(min_length=2)
@@ -58,8 +70,9 @@ class ProviderPromotionPolicy(_StrictModel):
     """Preregistered provenance and maturity gates for provider/model promotion.
 
     Statistical metric thresholds remain in ``EvalMetricRule`` and are evaluated
-    by ``compare_eval_bundles``. This policy intentionally does not introduce a
-    second score or threshold system.
+    by ``compare_eval_bundles``. Human calibration is deliberately quantitative:
+    sample size, human agreement, OCA and the OCA lower confidence bound are hard
+    maturity gates rather than a subjective production-readiness label.
     """
 
     schema_version: Literal["provider-promotion-policy-v1"] = "provider-promotion-policy-v1"
@@ -69,10 +82,16 @@ class ProviderPromotionPolicy(_StrictModel):
     expected_evaluator_version: str = Field(min_length=1, max_length=128)
     expected_rule_set_id: str = Field(min_length=1, max_length=128)
     expected_rule_set_hash: str = Field(min_length=1, max_length=256)
+    expected_human_calibration_protocol_id: str = Field(min_length=1, max_length=128)
+    expected_human_calibration_protocol_hash: str = Field(min_length=1, max_length=256)
     expected_code_sha: str = Field(min_length=7, max_length=64)
     min_scenarios: int = Field(ge=1)
     min_repeats: int = Field(ge=1)
     min_paired_groups: int = Field(ge=1)
+    min_human_calibration_cases: int = Field(ge=1)
+    min_human_agreement_rate: float = Field(ge=0.0, le=1.0)
+    min_operational_conclusion_accuracy: float = Field(ge=0.0, le=1.0)
+    min_operational_conclusion_accuracy_ci_low: float = Field(ge=0.0, le=1.0)
 
     @model_validator(mode="after")
     def validate_required_candidates(self) -> "ProviderPromotionPolicy":
@@ -80,6 +99,11 @@ class ProviderPromotionPolicy(_StrictModel):
             raise ValueError("duplicate_required_candidate_id")
         if any(not candidate_id.strip() for candidate_id in self.required_candidate_ids):
             raise ValueError("blank_required_candidate_id")
+        if (
+            self.min_operational_conclusion_accuracy_ci_low
+            > self.min_operational_conclusion_accuracy
+        ):
+            raise ValueError("minimum_oca_ci_low_cannot_exceed_minimum_oca")
         return self
 
 
@@ -106,7 +130,8 @@ def decide_provider_promotion(
     never promotes the first candidate that passes, and never treats latency/cost
     as a correctness substitute. All metric thresholds, regressions, response-mode
     slices, bootstrap confidence intervals, and hard gates are inherited from the
-    existing ``EvalDrivenDecisionReport`` objects.
+    existing ``EvalDrivenDecisionReport`` objects. Human semantic readiness is an
+    additional preregistered quantitative maturity gate.
     """
 
     provenance_reasons: list[str] = []
@@ -116,6 +141,16 @@ def decide_provider_promotion(
         (evidence.evaluator_version, policy.expected_evaluator_version, "EVALUATOR_VERSION_MISMATCH"),
         (evidence.rule_set_id, policy.expected_rule_set_id, "RULE_SET_ID_MISMATCH"),
         (evidence.rule_set_hash, policy.expected_rule_set_hash, "RULE_SET_HASH_MISMATCH"),
+        (
+            evidence.human_calibration_protocol_id,
+            policy.expected_human_calibration_protocol_id,
+            "HUMAN_CALIBRATION_PROTOCOL_ID_MISMATCH",
+        ),
+        (
+            evidence.human_calibration_protocol_hash,
+            policy.expected_human_calibration_protocol_hash,
+            "HUMAN_CALIBRATION_PROTOCOL_HASH_MISMATCH",
+        ),
         (evidence.code_sha, policy.expected_code_sha, "CODE_SHA_MISMATCH"),
     )
     for actual, expected, reason in expected_pairs:
@@ -140,6 +175,20 @@ def decide_provider_promotion(
         candidate = candidates[candidate_id]
         if not candidate.human_semantic_calibrated:
             maturity_reasons.append("HUMAN_SEMANTIC_CALIBRATION_REQUIRED")
+        if candidate.human_calibration_case_count < policy.min_human_calibration_cases:
+            maturity_reasons.append("INSUFFICIENT_HUMAN_CALIBRATION_CASES")
+        if candidate.human_agreement_rate < policy.min_human_agreement_rate:
+            maturity_reasons.append("HUMAN_AGREEMENT_BELOW_THRESHOLD")
+        if (
+            candidate.operational_conclusion_accuracy
+            < policy.min_operational_conclusion_accuracy
+        ):
+            maturity_reasons.append("OCA_BELOW_THRESHOLD")
+        if (
+            candidate.operational_conclusion_accuracy_ci_low
+            < policy.min_operational_conclusion_accuracy_ci_low
+        ):
+            maturity_reasons.append("OCA_CONFIDENCE_LOWER_BOUND_BELOW_THRESHOLD")
         if candidate.scenario_count < policy.min_scenarios:
             maturity_reasons.append("INSUFFICIENT_SCENARIOS")
         if candidate.repeat_count < policy.min_repeats:
