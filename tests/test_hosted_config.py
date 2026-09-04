@@ -32,6 +32,15 @@ def _oidc_env() -> dict[str, str]:
     return env
 
 
+def _serving_env() -> dict[str, str]:
+    return {
+        **_oidc_env(),
+        "ACADEMY_PROVIDER": "openai",
+        "OPENAI_API_KEY": "test-provider-key",
+        "ACADEMY_TRACTIAN_BASE_URL": "https://tractian.example.com",
+    }
+
+
 def test_hosted_config_allows_infrastructure_validation_before_provider_selection() -> None:
     env = _base_env()
     config = HostedProductConfig.from_environment(env)
@@ -42,6 +51,11 @@ def test_hosted_config_allows_infrastructure_validation_before_provider_selectio
     assert summary["provider"] == {
         "selection": "NO_SELECTION",
         "api_key_configured": False,
+    }
+    assert summary["deployment"] == {
+        "contract_profile": "hosted-only-v1",
+        "required_local_components": 0,
+        "production_identity": "oidc-jwks-v1",
     }
     assert summary["persistence"]["operational"] == "postgresql"  # type: ignore[index]
     assert summary["persistence"]["observability"] == "postgresql"  # type: ignore[index]
@@ -76,22 +90,30 @@ def test_hosted_config_accepts_provider_neutral_oidc_without_application_signing
 
 def test_hosted_config_requires_provider_and_tractian_endpoint_for_serving() -> None:
     with pytest.raises(ValueError, match="hosted_provider_not_selected"):
-        HostedProductConfig.from_environment(_base_env(), require_serving_ready=True)
+        HostedProductConfig.from_environment(_oidc_env(), require_serving_ready=True)
 
     env = {
-        **_base_env(),
+        **_oidc_env(),
         "ACADEMY_PROVIDER": "openai",
         "OPENAI_API_KEY": "test-provider-key",
     }
     with pytest.raises(ValueError, match="tractian_base_url_missing"):
         HostedProductConfig.from_environment(env, require_serving_ready=True)
 
-    ready = HostedProductConfig.from_environment(
-        {**env, "ACADEMY_TRACTIAN_BASE_URL": "https://tractian.example.com"},
-        require_serving_ready=True,
-    )
+    ready = HostedProductConfig.from_environment(_serving_env(), require_serving_ready=True)
     assert ready.provider == "openai"
     assert "test-provider-key" not in repr(ready.sanitized_summary())
+
+
+def test_signed_bearer_remains_regression_only_and_cannot_claim_hosted_production_ready() -> None:
+    env = {
+        **_base_env(),
+        "ACADEMY_PROVIDER": "openai",
+        "OPENAI_API_KEY": "test-provider-key",
+        "ACADEMY_TRACTIAN_BASE_URL": "https://tractian.example.com",
+    }
+    with pytest.raises(ValueError, match="hosted_production_requires_oidc"):
+        HostedProductConfig.from_environment(env, require_serving_ready=True)
 
 
 def test_hosted_config_rejects_unsafe_or_ambiguous_network_configuration() -> None:
@@ -109,6 +131,40 @@ def test_hosted_config_rejects_unsafe_or_ambiguous_network_configuration() -> No
 
     with pytest.raises(ValueError, match="unsupported_identity_backend"):
         HostedProductConfig.from_environment({**env, "ACADEMY_IDENTITY_BACKEND": "browser_headers"})
+
+
+@pytest.mark.parametrize(
+    ("environment_name", "local_value"),
+    [
+        (
+            "ACADEMY_POSTGRES_INTERNAL_DSN",
+            "postgresql://internal:secret@localhost:5432/academy",
+        ),
+        (
+            "ACADEMY_POSTGRES_SCOPED_DSN",
+            "postgresql://scoped:secret@127.0.0.1:5432/academy",
+        ),
+        ("ACADEMY_RUNTIME_IDENTITY_ISSUER", "https://localhost"),
+        ("ACADEMY_OIDC_JWKS_URL", "https://127.0.0.1/.well-known/jwks.json"),
+        ("ACADEMY_CORS_ORIGINS", "https://localhost"),
+        ("ACADEMY_TRACTIAN_BASE_URL", "https://[::1]"),
+    ],
+)
+def test_serving_ready_rejects_local_machine_dependencies(
+    environment_name: str,
+    local_value: str,
+) -> None:
+    env = _serving_env()
+    env[environment_name] = local_value
+    with pytest.raises(ValueError, match=f"local_endpoint_forbidden:{environment_name}"):
+        HostedProductConfig.from_environment(env, require_serving_ready=True)
+
+
+def test_serving_ready_requires_https_oidc_issuer() -> None:
+    env = _serving_env()
+    env["ACADEMY_RUNTIME_IDENTITY_ISSUER"] = "http://identity.example.com"
+    with pytest.raises(ValueError, match="invalid_http_url:ACADEMY_RUNTIME_IDENTITY_ISSUER"):
+        HostedProductConfig.from_environment(env, require_serving_ready=True)
 
 
 def test_hosted_config_rejects_incomplete_or_symmetric_oidc_configuration() -> None:
