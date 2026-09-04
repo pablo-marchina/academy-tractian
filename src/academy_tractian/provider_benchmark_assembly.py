@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from hashlib import sha256
 import json
-from typing import Any, Sequence
+from typing import Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -20,10 +20,9 @@ from .provider_promotion import (
     ProviderCandidateEvidence,
     ProviderHumanCalibrationEvidence,
 )
-from .runtime import (
-    ProductionRuntimeConfig,
+from .runtime import ProductionRuntimeConfig, canonical_tool_registry
+from .runtime_configuration_identity import (
     RuntimeConfigurationIdentity,
-    canonical_tool_registry,
     production_runtime_config_hash,
 )
 
@@ -161,9 +160,9 @@ def assemble_provider_benchmark_evidence(
     experimental units while still making the amount of scenario/repeat coverage quantitative.
 
     Candidate/provider identity is code-owned and the expected runtime config hash is recomputed
-    from the canonical 18-tool contract plus the exact candidate identity. Pairwise EDD reports are
-    generated in both directions for every candidate pair so the promotion gate never accepts an
-    incomplete comparison matrix.
+    from the frozen production runtime hash plus the exact candidate identity. Pairwise EDD reports
+    are generated in both directions for every candidate pair so the promotion gate never accepts
+    an incomplete comparison matrix.
     """
 
     if len(candidates) < 2:
