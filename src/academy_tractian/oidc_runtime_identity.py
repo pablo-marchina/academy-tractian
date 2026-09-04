@@ -71,6 +71,7 @@ class OIDCClaimMapping:
     role_claim: str | None = "role"
     permissions_claim: str | None = "permissions"
     identity_claim: str | None = "sid"
+    required_claims: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for label, value in (
@@ -81,15 +82,20 @@ class OIDCClaimMapping:
         ):
             if value is not None:
                 _trimmed(value, label=label, max_length=128)
+        normalized_required = tuple(
+            dict.fromkeys(_trimmed(value, label="required_claim", max_length=128) for value in self.required_claims)
+        )
+        object.__setattr__(self, "required_claims", normalized_required)
 
 
 class OIDCRuntimeContextProvider:
     """Provider-neutral OIDC/JWT resource-server boundary over asymmetric JWKS verification.
 
     Authentication is delegated to a hosted issuer. Application authorization remains server-owned:
-    issuer/audience/algorithm are fixed configuration, organization is mandatory, token permissions
-    are intersected with a server allow-list, and privileged permissions require a second explicit
-    server-side enablement. There is no fallback to browser-supplied tenant or role headers.
+    issuer/audience/algorithm are fixed configuration, organization is mandatory, explicitly required
+    provider claims must be present, token permissions are intersected with a server allow-list, and
+    privileged permissions require a second explicit server-side enablement. There is no fallback to
+    browser-supplied tenant or role headers.
     """
 
     def __init__(
@@ -205,6 +211,10 @@ class OIDCRuntimeContextProvider:
         subject = _claim_string(claims, "sub")
         organization_id = _claim_string(claims, self._mapping.organization_claim)
         assert subject is not None and organization_id is not None
+
+        for claim_name in self._mapping.required_claims:
+            if claims.get(claim_name) is None:
+                raise ValueError(f"required OIDC claim missing:{claim_name}")
 
         issued_at = claims.get("iat")
         expires_at = claims.get("exp")
