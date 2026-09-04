@@ -17,7 +17,12 @@ from .realtime_observability import (
     ObservableHarnessRunner,
     SafeObservabilityEventSink,
 )
-from .runtime import ProductionRequest, ProductionRuntime, ProductionRuntimeConfig
+from .runtime import (
+    ProductionRequest,
+    ProductionRuntime,
+    ProductionRuntimeConfig,
+    RuntimeConfigurationIdentity,
+)
 
 
 class PreparedRealtimeRun:
@@ -46,10 +51,11 @@ class PreparedRealtimeRun:
 class RealtimeProductionRuntime(ProductionRuntime):
     """Prospective observable adapter over the frozen ProductionRuntime v1 contract.
 
-    The base runtime remains byte-exact for historical freezes. This adapter reuses its
-    validated configuration, registry and action-safety ownership, while substituting only
-    production-owned wrappers that publish safe trace projections after canonical E2 appends.
-    Provider/tool/controller semantics are regression-tested for exact trace equivalence.
+    The base runtime remains byte-exact for historical freezes when no external candidate identity
+    is supplied. This adapter reuses its validated configuration, registry and action-safety
+    ownership, while substituting only production-owned wrappers that publish safe trace projections
+    after canonical E2 appends. Provider/tool/controller semantics are regression-tested for exact
+    trace equivalence.
     """
 
     def __init__(
@@ -60,12 +66,14 @@ class RealtimeProductionRuntime(ProductionRuntime):
         observability_sink: SafeObservabilityEventSink,
         registry: Mapping[str, ToolSpec] | None = None,
         config: ProductionRuntimeConfig | None = None,
+        configuration_identity: RuntimeConfigurationIdentity | None = None,
     ) -> None:
         super().__init__(
             decision_source=decision_source,
             transport=transport,
             registry=registry,
             config=config,
+            configuration_identity=configuration_identity,
         )
         self.observability_publisher = FailIsolatedObservabilityPublisher(
             observability_sink
