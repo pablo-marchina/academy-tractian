@@ -1,6 +1,7 @@
 name: full-product-playwright
 
 on:
+  workflow_call:
   pull_request:
     paths:
       - "frontend/**"
