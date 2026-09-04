@@ -33,6 +33,7 @@ class TransportProbeFixture(_StrictModel):
     valid_arguments: dict[str, Any]
     error_arguments: dict[str, Any] | None = None
     action_execution_approved: bool = False
+    action_error_probe_approved: bool = False
     action_approval_ref: str | None = Field(default=None, min_length=8, max_length=256)
 
     @model_validator(mode="after")
@@ -41,13 +42,26 @@ class TransportProbeFixture(_StrictModel):
             tool = get_tool(self.operation)
         except KeyError as exc:
             raise ValueError("unknown_transport_probe_operation") from exc
+
         if tool.kind is ToolKind.READ:
-            if self.action_execution_approved or self.action_approval_ref is not None:
+            if (
+                self.action_execution_approved
+                or self.action_error_probe_approved
+                or self.action_approval_ref is not None
+            ):
                 raise ValueError("read_fixture_cannot_carry_action_approval")
-        elif self.action_execution_approved and self.action_approval_ref is None:
+            return self
+
+        if self.action_execution_approved and self.action_approval_ref is None:
             raise ValueError("approved_action_requires_approval_ref")
-        elif not self.action_execution_approved and self.action_approval_ref is not None:
+        if not self.action_execution_approved and self.action_approval_ref is not None:
             raise ValueError("action_approval_ref_requires_execution_approval")
+        if self.action_error_probe_approved and not self.action_execution_approved:
+            raise ValueError("action_error_probe_requires_execution_approval")
+        if self.action_error_probe_approved and self.error_arguments is None:
+            raise ValueError("action_error_probe_approval_requires_error_arguments")
+        if self.error_arguments is not None and not self.action_error_probe_approved:
+            raise ValueError("action_error_probe_requires_explicit_approval")
         return self
 
 
@@ -97,6 +111,7 @@ class OperationTransportProbeResult(_StrictModel):
     valid_probe: ProbeOutcome
     error_probe: ProbeOutcome
     action_live_execution_enabled: bool
+    action_error_probe_enabled: bool
 
 
 class TractianTransportCampaignRun(_StrictModel):
@@ -143,10 +158,12 @@ def run_tractian_transport_campaign(
 ) -> tuple[TractianTransportCampaignRun, IntegrationEvidenceLedger]:
     """Execute bounded live transport probes without converting them into semantic proof.
 
-    Consequential operations require two independent gates: the fixture must carry an explicit
-    approval reference and the caller must set ``allow_actions=True`` for this invocation. Without
-    both, no action request reaches the delegate transport; the attempted campaign step is recorded
-    only as a real runner safety block. Raw arguments and response bodies never enter the result.
+    Consequential valid probes require two independent gates: per-fixture action approval and the
+    invocation-level ``allow_actions=True`` switch. A consequential error probe is an additional
+    mutation attempt and therefore requires a third, explicit ``action_error_probe_approved`` gate.
+    Without the valid-action gates, no action request reaches the delegate transport and the attempt
+    is recorded only as a runner safety block. Raw arguments and response bodies never enter the
+    result.
     """
 
     active_recorder = recorder or HostedIntegrationEvidenceRecorder()
@@ -166,6 +183,11 @@ def run_tractian_transport_campaign(
             and fixture.action_approval_ref is not None
             and allow_actions
         )
+        action_error_enabled = (
+            action_enabled
+            and fixture.action_error_probe_approved
+            and fixture.error_arguments is not None
+        )
         if tool.kind is ToolKind.ACTION and not action_enabled:
             blocked_request = build_b0_request(tool, fixture.valid_arguments, binding)
             active_recorder.record(blocked_request, outcome="blocked_by_safety")
@@ -176,6 +198,7 @@ def run_tractian_transport_campaign(
                     valid_probe="blocked_by_safety",
                     error_probe="not_configured",
                     action_live_execution_enabled=False,
+                    action_error_probe_enabled=False,
                 )
             )
             continue
@@ -187,7 +210,9 @@ def run_tractian_transport_campaign(
             binding=binding,
         )
         error_outcome: ProbeOutcome = "not_configured"
-        if fixture.error_arguments is not None:
+        if fixture.error_arguments is not None and (
+            tool.kind is ToolKind.READ or action_error_enabled
+        ):
             error_outcome = _request_probe(
                 transport=recording_transport,
                 tool=tool,
@@ -201,6 +226,7 @@ def run_tractian_transport_campaign(
                 valid_probe=valid_outcome,
                 error_probe=error_outcome,
                 action_live_execution_enabled=action_enabled,
+                action_error_probe_enabled=action_error_enabled,
             )
         )
 
