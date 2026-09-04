@@ -9,7 +9,9 @@ from academy_tractian.eval_driven import EvalDrivenDecisionReport
 from academy_tractian.provider_promotion import (
     ProviderBenchmarkEvidence,
     ProviderCandidateEvidence,
+    ProviderHumanCalibrationEvidence,
     ProviderPromotionPolicy,
+    build_provider_human_calibration_artifact,
     decide_provider_promotion,
 )
 
@@ -18,7 +20,34 @@ CANDIDATES = ("openai:gpt-5.6-sol", "google:gemini-3.7-flash")
 CODE_SHA = "abcdef1234567890"
 
 
-def _candidate(candidate_id: str, **overrides: object) -> ProviderCandidateEvidence:
+def _human_calibration(
+    candidate_id: str,
+    **overrides: object,
+) -> ProviderHumanCalibrationEvidence:
+    payload: dict[str, object] = {
+        "candidate_id": candidate_id,
+        "config_hash": f"cfg-{candidate_id}",
+        "protocol_id": "human-calibration-v1",
+        "protocol_hash": "sha256:human-calibration-v1",
+        "source_manifest_sha256": "1" * 64,
+        "annotation_manifest_sha256": "2" * 64,
+        "resolution_report_sha256": "3" * 64,
+        "calibration_ready": True,
+        "case_count": 60,
+        "human_agreement_rate": 0.95,
+        "operational_conclusion_accuracy": 0.93,
+        "operational_conclusion_accuracy_ci_low": 0.86,
+    }
+    payload.update(overrides)
+    return build_provider_human_calibration_artifact(**payload)  # type: ignore[arg-type]
+
+
+def _candidate(
+    candidate_id: str,
+    *,
+    human_overrides: dict[str, object] | None = None,
+    **overrides: object,
+) -> ProviderCandidateEvidence:
     provider_id, model_id = candidate_id.split(":", 1)
     payload: dict[str, object] = {
         "candidate_id": candidate_id,
@@ -26,12 +55,10 @@ def _candidate(candidate_id: str, **overrides: object) -> ProviderCandidateEvide
         "model_id": model_id,
         "scenario_count": 60,
         "repeat_count": 3,
-        "human_semantic_calibrated": True,
-        "human_calibration_artifact_hash": "c" * 64,
-        "human_calibration_case_count": 60,
-        "human_agreement_rate": 0.95,
-        "operational_conclusion_accuracy": 0.93,
-        "operational_conclusion_accuracy_ci_low": 0.86,
+        "human_calibration": _human_calibration(
+            candidate_id,
+            **(human_overrides or {}),
+        ),
     }
     payload.update(overrides)
     return ProviderCandidateEvidence.model_validate(payload)
@@ -118,7 +145,7 @@ def _winning_reports() -> tuple[EvalDrivenDecisionReport, ...]:
 
 def test_missing_human_semantic_calibration_invalidates_comparison() -> None:
     candidates = (
-        _candidate(CANDIDATES[0], human_semantic_calibrated=False),
+        _candidate(CANDIDATES[0], human_overrides={"calibration_ready": False}),
         _candidate(CANDIDATES[1]),
     )
     decision = decide_provider_promotion(
@@ -133,9 +160,9 @@ def test_missing_human_semantic_calibration_invalidates_comparison() -> None:
 
 
 @pytest.mark.parametrize(
-    ("candidate_override", "reason"),
+    ("human_override", "reason"),
     [
-        ({"human_calibration_case_count": 49}, "INSUFFICIENT_HUMAN_CALIBRATION_CASES"),
+        ({"case_count": 49}, "INSUFFICIENT_HUMAN_CALIBRATION_CASES"),
         ({"human_agreement_rate": 0.89}, "HUMAN_AGREEMENT_BELOW_THRESHOLD"),
         (
             {
@@ -151,11 +178,11 @@ def test_missing_human_semantic_calibration_invalidates_comparison() -> None:
     ],
 )
 def test_quantitative_human_calibration_gates_block_promotion(
-    candidate_override: dict[str, object],
+    human_override: dict[str, object],
     reason: str,
 ) -> None:
     candidates = (
-        _candidate(CANDIDATES[0], **candidate_override),
+        _candidate(CANDIDATES[0], human_overrides=human_override),
         _candidate(CANDIDATES[1]),
     )
     decision = decide_provider_promotion(
@@ -257,6 +284,16 @@ def test_provenance_mismatch_is_no_selection(field: str, value: str, reason: str
     assert reason in decision.reason_codes
 
 
+def test_candidate_human_protocol_must_match_benchmark_protocol() -> None:
+    candidates = (
+        _candidate(CANDIDATES[0], human_overrides={"protocol_id": "different-protocol"}),
+        _candidate(CANDIDATES[1]),
+    )
+
+    with pytest.raises(ValidationError, match="candidate_human_calibration_protocol_id_mismatch"):
+        _evidence(candidates=candidates)
+
+
 def test_insufficient_sample_or_repeats_invalidates_comparison() -> None:
     candidates = (
         _candidate(CANDIDATES[0], scenario_count=49),
@@ -287,24 +324,45 @@ def test_incomplete_pairwise_matrix_never_promotes_a_candidate() -> None:
 
 def test_invalid_oca_confidence_bound_is_rejected_by_schema() -> None:
     with pytest.raises(ValidationError, match="oca_ci_low_cannot_exceed_point_estimate"):
-        _candidate(
+        _human_calibration(
             CANDIDATES[0],
             operational_conclusion_accuracy=0.80,
             operational_conclusion_accuracy_ci_low=0.81,
         )
 
 
-def test_calibration_artifact_hash_must_be_sha256_hex() -> None:
-    with pytest.raises(ValidationError):
-        _candidate(CANDIDATES[0], human_calibration_artifact_hash="not-a-sha256")
+def test_human_calibration_artifact_detects_metric_tampering() -> None:
+    artifact = _human_calibration(CANDIDATES[0])
+    tampered = artifact.model_dump(mode="json")
+    tampered["operational_conclusion_accuracy"] = 0.99
+
+    with pytest.raises(
+        ValidationError,
+        match="provider_human_calibration_artifact_hash_mismatch",
+    ):
+        ProviderHumanCalibrationEvidence.model_validate(tampered)
+
+
+def test_candidate_cannot_reference_another_candidates_human_artifact() -> None:
+    with pytest.raises(ValidationError, match="human_calibration_candidate_id_mismatch"):
+        ProviderCandidateEvidence.model_validate(
+            {
+                "candidate_id": CANDIDATES[0],
+                "provider_id": "openai",
+                "model_id": "gpt-5.6-sol",
+                "scenario_count": 60,
+                "repeat_count": 3,
+                "human_calibration": _human_calibration(CANDIDATES[1]).model_dump(mode="json"),
+            }
+        )
 
 
 def test_strict_artifacts_reject_unknown_fields_instead_of_raw_payloads() -> None:
     with pytest.raises(ValidationError):
-        ProviderCandidateEvidence.model_validate(
+        ProviderHumanCalibrationEvidence.model_validate(
             {
-                **_candidate(CANDIDATES[0]).model_dump(),
-                "raw_provider_response": "secret-bearing body",
+                **_human_calibration(CANDIDATES[0]).model_dump(mode="json"),
+                "raw_human_notes": "must never enter promotion artifact",
             }
         )
 
