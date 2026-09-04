@@ -1,0 +1,126 @@
+name: clean-clone-full-product-reproduction
+
+on:
+  pull_request:
+    paths:
+      - "src/academy_tractian/**"
+      - "tests/**"
+      - "scripts/**"
+      - "frontend/**"
+      - "research/e2/**"
+      - "research/frozen/**"
+      - "research/results/**"
+      - "research/*decision*.md"
+      - "docs/**"
+      - "README.md"
+      - "pyproject.toml"
+      - ".github/workflows/clean-clone-full-product-reproduction.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce-current-product:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: academy_tractian
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d academy_tractian"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      POSTGRES_OPERATIONAL_TEST_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+      CI: "true"
+    steps:
+      - name: Check out clean repository
+        uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 1
+
+      - name: Verify clean checkout before reproduction
+        run: |
+          test -z "$(git status --porcelain --untracked-files=no)"
+          git diff --exit-code
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install production and E2 dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" -e "research/e2[dev]"
+
+      - name: Run full Python product suite with PostgreSQL enabled
+        run: python -m pytest -q tests
+
+      - name: Explicitly prove promoted PostgreSQL P0 campaigns execute
+        run: >-
+          python -m pytest -q
+          tests/test_postgres_authenticated_product_api.py
+          tests/test_postgres_load_concurrency_benchmark.py
+          tests/test_postgres_restart_recovery_campaign.py
+
+      - name: Regress accepted ADR-004 controller boundary
+        run: python -m pytest -q research/e2/tests/test_controller.py
+
+      - name: Reproduce frozen EV-007
+        run: python scripts/validate_ev007_failure_campaign.py
+
+      - name: Reproduce frozen EV-008
+        run: python scripts/validate_ev008_stability_campaign.py
+
+      - name: Reproduce frozen EV-011
+        run: python scripts/validate_ev011_communication_campaign.py
+
+      - name: Validate final-delivery provider-free demo
+        run: python scripts/validate_delivery_reproduction.py
+
+      - name: Validate final handoff audit
+        run: python scripts/validate_final_handoff_audit.py
+
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Reproduce frontend typecheck, tests and production build
+        working-directory: frontend
+        run: |
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Verify reproduction did not mutate tracked repository state
+        run: |
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=no)"
+
+      - name: Record clean-clone reproduction summary
+        run: |
+          printf '%s\n' \
+            'CLEAN_CLONE_REPRODUCTION=PASS' \
+            'FROZEN_DELIVERY_WORKFLOW_BLOB=PRESERVED' \
+            'POSTGRES_PRODUCT_TESTS=EXECUTED' \
+            'FROZEN_CAMPAIGNS=REPRODUCED' \
+            'FRONTEND_LOCKED_BUILD=PASS' \
+            'TRACKED_REPOSITORY_MUTATIONS=0'
