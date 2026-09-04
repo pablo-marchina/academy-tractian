@@ -16,6 +16,7 @@ def _groq_env(*, include_key: bool) -> dict[str, str]:
         "ACADEMY_OIDC_JWKS_URL": "https://identity.example.com/.well-known/jwks.json",
         "ACADEMY_OIDC_ALGORITHMS": "RS256",
         "ACADEMY_PROVIDER": "groq",
+        "ACADEMY_MODEL": "openai/gpt-oss-120b",
         "ACADEMY_TRACTIAN_BASE_URL": "https://tractian.example.com",
     }
     if include_key:
@@ -37,6 +38,12 @@ def test_groq_hosted_candidate_is_serving_configurable_without_secret_projection
     summary = config.sanitized_summary()
 
     assert config.provider == "groq"
+    assert config.model == "openai/gpt-oss-120b"
     assert config.provider_api_key == "groq-test-secret"
-    assert summary["provider"] == {"selection": "groq", "api_key_configured": True}
+    assert summary["provider"] == {
+        "selection": "groq",
+        "model": "openai/gpt-oss-120b",
+        "candidate_id": "groq:openai/gpt-oss-120b",
+        "api_key_configured": True,
+    }
     assert "groq-test-secret" not in repr(summary)
