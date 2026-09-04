@@ -111,24 +111,14 @@ def decide_provider_promotion(
 
     provenance_reasons: list[str] = []
     expected_pairs = (
-        ("corpus_id", evidence.corpus_id, policy.expected_corpus_id, "CORPUS_ID_MISMATCH"),
-        ("corpus_hash", evidence.corpus_hash, policy.expected_corpus_hash, "CORPUS_HASH_MISMATCH"),
-        (
-            "evaluator_version",
-            evidence.evaluator_version,
-            policy.expected_evaluator_version,
-            "EVALUATOR_VERSION_MISMATCH",
-        ),
-        ("rule_set_id", evidence.rule_set_id, policy.expected_rule_set_id, "RULE_SET_ID_MISMATCH"),
-        (
-            "rule_set_hash",
-            evidence.rule_set_hash,
-            policy.expected_rule_set_hash,
-            "RULE_SET_HASH_MISMATCH",
-        ),
-        ("code_sha", evidence.code_sha, policy.expected_code_sha, "CODE_SHA_MISMATCH"),
+        (evidence.corpus_id, policy.expected_corpus_id, "CORPUS_ID_MISMATCH"),
+        (evidence.corpus_hash, policy.expected_corpus_hash, "CORPUS_HASH_MISMATCH"),
+        (evidence.evaluator_version, policy.expected_evaluator_version, "EVALUATOR_VERSION_MISMATCH"),
+        (evidence.rule_set_id, policy.expected_rule_set_id, "RULE_SET_ID_MISMATCH"),
+        (evidence.rule_set_hash, policy.expected_rule_set_hash, "RULE_SET_HASH_MISMATCH"),
+        (evidence.code_sha, policy.expected_code_sha, "CODE_SHA_MISMATCH"),
     )
-    for _field, actual, expected, reason in expected_pairs:
+    for actual, expected, reason in expected_pairs:
         if actual != expected:
             provenance_reasons.append(reason)
 
@@ -167,12 +157,24 @@ def decide_provider_promotion(
         (report.baseline_config_id, report.candidate_config_id): report
         for report in evidence.pairwise_reports
     }
+    required_pairs = {
+        (baseline_id, candidate_id)
+        for candidate_id in policy.required_candidate_ids
+        for baseline_id in policy.required_candidate_ids
+        if baseline_id != candidate_id
+    }
+    if not required_pairs.issubset(report_by_pair):
+        return ProviderPromotionDecision(
+            outcome="NO_SELECTION",
+            selected_candidate_id=None,
+            comparison_ready_candidate_ids=comparison_ready,
+            reason_codes=("PAIRWISE_REPORT_MATRIX_INCOMPLETE",),
+        )
 
     def promoted_against(candidate_id: str, baseline_id: str) -> bool:
-        report = report_by_pair.get((baseline_id, candidate_id))
+        report = report_by_pair[(baseline_id, candidate_id)]
         return bool(
-            report is not None
-            and report.decision == "PROMOTE"
+            report.decision == "PROMOTE"
             and len(report.paired_groups) >= policy.min_paired_groups
             and not report.comparison_issues
             and not report.candidate_hard_gate_failures
@@ -189,15 +191,7 @@ def decide_provider_promotion(
     )
 
     if len(evidence_backed_winners) != 1:
-        missing_reports = any(
-            (baseline_id, candidate_id) not in report_by_pair
-            for candidate_id in policy.required_candidate_ids
-            for baseline_id in policy.required_candidate_ids
-            if baseline_id != candidate_id
-        )
         reasons = ["NO_UNIQUE_EDD_PROMOTION"]
-        if missing_reports:
-            reasons.append("PAIRWISE_REPORT_MATRIX_INCOMPLETE")
         if any(report.candidate_hard_gate_failures for report in evidence.pairwise_reports):
             reasons.append("CANDIDATE_HARD_GATE_FAILURE_OBSERVED")
         if any(report.comparison_issues for report in evidence.pairwise_reports):
