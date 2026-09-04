@@ -21,7 +21,7 @@ POLICY = ProviderFeasibilityPolicy(
     allowed_api_maturities=("ga",),
     require_hosted_service=True,
     max_required_local_components=0,
-    max_required_cash_cost_usd=0.0,
+    require_zero_cost_execution=True,
     require_structured_output=True,
     min_free_requests_per_day=100,
     min_free_tokens_per_day=100_000,
@@ -35,7 +35,9 @@ def _evidence(candidate_id: str = "groq:openai/gpt-oss-120b", **overrides):
         "source_manifest_sha256": SOURCE_HASH,
         "hosted_service": True,
         "required_local_components": 0,
-        "required_cash_cost_usd": 0.0,
+        "zero_cost_execution_available": True,
+        "metered_input_usd_per_million": 0.15,
+        "metered_output_usd_per_million": 0.60,
         "structured_output_supported": True,
         "free_requests_per_day": 1000,
         "free_tokens_per_day": 200_000,
@@ -62,7 +64,7 @@ def test_eligible_means_only_hard_constraints_passed_not_quality_promotion() -> 
     [
         ({"hosted_service": False}, "HOSTED_SERVICE_REQUIRED"),
         ({"required_local_components": 1}, "LOCAL_COMPONENT_LIMIT_EXCEEDED"),
-        ({"required_cash_cost_usd": 0.01}, "REQUIRED_CASH_COST_EXCEEDED"),
+        ({"zero_cost_execution_available": False}, "ZERO_COST_EXECUTION_REQUIRED"),
         ({"structured_output_supported": False}, "STRUCTURED_OUTPUT_REQUIRED"),
         ({"free_requests_per_day": 99}, "FREE_REQUEST_CAPACITY_INSUFFICIENT"),
         ({"free_tokens_per_day": 99_999}, "FREE_TOKEN_CAPACITY_INSUFFICIENT"),
@@ -78,6 +80,19 @@ def test_each_hard_constraint_is_non_compensatory(overrides, reason: str) -> Non
     )
     assert decision.outcome == "INELIGIBLE"
     assert reason in decision.reason_codes
+
+
+def test_metered_price_is_recorded_but_does_not_override_a_valid_free_path() -> None:
+    decision = decide_provider_feasibility(
+        evidence=_evidence(
+            zero_cost_execution_available=True,
+            metered_input_usd_per_million=999.0,
+            metered_output_usd_per_million=999.0,
+        ),
+        policy=POLICY,
+        evaluated_at=NOW,
+    )
+    assert decision.outcome == "ELIGIBLE"
 
 
 def test_stale_and_future_evidence_fail_closed() -> None:
@@ -109,7 +124,7 @@ def test_candidate_identity_is_recomputed_from_code_owned_registry() -> None:
 def test_evidence_integrity_is_hash_bound() -> None:
     evidence = _evidence()
     payload = evidence.model_dump(mode="json")
-    payload["required_cash_cost_usd"] = 10.0
+    payload["zero_cost_execution_available"] = False
     with pytest.raises(ValidationError, match="provider_feasibility_artifact_hash_mismatch"):
         type(evidence).model_validate(payload)
 
