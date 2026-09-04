@@ -30,6 +30,7 @@ from .production_actions_v2 import (
 from .realtime_observability import DuckDBObservabilityEventSink
 from .run_access import RunAccessStore
 from .run_execution_store import RunExecutionStore
+from .runtime import RuntimeConfigurationIdentity
 
 
 class _FrozenModel(BaseModel):
@@ -70,6 +71,7 @@ def create_action_capable_product_app(
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
+    runtime_configuration_identity: RuntimeConfigurationIdentity | None = None,
 ) -> FastAPI:
     if custody_store is not None and action_custody_path is not None:
         raise ValueError("provide custody_store or action_custody_path, not both")
@@ -85,13 +87,16 @@ def create_action_capable_product_app(
     action_recovery = reconcile_orphaned_actions(custody=custody, ledger=ledger)
 
     def runtime_factory(sink):
-        return ActionProposalRealtimeProductionRuntime(
+        runtime = ActionProposalRealtimeProductionRuntime(
             decision_source=decision_source_factory(),
             transport=transport_factory(),
             observability_sink=sink,
             authorization_resolver=authorization_resolver,
             custody=custody,
         )
+        if runtime_configuration_identity is not None:
+            runtime.bind_configuration_identity(runtime_configuration_identity)
+        return runtime
 
     app = create_product_app(
         db_path=db_path,
@@ -126,6 +131,11 @@ def create_action_capable_product_app(
     app.state.action_idempotency_ledger = ledger
     app.state.production_action_executor = executor
     app.state.action_recovery_report = action_recovery
+    app.state.runtime_configuration_identity = (
+        None
+        if runtime_configuration_identity is None
+        else runtime_configuration_identity.model_dump(mode="json")
+    )
 
     def trusted_context(request: Request) -> AuthenticatedRuntimeContext:
         return trusted_runtime_context(context_provider, request)
