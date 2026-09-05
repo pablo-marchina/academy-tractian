@@ -1,18 +1,6 @@
 name: provider-model-comparison-design-v2
 
 on:
-  pull_request:
-    paths:
-      - research/provider-model-comparison-design-v2-2026-08-31.md
-      - research/experiments/provider-model-comparison-design-manifest-v2.json
-      - research/experiments/provider-model-comparison-dev-population-v1.json
-      - scripts/research/validate_provider_model_comparison_design_v2.py
-      - tests/test_provider_model_comparison_design_v2.py
-      - .github/workflows/provider-model-comparison-design-v2.yml
-      - docs/adr/018-cloudflare-provider-model-comparison-preregistration-2026-08-31.md
-      - docs/adr/README.md
-      - docs/CURRENT-PROJECT-STATUS.md
-      - docs/NEXT-STEPS.md
   workflow_dispatch:
 
 permissions:
