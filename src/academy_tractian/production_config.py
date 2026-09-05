@@ -1,0 +1,211 @@
+from __future__ import annotations
+
+from ipaddress import ip_address
+import re
+from typing import Mapping
+from urllib.parse import parse_qs, urlsplit
+
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
+
+
+_GIT_SHA = re.compile(r"^[0-9a-fA-F]{40}$")
+_LOCAL_HOST_ALIASES = frozenset(
+    {
+        "localhost",
+        "localhost.localdomain",
+        "host.docker.internal",
+        "gateway.docker.internal",
+        "docker.for.mac.host.internal",
+    }
+)
+_REQUIRED_ENV = (
+    "ACADEMY_ENVIRONMENT",
+    "ACADEMY_POSTGRES_INTERNAL_DSN",
+    "ACADEMY_POSTGRES_SCOPED_DSN",
+    "ACADEMY_RUNTIME_IDENTITY_SECRET",
+    "ACADEMY_RUNTIME_IDENTITY_ISSUER",
+    "ACADEMY_RUNTIME_IDENTITY_AUDIENCE",
+    "ACADEMY_PUBLIC_BASE_URL",
+    "ACADEMY_RELEASE_GIT_SHA",
+    "ACADEMY_DEPLOYMENT_ID",
+    "ACADEMY_COST_POLICY",
+    "ACADEMY_PAID_FALLBACK_ENABLED",
+    "ACADEMY_LOCAL_SERVING_ENABLED",
+)
+
+
+def _parse_bool(value: str, *, name: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized == "true":
+        return True
+    if normalized == "false":
+        return False
+    raise ValueError(f"{name} must be explicitly true or false")
+
+
+def _is_local_endpoint(hostname: str) -> bool:
+    host = hostname.strip().lower().rstrip(".")
+    if host in _LOCAL_HOST_ALIASES or host.endswith(".localhost") or host.endswith(".local"):
+        return True
+    try:
+        address = ip_address(host)
+    except ValueError:
+        return False
+    return address.is_loopback or address.is_unspecified or address.is_link_local
+
+
+def _validate_remote_postgres_dsn(value: SecretStr) -> SecretStr:
+    raw = value.get_secret_value().strip()
+    parsed = urlsplit(raw)
+    if parsed.scheme not in {"postgres", "postgresql"}:
+        raise ValueError("production database must use a remote PostgreSQL URI")
+    if parsed.hostname is None or parsed.username is None:
+        raise ValueError("production database must use a remote PostgreSQL URI with an explicit role")
+    if _is_local_endpoint(parsed.hostname):
+        raise ValueError("production database must use a remote PostgreSQL endpoint, not localhost")
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    ssl_modes = [item.lower() for item in query.get("sslmode", [])]
+    if not ssl_modes or any(item not in {"require", "verify-ca", "verify-full"} for item in ssl_modes):
+        raise ValueError("remote PostgreSQL production DSN must require TLS via sslmode")
+    return SecretStr(raw)
+
+
+def _postgres_role(value: SecretStr) -> str:
+    parsed = urlsplit(value.get_secret_value())
+    if parsed.username is None:  # guarded by field validation; keep the invariant local
+        raise ValueError("production database role is missing")
+    return parsed.username
+
+
+class RemoteProductionConfig(BaseModel):
+    """Fail-closed configuration boundary for remotely served production.
+
+    This model does not claim that an infrastructure provider has been selected or that a cloud
+    billing system is technically capped. It prevents the application itself from booting under
+    configuration that violates the project's already-frozen USD0/no-local constraints. External
+    platform eligibility still requires independent evidence before deployment.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    environment: str = Field(min_length=1)
+    internal_dsn: SecretStr
+    scoped_dsn: SecretStr
+    runtime_identity_secret: SecretStr
+    runtime_identity_issuer: str = Field(min_length=1, max_length=200)
+    runtime_identity_audience: str = Field(min_length=1, max_length=200)
+    public_base_url: str = Field(min_length=1, max_length=2048)
+    release_git_sha: str
+    deployment_id: str = Field(min_length=1, max_length=200)
+    cost_policy: str = Field(min_length=1)
+    paid_fallback_enabled: bool
+    local_serving_enabled: bool
+    provider_calls_enabled: bool = False
+
+    @field_validator("internal_dsn", "scoped_dsn")
+    @classmethod
+    def validate_postgres_dsn(cls, value: SecretStr) -> SecretStr:
+        return _validate_remote_postgres_dsn(value)
+
+    @field_validator("runtime_identity_secret")
+    @classmethod
+    def validate_runtime_identity_secret(cls, value: SecretStr) -> SecretStr:
+        raw = value.get_secret_value()
+        if len(raw.encode("utf-8")) < 32:
+            raise ValueError("runtime identity secret must be at least 32 bytes")
+        normalized = raw.strip().lower()
+        if any(marker in normalized for marker in ("change-me", "placeholder", "example-secret", "test-secret")):
+            raise ValueError("runtime identity secret must not be a development placeholder")
+        return value
+
+    @field_validator("public_base_url")
+    @classmethod
+    def validate_public_base_url(cls, value: str) -> str:
+        normalized = value.strip().rstrip("/")
+        parsed = urlsplit(normalized)
+        if parsed.scheme != "https" or parsed.hostname is None or _is_local_endpoint(parsed.hostname):
+            raise ValueError("production public base URL must be a remote HTTPS endpoint")
+        if parsed.username is not None or parsed.password is not None or parsed.query or parsed.fragment:
+            raise ValueError("production public base URL must be a remote HTTPS origin without credentials/query/fragment")
+        return normalized
+
+    @field_validator("release_git_sha")
+    @classmethod
+    def validate_release_git_sha(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not _GIT_SHA.fullmatch(normalized):
+            raise ValueError("release git SHA must be an exact 40-character hexadecimal commit SHA")
+        return normalized
+
+    @field_validator("environment")
+    @classmethod
+    def validate_environment(cls, value: str) -> str:
+        if value.strip().lower() != "production":
+            raise ValueError("remote serving configuration must use the production environment")
+        return "production"
+
+    @field_validator("cost_policy")
+    @classmethod
+    def validate_cost_policy(cls, value: str) -> str:
+        if value.strip().lower() != "usd0-hard-gate":
+            raise ValueError("production cost policy must remain usd0-hard-gate")
+        return "usd0-hard-gate"
+
+    @model_validator(mode="after")
+    def validate_hard_boundaries(self) -> "RemoteProductionConfig":
+        if self.paid_fallback_enabled:
+            raise ValueError("paid fallback is forbidden by the USD0 hard gate")
+        if self.local_serving_enabled:
+            raise ValueError("local serving is forbidden in the production topology")
+        if _postgres_role(self.internal_dsn) == _postgres_role(self.scoped_dsn):
+            raise ValueError("internal and scoped database DSNs must use distinct PostgreSQL roles")
+        if self.internal_dsn.get_secret_value() == self.scoped_dsn.get_secret_value():
+            raise ValueError("internal and scoped database DSNs must be distinct")
+        return self
+
+    @classmethod
+    def from_env(cls, environ: Mapping[str, str]) -> "RemoteProductionConfig":
+        missing = [name for name in _REQUIRED_ENV if not environ.get(name, "").strip()]
+        if missing:
+            raise ValueError(
+                "missing required production environment variables: " + ", ".join(sorted(missing))
+            )
+        return cls(
+            environment=environ["ACADEMY_ENVIRONMENT"],
+            internal_dsn=SecretStr(environ["ACADEMY_POSTGRES_INTERNAL_DSN"]),
+            scoped_dsn=SecretStr(environ["ACADEMY_POSTGRES_SCOPED_DSN"]),
+            runtime_identity_secret=SecretStr(environ["ACADEMY_RUNTIME_IDENTITY_SECRET"]),
+            runtime_identity_issuer=environ["ACADEMY_RUNTIME_IDENTITY_ISSUER"],
+            runtime_identity_audience=environ["ACADEMY_RUNTIME_IDENTITY_AUDIENCE"],
+            public_base_url=environ["ACADEMY_PUBLIC_BASE_URL"],
+            release_git_sha=environ["ACADEMY_RELEASE_GIT_SHA"],
+            deployment_id=environ["ACADEMY_DEPLOYMENT_ID"],
+            cost_policy=environ["ACADEMY_COST_POLICY"],
+            paid_fallback_enabled=_parse_bool(
+                environ["ACADEMY_PAID_FALLBACK_ENABLED"],
+                name="ACADEMY_PAID_FALLBACK_ENABLED",
+            ),
+            local_serving_enabled=_parse_bool(
+                environ["ACADEMY_LOCAL_SERVING_ENABLED"],
+                name="ACADEMY_LOCAL_SERVING_ENABLED",
+            ),
+            provider_calls_enabled=_parse_bool(
+                environ.get("ACADEMY_PROVIDER_CALLS_ENABLED", "false"),
+                name="ACADEMY_PROVIDER_CALLS_ENABLED",
+            ),
+        )
+
+    def safe_metadata(self) -> dict[str, object]:
+        """Return browser-safe release identity without DSNs, roles, hosts or secrets."""
+
+        return {
+            "schema_version": "remote-production-release-v1",
+            "environment": self.environment,
+            "public_base_url": self.public_base_url,
+            "release_git_sha": self.release_git_sha,
+            "deployment_id": self.deployment_id,
+            "cost_policy": self.cost_policy,
+            "paid_fallback_enabled": self.paid_fallback_enabled,
+            "local_serving_enabled": self.local_serving_enabled,
+            "provider_calls_enabled": self.provider_calls_enabled,
+        }

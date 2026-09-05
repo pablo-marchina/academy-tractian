@@ -37,6 +37,7 @@ USD0 is an eligibility hard gate, not a weighted preference. Paid candidates may
 |---|---|
 | Non-negotiable principles | [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) |
 | Current project state | [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) |
+| Consolidated development update (2026-09-05) | [`docs/DEVELOPMENT-UPDATE-2026-09-05.md`](docs/DEVELOPMENT-UPDATE-2026-09-05.md) |
 | Documentation index | [`docs/README.md`](docs/README.md) |
 | Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Codebase map | [`docs/CODEBASE-MAP.md`](docs/CODEBASE-MAP.md) |

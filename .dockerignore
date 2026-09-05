@@ -1,0 +1,42 @@
+# VCS / editor
+.git
+.github
+.idea
+.vscode
+
+# Python local/dev artifacts
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage*
+htmlcov
+.venv
+venv
+*.egg-info
+build
+dist
+
+# Frontend is released separately from the backend artifact
+frontend
+node_modules
+
+# Tests, docs and historical research are not backend runtime inputs.
+# research/e2 is explicitly re-included because the accepted production wheel imports that package.
+tests
+docs
+research/**
+!research/e2/
+!research/e2/**
+
+# Local/private artifacts and secrets
+.env
+.env.*
+!.env.example
+partner-private
+artifacts/private
+artifacts/generated-private
+.tmp
+tmp
+*.log
