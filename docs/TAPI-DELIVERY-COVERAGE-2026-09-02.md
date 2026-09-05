@@ -1,410 +1,384 @@
 # TAPI Delivery Coverage — Stack, Techniques, Frameworks and Final Outputs
 
-**Checkpoint:** 2026-09-02  
+**Status:** ACTIVE / canonical TAPI-to-delivery coverage  
+**Final-P0 checkpoint:** 2026-09-05 BRT  
 **Project:** Academy × TRACTIAN — Engenharia e Avaliação de Agentes Industriais  
 **Source:** TAPI `Engenharia e Avaliação de Agentes Industriais`  
-**Delivery target:** 2026-09-08
+**Functional P0 baseline:** `d3bed06b132212c85b126f56708863d45f64e03e`  
+**Post-merge gate:** `final-ci-required` run #386 / `required-gate = success`  
+**Delivery:** 2026-09-08
 
-This document makes explicit the technical choices and final outputs that were previously distributed across runtime/evaluation/observability issues. It is a prospective delivery plan; frozen historical ADRs/results remain authoritative for their exact scopes.
+This document answers one question: **how the delivered product covers the assignment scope and expected technical/evaluation outputs**. Historical ADRs/experiments remain authoritative for their original checkpoints.
 
-## 1. Declared TAPI track
+## 1. Declared combined track
 
-The delivery combines both allowed TAPI tracks:
+The delivery combines the two TAPI capabilities in one solution:
 
-- **Track A — Agent construction:** governed industrial agent with typed tools over the TRACTIAN API, bounded planning/stopping, evidence-aware outcomes and read/action/escalation safety boundaries.
-- **Track B — Agent evaluation framework:** scenario runner, metrics/evaluators, adversarial/failure/stability campaigns, trace capture/reproduction, provider comparison experiments and realtime trace-inspection application.
+- **Agent construction:** governed industrial support agent with typed TRACTIAN tools, bounded investigation, evidence-aware outcomes, escalation and controlled consequential actions;
+- **Agent evaluation framework:** scenario/campaign execution, deterministic trace/safety/trajectory metrics, failure/stability/communication analysis, provider experiments and safe trace-inspection product surfaces.
 
-Research question instantiated for the project:
+Project research question:
 
-> How can a single-agent industrial support system use typed tools and evidence while remaining reliable under incomplete/conflicting/unavailable API responses, constrained actions and provider variability?
-
-Primary experiment line:
-
-1. establish a deterministic provider-free baseline and safety/evaluation harness;
-2. compare live free-provider candidates under a frozen public packet (D01);
-3. diagnose the observed exact-512-token output censoring with a single-variable 1024 completion-cap experiment (D02);
-4. retain `NO_SELECTION` when hard quality/stability gates are not met;
-5. preserve or change architecture only when a measured material gap supports it.
+> How can an industrial support agent use typed tools and evidence while remaining reliable under incomplete/conflicting/unavailable API responses, consequential-action risk and provider variability?
 
 ## 2. Final technical stack
 
-### 2.1 Agent/runtime
+### Agent/runtime
 
-| Layer | Choice | Role | Status |
-|---|---|---|---|
-| Language | Python >=3.11 | Main agent/runtime/evaluation implementation | Implemented |
-| Schemas | Pydantic 2.x | Frozen typed inputs, tool contracts, decisions, traces, evaluator reports | Implemented |
-| Agent orchestration | Custom `AgentController` | Single-agent tool/terminal decision loop, bounded turns/tool calls | Implemented |
-| Execution boundary | `HarnessRunner` | Sole real tool execution boundary, trace capture and policy containment | Implemented |
-| Tool contract | `ToolSpec` + JSON-schema-like parameter contracts | 18 canonical operations, argument validation, permissions | Implemented |
-| API integration | Typed HTTP adapter/transport | TRACTIAN API requests/responses | Implemented |
-| Action safety | B1/B2/B3-style deterministic gates + authorization/idempotency custody | Argument, policy, evidence/action safety | Implemented |
-| Packaging | hatchling wheel | Clean standalone reproduction | Implemented |
+| Layer | Final choice | State |
+|---|---|---|
+| Language | Python >=3.11 | implemented |
+| Schemas | Pydantic 2.x | implemented |
+| Product/API | FastAPI + Uvicorn | implemented |
+| Agent orchestration | custom `AgentController` | final P0 `NO_CHANGE` |
+| Execution boundary | `HarnessRunner` | frozen hard boundary |
+| Tool contract | 18 typed `ToolSpec`s | implemented |
+| TRACTIAN integration | typed adapter/transport | implemented |
+| Serving persistence | PostgreSQL + psycopg | promoted |
+| Tenant isolation | PostgreSQL RLS + signed server context | promoted/tested |
+| Realtime wakeup | PostgreSQL LISTEN/NOTIFY + durable fallback | promoted/tested |
+| Read-only handoff | PostgreSQL work items + generation leases | promoted/tested |
+| Consequential action ownership | custody + idempotency + non-transferable lease | promoted/tested |
+| Packaging | hatchling wheel | reproduced |
 
-**Why no LangGraph/LangChain/Pydantic AI:** TAPI lists them as suggested/equivalent orchestration choices, not mandatory dependencies. The custom controller is deliberately smaller, deterministic and already measured. Adding another orchestration framework without a material gap would add risk without evidence of benefit.
+DuckDB is not a production dependency. It remains only in explicit dev/benchmark compatibility extras.
 
-**Why no MCP in the main path:** TAPI accepts tools, MCP or equivalent. Native typed tools currently preserve stronger direct contracts and lower complexity for this API scope. MCP can be an evolution path, not a delivery requirement.
+### Frontend
 
-### 2.2 Model/provider
-
-| Item | Choice/status |
+| Layer | Choice |
 |---|---|
-| Route | Direct Cloudflare Workers AI |
-| Candidate A | `@cf/zai-org/glm-4.7-flash` |
-| Candidate B | `@cf/nvidia/nemotron-3-120b-a12b` |
-| D01 | 32/32 live attempts; USD0; `NO_SELECTION`; 24/24 `CLIENT_FAILURE` at exactly 512 output tokens |
-| D02 | Same packet/provider/prompt/schema, completion cap 1024 + sanitized failure subtype; live pending governed reset window |
-| Production provider | Must remain evidence-driven; `NO_SELECTION` is valid |
+| Language | TypeScript |
+| UI | React 19 |
+| Build | Vite |
+| Server state | TanStack Query |
+| Analytics | Apache ECharts |
+| Trace/architecture graph | React Flow / `@xyflow/react` |
+| Unit tests | Vitest |
+| Browser acceptance | Playwright / Chromium |
+| Dependency lock | committed `package-lock.json` + `npm ci` |
 
-Provider/model version, route, configuration, completion limits, resource accounting and known limitations must be visible in the final documentation and Quality & Provider frontend screen.
+### Evaluation/research
 
-### 2.3 Evaluation/research
-
-| Technique/framework | Role | Status |
+| Technique | Delivered role | State |
 |---|---|---|
-| pytest | Unit/integration/regression tests | Implemented |
-| Scenario runner | Controlled industrial cases | Implemented |
-| Deterministic trace evaluator | Structural/safety/provenance validation | Implemented |
-| Frozen public provider comparison | Controlled model behavior experiment | Implemented D01; D02 prepared |
-| Repeated trials | Stability/signature repeatability | Implemented |
-| Failure campaigns | Partial/inconclusive/conflict/unavailable/provider/tool failure behavior | Implemented |
-| Adversarial/policy cases | Invalid arguments, blocked actions, evidence insufficiency | Implemented |
-| Trace capture + replay/reproduction | Auditable executions | Implemented |
-| Sanitized provider-call provenance | Provider/model/latency/outcome without raw prompt/response | Implemented |
-| Human escalation handoff validation | Safe operational escalation output | Implemented |
+| deterministic trace evaluator | structure/safety/trajectory/provenance | implemented |
+| scenario/failure campaigns | complete/partial/conflict/unavailable/provider/tool cases | implemented |
+| repeated runs | stability/signature behavior | implemented |
+| communication campaign | customer-safe terminal/handoff behavior | implemented |
+| action safety evaluation | proposal/confirmation/idempotency/fencing/no-replay | implemented |
+| provider comparison | D01/D02 controlled USD0 experiments | complete / `NO_SELECTION` |
+| load/concurrency | queue/latency/resource description | measured / bounded |
+| restart/recovery | conservative persisted-state semantics | measured / bounded |
+| realtime benchmark | polling vs LISTEN/NOTIFY | measured / candidate promoted |
+| human semantic review | blinded collection/adjudication infrastructure | implemented; real labels missing |
+| operational value | blinded MANUAL×ASSISTED collection + paired analysis | implemented; real observations missing |
+| adaptive stopping | evaluator-only replay diagnostic | implemented / not promoted |
 
-TAPI analysis objects explicitly covered:
+## 3. Agent techniques
 
-1. function/tool selection;
-2. argument accuracy;
-3. execution trajectory;
-4. evidence use;
-5. response quality;
-6. safety;
-7. failure behavior;
-8. stability between executions;
-9. high-impact-action behavior.
+### T1 — Typed tool-augmented loop
 
-### 2.4 Realtime observability backend
+```text
+decision
+→ optional typed tool proposal
+→ deterministic validation/policy
+→ execution
+→ normalized observation
+→ next decision or terminal outcome
+```
 
-| Layer | Choice | Role | Delivery status |
-|---|---|---|---|
-| Safe telemetry projection | New typed Python/Pydantic models | Convert raw runtime trace to browser-safe observability records | P0 planned (#121) |
-| Event sink | `ObservabilityEventSink` protocol | Fail-isolated live event publication boundary | P0 planned (#124) |
-| Service/API | FastAPI stable 0.140.x line | Read-only telemetry/query endpoints + SSE | P0 planned |
-| Realtime transport | Server-Sent Events | Genuine live run updates, reconnect/cursor catch-up | P0 planned |
-| Analytics store | DuckDB stable 1.5.5 | Local USD0 analytical persistence/query | P0 planned |
-| Export | Sanitized JSONL/Parquet where useful | Reproduction/offline analysis | Planned |
-| Multi-instance adapter | Redis Streams or equivalent behind sink | Optional scale-out only if configured/tested | Conditional, not claimed by default |
-
-Raw `RunTrace` is never served directly to the browser. Identity, user id, seed, credentials, auth headers, raw provider material, forbidden raw tool/observation bodies and evaluator-private truth remain outside the frontend boundary.
-
-### 2.5 Frontend/data visualization
-
-Target stable frontend baseline (versions must be frozen in the lockfile at scaffold time):
-
-| Layer | Choice | Role |
-|---|---|---|
-| UI language | TypeScript | Frontend type safety |
-| UI framework | React 19.2 stable line | Application/component model |
-| Build/dev | Vite 8.1 stable line | Fast local build/dev server |
-| Server state | TanStack Query 5.x | REST cache/loading/error/refetch |
-| Live state | Idempotent event reducer/store | SSE event application by event id/cursor |
-| Analytics visualization | Apache ECharts 6.1 | Dynamic charts, datasets, live updates |
-| Trace/architecture graph | `@xyflow/react` / React Flow 12.11 | Interactive execution + architecture topology |
-| Styling | Lightweight local CSS/component primitives | Presentation-grade control room without hosted dependency |
-
-Frontend is intentionally richer than TAPI's Streamlit/Gradio examples because the TAPI leaves delivery format open and explicitly values trace inspection and demonstration quality.
-
-### 2.6 Frontend/contract QA
-
-| Tool/technique | Role | Target |
-|---|---|---|
-| Vitest 4.1 stable line | Frontend unit/component logic | P0 |
-| Testing Library | User-facing component behavior | P0 |
-| Playwright 1.62 stable line | E2E/browser/realtime/reconnect tests | P0 |
-| FastAPI/Pydantic contract tests | API schema/sanitization | P0 |
-| pytest | Backend/runtime/observability regression | P0 |
-| Clean frontend build gate | Reproducible UI artifact | P0 |
-| Security field-deny tests | Prove private fields cannot cross API/SSE | P0 |
-| Reconnect/idempotency tests | Realtime correctness | P0 |
-| Presentation viewport tests | Demo quality | P1 |
-
-## 3. Agent techniques used
-
-The plan must name techniques independently of library choice.
-
-### T1 — Tool-augmented iterative agent loop
-
-A bounded observation/action loop structurally inspired by tool-using agent patterns: model decision -> typed tool proposal -> deterministic validation/policy -> observation -> next decision or terminal outcome. Do **not** claim hidden chain-of-thought or literal ReAct prompting unless implemented and measured.
+No hidden chain-of-thought is claimed or exposed.
 
 ### T2 — Typed function/tool calling
 
-- canonical typed tool registry;
-- strict argument schemas;
+- one canonical 18-operation registry;
+- strict parameter schemas;
 - deterministic argument validation;
-- identity/seed binding outside model control;
-- no arbitrary HTTP construction by the model.
+- identity/tenant/permissions outside model control;
+- no arbitrary model-generated HTTP path.
 
-### T3 — Evidence-aware decision policy
+### T3 — Evidence-aware outcomes
 
-The agent must distinguish:
+First-class outcomes:
 
-- contextualize/orient;
-- investigate with tools;
-- ask clarification;
-- abstain safely;
-- escalate to a human;
-- propose/execute an action only through deterministic safety gates.
+- orient/final;
+- investigate;
+- clarify;
+- abstain;
+- escalate;
+- bounded consequential-action proposal.
 
-### T4 — Bounded planning and stopping
+### T4 — Deterministic safety envelope
 
-- maximum turns;
-- maximum tool calls;
-- no hidden retry/fallback on governed paths;
-- safe abstention on exhausted/failing boundaries.
-
-### T5 — Fail-closed action safety
-
-- B1 argument/schema validation;
-- B2 permission/resource policy;
+- B1 schema/argument checks;
+- B2 permission/resource/action policy;
 - B3 evidence/authorization where applicable;
-- justification requirements;
-- idempotency/no-replay custody for consequential actions.
+- explicit confirmation;
+- persistent idempotency;
+- non-transferable action execution lease;
+- privacy field deny-list;
+- hard resource/turn/tool caps.
+
+### T5 — Distributed ownership with asymmetric semantics
+
+Read-only runtime lease expiry may allow takeover with a new generation. Consequential action lease expiry/loss does not transfer; the product converges ambiguity to `UNCERTAIN` and forbids replacement replay.
 
 ### T6 — Evidence/provenance tracing
 
-Every meaningful execution transition is represented as an ordered trace event; provider-call metadata is sanitized and hash/provenance oriented. Final UI exposes safe evidence lineage without exposing chain-of-thought.
+Ordered runtime/evaluator transitions become safe PostgreSQL run/event/evidence/evaluation rows. Frontend exposes producer/evidence lineage without raw private trace material.
 
-### T7 — Robustness under probabilistic API behavior
+### T7 — Realtime durable projection
 
-Explicitly test TAPI response modes:
+PostgreSQL rows/cursors are authoritative. LISTEN/NOTIFY is wakeup-only; missed notifications recover through bounded durable reads. SSE/browser reduction is idempotent.
 
-- complete;
-- partial;
-- inconclusive;
-- conflict;
-- unavailable.
+### T8 — Eval-Driven Development
 
-### T8 — Repeated-execution stability
+```text
+requirement
+→ metric/evaluator
+→ baseline
+→ preregistered candidate
+→ repeated/sliced comparison
+→ hard gates + uncertainty
+→ PROMOTE / REJECT / INCONCLUSIVE / NO_CHANGE
+→ regression
+```
 
-Repeat public units, compare terminal/tool signatures and quantify consistency rather than judging one favorable sample.
+## 4. TAPI analysis objects covered
 
-### T9 — Controlled provider/model experimentation
+The evaluation framework covers the assignment's meaningful agent dimensions:
 
-Frozen packet, same units/repeats/config, explicit hard gates, resource/cost accounting, Pareto/`NO_SELECTION` outcome. D02 changes one measured variable after D01 censoring evidence.
+1. function/tool selection;
+2. argument validity/accuracy where deterministically measurable;
+3. execution trajectory;
+4. evidence/provenance use;
+5. response/operational-conclusion quality;
+6. safety/authorization;
+7. failure behavior;
+8. stability between executions;
+9. high-impact/consequential-action behavior;
+10. escalation/handoff and communication behavior.
 
-### T10 — Trace-only deterministic evaluation + separated semantic experiments
+Semantic response-quality claims remain bounded where real human labels are unavailable.
 
-Production evaluator consumes only runtime trace-visible structural/safety evidence. Evaluator-private/gold information never enters runtime/model input. Semantic/provider quality experiments remain explicitly separated.
+## 5. Provider/model experiment line
 
-### T11 — Realtime event-sourcing-style observability projection
+### D01
 
-Runtime trace events are append-only operational truth; safe projected events are persisted and streamed. Reconnect performs cursor-based catch-up. Browser reducers are idempotent.
+- 2 Cloudflare Workers AI free candidates;
+- frozen public packet;
+- 32/32 governed attempts completed;
+- USD0;
+- substantial exact-512 completion-cap censoring observed;
+- selection: `NO_SELECTION`.
 
-### T12 — Schema-driven dynamic visualization
+### D02
 
-Allow-listed telemetry schema describes field type, semantic role, units and valid aggregations. The explorer chooses/validates visual grammar deterministically rather than allowing arbitrary SQL/private-schema guessing.
+Controlled change:
 
-## 4. Frameworks/tools explicitly not used in the delivery critical path
+```text
+completion cap 512 → 1024
+```
 
-| Technology | Decision | Reason |
+All 32/32 governed attempts completed at USD0. Quality improved materially on several public metrics, but both candidates still failed frozen M1/M4/M7 promotion gates.
+
+Accepted aggregate D02:
+
+| Candidate | M1 | M4 | success | stability | median | p95 | Decision |
+|---|---:|---:|---:|---:|---:|---:|---|
+| GLM 4.7 Flash | 0.4375 | 0.3750 | 0.4375 | 0.2500 | 15329 ms | 38270 ms | FAIL M1/M4/M7 |
+| Nemotron 3 120B A12B | 0.5625 | 0.5625 | 0.5625 | 0.5000 | 4218.5 ms | 9168 ms | FAIL M1/M4/M7 |
+
+Final provider/model state: **`NO_SELECTION`**.
+
+D01/D02 are consumed and must not be replayed. Any future provider/model comparison is P1 with a new experiment ID/protocol.
+
+## 6. Frameworks/tools intentionally not on the P0 critical path
+
+| Technology | Final P0 decision | Reason |
 |---|---|---|
-| LangGraph | NO_CHANGE / not used | Current single-agent controller covers measured needs; no proven topology gap |
-| LangChain | Not used | Adds abstraction without measured benefit to typed bounded path |
-| Pydantic AI | Not used as orchestrator | Pydantic schemas already used directly; custom controller retained |
-| MCP SDK | Not used on main path | Native typed tools are an accepted equivalent and simpler for supplied API |
-| RAG/vector/hybrid/reranking | Not used | TAPI says optional; no demonstrated knowledge-retrieval gap in current public cases |
-| Persistent agent memory | Not used | No measured requirement; risks state leakage/reproducibility |
-| Grafana/Phoenix/Langfuse | Not primary UI | Native control room is delivery-critical; optional export/benchmark later |
-| Redis Streams | Conditional | Only required to claim horizontal multi-instance realtime; single-process delivery can use in-process sink + durable telemetry |
-| Streamlit/Gradio | Not used | React control room better satisfies realtime, drill-down, trace topology and dynamic visualization requirements |
+| LangGraph | not promoted / `NO_CHANGE` | PostgreSQL handoff/action fencing closed measured durability/HITL gaps without framework migration |
+| LangChain | not used | no measured benefit over typed bounded path |
+| Pydantic AI orchestration | not used | schemas use Pydantic directly; no orchestrator gap |
+| MCP migration | not used | native typed tools satisfy supplied API need |
+| RAG/vector/hybrid retrieval | not used | no demonstrated retrieval gap |
+| persistent cross-request memory | not used | no demonstrated requirement; privacy/reproducibility cost |
+| multi-agent | not used | no measured topology gap |
+| Redis/Kafka/Temporal | not required | PostgreSQL topology satisfies tested P0 serving/handoff/realtime needs |
+| Streamlit/Gradio | not used | React control room better fits realtime/drill-down/trace needs |
 
-Absence of these frameworks is an evidence-backed scope decision, not an omission.
+Absence is an evidence-backed scope decision, not an omission.
 
-## 5. Final product outputs
+## 7. Final product outputs
 
 ### O1 — Functional industrial agent
 
-Executable agent path that accepts a user support request and can:
+Can:
 
 - contextualize/orient;
-- investigate assets/analyses/data/model/knowledge through typed TRACTIAN tools;
-- ask clarification;
+- investigate through typed TRACTIAN reads;
+- clarify;
 - abstain;
 - escalate with structured handoff;
-- contain unsafe/unauthorized actions;
-- execute only explicitly authorized supplied/test actions where the existing controlled path permits.
+- propose actions under deterministic policy;
+- execute only after explicit governed confirmation in enabled profiles;
+- fail safely under tool/provider/runtime issues.
 
-### O2 — Typed TRACTIAN integration package
+### O2 — Typed TRACTIAN integration
 
-- 18-operation canonical tool registry;
-- HTTP adapter/transport;
+- 18-operation registry;
+- typed adapter/transport;
 - strict schemas;
-- response normalization;
+- normalized observations;
 - action-policy integration;
-- reproducible standalone wheel.
+- standalone reproducible package.
 
 ### O3 — Agent evaluation framework
 
 - scenario runner;
-- metric/evaluator library;
+- deterministic metrics/evaluators;
 - trace validators;
-- failure/adversarial/stability campaigns;
-- provider comparison harness;
-- reproducible frozen results/evidence.
+- failure/adversarial/stability/communication campaigns;
+- action-safety evaluation;
+- provider comparison harness/evidence;
+- safe per-run evaluation in product UI.
 
 ### O4 — Governed experiment reports
 
-At minimum final documentation must summarize:
+Final evidence includes:
 
-- provider-free baseline evidence;
-- D01 design/result and limitations;
-- D01 exact-512-token censoring diagnosis;
-- D02 hypothesis/design/result when executed;
-- provider selection or `NO_SELECTION` justification;
-- latency/resource/cost findings;
-- architecture materiality decision.
+- provider-free baseline/failure/stability/communication evidence;
+- D01/D02 design/results/limitations;
+- realtime wakeup comparison;
+- operational-store/load/restart/distributed ownership decisions;
+- negative outcomes such as `NO_SELECTION`, `NO_CHANGE`, `NOT_PROMOTED`.
 
-### O5 — Realtime Observability Control Room
+### O5 — Realtime Operator Control Room
 
-Screens:
+Connected surfaces include:
 
 1. Mission Control;
-2. Live Runs;
+2. Live Run Cockpit;
 3. Run Explorer;
-4. Trace Timeline / Waterfall;
+4. Timeline / Waterfall;
 5. Trace Graph;
-6. Tools & Policy;
-7. Quality & Providers;
-8. Dynamic Data Explorer;
-9. Architecture Explorer / Explain This Run.
+6. Architecture Explorer;
+7. Evidence Explorer;
+8. Output Lineage;
+9. Action Control;
+10. Tools & Policy analytics;
+11. Eval Lab;
+12. Provider D01/D02 Lab;
+13. Dynamic Data Explorer;
+14. Production Health.
 
-### O6 — Architecture Explorer
+### O6 — Output lineage
 
-Interactive implementation-backed diagram showing:
-
-`request -> runtime -> decision source/provider -> controller -> runner -> tools -> policy/action gates -> TRACTIAN API -> observations -> terminal output -> trace -> evaluator -> observability -> frontend`
-
-Selected runs highlight the exact active path.
-
-### O7 — Per-run output lineage
-
-Every safe output is labeled by producer:
-
-- `MODEL`;
-- `CONTROLLER`;
-- `POLICY`;
-- `TOOL`;
-- `OBSERVATION`;
-- `EVALUATOR`;
-- `SYSTEM`.
-
-UI answers: what happened, which component produced it, what safe evidence fed it, what happened next and what became terminal output. No hidden chain-of-thought.
-
-### O8 — Dynamic Data Explorer
-
-User-selectable safe dataset/dimensions/measures/filters/aggregations with deterministic chart compatibility and drill-down to underlying run/event evidence.
-
-### O9 — Realtime production telemetry
-
-- safe runtime event stream;
-- SSE updates;
-- event ids/cursors;
-- persisted catch-up;
-- explicit `LIVE`, `RECONNECTING`, `CAUGHT_UP`, `HISTORICAL` states;
-- live trace graph/timeline/counters;
-- fail-isolated slow-client behavior.
-
-### O10 — Technical documentation/reproduction package
-
-README and docs must explicitly cover TAPI-required common documentation:
-
-- problem;
-- declared combined track/scope;
-- architecture;
-- installation/execution;
-- full stack/framework matrix;
-- model/version/configuration;
-- agent techniques;
-- experimental methodology;
-- results;
-- limitations/risks;
-- evolution opportunities;
-- demo/reproduction runbook.
-
-## 6. TAPI requirement-to-evidence map
-
-| TAPI expectation | Planned/final evidence |
-|---|---|
-| API integration quality | typed 18-tool registry + HTTP adapter + contract tests |
-| Functional agent | ProductionRuntime + AgentController demo/live path |
-| Function selection | scenario/provider metrics + run traces |
-| Argument accuracy | B1 schema validation + metrics/tests |
-| Execution trajectory | RunTrace + Trace Graph/Timeline |
-| Evidence use | observation/evidence lineage + abstain/escalate cases |
-| Response quality | public experiment rubric/provider metrics |
-| Safety | action policy, permissions, idempotency, containment campaigns |
-| Failure behavior | partial/inconclusive/conflict/unavailable/provider/tool campaigns |
-| Stability | repeated-run signature/stability metrics |
-| High-impact actions | supplied/test controlled action evidence + policy blocks |
-| Experiment/hypothesis | D01/D02 preregistration/results + architecture materiality protocol |
-| Result analysis | experiment reports + Quality & Provider UI |
-| Limitations/risks | explicit bounded claims/NO_SELECTION/external blockers |
-| Reproducibility | clean wheel + provider-free reproduction + lockfiles/tests |
-| Documentation | README + ADRs + this coverage matrix + runbooks |
-| Demonstration quality | realtime control room + trace/architecture/output lineage + dynamic explorer |
-
-## 7. Final demo outputs to show live
-
-The final demonstration should deliberately show, rather than merely mention:
-
-1. a real support request entering the runtime;
-2. live architecture path activation;
-3. model-call metadata and structured decision;
-4. typed tool proposal;
-5. validation/policy result;
-6. TRACTIAN API call metadata;
-7. safe observation/evidence reference;
-8. subsequent decision;
-9. one terminal success/orientation;
-10. one clarification/abstention/failure path;
-11. one escalation + structured human handoff;
-12. one blocked high-impact action or controlled authorized action example;
-13. trace timeline/graph and per-output lineage;
-14. evaluator results appearing only after runtime completion;
-15. D01/D02 provider experiment comparison;
-16. dynamic data explorer interaction over safe telemetry;
-17. realtime disconnect/reconnect/catch-up if presentation time permits;
-18. exact limitations and provider-selection state.
-
-## 8. Delivery order
+Safe outputs identify producer classes:
 
 ```text
-#119 safe observability/realtime/explanation matrix
-→ #121 telemetry read model/API/persistence
-→ #124 realtime runtime event sink + SSE/reconnect
-→ #122 Mission Control / Live Runs / Run Explorer / Trace views
-→ #125 Architecture Explorer + Output Lineage
-→ #123 Dynamic Data Explorer + Quality/Provider/Tools/Policy visualizations
-→ #114 integrated E2E/security/realtime/front acceptance
-→ hard visual/feature freeze
-→ clean reproduction / documentation / final rehearsal
+MODEL
+CONTROLLER
+POLICY
+TOOL
+OBSERVATION
+EVALUATOR
+SYSTEM
 ```
 
-D02 (#117) remains parallel and must not block provider-free frontend implementation/testing.
+The UI answers what happened, what evidence fed it, what happened next, what became terminal and what evaluation followed.
 
-## 9. Definition of done against TAPI
+### O7 — Reproduction/evidence package
 
-The project is not considered delivery-complete merely because the runtime and tests pass. Before final delivery, the repository must make it straightforward for a reviewer to identify:
+- clean-clone backend/evaluator/frontend reproduction;
+- Chromium full-product acceptance;
+- horizontal runtime handoff gate;
+- action execution lease gate;
+- stable aggregate `required-gate`;
+- final freeze bundle with exact Git blobs and canonical manifest hash;
+- provider-independent final rehearsal path.
 
-- the exact declared TAPI track(s);
-- the exact stack and framework choices;
-- the exact model/provider/configuration;
-- the agent techniques used;
-- the experiment hypothesis and controls;
-- quantitative and qualitative results;
-- all final executable/product/documentation outputs;
-- limitations and consciously rejected optional technologies;
-- a reproducible run path;
-- a realtime, inspectable demonstration connecting request -> tools/API -> outcome -> trace/evaluation.
+## 8. Requirement-to-evidence map
+
+| TAPI expectation | Final evidence/disposition |
+|---|---|
+| API integration quality | typed 18-tool registry + adapter + contract/runtime tests |
+| Functional agent | production runtime + browser/provider-free integrated paths |
+| Function selection | traces/evaluator/campaigns |
+| Argument accuracy | ToolSpec/B1 deterministic validation + tests |
+| Execution trajectory | RunTrace + timeline/graph + evaluator |
+| Evidence use | evidence rows/lineage + clarify/abstain/escalate cases |
+| Response quality | deterministic communication + human-review infrastructure; real semantic calibration still NOT READY |
+| Safety | B1/B2/B3 + action custody/confirmation/idempotency/leases |
+| Failure behavior | EV-007 + tool/provider/restart/distributed tests |
+| Stability | EV-008 repeated-run campaign |
+| High-impact actions | controlled action proposal/confirmation/execution + stale-owner fencing |
+| Technical experiment | D01/D02 + storage/realtime/load/recovery comparisons |
+| Result analysis | frozen decision docs + crosswalk + product analytics |
+| Limitations/risks | explicit bounded non-claims and external blockers |
+| Reproducibility | clean clone + exact evidence pins + lockfile |
+| Documentation | README + architecture + plan + acceptance + runbook + rubric crosswalk |
+| Demonstration quality | real provider-free Chromium path + presentation rehearsal sequence |
+
+## 9. Final demonstration coverage
+
+The final provider-independent presentation should visibly show:
+
+```text
+request
+→ live run
+→ architecture activation
+→ structured decision/model metadata
+→ typed tool proposal
+→ deterministic policy result
+→ TRACTIAN transport metadata
+→ safe evidence
+→ next decision
+→ terminal / clarification / abstention / escalation / governed action
+→ RunTrace completion
+→ post-runtime evaluation
+→ output lineage
+→ Production Health
+→ dynamic analytics
+→ D01/D02 + architecture-decision evidence
+```
+
+Live provider availability must not be a single point of failure.
+
+## 10. Exact current acceptance evidence
+
+Functional P0 baseline:
+
+`d3bed06b132212c85b126f56708863d45f64e03e`
+
+Post-merge `final-ci-required` run #386 / `33971230788`:
+
+```text
+clean-clone                         success
+Chromium                            success
+horizontal runtime handoff          success
+action execution lease              success
+required-gate                       success
+```
+
+## 11. Explicit boundaries
+
+Final delivery must not claim:
+
+- a selected production provider/model;
+- completed semantic human calibration;
+- measured Engineer Minutes Saved/business value;
+- adaptive stopping runtime improvement;
+- production capacity/SLO from hosted CI;
+- deployed Cloud Run/Cloud SQL HA, RTO/RPO, autoscaling, multi-region failover or uptime;
+- distributed exactly-once external side effects;
+- enterprise OAuth/OIDC/SSO;
+- superiority/necessity of LangGraph/RAG/multi-agent/etc.;
+- branch protection while GitHub reports `main.protected=false`, `rulesets=[]`;
+- reconstruction/substitution/rescoring of the externally unavailable exact C4 artifact.
+
+## 12. Freeze/delivery state
+
+Before end of 2026-09-05, canonical documentation/evidence drift must be closed and the exact final PR head must pass clean clone + Chromium + horizontal runtime + action lease + `required-gate`.
+
+After hard freeze, only delivery-blocking fixes with targeted regression are allowed. Final rehearsal is 2026-09-06/07; delivery is 2026-09-08.
