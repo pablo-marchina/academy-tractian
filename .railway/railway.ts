@@ -15,11 +15,13 @@ export default defineRailway(() => {
       dockerfilePath: "Dockerfile",
       watchPatterns: ["src/**", "research/e2/**", "Dockerfile", "pyproject.toml", "requirements-production.lock"],
     },
+    deploy: {
+      restartPolicyType: "ON_FAILURE",
+      restartPolicyMaxRetries: 5,
+    },
     healthcheck: "/health",
     healthcheckTimeout: 60,
     replicas: { "us-east4-eqdc4a": 1 },
-    restarts: "on_failure",
-    restartLimit: 5,
     env: {
       ACADEMY_PORT: preserve(),
       ACADEMY_MAX_WORKERS: preserve(),
@@ -47,11 +49,13 @@ export default defineRailway(() => {
       rootDirectory: "frontend",
     }),
     build: { dockerfilePath: "Dockerfile.production", watchPatterns: ["frontend/**"] },
+    deploy: {
+      restartPolicyType: "ON_FAILURE",
+      restartPolicyMaxRetries: 5,
+    },
     healthcheck: "/",
     healthcheckTimeout: 120,
     replicas: { "us-east4-eqdc4a": 1 },
-    restarts: "on_failure",
-    restartLimit: 5,
     env: {
       NEON_AUTH_BASE_PATH: preserve(),
       NEON_AUTH_HOST: preserve(),
