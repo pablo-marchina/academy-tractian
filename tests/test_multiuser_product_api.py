@@ -11,12 +11,15 @@ from research.e2.controller import (
 from research.e2.models import BoundRequest
 from research.e2.transport import TransportResponse
 
+from academy_tractian.observability_store import ObservabilityStore
 from academy_tractian.product_api import (
     DEFAULT_RUNTIME_PERMISSIONS,
     AuthenticatedRuntimeContext,
     create_product_app,
 )
 from academy_tractian.realtime_runtime import RealtimeProductionRuntime
+from academy_tractian.run_access import DuckDBRunAccessStore
+from academy_tractian.run_execution_store import DuckDBRunExecutionStore
 
 
 class FinalSource:
@@ -83,10 +86,17 @@ def _submit_and_wait(client: TestClient, app, user_id: str) -> str:
     return run_id
 
 
+def _explicit_local_test_stores(tmp_path, prefix: str):
+    return {
+        "observability_store": ObservabilityStore(tmp_path / f"{prefix}.observability.duckdb"),
+        "run_access_store": DuckDBRunAccessStore(tmp_path / f"{prefix}.access.duckdb"),
+        "execution_store": DuckDBRunExecutionStore(tmp_path / f"{prefix}.execution.duckdb"),
+    }
+
+
 def test_two_users_cannot_cross_read_run_surfaces_or_sse(tmp_path) -> None:
     app = create_product_app(
-        db_path=tmp_path / "multiuser.duckdb",
-        access_db_path=tmp_path / "multiuser-access.duckdb",
+        **_explicit_local_test_stores(tmp_path, "multiuser"),
         runtime_factory=_runtime_factory,
         context_provider=_context_provider,
     )
@@ -146,8 +156,6 @@ def test_two_users_cannot_cross_read_run_surfaces_or_sse(tmp_path) -> None:
         )
         assert cross_org_same_user.status_code == 404
 
-        # Global analytics are fail-closed for normal users until an explicitly privileged
-        # or tenant-scoped analytical view is selected.
         assert client.get("/api/overview", headers=_headers("user-a")).status_code == 403
 
         admin_runs = client.get("/api/runs", headers=_headers("admin")).json()["items"]
@@ -156,14 +164,19 @@ def test_two_users_cannot_cross_read_run_surfaces_or_sse(tmp_path) -> None:
 
 
 def test_run_ownership_and_completed_execution_status_survive_product_restart(tmp_path) -> None:
-    db_path = tmp_path / "restart.duckdb"
-    access_path = tmp_path / "restart-access.duckdb"
-    execution_path = tmp_path / "restart-execution.duckdb"
+    observability_path = tmp_path / "restart.observability.duckdb"
+    access_path = tmp_path / "restart.access.duckdb"
+    execution_path = tmp_path / "restart.execution.duckdb"
+
+    def restart_stores():
+        return {
+            "observability_store": ObservabilityStore(observability_path),
+            "run_access_store": DuckDBRunAccessStore(access_path),
+            "execution_store": DuckDBRunExecutionStore(execution_path),
+        }
 
     first_app = create_product_app(
-        db_path=db_path,
-        access_db_path=access_path,
-        execution_db_path=execution_path,
+        **restart_stores(),
         runtime_factory=_runtime_factory,
         context_provider=_context_provider,
     )
@@ -178,9 +191,7 @@ def test_run_ownership_and_completed_execution_status_survive_product_restart(tm
         assert execution.json()["status"] == "completed"
 
     second_app = create_product_app(
-        db_path=db_path,
-        access_db_path=access_path,
-        execution_db_path=execution_path,
+        **restart_stores(),
         runtime_factory=_runtime_factory,
         context_provider=_context_provider,
     )
@@ -200,8 +211,7 @@ def test_run_ownership_and_completed_execution_status_survive_product_restart(tm
 
 def test_browser_cannot_override_tenant_role_or_permissions(tmp_path) -> None:
     app = create_product_app(
-        db_path=tmp_path / "payload-boundary.duckdb",
-        access_db_path=tmp_path / "payload-boundary-access.duckdb",
+        **_explicit_local_test_stores(tmp_path, "payload-boundary"),
         runtime_factory=_runtime_factory,
         context_provider=_context_provider,
     )

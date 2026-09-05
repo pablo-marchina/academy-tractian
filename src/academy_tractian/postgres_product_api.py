@@ -212,9 +212,7 @@ def create_postgres_action_capable_product_app(
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
         app = create_action_capable_product_app(
-            # The generic composition seam still calls this argument ``db_path``. Passing the
-            # shared database object selects PostgresObservabilityStore; it never becomes a path.
-            db_path=database,  # type: ignore[arg-type]
+            observability_store=observability_store,
             decision_source_factory=decision_source_factory,
             transport_factory=transport_factory,
             context_provider=context_provider,

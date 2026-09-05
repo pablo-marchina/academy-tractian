@@ -6,8 +6,11 @@ from research.e2.controller import ControllerContext, ControllerDecision, Contro
 from research.e2.models import BoundRequest
 from research.e2.transport import TransportResponse
 
+from academy_tractian.observability_store import ObservabilityStore
 from academy_tractian.product_api import DEFAULT_RUNTIME_PERMISSIONS, create_product_app
 from academy_tractian.realtime_runtime import RealtimeProductionRuntime
+from academy_tractian.run_access import DuckDBRunAccessStore
+from academy_tractian.run_execution_store import DuckDBRunExecutionStore
 from academy_tractian.runtime_identity import (
     SignedBearerRuntimeContextProvider,
     SignedRuntimeIdentityClaims,
@@ -96,6 +99,14 @@ def _submit_wait(client: TestClient, app, *, user_id: str, organization_id: str)
     return run_id
 
 
+def _explicit_local_test_stores(tmp_path, prefix: str):
+    return {
+        "observability_store": ObservabilityStore(tmp_path / f"{prefix}.observability.duckdb"),
+        "run_access_store": DuckDBRunAccessStore(tmp_path / f"{prefix}.access.duckdb"),
+        "execution_store": DuckDBRunExecutionStore(tmp_path / f"{prefix}.execution.duckdb"),
+    }
+
+
 def test_signed_identity_drives_run_ownership_and_cross_tenant_reads_fail_closed(tmp_path):
     provider = SignedBearerRuntimeContextProvider(
         secret=SECRET,
@@ -104,9 +115,7 @@ def test_signed_identity_drives_run_ownership_and_cross_tenant_reads_fail_closed
         now=lambda: NOW,
     )
     app = create_product_app(
-        db_path=tmp_path / "authenticated.duckdb",
-        access_db_path=tmp_path / "authenticated-access.duckdb",
-        execution_db_path=tmp_path / "authenticated-execution.duckdb",
+        **_explicit_local_test_stores(tmp_path, "authenticated"),
         runtime_factory=_runtime_factory,
         context_provider=provider,
     )
@@ -145,9 +154,7 @@ def test_browser_cannot_spoof_signed_tenant_identity_permissions_or_seed_in_payl
         now=lambda: NOW,
     )
     app = create_product_app(
-        db_path=tmp_path / "spoof.duckdb",
-        access_db_path=tmp_path / "spoof-access.duckdb",
-        execution_db_path=tmp_path / "spoof-execution.duckdb",
+        **_explicit_local_test_stores(tmp_path, "spoof"),
         runtime_factory=_runtime_factory,
         context_provider=provider,
     )
@@ -177,8 +184,7 @@ def test_global_access_requires_both_signed_claim_and_server_side_enablement(tmp
         now=lambda: NOW,
     )
     normal_app = create_product_app(
-        db_path=tmp_path / "global-normal.duckdb",
-        access_db_path=tmp_path / "global-normal-access.duckdb",
+        **_explicit_local_test_stores(tmp_path, "global-normal"),
         runtime_factory=_runtime_factory,
         context_provider=normal_provider,
     )
@@ -205,8 +211,7 @@ def test_global_access_requires_both_signed_claim_and_server_side_enablement(tmp
         now=lambda: NOW,
     )
     privileged_app = create_product_app(
-        db_path=tmp_path / "global-enabled.duckdb",
-        access_db_path=tmp_path / "global-enabled-access.duckdb",
+        **_explicit_local_test_stores(tmp_path, "global-enabled"),
         runtime_factory=_runtime_factory,
         context_provider=privileged_provider,
     )

@@ -14,11 +14,14 @@ from research.e2.controller import (
 from research.e2.models import BoundRequest
 from research.e2.transport import TransportResponse
 
+from academy_tractian.observability_store import ObservabilityStore
 from academy_tractian.product_api import (
     AuthenticatedRuntimeContext,
     create_product_app,
 )
 from academy_tractian.realtime_runtime import RealtimeProductionRuntime
+from academy_tractian.run_access import DuckDBRunAccessStore
+from academy_tractian.run_execution_store import DuckDBRunExecutionStore
 
 
 class FakeTransport:
@@ -72,6 +75,16 @@ def _sse_data_payloads(text: str) -> list[dict[str, object]]:
     return payloads
 
 
+def _explicit_local_test_stores(tmp_path):
+    """Test fixture only: the production factory itself owns no local persistence fallback."""
+
+    return {
+        "observability_store": ObservabilityStore(tmp_path / "product.observability.duckdb"),
+        "run_access_store": DuckDBRunAccessStore(tmp_path / "product.access.duckdb"),
+        "execution_store": DuckDBRunExecutionStore(tmp_path / "product.execution.duckdb"),
+    }
+
+
 def test_post_run_persists_real_start_before_background_execution_and_evaluates_after(tmp_path) -> None:
     entered = Event()
     release = Event()
@@ -97,7 +110,7 @@ def test_post_run_persists_real_start_before_background_execution_and_evaluates_
         )
 
     app = create_product_app(
-        db_path=tmp_path / "product.duckdb",
+        **_explicit_local_test_stores(tmp_path),
         runtime_factory=runtime_factory,
         context_provider=context_provider,
         max_workers=2,
@@ -115,7 +128,6 @@ def test_post_run_persists_real_start_before_background_execution_and_evaluates_
         assert "server-owned" not in json.dumps(accepted)
         assert entered.wait(timeout=5), "background runtime never entered decision source"
 
-        # Decision source is blocked, so only the genuine run_started event may exist.
         run_before = client.get(accepted["run_path"])
         assert run_before.status_code == 200
         assert run_before.json()["completed"] is False
@@ -185,7 +197,7 @@ def test_browser_cannot_submit_identity_or_seed_fields(tmp_path) -> None:
         )
 
     app = create_product_app(
-        db_path=tmp_path / "product.duckdb",
+        **_explicit_local_test_stores(tmp_path),
         runtime_factory=runtime_factory,
         context_provider=context_provider,
     )
@@ -210,7 +222,7 @@ def test_context_provider_failure_is_generic_401(tmp_path) -> None:
         raise AssertionError("runtime must not be constructed without trusted context")
 
     app = create_product_app(
-        db_path=tmp_path / "product.duckdb",
+        **_explicit_local_test_stores(tmp_path),
         runtime_factory=runtime_factory,
         context_provider=context_provider,
     )

@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import asynccontextmanager, suppress
-from pathlib import Path
 from threading import Lock
 from time import perf_counter
 from typing import Any, Callable, Literal, Protocol
@@ -15,12 +14,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from .evaluation import ProductionEvaluator
 from .observability import safe_run_id
 from .observability_api import ObservabilityAccessPolicy, create_observability_app
+from .observability_contract import ObservabilityStoreContract
 from .production_controls import ProductionControlState
 from .production_telemetry import ProductionTelemetry
+from .product_storage_contracts import ExecutionKind, RunAccessStore, RunExecutionStore
 from .realtime_observability import DuckDBObservabilityEventSink, SafeObservabilityEventSink
 from .realtime_runtime import PreparedRealtimeRun, RealtimeProductionRuntime
-from .run_access import DuckDBRunAccessStore, RunAccessStore
-from .run_execution_store import DuckDBRunExecutionStore, ExecutionKind, RunExecutionStore
 from .runtime import ProductionRequest
 
 
@@ -118,8 +117,6 @@ class ProductObservabilityAccessPolicy(ObservabilityAccessPolicy):
         if "runs:read:any" in context.permissions:
             return
 
-        # PostgreSQL implements this through a non-owner/non-BYPASSRLS connection. The DuckDB
-        # baseline provides the same contract by application filtering for tests/fallback use.
         ownership = self.run_access_store.get_scoped(
             run_id=run_id,
             organization_id=context.organization_id,
@@ -276,56 +273,43 @@ class RunExecutionRegistry:
             }
 
 
-def _derived_db_path(db_path: str | Path, infix: str) -> Path:
-    path = Path(db_path)
-    if path.suffix:
-        return path.with_name(f"{path.stem}.{infix}{path.suffix}")
-    return path.with_name(f"{path.name}.{infix}.duckdb")
-
-
 def create_product_app(
     *,
-    db_path: str | Path,
+    observability_store: ObservabilityStoreContract,
     runtime_factory: RealtimeRuntimeFactory,
     context_provider: RuntimeContextProvider,
-    access_db_path: str | Path | None = None,
-    execution_db_path: str | Path | None = None,
-    run_access_store: RunAccessStore | None = None,
-    execution_store: RunExecutionStore | None = None,
+    run_access_store: RunAccessStore,
+    execution_store: RunExecutionStore,
     operational_close: Callable[[], None] | None = None,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    """Create the product API over the safe observability/control plane.
+    """Create the production-capable API from explicit durable storage dependencies.
 
-    Store injection preserves one API/runtime semantic contract while allowing the qualified
-    PostgreSQL backend to own mutable production state. If stores are not injected, persistent
-    DuckDB stores remain available for isolated tests and bounded fallback use. The safe
-    observability/evaluation read model remains DuckDB regardless of operational backend.
+    The composition layer owns no persistence fallback. Callers must inject browser-safe
+    observability, run-ownership and execution-state stores explicitly. This prevents missing
+    cloud dependencies from silently degrading a multi-replica deployment into local file state.
+    Test-only local composition belongs in explicitly named fixtures/wrappers outside this factory.
     """
 
     if not 1 <= max_workers <= 64:
         raise ValueError("max_workers must be within [1, 64]")
     if not 250 <= heartbeat_interval_ms <= 10000:
         raise ValueError("heartbeat_interval_ms must be within [250, 10000]")
-    if run_access_store is not None and access_db_path is not None:
-        raise ValueError("provide run_access_store or access_db_path, not both")
-    if execution_store is not None and execution_db_path is not None:
-        raise ValueError("provide execution_store or execution_db_path, not both")
+    if not observability_store.ready():
+        raise ValueError("observability_store must be ready")
+    if not run_access_store.ready():
+        raise ValueError("run_access_store must be ready")
+    if not execution_store.ready():
+        raise ValueError("execution_store must be ready")
 
     created_perf = perf_counter()
     executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="academy-tractian-run")
     telemetry = ProductionTelemetry(heartbeat_stale_after_ms=max(1000, heartbeat_interval_ms * 3))
     controls = ProductionControlState(provider_calls_enabled=provider_calls_enabled)
-    active_run_access_store: RunAccessStore = run_access_store or DuckDBRunAccessStore(
-        _derived_db_path(db_path, "access") if access_db_path is None else access_db_path
-    )
-    active_execution_store: RunExecutionStore = execution_store or DuckDBRunExecutionStore(
-        _derived_db_path(db_path, "execution")
-        if execution_db_path is None
-        else execution_db_path
-    )
+    active_run_access_store = run_access_store
+    active_execution_store = execution_store
     recovered_executions = active_execution_store.reconcile_orphaned()
     registry = RunExecutionRegistry(max_workers=max_workers, state_store=active_execution_store)
     access_policy = ProductObservabilityAccessPolicy(
@@ -378,7 +362,7 @@ def create_product_app(
 
     try:
         app = create_observability_app(
-            db_path=db_path,
+            observability_store=observability_store,
             lifespan=lifespan,
             production_telemetry=telemetry,
             live_operability_supplier=live_operability_snapshot,
@@ -400,6 +384,7 @@ def create_product_app(
     app.state.production_controls = controls
     app.state.run_access_store = active_run_access_store
     app.state.product_access_policy = access_policy
+    app.state.local_test_storage_enabled = False
 
     def execute_prepared(run_id: str, prepared: PreparedRealtimeRun) -> None:
         registry.running(run_id)

@@ -9,7 +9,7 @@ from research.e2.models import RunTrace
 from research.e2.runner import HarnessRunner
 
 from .observability import SafeEvidenceRef, SafeEvent, SafeRun, project_trace
-from .observability_store import ObservabilityStore
+from .observability_contract import ObservabilityStoreContract
 from .production_telemetry import ProductionTelemetry
 
 
@@ -25,10 +25,12 @@ class SafeObservabilityEventSink(Protocol):
     ) -> None: ...
 
 
-class DuckDBObservabilityEventSink:
+class ObservabilityEventSink:
+    """Storage-engine-neutral publisher for the sanitized durable observability projection."""
+
     def __init__(
         self,
-        store: ObservabilityStore,
+        store: ObservabilityStoreContract,
         *,
         telemetry: ProductionTelemetry | None = None,
     ) -> None:
@@ -51,13 +53,18 @@ class DuckDBObservabilityEventSink:
             )
 
 
+# Backwards-compatible symbol for historical tests/research imports. New production composition
+# must use the engine-neutral name above; the implementation has no DuckDB-specific behavior.
+DuckDBObservabilityEventSink = ObservabilityEventSink
+
+
 class FailIsolatedObservabilityPublisher:
     """Project the latest canonical event and publish it without affecting runtime semantics."""
 
     def __init__(self, sink: SafeObservabilityEventSink) -> None:
         self.sink = sink
         self.telemetry = (
-            sink.telemetry if isinstance(sink, DuckDBObservabilityEventSink) else None
+            sink.telemetry if isinstance(sink, ObservabilityEventSink) else None
         )
         self._lock = Lock()
         self._published_count = 0
@@ -138,8 +145,6 @@ class ObservableHarnessRunner(HarnessRunner):
     ) -> None:
         self.observability_publisher = observability_publisher
         super().__init__(**kwargs)
-        # HarnessRunner constructs run_started directly rather than through _emit(). Capture the
-        # first possible post-construction monotonic boundary without altering the frozen trace.
         canonical_append_perf = perf_counter()
         self.observability_publisher.publish_trace_state(
             self.trace,
@@ -168,7 +173,6 @@ class ObservableAgentController(AgentController):
         super().__init__(**kwargs)
 
     def _emit(self, event_type: str, **kwargs: Any) -> None:
-        # ADR-004 semantics stay owned by the accepted controller implementation.
         super()._emit(event_type, **kwargs)
         canonical_append_perf = perf_counter()
         self.observability_publisher.publish_trace_state(

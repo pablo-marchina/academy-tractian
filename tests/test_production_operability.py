@@ -13,8 +13,11 @@ from research.e2.controller import (
 from research.e2.models import BoundRequest
 from research.e2.transport import TransportResponse
 
+from academy_tractian.observability_store import ObservabilityStore
 from academy_tractian.product_api import AuthenticatedRuntimeContext, create_product_app
 from academy_tractian.realtime_runtime import RealtimeProductionRuntime
+from academy_tractian.run_access import DuckDBRunAccessStore
+from academy_tractian.run_execution_store import DuckDBRunExecutionStore
 
 
 class FakeTransport:
@@ -87,6 +90,14 @@ def _component(health: dict, name: str) -> dict:
     return next(item for item in health["components"] if item["component"] == name)
 
 
+def _explicit_local_test_stores(tmp_path, prefix: str):
+    return {
+        "observability_store": ObservabilityStore(tmp_path / f"{prefix}.observability.duckdb"),
+        "run_access_store": DuckDBRunAccessStore(tmp_path / f"{prefix}.access.duckdb"),
+        "execution_store": DuckDBRunExecutionStore(tmp_path / f"{prefix}.execution.duckdb"),
+    }
+
+
 def test_health_reports_real_quantitative_runtime_api_sse_resource_and_adapter_metrics(tmp_path) -> None:
     transports: list[FakeTransport] = []
 
@@ -100,7 +111,7 @@ def test_health_reports_real_quantitative_runtime_api_sse_resource_and_adapter_m
         )
 
     app = create_product_app(
-        db_path=tmp_path / "operability.duckdb",
+        **_explicit_local_test_stores(tmp_path, "operability"),
         runtime_factory=runtime_factory,
         context_provider=_context,
         max_workers=2,
@@ -232,7 +243,7 @@ def test_decision_source_failure_is_completed_safe_abstention_slice_without_priv
         )
 
     app = create_product_app(
-        db_path=tmp_path / "handled-failure.duckdb",
+        **_explicit_local_test_stores(tmp_path, "handled-failure"),
         runtime_factory=runtime_factory,
         context_provider=_context,
         heartbeat_interval_ms=250,
@@ -270,7 +281,7 @@ def test_provider_kill_switch_blocks_before_runtime_factory(tmp_path) -> None:
         raise AssertionError("runtime factory must not run while provider switch is engaged")
 
     app = create_product_app(
-        db_path=tmp_path / "kill-switch.duckdb",
+        **_explicit_local_test_stores(tmp_path, "kill-switch"),
         runtime_factory=runtime_factory,
         context_provider=_context,
         provider_calls_enabled=False,
@@ -304,7 +315,7 @@ def test_executor_pressure_reports_one_running_and_one_queued_with_single_worker
         )
 
     app = create_product_app(
-        db_path=tmp_path / "pressure.duckdb",
+        **_explicit_local_test_stores(tmp_path, "pressure"),
         runtime_factory=runtime_factory,
         context_provider=_context,
         max_workers=1,
