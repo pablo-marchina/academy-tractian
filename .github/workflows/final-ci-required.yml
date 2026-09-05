@@ -10,7 +10,10 @@ on:
       - "research/e2/**"
       - "research/frozen/**"
       - "research/results/**"
+      - "research/experiments/**"
+      - "research/deployment-feasibility/**"
       - "research/*decision*.md"
+      - "research/managed-state-identity-static-screening-*.json"
       - "docs/**"
       - "README.md"
       - "pyproject.toml"
@@ -29,7 +32,10 @@ on:
       - "research/e2/**"
       - "research/frozen/**"
       - "research/results/**"
+      - "research/experiments/**"
+      - "research/deployment-feasibility/**"
       - "research/*decision*.md"
+      - "research/managed-state-identity-static-screening-*.json"
       - "docs/**"
       - "README.md"
       - "pyproject.toml"
@@ -55,21 +61,63 @@ jobs:
     name: full-product-browser
     uses: ./.github/workflows/full-product-playwright.yml
 
+  cloud-bakeoff-design:
+    name: cloud-bakeoff-design
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install frozen-product test surface
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Validate provider-free cloud bakeoff preregistration
+        run: python scripts/validate_cloud_deployment_bakeoff_preregistration.py
+
+      - name: Require bakeoff hard-gate and offline decision regressions
+        run: >-
+          python -m pytest -q
+          tests/test_deployment_bakeoff.py
+          tests/test_cloud_deployment_bakeoff_decide.py
+
+      - name: Prove current no-live state cannot promote a cloud
+        shell: bash
+        run: |
+          set +e
+          python scripts/cloud_deployment_bakeoff_decide.py \
+            --evaluated-at 2026-09-04T20:00:00Z \
+            --require-promotion
+          code=$?
+          set -e
+          test "$code" -eq 2
+          echo "CLOUD_BAKEOFF_DESIGN_GATE=PASS_NO_LIVE_SELECTION"
+
   required-gate:
     name: required-gate
     if: ${{ always() }}
     needs:
       - clean-clone
       - full-product-browser
+      - cloud-bakeoff-design
     runs-on: ubuntu-latest
     steps:
-      - name: Require clean clone and full browser acceptance
+      - name: Require clean clone, browser acceptance, and cloud bakeoff design integrity
         env:
           CLEAN_CLONE_RESULT: ${{ needs.clean-clone.result }}
           FULL_PRODUCT_BROWSER_RESULT: ${{ needs.full-product-browser.result }}
+          CLOUD_BAKEOFF_DESIGN_RESULT: ${{ needs.cloud-bakeoff-design.result }}
         run: |
           echo "clean-clone=${CLEAN_CLONE_RESULT}"
           echo "full-product-browser=${FULL_PRODUCT_BROWSER_RESULT}"
+          echo "cloud-bakeoff-design=${CLOUD_BAKEOFF_DESIGN_RESULT}"
           test "${CLEAN_CLONE_RESULT}" = "success"
           test "${FULL_PRODUCT_BROWSER_RESULT}" = "success"
+          test "${CLOUD_BAKEOFF_DESIGN_RESULT}" = "success"
           echo "FINAL_REQUIRED_CI=PASS"
