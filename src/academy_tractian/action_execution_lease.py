@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import Future
 from dataclasses import dataclass
-from threading import Lock
+from threading import Event, Lock, Thread
 from time import perf_counter
 from typing import Any, Protocol
 
@@ -88,7 +88,8 @@ class ActionExecutionLeaseSupervisor:
 
     This supervisor never dequeues work and never creates a replacement action attempt. It only
     maintains leases for action Futures already started by this replica and periodically asks the
-    shared store to converge expired/missing ownership to UNCERTAIN.
+    shared store to converge expired/missing ownership to UNCERTAIN. One daemon thread per product
+    replica owns maintenance; it is closed before the shared PostgreSQL pool.
     """
 
     def __init__(
@@ -97,6 +98,7 @@ class ActionExecutionLeaseSupervisor:
         store: ActionExecutionLeaseStore,
         instance_id: str,
         lease_seconds: float = 15.0,
+        scan_interval_seconds: float = 0.5,
     ) -> None:
         if not store.ready():
             raise ValueError("action execution lease store must be ready")
@@ -104,12 +106,17 @@ class ActionExecutionLeaseSupervisor:
             raise ValueError("instance_id must be within [1, 128] characters")
         if not 3.0 <= lease_seconds <= 3600.0:
             raise ValueError("lease_seconds must be within [3, 3600]")
+        if not 0.1 <= scan_interval_seconds <= 10.0:
+            raise ValueError("scan_interval_seconds must be within [0.1, 10]")
         self.store = store
         self.instance_id = instance_id
         self.lease_seconds = float(lease_seconds)
+        self.scan_interval_seconds = float(scan_interval_seconds)
         self._renew_every_seconds = max(1.0, self.lease_seconds / 3.0)
         self._lock = Lock()
         self._active: dict[str, _ActiveActionLease] = {}
+        self._stop = Event()
+        self._thread: Thread | None = None
         self._acquired = 0
         self._acquire_failures = 0
         self._renewals = 0
@@ -119,6 +126,29 @@ class ActionExecutionLeaseSupervisor:
         self._reconcile_ticks = 0
         self._reconcile_failures = 0
         self._reconciled_uncertain = 0
+
+    def start(self) -> None:
+        with self._lock:
+            if self._thread is not None and self._thread.is_alive():
+                return
+            self._stop.clear()
+            self._thread = Thread(
+                target=self._run,
+                name=f"action-lease-{self.instance_id[:24]}",
+                daemon=True,
+            )
+            self._thread.start()
+
+    def _run(self) -> None:
+        while not self._stop.wait(self.scan_interval_seconds):
+            self.tick()
+
+    def close(self) -> None:
+        self._stop.set()
+        with self._lock:
+            thread = self._thread
+        if thread is not None and thread.is_alive():
+            thread.join(timeout=max(1.0, self.scan_interval_seconds * 4.0))
 
     def acquire(self, *, action_id: str, execution_run_id: str) -> ActionExecutionLeaseClaim:
         claim = self.store.acquire(
@@ -203,6 +233,8 @@ class ActionExecutionLeaseSupervisor:
                 "schema_version": "action-execution-lease-supervisor-v1",
                 "instance_id": self.instance_id,
                 "lease_seconds": self.lease_seconds,
+                "scan_interval_seconds": self.scan_interval_seconds,
+                "maintenance_running": self._thread is not None and self._thread.is_alive(),
                 "active_local_leases": len(self._active),
                 "acquired": self._acquired,
                 "acquire_failures": self._acquire_failures,
