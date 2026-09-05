@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 from time import time
 from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
@@ -125,11 +124,9 @@ def _headers(*, user_id: str, organization_id: str) -> dict[str, str]:
 
 
 def test_signed_bearer_identity_and_postgres_rls_close_tenant_boundary(
-    tmp_path: Path,
     postgres_fixture,
 ) -> None:
     app = create_authenticated_postgres_action_capable_product_app(
-        db_path=tmp_path / "authenticated-postgres.duckdb",
         internal_dsn=postgres_fixture.admin_dsn,
         scoped_dsn=postgres_fixture.scoped_dsn,
         decision_source_factory=FinalSource,
@@ -156,6 +153,7 @@ def test_signed_bearer_identity_and_postgres_rls_close_tenant_boundary(
         future.result(timeout=15)
 
         assert app.state.runtime_identity_backend == "signed-bearer-hmac-sha256-v1"
+        assert app.state.local_test_storage_enabled is False
         assert client.get(
             f"/api/runs/{run_id}",
             headers=_headers(user_id="user-a", organization_id="org-a"),
