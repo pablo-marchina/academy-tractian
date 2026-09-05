@@ -27,6 +27,10 @@ jobs:
     name: action-execution-lease
     uses: ./.github/workflows/action-execution-lease.yml
 
+  railway-iac-contract:
+    name: railway-iac-contract
+    uses: ./.github/workflows/railway-iac-contract.yml
+
   required-gate:
     name: required-gate
     if: ${{ always() }}
@@ -35,21 +39,25 @@ jobs:
       - full-product-browser
       - horizontal-runtime-handoff
       - action-execution-lease
+      - railway-iac-contract
     runs-on: ubuntu-latest
     steps:
-      - name: Require clean clone, browser, horizontal runtime and action lease acceptance
+      - name: Require all final production regression contracts
         env:
           CLEAN_CLONE_RESULT: ${{ needs.clean-clone.result }}
           FULL_PRODUCT_BROWSER_RESULT: ${{ needs.full-product-browser.result }}
           HORIZONTAL_RUNTIME_RESULT: ${{ needs.horizontal-runtime-handoff.result }}
           ACTION_EXECUTION_LEASE_RESULT: ${{ needs.action-execution-lease.result }}
+          RAILWAY_IAC_RESULT: ${{ needs.railway-iac-contract.result }}
         run: |
           echo "clean-clone=${CLEAN_CLONE_RESULT}"
           echo "full-product-browser=${FULL_PRODUCT_BROWSER_RESULT}"
           echo "horizontal-runtime-handoff=${HORIZONTAL_RUNTIME_RESULT}"
           echo "action-execution-lease=${ACTION_EXECUTION_LEASE_RESULT}"
+          echo "railway-iac-contract=${RAILWAY_IAC_RESULT}"
           test "${CLEAN_CLONE_RESULT}" = "success"
           test "${FULL_PRODUCT_BROWSER_RESULT}" = "success"
           test "${HORIZONTAL_RUNTIME_RESULT}" = "success"
           test "${ACTION_EXECUTION_LEASE_RESULT}" = "success"
+          test "${RAILWAY_IAC_RESULT}" = "success"
           echo "FINAL_REQUIRED_CI=PASS"
