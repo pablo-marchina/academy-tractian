@@ -17,8 +17,9 @@ class PostgresRuntimeHandoffStore:
 
     The queue is deliberately PostgreSQL-native: consumers claim rows with
     ``FOR UPDATE ... SKIP LOCKED`` and receive a monotonically increasing generation token.
-    Only the current owner/generation may renew or finalize a run. Runtime envelopes are deleted
-    on terminal completion/failure so private user input is retained only while recovery needs it.
+    Only the current non-expired owner/generation may use tools, publish or finalize a run.
+    Runtime envelopes are deleted on terminal completion/failure so private user input is
+    retained only while recovery needs it.
 
     Consequential action executions are intentionally excluded from automatic replay. Startup
     reconciliation marks stale actions uncertain and marks legacy runtime rows without an envelope
@@ -112,6 +113,11 @@ class PostgresRuntimeHandoffStore:
     def _validate_limit(limit: int) -> None:
         if not 1 <= limit <= 64:
             raise ValueError("claim limit must be within [1, 64]")
+
+    @staticmethod
+    def _validate_generation(claim_generation: int) -> None:
+        if claim_generation < 1:
+            raise ValueError("claim_generation must be >= 1")
 
     def enqueue(self, envelope: RuntimeExecutionEnvelope) -> None:
         if not all(
@@ -333,6 +339,32 @@ class PostgresRuntimeHandoffStore:
             run_id=None,
         )
 
+    def is_current_owner(
+        self,
+        *,
+        run_id: str,
+        owner_instance_id: str,
+        claim_generation: int,
+    ) -> bool:
+        self._validate_owner(owner_instance_id)
+        self._validate_generation(claim_generation)
+        with self.database.internal_pool.connection() as connection:
+            row = connection.execute(
+                f"""
+                SELECT 1
+                FROM {self._table()} AS w
+                JOIN "{self.schema}".run_executions AS e USING (run_id)
+                WHERE w.run_id = %s
+                  AND w.owner_instance_id = %s
+                  AND w.claim_generation = %s
+                  AND w.lease_expires_at > CURRENT_TIMESTAMP
+                  AND e.execution_kind = 'runtime'
+                  AND e.state = 'running'
+                """,
+                (run_id, owner_instance_id, claim_generation),
+            ).fetchone()
+        return row is not None
+
     def renew(
         self,
         *,
@@ -343,8 +375,7 @@ class PostgresRuntimeHandoffStore:
     ) -> bool:
         self._validate_owner(owner_instance_id)
         self._validate_lease(lease_seconds)
-        if claim_generation < 1:
-            raise ValueError("claim_generation must be >= 1")
+        self._validate_generation(claim_generation)
         with self.database.internal_pool.connection() as connection:
             with connection.transaction():
                 row = connection.execute(
@@ -355,6 +386,7 @@ class PostgresRuntimeHandoffStore:
                     WHERE w.run_id = %s
                       AND w.owner_instance_id = %s
                       AND w.claim_generation = %s
+                      AND w.lease_expires_at > CURRENT_TIMESTAMP
                       AND EXISTS (
                           SELECT 1 FROM "{self.schema}".run_executions AS e
                           WHERE e.run_id = w.run_id
@@ -376,8 +408,7 @@ class PostgresRuntimeHandoffStore:
         state: ExecutionState,
     ) -> bool:
         self._validate_owner(owner_instance_id)
-        if claim_generation < 1:
-            raise ValueError("claim_generation must be >= 1")
+        self._validate_generation(claim_generation)
         if state not in {"completed", "failed"}:
             raise ValueError("runtime handoff terminal state must be completed or failed")
 
@@ -389,6 +420,7 @@ class PostgresRuntimeHandoffStore:
                     WHERE run_id = %s
                       AND owner_instance_id = %s
                       AND claim_generation = %s
+                      AND lease_expires_at > CURRENT_TIMESTAMP
                     FOR UPDATE
                     """,
                     (run_id, owner_instance_id, claim_generation),
