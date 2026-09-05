@@ -16,15 +16,16 @@ from .observability import (
 from .postgres_operational import PostgresOperationalDatabase
 
 
-OBSERVABILITY_SCHEMA_VERSION = "postgres-observability-store-v1"
+# Safe-projection contract version. Storage technology is evidenced independently.
+OBSERVABILITY_SCHEMA_VERSION = "observability-store-v1"
 
 
 class PostgresObservabilityStore:
     """Shared PostgreSQL persistence for browser-safe observability projections only.
 
-    The store deliberately receives the already-qualified production PostgreSQL substrate
-    instead of a DSN or filesystem path. The parent application therefore owns connection-pool
-    lifecycle, while every replica reads and writes the same durable safe projection.
+    The store receives the already-qualified production PostgreSQL substrate instead of a DSN
+    or filesystem path. The parent application owns pool lifecycle and all replicas therefore
+    read and write the same durable safe projection.
 
     Raw ``RunTrace`` objects may enter through ``persist_trace``. Only the allow-listed
     projection produced by ``project_trace`` / ``project_evaluation`` is persisted.
@@ -404,7 +405,10 @@ class PostgresObservabilityStore:
 
     @staticmethod
     def _rows(cursor: Any) -> list[dict[str, Any]]:
-        columns = [getattr(description, "name", description[0]) for description in cursor.description]
+        columns = [
+            description.name if hasattr(description, "name") else description[0]
+            for description in cursor.description
+        ]
         return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
 
     def overview(self) -> dict[str, Any]:
