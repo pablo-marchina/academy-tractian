@@ -47,10 +47,22 @@ def test_hosted_config_is_production_only_and_secret_safe() -> None:
         "required_local_components": 0,
         "runtime_ddl_credential": False,
     }
+    assert summary["actions"] == {"kill_switch_enabled": True}
     representation = repr(config)
     for marker in SECRET_MARKERS:
         assert marker not in representation
     assert "DEMO_MODE" not in representation
+
+
+def test_hosted_actions_require_explicit_opt_in_and_default_to_kill_switch_on() -> None:
+    default_config = HostedProductConfig.from_environment(_environment())
+    assert default_config.actions_enabled is False
+
+    enabled_config = HostedProductConfig.from_environment(
+        {**_environment(), "ACADEMY_ACTIONS_ENABLED": "true"}
+    )
+    assert enabled_config.actions_enabled is True
+    assert enabled_config.sanitized_summary()["actions"] == {"kill_switch_enabled": False}
 
 
 def test_hosted_config_requires_oidc_remote_postgres_https_cors_and_remote_tractian() -> None:
@@ -88,7 +100,10 @@ def test_hosted_product_has_no_demo_identity_or_runtime_migration_escape_hatch()
     for marker in forbidden:
         assert marker not in source
     assert "initialize_schema=False" in source
-    assert "actions_enabled=False" in source
+    assert "actions_enabled=active.actions_enabled" in source
+    assert "HostedActionAuthorizationResolver" in source
+    assert "TenantGuardedTractianTransport" in source
+    assert "hosted_action_authorization_backend = \"exact-target-revalidated-v1\"" in source
     assert "hosted_runtime_ddl_credential_present = False" in source
 
 
