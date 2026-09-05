@@ -1,615 +1,265 @@
 # Academy × TRACTIAN — Unified Delivery Plan
 
-**Status:** ACTIVE / canonical execution plan  
-**Checkpoint:** 2026-09-02 20:20 BRT  
+**Status:** ACTIVE / canonical final-delivery execution plan  
+**Checkpoint:** 2026-09-05 BRT  
+**Accepted P0 baseline:** `d3bed06b132212c85b126f56708863d45f64e03e`  
+**Post-merge acceptance:** `final-ci-required` run #386 / `required-gate = success`  
+**Hard feature/visual/architecture freeze:** end of 2026-09-05  
 **Final delivery:** 2026-09-08  
 **Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)  
 **Acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)
 
-This is the canonical execution plan after the updated-TAPI / TRACTIAN-delivery review and the production-observability implementation cycle through PR #142. It replaces stale sequencing in older planning snapshots without rewriting frozen historical evidence.
+This document owns the execution sequence from the final P0 closure through delivery. Earlier sprint sequencing remains recoverable in Git history and historical ADR/research artifacts; it is no longer the active plan.
 
 ## 1. Final objective
 
-Deliver the strongest defensible **TRACTIAN Industrial Agent Operations Platform** under the actual updated TAPI, delivered package, partner guidance and repository P1–P4 principles.
+Deliver one defensible **TRACTIAN Industrial Agent Operations Platform** containing:
 
-The final system is not a demo stack. It is one production-oriented product containing:
+1. an industrial agent over the supplied TRACTIAN API;
+2. deterministic safety/tool/action boundaries;
+3. an integrated agent-evaluation framework;
+4. governed technical experiments and explicit negative decisions;
+5. genuine realtime safe observability;
+6. a React operator control room exposing trace/evidence/evaluation/health;
+7. reproducible PostgreSQL-backed serving/recovery paths;
+8. evidence-honest documentation, limitations and presentation.
 
-1. a functional industrial agent;
-2. the full typed TRACTIAN integration;
-3. a quantitative/eval-driven agent evaluation framework;
-4. governed technical experiments;
-5. consequential-action safety and human confirmation;
-6. genuine realtime safe observability;
-7. an operator frontend exposing live architecture, trace, evidence, outputs, evaluation and health;
-8. schema-driven quantitative analytics;
-9. a reproducible production start/restart path;
-10. evidence-backed technical documentation and limitations.
-
-Hard constraints:
+P0 hard constraints:
 
 ```text
-external API / hosted-service project cost   USD 0
+external API/hosted-service project cost     USD 0
 paid spillover                               FORBIDDEN
 gold/evaluator-private leakage               0
 credential/private-field leakage             0
 unauthorized consequential actions           0
-duplicate consequential actions              0
+automatic consequential-action replay        0
 final delivery                               2026-09-08
 ```
 
-## 2. Updated-TAPI interpretation
+## 2. Frozen engineering rules
 
-The updated TAPI describes the project objective as a solution containing both:
-
-- construction of an industrial agent; and
-- a framework/process/application for evaluating agent quality and reliability.
-
-Therefore the final acceptance treats **Agent + Evaluation** as one combined product requirement, not as a choice between two disconnected tracks.
-
-The final product must visibly cover the three customer-support modes:
-
-```text
-CONTEXTUALIZE
-INVESTIGATE
-EXECUTE
-```
-
-and the operational outcomes:
-
-```text
-FINAL / ORIENT
-CLARIFY
-ABSTAIN
-ESCALATE
-ACTION PROPOSAL / CONFIRMED ACTION
-```
-
-## 3. Engineering rules for the remainder of the project
-
-### 3.1 Eval-Driven Development
-
-Every material behavior/architecture change follows:
+Material behavior/architecture changes follow EDD:
 
 ```text
 requirement
-→ evaluator / measurement design
+→ evaluator/metric
 → frozen baseline
-→ hypothesis
-→ preregistered candidate
+→ preregistered hypothesis/candidate
 → controlled implementation
-→ repeated / sliced evaluation
-→ diagnosis
+→ repeated/sliced comparison
+→ uncertainty/failure analysis
 → Pareto decision
 → regression protection
 ```
 
-No change is accepted because it merely looks better.
-
-### 3.2 Quantitative before qualitative
-
-Prefer rates, distributions, p50/p95, paired deltas, confidence intervals/effect sizes, pass/failure rates, resource usage and repeated-run stability whenever they are meaningful.
-
-Qualitative judgment is reserved for dimensions that cannot be validly reduced to deterministic metrics, and any semantic judge used as a gate must be calibrated first.
-
-### 3.3 Adaptive intelligence inside deterministic safety
-
-Potentially adaptive:
-
-- investigation depth;
-- stopping;
-- clarification;
-- abstention;
-- escalation;
-- evidence-gathering strategy;
-- provider/model routing only after multiple eligible providers exist.
-
 Always deterministic:
 
+- authentication/tenant/permissions;
 - ToolSpec/schema validation;
-- identity and evaluation seed ownership;
-- authorization/resource scope;
-- permissions;
+- resource/action authorization;
 - consequential-action confirmation;
-- idempotency/no-replay;
+- persistent idempotency/no-replay;
+- action ownership fencing;
 - privacy/field deny-list;
-- hard resource and execution caps.
+- gold/evaluator-private boundary;
+- hard execution/resource caps.
 
-### 3.4 Every material technology decision must be evidence-backed
+No technology enters P0 because it is fashionable. RAG, vector DB, Redis, Kafka, Temporal, multi-agent, MCP migration, LangGraph or provider routing require a measured gap and a challenger win.
 
-Required sequence:
+## 3. Accepted P0 state
 
-```text
-decision question
-→ requirement/risk mapping
-→ systematic primary-source research
-→ credible alternatives + NO_CHANGE/simple baseline
-→ preregistered metrics/hard gates
-→ controlled comparison
-→ uncertainty/failure/production-fit analysis
-→ Pareto decision
-→ ADR/reversal trigger
-```
-
-`works` means at most `QUALIFIED`; final project choices should reach `PREFERRED` or `FROZEN` where feasible.
-
-## 4. State entering this rebaseline
-
-Already merged and green in `main` through PR #142:
-
-- production provider-neutral runtime;
-- 18-operation typed TRACTIAN ToolSpec integration;
-- deterministic B1/B2/B3 safety envelope;
-- provider-free deterministic evaluator and failure/stability campaigns;
-- EDD baseline/candidate delta machinery;
-- safe RunTrace projection;
-- persistent DuckDB observability store;
-- FastAPI product/read API;
-- genuine runtime-time SSE with persisted catch-up;
-- `POST /api/runs` request → runtime → evaluation product path;
-- Live Run Cockpit;
-- Run Explorer;
-- Trace Graph;
-- Architecture Explorer;
-- Evidence Explorer;
-- Output Lineage;
-- Mission Control / Production Health;
-- Tools & Policy analytics;
-- Eval Lab;
-- Provider D01/D02 Lab;
-- schema-driven Dynamic Data Explorer;
-- global run scope, cross-filter and drill-down;
-- runtime/API/resource/SSE quantitative operability telemetry;
-- provider/action kill-switch observability.
-
-PR #143 is open and has passed the complete 16-workflow gate. It adds the production-capable two-phase consequential-action path and frontend Action Control.
-
-D01 remains frozen:
+Merged and post-merge green:
 
 ```text
-32 / 32 attempts complete
-USD 0
-2813.628464 observed Neurons
-selection = NO_SELECTION
-24 / 24 CLIENT_FAILURE at exact 512 completion ceiling
+AgentController + HarnessRunner runtime                  accepted
+18 typed TRACTIAN operations                             accepted
+deterministic evaluator/failure/stability campaigns      accepted
+PostgreSQL tenant RLS                                    accepted
+PostgreSQL shared serving persistence                    accepted
+PostgreSQL safe observability/evaluation                 accepted
+PostgreSQL LISTEN/NOTIFY wakeup + durable fallback       accepted
+read-only cross-replica lease takeover/fencing           accepted
+action custody/idempotency/non-transferable lease        accepted
+React operator control room                              accepted
+full Chromium product acceptance                         accepted
+clean-clone reproduction                                 accepted
+final freeze bundle validator                            accepted
+required-gate                                            success
 ```
 
-D02 remains prospective and unexecuted.
+Provider/model state remains `NO_SELECTION`. Semantic human calibration and engineer-time value remain `NOT_READY_HUMAN_DATA`. Adaptive stopping remains not promoted.
 
-## 5. Critical path from this checkpoint
+## 4. Distributed-runtime decision frozen for P0
+
+### Read-only runtime work
+
+- durable PostgreSQL work item;
+- expiring lease;
+- generation/fencing token;
+- expired work may transfer to another replica;
+- stale generation cannot renew/finalize/publish.
+
+### Consequential actions
+
+- private custody + explicit confirmation;
+- persistent idempotency claim before transport;
+- non-transferable action execution lease;
+- stale/lost ownership → `UNCERTAIN`;
+- no replacement transport attempt after lease loss;
+- stale result cannot overwrite uncertainty.
+
+This supports repository-level cross-replica correctness claims for the tested algorithms, not deployed HA/RTO/RPO/exactly-once external side effects.
+
+## 5. Provider/model state
+
+D01/D02 are complete consumed governed experiments:
+
+- cash cost: USD0;
+- D02 improved multiple metrics over D01;
+- both candidates still failed frozen M1/M4/M7 promotion gates;
+- selection: `NO_SELECTION`.
+
+D01/D02 must not be replayed.
+
+Any future provider/model work is **P1**, starts only after the delivery freeze path is secured, and requires:
 
 ```text
-A. merge #143 production actions
-        ↓
-B. D02 fresh post-reset preflight + single governed execution (#117)
-        ↓
-C. integrate D02 result / bounded provider state
-        ↓
-D. close semantic response-quality evaluation layer (#128)
-        ↓
-E. adaptive evidence/stopping/escalation experiment (#129)
-        ↓
-F. runtime/HITL materiality revalidation (#92)
-        ↓
-G. operational storage + deployment/restart hardening (#131)
-        ↓
-H. Playwright + lockfile + full integrated E2E (#114/#131)
-        ↓
-I. current documentation + clean reproduction
-        ↓
-HARD FEATURE / VISUAL / ARCHITECTURE FREEZE
+new experiment ID
+→ current primary-source provider/model/cost verification
+→ new candidate eligibility decision
+→ new preregistered population/request/budget/metrics
+→ provider-free validator/tests
+→ explicit live authorization before attempt 1
 ```
 
-Adaptive/runtime/storage candidates are promoted only if the controlled evidence supports them. `NO_CHANGE` is a valid and preferred result when the simple baseline remains on the best-supported Pareto frontier.
+No P1 provider campaign may mutate the frozen P0 delivery candidate.
 
-## 6. Gate A — merge production action path (#143 / #130)
+## 6. Human-dependent evidence
 
-Acceptance before merge:
+### Semantic calibration
 
-- all repository workflows green;
-- proposal never directly executes a consequential action;
-- private custody is separated from public observability;
-- browser confirmation accepts consent only, not tool args/permissions/idempotency;
-- current authorization and host kill switch are revalidated at execution time;
-- persistent atomic idempotency claim precedes transport;
-- ambiguous execution becomes `UNCERTAIN` and is never blindly retried;
-- confirmed action receives a separate realtime RunTrace + ActionEvaluator;
-- Action Control follows the execution run using the same SSE/reducer path.
+Infrastructure exists, but production semantic gating remains `NOT_READY_HUMAN_DATA` until:
 
-Do not weaken the frozen read-only `ProductionRuntime` or `ProductionEvaluator` contracts to achieve this.
+- real blinded human labels exist;
+- two-reviewer/adjudication protocol is executed;
+- judge-vs-human agreement/error is measured by relevant slices;
+- an explicit promotion decision is recorded.
 
-## 7. Gate B — D02 provider diagnosis (#117)
+### Operational/business value
 
-Earliest possible reset boundary:
+Collection and paired analysis exist, but no Engineer Minutes Saved/business-value claim is allowed until real operator timing/outcome observations exist.
+
+Absent real data, `NOT READY` is the correct final state.
+
+## 7. Hard-freeze path — 2026-09-05
+
+Before the end-of-day freeze:
+
+1. finish canonical documentation drift cleanup;
+2. repin/validate the final evidence bundle if canonical artifacts change;
+3. run clean clone + Chromium + horizontal runtime + action lease + `required-gate` on the exact final head;
+4. merge only if all hard gates are green;
+5. verify the post-merge `required-gate` on exact `main`;
+6. record the final baseline SHA;
+7. freeze feature set, visual/information hierarchy and runtime→telemetry→frontend contracts.
+
+After that point, no feature/framework/provider expansion enters the delivery branch.
+
+## 8. Rehearsal — 2026-09-06/07
+
+Run the final provider-independent product path on the intended presentation environment.
+
+Required rehearsal sequence:
 
 ```text
-2026-09-03T00:00:00Z
-=
-2026-09-02 21:00 America/Sao_Paulo
+request
+→ live run
+→ architecture/trace growth
+→ typed tool proposal
+→ deterministic policy
+→ TRACTIAN transport metadata
+→ safe evidence
+→ terminal/clarify/abstain/escalation
+→ governed action proposal/confirmation where relevant
+→ completed RunTrace
+→ post-runtime evaluation
+→ output lineage
+→ Production Health
+→ dynamic analytics
+→ D01/D02 + architecture-decision evidence
 ```
 
-Reset alone is not authorization.
+Rehearse multiple outcome/failure classes; do not depend on live provider availability.
 
-Before D02:
+Inspect:
 
-- fresh zero-use evidence for the new UTC day;
-- Workers Free confirmed;
-- Workers Paid disabled;
-- no worker/app/background consumer on the target account;
-- exclusive packet window;
-- direct Workers AI route;
-- no AI Gateway/prepaid path;
-- valid short-lived receipt;
-- no previous D02 custody/run collision.
+- `/health` and `/ready` truthfulness;
+- tenant isolation;
+- SSE disconnect/reconnect/catch-up;
+- action confirmation + separate execution run;
+- forbidden-field absence;
+- long/empty/error states;
+- responsive presentation viewport;
+- final docs/commands against committed code;
+- exact evidence links/SHAs.
 
-Execute exactly once under the frozen D02 packet. If a provider attempt may have started and custody is `CLAIMED`/`UNCERTAIN`, do not replay.
+## 9. Branch protection
 
-Analyze:
+Desired stable required status: `required-gate`.
 
-- M1/M4/M7 and frozen hard gates;
-- success/structured-decision/rubric rates;
-- sanitized failure subtype;
-- completion-cap hits at 1024;
-- latency p50/p95;
-- observed Neurons/cost;
-- D01 vs D02 delta;
-- Pareto selection / `NO_SELECTION`.
-
-No architecture expansion follows automatically from a provider failure.
-
-## 8. Gate C — semantic response-quality closure (#128)
-
-The deterministic evaluator remains the primary safety/integrity layer. Add semantic evaluation only for TAPI dimensions not sufficiently captured deterministically:
-
-- operational conclusion quality;
-- evidence support / groundedness;
-- unsupported-claim rate;
-- escalation/handoff usefulness;
-- customer-safe communication;
-- completeness vs unnecessary verbosity where task-relevant.
-
-Required architecture:
+Last observed GitHub state on 2026-09-05:
 
 ```text
-Layer 1 — deterministic structural/safety/trajectory evaluation
-Layer 2 — calibrated semantic evaluation where necessary
-Layer 3 — human-labelled calibration / disagreement analysis
+main.protected = false
+rulesets = []
 ```
 
-Before any semantic judge gates candidates:
+The connected repository integration in this workstream has no branch-protection write action. Applying enforcement therefore remains an external GitHub-admin task. Until a subsequent read proves protection active, delivery documentation must say `PENDING_EXTERNAL_ENFORCEMENT`.
 
-- define rubric and task-level labels;
-- create a small blind human-labelled calibration set without leaking evaluator-private data to runtime;
-- compare judge vs human labels;
-- quantify agreement/error by response-mode slice;
-- reject judge metrics that are not sufficiently reliable;
-- keep deterministic metrics authoritative wherever exact ground truth exists.
+## 10. C4 historical blocker
 
-The final Eval Lab must display deterministic and semantic layers separately.
+The exact evaluator-side C4 artifact with required SHA-256 remains externally unavailable. Reconstruction, substitution and rescoring are forbidden.
 
-## 9. Gate D — adaptive evidence/stopping/escalation experiment (#129)
+The final delivery must preserve this blocker explicitly; current product CI does not resolve it.
 
-Baseline: current bounded controller with fixed hard turn/tool ceilings.
+## 11. Final delivery — 2026-09-08
 
-Candidates:
+Delivery package/presentation must show:
 
-A. fixed execution budget vs adaptive investigation budget;  
-B. fixed stopping vs evidence-sufficiency/marginal-gain stopping;  
-C. fixed escalation vs calibrated risk × uncertainty × contradiction policy.
+- integrated Agent + Evaluation scope;
+- actual PostgreSQL serving architecture;
+- cross-replica read-only takeover vs non-transferable action fencing;
+- deterministic safety/tool/action boundaries;
+- genuine safe realtime path;
+- browser acceptance and reproducibility;
+- D01/D02 `NO_SELECTION` evidence;
+- adaptive/runtime/storage decisions, including negative `NO_CHANGE`/not-promoted outcomes;
+- human-data limitations;
+- branch-protection/C4 external blockers;
+- exact final SHA and green required-gate evidence.
 
-Hold constant wherever possible:
+## 12. Delivery-blocker rule after freeze
 
-- provider/model/config;
-- scenario groups;
-- ToolSpecs and HarnessRunner;
-- deterministic safety policy;
-- evaluator definitions;
-- hard execution caps.
+A post-freeze change is allowed only if all are true:
 
-Report overall + group/response-mode slices:
+1. it blocks reproducibility, correctness, safety, evidence truthfulness or presentation of an already-frozen requirement;
+2. the change is the smallest viable fix;
+3. no new feature/architecture/provider scope is introduced;
+4. targeted regression is added/run;
+5. full required-gate is green on the new exact SHA;
+6. affected evidence pins are updated without weakening validators.
 
-- task/terminal success;
-- tool-selection and argument correctness;
-- evidence support/coverage;
-- unnecessary tool calls;
-- trajectory length;
-- clarification/abstention/escalation correctness;
-- latency;
-- tokens/Neurons where measured;
-- repeated-run stability;
-- safety hard gates.
+## 13. Explicitly deferred P1
 
-Promote only a material Pareto improvement. Otherwise retain the fixed/simple baseline and record the negative result.
+Deferred beyond the frozen delivery candidate:
 
-## 10. Gate E — runtime / HITL materiality revalidation (#92)
+- new provider/model benchmark;
+- adaptive provider routing;
+- LangGraph/framework challenger;
+- broader OpenTelemetry export standardization;
+- additional cloud/IaC deployment proof;
+- managed enterprise identity;
+- any retrieval/memory/multi-agent layer without a measured product gap.
 
-PR #143 introduces durable pending-action custody and an explicit human confirmation/resume workflow. This activates a legitimate runtime decision question that did not exist at the original P0 controller freeze.
-
-Compare prospectively:
-
-```text
-A — current custom AgentController + private action custody
-B — LangGraph-compatible durable/checkpoint/HITL runtime adapter
-```
-
-Only add a third candidate if systematic research identifies a materially distinct credible alternative.
-
-Keep the following fixed:
-
-- provider/model;
-- ToolSpecs;
-- HarnessRunner execution boundary;
-- B1/B2/B3 and action safety;
-- scenarios;
-- evaluator;
-- action payload/authorization semantics.
-
-Measure:
-
-- task/trace equivalence;
-- HITL pause/resume correctness;
-- process-restart recovery;
-- duplicate-action rate;
-- failure containment;
-- latency/overhead;
-- resource use;
-- new dependency/runtime surface;
-- implementation/maintenance complexity;
-- clean reproduction;
-- debuggability and trace clarity.
-
-LangGraph enters production only if it provides measurable net benefit while preserving every hard safety/evaluation invariant. Otherwise `NO_CHANGE/custom` is frozen.
-
-## 11. Gate F — operational persistence and deployment (#131)
-
-Keep DuckDB as the current safe analytics store unless evidence says otherwise.
-
-Separately evaluate the operational mutable-state role introduced by actions/HITL:
-
-```text
-A — current DuckDB single-process custody/idempotency baseline
-B — local PostgreSQL operational state
-```
-
-Decision question: what storage topology is required for the production claim we will actually make?
-
-If final claim remains explicitly single-process/single-node, the current baseline may remain sufficient. If the project claims concurrent multi-process recovery, the operational store must prove that capability.
-
-Measure:
-
-- concurrent confirmation/claim correctness;
-- duplicate action rate;
-- restart/crash recovery;
-- transaction/atomicity behavior;
-- read/write latency;
-- setup and migration complexity;
-- disk/memory footprint;
-- clean checkout reproducibility;
-- USD0 compliance.
-
-Target separation if PostgreSQL materially wins:
-
-```text
-PostgreSQL → operational mutable state
-DuckDB     → sanitized analytical telemetry
-```
-
-Do not migrate without the comparison.
-
-Production start/recovery acceptance in the same gate:
-
-- one documented product startup path (`docker compose` or equivalent);
-- environment/config validation;
-- secret injection from environment only;
-- graceful shutdown;
-- restart recovery;
-- schema lifecycle/migrations where applicable;
-- health/readiness/version/config endpoints;
-- bounded concurrency/resource controls;
-- provider/action kill switches;
-- no demo-only service.
-
-## 12. Gate G — frontend/browser E2E and reproducibility (#114/#131)
-
-The frontend is already implemented; this gate changes it from a green build to browser-proved product acceptance.
-
-Required package/install behavior:
-
-- commit/freeze the frontend transitive dependency lockfile;
-- use deterministic lockfile installation in CI (`npm ci` or equivalent);
-- no unbounded dependency resolution in final reproduction.
-
-Required Playwright E2E over the actual provider-free product path:
-
-1. submit request via `POST /api/runs`;
-2. observe genuine SSE events;
-3. verify event ordering/idempotent UI;
-4. disconnect and reconnect with persisted catch-up;
-5. inspect Timeline/Trace Graph/Architecture path;
-6. inspect Evidence Explorer + Output Lineage;
-7. use global run scope and Dynamic Data Explorer drill-down;
-8. verify Production Health values come from real telemetry;
-9. exercise clarification/abstain/escalation/error/blocked-action states;
-10. confirm a pending action in the production action profile and follow the separate realtime execution run;
-11. verify terminal output only after real completion;
-12. verify evaluation appears post-runtime only;
-13. assert forbidden fields never appear in browser/API/SSE payloads;
-14. test long/empty/error/unsupported-chart states and presentation viewport.
-
-## 13. Gate H — production quantitative acceptance thresholds
-
-PR #142 now provides real runtime/API/resource/SSE measurements. Use provider-free baselines to preregister acceptance targets before the final candidate/rehearsal results are examined.
-
-At minimum report:
-
-- startup/readiness time;
-- runtime request and execution p50/p95;
-- API/query p50/p95;
-- observability publish/persistence overhead;
-- runtime-event → persistence p50/p95;
-- persistence → SSE delivery p50/p95;
-- reconnect recovery rate/time;
-- event-gap rate;
-- logical duplicate rate;
-- concurrent executor pressure;
-- process CPU/load/RSS;
-- provider failure/latency observations;
-- TRACTIAN HTTP success/status distribution.
-
-Do not create post-hoc numeric PASS targets from observed final results.
-
-## 14. Frontend final product contract
-
-The final UI is one native agent control room, not a marketing dashboard.
-
-Required connected surfaces:
-
-1. Mission Control;
-2. Live Run Cockpit;
-3. Run Explorer;
-4. Timeline/Waterfall;
-5. Trace Graph;
-6. Architecture Explorer;
-7. Evidence Explorer;
-8. Output Lineage / Explain This Run;
-9. Action Control;
-10. Tools & Policy analytics;
-11. Eval Lab;
-12. Provider D01/D02 Lab;
-13. Dynamic Data Explorer;
-14. Production Health.
-
-Every safe aggregate must drill toward exact safe run/event/evidence records where semantically meaningful.
-
-`total observability` means all operationally relevant **safe** data, not secrets, raw sensitive bodies, evaluator-private truth or hidden chain-of-thought.
-
-## 15. Schedule from this checkpoint
-
-### 2026-09-02 — close current branch + D02 window
-
-Before 21:00 BRT:
-
-1. merge #143 after final green verification;
-2. land this plan/status rebaseline;
-3. prepare fresh D02 evidence paths without credentials/provider calls.
-
-At/after 21:00 BRT:
-
-4. verify current time/reset;
-5. obtain fresh truthful D02 zero-use/free/no-paid/exclusive attestation;
-6. issue fresh receipt;
-7. execute D02 exactly once if every gate is valid;
-8. analyze and integrate the D02 result.
-
-Do not spend the D02 window on unrelated architecture experiments.
-
-### 2026-09-03 — quality/evaluation + highest-value experiments
-
-Priority order:
-
-1. close semantic response-quality/calibration work under #128;
-2. integrate Eval Lab result layers;
-3. run #129 adaptive-policy experiment if the evaluator baseline is trustworthy;
-4. freeze `PROMOTE / REJECT / INCONCLUSIVE` for adaptive candidate;
-5. activate #92 runtime/HITL comparison only after the action path is merged and testable;
-6. start #131 operational-storage comparison/deployment path.
-
-No multi-agent/RAG/MCP/memory work unless one of these gates finds a measured requirement.
-
-### 2026-09-04 — production hardening + browser E2E
-
-- finish runtime/HITL and storage decisions or freeze `NO_CHANGE`;
-- implement only the winning production candidate where necessary;
-- lock frontend dependency graph;
-- add Playwright full-product suite;
-- finish production start/restart/config path;
-- execute full safe state matrix in frontend;
-- integrate D02/adaptive/runtime/storage decision evidence into UI/docs;
-- presentation/accessibility/overflow polish only after functional gates are green.
-
-### 2026-09-05 — dedicated integrated test/fix day
-
-No planned feature expansion.
-
-Run:
-
-- complete TAPI requirement/evidence matrix;
-- complete EDD scorecard;
-- backend/runtime/action/storage regressions;
-- API/SSE/security tests;
-- Playwright real-run/reconnect/action flows;
-- dynamic query/chart tests;
-- architecture/lineage consistency;
-- operability/latency/overhead acceptance;
-- slow/disconnected client stress;
-- restart/recovery tests;
-- clean product startup rehearsal;
-- documentation consistency audit.
-
-Fix P0/P1 blockers only.
-
-**HARD FEATURE + VISUAL + ARCHITECTURE FREEZE at end of 2026-09-05.**
-
-### 2026-09-06 — clean reproduction and evidence freeze
-
-From a clean checkout:
-
-- install backend from pinned constraints;
-- install frontend from lockfile;
-- start the entire product using the documented production path;
-- run complete Python/runtime/evaluator/action/observability suite;
-- run frontend unit + Playwright E2E;
-- execute provider-independent realtime request → evaluation path;
-- verify restart/recovery;
-- verify architecture/output lineage;
-- freeze final metric/evidence bundle;
-- update README/runbook/results/limitations to exactly match the product.
-
-No open unbounded P0 is allowed after this phase.
-
-### 2026-09-07 — final acceptance / presentation-machine rehearsal
-
-- execute the exact normal product path end to end;
-- verify live frontend/Action Control/health/data explorer;
-- verify D01/D02 evidence;
-- verify provider-independent safe fallback;
-- verify all final decision records and limitations;
-- no redesign;
-- P0 delivery blockers only + targeted regression.
-
-### 2026-09-08 — delivery
-
-- smoke tests only;
-- no same-day feature/architecture work;
-- deliver frozen code, evidence and documentation;
-- operate the real product during presentation;
-- state `NO_SELECTION`, rejected adaptive/runtime/storage alternatives and limitations honestly when applicable.
-
-## 16. Scope-cut rule under time pressure
-
-Never cut:
-
-1. updated-TAPI agent behavior;
-2. evaluation framework / EDD evidence;
-3. API/tool/action safety and evaluator isolation;
-4. real request → runtime → tool → output → evaluation path;
-5. genuine realtime observability;
-6. Live Run / Trace / Architecture / Evidence / Output Lineage;
-7. consequential-action safety path;
-8. clean reproduction;
-9. documentation matching actual state.
-
-Cut/defer first:
-
-1. an adaptive candidate that has not beaten baseline;
-2. LangGraph/runtime migration if `NO_CHANGE` remains on the Pareto frontier;
-3. PostgreSQL migration if single-process DuckDB satisfies the bounded production claim;
-4. adaptive chart recommendation;
-5. optional Grafana/OpenTelemetry/Redis/multi-instance claims;
-6. additional chart types/exports;
-7. multi-agent/RAG/MCP/persistent memory without measured need;
-8. cosmetic polish beyond presentation usability.
-
-## 17. Final completion statement
-
-The project is complete only when a third party can, from a clean checkout, start the production-oriented system, submit a real support request, observe the real agent/tools/policies/evidence/architecture/output live, obtain a safe terminal result or governed action/escalation, inspect post-runtime evaluation and quantitative metrics, reproduce the accepted experiments, and understand why every material architecture/stack choice was selected or rejected from evidence rather than preference.
+P1 cannot be used to justify destabilizing a complete, evidence-backed P0 immediately before delivery.
