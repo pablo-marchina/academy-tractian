@@ -9,7 +9,14 @@ from .tractian_authority import TractianAuthority, TractianAuthorityError
 
 
 class HostedTractianAuthority(TractianAuthority):
-    """TRACTIAN authority with last-mile action permission revalidation."""
+    """TRACTIAN authority with last-mile action permission revalidation.
+
+    Hosted serving accepts mutations only for the exact canonical action routes. Resource scope is
+    resolved first and the user's permission/company are fetched again afterwards, making the final
+    authority read the closest possible check before the raw HTTP side effect. The upstream action
+    endpoint still receives the same server-bound ``x-user-id`` and independently checks its own
+    permission at execution time.
+    """
 
     @staticmethod
     def _required_permission(request: BoundRequest) -> Permission | None:
@@ -41,14 +48,27 @@ class HostedTractianAuthority(TractianAuthority):
 
     def authorize_bound_request(self, request: BoundRequest):
         permission = self._required_permission(request)
-        if permission is not None:
-            user_id = request.headers.get("x-user-id")
-            if not isinstance(user_id, str) or not user_id:
-                raise TractianAuthorityError("TRACTIAN_AUTHORITY_USER_REQUIRED")
-            user = self.current_user(user_id=user_id)
-            if permission not in user.permissions:
-                raise TractianAuthorityError("TRACTIAN_AUTHORITY_PERMISSION_DENIED")
-        return super().authorize_bound_request(request)
+        if request.method != "GET" and permission is None:
+            raise TractianAuthorityError("TRACTIAN_AUTHORITY_PATH_NOT_QUALIFIED")
+
+        try:
+            scoped_user = super().authorize_bound_request(request)
+            if permission is None:
+                return scoped_user
+
+            # Re-read the user after target scope resolution so permission/company revocation that
+            # happens between proposal/confirmation and transport is observed before the raw call.
+            latest_user = self.current_user(user_id=scoped_user.user_id)
+        except TractianAuthorityError:
+            raise
+        except Exception as exc:
+            raise TractianAuthorityError("TRACTIAN_AUTHORITY_UPSTREAM_UNAVAILABLE") from exc
+
+        if latest_user.company_id != scoped_user.company_id:
+            raise TractianAuthorityError("TRACTIAN_AUTHORITY_CROSS_TENANT_DENIED")
+        if permission not in latest_user.permissions:
+            raise TractianAuthorityError("TRACTIAN_AUTHORITY_PERMISSION_DENIED")
+        return latest_user
 
 
 class HostedActionAuthorizationResolver:
