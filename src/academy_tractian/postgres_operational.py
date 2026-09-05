@@ -4,12 +4,13 @@ from contextlib import contextmanager
 import re
 from typing import Iterable, Iterator
 
-from .run_access import RUN_ACCESS_SCHEMA_VERSION, RunOwnership
-from .run_execution_store import (
+from .product_storage_contracts import (
+    RUN_ACCESS_SCHEMA_VERSION,
     RUN_EXECUTION_SCHEMA_VERSION,
     DurableExecution,
     ExecutionKind,
     ExecutionState,
+    RunOwnership,
 )
 
 
@@ -215,7 +216,7 @@ class PostgresOperationalDatabase:
                     f"""
                     SELECT value FROM "{schema}".operational_meta
                     WHERE key = 'schema_version'
-                    """
+                    """,
                 ).fetchone()
                 if row is None or str(row[0]) != _OPERATIONAL_SCHEMA_VERSION:
                     return False

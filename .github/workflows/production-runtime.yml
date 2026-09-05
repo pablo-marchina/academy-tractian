@@ -43,6 +43,23 @@ jobs:
 
   standalone-wheel-smoke:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: academy_tractian
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d academy_tractian"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      POSTGRES_ADMIN_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+      POSTGRES_SCOPED_DSN: postgresql://academy_wheel_scoped:academy-wheel-scoped@127.0.0.1:5432/academy_tractian
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -63,16 +80,83 @@ jobs:
           /tmp/academy-tractian-wheel/bin/python -m pip install --upgrade pip
           /tmp/academy-tractian-wheel/bin/python -m pip install dist/academy_tractian-*.whl
 
-      - name: Smoke test installed wheel outside repository checkout
+      - name: Prove DuckDB is absent from production environment
+        run: |
+          /tmp/academy-tractian-wheel/bin/python - <<'PY'
+          import importlib.util
+
+          assert importlib.util.find_spec("duckdb") is None, "DuckDB leaked into production dependencies"
+          print("duckdb absent from production wheel environment")
+          PY
+
+      - name: Smoke test promoted production imports outside repository checkout
         working-directory: /tmp
         run: |
           /tmp/academy-tractian-wheel/bin/python - <<'PY'
+          import importlib.util
+
+          assert importlib.util.find_spec("duckdb") is None
+
           from academy_tractian import ProductionRuntimeConfig, canonical_tool_registry
+          from academy_tractian.authenticated_postgres_product_api import (
+              create_authenticated_postgres_action_capable_product_app,
+          )
+          from academy_tractian.postgres_product_api import create_postgres_action_capable_product_app
           from research.e2.controller import AgentController
 
           registry = canonical_tool_registry()
           assert len(registry) == 18
           assert ProductionRuntimeConfig().actions_enabled is False
           assert AgentController.__name__ == "AgentController"
-          print("standalone production wheel smoke passed")
+          assert callable(create_postgres_action_capable_product_app)
+          assert callable(create_authenticated_postgres_action_capable_product_app)
+          print("standalone no-DuckDB production wheel import smoke passed")
+          PY
+
+      - name: Create non-owner scoped PostgreSQL role
+        working-directory: /tmp
+        run: |
+          /tmp/academy-tractian-wheel/bin/python - <<'PY'
+          import os
+          import psycopg
+
+          with psycopg.connect(os.environ["POSTGRES_ADMIN_DSN"], autocommit=True) as connection:
+              connection.execute(
+                  "CREATE ROLE academy_wheel_scoped LOGIN PASSWORD 'academy-wheel-scoped' NOSUPERUSER NOBYPASSRLS"
+              )
+          print("scoped wheel-smoke role created")
+          PY
+
+      - name: Boot promoted PostgreSQL product with DuckDB absent
+        working-directory: /tmp
+        run: |
+          /tmp/academy-tractian-wheel/bin/python - <<'PY'
+          import importlib.util
+          import os
+
+          assert importlib.util.find_spec("duckdb") is None
+
+          from academy_tractian.postgres_product_api import create_postgres_action_capable_product_app
+
+          app = create_postgres_action_capable_product_app(
+              internal_dsn=os.environ["POSTGRES_ADMIN_DSN"],
+              scoped_dsn=os.environ["POSTGRES_SCOPED_DSN"],
+              decision_source_factory=lambda: None,
+              transport_factory=lambda: None,
+              context_provider=lambda _request: None,
+              authorization_resolver=lambda **_kwargs: None,
+              schema="academy_wheel_smoke",
+              initialize_schema=True,
+          )
+          try:
+              assert app.state.local_test_storage_enabled is False
+              assert app.state.observability_backend == "postgresql"
+              assert app.state.operational_backend == "postgresql"
+              assert app.state.observability_store.ready() is True
+              assert app.state.run_access_store.ready() is True
+              assert app.state.run_execution_store.ready() is True
+              assert importlib.util.find_spec("duckdb") is None
+              print("standalone no-DuckDB PostgreSQL product boot passed")
+          finally:
+              app.state.postgres_operational_database.close()
           PY

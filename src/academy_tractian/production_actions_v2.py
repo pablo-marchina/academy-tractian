@@ -8,7 +8,6 @@ from threading import Lock
 from typing import Any, Callable, Literal, Mapping, Protocol
 from uuid import uuid4
 
-import duckdb
 from pydantic import BaseModel, ConfigDict, Field
 
 from research.e2.controller import ControllerLimits, DecisionSource
@@ -35,6 +34,16 @@ from .runtime import ProductionRequest, ProductionRuntime, ProductionRuntimeConf
 
 
 ACTION_EXECUTION_CONFIG_HASH = sha256(b"prod-action-runtime-v2").hexdigest()
+
+
+def _duckdb():
+    """Load the legacy local adapter only when a test explicitly selects it."""
+
+    try:
+        import duckdb
+    except ImportError as exc:  # pragma: no cover - packaging guard for test-only adapter
+        raise RuntimeError("DuckDB action adapters require the dev/test DuckDB extra") from exc
+    return duckdb
 
 
 class _FrozenModel(BaseModel):
@@ -104,7 +113,7 @@ class PendingActionCustody:
             raise ValueError("pending action custody requires a persistent path")
         Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         self._lock = Lock()
-        connection = duckdb.connect(self.path)
+        connection = _duckdb().connect(self.path)
         try:
             connection.execute(
                 """
@@ -140,7 +149,7 @@ class PendingActionCustody:
         action_id = _safe_action_id(origin_raw_run_id, fingerprint)
         permissions = tuple(permission.value for permission in tool.required_permissions)
         with self._lock:
-            connection = duckdb.connect(self.path)
+            connection = _duckdb().connect(self.path)
             try:
                 existing = connection.execute(
                     "SELECT action_id FROM pending_actions WHERE origin_run_id = ? AND action_fingerprint = ?",
@@ -172,7 +181,7 @@ class PendingActionCustody:
         return self.get_safe(action_id)
 
     def _load_private(self, action_id: str) -> _PendingActionPrivate | None:
-        connection = duckdb.connect(self.path, read_only=True)
+        connection = _duckdb().connect(self.path, read_only=True)
         try:
             row = connection.execute(
                 """
@@ -224,7 +233,7 @@ class PendingActionCustody:
         return item
 
     def list_safe_for_origin(self, origin_run_id: str) -> list[PendingActionSafe]:
-        connection = duckdb.connect(self.path, read_only=True)
+        connection = _duckdb().connect(self.path, read_only=True)
         try:
             rows = connection.execute(
                 "SELECT action_id FROM pending_actions WHERE origin_run_id = ? ORDER BY action_id",
@@ -243,7 +252,7 @@ class PendingActionCustody:
         execution_run_id: str | None = None,
     ) -> bool:
         with self._lock:
-            connection = duckdb.connect(self.path)
+            connection = _duckdb().connect(self.path)
             try:
                 row = connection.execute(
                     "SELECT state FROM pending_actions WHERE action_id = ?",
@@ -275,7 +284,7 @@ class DuckDBActionIdempotencyLedger:
             raise ValueError("action idempotency ledger requires a persistent path")
         Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         self._lock = Lock()
-        connection = duckdb.connect(self.path)
+        connection = _duckdb().connect(self.path)
         try:
             connection.execute(
                 """
@@ -292,7 +301,7 @@ class DuckDBActionIdempotencyLedger:
 
     def claim(self, *, key_sha256: str, action_fingerprint: str, action_id: str) -> bool:
         with self._lock:
-            connection = duckdb.connect(self.path)
+            connection = _duckdb().connect(self.path)
             try:
                 existing = connection.execute(
                     "SELECT idempotency_key_sha256 FROM action_claims WHERE idempotency_key_sha256 = ? OR action_fingerprint = ?",
@@ -310,7 +319,7 @@ class DuckDBActionIdempotencyLedger:
 
     def mark(self, *, key_sha256: str, state: str) -> None:
         with self._lock:
-            connection = duckdb.connect(self.path)
+            connection = _duckdb().connect(self.path)
             try:
                 connection.execute(
                     "UPDATE action_claims SET state = ? WHERE idempotency_key_sha256 = ?",
@@ -320,7 +329,7 @@ class DuckDBActionIdempotencyLedger:
                 connection.close()
 
     def get(self, key_sha256: str) -> dict[str, str] | None:
-        connection = duckdb.connect(self.path, read_only=True)
+        connection = _duckdb().connect(self.path, read_only=True)
         try:
             row = connection.execute(
                 "SELECT action_fingerprint, action_id, state FROM action_claims WHERE idempotency_key_sha256 = ?",
