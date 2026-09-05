@@ -41,6 +41,11 @@ from .production_actions_v2 import (
 )
 from .realtime_observability import DuckDBObservabilityEventSink
 from .realtime_wakeup import RealtimeWakeup
+from .target_action_authorization import (
+    TargetAwareActionProposalRealtimeProductionRuntime,
+    TargetAwareProductionActionExecutor,
+    target_resolver_from_legacy,
+)
 
 
 class _FrozenModel(BaseModel):
@@ -108,6 +113,10 @@ def create_action_capable_product_app(
     action executions use a separate non-transferable lease when supplied. A healthy action lease
     prevents another replica's startup/reconciler from declaring the attempt orphaned; an expired
     lease converges to UNCERTAIN and is never permission to replay the external side effect.
+
+    A resolver object may expose ``resolve_target(user_id, tool, arguments)``. When present, the
+    product lazily resolves the exact action target at proposal time and resolves it again before
+    confirmation is accepted. Legacy user-only resolvers retain their existing behavior.
     """
 
     if custody_store is not None and action_custody_path is not None:
@@ -178,6 +187,7 @@ def create_action_capable_product_app(
 
     custody = custody_store or PendingActionCustody(action_custody_path)  # type: ignore[arg-type]
     ledger = action_ledger or DuckDBActionIdempotencyLedger(action_ledger_path)  # type: ignore[arg-type]
+    target_authorization_resolver = target_resolver_from_legacy(authorization_resolver)
     lease_context = ActionExecutionLeaseContext()
     lease_supervisor = (
         ActionExecutionLeaseSupervisor(
@@ -201,6 +211,14 @@ def create_action_capable_product_app(
     )
 
     def runtime_factory(sink):
+        if target_authorization_resolver is not None:
+            return TargetAwareActionProposalRealtimeProductionRuntime(
+                decision_source=decision_source_factory(),
+                transport=transport_factory(),
+                observability_sink=sink,
+                target_authorization_resolver=target_authorization_resolver,
+                custody=custody,
+            )
         return ActionProposalRealtimeProductionRuntime(
             decision_source=decision_source_factory(),
             transport=transport_factory(),
@@ -265,14 +283,24 @@ def create_action_capable_product_app(
             return transport
         return LeaseContextGuardedTransport(transport, lease_context)  # type: ignore[return-value]
 
-    executor = ProductionActionExecutor(
-        custody=executor_custody,
-        ledger=executor_ledger,
-        authorization_resolver=authorization_resolver,
-        transport_factory=action_transport_factory,
-        observability_sink=executor_sink,
-        actions_enabled=actions_enabled,
-    )
+    if target_authorization_resolver is not None:
+        executor = TargetAwareProductionActionExecutor(
+            custody=executor_custody,
+            ledger=executor_ledger,
+            target_authorization_resolver=target_authorization_resolver,
+            transport_factory=action_transport_factory,
+            observability_sink=executor_sink,
+            actions_enabled=actions_enabled,
+        )
+    else:
+        executor = ProductionActionExecutor(
+            custody=executor_custody,
+            ledger=executor_ledger,
+            authorization_resolver=authorization_resolver,
+            transport_factory=action_transport_factory,
+            observability_sink=executor_sink,
+            actions_enabled=actions_enabled,
+        )
     if lease_supervisor is not None:
         lease_supervisor.start()
 
@@ -286,6 +314,9 @@ def create_action_capable_product_app(
         "non_transferable_shared_lease"
         if action_execution_lease_store is not None
         else "legacy_no_lease"
+    )
+    app.state.action_authorization_backend = (
+        "exact_target_v1" if target_authorization_resolver is not None else "legacy_user_snapshot"
     )
     app.state.local_test_storage_enabled = allow_local_test_storage
 
@@ -344,8 +375,6 @@ def create_action_capable_product_app(
                 new_state="UNCERTAIN",
             )
         except ActionExecutionLeaseLost:
-            # Ownership was lost. The shared reconciler is the only component allowed to converge
-            # an expired action attempt; this worker must not write any further state.
             return
 
     def execute_confirmed_action(execution_run_id: str, action_id: str, prepared, claim) -> None:
@@ -410,9 +439,10 @@ def create_action_capable_product_app(
         if not controls.actions_enabled():
             raise HTTPException(status_code=503, detail="action_kill_switch_engaged")
 
-        principal = authorization_resolver(user_id=context.user_id)
-        if principal.user_id != context.user_id:
-            raise HTTPException(status_code=403, detail="action_authorization_context_mismatch")
+        if target_authorization_resolver is None:
+            principal = authorization_resolver(user_id=context.user_id)
+            if principal.user_id != context.user_id:
+                raise HTTPException(status_code=403, detail="action_authorization_context_mismatch")
 
         executor.set_actions_enabled(controls.actions_enabled())
         try:
