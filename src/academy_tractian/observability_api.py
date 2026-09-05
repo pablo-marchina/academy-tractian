@@ -15,6 +15,7 @@ from .architecture_manifest import ProviderSelectionState, architecture_manifest
 from .observability_contract import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStoreContract
 from .operational_read_model import AnalyticsQuery, OperationalReadModel
 from .production_telemetry import CloseReason, ProductionTelemetry
+from .realtime_wakeup import RealtimeWakeup
 
 
 class ObservabilityAccessPolicy(Protocol):
@@ -165,6 +166,9 @@ def _augment_health_with_quantitative_telemetry(
     sse = telemetry.get("sse")
     if isinstance(sse, dict):
         measured["sse"] = sse
+    realtime_wakeup = live_operability.get("realtime_wakeup")
+    if isinstance(realtime_wakeup, dict):
+        measured["realtime_wakeup"] = realtime_wakeup
 
     closed_gaps = {
         "runtime_request_latency_by_outcome_ms": "runtime_requests" in measured,
@@ -195,18 +199,27 @@ def create_observability_app(
     production_telemetry: ProductionTelemetry | None = None,
     live_operability_supplier: Callable[[], dict[str, Any]] | None = None,
     access_policy: ObservabilityAccessPolicy | None = None,
+    realtime_wakeup: RealtimeWakeup | None = None,
+    realtime_fallback_poll_ms: int = 1000,
 ) -> FastAPI:
     """Create the observability API from an explicit backend.
 
     Production composition injects ``observability_store``. ``db_path`` remains only as an
     explicit compatibility/test seam; there is deliberately no local default path. Supplying
     neither or both backends fails closed rather than guessing a persistence topology.
+
+    When ``realtime_wakeup`` is provided it is coordination only: every SSE iteration captures
+    the wakeup generation before reading durable rows, then waits for a newer generation if no
+    rows are pending. A bounded fallback timeout re-reads the durable cursor even if NOTIFY is
+    lost. Without a wakeup backend the accepted polling baseline remains unchanged.
     """
 
     if observability_store is not None and db_path is not None:
         raise ValueError("provide observability_store or db_path, not both")
     if observability_store is None and db_path is None:
         raise ValueError("observability_store is required; db_path is explicit test-only storage")
+    if not 250 <= realtime_fallback_poll_ms <= 30000:
+        raise ValueError("realtime_fallback_poll_ms must be within [250, 30000]")
 
     if observability_store is None:
         from .observability_store import ObservabilityStore
@@ -228,6 +241,8 @@ def create_observability_app(
     app.state.observability_store = store
     app.state.operational_read_model = analytics
     app.state.local_test_storage_enabled = local_test_storage
+    app.state.realtime_wakeup = realtime_wakeup
+    app.state.realtime_fallback_poll_ms = realtime_fallback_poll_ms
 
     if production_telemetry is not None:
         @app.middleware("http")
@@ -430,6 +445,13 @@ def create_observability_app(
             reconnect_catchup_pending = reconnect_requested and follow
             try:
                 while True:
+                    # Capture the generation before reading durable rows. If a notification
+                    # arrives between this capture and registration of the waiter, the waiter
+                    # observes the newer generation and returns immediately. If NOTIFY is lost,
+                    # the bounded timeout causes another durable cursor read.
+                    wakeup_generation = (
+                        -1 if realtime_wakeup is None else realtime_wakeup.generation(run_id)
+                    )
                     items = store.get_events_after(run_id, after_sequence=after_sequence, limit=1000)
                     for item in items:
                         sequence = int(item["sequence"])
@@ -441,6 +463,9 @@ def create_observability_app(
                                 sequence=sequence,
                             )
                         yield _sse_record(item)
+
+                    if realtime_wakeup is not None:
+                        wakeup_generation = max(wakeup_generation, after_sequence)
 
                     if reconnect_catchup_pending:
                         yield _sse_stream_state_record(
@@ -463,6 +488,19 @@ def create_observability_app(
                     if await request.is_disconnected():
                         close_reason = "client_disconnect"
                         return
+
+                    if realtime_wakeup is not None:
+                        changed = await realtime_wakeup.wait_for_change(
+                            run_id,
+                            after_generation=wakeup_generation,
+                            timeout_seconds=realtime_fallback_poll_ms / 1000.0,
+                        )
+                        if changed:
+                            continue
+                        if production_telemetry is not None and connection_id is not None:
+                            production_telemetry.sse_keepalive(connection_id=connection_id)
+                        yield ": keepalive\n\n"
+                        continue
 
                     if production_telemetry is not None and connection_id is not None:
                         production_telemetry.sse_keepalive(connection_id=connection_id)
