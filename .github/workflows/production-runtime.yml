@@ -17,6 +17,7 @@ on:
       - "pyproject.toml"
       - "research/e2/**"
       - ".github/workflows/production-runtime.yml"
+  workflow_dispatch:
 
 jobs:
   production-runtime-unit:
@@ -103,7 +104,9 @@ jobs:
           )
           from academy_tractian.postgres_product_api import create_postgres_action_capable_product_app
           from academy_tractian.production_config import RemoteProductionConfig
+          from academy_tractian.remote_migrate import migrate
           from academy_tractian.remote_production import create_remote_production_app
+          from academy_tractian.remote_server import app_factory
           from research.e2.controller import AgentController
 
           registry = canonical_tool_registry()
@@ -114,6 +117,8 @@ jobs:
           assert callable(create_authenticated_postgres_action_capable_product_app)
           assert callable(RemoteProductionConfig.from_env)
           assert callable(create_remote_production_app)
+          assert callable(app_factory)
+          assert callable(migrate)
           print("standalone no-DuckDB remote-production wheel import smoke passed")
           PY
 
