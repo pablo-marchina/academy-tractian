@@ -20,6 +20,7 @@ from .production_telemetry import ProductionTelemetry
 from .product_storage_contracts import ExecutionKind, RunAccessStore, RunExecutionStore
 from .realtime_observability import DuckDBObservabilityEventSink, SafeObservabilityEventSink
 from .realtime_runtime import PreparedRealtimeRun, RealtimeProductionRuntime
+from .realtime_wakeup import RealtimeWakeup
 from .runtime import ProductionRequest
 
 
@@ -284,6 +285,8 @@ def create_product_app(
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
     heartbeat_interval_ms: int = 1000,
+    realtime_wakeup: RealtimeWakeup | None = None,
+    realtime_fallback_poll_ms: int = 1000,
 ) -> FastAPI:
     """Create the production-capable API from explicit durable storage dependencies.
 
@@ -291,12 +294,18 @@ def create_product_app(
     observability, run-ownership and execution-state stores explicitly. This prevents missing
     cloud dependencies from silently degrading a multi-replica deployment into local file state.
     Test-only local composition belongs in explicitly named fixtures/wrappers outside this factory.
+
+    A realtime wakeup is optional at this generic boundary so the existing polling implementation
+    remains the EDD baseline. Promoted distributed topologies inject a shared coordination
+    backend; the durable observability store remains the only event source of truth.
     """
 
     if not 1 <= max_workers <= 64:
         raise ValueError("max_workers must be within [1, 64]")
     if not 250 <= heartbeat_interval_ms <= 10000:
         raise ValueError("heartbeat_interval_ms must be within [250, 10000]")
+    if not 250 <= realtime_fallback_poll_ms <= 30000:
+        raise ValueError("realtime_fallback_poll_ms must be within [250, 30000]")
     if not observability_store.ready():
         raise ValueError("observability_store must be ready")
     if not run_access_store.ready():
@@ -318,7 +327,7 @@ def create_product_app(
     )
 
     def live_operability_snapshot() -> dict[str, Any]:
-        return {
+        snapshot = {
             "telemetry": telemetry.snapshot(),
             "execution": registry.snapshot(),
             "controls": controls.snapshot(),
@@ -338,9 +347,14 @@ def create_product_app(
                 ),
             },
         }
+        if realtime_wakeup is not None:
+            snapshot["realtime_wakeup"] = realtime_wakeup.snapshot()
+        return snapshot
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
+        if realtime_wakeup is not None:
+            realtime_wakeup.start()
         telemetry.mark_started(startup_readiness_ms=(perf_counter() - created_perf) * 1000.0)
 
         async def heartbeat_loop() -> None:
@@ -357,6 +371,8 @@ def create_product_app(
                 await heartbeat_task
             telemetry.mark_stopped()
             executor.shutdown(wait=True, cancel_futures=False)
+            if realtime_wakeup is not None:
+                realtime_wakeup.close()
             if operational_close is not None:
                 operational_close()
 
@@ -367,9 +383,13 @@ def create_product_app(
             production_telemetry=telemetry,
             live_operability_supplier=live_operability_snapshot,
             access_policy=access_policy,
+            realtime_wakeup=realtime_wakeup,
+            realtime_fallback_poll_ms=realtime_fallback_poll_ms,
         )
     except Exception:
         executor.shutdown(wait=False, cancel_futures=True)
+        if realtime_wakeup is not None:
+            realtime_wakeup.close()
         if operational_close is not None:
             operational_close()
         raise
@@ -384,6 +404,7 @@ def create_product_app(
     app.state.production_controls = controls
     app.state.run_access_store = active_run_access_store
     app.state.product_access_policy = access_policy
+    app.state.realtime_wakeup = realtime_wakeup
     app.state.local_test_storage_enabled = False
 
     def execute_prepared(run_id: str, prepared: PreparedRealtimeRun) -> None:
