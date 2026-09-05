@@ -1,0 +1,145 @@
+schema_version: academy-tractian-decision-registry-v1
+updated_at: 2026-09-05
+rules:
+  material_decision_requires:
+    - requirement_or_risk
+    - baseline
+    - alternatives
+    - hard_constraints
+    - metrics
+    - hard_gates
+    - evidence
+    - decision_state
+    - reversal_trigger
+  allowed_states:
+    - UNASSESSED
+    - RESEARCHED
+    - INELIGIBLE
+    - QUALIFIED
+    - PREFERRED
+    - FROZEN
+    - REJECTED
+    - NO_CHANGE
+    - NO_SELECTION
+    - SUPERSEDED
+
+decisions:
+  - id: DP-001
+    question: Which remote hosting path should run the production backend?
+    requirement_or_risk: Remote production serving with no local dependency and USD0 hard gate.
+    baseline: Existing Railway hosted-pilot is stale and not the current Docker production path.
+    alternatives: [Railway, other USD0 hosted candidates, NO_SELECTION]
+    hard_constraints: [USD0, no_paid_spillover, HTTPS, remote, Docker_or_equivalent_reproducible_release]
+    metrics: [deployment_success, cold_start_ms, http_p95_ms, availability_limits, quota_behavior]
+    hard_gates: [cash_cost_usd_equals_0, no_local_dependency, tls, safe_quota_exhaustion]
+    evidence: []
+    decision_state: RESEARCHED
+    reversal_trigger: A currently eligible hosted alternative materially improves production fit under the same hard gates.
+
+  - id: DP-002
+    question: Which remote PostgreSQL path should hold production operational truth?
+    requirement_or_risk: Durable multi-user tenant-safe PostgreSQL state at USD0.
+    baseline: Existing Neon hosted-pilot is provisioned but not migrated; previously created scoped role is not yet acceptable evidence.
+    alternatives: [Neon, other USD0 PostgreSQL-compatible candidates, NO_SELECTION]
+    hard_constraints: [USD0, TLS, PostgreSQL, NOBYPASSRLS_scoped_role, durable_state]
+    metrics: [db_rtt_p95_ms, wake_latency_ms, connection_limits, reconnect_correctness]
+    hard_gates: [cash_cost_usd_equals_0, tenant_escape_equals_0, schema_migration_pass, reconnect_catchup_pass]
+    evidence: []
+    decision_state: RESEARCHED
+    reversal_trigger: Current free-tier limitations prevent the measured production envelope or another eligible candidate dominates it.
+
+  - id: DP-003
+    question: Which standards-based browser IAM architecture should be promoted?
+    requirement_or_risk: Multi-user browser authentication without browser-owned tenant/permission authority.
+    baseline: Internal signed HMAC runtime bearer is not end-user IAM.
+    alternatives: [OIDC_BFF_Authorization_Code_PKCE, equivalent_standards_based_USD0_candidate, NO_SELECTION]
+    hard_constraints: [USD0, standards_based, server_owned_scope, secure_session, authenticated_SSE]
+    metrics: [login_success_rate, session_failure_rate, auth_latency_ms]
+    hard_gates: [cross_tenant_access_equals_0, privilege_escalation_equals_0, browser_cannot_assert_tenant]
+    evidence: []
+    decision_state: RESEARCHED
+    reversal_trigger: A simpler eligible standards-based design proves equivalent security and better production fit.
+
+  - id: DP-004
+    question: Which hosted model/provider should supply production controller decisions?
+    requirement_or_risk: Real hosted decision source with task quality, reliability, safety and USD0 eligibility.
+    baseline: NO_SELECTION after historical D01/D02.
+    alternatives: [current_USD0_hosted_candidates, NO_SELECTION]
+    hard_constraints: [USD0, remote, structured_decisions, no_paid_fallback]
+    metrics: [operational_accuracy, required_tool_recall, argument_accuracy, evidence_correctness, escalation_accuracy, p95_latency_ms, failure_rate, stability]
+    hard_gates: [cash_cost_usd_equals_0, unsafe_unsupported_action_equals_0, gold_leakage_equals_0, known_schema_validity_equals_1]
+    evidence: []
+    decision_state: NO_SELECTION
+    reversal_trigger: New preregistered evidence shows a currently eligible candidate passes every promotion gate.
+
+  - id: DP-005
+    question: How should the production runtime communicate with the TRACTIAN API?
+    requirement_or_risk: Real typed integration preserving deterministic safety and write semantics.
+    baseline: Typed transport contract exists; remote production composition currently fails closed.
+    alternatives: [direct_typed_HTTP_transport, MCP_adapter_if_measured_need, equivalent_uniform_adapter]
+    hard_constraints: [typed_contract, server_managed_credentials, bounded_timeouts, no_blind_write_retry]
+    metrics: [tool_success_rate, tool_p95_ms, normalization_error_rate]
+    hard_gates: [unknown_tool_execution_equals_0, malformed_bound_request_equals_0, blind_write_replay_equals_0]
+    evidence: []
+    decision_state: PREFERRED
+    reversal_trigger: A measured interoperability requirement appears that the direct typed adapter cannot satisfy.
+
+  - id: DP-006
+    question: How should production infrastructure telemetry complement domain RunTrace?
+    requirement_or_risk: Live health/latency/failure evidence without leaking sensitive material.
+    baseline: Domain RunTrace + sanitized PostgreSQL observability.
+    alternatives: [OpenTelemetry_compatible_instrumentation, custom_minimal_metrics, NO_CHANGE]
+    hard_constraints: [USD0, no_secrets, no_chain_of_thought, sanitized_browser_projection]
+    metrics: [coverage, overhead_ms, dropped_telemetry_rate]
+    hard_gates: [credential_leakage_equals_0, gold_leakage_equals_0]
+    evidence: []
+    decision_state: RESEARCHED
+    reversal_trigger: Telemetry overhead or external dependency violates the production envelope.
+
+  - id: DP-007
+    question: Which hosting path should serve the React production frontend?
+    requirement_or_risk: Public authenticated frontend with no developer-machine dependency.
+    baseline: React/Vite product exists but has no proved remote production host.
+    alternatives: [USD0_static_host_or_same_platform, same_origin_backend_static_release, NO_SELECTION]
+    hard_constraints: [USD0, HTTPS, remote, reproducible_build]
+    metrics: [deploy_success, page_load_p95_ms, availability_limits]
+    hard_gates: [cash_cost_usd_equals_0, no_local_dependency]
+    evidence: []
+    decision_state: UNASSESSED
+    reversal_trigger: Selected backend topology makes a simpler same-origin deployment preferable.
+
+  - id: DP-008
+    question: Should the accepted custom agent orchestration be replaced by a framework?
+    requirement_or_risk: Avoid unnecessary orchestration complexity while preserving bounded execution and action semantics.
+    baseline: AgentController + HarnessRunner.
+    alternatives: [NO_CHANGE, LangGraph, PydanticAI, other_measured_challenger]
+    hard_constraints: [safety_semantics_preserved, USD0, inspectable_execution]
+    metrics: [task_quality, failure_recovery, latency, implementation_complexity]
+    hard_gates: [action_safety_regression_equals_0, tenant_safety_regression_equals_0]
+    evidence: []
+    decision_state: NO_CHANGE
+    reversal_trigger: A measured controller/runtime gap is identified and a challenger wins a preregistered comparison.
+
+  - id: DP-009
+    question: When may semantic evaluation gate agent/provider changes?
+    requirement_or_risk: Open-ended conclusion quality cannot rely on an uncalibrated LLM judge.
+    baseline: Deterministic checks authoritative; semantic layer non-gating until human calibration.
+    alternatives: [human_calibrated_semantic_judge, human_only_review, deterministic_only_where_possible]
+    hard_constraints: [blinded_labels, no_gold_leakage, explicit_rubric]
+    metrics: [precision, recall, F1, agreement]
+    hard_gates: [human_calibration_required_before_gating]
+    evidence: []
+    decision_state: NO_CHANGE
+    reversal_trigger: Real blinded human labels establish judge reliability above preregistered thresholds.
+
+  - id: DP-010
+    question: Should investigation depth/stopping be adaptive in production?
+    requirement_or_risk: Reduce unnecessary tool/model work or improve difficult-case quality without weakening safety.
+    baseline: Bounded static production policy.
+    alternatives: [NO_CHANGE, adaptive_depth, adaptive_tool_ordering]
+    hard_constraints: [deterministic_safety, USD0, hard_resource_caps]
+    metrics: [task_quality, risk_coverage, tool_calls_per_run, latency_ms, escalation_accuracy]
+    hard_gates: [safety_regression_equals_0, quality_not_worse]
+    evidence: []
+    decision_state: NO_CHANGE
+    reversal_trigger: Controlled production-compatible challenger proves material benefit.
