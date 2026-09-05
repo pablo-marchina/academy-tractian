@@ -1,246 +1,264 @@
 # Academy × TRACTIAN — Non-Negotiable Project Principles
 
 **Status:** mandatory repository-wide governance  
-**Applies to:** research, architecture, models, prompts, evaluators, judges, tools, runtimes, retrieval, memory, orchestration, data, security, observability, deployment, UI/integration and any other material project decision.  
-**Formal project source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)  
-**Operational decision-revalidation plan:** [`DECISION-REVALIDATION-MASTER-PLAN.md`](DECISION-REVALIDATION-MASTER-PLAN.md)
+**Checkpoint:** 2026-09-05 production rebaseline  
+**Applies to:** research, architecture, models, prompts, evaluators, tools, runtimes, data, security, observability, deployment, UI and every material technical decision.  
+**Formal source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)  
+**Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
+**Execution plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)
 
-These principles override convenience, novelty, implementation momentum and prior provisional choices. A component or decision is not final merely because it works, passes a minimum gate, is already implemented, is popular, or was previously selected.
+These principles override convenience, novelty, implementation momentum and prior provisional choices. A component is not final because it works, is popular, is already implemented or passed one minimum gate.
 
-## Project North Star — maximize the actual requested delivery
+## North Star
 
-The fixed objective of this repository is:
+> **Deliver the strongest defensible TRACTIAN × Inteli product: a remote, multi-user, production-oriented Agent + Evaluation platform whose behavior, architecture, safety, quality and operational value are measurable and observable.**
 
-> **Deliver the strongest defensible individual TRACTIAN × Inteli project against the actual assignment, delivered package, partner-quality guidance and academic criteria, while following P1–P4 rigorously.**
-
-The project must optimize for the requested outcome, not for research volume, benchmark novelty, framework sophistication or the number of technologies used.
+The project optimizes the requested outcome, not research volume, framework count or architectural sophistication.
 
 Every material workstream must map to at least one of:
 
 1. a formal TAPI/delivered-package requirement;
 2. an academic evaluation criterion;
-3. a material security/reliability/production risk that could block the requested delivery; or
-4. an experiment required to select among credible alternatives for one of the above.
+3. a material production/security/reliability risk;
+4. a measurable user/operational-value requirement; or
+5. an experiment required to choose among credible alternatives for the above.
 
 If it maps to none, defer it.
 
-### Permanent monetary hard constraint — USD 0
+## P0 — Production-first, remote-first, never demo-first
 
-From the 2026-08-28 decision-revalidation checkpoint forward, the production/project technology path must remain **monetarily free**:
+The final serving path is a real remotely deployed product, not a local demo.
 
-```text
-external API / hosted-service project charge    USD 0
-paid subscription required                      NO
-purchased API credits                           NO
-unbounded paid spillover                        FORBIDDEN
-```
+### Production eligibility
 
-This is a **hard eligibility constraint**, not a weighted optimization metric. A provider/model/tool that requires paid usage is outside the feasible production candidate set even if it is higher quality.
+Production mode must not depend on:
 
-Within the zero-cost feasible set, the project must still search broadly for and compare the strongest credible quality frontier. “Free” does not justify choosing the first available option, and “stronger but paid” does not override the hard constraint.
+- `localhost` / `127.0.0.1` services;
+- a developer laptop or manually running process;
+- local/open-weight model serving;
+- SQLite/DuckDB/filesystem state as production source of truth;
+- test doubles, scripted scenario sources or mock provider responses;
+- browser-provided tenant/identity/permission authority.
 
-Free-credit or free-tier candidates are eligible only when the intended project run can be bounded to USD 0 without silent paid spillover. Local/open-weight execution is eligible as a monetary-zero external-service baseline when operationally feasible.
+Local execution remains valid for development, deterministic tests, reproduction and controlled benchmarks. It is not evidence that the deployed product is production-ready.
 
-### Canonical source hierarchy
+Production configuration should fail closed when a forbidden local dependency is detected.
 
-When upstream sources differ, use:
+### Cost policy
 
-1. **[UPDATED] TAPI** — formal scope, deliverables and academic criteria;
-2. **delivered TRACTIAN project package** — Student Guide, agent input, evaluation material, contract/docs and synthetic environment as actually delivered;
-3. **executable supplied API behavior/tests** — operational truth for the simplified API when prose and implementation differ;
-4. **kickoff partner guidance** — product-quality guidance where compatible with the written sources;
-5. **project-generated research/assumptions** — hypotheses/extensions that must never overwrite upstream requirements.
-
-Record discrepancies instead of silently reconciling them. The current audited bundle and hashes are frozen in `research/tractian-source-baseline-2026-08-27.md`.
-
-### Acceptance-first priority
-
-Use this delivery priority throughout development:
+Cost is a **measured optimization objective and operating constraint**, not a universal architecture veto.
 
 ```text
-P0 — requested capabilities + trustworthy evaluation
-        ↓
-P1 — production/security/reliability needed to operate P0 well
-        ↓
-P2 — optional complexity only when measured benefit justifies it
+unbounded spend / silent paid spillover       FORBIDDEN
+unapproved paid execution/deployment          FORBIDDEN
+cost measurement and budgets                  REQUIRED
+free option that meets all hard gates         PREFERRED when Pareto-competitive
+paid option needed for stronger production    ELIGIBLE only after explicit owner authorization
 ```
 
-P0 coverage and rubric quality must not be sacrificed to add RAG, vector DB, reranking, multi-agent decomposition, persistent memory, MCP, adaptive routing, a richer UI or any other optional component merely because it is interesting or fashionable.
+No assistant, workflow or deployment automation may create paid usage merely because a paid candidate is technically superior. A budget/spend-bearing production step requires explicit authorization and must expose expected/actual cost.
 
-### Academic excellence target
+Historical USD-zero provider experiments remain valid evidence for their original scope; this prospective policy does not rewrite their frozen protocols.
 
-The final project should maximize evidence quality across the official evaluation dimensions:
+### Production evidence
 
-- API integration quality;
-- technical coherence;
-- hypothesis/experiment clarity;
-- quality of result analysis;
-- limitations and risk treatment;
-- reproducibility;
-- documentation;
-- demonstration quality.
+A production claim requires evidence from the deployed path itself. Repository tests may qualify algorithms and contracts, but do not automatically prove:
 
-These dimensions are cross-cutting acceptance objectives, not end-of-project polish.
+- deployed availability/HA;
+- capacity/SLO;
+- autoscaling;
+- backup/restore;
+- RTO/RPO;
+- remote IAM;
+- live provider reliability.
 
-## P1 — Systematic research and comparative decision-making
+Those claims require remote tests and observable production evidence.
 
-Every material project decision must be preceded by a systematic decision process.
+## Source hierarchy
 
-Required sequence:
+When upstream sources differ:
 
-`decision question → requirements/constraints → systematic research → credible alternative set → preregistered comparison → quantitative experiments → robustness/sensitivity analysis → production-fit analysis → decision record → confirmation/freeze`
+1. current/updated TAPI;
+2. delivered TRACTIAN package and contract;
+3. executable supplied API behavior/tests;
+4. kickoff/partner guidance compatible with formal sources;
+5. project research and assumptions.
 
-Mandatory rules:
+Record discrepancies instead of silently reconciling them.
 
-1. Define the decision question, scope, hard constraints and success/failure criteria before selecting a solution.
-2. Search broadly enough to identify all credible materially different alternatives, including the null/simple option and alternative architectural patterns.
-3. Prefer primary sources: project/API contracts, specifications, source code, official documentation, peer-reviewed or otherwise primary research, and reproducible project experiments.
-4. Compare viable alternatives under the same task distribution and controlled conditions whenever possible.
-5. Use quantitative measurements, uncertainty estimates, repeated runs and paired comparisons where applicable.
-6. Include ablations so improvements can be attributed to the component being evaluated.
-7. Test robustness, adversarial/failure conditions, sensitivity to configuration and operational variability.
-8. Evaluate production-relevant trade-offs, including correctness, safety, reliability, latency, throughput, cost/resource use, scalability, portability, maintainability, observability and operational complexity.
-9. Use Pareto/frontier reasoning when objectives conflict; do not hide trade-offs in an arbitrary weighted score unless the utility function itself is justified and preregistered.
-10. Record evidence, alternatives, results, uncertainty, rejected options, reversal triggers and unresolved questions in an ADR or equivalent decision record.
-11. When an upstream project source is updated or newly delivered, reconcile the requirement/acceptance maps before allowing downstream architecture momentum to continue unchanged.
-12. Treat a newly discovered hard-constraint violation or materially credible alternative as a prospective revalidation trigger even when the prior decision was historically frozen.
+## Priority rule
 
-### Permanent pre-implementation documentation gate
+```text
+P0 — requested capability + production/security blockers
+        ↓
+P1 — measurable quality, evaluation and operational value
+        ↓
+P2 — optional complexity only after a measured gap
+```
 
-From the 2026-08-28 revalidation checkpoint forward, **documentation and planning precede material implementation**.
+P0/P1 work must not be displaced by RAG, vector DB, multi-agent decomposition, persistent memory, MCP, framework migration, Kafka/Redis or other optional components merely because they are modern.
 
-Before new material code is written, the applicable plan/issue/experiment must state:
+## P1 — Systematic research before material choices
 
-- decision question and requirement/risk mapping;
-- hard constraints, including USD 0 where applicable;
-- current baseline;
-- credible materially different alternatives and explicit exclusions;
-- preregistered metrics, hard gates and task population;
-- repetition/uncertainty and robustness/failure plan where relevant;
-- production-fit measurements;
-- stopping/decision semantics;
-- regression obligations and reversal triggers.
+Every material choice follows:
 
-The operational checklist and current decision inventory live in `DECISION-REVALIDATION-MASTER-PLAN.md`.
+```text
+decision question
+→ requirement/risk mapping
+→ constraints
+→ systematic primary-source research
+→ simple/null baseline + credible alternatives
+→ preregistered metrics and hard gates
+→ controlled quantitative comparison
+→ robustness/failure analysis
+→ production-fit analysis
+→ Pareto decision
+→ ADR + reversal trigger
+→ regression protection
+```
 
-If implementation begins before this gate is satisfied, stop implementation and return to planning. Historical implementation effort is never justification to skip this step.
+Rules:
 
-### Decision-state semantics
+1. Define the decision question and success/failure criteria before selecting a solution.
+2. Search broadly enough to include materially different alternatives and `NO_CHANGE`.
+3. Prefer primary sources and reproducible project evidence.
+4. Compare candidates under the same workload and constraints where possible.
+5. Use repeated runs, paired comparisons, distributions and uncertainty estimates when relevant.
+6. Use ablations when attribution matters.
+7. Test failure/adversarial conditions and operational variability.
+8. Evaluate correctness, safety, reliability, latency, throughput, cost, scalability, portability, maintainability and observability.
+9. Use Pareto/frontier reasoning rather than hiding trade-offs in arbitrary weighted scores.
+10. Record rejected options and reversal triggers.
+11. A changed hard assumption reopens a previously frozen choice prospectively; historical evidence itself stays immutable.
 
-Every material choice should be understood as one of these states:
+### Decision states
 
-- `UNASSESSED` — no adequate systematic evaluation yet.
-- `RESEARCHED` — alternatives and evidence mapped, but no sufficient experiment/decision yet.
-- `QUALIFIED` — candidate meets minimum gates; this does **not** mean it is the best choice.
-- `PREFERRED` — candidate is currently best-supported after a broad comparative evaluation, but confirmation or production validation may still be pending.
-- `FROZEN` — best-supported choice after systematic comparison, robustness confirmation and production-fit validation; change requires new evidence or a failed assumption.
-- `SUPERSEDED` — replaced by a better-supported choice.
+- `UNASSESSED` — not adequately evaluated.
+- `RESEARCHED` — alternatives/evidence mapped.
+- `QUALIFIED` — passes minimum gates; not necessarily best.
+- `PREFERRED` — best-supported currently after comparison.
+- `FROZEN` — best-supported for the stated scope after robustness/production validation.
+- `SUPERSEDED` — prospectively replaced by stronger evidence.
+- `NO_SELECTION` / `NO_CHANGE` — valid result when no candidate deserves promotion.
 
-**Passing a gate proves qualification, not optimality.** A choice may be called final only when no credible material alternative remains unevaluated within the explicitly defined search scope and project constraints.
+Passing one gate proves qualification, not optimality.
 
-A historical `FROZEN` artifact remains immutable evidence of its original decision scope. If a hard assumption changes or a material alternative was omitted, the artifact is not rewritten; a prospective revalidation may later supersede its final-choice role.
+## P2 — Quantitative before qualitative
 
-### Meaning of “best possible”
+Where a property can be validly measured, measure it.
 
-The project does not claim mathematical global optimality. “Best possible” means the **best-supported known option after an explicit, sufficiently broad and reproducible search of the credible decision space**, with quantitative comparison and robustness/production confirmation, while preserving full required-scope coverage and all hard constraints. If a material alternative remains untested or a P0 delivery requirement remains uncovered, the decision/project is not final.
+Prefer:
 
-## P2 — Production-first, never demo-first
+- rates and distributions;
+- p50/p95/p99;
+- paired deltas;
+- confidence intervals/effect sizes;
+- error/failure rates;
+- resource/cost usage;
+- repeated-run stability;
+- calibration/agreement metrics;
+- operational-value deltas.
 
-The target is a real production-path final system, not a presentation demo, scripted prototype or benchmark-only artifact.
+Thresholds must be justified by a hard requirement or empirical evidence.
 
-Therefore:
+Qualitative judgment is reserved for dimensions that cannot be reduced reliably to deterministic metrics. Semantic/LLM judges must be calibrated before they can gate candidates.
 
-- demos, mocks, fixtures, scripted paths and test doubles may validate infrastructure, but cannot establish production quality or agent capability;
-- architecture must be evaluated for real deployment constraints, failure recovery, security, authorization, privacy, observability, reproducibility, maintainability, scaling, latency, throughput and resource/cost behavior;
-- integrations must exercise real supplied contracts and realistic failure modes before production readiness is claimed;
-- state-changing behavior requires explicit authorization, idempotency/retry semantics where applicable, auditability and safe failure behavior;
-- production configuration, dependency/version control, secrets handling, environment setup, monitoring and rollback/reversal paths are part of the product, not post-demo cleanup;
-- a component that improves a benchmark but is operationally fragile, unsafe, outside the USD 0 hard constraint, unobservable or non-maintainable cannot be considered the final choice;
-- introducing the agent must not make the underlying support workflow less available: provider/model/agent failure must have a safe fallback or human-handoff path;
-- customer-facing behavior must distinguish operationally useful conclusions from unnecessary disclosure of internal implementation details;
-- consequential action confirmation is a production-policy decision to evaluate explicitly; do not force it into benchmark semantics when the delivered scenario contract already treats a request as authorized execution;
-- use a stable agent-facing tool contract and isolate backend/protocol heterogeneity behind adapters when that improves maintainability and reliability;
-- for model/provider selection, search for the strongest credible **zero-cost** quality frontier and compare it against other feasible zero-cost hosted/local options before optimizing latency, quota/resource use, reliability and operational complexity.
+## P3 — Adaptive where valuable, deterministic where safety-critical
 
-No project milestone may be marked complete solely because the UI/demo works or because a happy-path scenario succeeds.
+Adaptive behavior is encouraged when context-sensitive decisions can outperform a simpler static baseline.
 
-## P3 — Quantitative and adaptive by default
+Potentially adaptive:
 
-The project should maximize justified quantitative behavior and runtime adaptivity while preserving deterministic safety boundaries.
+- investigation depth;
+- evidence gathering/tool ordering;
+- stopping;
+- clarification/abstention/escalation thresholds;
+- provider/model routing;
+- retry/backoff within safe semantics;
+- contextual time/resource budget;
+- visualization prioritization.
 
-### Quantitative-by-default
+Always deterministic/hard-gated:
 
-Where a decision can be measured, it should be measured. Prefer explicit metrics, calibrated thresholds, confidence/uncertainty estimates, distributions and empirical decision rules over unsupported qualitative judgment.
+- authentication and tenant binding;
+- RLS/authorization;
+- permission/resource scope;
+- schema validation;
+- consequential-action confirmation;
+- custody/idempotency/leases/fencing;
+- privacy/field deny-lists;
+- evaluator partition/gold isolation;
+- hard execution/resource caps.
 
-Examples include:
+Adaptivity must be observable, reproducible enough to debug and promoted only after measured benefit.
 
-- evidence sufficiency and stopping;
-- model/runtime selection;
-- retrieval depth and routing;
-- tool selection and action authorization;
-- reliability and stability;
-- latency/throughput/resource budgets;
-- confidence, abstention and escalation;
-- production health and drift;
-- customer-safe communication and escalation-handoff quality when reliable annotation/judging is available.
+## P4 — Eval-driven engineering
 
-Thresholds must be justified empirically or by hard requirements, not chosen only for convenience.
+Evaluation controls the engineering loop:
 
-### Adaptive-by-default
-
-Static rules/configurations must not be assumed optimal when context-sensitive adaptation can be evaluated. Where justified, the system should adapt behavior to observed task state, evidence sufficiency, uncertainty, risk, API/tool availability, failure state, resource budget and other measurable runtime signals.
-
-Adaptation itself must be evaluated. It must not bypass deterministic security/safety/authorization constraints, must be observable and reproducible enough for debugging, and must demonstrate measurable benefit over simpler static baselines before adoption.
-
-## P4 — Eval-driven engineering across the entire project
-
-The project as a whole is eval-driven. Evaluation is not a final QA phase; it defines and controls the engineering loop.
-
-Required loop:
-
-`requirement → evaluator/measurement design → baseline → candidate hypothesis → preregistration → implementation → controlled evaluation → diagnosis → comparison → decision → regression coverage`
+```text
+requirement
+→ evaluator/measurement design
+→ baseline
+→ candidate hypothesis
+→ preregistration
+→ implementation
+→ controlled evaluation
+→ diagnosis
+→ comparison
+→ promote/reject/no-change
+→ regression coverage
+```
 
 Mandatory implications:
 
-1. Define how success and failure will be measured before materially changing a candidate whenever feasible.
+1. Define measurable success before material implementation whenever feasible.
 2. Establish a baseline before claiming improvement.
-3. Keep DEV/VALIDATION/LOCKED_TEST boundaries explicit and prevent tuning leakage.
-4. Separate deterministic evaluation from LLM-judge evaluation whenever deterministic ground truth is available.
-5. Validate evaluators and judges themselves before allowing them to gate candidates.
-6. Benchmark candidate models, judges, prompts, runtimes, retrieval strategies, guards and architectures rather than accepting the first one that passes.
-7. Preserve failed experiments and consumed attempts as evidence; do not silently rerun or erase inconvenient results.
-8. Require regression evaluation after material changes.
-9. Treat operational failures separately from scientific/task-quality failures.
-10. Production telemetry and post-deployment evaluation must eventually feed controlled adaptation/re-evaluation without bypassing frozen safety constraints.
-11. Evaluate both the final conclusion and the observable execution process: tool choice, arguments, evidence use, stopping, action/escalation decisions, robustness and safety.
-12. Exact wording must not become the primary correctness signal when the requested operational conclusion can be evaluated more directly.
+3. Keep DEV / VALIDATION / LOCKED_TEST boundaries explicit.
+4. Prefer deterministic ground truth over LLM judges when exact checks exist.
+5. Validate judges/evaluators before allowing them to gate candidates.
+6. Preserve failed experiments and consumed attempts.
+7. Separate operational failure from scientific/task-quality failure.
+8. Evaluate conclusion **and** observable execution process: tool choice, arguments, evidence, stopping, escalation/action behavior and safety.
+9. Exact wording is not the primary correctness signal when operational conclusion can be evaluated directly.
+10. Production telemetry should feed later controlled re-evaluation, never bypass hard safety constraints.
 
-## Repository-wide completion gate
+## Documentation and provenance gate
 
-A material component, decision or workstream is **not complete** unless all applicable conditions are satisfied:
+Before material implementation, the issue/plan must state:
 
-- [ ] the work maps to an explicit delivery requirement, academic criterion, material risk or required comparison;
-- [ ] decision question and requirements are explicit;
-- [ ] systematic research is documented;
-- [ ] credible materially different alternatives were identified;
-- [ ] comparison criteria and hard constraints were defined before final selection;
-- [ ] the USD 0 hard constraint is satisfied for applicable production/provider/service choices;
-- [ ] appropriate baselines and ablations exist;
-- [ ] quantitative controlled evaluation was executed;
+- requirement/risk mapping;
+- current baseline;
+- credible alternatives;
+- hard constraints;
+- metrics and hard gates;
+- robustness/failure plan;
+- production-fit evidence required;
+- stopping/decision semantics;
+- regression/reversal triggers.
+
+Frozen/source-pinned evidence is never silently rewritten or cosmetically moved. Repository cleanup follows `docs/REPOSITORY-CLEANUP-AUDIT.md` and the lifecycle rules in `docs/README.md`.
+
+## Completion gate
+
+A material workstream is not done unless all applicable conditions hold:
+
+- [ ] maps to an explicit requirement/risk/value objective;
+- [ ] baseline and decision question are explicit;
+- [ ] credible alternatives were researched;
+- [ ] metrics/hard gates were defined before final selection;
+- [ ] controlled quantitative evaluation exists where applicable;
 - [ ] uncertainty/repeated-run behavior was measured where stochasticity matters;
-- [ ] robustness, adversarial and failure-mode behavior was evaluated where applicable;
-- [ ] production fitness was evaluated, not inferred from a demo;
-- [ ] adaptive behavior was considered and compared against static/simple baselines where relevant;
-- [ ] evaluator/judge validity is established for any metric used as a gate;
-- [ ] no material credible alternative remains unevaluated within the defined search scope;
-- [ ] trade-offs and Pareto position are understood;
-- [ ] decision and reversal triggers are documented;
-- [ ] regression protection exists for the accepted behavior;
-- [ ] the evidence supports `PREFERRED`/`FROZEN`, not merely `QUALIFIED`;
-- [ ] applicable P0 rows in `DELIVERY-ACCEPTANCE.md` remain covered or have an explicit evidence-honest limitation.
+- [ ] robustness/failure behavior was tested;
+- [ ] production fitness was measured on the relevant path rather than inferred from a demo;
+- [ ] production mode has no forbidden local serving dependency;
+- [ ] cost is bounded, measured and explicitly authorized if non-zero;
+- [ ] adaptive behavior was compared with a simpler static baseline where relevant;
+- [ ] evaluator/judge validity is established for gating metrics;
+- [ ] trade-offs/Pareto position are understood;
+- [ ] decision/reversal triggers are documented;
+- [ ] regression protection exists;
+- [ ] claims remain bounded by evidence;
+- [ ] applicable TAPI/acceptance rows remain covered.
 
-If any applicable item is missing, the correct state is still research/experimental, not done.
-
-## Consequence for existing provisional choices
-
-Existing choices remain valid as historical experimental evidence, but their status must be interpreted using this policy. A previously “qualified” or historically frozen component is not automatically the final project standard. Before final architecture freeze, major choices — including model/provider, semantic judge, orchestration/runtime, agent topology, retrieval strategy, tool topology, memory, adaptive policies, observability, deployment and evaluation stack — must be checked against this repository-wide systematic-comparison rule, the USD 0 hard constraint and the actual requested delivery.
+If an applicable item is missing, the correct state is still research/experimental/incomplete — not production-ready.
