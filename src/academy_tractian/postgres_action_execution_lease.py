@@ -16,6 +16,11 @@ class PostgresActionExecutionLeaseStore:
     The row is deliberately *not* a queue. An expired row cannot be claimed by another replica.
     Reconciliation converts the action, its execution run and any consumed idempotency claim to
     UNCERTAIN, because the external side effect may already have occurred.
+
+    ``orphan_grace_seconds`` closes the small confirmation setup window in which custody has
+    atomically moved to EXECUTING but the accepted execution row/lease has not yet been written.
+    A recent lease-less action is left alone; a periodically observed lease-less action older than
+    the grace converges to UNCERTAIN. An explicitly expired lease is uncertain immediately.
     """
 
     def __init__(
@@ -23,9 +28,13 @@ class PostgresActionExecutionLeaseStore:
         database: PostgresOperationalDatabase,
         *,
         initialize: bool = False,
+        orphan_grace_seconds: float = 5.0,
     ) -> None:
+        if not 1.0 <= orphan_grace_seconds <= 300.0:
+            raise ValueError("orphan_grace_seconds must be within [1, 300]")
         self.database = database
         self.schema = database.schema
+        self.orphan_grace_seconds = float(orphan_grace_seconds)
         if initialize:
             self.initialize_schema()
 
@@ -238,15 +247,20 @@ class PostgresActionExecutionLeaseStore:
                     FROM "{self.schema}".pending_actions AS a
                     LEFT JOIN {self._table()} AS l USING (action_id)
                     WHERE a.state = 'EXECUTING'
-                      AND (l.action_id IS NULL OR l.lease_expires_at <= CURRENT_TIMESTAMP)
+                      AND (
+                          l.lease_expires_at <= CURRENT_TIMESTAMP
+                          OR (
+                              l.action_id IS NULL
+                              AND a.updated_at <= CURRENT_TIMESTAMP - (%s * INTERVAL '1 second')
+                          )
+                      )
                     ORDER BY a.action_id
                     FOR UPDATE OF a
-                    """
+                    """,
+                    (self.orphan_grace_seconds,),
                 ).fetchall()
                 action_ids = tuple(str(row[0]) for row in rows)
-                execution_run_ids = tuple(
-                    str(row[1]) for row in rows if row[1] is not None
-                )
+                execution_run_ids = tuple(str(row[1]) for row in rows if row[1] is not None)
                 if not action_ids:
                     return ActionExecutionRecoveryReport((), (), ())
 
@@ -311,5 +325,6 @@ class PostgresActionExecutionLeaseStore:
             "active_leases": int(row[0]),
             "expired_leases": int(row[1]),
             "total_leases": int(row[2]),
+            "orphan_grace_seconds": self.orphan_grace_seconds,
             "automatic_replay_enabled": False,
         }
