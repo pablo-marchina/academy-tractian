@@ -17,6 +17,7 @@ _PROVIDER_KEY_ENV = {
     "openai": "OPENAI_API_KEY",
     "google": "GOOGLE_API_KEY",
     "groq": "GROQ_API_KEY",
+    "cloudflare": "CLOUDFLARE_API_TOKEN",
 }
 _LOCAL_HOST_ALIASES = frozenset(
     {
@@ -146,6 +147,7 @@ class HostedProductConfig:
     provider_api_key: str | None
     max_workers: int
     heartbeat_interval_ms: int
+    provider_account_id: str | None = None
 
     @classmethod
     def from_environment(
@@ -201,8 +203,11 @@ class HostedProductConfig:
             resolve_hosted_candidate(provider, model)
 
         provider_api_key = None
+        provider_account_id = None
         if provider is not None:
             provider_api_key = _optional(env, _PROVIDER_KEY_ENV[provider])
+            if provider == "cloudflare":
+                provider_account_id = _optional(env, "CLOUDFLARE_ACCOUNT_ID")
 
         tractian_raw = _optional(env, "ACADEMY_TRACTIAN_BASE_URL")
         tractian_base_url = (
@@ -235,6 +240,7 @@ class HostedProductConfig:
             provider_api_key=provider_api_key,
             max_workers=_positive_int(env, "ACADEMY_MAX_WORKERS", 4),
             heartbeat_interval_ms=_positive_int(env, "ACADEMY_HEARTBEAT_INTERVAL_MS", 1000),
+            provider_account_id=provider_account_id,
         )
         if config.max_workers > 64:
             raise ValueError("ACADEMY_MAX_WORKERS_exceeds_64")
@@ -256,6 +262,8 @@ class HostedProductConfig:
         resolve_hosted_candidate(self.provider, self.model)
         if not self.provider_api_key:
             raise ValueError("hosted_provider_api_key_missing")
+        if self.provider == "cloudflare" and not self.provider_account_id:
+            raise ValueError("cloudflare_account_id_required")
         if self.tractian_base_url is None:
             raise ValueError("tractian_base_url_missing")
 
@@ -297,6 +305,15 @@ class HostedProductConfig:
         candidate_id = (
             None if self.provider is None or self.model is None else f"{self.provider}:{self.model}"
         )
+        provider_summary: dict[str, object] = {
+            "selection": self.provider or "NO_SELECTION",
+            "model": self.model or "NO_SELECTION",
+            "candidate_id": candidate_id or "NO_SELECTION",
+            "api_key_configured": self.provider_api_key is not None,
+        }
+        if self.provider == "cloudflare":
+            provider_summary["account_id_configured"] = self.provider_account_id is not None
+
         return {
             "schema_version": "hosted-product-config-v4",
             "deployment": {
@@ -318,12 +335,7 @@ class HostedProductConfig:
                 "tractian_bearer_configured": self.tractian_bearer_token is not None,
             },
             "identity": identity,
-            "provider": {
-                "selection": self.provider or "NO_SELECTION",
-                "model": self.model or "NO_SELECTION",
-                "candidate_id": candidate_id or "NO_SELECTION",
-                "api_key_configured": self.provider_api_key is not None,
-            },
+            "provider": provider_summary,
             "runtime": {
                 "max_workers": self.max_workers,
                 "heartbeat_interval_ms": self.heartbeat_interval_ms,
