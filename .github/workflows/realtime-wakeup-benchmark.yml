@@ -1,0 +1,102 @@
+name: realtime-wakeup-benchmark
+
+on:
+  pull_request:
+    paths:
+      - "src/academy_tractian/realtime_wakeup.py"
+      - "src/academy_tractian/observability_api.py"
+      - "src/academy_tractian/postgres_observability_store.py"
+      - "src/academy_tractian/postgres_product_api.py"
+      - "src/academy_tractian/product_api.py"
+      - "src/academy_tractian/action_product_api.py"
+      - "research/realtime_wakeup/**"
+      - "tests/test_realtime_wakeup.py"
+      - "tests/test_postgres_multi_instance_product.py"
+      - "docs/REALTIME-WAKEUP-BENCHMARK-2026-09-05.md"
+      - ".github/workflows/realtime-wakeup-benchmark.yml"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "RT-WAKEUP-001 benchmark profile"
+        required: true
+        default: "ci"
+        type: choice
+        options:
+          - ci
+          - full
+
+jobs:
+  realtime-wakeup-decision:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: academy_tractian
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d academy_tractian"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      REALTIME_POSTGRES_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install benchmark dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Regress wakeup payload and fail-closed contracts
+        run: python -m pytest -q tests/test_realtime_wakeup.py
+
+      - name: Run preregistered paired realtime benchmark
+        shell: bash
+        run: |
+          PROFILE="${{ github.event.inputs.profile || 'ci' }}"
+          python -m research.realtime_wakeup.benchmark \
+            --profile "$PROFILE" \
+            --output artifacts/realtime-wakeup-benchmark.json
+
+      - name: Validate promotion artifact and hard gates
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("artifacts/realtime-wakeup-benchmark.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          assert payload["decision_id"] == "RT-WAKEUP-001"
+          assert payload["schema_version"] == "realtime-wakeup-benchmark-v1"
+          assert payload["decision"]["hard_gates_passed"] is True
+          assert payload["decision"]["efficiency_gates_passed"] is True
+          assert payload["decision"]["outcome"] == "PROMOTE_PG_LISTEN_NOTIFY"
+          assert all(payload["hard_gates"].values())
+          assert all(payload["efficiency_gates"].values())
+          candidate = payload["candidates"]["postgres_listen_notify"]
+          assert candidate["listener_final"]["listener_connections_opened"] == 1
+          assert candidate["listener_final"]["listener_failures"] == 0
+          assert candidate["listener_final"]["payload_rejections"] == 0
+          assert payload["comparison"]["idle_durable_read_ratio_candidate_over_baseline"] <= 0.50
+          print(json.dumps(payload["comparison"], indent=2, sort_keys=True))
+          print(json.dumps(payload["decision"], indent=2, sort_keys=True))
+          PY
+
+      - name: Upload quantitative decision evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: realtime-wakeup-benchmark-${{ github.run_id }}
+          path: artifacts/realtime-wakeup-benchmark.json
+          if-no-files-found: error
+          retention-days: 30
