@@ -80,27 +80,27 @@ States: `DONE`, `IN_PROGRESS`, `BLOCKED`, `PLANNED`, `NOT_READY`, `NO_SELECTION`
 | # | Workstream | State | Evidence / next gate |
 |---:|---|---|---|
 | 01 | Rebaseline active project truth | DONE | `ACTIVE-PROJECT-STATUS.md` synchronized |
-| 02 | Material decision registry | DONE | `decision-registry.yaml` created and updated as promotion evidence changes |
-| 03 | Architecture manifest truthfulness | DONE | promoted PostgreSQL/identity/handoff/action/realtime architecture encoded + regression test |
-| 04 | Final remote hosting topology | IN_PROGRESS | Railway `production-api` + `production-web` on final branch; frontend remote deploy PASS; backend boot still blocked by approved DSN injection |
+| 02 | Material decision registry | DONE | `decision-registry.yaml` active and evidence-linked |
+| 03 | Architecture manifest truthfulness | DONE | PostgreSQL/runtime/action/realtime + managed-session/compatibility identity encoded with regression guard |
+| 04 | Final remote hosting topology | IN_PROGRESS | Railway backend/frontend + Neon DB/Auth provisioned; frontend remote deploy PASS; backend boot blocked only by approved DSN injection |
 | 05 | Remote PostgreSQL role/schema promotion | DONE | Neon main: 15/15 tables, 7/7 metadata, safe scoped role and RLS negative test PASS |
-| 06 | Remote backend boot / health / release identity | BLOCKED | managed-IAM mode removes browser HMAC secret; only internal/scoped PostgreSQL DSNs remain blocked by connector secret-transfer policy |
-| 07 | Browser IAM / managed session boundary | IN_PROGRESS | Neon Auth challenger + React AuthBoundary + server-side session verifier implemented; PR #196 regression/remote acceptance pending |
+| 06 | Remote backend boot / health / release identity | BLOCKED | latest fail-closed log reports only `ACADEMY_POSTGRES_INTERNAL_DSN` + `ACADEMY_POSTGRES_SCOPED_DSN` missing |
+| 07 | Browser IAM / managed session boundary | IN_PROGRESS | Neon Auth provisioned on production main + trusted product origin; code/regression PASS; live two-user/two-tenant acceptance pending |
 | 08 | Multi-user / tenant negative acceptance | PLANNED | DB RLS gate ready; requires live backend managed-session path |
 | 09 | Hosted provider/model tournament | NO_SELECTION | new USD0 eligible experiment required |
 | 10 | Real provider DecisionSource composition | BLOCKED | blocked on provider promotion |
 | 11 | Real TRACTIAN production transport | PLANNED | direct typed HTTP adapter baseline; exact supplied contract/config must drive implementation |
 | 12 | Real action authorization resolver | PLANNED | requires authenticated identity/resource mapping |
 | 13 | Consequential action remote E2E | PLANNED | preserve custody/idempotency/non-transferable lease semantics |
-| 14 | Production frontend deployment | IN_PROGRESS | Railway/Caddy production-web deployment PASS; authenticated backend E2E still pending |
-| 15 | Authenticated REST + SSE | IN_PROGRESS | Caddy same-origin `/auth` + `/api` proxy implemented; backend session composition under CI and remote boot blocked on DSNs |
-| 16 | Production Control Room completeness | PLANNED | live architecture/evidence/lineage/eval/health after remote data path closes |
-| 17 | Infrastructure telemetry | PLANNED | RunTrace remains domain truth; OTel-compatible challenger only if needed |
+| 14 | Production frontend deployment | DONE | Railway/Caddy `production-web` on final branch, production auth forced on, main Neon Auth target, remote deploy SUCCESS |
+| 15 | Authenticated REST + SSE | IN_PROGRESS | same-origin `/auth` + `/api` + SSE composition complete; live DB-backed API acceptance blocked on DSNs |
+| 16 | Production Control Room completeness | PLANNED | validate all safe live surfaces after remote data path closes |
+| 17 | Infrastructure telemetry | PLANNED | RunTrace remains domain truth; OTel-compatible challenger only if a measured gap appears |
 | 18 | Realtime reconnect/recovery campaign | PLANNED | must include DB sleep/wake and cursor catch-up |
 | 19 | Adversarial security campaign | PLANNED | tenant/session/prompt/tool/action/evaluator failure families |
 | 20 | Remote load/capacity campaign | PLANNED | derive measured free-tier envelope and SLO claims |
-| 21 | GitHub main protection | PLANNED | PR #196 now supplies final-branch CI; main protection still must require `final-ci-required / required-gate` |
-| 22 | CI/CD + rollback + provenance | IN_PROGRESS | draft PR #196 created; PR workflows active; production deploy/rollback automation remains open |
+| 21 | GitHub main protection | PLANNED | require PR + `final-ci-required / required-gate`; protection still not enforced |
+| 22 | CI/CD + rollback + provenance | IN_PROGRESS | draft PR #196 active; IAM/frontend checkpoint `required-gate` PASS; latest-head revalidation + deploy/rollback automation remain open |
 | 23 | Human semantic calibration | NOT_READY | real blinded labels required before semantic judge gates |
 | 24 | Operational-value experiment | NOT_READY | real MANUAL vs AGENT-ASSISTED observations required |
 | 25 | Adaptive runtime challengers | PLANNED / P1 | only after P0 production closure |
@@ -117,14 +117,14 @@ Do not displace this sequence with optional complexity. A blocked dependency may
 04 remote hosting                                    IN_PROGRESS
 05 PostgreSQL roles + migration                      DONE
 06 backend live shell + health/version               BLOCKED ON APPROVED DSN INJECTION
-07 browser IAM / managed session                     IN_PROGRESS
+07 browser IAM / managed session                     HOSTED + CODED / LIVE ACCEPTANCE OPEN
 08 multi-user/RLS remote acceptance                  NEXT AFTER LIVE BACKEND
 09 provider tournament
 10 real DecisionSource
 11 TRACTIAN transport
 12 authorization resolver
 13 action E2E
-14 frontend hosting                                  REMOTE BASELINE PASS / E2E OPEN
+14 frontend hosting                                  DONE
 15 authenticated REST/SSE                            IN_PROGRESS
 16 Control Room completeness
 17 telemetry
@@ -132,7 +132,7 @@ Do not displace this sequence with optional complexity. A blocked dependency may
 19 adversarial security
 20 remote load/capacity
 21 GitHub protection
-22 CI/CD + rollback/provenance                       PR CI ACTIVE
+22 CI/CD + rollback/provenance                       REQUIRED GATE PASS AT IAM/FRONTEND CHECKPOINT
 23 semantic calibration where feasible
 24 operational value where feasible
 25 adaptive challengers only after P0
@@ -144,9 +144,10 @@ Do not displace this sequence with optional complexity. A blocked dependency may
 ### Status: DONE for current baseline
 
 - active status is rebaselined to the actual final branch and external infrastructure state;
-- `architecture_manifest.py` represents PostgreSQL operational truth, trusted identity, runtime handoff, action custody/lease, human review/value and non-authoritative realtime wake-up;
+- `architecture_manifest.py` represents PostgreSQL operational truth, runtime handoff, action custody/lease, safe observability and the configured identity boundary;
+- managed-session identity is represented as the current remote candidate while signed bearer remains a compatibility/rollback path;
 - the legacy `DuckDB Safe Read Model` label is removed from the promoted architecture;
-- a regression test prevents that storage truth from silently reverting;
+- regression tests guard storage and identity truthfulness;
 - material decisions have an explicit registry;
 - PR #196 is the draft integration/review surface for the final branch.
 
@@ -195,33 +196,35 @@ Remaining database evidence belongs to P0-H rather than schema promotion: remote
 
 A clean Railway service named `production-api` exists separately from the stale historical `hosted-pilot`. Its GitHub source branch is explicitly `release/production-final`, it builds the repository Python 3.11 production Dockerfile, runs in Railway US East Metal, restarts on failure and has a Railway HTTPS service domain.
 
-The prior fail-closed deployment proved that missing production secrets stop serving boot rather than silently falling back.
+The current `neon-auth` composition reaches its fail-closed configuration guard and reports **only** the two PostgreSQL DSNs missing. This proves obsolete browser-HMAC configuration is no longer blocking the selected candidate and that serving still refuses unsafe fallback.
 
 ### Required next
 
 - install only the two remaining PostgreSQL DSNs through an approved Railway secret channel:
   - `ACADEMY_POSTGRES_INTERNAL_DSN` using the owner/internal role;
   - `ACADEMY_POSTGRES_SCOPED_DSN` using `academy_tractian_rls`;
-- do not commit, document or proxy those values through an unapproved connector;
-- redeploy the exact final-branch SHA;
+- do not commit, document, paste into chat or proxy those values through an unapproved connector;
+- set release metadata to the exact deployment SHA immediately before live promotion;
+- redeploy the current final branch;
 - verify database connectivity, `/health`, release identity and restart/persistence;
 - keep provider calls disabled until DP-004 promotes a candidate.
 
-The managed `neon-auth` browser IAM mode intentionally does **not** require `ACADEMY_RUNTIME_IDENTITY_SECRET`, issuer or audience for the browser path. This removes an obsolete browser-HMAC secret from the final web topology while preserving the old signed-bearer mode as a rollback-compatible composition.
+The managed `neon-auth` browser IAM mode intentionally does **not** require `ACADEMY_RUNTIME_IDENTITY_SECRET`, issuer or audience for the browser path. Signed bearer remains available only as a controlled compatibility path.
 
 ## 9. P0-D — Browser IAM and multi-user product
 
 ### Current challenger: Neon Auth / Better Auth managed session
 
-The original OIDC+BFF target remains a valid baseline, but the current USD0 challenger is a managed Neon Auth session behind the same-origin product boundary.
+The original OIDC+BFF target remains a valid alternative. The current USD0 challenger is a managed Neon Auth session behind the same-origin product boundary.
 
-Implemented in the final branch:
+Implemented/provisioned:
 
 ```text
 Browser
 → production-web HTTPS origin
 → /auth/* same-origin Caddy proxy
-→ Neon Auth / Better Auth managed HttpOnly session
+→ Neon Auth / Better Auth on Neon production main
+→ managed HttpOnly session
 → /api/* same-origin Caddy proxy
 → FastAPI NeonAuthRuntimeContextProvider
 → server-side managed-session revalidation
@@ -237,9 +240,18 @@ Security invariants:
 - shared active organization comes only from managed session state;
 - without an active shared organization, tenant defaults to deterministic `user:<authenticated-user-id>` personal isolation;
 - default runtime permissions stay server-defined;
-- no auth token/DSN is stored in React state or committed to source.
+- no auth token/DSN is stored in React state or committed to source;
+- production Docker build forces browser auth on; provider-free dev/CI does not depend on an external identity service.
 
-Promotion still requires PR regression success and live multi-user REST/SSE negative acceptance. If those gates fail, DP-003 remains reversible to OIDC+BFF or another eligible design.
+Evidence:
+
+- backend managed-session/config tests passed in `production-runtime`;
+- provider-free Chromium acceptance passed after production-only auth gating was introduced;
+- `final-ci-required` checkpoint completed `required-gate: SUCCESS` across clean clone, browser, horizontal runtime and action-lease jobs;
+- Neon Auth is now provisioned on production main and the production-web origin is trusted;
+- production-web redeployed successfully against the production-main Auth host.
+
+Promotion still requires live two-user/two-tenant REST/SSE negative acceptance through the DB-backed remote backend. Current email/password config does not require email verification, so verified-email identity is not claimed.
 
 ## 10. P0-E — Provider/model selection
 
@@ -284,20 +296,24 @@ Blind replacement/replay remains forbidden.
 
 ## 12. P0-G — Frontend production and live visibility
 
+### Hosting status: DONE; authenticated end-to-end remains P0-D/P0-G integration evidence
+
 Retain React 19 + TypeScript + Vite + TanStack Query + ECharts + React Flow + Vitest + Playwright.
 
-Current remote baseline:
+Remote hosting baseline:
 
 - `production-web` Railway service;
 - React/Vite multi-stage production image;
 - Caddy static SPA serving;
 - HTTPS public Railway domain;
-- same-origin `/auth` and `/api` routing;
-- `/api` proxy targets Railway private `production-api` networking;
-- SSE buffering explicitly disabled at the Caddy reverse proxy;
-- authenticated React boundary prevents product queries from starting before a valid managed session is present.
+- production build forces `VITE_BROWSER_AUTH_ENABLED=true`;
+- same-origin `/auth` routing targets Neon Auth on production main;
+- same-origin `/api` routing targets Railway private `production-api` networking;
+- SSE buffering explicitly disabled at the reverse proxy;
+- authenticated React boundary prevents product queries before a managed session is available;
+- post-Auth-main redeploy reached `SUCCESS`.
 
-Remote deployment reached `SUCCESS`. Final frontend promotion still requires live auth/API/SSE behavior, browser acceptance and performance evidence.
+Hosting itself is complete. Live auth/API/SSE behavior, Control Room data completeness and performance remain separate acceptance gates.
 
 Production areas should expose safe real state for Mission Control, Live Run Cockpit, timeline/waterfall, Trace Graph, Architecture Explorer, evidence/output lineage, Action Control, Eval Lab, provider experiments, Dynamic Data Explorer, Production Health and real Operational Value evidence when available.
 
@@ -321,7 +337,7 @@ Run increasing concurrency on the actual selected free deployment until measured
 
 ## 14. P0-I — Repository protection and release
 
-Draft PR #196 now provides the integration surface and triggers the PR CI matrix. It remains draft until applicable P0 gates are evidence-backed.
+Draft PR #196 is the final-branch integration surface. The IAM/frontend code checkpoint passed `final-ci-required / required-gate`; every subsequent material code change must revalidate before merge.
 
 Before final production completion:
 
