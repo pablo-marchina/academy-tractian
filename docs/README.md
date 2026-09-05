@@ -1,7 +1,7 @@
 # Documentation Hub
 
 **Status:** canonical documentation index  
-**Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
+**Active state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
 **Delivery target:** 2026-09-08
 
 This repository contains both active product documentation and a large scientific evidence trail. The active surface is intentionally small; historical/frozen files remain available for provenance and reproduction but are not competing sources of current truth.
@@ -12,19 +12,26 @@ Use one document per question:
 
 | Question | Canonical document |
 |---|---|
-| Where are we now? | [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md) |
+| Where are we now? | [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md) |
 | What are we building next and by when? | [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md) |
 | What is the architecture/stack/technique set? | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | Where does code live / where should a change go? | [`CODEBASE-MAP.md`](CODEBASE-MAP.md) |
 | How does this satisfy the TAPI? | [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md) |
 | What must be true for final acceptance? | [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md) |
 | How do I install, reproduce and recover? | [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md) |
-| What evidence supports the rubric? | [`RUBRIC-TO-EVIDENCE.md`](RUBRIC-TO-EVIDENCE.md) |
+| What historical frozen rubric evidence exists? | [`RUBRIC-TO-EVIDENCE.md`](RUBRIC-TO-EVIDENCE.md) |
 | What governance rules constrain changes? | [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md) |
 | Why was a material decision made? | [`adr/README.md`](adr/README.md) + `adr/*` |
 | How did the project evolve? | [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md) + `progress/` |
 
 `README.md` at repository root is a concise entrypoint only.
+
+Two legacy filenames look mutable but are now provenance-bound and must not be used for new state:
+
+- `CURRENT-PROJECT-STATUS.md` is hash-pinned by the final-freeze evidence bundle;
+- `RUBRIC-TO-EVIDENCE.md` is hash-pinned by ADR-017 / hard-freeze integrity checks.
+
+New state is written to `ACTIVE-PROJECT-STATUS.md`; new rubric/reviewer analysis must use a new, explicitly non-frozen document rather than rewriting historical bytes.
 
 ## 2. Documentation lifecycle
 
@@ -32,20 +39,21 @@ Use one document per question:
 
 May be updated as evidence/state changes:
 
-- `CURRENT-PROJECT-STATUS.md`
+- `ACTIVE-PROJECT-STATUS.md`
 - `DELIVERY-PLAN.md`
 - `ARCHITECTURE.md`
 - `CODEBASE-MAP.md`
 - `TAPI-DELIVERY-COVERAGE-2026-09-02.md`
 - `DELIVERY-ACCEPTANCE.md`
 - `FINAL-HANDOFF-RUNBOOK.md`
-- `RUBRIC-TO-EVIDENCE.md`
 - `PROJECT-PRINCIPLES.md`
 
 ### FROZEN / HISTORICAL
 
 Do not rewrite to make later decisions look cleaner:
 
+- `CURRENT-PROJECT-STATUS.md` — legacy mutable name, now blob-pinned by the final-freeze bundle;
+- `RUBRIC-TO-EVIDENCE.md` — ADR-017/hard-freeze pinned;
 - `adr/*` after acceptance/freeze;
 - `research/frozen/*`;
 - frozen experiment manifests/results/closures;
@@ -71,8 +79,8 @@ For **current repository state/authorization**:
 
 1. exact frozen experiment evidence for its own scope;
 2. `PROJECT-PRINCIPLES.md`;
-3. `CURRENT-PROJECT-STATUS.md`;
-4. current machine-readable checkpoint/result linked from status;
+3. `ACTIVE-PROJECT-STATUS.md`;
+4. current machine-readable checkpoint/result linked from active status;
 5. `DELIVERY-PLAN.md`;
 6. `DELIVERY-ACCEPTANCE.md`;
 7. `ARCHITECTURE.md`;
@@ -134,12 +142,14 @@ When uncertain, prefer logical cleanup: mark lifecycle and point to the canonica
 
 When a material state changes, update only the documents that own that question:
 
-- state/authorization → `CURRENT-PROJECT-STATUS.md`;
+- state/authorization → `ACTIVE-PROJECT-STATUS.md`;
 - priorities/deadline → `DELIVERY-PLAN.md`;
 - durable architecture/stack → `ARCHITECTURE.md` + ADR when material;
 - code ownership/navigation → `CODEBASE-MAP.md`;
 - requirement/DoD → TAPI coverage + `DELIVERY-ACCEPTANCE.md`;
 - operator commands/recovery → `FINAL-HANDOFF-RUNBOOK.md`;
 - historical event → append to progress/evidence, never copy into every active document.
+
+Frozen paths are never changed merely because their wording has become stale. New evidence supersedes their role prospectively through new files.
 
 This is the anti-drift rule for the remainder of the project.

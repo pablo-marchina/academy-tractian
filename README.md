@@ -36,7 +36,7 @@ USD0 is an eligibility hard gate, not a weighted preference. Paid candidates may
 | Need | Canonical source |
 |---|---|
 | Non-negotiable principles | [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) |
-| Current project state | [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) |
+| Active project state | [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md) |
 | Documentation index | [`docs/README.md`](docs/README.md) |
 | Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Codebase map | [`docs/CODEBASE-MAP.md`](docs/CODEBASE-MAP.md) |
@@ -45,6 +45,8 @@ USD0 is an eligibility hard gate, not a weighted preference. Paid candidates may
 | TAPI coverage | [`docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md`](docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md) |
 | Development process | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | Research/evidence history | [`research/README.md`](research/README.md) |
+
+`docs/CURRENT-PROJECT-STATUS.md` is retained byte-for-byte because the 2026-09-04 final-freeze bundle hash-pins that historical path. New mutable state belongs in `docs/ACTIVE-PROJECT-STATUS.md`.
 
 ## Promoted product path
 
@@ -169,4 +171,4 @@ Do not claim more than the evidence proves. In particular, repository-level corr
 
 Do not claim a paid candidate is project-eligible, and do not claim Cloudflare is selected merely because it is free.
 
-The authoritative status of those claims is maintained in [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md).
+The active status of those claims is maintained in [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md); the legacy `CURRENT-PROJECT-STATUS.md` remains frozen for provenance.
