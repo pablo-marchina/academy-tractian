@@ -12,7 +12,7 @@ from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
 from .architecture_manifest import ProviderSelectionState, architecture_manifest
-from .observability_store import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStore
+from .observability_contract import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStoreContract
 from .operational_read_model import AnalyticsQuery, OperationalReadModel
 from .production_telemetry import CloseReason, ProductionTelemetry
 
@@ -99,8 +99,6 @@ def _sse_stream_state_record(*, run_id: str, state: str, after_sequence: int) ->
         sort_keys=True,
         separators=(",", ":"),
     )
-    # Transport-control state deliberately carries no SSE id so the browser's Last-Event-ID
-    # remains the last persisted trace event and reconnect resumes from the canonical cursor.
     return f"event: stream_state\ndata: {payload}\n\n"
 
 
@@ -190,13 +188,35 @@ def _augment_health_with_quantitative_telemetry(
 
 def create_observability_app(
     *,
-    db_path: str | Path = "./var/observability.duckdb",
+    observability_store: ObservabilityStoreContract | None = None,
+    db_path: str | Path | None = None,
     lifespan: Callable[[FastAPI], AsyncContextManager[None]] | None = None,
     provider_selection_state: ProviderSelectionState = "NO_SELECTION",
     production_telemetry: ProductionTelemetry | None = None,
     live_operability_supplier: Callable[[], dict[str, Any]] | None = None,
     access_policy: ObservabilityAccessPolicy | None = None,
 ) -> FastAPI:
+    """Create the observability API from an explicit backend.
+
+    Production composition injects ``observability_store``. ``db_path`` remains only as an
+    explicit compatibility/test seam; there is deliberately no local default path. Supplying
+    neither or both backends fails closed rather than guessing a persistence topology.
+    """
+
+    if observability_store is not None and db_path is not None:
+        raise ValueError("provide observability_store or db_path, not both")
+    if observability_store is None and db_path is None:
+        raise ValueError("observability_store is required; db_path is explicit test-only storage")
+
+    if observability_store is None:
+        from .observability_store import ObservabilityStore
+
+        store: ObservabilityStoreContract = ObservabilityStore(db_path)  # type: ignore[arg-type,assignment]
+        local_test_storage = True
+    else:
+        store = observability_store
+        local_test_storage = False
+
     app = FastAPI(
         title="Academy × TRACTIAN Observability API",
         version=_package_version(),
@@ -204,10 +224,10 @@ def create_observability_app(
         redoc_url=None,
         lifespan=lifespan,
     )
-    store = ObservabilityStore(db_path)
-    analytics = OperationalReadModel(store)
+    analytics = OperationalReadModel(store)  # type: ignore[arg-type]
     app.state.observability_store = store
     app.state.operational_read_model = analytics
+    app.state.local_test_storage_enabled = local_test_storage
 
     if production_telemetry is not None:
         @app.middleware("http")
