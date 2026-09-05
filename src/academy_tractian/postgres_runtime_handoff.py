@@ -21,9 +21,10 @@ class PostgresRuntimeHandoffStore:
     Runtime envelopes are deleted on terminal completion/failure so private user input is
     retained only while recovery needs it.
 
-    Consequential action executions are intentionally excluded from automatic replay. Startup
-    reconciliation marks stale actions uncertain and marks legacy runtime rows without an envelope
-    interrupted; runtime rows with envelopes remain recoverable by another replica.
+    This store owns read-only runtime recovery only. Consequential action execution has a separate
+    non-transferable lease/custody/idempotency authority and must never be terminalized here. Legacy
+    runtime rows without a private handoff envelope become interrupted; recoverable runtime rows
+    with an envelope remain available for lease-based takeover.
     """
 
     def __init__(
@@ -488,29 +489,15 @@ class PostgresRuntimeHandoffStore:
         )
 
     def reconcile_unrecoverable(self) -> tuple[DurableExecution, ...]:
-        """Terminalize only work that cannot be safely replayed after replica loss.
+        """Interrupt only read-only runtimes that cannot be reconstructed after replica loss.
 
-        Action executions remain non-replayable by design. Legacy/runtime rows without a private
-        handoff envelope cannot be reconstructed and therefore stay fail-safe as interrupted.
-        Recoverable runtime rows with an envelope are left untouched for lease-based takeover.
+        Action executions are outside this store's authority. Their non-transferable lease layer
+        decides whether an attempt is healthy, in setup grace, expired or otherwise uncertain.
+        Recoverable runtime rows with a private handoff envelope are left untouched for takeover.
         """
 
-        recovered: list[DurableExecution] = []
         with self.database.internal_pool.connection() as connection:
             with connection.transaction():
-                action_rows = connection.execute(
-                    f"""
-                    UPDATE "{self.schema}".run_executions
-                    SET state = 'uncertain',
-                        transition_count = transition_count + 1,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE execution_kind = 'action'
-                      AND state IN ('accepted', 'running')
-                    RETURNING run_id, execution_kind, state, related_action_id, transition_count
-                    """
-                ).fetchall()
-                recovered.extend(self._execution(row) for row in action_rows)
-
                 runtime_rows = connection.execute(
                     f"""
                     UPDATE "{self.schema}".run_executions AS e
@@ -526,8 +513,7 @@ class PostgresRuntimeHandoffStore:
                               e.transition_count
                     """
                 ).fetchall()
-                recovered.extend(self._execution(row) for row in runtime_rows)
-        return tuple(sorted(recovered, key=lambda item: item.run_id))
+        return tuple(sorted((self._execution(row) for row in runtime_rows), key=lambda item: item.run_id))
 
     def snapshot(self) -> dict[str, Any]:
         with self.database.internal_pool.connection() as connection:
