@@ -144,6 +144,12 @@
       "git_blob_sha1": "4961fdfd89a6456ac5c7a0bde6d53e80448c6e50",
       "role": "current_contract",
       "description": "Canonical current state with final functional P0 baseline d3bed06b and post-merge required-gate #386."
+    },
+    {
+      "path": "docs/RUBRIC-TO-EVIDENCE.md",
+      "git_blob_sha1": "f6e01771f72c9ed66f5d46fb923a90980a75aff1",
+      "role": "current_contract",
+      "description": "Canonical reviewer navigation crosswalk synchronized to final P0 evidence and bounded claims."
     }
   ],
   "decisions": [
@@ -299,5 +305,5 @@
     "restart_ci_proves_rto_rpo_ha",
     "unconditional_production_readiness"
   ],
-  "manifest_sha256": "b432e5594878a20050d9ad03d396b7d16da50401127b147074de25a416e55446"
+  "manifest_sha256": "c1f382735265d79986ee8c41fc07833a4d2e752d27d3b75229f620b0a7a60c3f"
 }
