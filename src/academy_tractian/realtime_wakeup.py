@@ -117,6 +117,8 @@ class PostgresListenNotifyWakeup:
         self._valid_notifications = 0
         self._duplicate_notifications = 0
         self._payload_rejections = 0
+        self._listener_connections_opened = 0
+        self._listener_failures = 0
         self._listener_reconnects = 0
         self._wait_calls = 0
         self._wait_wakeups = 0
@@ -212,6 +214,8 @@ class PostgresListenNotifyWakeup:
                 "valid_notifications": self._valid_notifications,
                 "duplicate_notifications": self._duplicate_notifications,
                 "payload_rejections": self._payload_rejections,
+                "listener_connections_opened": self._listener_connections_opened,
+                "listener_failures": self._listener_failures,
                 "listener_reconnects": self._listener_reconnects,
                 "wait_calls": self._wait_calls,
                 "wait_wakeups": self._wait_wakeups,
@@ -239,7 +243,7 @@ class PostgresListenNotifyWakeup:
         except ImportError:
             with self._lock:
                 self._connected = False
-                self._listener_reconnects += 1
+                self._listener_failures += 1
             return
 
         connected_once = False
@@ -249,6 +253,7 @@ class PostgresListenNotifyWakeup:
                     connection.execute(sql.SQL("LISTEN {}").format(sql.Identifier(self.channel)))
                     with self._lock:
                         self._connected = True
+                        self._listener_connections_opened += 1
                         if connected_once:
                             self._listener_reconnects += 1
                     connected_once = True
@@ -269,8 +274,7 @@ class PostgresListenNotifyWakeup:
             except Exception:
                 with self._lock:
                     self._connected = False
-                    if connected_once:
-                        self._listener_reconnects += 1
+                    self._listener_failures += 1
                 if self._stop.wait(self.reconnect_delay_seconds):
                     break
             finally:
