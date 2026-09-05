@@ -27,9 +27,9 @@
     },
     {
       "path": "docs/PLAYWRIGHT-ACCEPTANCE.md",
-      "git_blob_sha1": "4c7e4729695d9bbac9badeb199614e9326e5d85f",
+      "git_blob_sha1": "59f47dfded39cbc68ac7d70ebf7cdc01c7cf1e03",
       "role": "current_contract",
-      "description": "Full-product browser acceptance contract and tested topology."
+      "description": "Canonical full-product browser acceptance contract aligned to the PostgreSQL serving path."
     },
     {
       "path": "research/identity-tenant-production-closure-2026-09-03.md",
@@ -81,9 +81,9 @@
     },
     {
       "path": "docs/BRANCH-PROTECTION.md",
-      "git_blob_sha1": "39c2b21d4add1ef6ebf825d66e3a9c426afd405e",
+      "git_blob_sha1": "3e40ca358d33160c97e51f7bea44d76deb794896",
       "role": "current_contract",
-      "description": "Stable required-gate branch protection contract and external enforcement boundary."
+      "description": "Stable four-gate required-gate branch-protection contract and external enforcement boundary."
     },
     {
       "path": "research/results/final-handoff-acceptance-audit-2026-08-28.json",
@@ -299,5 +299,5 @@
     "restart_ci_proves_rto_rpo_ha",
     "unconditional_production_readiness"
   ],
-  "manifest_sha256": "10d863b1fc330c47b49b2995d626651cadb8c338f578afe61b9d74bbbde66b30"
+  "manifest_sha256": "b432e5594878a20050d9ad03d396b7d16da50401127b147074de25a416e55446"
 }
