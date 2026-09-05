@@ -24,6 +24,7 @@ from .postgres_operational_value_v5 import PostgresOperationalPilotStoreV5
 from .postgres_semantic_review import PostgresSemanticReviewStore
 from .product_api import RuntimeContextProvider
 from .production_actions_v2 import ActionAuthorizationResolver
+from .realtime_wakeup import DEFAULT_POSTGRES_WAKEUP_CHANNEL, PostgresListenNotifyWakeup
 from .semantic_human_calibration import SemanticAnnotationManifest, SemanticReviewerPacket
 from .semantic_review_collection import attach_semantic_review_collection_api
 
@@ -180,6 +181,7 @@ def create_postgres_action_capable_product_app(
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
+    realtime_fallback_poll_ms: int = 1000,
 ) -> FastAPI:
     """Create the promoted no-local PostgreSQL production topology.
 
@@ -188,6 +190,10 @@ def create_postgres_action_capable_product_app(
     path parameter: serving cannot select a local persistence backend by configuration accident.
     With ``initialize_schema=False`` it remains fail-closed until the explicit migration step has
     established every required table and policy.
+
+    Realtime coordination uses one LISTEN/NOTIFY listener per application replica. PostgreSQL
+    rows remain authoritative; NOTIFY is only a wakeup and a bounded fallback cursor read
+    preserves eventual delivery if a notification is missed.
     """
 
     database = PostgresOperationalDatabase(
@@ -197,12 +203,20 @@ def create_postgres_action_capable_product_app(
         max_size=max(8, max_workers * 4),
         initialize=initialize_schema,
     )
+    wakeup = PostgresListenNotifyWakeup(
+        dsn=internal_dsn,
+        channel=DEFAULT_POSTGRES_WAKEUP_CHANNEL,
+    )
     try:
         custody = PostgresPendingActionCustody(database, initialize=initialize_schema)
         ledger = PostgresActionIdempotencyLedger(database, initialize=initialize_schema)
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=initialize_schema)
         semantic_store = PostgresSemanticReviewStore(database, initialize=initialize_schema)
-        observability_store = PostgresObservabilityStore(database, initialize=initialize_schema)
+        observability_store = PostgresObservabilityStore(
+            database,
+            initialize=initialize_schema,
+            notify_channel=DEFAULT_POSTGRES_WAKEUP_CHANNEL,
+        )
         if (
             not database.ready()
             or not pilot_store.ready()
@@ -226,6 +240,8 @@ def create_postgres_action_capable_product_app(
             provider_calls_enabled=provider_calls_enabled,
             actions_enabled=actions_enabled,
             heartbeat_interval_ms=heartbeat_interval_ms,
+            realtime_wakeup=wakeup,
+            realtime_fallback_poll_ms=realtime_fallback_poll_ms,
         )
         attach_operational_value_collection_api(
             app,
@@ -238,6 +254,7 @@ def create_postgres_action_capable_product_app(
             store=semantic_store,
         )
     except Exception:
+        wakeup.close()
         database.close()
         raise
 
@@ -246,5 +263,6 @@ def create_postgres_action_capable_product_app(
     app.state.semantic_review_collection_store = semantic_store
     app.state.observability_backend = "postgresql"
     app.state.operational_backend = "postgresql"
+    app.state.realtime_backend = "postgresql_listen_notify"
     app.state.local_test_storage_enabled = False
     return app
