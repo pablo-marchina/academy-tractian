@@ -1,0 +1,54 @@
+name: provider-model-frontier-v3-provider-free
+
+on:
+  pull_request:
+    paths:
+      - research/experiments/provider-model-frontier-preregistration-v3.json
+      - scripts/research/validate_provider_model_frontier_v3.py
+      - src/academy_tractian/provider_frontier_v3.py
+      - src/academy_tractian/hosted_candidate_registry.py
+      - src/academy_tractian/hosted_provider.py
+      - src/academy_tractian/hosted_config.py
+      - src/academy_tractian/cloudflare_provider_client.py
+      - src/academy_tractian/google_interactions_provider_client.py
+      - src/academy_tractian/groq_provider_client.py
+      - src/academy_tractian/provider_promotion.py
+      - tests/test_provider_frontier_v3.py
+      - tests/test_hosted_provider.py
+      - tests/test_hosted_config.py
+      - requirements.lock
+      - .github/workflows/provider-model-frontier-v3-provider-free.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-provider-frontier-v3:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ""
+      GOOGLE_API_KEY: ""
+      GEMINI_API_KEY: ""
+      GROQ_API_KEY: ""
+      CLOUDFLARE_API_TOKEN: ""
+      CLOUDFLARE_AUTH_TOKEN: ""
+      CLOUDFLARE_ACCOUNT_ID: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install exact locked dependency set
+        run: |
+          python -m pip install -r requirements.lock
+          python -m pip install --no-deps -e .
+      - name: Validate preregistered provider frontier without credentials
+        run: python scripts/research/validate_provider_model_frontier_v3.py
+      - name: Run frontier and hosted-provider regression tests
+        run: >-
+          python -m pytest -q
+          tests/test_provider_frontier_v3.py
+          tests/test_hosted_provider.py
+          tests/test_hosted_config.py
+          tests/test_provider_promotion.py
