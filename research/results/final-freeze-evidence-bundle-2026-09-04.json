@@ -150,6 +150,12 @@
       "git_blob_sha1": "f6e01771f72c9ed66f5d46fb923a90980a75aff1",
       "role": "current_contract",
       "description": "Canonical reviewer navigation crosswalk synchronized to final P0 evidence and bounded claims."
+    },
+    {
+      "path": "docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md",
+      "git_blob_sha1": "a60fa644e8ac45135597edacf2b4477aac0fe370",
+      "role": "current_contract",
+      "description": "Canonical TAPI-to-delivery coverage synchronized to the delivered final P0 topology and evidence state."
     }
   ],
   "decisions": [
@@ -305,5 +311,5 @@
     "restart_ci_proves_rto_rpo_ha",
     "unconditional_production_readiness"
   ],
-  "manifest_sha256": "c1f382735265d79986ee8c41fc07833a4d2e752d27d3b75229f620b0a7a60c3f"
+  "manifest_sha256": "7856397517fd794b1738fe71b648f70b5d0d67e391b4bfdc2744506ac587e8b1"
 }
