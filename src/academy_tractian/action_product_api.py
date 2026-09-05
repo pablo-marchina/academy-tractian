@@ -11,6 +11,7 @@ from research.e2.transport import RequestTransport
 
 from .action_evaluation import ProductionActionEvaluator
 from .action_recovery import reconcile_orphaned_actions
+from .observability_contract import ObservabilityStoreContract
 from .product_api import (
     AuthenticatedRuntimeContext,
     RuntimeContextProvider,
@@ -18,6 +19,7 @@ from .product_api import (
     require_runtime_permission,
     trusted_runtime_context,
 )
+from .product_storage_contracts import RunAccessStore, RunExecutionStore
 from .production_actions_v2 import (
     ActionAuthorizationResolver,
     ActionProposalRealtimeProductionRuntime,
@@ -27,8 +29,6 @@ from .production_actions_v2 import (
     ProductionActionExecutor,
 )
 from .realtime_observability import DuckDBObservabilityEventSink
-from .run_access import RunAccessStore
-from .run_execution_store import RunExecutionStore
 
 
 class _FrozenModel(BaseModel):
@@ -48,13 +48,21 @@ class ActionExecutionAccepted(_FrozenModel):
     execution_path: str
 
 
+def _derived_test_db_path(db_path: str | Path, infix: str) -> Path:
+    path = Path(db_path)
+    if path.suffix:
+        return path.with_name(f"{path.stem}.{infix}{path.suffix}")
+    return path.with_name(f"{path.name}.{infix}.duckdb")
+
+
 def create_action_capable_product_app(
     *,
-    db_path: str | Path,
     decision_source_factory: Callable[[], DecisionSource],
     transport_factory: Callable[[], RequestTransport],
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
+    observability_store: ObservabilityStoreContract | None = None,
+    db_path: str | Path | None = None,
     action_custody_path: str | Path | None = None,
     action_ledger_path: str | Path | None = None,
     custody_store: Any | None = None,
@@ -72,10 +80,9 @@ def create_action_capable_product_app(
 ) -> FastAPI:
     """Create the action-capable product while failing closed on local storage.
 
-    Production callers must inject custody, idempotency, run-access and execution stores.
-    File-backed stores are retained only for isolated compatibility tests and require the
-    explicit ``allow_local_test_storage=True`` escape hatch. This prevents a missing production
-    dependency from silently degrading a multi-replica deployment into process-local/file state.
+    Production callers inject all five durable stores. File-backed stores are retained only for
+    isolated compatibility tests and require ``allow_local_test_storage=True``. The strict base
+    product factory never receives a path and cannot infer a local persistence topology.
     """
 
     if custody_store is not None and action_custody_path is not None:
@@ -86,32 +93,58 @@ def create_action_capable_product_app(
         raise ValueError("provide run_access_store or access_db_path, not both")
     if execution_store is not None and execution_db_path is not None:
         raise ValueError("provide execution_store or execution_db_path, not both")
+    if observability_store is not None and db_path is not None:
+        raise ValueError("provide observability_store or db_path, not both")
 
-    local_fallback_requested = any(
-        (
-            custody_store is None,
-            action_ledger is None,
-            run_access_store is None,
-            execution_store is None,
-            action_custody_path is not None,
-            action_ledger_path is not None,
-            access_db_path is not None,
-            execution_db_path is not None,
-        )
-    )
-    if local_fallback_requested and not allow_local_test_storage:
-        raise ValueError(
-            "production action storage must be explicitly injected; "
-            "local file-backed fallbacks are test-only"
-        )
+    if allow_local_test_storage:
+        if db_path is None and observability_store is None:
+            raise ValueError("db_path is required for local test observability storage")
+        if observability_store is None:
+            from .observability_store import ObservabilityStore
 
+            observability_store = ObservabilityStore(db_path)  # type: ignore[arg-type,assignment]
+        if run_access_store is None:
+            from .run_access import DuckDBRunAccessStore
+
+            run_access_store = DuckDBRunAccessStore(
+                access_db_path
+                if access_db_path is not None
+                else _derived_test_db_path(db_path, "access")  # type: ignore[arg-type]
+            )
+        if execution_store is None:
+            from .run_execution_store import DuckDBRunExecutionStore
+
+            execution_store = DuckDBRunExecutionStore(
+                execution_db_path
+                if execution_db_path is not None
+                else _derived_test_db_path(db_path, "execution")  # type: ignore[arg-type]
+            )
+    else:
+        local_path_supplied = any(
+            value is not None
+            for value in (
+                db_path,
+                action_custody_path,
+                action_ledger_path,
+                access_db_path,
+                execution_db_path,
+            )
+        )
+        if local_path_supplied:
+            raise ValueError(
+                "production action storage must be explicitly injected; "
+                "local file-backed fallbacks are test-only"
+            )
+
+    if observability_store is None:
+        raise ValueError("observability store is required for production")
     if custody_store is None and action_custody_path is None:
         raise ValueError("action custody store is required for production")
     if action_ledger is None and action_ledger_path is None:
         raise ValueError("action idempotency ledger is required for production")
-    if run_access_store is None and access_db_path is None and not allow_local_test_storage:
+    if run_access_store is None:
         raise ValueError("run access store is required for production")
-    if execution_store is None and execution_db_path is None and not allow_local_test_storage:
+    if execution_store is None:
         raise ValueError("run execution store is required for production")
 
     custody = custody_store or PendingActionCustody(action_custody_path)  # type: ignore[arg-type]
@@ -128,11 +161,9 @@ def create_action_capable_product_app(
         )
 
     app = create_product_app(
-        db_path=db_path,
+        observability_store=observability_store,
         runtime_factory=runtime_factory,
         context_provider=context_provider,
-        access_db_path=access_db_path,
-        execution_db_path=execution_db_path,
         run_access_store=run_access_store,
         execution_store=execution_store,
         operational_close=operational_close,
