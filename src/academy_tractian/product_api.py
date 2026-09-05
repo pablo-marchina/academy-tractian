@@ -17,11 +17,18 @@ from .observability_api import ObservabilityAccessPolicy, create_observability_a
 from .observability_contract import ObservabilityStoreContract
 from .production_controls import ProductionControlState
 from .production_telemetry import ProductionTelemetry
-from .product_storage_contracts import ExecutionKind, RunAccessStore, RunExecutionStore
+from .product_storage_contracts import (
+    ExecutionKind,
+    RunAccessStore,
+    RunExecutionStore,
+    RuntimeExecutionEnvelope,
+    RuntimeHandoffStore,
+)
 from .realtime_observability import DuckDBObservabilityEventSink, SafeObservabilityEventSink
 from .realtime_runtime import PreparedRealtimeRun, RealtimeProductionRuntime
 from .realtime_wakeup import RealtimeWakeup
 from .runtime import ProductionRequest
+from .runtime_handoff_supervisor import HorizontalRuntimeSupervisor
 
 
 DEFAULT_RUNTIME_PERMISSIONS = frozenset(
@@ -194,6 +201,11 @@ class RunExecutionRegistry:
             self._last_transition_perf = perf_counter()
             self._transition_count += 1
 
+    def observe(self, run_id: str, state: str) -> None:
+        """Record process-local operability after an external durable transition."""
+
+        self._local_transition(run_id, state)
+
     def accepted(
         self,
         run_id: str,
@@ -287,6 +299,9 @@ def create_product_app(
     heartbeat_interval_ms: int = 1000,
     realtime_wakeup: RealtimeWakeup | None = None,
     realtime_fallback_poll_ms: int = 1000,
+    runtime_handoff_store: RuntimeHandoffStore | None = None,
+    runtime_handoff_lease_seconds: float = 15.0,
+    runtime_handoff_scan_ms: int = 500,
 ) -> FastAPI:
     """Create the production-capable API from explicit durable storage dependencies.
 
@@ -296,8 +311,13 @@ def create_product_app(
     Test-only local composition belongs in explicitly named fixtures/wrappers outside this factory.
 
     A realtime wakeup is optional at this generic boundary so the existing polling implementation
-    remains the EDD baseline. Promoted distributed topologies inject a shared coordination
-    backend; the durable observability store remains the only event source of truth.
+    remains the EDD baseline. Promoted distributed topologies inject a shared coordination backend;
+    the durable observability store remains the only event source of truth.
+
+    A runtime handoff store is also optional at this generic boundary. When injected, read-only
+    runtime ownership moves to a shared lease/generation queue so another replica can reconstruct
+    and resume work after process loss. Consequential actions deliberately remain on their
+    no-blind-replay path and become uncertain after interrupted execution.
     """
 
     if not 1 <= max_workers <= 64:
@@ -306,12 +326,18 @@ def create_product_app(
         raise ValueError("heartbeat_interval_ms must be within [250, 10000]")
     if not 250 <= realtime_fallback_poll_ms <= 30000:
         raise ValueError("realtime_fallback_poll_ms must be within [250, 30000]")
+    if not 3.0 <= runtime_handoff_lease_seconds <= 3600.0:
+        raise ValueError("runtime_handoff_lease_seconds must be within [3, 3600]")
+    if not 100 <= runtime_handoff_scan_ms <= 10000:
+        raise ValueError("runtime_handoff_scan_ms must be within [100, 10000]")
     if not observability_store.ready():
         raise ValueError("observability_store must be ready")
     if not run_access_store.ready():
         raise ValueError("run_access_store must be ready")
     if not execution_store.ready():
         raise ValueError("execution_store must be ready")
+    if runtime_handoff_store is not None and not runtime_handoff_store.ready():
+        raise ValueError("runtime_handoff_store must be ready")
 
     created_perf = perf_counter()
     executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="academy-tractian-run")
@@ -319,12 +345,17 @@ def create_product_app(
     controls = ProductionControlState(provider_calls_enabled=provider_calls_enabled)
     active_run_access_store = run_access_store
     active_execution_store = execution_store
-    recovered_executions = active_execution_store.reconcile_orphaned()
+    recovered_executions = (
+        runtime_handoff_store.reconcile_unrecoverable()
+        if runtime_handoff_store is not None
+        else active_execution_store.reconcile_orphaned()
+    )
     registry = RunExecutionRegistry(max_workers=max_workers, state_store=active_execution_store)
     access_policy = ProductObservabilityAccessPolicy(
         context_provider=context_provider,
         run_access_store=active_run_access_store,
     )
+    runtime_supervisor: HorizontalRuntimeSupervisor | None = None
 
     def live_operability_snapshot() -> dict[str, Any]:
         snapshot = {
@@ -336,7 +367,7 @@ def create_product_app(
                 "ready": active_run_access_store.ready(),
             },
             "recovery": {
-                "schema_version": "product-recovery-operability-v1",
+                "schema_version": "product-recovery-operability-v2",
                 "execution_store_ready": active_execution_store.ready(),
                 "orphaned_executions_reconciled": len(recovered_executions),
                 "interrupted_runtime_runs": sum(
@@ -345,10 +376,15 @@ def create_product_app(
                 "uncertain_action_runs": sum(
                     item.state == "uncertain" for item in recovered_executions
                 ),
+                "horizontal_runtime_recovery_enabled": runtime_handoff_store is not None,
             },
         }
         if realtime_wakeup is not None:
             snapshot["realtime_wakeup"] = realtime_wakeup.snapshot()
+        if runtime_supervisor is not None:
+            snapshot["runtime_handoff"] = runtime_supervisor.snapshot()
+        elif runtime_handoff_store is not None:
+            snapshot["runtime_handoff"] = runtime_handoff_store.snapshot()
         return snapshot
 
     @asynccontextmanager
@@ -362,10 +398,25 @@ def create_product_app(
                 telemetry.heartbeat()
                 await asyncio.sleep(heartbeat_interval_ms / 1000.0)
 
+        async def runtime_handoff_loop() -> None:
+            while True:
+                if runtime_supervisor is not None:
+                    runtime_supervisor.tick()
+                await asyncio.sleep(runtime_handoff_scan_ms / 1000.0)
+
         heartbeat_task = asyncio.create_task(heartbeat_loop())
+        handoff_task = (
+            asyncio.create_task(runtime_handoff_loop())
+            if runtime_handoff_store is not None
+            else None
+        )
         try:
             yield
         finally:
+            if handoff_task is not None:
+                handoff_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await handoff_task
             heartbeat_task.cancel()
             with suppress(asyncio.CancelledError):
                 await heartbeat_task
@@ -396,6 +447,22 @@ def create_product_app(
 
     store = app.state.observability_store
     sink = DuckDBObservabilityEventSink(store, telemetry=telemetry)
+    if runtime_handoff_store is not None:
+        runtime_supervisor = HorizontalRuntimeSupervisor(
+            instance_id=f"runtime-{uuid4().hex}",
+            max_workers=max_workers,
+            executor=executor,
+            handoff_store=runtime_handoff_store,
+            runtime_factory=runtime_factory,
+            observability_sink=sink,
+            observability_store=store,
+            telemetry=telemetry,
+            bind_future=registry.bind_future,
+            observe_state=registry.observe,
+            execution_enabled=controls.provider_calls_enabled,
+            lease_seconds=runtime_handoff_lease_seconds,
+        )
+
     app.state.product_executor = executor
     app.state.run_execution_registry = registry
     app.state.run_execution_store = active_execution_store
@@ -405,6 +472,11 @@ def create_product_app(
     app.state.run_access_store = active_run_access_store
     app.state.product_access_policy = access_policy
     app.state.realtime_wakeup = realtime_wakeup
+    app.state.runtime_handoff_store = runtime_handoff_store
+    app.state.runtime_handoff_supervisor = runtime_supervisor
+    app.state.runtime_handoff_backend = (
+        "shared_durable_queue" if runtime_handoff_store is not None else "local_executor"
+    )
     app.state.local_test_storage_enabled = False
 
     def execute_prepared(run_id: str, prepared: PreparedRealtimeRun) -> None:
@@ -488,21 +560,52 @@ def create_product_app(
             ) from exc
 
         telemetry.runtime_request_started(run_id=run_id)
-        try:
-            future = executor.submit(execute_prepared, run_id, prepared)
-        except Exception as exc:
-            registry.failed(run_id)
-            telemetry.runtime_request_finished(
-                run_id=run_id,
-                outcome="failed",
-                terminal_decision=None,
-                response_mode=None,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="run_dispatch_failed",
-            ) from exc
-        registry.bind_future(run_id, future)
+        if runtime_handoff_store is not None:
+            try:
+                runtime_handoff_store.enqueue(
+                    RuntimeExecutionEnvelope(
+                        run_id=run_id,
+                        request_id=raw_request_id,
+                        identity_id=context.identity_id,
+                        user_id=context.user_id,
+                        user_request=payload.user_request,
+                        seed=context.seed,
+                    )
+                )
+            except Exception as exc:
+                registry.failed(run_id)
+                telemetry.runtime_request_finished(
+                    run_id=run_id,
+                    outcome="failed",
+                    terminal_decision=None,
+                    response_mode=None,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="runtime_handoff_persist_failed",
+                ) from exc
+
+            # The request replica opportunistically claims immediately for latency. Failure to
+            # claim is not a request failure: the durable accepted item remains available to this
+            # or another replica's supervisor loop.
+            assert runtime_supervisor is not None
+            runtime_supervisor.dispatch_specific(run_id)
+        else:
+            try:
+                future = executor.submit(execute_prepared, run_id, prepared)
+            except Exception as exc:
+                registry.failed(run_id)
+                telemetry.runtime_request_finished(
+                    run_id=run_id,
+                    outcome="failed",
+                    terminal_decision=None,
+                    response_mode=None,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="run_dispatch_failed",
+                ) from exc
+            registry.bind_future(run_id, future)
 
         return RunAccepted(
             run_id=run_id,

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Literal, Protocol
+from typing import Any, Iterable, Literal, Protocol
 
 
 RUN_ACCESS_SCHEMA_VERSION = "run-access-v1"
 RUN_EXECUTION_SCHEMA_VERSION = "run-execution-store-v1"
+RUNTIME_HANDOFF_SCHEMA_VERSION = "runtime-handoff-v1"
 
 ExecutionKind = Literal["runtime", "action"]
 ExecutionState = Literal[
@@ -81,3 +82,94 @@ class RunExecutionStore(Protocol):
     def reconcile_orphaned(self) -> tuple[DurableExecution, ...]: ...
 
     def counts(self) -> dict[str, int]: ...
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeExecutionEnvelope:
+    """Private durable input required to reconstruct a read-only runtime after replica loss.
+
+    This object is server-internal and must never be exposed through browser-safe observability.
+    Production stores should retain it only while the execution is non-terminal.
+    """
+
+    run_id: str
+    request_id: str
+    identity_id: str
+    user_id: str
+    user_request: str
+    seed: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeHandoffClaim:
+    envelope: RuntimeExecutionEnvelope
+    owner_instance_id: str
+    claim_generation: int
+    previous_state: ExecutionState
+    recovery_count: int
+
+
+class RuntimeHandoffStore(Protocol):
+    """Durable multi-replica queue/lease contract for read-only runtime executions only.
+
+    Consequential action executions deliberately do not use this automatic replay path.
+    A generation token fences tool access, projection writes and terminal state from stale workers
+    after handoff.
+    """
+
+    def ready(self) -> bool: ...
+
+    def enqueue(self, envelope: RuntimeExecutionEnvelope) -> None: ...
+
+    def claim_specific(
+        self,
+        *,
+        run_id: str,
+        owner_instance_id: str,
+        lease_seconds: float,
+    ) -> RuntimeHandoffClaim | None: ...
+
+    def claim_available(
+        self,
+        *,
+        owner_instance_id: str,
+        lease_seconds: float,
+        limit: int,
+    ) -> tuple[RuntimeHandoffClaim, ...]: ...
+
+    def is_current_owner(
+        self,
+        *,
+        run_id: str,
+        owner_instance_id: str,
+        claim_generation: int,
+    ) -> bool: ...
+
+    def renew(
+        self,
+        *,
+        run_id: str,
+        owner_instance_id: str,
+        claim_generation: int,
+        lease_seconds: float,
+    ) -> bool: ...
+
+    def complete(
+        self,
+        *,
+        run_id: str,
+        owner_instance_id: str,
+        claim_generation: int,
+    ) -> bool: ...
+
+    def fail(
+        self,
+        *,
+        run_id: str,
+        owner_instance_id: str,
+        claim_generation: int,
+    ) -> bool: ...
+
+    def reconcile_unrecoverable(self) -> tuple[DurableExecution, ...]: ...
+
+    def snapshot(self) -> dict[str, Any]: ...

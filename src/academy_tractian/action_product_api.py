@@ -19,7 +19,7 @@ from .product_api import (
     require_runtime_permission,
     trusted_runtime_context,
 )
-from .product_storage_contracts import RunAccessStore, RunExecutionStore
+from .product_storage_contracts import RunAccessStore, RunExecutionStore, RuntimeHandoffStore
 from .production_actions_v2 import (
     ActionAuthorizationResolver,
     ActionProposalRealtimeProductionRuntime,
@@ -72,6 +72,7 @@ def create_action_capable_product_app(
     execution_db_path: str | Path | None = None,
     run_access_store: RunAccessStore | None = None,
     execution_store: RunExecutionStore | None = None,
+    runtime_handoff_store: RuntimeHandoffStore | None = None,
     operational_close: Callable[[], None] | None = None,
     max_workers: int = 4,
     provider_calls_enabled: bool = True,
@@ -79,13 +80,19 @@ def create_action_capable_product_app(
     heartbeat_interval_ms: int = 1000,
     realtime_wakeup: RealtimeWakeup | None = None,
     realtime_fallback_poll_ms: int = 1000,
+    runtime_handoff_lease_seconds: float = 15.0,
+    runtime_handoff_scan_ms: int = 500,
     allow_local_test_storage: bool = False,
 ) -> FastAPI:
     """Create the action-capable product while failing closed on local storage.
 
-    Production callers inject all five durable stores. File-backed stores are retained only for
+    Production callers inject all durable stores. File-backed stores are retained only for
     isolated compatibility tests and require ``allow_local_test_storage=True``. The strict base
     product factory never receives a path and cannot infer a local persistence topology.
+
+    ``runtime_handoff_store`` applies only to read-only investigation runtimes. Consequential
+    action executions retain their separate custody/idempotency contract and are never blindly
+    replayed after process loss.
     """
 
     if custody_store is not None and action_custody_path is not None:
@@ -169,12 +176,15 @@ def create_action_capable_product_app(
         context_provider=context_provider,
         run_access_store=run_access_store,
         execution_store=execution_store,
+        runtime_handoff_store=runtime_handoff_store,
         operational_close=operational_close,
         max_workers=max_workers,
         provider_calls_enabled=provider_calls_enabled,
         heartbeat_interval_ms=heartbeat_interval_ms,
         realtime_wakeup=realtime_wakeup,
         realtime_fallback_poll_ms=realtime_fallback_poll_ms,
+        runtime_handoff_lease_seconds=runtime_handoff_lease_seconds,
+        runtime_handoff_scan_ms=runtime_handoff_scan_ms,
     )
     controls = app.state.production_controls
     controls.set_actions_enabled(actions_enabled)

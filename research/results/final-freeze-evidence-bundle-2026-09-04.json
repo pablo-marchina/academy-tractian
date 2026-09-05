@@ -9,7 +9,7 @@
   "artifacts": [
     {
       "path": ".github/workflows/final-ci-required.yml",
-      "git_blob_sha1": "8be8121a4a70571fd0de8e4add0ea8b7c8171cc5",
+      "git_blob_sha1": "541bbd1fe474d5ed9c2bdaf11d94a311217b730f",
       "role": "current_ci",
       "description": "Always-on final CI aggregator exposing required-gate."
     },
@@ -245,5 +245,5 @@
     "restart_ci_proves_rto_rpo_ha",
     "unconditional_production_readiness"
   ],
-  "manifest_sha256": "e863f6b8643f667264fa52255a3458b83bd97b9f596519e80fa4b58861c99657"
+  "manifest_sha256": "2a2c8f7cf170c5fe1d60129440722904000dbbeb34e682e72b94ecae6d9f5917"
 }

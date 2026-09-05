@@ -19,21 +19,29 @@ jobs:
     name: full-product-browser
     uses: ./.github/workflows/full-product-playwright.yml
 
+  horizontal-runtime-handoff:
+    name: horizontal-runtime-handoff
+    uses: ./.github/workflows/horizontal-runtime-handoff.yml
+
   required-gate:
     name: required-gate
     if: ${{ always() }}
     needs:
       - clean-clone
       - full-product-browser
+      - horizontal-runtime-handoff
     runs-on: ubuntu-latest
     steps:
-      - name: Require clean clone and full browser acceptance
+      - name: Require clean clone, browser and horizontal runtime acceptance
         env:
           CLEAN_CLONE_RESULT: ${{ needs.clean-clone.result }}
           FULL_PRODUCT_BROWSER_RESULT: ${{ needs.full-product-browser.result }}
+          HORIZONTAL_RUNTIME_RESULT: ${{ needs.horizontal-runtime-handoff.result }}
         run: |
           echo "clean-clone=${CLEAN_CLONE_RESULT}"
           echo "full-product-browser=${FULL_PRODUCT_BROWSER_RESULT}"
+          echo "horizontal-runtime-handoff=${HORIZONTAL_RUNTIME_RESULT}"
           test "${CLEAN_CLONE_RESULT}" = "success"
           test "${FULL_PRODUCT_BROWSER_RESULT}" = "success"
+          test "${HORIZONTAL_RUNTIME_RESULT}" = "success"
           echo "FINAL_REQUIRED_CI=PASS"

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+from concurrent.futures import ThreadPoolExecutor
 import os
 from pathlib import Path
 from threading import Event, Thread
@@ -38,6 +38,7 @@ pytestmark = pytest.mark.skipif(
 SECRET = "load-benchmark-runtime-secret-that-is-at-least-32-bytes"
 ISSUER = "academy-load-benchmark"
 AUDIENCE = "academy-product"
+_TERMINAL_STATES = frozenset({"completed", "failed", "interrupted", "uncertain"})
 
 
 class DelayedFinalSource:
@@ -157,6 +158,23 @@ def _pressure_sample(app, *, level: int, started: float) -> LoadPressureObservat
     )
 
 
+def _wait_for_durable_terminal(app, run_id: str, *, timeout_seconds: float) -> str:
+    """Wait on shared execution truth, not a process-local Future handle.
+
+    Horizontal serving intentionally allows the accepting replica to return 202 while the run is
+    queued for another worker/replica. A local Future is therefore an implementation detail, not
+    an end-to-end completion contract.
+    """
+
+    deadline = perf_counter() + timeout_seconds
+    while perf_counter() < deadline:
+        state = app.state.run_execution_registry.status(run_id)
+        if state in _TERMINAL_STATES:
+            return str(state)
+        sleep(0.005)
+    return "timeout"
+
+
 def test_authenticated_postgres_load_campaign_measures_saturation_without_capacity_claim(
     postgres_fixture,
 ) -> None:
@@ -185,6 +203,7 @@ def test_authenticated_postgres_load_campaign_measures_saturation_without_capaci
         heartbeat_interval_ms=250,
     )
     assert app.state.local_test_storage_enabled is False
+    assert app.state.runtime_handoff_backend == "postgresql_skip_locked_lease"
 
     request_observations: list[LoadRequestObservation] = []
     pressure_observations: list[LoadPressureObservation] = []
@@ -199,9 +218,14 @@ def test_authenticated_postgres_load_campaign_measures_saturation_without_capaci
             json={"user_request": "Warm provider-free benchmark path."},
         )
         assert warm.status_code == 202
-        warm_future = app.state.run_execution_registry.future(warm.json()["run_id"])
-        assert warm_future is not None
-        warm_future.result(timeout=10)
+        assert (
+            _wait_for_durable_terminal(
+                app,
+                warm.json()["run_id"],
+                timeout_seconds=10,
+            )
+            == "completed"
+        )
 
         for level in protocol.concurrency_levels:
             level_started = perf_counter()
@@ -239,11 +263,12 @@ def test_authenticated_postgres_load_campaign_measures_saturation_without_capaci
 
                 run_id = response.json()["run_id"]
                 run_scope[run_id] = (organization_id, user_id)
-                future = app.state.run_execution_registry.future(run_id)
-                assert future is not None
-                try:
-                    future.result(timeout=protocol.completion_timeout_seconds)
-                except FutureTimeout:
+                terminal = _wait_for_durable_terminal(
+                    app,
+                    run_id,
+                    timeout_seconds=protocol.completion_timeout_seconds,
+                )
+                if terminal == "timeout":
                     return LoadRequestObservation(
                         concurrency_level=level,
                         request_index=index,
@@ -252,8 +277,7 @@ def test_authenticated_postgres_load_campaign_measures_saturation_without_capaci
                         end_to_end_latency_ms=(perf_counter() - started) * 1000.0,
                         terminal_state="timeout",
                     )
-                terminal = app.state.run_execution_registry.status(run_id)
-                assert terminal in {"completed", "failed", "interrupted", "uncertain"}
+                assert terminal in _TERMINAL_STATES
                 return LoadRequestObservation(
                     concurrency_level=level,
                     request_index=index,
