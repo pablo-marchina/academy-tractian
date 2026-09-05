@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from concurrent.futures import Future
 from dataclasses import dataclass
+from threading import Lock
+from time import perf_counter
 from typing import Any, Protocol
 
 
@@ -71,3 +74,146 @@ class ActionExecutionLeaseGuard:
     def assert_active(self) -> None:
         if not self.store.is_current_owner(self.claim):
             raise ActionExecutionLeaseLost("action_execution_lease_not_current")
+
+
+@dataclass(slots=True)
+class _ActiveActionLease:
+    claim: ActionExecutionLeaseClaim
+    future: Future[object]
+    last_renew_perf: float
+
+
+class ActionExecutionLeaseSupervisor:
+    """Replica-local renewer over non-transferable consequential-action leases.
+
+    This supervisor never dequeues work and never creates a replacement action attempt. It only
+    maintains leases for action Futures already started by this replica and periodically asks the
+    shared store to converge expired/missing ownership to UNCERTAIN.
+    """
+
+    def __init__(
+        self,
+        *,
+        store: ActionExecutionLeaseStore,
+        instance_id: str,
+        lease_seconds: float = 15.0,
+    ) -> None:
+        if not store.ready():
+            raise ValueError("action execution lease store must be ready")
+        if not instance_id or len(instance_id) > 128:
+            raise ValueError("instance_id must be within [1, 128] characters")
+        if not 3.0 <= lease_seconds <= 3600.0:
+            raise ValueError("lease_seconds must be within [3, 3600]")
+        self.store = store
+        self.instance_id = instance_id
+        self.lease_seconds = float(lease_seconds)
+        self._renew_every_seconds = max(1.0, self.lease_seconds / 3.0)
+        self._lock = Lock()
+        self._active: dict[str, _ActiveActionLease] = {}
+        self._acquired = 0
+        self._acquire_failures = 0
+        self._renewals = 0
+        self._renewal_failures = 0
+        self._terminal_releases = 0
+        self._terminal_release_failures = 0
+        self._reconcile_ticks = 0
+        self._reconcile_failures = 0
+        self._reconciled_uncertain = 0
+
+    def acquire(self, *, action_id: str, execution_run_id: str) -> ActionExecutionLeaseClaim:
+        claim = self.store.acquire(
+            action_id=action_id,
+            execution_run_id=execution_run_id,
+            owner_instance_id=self.instance_id,
+            lease_seconds=self.lease_seconds,
+        )
+        with self._lock:
+            if claim is None:
+                self._acquire_failures += 1
+                raise ActionExecutionLeaseLost("action_execution_lease_acquire_failed")
+            self._acquired += 1
+        return claim
+
+    def guard(self, claim: ActionExecutionLeaseClaim) -> ActionExecutionLeaseGuard:
+        return ActionExecutionLeaseGuard(self.store, claim)
+
+    def bind_future(self, claim: ActionExecutionLeaseClaim, future: Future[object]) -> None:
+        with self._lock:
+            self._active[claim.action_id] = _ActiveActionLease(
+                claim=claim,
+                future=future,
+                last_renew_perf=perf_counter(),
+            )
+
+    def release_terminal(self, claim: ActionExecutionLeaseClaim) -> bool:
+        released = self.store.release_terminal(claim)
+        with self._lock:
+            self._active.pop(claim.action_id, None)
+            if released:
+                self._terminal_releases += 1
+            else:
+                self._terminal_release_failures += 1
+        return released
+
+    def tick(self) -> None:
+        """Renew healthy local attempts first, then reconcile globally expired ownership."""
+
+        now = perf_counter()
+        with self._lock:
+            active_items = list(self._active.items())
+        for action_id, active in active_items:
+            if active.future.done():
+                with self._lock:
+                    self._active.pop(action_id, None)
+                continue
+            if now - active.last_renew_perf < self._renew_every_seconds:
+                continue
+            try:
+                renewed = self.store.renew(
+                    claim=active.claim,
+                    lease_seconds=self.lease_seconds,
+                )
+            except Exception:
+                renewed = False
+            with self._lock:
+                current = self._active.get(action_id)
+                if current is not None:
+                    current.last_renew_perf = now
+                if renewed:
+                    self._renewals += 1
+                else:
+                    self._renewal_failures += 1
+
+        try:
+            report = self.store.reconcile_expired()
+        except Exception:
+            with self._lock:
+                self._reconcile_ticks += 1
+                self._reconcile_failures += 1
+            return
+        with self._lock:
+            self._reconcile_ticks += 1
+            self._reconciled_uncertain += len(report.actions_marked_uncertain)
+            for action_id in report.actions_marked_uncertain:
+                self._active.pop(action_id, None)
+
+    def snapshot(self) -> dict[str, Any]:
+        with self._lock:
+            local = {
+                "schema_version": "action-execution-lease-supervisor-v1",
+                "instance_id": self.instance_id,
+                "lease_seconds": self.lease_seconds,
+                "active_local_leases": len(self._active),
+                "acquired": self._acquired,
+                "acquire_failures": self._acquire_failures,
+                "renewals": self._renewals,
+                "renewal_failures": self._renewal_failures,
+                "terminal_releases": self._terminal_releases,
+                "terminal_release_failures": self._terminal_release_failures,
+                "reconcile_ticks": self._reconcile_ticks,
+                "reconcile_failures": self._reconcile_failures,
+                "reconciled_uncertain": self._reconciled_uncertain,
+                "automatic_replay_enabled": False,
+            }
+        local["store"] = self.store.snapshot()
+        return local
