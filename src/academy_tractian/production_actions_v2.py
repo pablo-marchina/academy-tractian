@@ -355,13 +355,19 @@ class PendingActionCapturePolicy(ResourcePolicy):
         principal: ProductionActionPrincipal,
         origin_raw_run_id: str,
         custody: PendingActionCustody,
+        execution_guard: Callable[[], None] | None = None,
     ) -> None:
         self.principal = principal
         self.origin_raw_run_id = origin_raw_run_id
         self.custody = custody
+        self.execution_guard = execution_guard
         self.last_pending: PendingActionSafe | None = None
 
     def check(self, tool: ToolSpec, arguments: dict[str, object]) -> PolicyDecision:
+        # Horizontal runtimes bind this to the current lease/generation. Checking before every
+        # tool protects read calls and pending-action custody from a stale worker after takeover.
+        if self.execution_guard is not None:
+            self.execution_guard()
         if tool.kind is not ToolKind.ACTION:
             return PolicyDecision(
                 allowed=True,
@@ -472,10 +478,12 @@ class ActionProposalRealtimeProductionRuntime(ProductionRuntime):
             user_id=request.user_id,
             seed=request.seed,
         )
+        execution_guard = getattr(self.observability_publisher.sink, "assert_active", None)
         policy = PendingActionCapturePolicy(
             principal=principal,
             origin_raw_run_id=request.request_id,
             custody=self.custody,
+            execution_guard=execution_guard if callable(execution_guard) else None,
         )
         runner = ObservableHarnessRunner(
             observability_publisher=self.observability_publisher,
