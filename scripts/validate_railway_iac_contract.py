@@ -20,16 +20,24 @@ def main() -> None:
         'github("pablo-marchina/academy-tractian"', 'branch: "release/production-final"',
         'dockerfilePath: "Dockerfile"', 'rootDirectory: "frontend"', 'dockerfilePath: "Dockerfile.production"',
         'healthcheck: "/health"', 'healthcheckTimeout: 60', 'healthcheck: "/"', 'healthcheckTimeout: 120',
-        '"us-east4-eqdc4a": 1', 'restarts: "on_failure"', 'restartLimit: 5',
+        '"us-east4-eqdc4a": 1', 'restartPolicyType: "ON_FAILURE"', 'restartPolicyMaxRetries: 5',
         'ACADEMY_POSTGRES_INTERNAL_DSN: preserve()', 'ACADEMY_POSTGRES_SCOPED_DSN: preserve()',
         'ACADEMY_PROVIDER_CALLS_ENABLED: preserve()', 'ACADEMY_BROWSER_IAM_MODE: preserve()',
         'ACADEMY_NEON_AUTH_BASE_URL: preserve()', 'NEON_AUTH_BASE_PATH: preserve()', 'NEON_AUTH_HOST: preserve()',
         'resources: [productionApi, productionWeb]',
     ):
         require(text, item)
+    for forbidden in ('restarts:', 'restartLimit:'):
+        if forbidden in text:
+            raise SystemExit(f"unsupported Railway IaC shorthand present: {forbidden}")
     if 'service("hosted-pilot"' in text:
         raise SystemExit("historical hosted-pilot must not be managed by production IaC")
-    for pattern in (r"postgres(?:ql)?://", r"ACADEMY_POSTGRES_INTERNAL_DSN\s*:\s*[\"']", r"ACADEMY_POSTGRES_SCOPED_DSN\s*:\s*[\"']", r"password\s*[:=]\s*[\"'][^\"']+"):
+    for pattern in (
+        r"postgres(?:ql)?://",
+        r"ACADEMY_POSTGRES_INTERNAL_DSN\s*:\s*[\"']",
+        r"ACADEMY_POSTGRES_SCOPED_DSN\s*:\s*[\"']",
+        r"password\s*[:=]\s*[\"'][^\"']+",
+    ):
         if re.search(pattern, text, flags=re.IGNORECASE):
             raise SystemExit(f"forbidden literal/secret pattern: {pattern}")
     services = re.findall(r'service\("([^"]+)"', text)
