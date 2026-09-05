@@ -85,6 +85,7 @@ def _make_app(tmp_path, *, actions_enabled: bool, calls: list[BoundRequest]):
         authorization_resolver=_resolver,
         actions_enabled=actions_enabled,
         heartbeat_interval_ms=250,
+        allow_local_test_storage=True,
     )
 
 

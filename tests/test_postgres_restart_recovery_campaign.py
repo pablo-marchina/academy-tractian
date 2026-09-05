@@ -49,9 +49,7 @@ ISSUER = "academy-restart-recovery"
 AUDIENCE = "academy-product"
 ACTION_ARGS = {
     "analysis_id": "analysis-recovery",
-    "body": {
-        "justification": "Synthetic provider-free restart recovery evidence only."
-    },
+    "body": {"justification": "Synthetic provider-free restart recovery evidence only."},
 }
 
 
@@ -148,9 +146,8 @@ def _headers(*, user_id: str, organization_id: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _build_app(*, tmp_path: Path, fixture: _PgFixture):
+def _build_app(*, fixture: _PgFixture):
     return create_authenticated_postgres_action_capable_product_app(
-        db_path=tmp_path / "restart-recovery-observability.duckdb",
         internal_dsn=fixture.admin_dsn,
         scoped_dsn=fixture.scoped_dsn,
         decision_source_factory=FinalSource,
@@ -169,7 +166,6 @@ def _build_app(*, tmp_path: Path, fixture: _PgFixture):
 
 
 def test_promoted_postgres_restart_recovery_is_fail_safe_and_idempotent(
-    tmp_path: Path,
     postgres_fixture,
 ) -> None:
     CountingTransport.requests.clear()
@@ -290,7 +286,8 @@ def test_promoted_postgres_restart_recovery_is_fail_safe_and_idempotent(
     )
     seed_db.close()
 
-    first = _build_app(tmp_path=tmp_path, fixture=postgres_fixture)
+    first = _build_app(fixture=postgres_fixture)
+    assert first.state.local_test_storage_enabled is False
     recovered = tuple(first.state.recovered_executions)
     first_action_recovery = first.state.action_recovery_report
     first_db = first.state.postgres_operational_database
@@ -311,15 +308,9 @@ def test_promoted_postgres_restart_recovery_is_fail_safe_and_idempotent(
     assert first_custody.get_safe(executing_action.action_id).state == "UNCERTAIN"
     assert first_ledger.get(key_sha256)["state"] == "UNCERTAIN"  # type: ignore[index]
 
-    pending_preserved = (
-        first_custody.get_safe(pending_action.action_id).state == "PENDING_CONFIRMATION"
-    )
-    completed_preserved = (
-        first_executions.get(runtime_completed).state == "completed"  # type: ignore[union-attr]
-    )
-    failed_preserved = (
-        first_executions.get(runtime_failed).state == "failed"  # type: ignore[union-attr]
-    )
+    pending_preserved = first_custody.get_safe(pending_action.action_id).state == "PENDING_CONFIRMATION"
+    completed_preserved = first_executions.get(runtime_completed).state == "completed"  # type: ignore[union-attr]
+    failed_preserved = first_executions.get(runtime_failed).state == "failed"  # type: ignore[union-attr]
     assert pending_preserved
     assert completed_preserved
     assert failed_preserved
@@ -348,7 +339,8 @@ def test_promoted_postgres_restart_recovery_is_fail_safe_and_idempotent(
 
     first_transport_calls = len(CountingTransport.requests)
 
-    second = _build_app(tmp_path=tmp_path, fixture=postgres_fixture)
+    second = _build_app(fixture=postgres_fixture)
+    assert second.state.local_test_storage_enabled is False
     second_recovered = tuple(second.state.recovered_executions)
     second_action_recovery = second.state.action_recovery_report
     second_custody = second.state.pending_action_custody

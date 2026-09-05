@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from pathlib import Path
 
 from fastapi import FastAPI
 
@@ -15,7 +14,6 @@ from .runtime_identity import SignedBearerRuntimeContextProvider
 
 def create_authenticated_postgres_action_capable_product_app(
     *,
-    db_path: str | Path,
     internal_dsn: str,
     scoped_dsn: str,
     decision_source_factory: Callable[[], DecisionSource],
@@ -34,12 +32,12 @@ def create_authenticated_postgres_action_capable_product_app(
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    """Create the promoted Postgres topology with cryptographically authenticated identity.
+    """Create the no-local PostgreSQL topology with authenticated runtime identity.
 
-    Unlike the generic factory used by tests and embedding applications, this entrypoint does not
-    accept an arbitrary `RuntimeContextProvider`. Tenant, user, identity and permissions must come
-    from a verified signed bearer envelope. Benchmark/replay seed claims are impossible on this
-    production identity path.
+    This entrypoint accepts neither an arbitrary runtime context provider nor a local persistence
+    path. Tenant, user, identity and permissions come from a verified signed bearer envelope, and
+    all durable product state is supplied by the promoted PostgreSQL composition. Benchmark/replay
+    seed claims are impossible on this production identity path.
     """
 
     context_provider = SignedBearerRuntimeContextProvider(
@@ -51,7 +49,6 @@ def create_authenticated_postgres_action_capable_product_app(
         allowed_privileged_permissions=runtime_identity_allowed_privileged_permissions,
     )
     app = create_postgres_action_capable_product_app(
-        db_path=db_path,
         internal_dsn=internal_dsn,
         scoped_dsn=scoped_dsn,
         decision_source_factory=decision_source_factory,
