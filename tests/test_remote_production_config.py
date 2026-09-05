@@ -40,14 +40,16 @@ def test_valid_remote_usd0_configuration_is_accepted_and_metadata_is_sanitized()
 
     assert config.environment == "production"
     assert config.cost_policy == "usd0-hard-gate"
+    assert config.browser_iam_mode == "signed-bearer"
     assert config.paid_fallback_enabled is False
     assert config.local_serving_enabled is False
     assert config.provider_calls_enabled is False
 
     metadata = config.safe_metadata()
     assert metadata == {
-        "schema_version": "remote-production-release-v1",
+        "schema_version": "remote-production-release-v2",
         "environment": "production",
+        "browser_iam_mode": "signed-bearer",
         "public_base_url": "https://app.academy-cloud.net",
         "release_git_sha": "a" * 40,
         "deployment_id": "deploy-20260905-001",
@@ -61,6 +63,51 @@ def test_valid_remote_usd0_configuration_is_accepted_and_metadata_is_sanitized()
     assert "scoped-password" not in rendered
     assert "runtime-identity-secret" not in rendered
     assert "db.academy-cloud.net" not in rendered
+
+
+def test_neon_auth_mode_does_not_require_browser_hmac_secret() -> None:
+    env = {
+        key: value
+        for key, value in BASE_ENV.items()
+        if key
+        not in {
+            "ACADEMY_RUNTIME_IDENTITY_SECRET",
+            "ACADEMY_RUNTIME_IDENTITY_ISSUER",
+            "ACADEMY_RUNTIME_IDENTITY_AUDIENCE",
+        }
+    }
+    env.update(
+        {
+            "ACADEMY_BROWSER_IAM_MODE": "neon-auth",
+            "ACADEMY_NEON_AUTH_BASE_URL": "https://auth.example.net/academy/auth",
+        }
+    )
+    config = RemoteProductionConfig.from_env(env)
+
+    assert config.browser_iam_mode == "neon-auth"
+    assert config.runtime_identity_secret is None
+    assert config.neon_auth_base_url == "https://auth.example.net/academy/auth"
+    assert config.safe_metadata()["browser_iam_mode"] == "neon-auth"
+
+
+def test_neon_auth_mode_requires_remote_auth_endpoint() -> None:
+    env = {
+        key: value
+        for key, value in BASE_ENV.items()
+        if key
+        not in {
+            "ACADEMY_RUNTIME_IDENTITY_SECRET",
+            "ACADEMY_RUNTIME_IDENTITY_ISSUER",
+            "ACADEMY_RUNTIME_IDENTITY_AUDIENCE",
+        }
+    }
+    env["ACADEMY_BROWSER_IAM_MODE"] = "neon-auth"
+    with pytest.raises(ValueError, match="ACADEMY_NEON_AUTH_BASE_URL"):
+        RemoteProductionConfig.from_env(env)
+
+    env["ACADEMY_NEON_AUTH_BASE_URL"] = "http://localhost:3000/auth"
+    with pytest.raises(ValidationError, match="remote HTTPS"):
+        RemoteProductionConfig.from_env(env)
 
 
 @pytest.mark.parametrize(
@@ -172,8 +219,9 @@ def test_remote_app_wrapper_validates_before_delegate_and_exposes_only_safe_rele
     assert captured["initialize_schema"] is False
     assert captured["provider_calls_enabled"] is False
     assert captured["actions_enabled"] is False
-    assert captured["runtime_identity_secret"] == config.runtime_identity_secret.get_secret_value()
+    assert captured["runtime_identity_secret"] == config.runtime_identity_secret.get_secret_value()  # type: ignore[union-attr]
     assert app.state.remote_production is True
+    assert app.state.browser_iam_mode == "signed-bearer"
 
     with TestClient(app) as client:
         response = client.get("/api/meta/release")
@@ -181,3 +229,47 @@ def test_remote_app_wrapper_validates_before_delegate_and_exposes_only_safe_rele
     assert response.json() == config.safe_metadata()
     assert "runtime_identity_secret" not in response.text
     assert "postgres" not in response.text.lower()
+
+
+def test_remote_app_uses_managed_session_builder_in_neon_auth_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_neon_builder(**kwargs):
+        captured.update(kwargs)
+        return FastAPI()
+
+    monkeypatch.setattr(
+        remote_production,
+        "create_neon_authenticated_postgres_action_capable_product_app",
+        fake_neon_builder,
+    )
+    config = RemoteProductionConfig.from_env(
+        {
+            **{
+                key: value
+                for key, value in BASE_ENV.items()
+                if key
+                not in {
+                    "ACADEMY_RUNTIME_IDENTITY_SECRET",
+                    "ACADEMY_RUNTIME_IDENTITY_ISSUER",
+                    "ACADEMY_RUNTIME_IDENTITY_AUDIENCE",
+                }
+            },
+            "ACADEMY_BROWSER_IAM_MODE": "neon-auth",
+            "ACADEMY_NEON_AUTH_BASE_URL": "https://auth.example.net/academy/auth",
+        }
+    )
+    app = remote_production.create_remote_production_app(
+        config=config,
+        decision_source_factory=lambda: object(),
+        transport_factory=lambda: object(),
+        authorization_resolver=lambda **_: object(),
+    )
+
+    assert captured["initialize_schema"] is False
+    assert captured["actions_enabled"] is False
+    assert captured["neon_auth_base_url"] == "https://auth.example.net/academy/auth"
+    assert "runtime_identity_secret" not in captured
+    assert app.state.browser_iam_mode == "neon-auth"
