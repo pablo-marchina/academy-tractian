@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 import ipaddress
 import json
+import math
 import re
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -76,7 +77,7 @@ def _validate_header_value(value: str, *, label: str, max_bytes: int = _MAX_HEAD
         raise ValueError(f"invalid {label}")
     if len(value.encode("utf-8")) > max_bytes:
         raise ValueError(f"invalid {label}")
-    if "\r" in value or "\n" in value or any(ord(char) == 0x7F for char in value):
+    if any(ord(char) < 0x20 or ord(char) == 0x7F for char in value):
         raise ValueError(f"invalid {label}")
     return value
 
@@ -183,6 +184,8 @@ def _encode_query(tool: ToolSpec, query: Mapping[str, Any]) -> str:
             raise ValueError(f"TRACTIAN query parameter must be a scalar: {key}")
         if not isinstance(value, (str, int, float, bool)):
             raise ValueError(f"TRACTIAN query parameter has unsupported type: {key}")
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ValueError(f"TRACTIAN query parameter must be finite: {key}")
         rendered = str(value).lower() if isinstance(value, bool) else str(value)
         if len(rendered.encode("utf-8")) > _MAX_QUERY_BYTES:
             raise ValueError(f"TRACTIAN query parameter is too large: {key}")
@@ -230,26 +233,41 @@ def _safe_response_headers(headers: Any) -> dict[str, str]:
         rendered = str(value).strip()
         if not rendered or len(rendered.encode("utf-8")) > _MAX_HEADER_VALUE_BYTES:
             continue
-        if "\r" in rendered or "\n" in rendered:
+        if any(ord(char) < 0x20 or ord(char) == 0x7F for char in rendered):
             continue
         safe[lowered] = rendered
     return safe
 
 
-def _decode_response_body(raw: bytes, headers: Mapping[str, str]) -> Any:
+def _normalize_upstream_response(status_code: int, raw: bytes, headers: Any) -> TransportResponse:
+    response_headers = _safe_response_headers(headers)
+    if len(raw) > _MAX_RESPONSE_BYTES:
+        return TransportResponse(
+            502,
+            {"content-type": "application/json"},
+            {"error": {"code": "TRACTIAN_RESPONSE_TOO_LARGE"}},
+        )
     if not raw:
-        return None
+        return TransportResponse(status_code, response_headers, None)
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
-        return {"error": {"code": "TRACTIAN_RESPONSE_INVALID_UTF8"}}
-    content_type = headers.get("content-type", "").lower()
-    if "json" in content_type:
+        return TransportResponse(
+            502,
+            {"content-type": "application/json"},
+            {"error": {"code": "TRACTIAN_RESPONSE_INVALID_UTF8"}},
+        )
+    if "json" in response_headers.get("content-type", "").lower():
         try:
-            return json.loads(text)
+            payload = json.loads(text)
         except json.JSONDecodeError:
-            return {"error": {"code": "TRACTIAN_RESPONSE_INVALID_JSON"}}
-    return text
+            return TransportResponse(
+                502,
+                {"content-type": "application/json"},
+                {"error": {"code": "TRACTIAN_RESPONSE_INVALID_JSON"}},
+            )
+        return TransportResponse(status_code, response_headers, payload)
+    return TransportResponse(status_code, response_headers, text)
 
 
 class ProductionTractianTransport:
@@ -306,32 +324,10 @@ class ProductionTractianTransport:
         try:
             with self._opener.open(network_request, timeout=self._timeout_seconds) as response:
                 raw = response.read(_MAX_RESPONSE_BYTES + 1)
-                response_headers = _safe_response_headers(response.headers)
-                if len(raw) > _MAX_RESPONSE_BYTES:
-                    return TransportResponse(
-                        502,
-                        {"content-type": "application/json"},
-                        {"error": {"code": "TRACTIAN_RESPONSE_TOO_LARGE"}},
-                    )
-                return TransportResponse(
-                    int(response.status),
-                    response_headers,
-                    _decode_response_body(raw, response_headers),
-                )
+                return _normalize_upstream_response(int(response.status), raw, response.headers)
         except HTTPError as exc:
             raw = exc.read(_MAX_RESPONSE_BYTES + 1)
-            response_headers = _safe_response_headers(exc.headers)
-            if len(raw) > _MAX_RESPONSE_BYTES:
-                return TransportResponse(
-                    502,
-                    {"content-type": "application/json"},
-                    {"error": {"code": "TRACTIAN_RESPONSE_TOO_LARGE"}},
-                )
-            return TransportResponse(
-                int(exc.code),
-                response_headers,
-                _decode_response_body(raw, response_headers),
-            )
+            return _normalize_upstream_response(int(exc.code), raw, exc.headers)
         except (URLError, TimeoutError, OSError):
             return TransportResponse(
                 599,
