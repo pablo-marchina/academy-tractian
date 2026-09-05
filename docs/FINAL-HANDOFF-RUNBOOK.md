@@ -1,43 +1,67 @@
 # Academy × TRACTIAN — Final Handoff Runbook
 
-**Status:** ACTIVE operational runbook  
-**Authority:** subordinate to [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md), accepted ADRs and frozen experiment evidence.  
+**Status:** ACTIVE / canonical final-P0 operational runbook  
+**Checkpoint:** 2026-09-05 BRT  
+**Accepted baseline:** `d3bed06b132212c85b126f56708863d45f64e03e`  
+**Post-merge acceptance:** `final-ci-required` run #386 / `required-gate = success`  
 **Final delivery:** 2026-09-08
+
+This runbook is subordinate to [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md), the P0 closure addendum and frozen experiment evidence.
 
 ## 1. Promoted provider-free product path
 
 ```text
 signed bearer identity
 → FastAPI product API
-→ PostgreSQL mutable operational state + tenant RLS
+→ PostgreSQL tenant RLS + shared serving state
+→ runtime handoff queue / lease generation
 → RealtimeProductionRuntime
-→ DecisionSource
+→ provider-neutral DecisionSource
 → AgentController
 → HarnessRunner
 → 18 typed TRACTIAN tools
-→ B1/B2/B3 boundaries
+→ B1/B2/B3 deterministic boundaries
 → normalized evidence
-→ terminal/action proposal
-→ RunTrace + evaluator
-→ safe DuckDB read model
+→ terminal / escalation / action proposal
+→ RunTrace + post-runtime evaluator
+→ safe PostgreSQL observability/evaluation rows
 → REST/SSE
+→ LISTEN/NOTIFY wakeup + durable cursor fallback
 → React operator control room
 ```
 
-The provider-free profile performs no live provider call and no real-customer mutation.
+Provider-free reproduction performs no live provider call and no real-customer mutation.
 
-Consequential actions are separately governed by persistent custody, explicit confirmation, current authorization, a host kill switch and a persistent one-shot idempotency claim. Ambiguous post-claim outcomes become `UNCERTAIN` and are never blindly retried.
+## 2. Consequential actions
 
-## 2. Prerequisites
+```text
+proposal
+→ deterministic validation
+→ PostgreSQL private custody
+→ PENDING_CONFIRMATION
+→ authenticated operator confirms opaque action_id
+→ current authorization + kill switch revalidated
+→ persistent atomic idempotency claim
+→ non-transferable PostgreSQL action execution lease
+→ exact custodied transport attempt
+→ lease-fenced custody/ledger/observability/terminal state
+→ action RunTrace + ProductionActionEvaluator
+```
 
-Canonical CI versions:
+If action ownership is lost, the attempt converges to `UNCERTAIN`; another replica does **not** acquire the action lease and does not start a replacement transport attempt.
+
+Do not describe this as external exactly-once. The external TRACTIAN API would need to participate in a common idempotency/fencing protocol for that stronger guarantee.
+
+## 3. Prerequisites
+
+Canonical CI toolchain:
 
 - Python 3.11
 - Node 24
 - PostgreSQL 18
-- npm dependencies from committed `frontend/package-lock.json`
+- frontend dependencies from committed `frontend/package-lock.json`
 
-Python install from repository root:
+Python test/rehearsal install:
 
 ```bash
 python -m pip install --upgrade pip
@@ -52,60 +76,71 @@ npm ci --ignore-scripts --no-audit --no-fund
 cd ..
 ```
 
-No provider secret is required for provider-free reproduction.
+Production root dependencies do not require DuckDB. The `dev` extra installs DuckDB only for historical/test compatibility.
 
-## 3. Canonical clean-clone reproduction
+## 4. Canonical automated reproduction
 
-The authoritative **current-product** automated path is:
+Current-product reproduction:
 
 `.github/workflows/clean-clone-full-product-reproduction.yml`
 
-The older `.github/workflows/final-delivery-provider-free-reproduction.yml` is historical frozen evidence. Its exact blob is intentionally preserved and must not be edited merely to extend current coverage.
+Historical immutable reproduction:
 
-The current-product workflow starts from a clean `actions/checkout`, starts PostgreSQL 18 and runs:
+`.github/workflows/final-delivery-provider-free-reproduction.yml`
+
+The current clean-clone workflow executes:
 
 ```text
-1. verify tracked checkout is clean
-2. install Python + E2 dependencies
-3. run complete `tests` suite with POSTGRES_OPERATIONAL_TEST_DSN set
-4. explicitly rerun promoted identity/RLS + load + restart P0 Postgres tests
-5. regress ADR-004 controller boundary
-6. reproduce frozen EV-007
-7. reproduce frozen EV-008
-8. reproduce frozen EV-011
-9. validate final-delivery demo/evidence index
-10. validate final-handoff audit
-11. npm ci from package-lock
-12. frontend typecheck
-13. frontend unit tests
-14. frontend production build
-15. verify no tracked repository mutation
+1. clean checkout verification
+2. Python/E2 install
+3. full `tests` suite with PostgreSQL enabled
+4. promoted PostgreSQL identity/RLS/load/restart regressions
+5. distributed runtime-handoff/action-lease regressions through current suite
+6. ADR-004 controller regression
+7. EV-007 failure campaign
+8. EV-008 stability campaign
+9. EV-011 communication campaign
+10. historical final-delivery validation
+11. final handoff audit
+12. final freeze bundle validation
+13. frontend `npm ci`
+14. frontend typecheck/tests/production build
+15. tracked repository mutation check = 0
 ```
 
-This is the P0 clean-checkout reproduction contract. Do not change frozen expected identities or frozen workflow blobs merely to make this gate pass; diagnose the implementation/evidence mismatch.
+Do not alter frozen identities, historical workflow blobs or validator rules merely to make a gate pass. Diagnose the implementation/evidence mismatch.
 
-## 4. Manual provider-free reproduction
+## 5. Manual provider-free rehearsal
 
-Start a local PostgreSQL 18 instance and expose an admin DSN only to the test process, for example:
+Start PostgreSQL 18 and set:
 
 ```text
 POSTGRES_OPERATIONAL_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
 ```
 
-Then run from repository root:
+PowerShell:
+
+```powershell
+$env:POSTGRES_OPERATIONAL_TEST_DSN = "postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian"
+```
+
+From repository root:
 
 ```bash
 python -m pytest -q tests
 python -m pytest -q \
   tests/test_postgres_authenticated_product_api.py \
   tests/test_postgres_load_concurrency_benchmark.py \
-  tests/test_postgres_restart_recovery_campaign.py
+  tests/test_postgres_restart_recovery_campaign.py \
+  tests/test_postgres_multi_instance_product.py \
+  tests/test_postgres_action_execution_lease.py
 python -m pytest -q research/e2/tests/test_controller.py
 python scripts/validate_ev007_failure_campaign.py
 python scripts/validate_ev008_stability_campaign.py
 python scripts/validate_ev011_communication_campaign.py
 python scripts/validate_delivery_reproduction.py
 python scripts/validate_final_handoff_audit.py
+python scripts/validate_final_freeze_bundle.py
 cd frontend
 npm ci --ignore-scripts --no-audit --no-fund
 npm run typecheck
@@ -113,108 +148,94 @@ npm test
 npm run build
 ```
 
-On PowerShell, set the DSN with:
+The exact set may be broader inside CI; the clean-clone workflow remains authoritative.
 
-```powershell
-$env:POSTGRES_OPERATIONAL_TEST_DSN = "postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian"
-```
+## 6. Browser acceptance
 
-## 5. Full browser acceptance
-
-Chromium full-product acceptance remains a separate mandatory gate:
+Mandatory reusable gate:
 
 `.github/workflows/full-product-playwright.yml`
 
-It starts PostgreSQL, the provider-free backend and Vite frontend, then exercises the real browser path. It also proves deterministic `npm ci`, typecheck, unit tests and build before Playwright.
+It starts PostgreSQL, the provider-free production backend and the Vite frontend, then runs Chromium against the real product path.
 
-Browser acceptance covers realtime run growth, safe drill-down, semantic-review/operational-value participant surfaces and responsive behavior without exposing raw private evaluator/runtime material.
+Acceptance covers, among other surfaces:
 
-## 6. Frozen provider-free campaigns
+- live request/runtime progression;
+- genuine SSE event ordering;
+- reconnect/cursor catch-up;
+- trace/architecture/evidence/lineage drill-down;
+- post-runtime evaluator timing;
+- tenant isolation;
+- pending/confirmed action flow in controlled profile;
+- forbidden-field absence;
+- responsive/empty/error/long-content states.
 
-Historical expected identities remain immutable for their original scopes:
+## 7. Stable aggregate CI gate
 
-```text
-EV-007  7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9
-EV-008  1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8
-EV-011  cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
-DEMO    43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445
-```
+`.github/workflows/final-ci-required.yml` exposes `required-gate`.
 
-EV-007 covers failure safety, EV-008 repeated stability and EV-011 communication behavior. The final demo validates representative integrated outcomes and one controlled synthetic action path.
-
-## 7. Current production-safety evidence
-
-Additional P0 evidence is intentionally separate from frozen historical identities:
-
-- authenticated identity + PostgreSQL RLS integration;
-- blinded semantic-review and operational-value collection contracts;
-- evaluator-only adaptive stopping diagnostic;
-- load/concurrency aggregate campaign;
-- PostgreSQL restart/recovery aggregate campaign.
-
-Load evidence is descriptive only and does not establish production capacity/SLOs. Restart evidence verifies conservative persisted-state semantics only and does not establish RTO/RPO/HA/uptime.
-
-## 8. Failure/recovery behavior
-
-### Invalid arguments
-
-B1 blocks before transport. Never convert the denied operation into invented success.
-
-### Authorization/policy denial
-
-Stop before consequential transport and preserve the denial in safe telemetry.
-
-### Missing/conflicting evidence
-
-Clarify, abstain or escalate. Do not fabricate certainty.
-
-### Provider/decision-source failure
-
-Do not manufacture a conclusion or action from malformed/unavailable output. Raw provider material remains private.
-
-### Consequential action uncertainty
-
-Once a durable idempotency claim is consumed, never delete/reuse it to manufacture retry eligibility. Ambiguity becomes `UNCERTAIN` pending external reconciliation.
-
-### Process restart
-
-Startup reconciliation is conservative:
+It requires all four reusable jobs:
 
 ```text
-orphan runtime accepted/running    → interrupted
-orphan action execution            → uncertain
-custody EXECUTING                  → UNCERTAIN
-ledger CLAIMED                     → UNCERTAIN
-PENDING_CONFIRMATION               → preserved
-completed / failed                 → preserved
+clean-clone reproduction
+Chromium full-product acceptance
+horizontal read-only runtime handoff
+action execution non-transferable lease
 ```
 
-A second startup is expected to perform zero additional recovery transitions. Restart never authorizes automatic replay.
+Latest accepted post-merge evidence at this checkpoint:
 
-## 9. Security/privacy
+```text
+main SHA       d3bed06b132212c85b126f56708863d45f64e03e
+run            final-ci-required #386 / 33971230788
+required-gate  success
+```
 
-Never expose through browser/API/SSE/artifacts:
+GitHub branch-protection enforcement is separate. Last observed repository state remains `main.protected=false`, `rulesets=[]`.
 
-- provider secrets/tokens;
-- account/auth headers;
-- raw identity binding or signing secrets;
-- benchmark/evaluator seed;
-- raw provider prompt/response material;
-- forbidden raw tool/observation bodies;
-- private action arguments/idempotency keys;
-- evaluator gold/oracles/private labels;
-- hidden chain-of-thought.
+## 8. Read-only runtime recovery
 
-The project-owned signed bearer is not an enterprise SSO/OIDC claim.
+Read-only runtime work may move between replicas after lease expiry.
 
-## 10. Operational diagnosis order
+Expected semantics:
+
+```text
+healthy owner A               → B cannot claim/interfere
+expired owner A               → B may claim a new generation
+stale owner/generation A      → cannot renew/finalize/publish
+recovered owner B             → may continue to evaluator/terminal state
+terminal run                  → private handoff payload removed
+```
+
+This is different from consequential actions and must remain different.
+
+## 9. Action ownership/recovery
+
+Action recovery authority belongs to the action lease subsystem, not the read-only runtime handoff reconciler.
+
+Expected semantics:
+
+```text
+PENDING_CONFIRMATION                  → preserved
+accepted setup + no lease, within grace → temporarily preserved
+running + no lease                    → ownership lost / UNCERTAIN
+healthy remote action lease           → not an orphan
+expired/stale action lease            → UNCERTAIN
+claimed ledger on lost ownership      → UNCERTAIN
+late stale terminal result            → cannot overwrite UNCERTAIN
+automatic replay                      → forbidden
+```
+
+A second restart/reconciliation should not manufacture new transport eligibility.
+
+## 10. Failure diagnosis order
 
 Diagnose the earliest failing boundary:
 
 ```text
 request/auth context
 → tenant ownership/RLS
-→ runtime preparation
+→ runtime work-item ownership
 → decision source
 → controller decision
 → tool proposal
@@ -225,48 +246,90 @@ request/auth context
 → terminal outcome
 → trace validation
 → evaluator
-→ safe projection
-→ persistence
+→ safe PostgreSQL projection
+→ durable event sequence
+→ LISTEN/NOTIFY wakeup/fallback
 → SSE
 → browser reducer/render
 ```
 
-Do not mask one layer with retries/fallbacks from another.
-
-## 11. Final presentation sequence
-
-Recommended provider-independent demo:
+For actions, additionally inspect:
 
 ```text
-1. Mission Control / production state
+custody
+→ confirmation authorization
+→ idempotency claim
+→ action execution lease owner/generation
+→ transport
+→ fenced terminal persistence
+```
+
+Do not mask one layer with retries/fallbacks from another.
+
+## 11. Security/privacy rehearsal
+
+Never expose through browser/API/SSE/artifacts:
+
+- provider secrets/tokens;
+- account/auth headers;
+- raw identity binding/signing secrets;
+- benchmark/evaluator seed;
+- raw provider prompt/response;
+- forbidden raw tool/observation bodies;
+- private action args/idempotency keys;
+- evaluator gold/oracles/private labels;
+- hidden chain-of-thought.
+
+The project-owned signed bearer is not enterprise OAuth/OIDC/SSO.
+
+## 12. Frozen provider/evaluation state
+
+D01/D02 are consumed governed experiments and remain `NO_SELECTION`. Do not replay them to seek a preferred winner.
+
+Human semantic calibration and engineer-time/business-value layers remain `NOT_READY_HUMAN_DATA` until real blinded labels/adjudication or real timing observations exist. Do not fabricate them for the presentation.
+
+Adaptive stopping remains evaluator-only and not promoted.
+
+## 13. Presentation rehearsal sequence
+
+Recommended provider-independent flow:
+
+```text
+1. Mission Control / Production Health
 2. submit representative industrial request
-3. observe LIVE run + architecture/trace growth
-4. inspect tool/policy/evidence path
+3. observe LIVE run and architecture/trace growth
+4. inspect typed tool + policy + evidence path
 5. inspect terminal operational conclusion
-6. inspect evaluator after runtime completion
-7. inspect output lineage / dynamic explorer
-8. show clarification/abstain/escalation example
-9. show governed pending action + explicit confirmation using synthetic profile
-10. show provider evidence state: D01/D02 = NO_SELECTION
-11. explain load and restart evidence with their explicit non-claim boundaries
+6. inspect post-runtime evaluation
+7. inspect output lineage / Dynamic Data Explorer
+8. show clarify / abstain / escalation path
+9. show governed pending action + explicit confirmation in synthetic profile
+10. explain read-only takeover vs non-transferable action lease
+11. show D01/D02 = NO_SELECTION
+12. explain load/restart/cross-replica evidence and non-claims
 ```
 
 Never make live provider availability a single point of presentation failure.
 
-## 12. Final completion checklist
+## 14. Final completion checklist
 
 Before delivery:
 
-- current-product clean-clone reproduction green on exact final SHA;
-- historical frozen reproduction blob remains unchanged;
-- full-product Playwright green on exact final SHA;
-- branch protection/final CI configured and verified;
-- final benchmark/evidence bundle frozen;
-- documentation commands match committed code;
+- final `main` SHA recorded;
+- clean-clone green on that SHA;
+- Chromium green on that SHA;
+- horizontal runtime gate green;
+- action lease gate green;
+- `required-gate` green;
+- final freeze bundle validates;
+- canonical README/architecture/plan/acceptance/runbook match committed code;
+- historical frozen reproduction/evidence remains unmodified;
 - no secrets/private evaluator material in repo/artifacts/frontend;
-- human-dependent claims remain marked `NOT READY` unless real data exists;
-- provider state remains truthful (`NO_SELECTION` unless a frozen challenger actually wins);
-- no last-minute framework/feature expansion without measured need;
-- exact demo rehearsed on the presentation environment.
+- human-dependent claims stay `NOT READY` unless real data exists;
+- provider stays `NO_SELECTION` unless a new frozen challenger actually wins;
+- no last-minute framework/feature expansion after hard freeze;
+- demo rehearsed on presentation environment;
+- branch protection either verified active or explicitly reported pending external enforcement;
+- missing exact C4 artifact explicitly remains externally blocked.
 
-If a gate is not closed, report the exact boundary and limitation instead of broadening the claim.
+If a gate is not closed, report the exact boundary instead of broadening the claim.
