@@ -8,6 +8,7 @@ on:
       - "src/academy_tractian/runtime_identity.py"
       - "src/academy_tractian/product_api.py"
       - "src/academy_tractian/action_product_api.py"
+      - "src/academy_tractian/action_execution_lease.py"
       - "src/academy_tractian/runtime_handoff_supervisor.py"
       - "src/academy_tractian/product_storage_contracts.py"
       - "src/academy_tractian/production_actions_v2.py"
@@ -24,6 +25,7 @@ on:
       - "tests/test_postgres_observability_store.py"
       - "tests/test_postgres_multi_instance_product.py"
       - "tests/test_postgres_runtime_handoff.py"
+      - "tests/test_postgres_action_execution_lease.py"
       - "tests/test_postgres_authenticated_product_api.py"
       - "tests/test_runtime_identity.py"
       - "tests/test_authenticated_product_api.py"
@@ -78,6 +80,7 @@ jobs:
           tests/test_postgres_observability_store.py
           tests/test_postgres_multi_instance_product.py
           tests/test_postgres_runtime_handoff.py
+          tests/test_postgres_action_execution_lease.py
           tests/test_postgres_authenticated_product_api.py
           tests/test_postgres_operational_value_collection.py
           tests/test_postgres_operational_value_v5.py
@@ -105,6 +108,7 @@ jobs:
           from academy_tractian.authenticated_postgres_product_api import (
               create_authenticated_postgres_action_capable_product_app,
           )
+          from academy_tractian.postgres_action_execution_lease import PostgresActionExecutionLeaseStore
           from academy_tractian.postgres_observability_store import PostgresObservabilityStore
           from academy_tractian.postgres_product_api import (
               create_postgres_action_capable_product_app,
@@ -124,6 +128,7 @@ jobs:
           assert callable(initialize_postgres_operational_schema)
           assert callable(register_postgres_operational_pilot_packet)
           assert callable(register_postgres_semantic_review_packet)
+          assert PostgresActionExecutionLeaseStore is not None
           assert PostgresObservabilityStore is not None
           assert PostgresRuntimeHandoffStore is not None
           assert HorizontalRuntimeSupervisor is not None
