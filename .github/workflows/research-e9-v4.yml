@@ -1,7 +1,6 @@
 name: research-e9-v4
 
 on:
-  pull_request:
   workflow_dispatch:
 
 jobs:
