@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ipaddress import ip_address
 import re
-from typing import Mapping
+from typing import Literal, Mapping
 from urllib.parse import parse_qs, urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
@@ -18,13 +18,10 @@ _LOCAL_HOST_ALIASES = frozenset(
         "docker.for.mac.host.internal",
     }
 )
-_REQUIRED_ENV = (
+_BASE_REQUIRED_ENV = (
     "ACADEMY_ENVIRONMENT",
     "ACADEMY_POSTGRES_INTERNAL_DSN",
     "ACADEMY_POSTGRES_SCOPED_DSN",
-    "ACADEMY_RUNTIME_IDENTITY_SECRET",
-    "ACADEMY_RUNTIME_IDENTITY_ISSUER",
-    "ACADEMY_RUNTIME_IDENTITY_AUDIENCE",
     "ACADEMY_PUBLIC_BASE_URL",
     "ACADEMY_RELEASE_GIT_SHA",
     "ACADEMY_DEPLOYMENT_ID",
@@ -32,6 +29,12 @@ _REQUIRED_ENV = (
     "ACADEMY_PAID_FALLBACK_ENABLED",
     "ACADEMY_LOCAL_SERVING_ENABLED",
 )
+_SIGNED_BEARER_REQUIRED_ENV = (
+    "ACADEMY_RUNTIME_IDENTITY_SECRET",
+    "ACADEMY_RUNTIME_IDENTITY_ISSUER",
+    "ACADEMY_RUNTIME_IDENTITY_AUDIENCE",
+)
+_NEON_AUTH_REQUIRED_ENV = ("ACADEMY_NEON_AUTH_BASE_URL",)
 
 
 def _parse_bool(value: str, *, name: str) -> bool:
@@ -72,28 +75,34 @@ def _validate_remote_postgres_dsn(value: SecretStr) -> SecretStr:
 
 def _postgres_role(value: SecretStr) -> str:
     parsed = urlsplit(value.get_secret_value())
-    if parsed.username is None:  # guarded by field validation; keep the invariant local
+    if parsed.username is None:
         raise ValueError("production database role is missing")
     return parsed.username
 
 
-class RemoteProductionConfig(BaseModel):
-    """Fail-closed configuration boundary for remotely served production.
+def _validate_remote_https_origin(value: str, *, label: str) -> str:
+    normalized = value.strip().rstrip("/")
+    parsed = urlsplit(normalized)
+    if parsed.scheme != "https" or parsed.hostname is None or _is_local_endpoint(parsed.hostname):
+        raise ValueError(f"{label} must be a remote HTTPS endpoint")
+    if parsed.username is not None or parsed.password is not None or parsed.query or parsed.fragment:
+        raise ValueError(f"{label} must not contain credentials/query/fragment")
+    return normalized
 
-    This model does not claim that an infrastructure provider has been selected or that a cloud
-    billing system is technically capped. It prevents the application itself from booting under
-    configuration that violates the project's already-frozen USD0/no-local constraints. External
-    platform eligibility still requires independent evidence before deployment.
-    """
+
+class RemoteProductionConfig(BaseModel):
+    """Fail-closed configuration boundary for remotely served production."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     environment: str = Field(min_length=1)
     internal_dsn: SecretStr
     scoped_dsn: SecretStr
-    runtime_identity_secret: SecretStr
-    runtime_identity_issuer: str = Field(min_length=1, max_length=200)
-    runtime_identity_audience: str = Field(min_length=1, max_length=200)
+    browser_iam_mode: Literal["signed-bearer", "neon-auth"] = "signed-bearer"
+    runtime_identity_secret: SecretStr | None = None
+    runtime_identity_issuer: str | None = Field(default=None, max_length=200)
+    runtime_identity_audience: str | None = Field(default=None, max_length=200)
+    neon_auth_base_url: str | None = Field(default=None, max_length=2048)
     public_base_url: str = Field(min_length=1, max_length=2048)
     release_git_sha: str
     deployment_id: str = Field(min_length=1, max_length=200)
@@ -109,7 +118,9 @@ class RemoteProductionConfig(BaseModel):
 
     @field_validator("runtime_identity_secret")
     @classmethod
-    def validate_runtime_identity_secret(cls, value: SecretStr) -> SecretStr:
+    def validate_runtime_identity_secret(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is None:
+            return None
         raw = value.get_secret_value()
         if len(raw.encode("utf-8")) < 32:
             raise ValueError("runtime identity secret must be at least 32 bytes")
@@ -118,16 +129,27 @@ class RemoteProductionConfig(BaseModel):
             raise ValueError("runtime identity secret must not be a development placeholder")
         return value
 
+    @field_validator("runtime_identity_issuer", "runtime_identity_audience")
+    @classmethod
+    def validate_optional_identity_label(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("runtime identity label must be non-empty when configured")
+        return normalized
+
     @field_validator("public_base_url")
     @classmethod
     def validate_public_base_url(cls, value: str) -> str:
-        normalized = value.strip().rstrip("/")
-        parsed = urlsplit(normalized)
-        if parsed.scheme != "https" or parsed.hostname is None or _is_local_endpoint(parsed.hostname):
-            raise ValueError("production public base URL must be a remote HTTPS endpoint")
-        if parsed.username is not None or parsed.password is not None or parsed.query or parsed.fragment:
-            raise ValueError("production public base URL must be a remote HTTPS origin without credentials/query/fragment")
-        return normalized
+        return _validate_remote_https_origin(value, label="production public base URL")
+
+    @field_validator("neon_auth_base_url")
+    @classmethod
+    def validate_neon_auth_base_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _validate_remote_https_origin(value, label="Neon Auth base URL")
 
     @field_validator("release_git_sha")
     @classmethod
@@ -161,22 +183,38 @@ class RemoteProductionConfig(BaseModel):
             raise ValueError("internal and scoped database DSNs must use distinct PostgreSQL roles")
         if self.internal_dsn.get_secret_value() == self.scoped_dsn.get_secret_value():
             raise ValueError("internal and scoped database DSNs must be distinct")
+
+        if self.browser_iam_mode == "signed-bearer":
+            if self.runtime_identity_secret is None or not self.runtime_identity_issuer or not self.runtime_identity_audience:
+                raise ValueError("signed-bearer IAM requires runtime identity secret, issuer and audience")
+        elif self.neon_auth_base_url is None:
+            raise ValueError("neon-auth IAM requires ACADEMY_NEON_AUTH_BASE_URL")
         return self
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str]) -> "RemoteProductionConfig":
-        missing = [name for name in _REQUIRED_ENV if not environ.get(name, "").strip()]
+        browser_iam_mode = environ.get("ACADEMY_BROWSER_IAM_MODE", "signed-bearer").strip().lower()
+        required = list(_BASE_REQUIRED_ENV)
+        if browser_iam_mode == "signed-bearer":
+            required.extend(_SIGNED_BEARER_REQUIRED_ENV)
+        elif browser_iam_mode == "neon-auth":
+            required.extend(_NEON_AUTH_REQUIRED_ENV)
+        missing = [name for name in required if not environ.get(name, "").strip()]
         if missing:
             raise ValueError(
                 "missing required production environment variables: " + ", ".join(sorted(missing))
             )
+
+        runtime_secret = environ.get("ACADEMY_RUNTIME_IDENTITY_SECRET", "").strip()
         return cls(
             environment=environ["ACADEMY_ENVIRONMENT"],
             internal_dsn=SecretStr(environ["ACADEMY_POSTGRES_INTERNAL_DSN"]),
             scoped_dsn=SecretStr(environ["ACADEMY_POSTGRES_SCOPED_DSN"]),
-            runtime_identity_secret=SecretStr(environ["ACADEMY_RUNTIME_IDENTITY_SECRET"]),
-            runtime_identity_issuer=environ["ACADEMY_RUNTIME_IDENTITY_ISSUER"],
-            runtime_identity_audience=environ["ACADEMY_RUNTIME_IDENTITY_AUDIENCE"],
+            browser_iam_mode=browser_iam_mode,
+            runtime_identity_secret=SecretStr(runtime_secret) if runtime_secret else None,
+            runtime_identity_issuer=environ.get("ACADEMY_RUNTIME_IDENTITY_ISSUER") or None,
+            runtime_identity_audience=environ.get("ACADEMY_RUNTIME_IDENTITY_AUDIENCE") or None,
+            neon_auth_base_url=environ.get("ACADEMY_NEON_AUTH_BASE_URL") or None,
             public_base_url=environ["ACADEMY_PUBLIC_BASE_URL"],
             release_git_sha=environ["ACADEMY_RELEASE_GIT_SHA"],
             deployment_id=environ["ACADEMY_DEPLOYMENT_ID"],
@@ -199,8 +237,9 @@ class RemoteProductionConfig(BaseModel):
         """Return browser-safe release identity without DSNs, roles, hosts or secrets."""
 
         return {
-            "schema_version": "remote-production-release-v1",
+            "schema_version": "remote-production-release-v2",
             "environment": self.environment,
+            "browser_iam_mode": self.browser_iam_mode,
             "public_base_url": self.public_base_url,
             "release_git_sha": self.release_git_sha,
             "deployment_id": self.deployment_id,
