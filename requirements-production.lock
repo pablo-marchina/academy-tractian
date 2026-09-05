@@ -1,0 +1,25 @@
+# Academy x TRACTIAN production runtime dependency lock
+#
+# Frozen from the clean standalone-wheel resolver observed in GitHub Actions on 2026-09-05
+# (production-runtime run 772, standalone-wheel-smoke).
+#
+# Scope: CPython 3.11 Linux production serving dependencies only.
+# Dev/test-only packages (including DuckDB and httpx) are intentionally absent.
+# The application wheel itself is installed separately with --no-deps.
+
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.15.1
+click==8.5.0
+fastapi==0.141.1
+h11==0.16.0
+idna==3.19
+psycopg==3.3.5
+psycopg-binary==3.3.5
+psycopg-pool==3.3.1
+pydantic==2.13.5
+pydantic-core==2.46.5
+starlette==1.6.0
+typing-extensions==4.16.0
+typing-inspection==0.4.4
+uvicorn==0.52.4
