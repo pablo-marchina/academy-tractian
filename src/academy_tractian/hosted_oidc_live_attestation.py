@@ -117,6 +117,9 @@ class HostedOIDCLiveDecision(_StrictModel):
 
 def build_hosted_oidc_live_evidence(**values: object) -> HostedOIDCLiveEvidence:
     material = {"schema_version": "hosted-oidc-live-evidence-v1", **values}
+    negative_matrix = material.get("negative_matrix")
+    if isinstance(negative_matrix, OIDCNegativeMatrix):
+        material["negative_matrix"] = negative_matrix.model_dump(mode="json")
     return HostedOIDCLiveEvidence.model_validate(
         {**material, "artifact_sha256": _canonical_sha256(material)}
     )
