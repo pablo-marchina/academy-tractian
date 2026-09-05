@@ -27,9 +27,9 @@
     },
     {
       "path": "docs/PLAYWRIGHT-ACCEPTANCE.md",
-      "git_blob_sha1": "4c7e4729695d9bbac9badeb199614e9326e5d85f",
+      "git_blob_sha1": "59f47dfded39cbc68ac7d70ebf7cdc01c7cf1e03",
       "role": "current_contract",
-      "description": "Full-product browser acceptance contract and tested topology."
+      "description": "Canonical full-product browser acceptance contract aligned to the PostgreSQL serving path."
     },
     {
       "path": "research/identity-tenant-production-closure-2026-09-03.md",
@@ -81,9 +81,9 @@
     },
     {
       "path": "docs/BRANCH-PROTECTION.md",
-      "git_blob_sha1": "39c2b21d4add1ef6ebf825d66e3a9c426afd405e",
+      "git_blob_sha1": "3e40ca358d33160c97e51f7bea44d76deb794896",
       "role": "current_contract",
-      "description": "Stable required-gate branch protection contract and external enforcement boundary."
+      "description": "Stable four-gate required-gate branch-protection contract and external enforcement boundary."
     },
     {
       "path": "research/results/final-handoff-acceptance-audit-2026-08-28.json",
@@ -110,10 +110,52 @@
       "description": "P0 distributed-product closure addendum with post-merge required-gate evidence and bounded cross-replica claims."
     },
     {
-      "path": "docs/CURRENT-PROJECT-STATUS.md",
-      "git_blob_sha1": "36fc7db50457a787a9e026fc1518324f63a0d9cb",
+      "path": "README.md",
+      "git_blob_sha1": "c455d40a69b5cd810f6baf4458ae27234ae59534",
       "role": "current_contract",
-      "description": "Canonical mutable human-readable state synchronized to the P0 distributed hard-freeze closure."
+      "description": "Canonical repository entrypoint synchronized to the final P0 serving architecture and evidence boundaries."
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "git_blob_sha1": "6a88b16a501f49ffea58cb29b3440ffa138a7063",
+      "role": "current_contract",
+      "description": "Canonical final-P0 architecture, distributed ownership semantics and technology decision state."
+    },
+    {
+      "path": "docs/DELIVERY-PLAN.md",
+      "git_blob_sha1": "c18a80fd4676f9ef9515c8e34c6de05300255a05",
+      "role": "current_contract",
+      "description": "Canonical freeze, rehearsal and delivery execution plan."
+    },
+    {
+      "path": "docs/DELIVERY-ACCEPTANCE.md",
+      "git_blob_sha1": "a2d66cf55a3e0d4316b7c113d0e4a44a1d018717",
+      "role": "current_contract",
+      "description": "Canonical final Definition of Done and bounded acceptance matrix."
+    },
+    {
+      "path": "docs/FINAL-HANDOFF-RUNBOOK.md",
+      "git_blob_sha1": "428c11ecc99a4335fde032667b23eeb5c60b3dfa",
+      "role": "current_contract",
+      "description": "Canonical provider-independent reproduction, recovery and presentation rehearsal runbook."
+    },
+    {
+      "path": "docs/CURRENT-PROJECT-STATUS.md",
+      "git_blob_sha1": "4961fdfd89a6456ac5c7a0bde6d53e80448c6e50",
+      "role": "current_contract",
+      "description": "Canonical current state with final functional P0 baseline d3bed06b and post-merge required-gate #386."
+    },
+    {
+      "path": "docs/RUBRIC-TO-EVIDENCE.md",
+      "git_blob_sha1": "f6e01771f72c9ed66f5d46fb923a90980a75aff1",
+      "role": "current_contract",
+      "description": "Canonical reviewer navigation crosswalk synchronized to final P0 evidence and bounded claims."
+    },
+    {
+      "path": "docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md",
+      "git_blob_sha1": "a60fa644e8ac45135597edacf2b4477aac0fe370",
+      "role": "current_contract",
+      "description": "Canonical TAPI-to-delivery coverage synchronized to the delivered final P0 topology and evidence state."
     }
   ],
   "decisions": [
@@ -122,9 +164,10 @@
       "status": "PASS_EVIDENCED",
       "evidence_paths": [
         ".github/workflows/final-ci-required.yml",
-        "research/p0-hard-freeze-closure-2026-09-05.md"
+        "research/p0-hard-freeze-closure-2026-09-05.md",
+        "docs/CURRENT-PROJECT-STATUS.md"
       ],
-      "claim_boundary": "The stable required-gate passed post-merge on main SHA 9e160e9badcf6ba0d5ebba39b7d64d24380408c6 with clean clone, Chromium, horizontal runtime handoff and action execution lease gates all green; GitHub branch protection enforcement is separate."
+      "claim_boundary": "The stable required-gate passed post-merge on functional main baseline d3bed06b132212c85b126f56708863d45f64e03e in run #386 with clean clone, Chromium, horizontal runtime handoff and action execution lease all green; later documentation-only commits do not change that functional baseline, and GitHub branch protection enforcement remains separate."
     },
     {
       "decision_id": "CLEAN_CLONE_REPRODUCTION",
@@ -132,7 +175,7 @@
       "evidence_paths": [
         ".github/workflows/clean-clone-full-product-reproduction.yml",
         "research/clean-clone-reproduction-decision-2026-09-04.md",
-        "research/p0-hard-freeze-closure-2026-09-05.md"
+        "docs/FINAL-HANDOFF-RUNBOOK.md"
       ],
       "claim_boundary": "Proves deterministic repository install/test/build/evidence reproduction with PostgreSQL enabled, including current distributed P0 regressions; it is not deployment infrastructure proof."
     },
@@ -142,7 +185,7 @@
       "evidence_paths": [
         ".github/workflows/full-product-playwright.yml",
         "docs/PLAYWRIGHT-ACCEPTANCE.md",
-        "research/p0-hard-freeze-closure-2026-09-05.md"
+        "docs/DELIVERY-ACCEPTANCE.md"
       ],
       "claim_boundary": "Proves the provider-free production product path in Chromium, including realtime, isolation, actions and safe projections; external provider availability is substituted."
     },
@@ -160,6 +203,7 @@
       "evidence_paths": [
         "docs/OPERATIONAL-STORE-RESULT-2026-09-03.md",
         "research/p0-hard-freeze-closure-2026-09-05.md",
+        "docs/ARCHITECTURE.md",
         "docs/CURRENT-PROJECT-STATUS.md"
       ],
       "claim_boundary": "PostgreSQL is the promoted serving substrate for mutable operational state and sanitized observability/evaluation; DuckDB is dev/benchmark compatibility only. Repository-level cross-replica correctness is proven separately, not deployed HA."
@@ -169,7 +213,8 @@
       "status": "PASS_BOUNDED",
       "evidence_paths": [
         "research/postgres-restart-recovery-decision-2026-09-04.md",
-        "research/p0-hard-freeze-closure-2026-09-05.md"
+        "research/p0-hard-freeze-closure-2026-09-05.md",
+        "docs/FINAL-HANDOFF-RUNBOOK.md"
       ],
       "claim_boundary": "Proves conservative persisted-state recovery plus split runtime/action recovery authority, healthy cross-replica non-interference and zero blind consequential replay; it does not establish RTO/RPO/HA/uptime."
     },
@@ -186,7 +231,8 @@
       "status": "NO_SELECTION",
       "evidence_paths": [
         "research/cloudflare-d01-d02-controlled-comparison-2026-09-03.md",
-        "research/p0-hard-freeze-closure-2026-09-05.md"
+        "docs/DELIVERY-PLAN.md",
+        "docs/CURRENT-PROJECT-STATUS.md"
       ],
       "claim_boundary": "D01/D02 are complete USD0 experiments, no candidate crossed frozen promotion gates, the consumed packets must not be replayed, and any P1 comparison requires a new preregistered experiment."
     },
@@ -194,7 +240,8 @@
       "decision_id": "SEMANTIC_CALIBRATION",
       "status": "NOT_READY_HUMAN_DATA",
       "evidence_paths": [
-        "research/semantic-calibration-freeze-decision-2026-09-03.md"
+        "research/semantic-calibration-freeze-decision-2026-09-03.md",
+        "docs/DELIVERY-ACCEPTANCE.md"
       ],
       "claim_boundary": "Calibration protocol and collection infrastructure exist, but no real human labels/adjudication or validated judge agreement profile exists."
     },
@@ -202,7 +249,8 @@
       "decision_id": "ENGINEER_TIME_VALUE",
       "status": "NOT_READY_HUMAN_DATA",
       "evidence_paths": [
-        "research/operational-value-analysis-decision-2026-09-03.md"
+        "research/operational-value-analysis-decision-2026-09-03.md",
+        "docs/DELIVERY-ACCEPTANCE.md"
       ],
       "claim_boundary": "Collection and paired analysis exist, but no real human timing observations support Engineer Minutes Saved or a business-value claim."
     },
@@ -210,7 +258,8 @@
       "decision_id": "ADAPTIVE_RUNTIME_STOPPING",
       "status": "NOT_PROMOTED",
       "evidence_paths": [
-        "research/adaptive-stopping-evaluator-decision-2026-09-03.md"
+        "research/adaptive-stopping-evaluator-decision-2026-09-03.md",
+        "docs/ARCHITECTURE.md"
       ],
       "claim_boundary": "The merged diagnostic is DEV/evaluator-only; no oracle-free runtime challenger has won EDD or authorized a production stopping change."
     },
@@ -220,16 +269,18 @@
       "evidence_paths": [
         "research/final-freeze-decision-2026-09-04.md",
         "research/p0-hard-freeze-closure-2026-09-05.md",
+        "docs/ARCHITECTURE.md",
         "docs/CURRENT-PROJECT-STATUS.md"
       ],
-      "claim_boundary": "The custom controller plus PostgreSQL durable handoff, custody and fencing is the proven P0 baseline. Read-only takeover and non-transferable action fencing now have repository-level cross-replica evidence; no LangGraph or alternate orchestration challenger has shown material Pareto improvement."
+      "claim_boundary": "The custom controller plus PostgreSQL durable handoff, custody and fencing is the proven P0 baseline. Read-only takeover and non-transferable action fencing have repository-level cross-replica evidence; no LangGraph or alternate orchestration challenger has shown material Pareto improvement."
     },
     {
       "decision_id": "BRANCH_PROTECTION",
       "status": "PENDING_EXTERNAL_ENFORCEMENT",
       "evidence_paths": [
         "docs/BRANCH-PROTECTION.md",
-        "research/p0-hard-freeze-closure-2026-09-05.md"
+        "docs/DELIVERY-PLAN.md",
+        "docs/CURRENT-PROJECT-STATUS.md"
       ],
       "claim_boundary": "Repository CI exposes a stable required-gate, but the 2026-09-05 GitHub read still reports main.protected=false and rulesets empty; enforcement must not be claimed yet."
     },
@@ -238,7 +289,8 @@
       "status": "EXTERNALLY_BLOCKED",
       "evidence_paths": [
         "research/results/final-handoff-acceptance-audit-2026-08-28.json",
-        "research/final-freeze-decision-2026-09-04.md"
+        "research/final-freeze-decision-2026-09-04.md",
+        "docs/DELIVERY-ACCEPTANCE.md"
       ],
       "claim_boundary": "The exact required C4 artifact remains unavailable; reconstruction, substitution and rescoring are forbidden."
     }
@@ -259,5 +311,5 @@
     "restart_ci_proves_rto_rpo_ha",
     "unconditional_production_readiness"
   ],
-  "manifest_sha256": "e65f97a2da637c043903726362941b44281310852658b4073cc5aa3aa349ede2"
+  "manifest_sha256": "7856397517fd794b1738fe71b648f70b5d0d67e391b4bfdc2744506ac587e8b1"
 }

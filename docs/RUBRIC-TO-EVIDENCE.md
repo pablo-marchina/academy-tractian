@@ -1,121 +1,201 @@
 # Academy × TRACTIAN — Rubric-to-Evidence Crosswalk
 
-This is reviewer navigation, not a new source of authorization. Exact current state remains in `CURRENT-PROJECT-STATUS.md`; exact acceptance semantics remain in `DELIVERY-ACCEPTANCE.md`; frozen artifacts/ADRs remain authoritative for their scoped results.
+**Status:** ACTIVE / canonical reviewer navigation  
+**Checkpoint:** 2026-09-05 BRT  
+**Functional P0 baseline:** `d3bed06b132212c85b126f56708863d45f64e03e`  
+**Post-merge gate:** `final-ci-required` run #386 / `required-gate = success`
 
-## Fast review path
+This file is navigation, not a new authorization source. Exact state lives in [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md), acceptance semantics in [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md), and historical ADR/research artifacts remain authoritative for their original scopes.
 
-1. Read [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md) for what is frozen, blocked, gated and forbidden.
-2. Run the sequence in [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md).
-3. Inspect [`../research/results/final-delivery-evidence-index-2026-08-28.json`](../research/results/final-delivery-evidence-index-2026-08-28.json) for exact evidence identities.
-4. Inspect [`../research/results/provider-free-final-delivery-demo-result-2026-08-28.json`](../research/results/provider-free-final-delivery-demo-result-2026-08-28.json) for the five integrated demo traces/results.
-5. Use the final machine audit (`../research/results/final-handoff-acceptance-audit-2026-08-28.json`) for all 83 preregistered acceptance dispositions.
+## 1. Fast reviewer path
 
-## Official academic excellence dimensions
+1. [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md) — exact current state, blockers and non-claims.
+2. [`ARCHITECTURE.md`](ARCHITECTURE.md) — final P0 serving/runtime/action topology.
+3. [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md) — reproduction and presentation rehearsal.
+4. [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md) — canonical Definition of Done.
+5. [`../research/results/final-freeze-evidence-bundle-2026-09-04.json`](../research/results/final-freeze-evidence-bundle-2026-09-04.json) — machine-verified current/frozen artifact identities.
+6. [`../research/results/final-handoff-acceptance-audit-2026-08-28.json`](../research/results/final-handoff-acceptance-audit-2026-08-28.json) — historical acceptance audit and exact C4 blocker.
 
-| Dimension | Strongest evidence | What it establishes | Boundary |
+## 2. Academic excellence dimensions
+
+| Dimension | Strongest current evidence | Establishes | Boundary |
 |---|---|---|---|
-| API integration quality | `research/results/tractian-api-contract-conformance-2026-08-27.json`; `research/e2/tool_registry.py`; `tests/test_runtime.py` | authored OpenAPI, registry and executable implementation agree on 18 normalized operations; strict tool boundary, identity/seed binding and negative action tests | only the production-path `get_asset` route is explicitly recorded as route-tested in the conformance artifact; do not claim live exercise of all 18 operations |
-| Technical coherence | ADR-004…ADR-016; `docs/ARCHITECTURE-ROADMAP.md`; `docs/PROJECT-PRINCIPLES.md` | controller/runtime/evaluator/action/provider boundaries were decided prospectively and kept separate; optional complexity is gated by evidence | global final architecture is not frozen |
-| Experiment clarity | `research/experiments/`; `docs/BENCHMARK-INTEGRITY-GATE.md`; ADR-013/014/015/016 | preregistered geometry, denominators, falsifications, fixed metrics and change rules | historical exposed data is not independent generalization evidence |
-| Result analysis quality | frozen P12-C4 deterministic/bootstrap/LOGO artifacts; EV-007/008/011 results; ADR-016 demo | deterministic scoring, uncertainty/sensitivity, failure slices, repeated-run stability and communication safety are preserved with exact identities | C4 per-group/slice continuation is blocked on the exact unavailable score-row artifact |
-| Limitations / risks | `docs/CURRENT-PROJECT-STATUS.md`; `docs/BENCHMARK-INTEGRITY-GATE.md`; `docs/FINAL-HANDOFF-RUNBOOK.md` | provider, blind-evaluation, action, replay, privacy and C4 limits are explicit and fail closed | no provider selection, fresh-blind generalization or production-readiness claim |
-| Reproducibility | ADR-016; `.github/workflows/final-delivery-provider-free-reproduction.yml`; `scripts/validate_delivery_reproduction.py`; final handoff validator | clean checkout can install, regress frozen campaigns, rerun the integrated demo and resolve exact evidence | provider-free scope only |
-| Documentation | root `README.md`; `docs/REPOSITORY-GUIDE.md`; this crosswalk; final runbook; delivery acceptance matrix | reviewer can navigate source of truth, setup, evidence, operations and non-claims | documentation cannot substitute for externally unavailable evidence |
-| Demonstration quality | `research/results/provider-free-final-delivery-demo-result-2026-08-28.json`; EV-007/008/011 | real runtime/evaluator traces cover investigate, clarify, abstain, escalate and one governed supplied/test action, plus failure/reliability/communication campaigns | synthetic/provider-free demonstration; zero real-customer mutations |
+| API integration | TRACTIAN API conformance artifacts; typed registry; runtime/controller tests | 18 normalized typed operations behind one `HarnessRunner` boundary | do not claim live exercise of every route unless separately evidenced |
+| Technical coherence | `ARCHITECTURE.md`; P0 closure; ADRs; PostgreSQL distributed gates | one integrated Agent + Evaluation product with deterministic safety and evidence-backed topology | repository-level correctness is not deployed HA |
+| Experiment clarity | `research/experiments/`; benchmark integrity docs; D01/D02 decision | preregistration, fixed metrics, consumed-attempt accounting, explicit `NO_SELECTION` | D01/D02 cannot be replayed |
+| Result analysis | EV-007/008/011; D01/D02 comparison; load/restart/realtime/distributed campaigns | failure, stability, communication, provider, resource and recovery analyses with explicit bounds | C4 exact continuation remains externally blocked |
+| Limitations/risks | current status; acceptance; runbook; branch-protection contract | provider/human/HA/exactly-once/branch-protection limitations are explicit | no unconditional production-readiness claim |
+| Reproducibility | clean-clone workflow; runbook; final freeze validator | clean checkout reproduces backend/eval/frontend/evidence with PostgreSQL and zero tracked mutation | provider-free product path; not cloud deployment proof |
+| Documentation | README; architecture; plan; acceptance; runbook; this crosswalk | active docs agree with accepted final P0 topology | historical docs remain historical and may describe prior states |
+| Demonstration | Chromium acceptance; provider-free demo; EV campaigns | real backend/frontend/realtime/action/evaluator paths without relying on live provider availability | synthetic/provider-free demo; zero real-customer mutation |
 
-## P0 project acceptance
+## 3. P0 capability coverage
 
-| Requirement | Primary evidence |
-|---|---|
-| REQ-001 individual project | repository history, source tree and final handoff package |
-| REQ-003 technical experiment | BIG-B2/B3/B4 protocol work; frozen P12-C4 analysis; EV-007/008/011 campaigns |
-| REQ-004 / REQ-020 document results | root README; ADRs; progress/frozen result artifacts; this crosswalk |
-| REQ-021 reproducible handoff | ADR-016 workflow/validator plus `FINAL-HANDOFF-RUNBOOK.md` |
-| REQ-017 agent + evaluation framework | `src/academy_tractian/runtime.py`, `src/academy_tractian/evaluation.py`, E2 runner/controller and ADR-016 integrated demo |
-
-## Agent/evaluator capability evidence
-
-| Capability | Strongest evidence | Scope note |
+| Requirement/capability | Primary evidence | Current disposition |
 |---|---|---|
-| Industrial API / tool contract | `research/results/tractian-api-contract-conformance-2026-08-27.json`; `research/e2/tool_registry.py` | 18 normalized operations; one stable typed agent-facing registry |
-| Investigate/read | DEMO-01; runtime/controller tests | supplied/local `get_asset` evidence path |
-| Clarify / abstain | DEMO-02/03; EV-011 | deterministic missing-context/no-safe-path behavior |
-| Escalate | DEMO-04; EV-011 COMM-09/other escalation cases | provider-free handoff behavior |
-| Consequential action | DEMO-05; ADR-012; controlled action tests | supplied/test authorized action only; default ProductionRuntime remains disabled |
-| Failure continuity | EV-007; runtime fault tests | deterministic faults, safe containment, no hidden retry |
-| Stability | EV-008 | 30/30 runs; 66/66 stability dimensions |
-| Customer-safe communication | EV-011 | 60/60 applicable predicates; COMM-07 remains evaluator FAIL by design |
-| Per-run evaluator / trace | `src/academy_tractian/evaluation.py`; `research/e2/models.py`; ADR-016 demo | same trace object is evaluated without runtime access to private gold |
-| Evaluation integrity | `docs/BENCHMARK-INTEGRITY-GATE.md`; BIG-B0…B4 artifacts | contamination/exposure roles and blind-access rules are frozen; fresh blind remains unavailable |
+| Agent + Evaluation integrated solution | production runtime/evaluator + browser product | PASS_EVIDENCED |
+| TRACTIAN API/tool integration | 18 typed ToolSpecs + HarnessRunner + contract tests | PASS_EVIDENCED |
+| contextualize/investigate/finalize | runtime/controller + demo/EV evidence | PASS_EVIDENCED |
+| clarify/abstain/escalate | runtime/controller + EV-011/browser states | PASS_EVIDENCED |
+| deterministic safety | B1/B2/B3 + action/negative tests | PASS_EVIDENCED |
+| consequential action proposal/confirmation | custody/idempotency/action RunTrace + browser E2E | PASS_EVIDENCED |
+| tenant isolation | signed bearer + PostgreSQL RLS integration | PASS_EVIDENCED |
+| read-only cross-replica handoff | horizontal-runtime-handoff reusable gate | PASS_EVIDENCED |
+| action stale-owner fencing/no replay | action-execution-lease reusable gate | PASS_EVIDENCED |
+| genuine safe realtime | PostgreSQL safe rows + LISTEN/NOTIFY + SSE/reconnect | PASS_BOUNDED |
+| frontend control room | React/Vite + Chromium full-product acceptance | PASS_EVIDENCED |
+| clean reproduction | clean-clone workflow | PASS_EVIDENCED |
+| stable final CI | `final-ci-required` → `required-gate` | PASS_EVIDENCED |
 
-## P1 production/quality evidence
+## 4. Agent/evaluator evidence
+
+| Capability | Evidence | Scope note |
+|---|---|---|
+| Industrial tool contract | API conformance + typed registry | 18 normalized operations under one stable agent-facing contract |
+| Investigation | provider-free integrated traces/controller tests | grounded read-tool path |
+| Clarification/abstention | EV/demo/controller tests | insufficient-context/no-safe-path behavior |
+| Escalation | EV-011/demo/browser surfaces | structured human handoff |
+| Consequential action | custody/idempotency/lease tests + browser controlled profile | explicit governed action; no blind retry |
+| Failure continuity | EV-007 + runtime fault tests | fail-safe provider/tool/runtime behavior |
+| Stability | EV-008 | repeated-run structural stability evidence |
+| Communication | EV-011 | deterministic communication predicates; bounded by evaluator design |
+| Per-run evaluation | ProductionEvaluator + safe evaluation rows | post-runtime evaluation, runtime cannot access private gold |
+| Evaluation integrity | benchmark-integrity gates | leakage/exposure roles are explicit and protected |
+
+## 5. Production/reliability evidence
 
 | Area | Evidence | Disposition boundary |
 |---|---|---|
-| Contracts | API conformance result + registry + runtime tests | evidenced provider-free contract; not all routes live-exercised |
-| Authorization | ADR-005, ADR-012, action safety tests | deterministic local/supplied boundary; no blanket customer authorization |
-| Consequential actions | ADR-012 + DEMO-05 + idempotency tests | exactly controlled action profile; uncertain post-claim attempts are non-replayable |
-| Failure continuity | EV-007 + EV-011 + runtime transport-failure tests | safe fallback/handoff in deterministic/provider-free campaign |
-| Escalation handoff | DEMO-04 + EV-011 | provider-free evidence |
-| Customer communication | EV-011 | provider-free evidence; no subjective claim beyond frozen predicates |
-| State/context | controller/runtime trace models | explicit per-request trace lifecycle; no persistent memory claimed |
-| Configuration | `pyproject.toml`, `research/e2/pyproject.toml`, frozen config/result hashes | Python/dependency constraints and deterministic identities; no deployment platform lock |
-| Secrets/privacy | provider authorization tests, EV-007/011 sentinels, benchmark-integrity guard | zero real credential probes and no private/blind access in handoff campaigns |
-| Observability | `RunTrace`, evaluators, failure/stability/communication reports | structured inspectable events/metrics; no external observability backend claimed |
-| Model/provider quality | ADR-008…011 and issue #44 | **UNEXECUTED_GATED**: 0/32 live calls, no provider selected |
-| Performance | controller limits + EV-007/008 no hidden retry/replay evidence | bounded loops/reliability only; live latency, cost and provider resource behavior unmeasured |
-| Reproducibility | ADR-016 + clean workflow + runbook | provider-free clean-checkout evidence |
-| Rollback | `FINAL-HANDOFF-RUNBOOK.md` + fail-closed runtime/action/custody rules | code/config/reversal path documented; no exercised deployment-infrastructure rollback claimed |
+| Serving storage | PostgreSQL production composition + operational store decision | production mutable + safe observability/evaluation persistence |
+| DuckDB | `pyproject.toml` optional extras | dev/benchmark compatibility only, not serving dependency |
+| Identity | signed bearer verification + RLS tests | project-owned auth envelope; not enterprise OIDC/SSO |
+| Runtime handoff | PostgreSQL work-item/lease tests | tested cross-replica read-only takeover/fencing |
+| Action ownership | non-transferable action lease tests | lost ownership → `UNCERTAIN`; replacement replay forbidden |
+| Restart recovery | restart campaign + split recovery ownership | conservative repository recovery; not RTO/RPO/HA |
+| Realtime | PostgreSQL rows + LISTEN/NOTIFY benchmark + browser reconnect | durable rows authoritative; hosted CI latency is not production SLO |
+| Load/concurrency | provider-free PostgreSQL benchmark | descriptive only; not production capacity/worker sizing |
+| Privacy | deny-list tests + safe projections | no credentials/raw action/private evaluator/CoT in browser contract |
 
-## Demonstration coverage
+## 6. Provider/model evidence
 
-The five-scenario ADR-016 demo is intentionally compact. Additional frozen campaigns provide the remaining demonstration dimensions rather than adding a second runtime path.
+D01/D02 are complete consumed USD0 experiments.
 
-| Final demo requirement | Evidence |
-|---|---|
-| Contextualize | DEMO-01 + evaluator-supported final orientation |
-| Investigate | DEMO-01 tool proposal/call/result/observation trace |
-| Execute | DEMO-05 controlled accepted `reprocess_analysis` |
-| Clarify / insufficient evidence | DEMO-02 and DEMO-03 |
-| Escalate | DEMO-04 |
-| Conflict / uncertainty | EV-007 failure profiles and EV-011 partial/unavailable/uncertain cases |
-| Failure / robustness | EV-007 |
-| Customer-safe response | EV-011 |
-| Per-run evaluation | all ADR-016 demo traces are evaluated |
-| Reliability view | EV-008 + EV-007 aggregate campaigns |
+Accepted D02 aggregate result:
 
-## Benchmark/security integrity
+| Candidate | M1 structured | M4 quality | success | stability | median latency | p95 latency | Promotion |
+|---|---:|---:|---:|---:|---:|---:|---|
+| GLM 4.7 Flash | 0.4375 | 0.3750 | 0.4375 | 0.2500 | 15329 ms | 38270 ms | FAIL M1/M4/M7 |
+| Nemotron 3 120B A12B | 0.5625 | 0.5625 | 0.5625 | 0.5000 | 4218.5 ms | 9168 ms | FAIL M1/M4/M7 |
 
-The key source is [`BENCHMARK-INTEGRITY-GATE.md`](BENCHMARK-INTEGRITY-GATE.md), backed by BIG-B0→BIG-B4 machine artifacts and workflow guards. Important review facts:
+Both preserved safe-failure and trace-integrity aggregates at 1.0 in the accepted comparison, but neither crossed the frozen quality/stability hard gates.
 
-- historical DEV + VALIDATION are an exposed development/selection pool;
-- legacy LOCKED_TEST is not described as pristine/untouched;
-- no fresh blind source is currently authorized;
-- private gold is evaluation-only and never runtime prompt material;
-- identity and seed are runner/runtime-owned;
-- API permissions and project/system policy are separate;
-- accepted action-event semantics are used instead of false final-state equality;
-- grouping unit for scientific generalization is `asset_story_group` to prevent split leakage.
+Final state: **`NO_SELECTION`**.
 
-## External/gated items reviewers should not mistake for completed work
+D01/D02 must not be replayed. Any P1 provider/model work requires a new experiment ID and fresh preregistration.
 
-### Live provider selection
+## 7. Human semantic/value evidence
 
-Issue #44 has a frozen 32-attempt comparison plan, clients, executor and custody wrapper. It remains **unexecuted** at 0/32 because explicit secrets plus a canonical durable custody root are required. No provider/model is selected; no live latency/cost/quality result exists.
+| Layer | Infrastructure | Missing evidence | State |
+|---|---|---|---|
+| Semantic response quality | blinded review/adjudication collection + source generation | real human labels + judge-vs-human agreement/error | NOT_READY_HUMAN_DATA |
+| Engineer-time/business value | blinded MANUAL×ASSISTED collection + paired analysis | real operator timing/outcome observations | NOT_READY_HUMAN_DATA |
 
-### C4 continuation
+No final presentation may fabricate these observations.
 
-The exact evaluator-side score-row artifact required for per-group/slice reporting is externally unavailable:
+## 8. Runtime/framework/adaptive decisions
+
+| Decision | State | Evidence rule |
+|---|---|---|
+| Custom AgentController | `NO_CHANGE` / final P0 baseline | distributed P0 requirements solved without framework migration |
+| LangGraph/framework swap | not promoted | no material Pareto challenger win |
+| Adaptive runtime stopping | `NOT_PROMOTED` | evaluator-only diagnostic; no oracle-free runtime win |
+| RAG/vector DB | not justified | no measured retrieval gap |
+| Multi-agent | not justified | no measured topology gap |
+| Persistent memory | not justified | no cross-request requirement demonstrated |
+| Redis/Kafka/Temporal/MCP migration | not justified | PostgreSQL topology meets current tested P0 needs |
+
+Negative/no-change decisions are valid EDD outcomes.
+
+## 9. Browser/demo coverage
+
+The provider-independent final demo + Chromium acceptance together cover:
+
+- Mission Control / Production Health;
+- live run submission;
+- genuine SSE growth;
+- trace/architecture/evidence/lineage;
+- tool/policy transitions;
+- clarify/abstain/escalate/error states;
+- pending action + explicit confirmation;
+- separate action execution run;
+- post-runtime evaluation;
+- dynamic analytics;
+- forbidden-field absence;
+- reconnect/catch-up;
+- responsive states.
+
+Use this path for presentation rehearsal; live provider availability must not be a single point of failure.
+
+## 10. Exact final CI navigation
+
+Functional P0 baseline:
+
+`d3bed06b132212c85b126f56708863d45f64e03e`
+
+Post-merge run #386 / `33971230788`:
 
 ```text
-SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
-bytes    177350
-rows     144
-geometry 36 common parents × 4 arms
+clean clone                       success
+Chromium                          success
+horizontal runtime handoff        success
+action execution lease            success
+required-gate                     success
 ```
 
-Reconstruction, rescoring or substitution is forbidden. This blocks the next C4 reporting step; it does not invalidate already frozen deterministic/bootstrap/LOGO evidence.
+A later docs-only merge does not change that functional topology but must independently pass the same gate before becoming the frozen delivery head.
 
-## Final reviewer rule
+## 11. External/bounded items
 
-Treat a row as satisfied only within the scope of the exact linked evidence. A green provider-free validator does not imply live-provider quality, a safe supplied/test action does not authorize real customer mutation, and benchmark-integrity controls do not create fresh-blind evidence that does not exist.
+### Branch protection
+
+Last observed on 2026-09-05:
+
+```text
+main.protected = false
+rulesets = []
+```
+
+State: `PENDING_EXTERNAL_ENFORCEMENT`.
+
+### Historical C4 artifact
+
+The exact evaluator-side artifact required for C4 continuation remains unavailable. Reconstruction/substitution/rescoring is forbidden.
+
+State: `EXTERNALLY_BLOCKED`.
+
+## 12. Reviewer-safe final claims
+
+Supported:
+
+- integrated Agent + Evaluation product;
+- PostgreSQL serving/realtime state;
+- tested read-only cross-replica takeover/fencing;
+- tested non-transferable action ownership/no replacement replay;
+- deterministic safety/privacy boundaries;
+- real provider-free Chromium product acceptance;
+- clean reproducibility;
+- D01/D02 controlled `NO_SELECTION`;
+- explicit human/HA/external blockers.
+
+Not supported:
+
+- production provider/model selected;
+- completed human semantic calibration;
+- measured engineer-time savings;
+- production capacity/SLO from CI;
+- deployed HA/RTO/RPO/autoscaling/multi-region uptime;
+- external exactly-once side effects;
+- enterprise OIDC/SSO;
+- LangGraph/RAG/multi-agent superiority;
+- branch-protection enforcement while GitHub reports it disabled;
+- reconstructed C4 evidence.
