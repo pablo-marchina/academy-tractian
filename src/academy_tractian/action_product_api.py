@@ -68,15 +68,51 @@ def create_action_capable_product_app(
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
+    allow_local_test_storage: bool = False,
 ) -> FastAPI:
+    """Create the action-capable product while failing closed on local storage.
+
+    Production callers must inject custody, idempotency, run-access and execution stores.
+    File-backed stores are retained only for isolated compatibility tests and require the
+    explicit ``allow_local_test_storage=True`` escape hatch. This prevents a missing production
+    dependency from silently degrading a multi-replica deployment into process-local/file state.
+    """
+
     if custody_store is not None and action_custody_path is not None:
         raise ValueError("provide custody_store or action_custody_path, not both")
     if action_ledger is not None and action_ledger_path is not None:
         raise ValueError("provide action_ledger or action_ledger_path, not both")
+    if run_access_store is not None and access_db_path is not None:
+        raise ValueError("provide run_access_store or access_db_path, not both")
+    if execution_store is not None and execution_db_path is not None:
+        raise ValueError("provide execution_store or execution_db_path, not both")
+
+    local_fallback_requested = any(
+        (
+            custody_store is None,
+            action_ledger is None,
+            run_access_store is None,
+            execution_store is None,
+            action_custody_path is not None,
+            action_ledger_path is not None,
+            access_db_path is not None,
+            execution_db_path is not None,
+        )
+    )
+    if local_fallback_requested and not allow_local_test_storage:
+        raise ValueError(
+            "production action storage must be explicitly injected; "
+            "local file-backed fallbacks are test-only"
+        )
+
     if custody_store is None and action_custody_path is None:
-        raise ValueError("action custody store or path is required")
+        raise ValueError("action custody store is required for production")
     if action_ledger is None and action_ledger_path is None:
-        raise ValueError("action idempotency ledger or path is required")
+        raise ValueError("action idempotency ledger is required for production")
+    if run_access_store is None and access_db_path is None and not allow_local_test_storage:
+        raise ValueError("run access store is required for production")
+    if execution_store is None and execution_db_path is None and not allow_local_test_storage:
+        raise ValueError("run execution store is required for production")
 
     custody = custody_store or PendingActionCustody(action_custody_path)  # type: ignore[arg-type]
     ledger = action_ledger or DuckDBActionIdempotencyLedger(action_ledger_path)  # type: ignore[arg-type]
@@ -123,6 +159,7 @@ def create_action_capable_product_app(
     app.state.action_idempotency_ledger = ledger
     app.state.production_action_executor = executor
     app.state.action_recovery_report = action_recovery
+    app.state.local_test_storage_enabled = allow_local_test_storage
 
     def trusted_context(request: Request) -> AuthenticatedRuntimeContext:
         return trusted_runtime_context(context_provider, request)
