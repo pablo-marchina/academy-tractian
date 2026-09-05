@@ -9,7 +9,7 @@
 **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)  
 **Principles:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
 
-This file is the sole mutable human-readable summary of current project state. Historical/frozen ADRs and result artifacts remain immutable evidence for their original scopes.
+This file is the mutable source of truth for current state. Frozen/source-pinned historical evidence must not be rewritten.
 
 ## 1. Executive status
 
@@ -20,112 +20,123 @@ current main                                 12b4753d3e39c86f7c68f0ea7b4f3215490
 final implementation branch                  release/production-final
 draft integration PR                         #196 / OPEN / DRAFT
 latest required product gate                 PASS / final-ci-required required-gate
-GitHub branch protection                     NOT ENFORCED
+GitHub main protection                       BLOCKED_USER_ACTION / connector has no admin write
 
 production agent runtime                     IMPLEMENTED / REGRESSION PASS
 production deterministic evaluator           IMPLEMENTED
 TRACTIAN typed tool registry                  18 operations
-React operator control room                   IMPLEMENTED
 PostgreSQL serving persistence               IMPLEMENTED + REMOTE SCHEMA APPLIED
 PostgreSQL observability/evaluation           IMPLEMENTED + REMOTE SCHEMA APPLIED
 realtime durable truth                       PostgreSQL rows + sequence cursor
 realtime wake-up                             LISTEN/NOTIFY + durable catch-up
 read-only cross-replica handoff              IMPLEMENTED / required gate PASS
 consequential-action safety                  IMPLEMENTED / action-lease gate PASS
-architecture manifest                        SYNCHRONIZED to managed-session candidate + compatibility identity
+React operator control room                  IMPLEMENTED
 material decision registry                   IMPLEMENTED / ACTIVE
 
-remote Railway historical pilot              PRESERVED / STALE, not current product
-remote Railway production-api                FINAL BRANCH / Docker / US East / FAIL-CLOSED
-remote Railway production-web                DEPLOYED / SUCCESS / US East
-remote public product origin                 HTTPS domain allocated for production-web
-same-origin auth/API proxy                   IMPLEMENTED in Caddy
-remote Neon project                          PROVISIONED
-remote production schema                     APPLIED / STRUCTURALLY VALIDATED
-remote tenant-scoped DB role                 academy_tractian_rls / NOBYPASSRLS / non-superuser
-remote RLS validation                        PASS on isolated migration-validation branch
-production Neon Auth                         PROVISIONED on Neon main / trusted product origin
-browser/end-user IAM                         CODE + HOSTED AUTH PROVISIONED / LIVE E2E PENDING
-backend managed-session verifier             IMPLEMENTED / production-runtime PASS
-remote backend serving boot                  BLOCKED only on approved injection of two PostgreSQL DSNs
+Railway production-web                       ONLINE / HTTPS / US East
+Railway production-api                       CRASHED FAIL-CLOSED / missing only two Postgres DSNs
+Railway API healthcheck desired state         /health / 60s / ON_FAILURE configured
+Railway production topology IaC              VERSIONED / .railway/railway.ts; live IaC apply pending
+Neon production schema                       APPLIED / STRUCTURALLY VALIDATED
+Neon scoped role                             academy_tractian_rls / NOBYPASSRLS / non-superuser
+remote RLS validation                        PASS on isolated validation branch
+Neon Auth / Better Auth                      PROVISIONED on production main
+browser IAM                                  CODE + HOSTED AUTH / LIVE E2E PENDING
+
 production provider/model                    NO_SELECTION
+production DecisionSource                    FAIL-CLOSED placeholder
 production TRACTIAN transport                NOT COMPOSED
 production authorization resolver            DENY-ALL baseline
 remote capacity/SLO                          NOT PROVED
 remote recovery/reconnect                    NOT PROVED
-
-human semantic collector/protocol            IMPLEMENTED
-real human semantic calibration              NOT READY — labels required
-operational-value collector/analysis         IMPLEMENTED
-real engineer-time/value claim               NOT READY — human observations required
+human semantic calibration                   NOT READY — labels required
+operational-value claim                      NOT READY — observations required
 adaptive runtime policy                      NOT PROMOTED; baseline first
 ```
 
-## 2. Current promoted / candidate product path
+## 2. Current target topology
 
 ```text
 browser
-→ production-web HTTPS origin
-→ managed browser session candidate (Neon Auth / Better Auth on production main)
-→ Caddy same-origin /auth + /api boundary
-→ FastAPI
-→ server-side managed-session revalidation
-→ server-owned organization/user/permissions
-→ PostgreSQL ownership + tenant isolation
-→ runtime handoff / generation-fenced read lease
-→ RealtimeProductionRuntime
-→ provider-neutral DecisionSource
+→ production-web HTTPS
+→ same-origin /auth
+→ Neon Auth managed session
+→ same-origin /api + SSE
+→ Railway production-api
+→ server-side session revalidation
+→ server-owned user / organization / permissions
+→ Neon PostgreSQL + RLS
+→ durable runtime handoff / leases / fencing
+→ selected hosted DecisionSource                  [OPEN]
 → AgentController
-→ HarnessRunner
 → 18 typed TRACTIAN tools
-→ deterministic safety boundaries
-→ normalized evidence
-→ FINAL | CLARIFY | ABSTAIN | ESCALATE | ACTION_PROPOSAL
-→ RunTrace
+→ real remote TRACTIAN transport                  [OPEN]
+→ evidence-grounded final/clarify/abstain/escalate/action proposal
+→ governed action confirmation + authorization    [OPEN remotely]
 → ProductionEvaluator
-→ sanitized PostgreSQL observability/evaluation
-→ durable cursor + LISTEN/NOTIFY wake-up
-→ REST/SSE
-→ React Production Control Room
+→ PostgreSQL observability/evaluation
+→ durable cursor + LISTEN/NOTIFY
+→ React Control Room
 ```
 
-The managed-session IAM infrastructure and code are now present in the production topology, but IAM is still **not READY** until the DB-backed API can boot and live two-user/two-tenant REST/SSE negative acceptance passes. The complete remote agent path also remains incomplete until a provider is selected and real TRACTIAN transport/authorization are composed.
+No component marked OPEN may be described as production-ready before hosted evidence closes it.
 
-## 3. External infrastructure actually provisioned
+## 3. External infrastructure state
 
 ### Railway
 
-The historical `hosted-pilot` service remains preserved as old evidence and is not the production service.
+`production-web` is online on `release/production-final` with:
 
-`production-api`:
+- React/Vite production build;
+- Caddy static serving;
+- public HTTPS Railway domain;
+- same-origin `/auth/*` proxy to production Neon Auth;
+- same-origin `/api/*` and `/health` proxy to `production-api.railway.internal:8000`;
+- SSE buffering disabled;
+- one replica in `us-east4-eqdc4a`;
+- explicit `ON_FAILURE` restart policy;
+- `/` deployment healthcheck.
 
-- source branch `release/production-final`;
-- repository Python 3.11 production Dockerfile;
-- Railway US East Metal;
-- provider calls disabled and consequential actions denied while provider is `NO_SELECTION`;
-- managed IAM mode points to the production-main Neon Auth endpoint;
-- latest boot fails closed with exactly two missing required values: `ACADEMY_POSTGRES_INTERNAL_DSN` and `ACADEMY_POSTGRES_SCOPED_DSN`;
-- no other mandatory production configuration is currently reported missing.
+`production-api` exists separately from historical `hosted-pilot` and uses:
 
-`production-web`:
+- `release/production-final`;
+- repository production Dockerfile;
+- one replica in `us-east4-eqdc4a`;
+- explicit `ON_FAILURE` restart policy;
+- `/health` deployment healthcheck with 60 second timeout;
+- provider calls disabled;
+- actions disabled at the current infrastructure/IAM boundary;
+- managed `neon-auth` browser IAM mode.
 
-- source branch `release/production-final`;
-- React/Vite production image + Caddy;
-- production Docker build forces browser auth enabled while provider-free dev/CI remains deterministic;
-- Railway US East Metal;
-- HTTPS public domain;
-- same-origin `/auth/*` proxy now points to Neon Auth on production main;
-- same-origin `/api/*` and `/health` proxy to `production-api.railway.internal`;
-- SSE proxy buffering disabled;
-- post-production-Auth-host redeploy reached Railway `SUCCESS`.
+Current boot remains intentionally fail-closed because exactly these values are absent:
 
-No database credential or authentication secret is committed or recorded in documentation.
+```text
+ACADEMY_POSTGRES_INTERNAL_DSN
+ACADEMY_POSTGRES_SCOPED_DSN
+```
+
+Those values must be inserted only through an approved Railway native secret channel.
+
+### Railway Infrastructure as Code
+
+The production topology is versioned in the current Railway IaC surface:
+
+```text
+.railway/railway.ts
+```
+
+The file is a named `production` partial so it manages only `production-api` and `production-web`. Historical `hosted-pilot` remains outside the partial and must not be deleted.
+
+All existing Railway-managed values and the two future PostgreSQL DSNs are represented as `preserve()`. No secret value is stored in Git. Repository validation and a dedicated IaC CI workflow guard the expected service scope and reject literal PostgreSQL URLs.
+
+A live `railway config plan`/apply remains pending before IaC ownership itself can be claimed as promoted. Dashboard/service state remains the effective platform state until that plan is reviewed and applied.
 
 ### Neon
 
-The `academy-tractian-hosted-pilot` project / `academy_tractian` database contains the promoted `academy_operational` schema.
+The `academy_tractian` database contains the promoted `academy_operational` schema.
 
-Validated on production main:
+Validated evidence remains:
 
 ```text
 required product tables          15 / 15
@@ -136,92 +147,95 @@ scoped superuser                  false
 scoped BYPASSRLS                  false
 run_ownership owner               academy_tractian_owner
 tenant SELECT policies             5
+cross-tenant validation           org-a visible / org-b denied
 ```
 
-An isolated Neon branch was used for migration and RLS validation before main application. Under `academy.organization_id=org-a`, the scoped role returned the org-a row and did not expose org-b.
+Production Neon Auth is provisioned and trusts the production-web origin. Email/password sessions are enabled; email verification is not required, so verified-email identity is not claimed.
 
-Neon Auth / Better Auth was first qualified on the isolated validation branch, then provisioned on the production main branch after managed-session regression and provider-free browser acceptance were green. The production product origin is in its trusted-origin allowlist. Current production Auth supports managed email/password sessions; email verification is not currently required, so **verified-email identity is not claimed**. Live authenticated API/SSE multi-user acceptance remains open.
+## 4. Immediate dependency gates
 
-### Supabase
+### Gate G1 — repository governance
 
-No current Supabase project is part of the `academy-tractian` production topology.
+Status: `BLOCKED_USER_ACTION`.
 
-## 4. Browser identity status
+Required:
 
-Current final-branch implementation:
+- protect `main`;
+- require pull requests;
+- require `final-ci-required / required-gate`;
+- require up-to-date branch;
+- block force push;
+- block branch deletion.
 
-- production React `AuthBoundary` blocks the Control Room until managed session validation succeeds;
-- sign-in/sign-up/sign-out/session calls stay same-origin under `/auth`;
-- provider-free Vite/CI does not enable the external browser-auth gate, while `Dockerfile.production` forces it on;
-- no tenant, role or permission authority is stored in browser state;
-- FastAPI `NeonAuthRuntimeContextProvider` forwards only the opaque cookie to the managed session authority and forces server-side session validation with cookie-cache bypass;
-- user/session identity mismatch, impersonation, missing cookie and auth-service failure all fail closed;
-- active managed organization becomes tenant when present;
-- otherwise a deterministic `user:<authenticated-user-id>` personal tenant preserves isolation;
-- permissions remain server-defined by `DEFAULT_RUNTIME_PERMISSIONS`;
-- old signed-bearer composition remains available for rollback/tests but is no longer required by the managed browser IAM mode.
+The connected GitHub integration does not expose an admin write action for branch protection, so this must be completed by the repository owner.
 
-Regression evidence is green for the backend managed-session implementation and provider-free browser flow. `final-ci-required` also passed its `required-gate`. Do not claim IAM READY until live authenticated two-user/two-tenant acceptance passes through the remotely hosted backend.
+### Gate G2 — remote backend serving
 
-## 5. Consequential actions
+Status: `BLOCKED_USER_ACTION`.
 
-The safety contract remains unchanged:
+Required:
 
-```text
-agent proposes exact action
-→ deterministic validation
-→ private server-side custody
-→ PENDING_CONFIRMATION
-→ authenticated operator confirms opaque action_id
-→ authorization + kill switch revalidated
-→ persistent idempotency claim
-→ non-transferable execution lease
-→ exact custodied transport attempt
-→ SUCCEEDED | FAILED | UNCERTAIN
-```
+1. insert `ACADEMY_POSTGRES_INTERNAL_DSN` in Railway `production-api`;
+2. insert `ACADEMY_POSTGRES_SCOPED_DSN` in Railway `production-api`;
+3. redeploy exact branch SHA;
+4. verify `/health`, `/api/meta/release`, both DB roles and persistence;
+5. restart and verify durable state.
 
-Lost/ambiguous action ownership converges to `UNCERTAIN`; automatic blind replay remains forbidden. This is not a distributed exactly-once external-side-effect claim.
+No DSN may be committed or pasted into project documentation/chat.
 
-## 6. Provider and TRACTIAN state
+### Gate G3 — live IAM and tenant isolation
 
-Historical Cloudflare D01/D02 remain immutable negative/experimental evidence.
+Status: `WAITING_G2`.
 
-Current production provider state remains **`NO_SELECTION`**. Provider calls stay disabled in the remote bootstrap.
+After backend boot:
 
-The real TRACTIAN transport is still not composed. The 18-operation typed contract exists, but implementation must follow the supplied TRACTIAN package/contract exactly rather than inventing endpoint behavior.
+- User A / Tenant A and User B / Tenant B;
+- cross-tenant REST reads = 0;
+- cross-tenant SSE leakage = 0;
+- cross-tenant action access/confirmation = 0;
+- browser-supplied org/user/role/permissions ignored or denied;
+- same-organization multi-user behavior tested;
+- invalid/expired/mismatched/impersonated sessions fail closed.
 
-## 7. Immediate critical path
+### Gate G4 — hosted provider
 
-```text
-1. install the two PostgreSQL DSNs in production-api through approved Railway secret UI/channel
-2. boot backend and verify DB connectivity + health + release identity + restart
-3. run live managed-session + two-user/two-tenant REST/SSE negative acceptance
-4. close authenticated frontend E2E and mark IAM capability accordingly
-5. run hosted USD0 provider tournament and compose winner or retain NO_SELECTION
-6. compose real TRACTIAN transport + authorization resolver
-7. validate governed consequential actions remotely
-8. run realtime/reconnect, adversarial-security and load campaigns
-9. enforce main protection + deploy/rollback pipeline
-10. calibrate semantic evaluation / operational value where real evidence is available
-11. freeze final evidence bundle and release
-```
+Status: `NO_SELECTION`.
 
-## 8. Current non-claims
+Run a preregistered USD0 tournament. Promotion requires quantitative evidence for task quality, tools, arguments, evidence, safety, latency, quota and stability.
+
+### Gate G5 — real TRACTIAN path
+
+Status: `WAITING_G4`.
+
+Compose the real typed transport from the supplied contract. Do not guess endpoints or retry consequential writes blindly.
+
+## 5. Current non-claims
 
 Do not claim yet:
 
-- complete remote product production-readiness;
-- IAM READY before live multi-user acceptance;
-- verified-email identity under the current Auth configuration;
-- a selected production model/provider;
+- full remote production readiness;
+- Railway IaC ownership/apply convergence before a live plan/apply;
+- IAM READY;
+- verified-email identity;
+- selected production model/provider;
 - real production TRACTIAN integration;
-- remote capacity/SLO/HA/RTO/RPO;
-- Neon/Railway enterprise always-on availability on a free tier;
+- remote action execution;
+- enterprise availability;
+- measured production SLO/HA/RTO/RPO;
 - human semantic calibration;
-- engineer minutes saved/business value without observations;
-- adaptive runtime superiority;
+- engineer-time savings;
+- adaptive-runtime superiority;
 - distributed exactly-once external side effects.
 
-## 9. State update rule
+## 6. State update rule
 
-Update this file whenever current state changes. Never rewrite frozen/source-pinned historical artifacts to fit the present. Every material production decision must link to current evidence and preserve valid negative results and reversal triggers.
+Every material change must update:
+
+1. implementation/infrastructure;
+2. validation evidence;
+3. this current-state document;
+4. `DELIVERY-PLAN.md`;
+5. `decision-registry.yaml` when a material decision changes;
+6. `docs/progress/` with chronological evidence.
+
+A green CI result is not a substitute for hosted production evidence.
