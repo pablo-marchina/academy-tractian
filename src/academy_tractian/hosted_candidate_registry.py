@@ -3,6 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from .cloudflare_provider_client import (
+    CLOUDFLARE_GLM_MODEL_ID,
+    CLOUDFLARE_NEMOTRON_MODEL_ID,
+    CLOUDFLARE_PROVIDER_ID,
+    CLOUDFLARE_ROUTE_ID,
+)
 from .google_interactions_provider_client import (
     GOOGLE_37_MODEL_ID,
     GOOGLE_38_MODEL_ID,
@@ -24,6 +30,7 @@ class HostedCandidateSpec:
     api_key_environment: str
     model_maturity: Maturity
     api_maturity: Maturity
+    account_id_environment: str | None = None
 
     @property
     def candidate_id(self) -> str:
@@ -60,6 +67,24 @@ HOSTED_CANDIDATE_SPECS = (
         model_id=GROQ_MODEL_ID,
         route_id=GROQ_ROUTE_ID,
         api_key_environment="GROQ_API_KEY",
+        model_maturity="ga",
+        api_maturity="ga",
+    ),
+    HostedCandidateSpec(
+        provider_id=CLOUDFLARE_PROVIDER_ID,
+        model_id=CLOUDFLARE_GLM_MODEL_ID,
+        route_id=CLOUDFLARE_ROUTE_ID,
+        api_key_environment="CLOUDFLARE_API_TOKEN",
+        account_id_environment="CLOUDFLARE_ACCOUNT_ID",
+        model_maturity="ga",
+        api_maturity="ga",
+    ),
+    HostedCandidateSpec(
+        provider_id=CLOUDFLARE_PROVIDER_ID,
+        model_id=CLOUDFLARE_NEMOTRON_MODEL_ID,
+        route_id=CLOUDFLARE_ROUTE_ID,
+        api_key_environment="CLOUDFLARE_API_TOKEN",
+        account_id_environment="CLOUDFLARE_ACCOUNT_ID",
         model_maturity="ga",
         api_maturity="ga",
     ),
