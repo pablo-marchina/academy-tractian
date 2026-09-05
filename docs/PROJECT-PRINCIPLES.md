@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Non-Negotiable Project Principles
 
 **Status:** mandatory repository-wide governance  
-**Checkpoint:** 2026-09-05 production rebaseline  
+**Checkpoint:** 2026-09-05 corrected production rebaseline  
 **Applies to:** research, architecture, models, prompts, evaluators, tools, runtimes, data, security, observability, deployment, UI and every material technical decision.  
 **Formal source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)  
 **Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
@@ -11,7 +11,7 @@ These principles override convenience, novelty, implementation momentum and prio
 
 ## North Star
 
-> **Deliver the strongest defensible TRACTIAN × Inteli product: a remote, multi-user, production-oriented Agent + Evaluation platform whose behavior, architecture, safety, quality and operational value are measurable and observable.**
+> **Deliver the strongest defensible TRACTIAN × Inteli product: a remote, multi-user, production-oriented Agent + Evaluation platform whose behavior, architecture, safety, quality and operational value are measurable and observable, while keeping project cash cost at USD 0.**
 
 The project optimizes the requested outcome, not research volume, framework count or architectural sophistication.
 
@@ -25,9 +25,9 @@ Every material workstream must map to at least one of:
 
 If it maps to none, defer it.
 
-## P0 — Production-first, remote-first, never demo-first
+## P0 — Production-first, remote-first, zero-cost, never demo-first
 
-The final serving path is a real remotely deployed product, not a local demo.
+The final serving path is a real remotely deployed product, not a local demo, and must operate within the project's **USD 0 actual cash-cost hard constraint**.
 
 ### Production eligibility
 
@@ -44,21 +44,28 @@ Local execution remains valid for development, deterministic tests, reproduction
 
 Production configuration should fail closed when a forbidden local dependency is detected.
 
-### Cost policy
+### Zero-cost hard constraint
 
-Cost is a **measured optimization objective and operating constraint**, not a universal architecture veto.
+**USD 0 actual cash cost is a non-negotiable project eligibility gate.** It applies prospectively to the complete project path, including models/APIs, hosting, databases, IAM, telemetry, CI/CD add-ons and other hosted/runtime dependencies selected for the final solution.
 
 ```text
-unbounded spend / silent paid spillover       FORBIDDEN
-unapproved paid execution/deployment          FORBIDDEN
-cost measurement and budgets                  REQUIRED
-free option that meets all hard gates         PREFERRED when Pareto-competitive
-paid option needed for stronger production    ELIGIBLE only after explicit owner authorization
+actual project cash cost > USD 0              INELIGIBLE
+silent paid spillover / automatic billing     FORBIDDEN
+required paid upgrade to keep normal path     INELIGIBLE
+USD 0 candidate                               ELIGIBLE FOR TECHNICAL EVALUATION
+USD 0 + all technical hard gates              ELIGIBLE FOR PROMOTION
+no USD 0 candidate passes all gates           NO_SELECTION / explicit blocker
 ```
 
-No assistant, workflow or deployment automation may create paid usage merely because a paid candidate is technically superior. A budget/spend-bearing production step requires explicit authorization and must expose expected/actual cost.
+Rules:
 
-Historical USD-zero provider experiments remain valid evidence for their original scope; this prospective policy does not rewrite their frozen protocols.
+1. Zero cost is **necessary, not sufficient** for selection.
+2. A free candidate still must pass quality, safety, reliability, production-fit and evaluation hard gates.
+3. A technically superior paid candidate may be researched as an external benchmark/reference, but it is **not selectable** for this project while the USD 0 rule applies.
+4. Free tiers/credits must be evaluated for durability, quotas, sleep/scale-to-zero behavior, account/billing requirements and risk of unexpected charge.
+5. The selected production design must have a fail-closed spending boundary: no automatic paid spillover.
+6. If production-grade quality cannot be achieved inside USD 0, the correct result is an explicit limitation/blocker or `NO_SELECTION`; the project constraint is not silently relaxed.
+7. Historical USD-zero experiments remain immutable evidence for their original scopes.
 
 ### Production evidence
 
@@ -72,7 +79,7 @@ A production claim requires evidence from the deployed path itself. Repository t
 - remote IAM;
 - live provider reliability.
 
-Those claims require remote tests and observable production evidence.
+Those claims require remote tests and observable production evidence, still under the USD 0 constraint.
 
 ## Source hierarchy
 
@@ -89,7 +96,7 @@ Record discrepancies instead of silently reconciling them.
 ## Priority rule
 
 ```text
-P0 — requested capability + production/security blockers
+P0 — hard constraints + requested capability + production/security blockers
         ↓
 P1 — measurable quality, evaluation and operational value
         ↓
@@ -105,14 +112,15 @@ Every material choice follows:
 ```text
 decision question
 → requirement/risk mapping
-→ constraints
+→ hard constraints (including USD 0)
 → systematic primary-source research
-→ simple/null baseline + credible alternatives
+→ eligibility filter
+→ simple/null baseline + credible eligible alternatives
 → preregistered metrics and hard gates
 → controlled quantitative comparison
 → robustness/failure analysis
 → production-fit analysis
-→ Pareto decision
+→ Pareto decision among eligible candidates
 → ADR + reversal trigger
 → regression protection
 ```
@@ -122,26 +130,28 @@ Rules:
 1. Define the decision question and success/failure criteria before selecting a solution.
 2. Search broadly enough to include materially different alternatives and `NO_CHANGE`.
 3. Prefer primary sources and reproducible project evidence.
-4. Compare candidates under the same workload and constraints where possible.
-5. Use repeated runs, paired comparisons, distributions and uncertainty estimates when relevant.
-6. Use ablations when attribution matters.
-7. Test failure/adversarial conditions and operational variability.
-8. Evaluate correctness, safety, reliability, latency, throughput, cost, scalability, portability, maintainability and observability.
-9. Use Pareto/frontier reasoning rather than hiding trade-offs in arbitrary weighted scores.
-10. Record rejected options and reversal triggers.
-11. A changed hard assumption reopens a previously frozen choice prospectively; historical evidence itself stays immutable.
+4. Apply hard constraints before promotion; ineligible paid candidates cannot win a project selection.
+5. Compare eligible candidates under the same workload and constraints where possible.
+6. Use repeated runs, paired comparisons, distributions and uncertainty estimates when relevant.
+7. Use ablations when attribution matters.
+8. Test failure/adversarial conditions and operational variability.
+9. Evaluate correctness, safety, reliability, latency, throughput, resource use, scalability, portability, maintainability and observability.
+10. Use Pareto/frontier reasoning rather than hiding trade-offs in arbitrary weighted scores.
+11. Record rejected/ineligible options and reversal triggers.
+12. A changed user-specified hard constraint may reopen a choice only when the user explicitly changes that constraint; historical evidence itself stays immutable.
 
 ### Decision states
 
+- `INELIGIBLE` — violates a hard project constraint, including USD 0.
 - `UNASSESSED` — not adequately evaluated.
 - `RESEARCHED` — alternatives/evidence mapped.
 - `QUALIFIED` — passes minimum gates; not necessarily best.
-- `PREFERRED` — best-supported currently after comparison.
-- `FROZEN` — best-supported for the stated scope after robustness/production validation.
-- `SUPERSEDED` — prospectively replaced by stronger evidence.
-- `NO_SELECTION` / `NO_CHANGE` — valid result when no candidate deserves promotion.
+- `PREFERRED` — best-supported eligible candidate currently after comparison.
+- `FROZEN` — best-supported eligible solution for the stated scope after robustness/production validation.
+- `SUPERSEDED` — prospectively replaced by stronger eligible evidence.
+- `NO_SELECTION` / `NO_CHANGE` — valid result when no eligible candidate deserves promotion.
 
-Passing one gate proves qualification, not optimality.
+Passing the zero-cost gate or one technical gate proves eligibility/qualification only, not optimality.
 
 ## P2 — Quantitative before qualitative
 
@@ -154,7 +164,7 @@ Prefer:
 - paired deltas;
 - confidence intervals/effect sizes;
 - error/failure rates;
-- resource/cost usage;
+- resource use and explicit USD cash cost (= 0 for selected project paths);
 - repeated-run stability;
 - calibration/agreement metrics;
 - operational-value deltas.
@@ -173,8 +183,8 @@ Potentially adaptive:
 - evidence gathering/tool ordering;
 - stopping;
 - clarification/abstention/escalation thresholds;
-- provider/model routing;
-- retry/backoff within safe semantics;
+- provider/model routing among USD-zero eligible providers;
+- retry/backoff within safe semantics and free-tier quotas;
 - contextual time/resource budget;
 - visualization prioritization.
 
@@ -188,7 +198,8 @@ Always deterministic/hard-gated:
 - custody/idempotency/leases/fencing;
 - privacy/field deny-lists;
 - evaluator partition/gold isolation;
-- hard execution/resource caps.
+- hard execution/resource caps;
+- zero-cost/no-paid-spillover boundary.
 
 Adaptivity must be observable, reproducible enough to debug and promoted only after measured benefit.
 
@@ -221,7 +232,7 @@ Mandatory implications:
 7. Separate operational failure from scientific/task-quality failure.
 8. Evaluate conclusion **and** observable execution process: tool choice, arguments, evidence, stopping, escalation/action behavior and safety.
 9. Exact wording is not the primary correctness signal when operational conclusion can be evaluated directly.
-10. Production telemetry should feed later controlled re-evaluation, never bypass hard safety constraints.
+10. Production telemetry should feed later controlled re-evaluation, never bypass hard safety or zero-cost constraints.
 
 ## Documentation and provenance gate
 
@@ -230,7 +241,8 @@ Before material implementation, the issue/plan must state:
 - requirement/risk mapping;
 - current baseline;
 - credible alternatives;
-- hard constraints;
+- hard constraints, explicitly including USD 0;
+- candidate eligibility status;
 - metrics and hard gates;
 - robustness/failure plan;
 - production-fit evidence required;
@@ -246,19 +258,21 @@ A material workstream is not done unless all applicable conditions hold:
 - [ ] maps to an explicit requirement/risk/value objective;
 - [ ] baseline and decision question are explicit;
 - [ ] credible alternatives were researched;
+- [ ] USD 0 eligibility was verified for any selected external/hosted dependency;
+- [ ] no selected path can silently spill into paid usage;
 - [ ] metrics/hard gates were defined before final selection;
 - [ ] controlled quantitative evaluation exists where applicable;
 - [ ] uncertainty/repeated-run behavior was measured where stochasticity matters;
 - [ ] robustness/failure behavior was tested;
 - [ ] production fitness was measured on the relevant path rather than inferred from a demo;
 - [ ] production mode has no forbidden local serving dependency;
-- [ ] cost is bounded, measured and explicitly authorized if non-zero;
+- [ ] actual project cash cost remains USD 0;
 - [ ] adaptive behavior was compared with a simpler static baseline where relevant;
 - [ ] evaluator/judge validity is established for gating metrics;
-- [ ] trade-offs/Pareto position are understood;
+- [ ] trade-offs/Pareto position among eligible candidates are understood;
 - [ ] decision/reversal triggers are documented;
 - [ ] regression protection exists;
 - [ ] claims remain bounded by evidence;
 - [ ] applicable TAPI/acceptance rows remain covered.
 
-If an applicable item is missing, the correct state is still research/experimental/incomplete — not production-ready.
+If an applicable item is missing, the correct state is still research/experimental/incomplete — not production-ready. If no USD-zero candidate clears all required gates, the correct outcome is `NO_SELECTION` or an explicit blocker, never a paid fallback.
