@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from hashlib import sha256
 import os
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -139,7 +138,6 @@ class _PgFixture:
                     sql.Literal(self.password),
                 )
             )
-        # CI DSN is intentionally simple and local. Replace only credentials, preserving host/db.
         from urllib.parse import urlsplit, urlunsplit
 
         parsed = urlsplit(admin_dsn)
@@ -181,12 +179,10 @@ def _wait(app, run_id: str) -> None:
     future.result(timeout=15)
 
 
-def test_postgres_product_multiuser_rls_and_restart(tmp_path: Path, postgres_fixture) -> None:
+def test_postgres_product_multiuser_rls_and_restart(postgres_fixture) -> None:
     calls: list[BoundRequest] = []
-    db_path = tmp_path / "observability.duckdb"
 
     first = create_postgres_action_capable_product_app(
-        db_path=db_path,
         internal_dsn=postgres_fixture.admin_dsn,
         scoped_dsn=postgres_fixture.scoped_dsn,
         schema=postgres_fixture.schema,
@@ -217,6 +213,7 @@ def test_postgres_product_multiuser_rls_and_restart(tmp_path: Path, postgres_fix
         _wait(first, run_b)
 
         assert first.state.operational_backend == "postgresql"
+        assert first.state.local_test_storage_enabled is False
         assert first.state.postgres_operational_database.ready() is True
         assert client.get(f"/api/runs/{run_a}", headers=_headers("user-a", "org-a")).status_code == 200
         assert client.get(f"/api/runs/{run_b}", headers=_headers("user-b", "org-b")).status_code == 200
@@ -233,7 +230,6 @@ def test_postgres_product_multiuser_rls_and_restart(tmp_path: Path, postgres_fix
         assert calls == []
 
     second = create_postgres_action_capable_product_app(
-        db_path=db_path,
         internal_dsn=postgres_fixture.admin_dsn,
         scoped_dsn=postgres_fixture.scoped_dsn,
         schema=postgres_fixture.schema,
@@ -246,6 +242,7 @@ def test_postgres_product_multiuser_rls_and_restart(tmp_path: Path, postgres_fix
         heartbeat_interval_ms=250,
     )
     with TestClient(second) as client:
+        assert second.state.local_test_storage_enabled is False
         assert client.get(f"/api/runs/{run_a}", headers=_headers("user-a", "org-a")).status_code == 200
         execution = client.get(
             f"/api/runs/{run_a}/execution", headers=_headers("user-a", "org-a")
@@ -255,10 +252,9 @@ def test_postgres_product_multiuser_rls_and_restart(tmp_path: Path, postgres_fix
         assert client.get(f"/api/runs/{run_a}", headers=_headers("user-b", "org-b")).status_code == 404
 
 
-def test_postgres_action_custody_confirmation_and_tenant_scope(tmp_path: Path, postgres_fixture) -> None:
+def test_postgres_action_custody_confirmation_and_tenant_scope(postgres_fixture) -> None:
     calls: list[BoundRequest] = []
     app = create_postgres_action_capable_product_app(
-        db_path=tmp_path / "action-observability.duckdb",
         internal_dsn=postgres_fixture.admin_dsn,
         scoped_dsn=postgres_fixture.scoped_dsn,
         schema=postgres_fixture.schema,
@@ -271,6 +267,7 @@ def test_postgres_action_custody_confirmation_and_tenant_scope(tmp_path: Path, p
         heartbeat_interval_ms=250,
     )
     with TestClient(app) as client:
+        assert app.state.local_test_storage_enabled is False
         accepted = client.post(
             "/api/runs",
             headers=_headers("user-a", "org-a"),
@@ -313,7 +310,6 @@ def test_postgres_action_custody_confirmation_and_tenant_scope(tmp_path: Path, p
         assert duplicate.status_code == 409
         assert len(calls) == 1
 
-        # Browser-safe surfaces never serialize private custody material.
         serialized = client.get(
             f"/api/runs/{origin_run}/actions", headers=_headers("user-a", "org-a")
         ).text.lower()
