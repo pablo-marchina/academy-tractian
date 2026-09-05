@@ -83,9 +83,9 @@ decisions:
       - backend NeonAuthRuntimeContextProvider revalidates managed session server-side with cookie-cache bypass
       - backend ignores browser organization/role headers and derives a personal tenant from authenticated user id when no managed active organization exists
       - impersonated, mismatched, missing and unavailable sessions fail closed in regression tests
-      - production-runtime regression passed for the managed-session backend composition
+      - production-runtime regression passed for the managed-session backend composition before the release-identity change
       - provider-free full Chromium acceptance passed after production-only auth gating
-      - final-ci-required checkpoint completed required-gate SUCCESS across clean clone, browser, horizontal runtime and action lease
+      - prior final-ci-required checkpoint completed required-gate SUCCESS across clean clone, browser, horizontal runtime and action lease
       - Neon Auth Better Auth is now provisioned on Neon production main
       - production-web origin is trusted on production-main Auth
       - production-web redeployed SUCCESS against production-main Auth host
@@ -97,14 +97,21 @@ decisions:
   - id: DP-004
     question: Which hosted model/provider should supply production controller decisions?
     requirement_or_risk: Real hosted decision source with task quality, reliability, safety and USD0 eligibility.
-    baseline: NO_SELECTION after historical D01/D02.
+    baseline: NO_SELECTION after historical D01/D02; historical results are not eligible to promote the fresh v3 decision.
     alternatives: [current_USD0_hosted_candidates, NO_SELECTION]
     hard_constraints: [USD0, remote, structured_decisions, no_paid_fallback]
     metrics: [operational_accuracy, required_tool_recall, argument_accuracy, evidence_correctness, escalation_accuracy, p95_latency_ms, failure_rate, stability]
     hard_gates: [cash_cost_usd_equals_0, unsafe_unsupported_action_equals_0, gold_leakage_equals_0, known_schema_validity_equals_1]
-    evidence: []
+    evidence:
+      - provider tournament v3 preregistered over 17 fresh canonical operational scenarios
+      - five repetitions are required per scenario per candidate, yielding 85 runs per candidate and 170 future calls across the two current candidates
+      - historical D01/D02 results are excluded from the v3 decision denominator
+      - campaign is partitioned into five UTC daily packets of 34 calls under the USD0 free-neuron envelope
+      - conservative packet-start quota gate prevents paid spillover and quota-blind execution
+      - validator and provider-free regression tests enforce scenario count, repetitions, provenance, route/model integrity, schema, safety, gold isolation, cash cost and quota policy
+      - v3 live provider execution has not occurred and no candidate is promoted
     decision_state: NO_SELECTION
-    reversal_trigger: New preregistered evidence shows a currently eligible candidate passes every promotion gate.
+    reversal_trigger: New preregistered v3 live evidence shows a currently eligible candidate passes every promotion gate.
 
   - id: DP-005
     question: How should the production runtime communicate with the TRACTIAN API?
@@ -209,3 +216,25 @@ decisions:
       - live railway config plan/apply is still required before claiming IaC ownership convergence
     decision_state: PREFERRED
     reversal_trigger: Railway IaC cannot produce a non-destructive converged plan for the two production services, current IaC defects block safe use, or another lower-complexity supported mechanism proves materially safer and more reproducible.
+
+  - id: DP-012
+    question: How should production prove that the public release SHA is the commit actually baked into the serving artifact?
+    requirement_or_risk: A format-valid mutable runtime variable could claim a Git SHA different from the image that is actually serving.
+    baseline: ACADEMY_RELEASE_GIT_SHA was validated as a lowercase 40-character SHA while Docker release metadata accepted an independent build argument; no immutable cross-check bound the public endpoint to the built artifact.
+    alternatives: [runtime_environment_only, OCI_label_only, baked_identity_plus_runtime_crosscheck]
+    hard_constraints: [exact_commit_identity, fail_closed_before_connections, no_runtime_override_of_baked_identity, Railway_compatible, provider_free_testable]
+    metrics: [independent_identity_signal_count, mismatch_acceptance_count, missing_identity_acceptance_count, pre_dependency_rejection]
+    hard_gates: [mismatch_acceptance_equals_0, missing_baked_identity_acceptance_equals_0, release_endpoint_without_verified_artifact_equals_0]
+    evidence:
+      - production Dockerfile now requires Railway Git-backed RAILWAY_GIT_COMMIT_SHA and rejects absent or malformed build identity
+      - exact build SHA is baked into /app/.academy-release-identity.json and org.opencontainers.image.revision
+      - baked identity uses an extra-forbidden frozen Pydantic contract and is read before remote product builders
+      - configured ACADEMY_RELEASE_GIT_SHA must equal the baked identity before PostgreSQL/IAM composition
+      - Railway runtime Git SHA, when exposed, is independently checked against the baked identity
+      - /api/meta/release v3 exposes safe artifact verification fields rather than relying on a single mutable SHA
+      - negative unit tests cover missing, corrupt, malformed, extra-field and mismatch cases before delegate invocation
+      - production-runtime Docker smoke proves positive identity and negative malformed-build/runtime-mismatch behavior
+      - production-runtime is now consumed by final-ci-required so artifact identity is a required source-level release gate
+      - current complete-head CI and hosted Railway v3 observation remain pending
+    decision_state: PREFERRED
+    reversal_trigger: Railway no longer supplies a trustworthy Git-backed build identity, the image build path changes so the baked file is not authoritative, or a stronger signed provenance/attestation mechanism becomes necessary under the same USD0 and complexity constraints.
