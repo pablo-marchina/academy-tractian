@@ -1,529 +1,380 @@
-# Academy × TRACTIAN — Consolidated Action Plan
+# Academy × TRACTIAN — Final Master Implementation Plan
 
-**Status:** ACTIVE / canonical execution plan  
-**Checkpoint:** 2026-09-05 corrected production rebaseline  
-**Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
+**Status:** ACTIVE / canonical execution authority  
+**Checkpoint:** 2026-09-05 BRT  
+**Delivery target:** 2026-09-08  
+**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
 **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)  
 **Principles:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)  
-**Acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)
+**Acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
+**Decision registry:** [`decision-registry.yaml`](decision-registry.yaml)
 
-This plan supersedes the September 2 sequencing around already-completed PRs/experiments. Historical plans remain in Git/evidence history but are not current execution authority.
+This is the authoritative implementation plan for the final production promotion. It replaces prior sequencing documents prospectively. Frozen/historical evidence remains unchanged.
 
-## 1. Final objective
+## 1. North Star
 
-Deliver a **remote, multi-user, production-oriented, USD-zero TRACTIAN Industrial Agent + Evaluation platform** with:
+Deliver the strongest defensible TRACTIAN × Inteli product: a remotely hosted, multi-user, tenant-safe Industrial Agent + Evaluation platform with live frontend observability, quantitative/eval-driven engineering and zero developer-machine dependency in the production serving path.
 
-- actual project cash cost fixed at USD 0;
-- no silent paid spillover or paid fallback;
-- no local dependency in the production serving path;
-- standards-based user identity before production IAM is claimed;
-- tenant isolation and safe consequential actions;
-- durable remote PostgreSQL-compatible state selected inside the USD0 constraint;
-- quantitative/eval-driven model and architecture decisions;
-- adaptive behavior only where it beats a simpler baseline;
-- live frontend visibility into architecture, runs, evidence, outputs, evaluation and production health;
-- remote capacity/recovery evidence;
-- human-calibrated semantic evaluation where deterministic truth is insufficient;
-- measured operational value before business claims;
-- systematic research/ADR evidence for every material technology choice.
-
-## 2. Priority and eligibility rule
-
-Every external/hosted candidate first passes the non-negotiable eligibility filter:
+Project-wide hard constraints apply simultaneously:
 
 ```text
-USD 0 actual cash cost
-AND remote / no local serving dependency
-AND required security/privacy constraints
-        ↓
-technically eligible candidate
-        ↓
-quality / safety / reliability / production hard gates
-        ↓
-quantitative Pareto comparison
-        ↓
-PROMOTE / KEEP_BASELINE / NO_SELECTION
+actual project cash cost = USD 0
+AND no automatic paid spillover
+AND remote production serving
+AND no local serving dependency
+AND multi-user / tenant-safe
+AND live frontend
+AND deterministic safety boundaries
+AND quantitative evidence where validly measurable
+AND EDD for every material change
+AND adaptive behavior only after beating a simpler baseline
+AND systematic research before material technical decisions
+AND claims never exceed evidence
 ```
 
-A paid candidate can be used only as research/reference evidence; it cannot be selected while the project USD0 rule applies.
+## 2. Execution rule
 
-Priority after eligibility:
+Every material work item follows:
 
 ```text
-P0 — hard constraints + production / security / claim blockers
-        ↓
-P1 — measurable quality / evaluation / operational value
-        ↓
-P2 — optional architecture challengers after measured gap
+requirement / risk / measured gap
+→ hard constraints
+→ baseline
+→ researched alternatives
+→ metrics + hard gates
+→ implementation candidate
+→ controlled evaluation
+→ failure/adversarial evaluation
+→ PROMOTE / REJECT / NO_CHANGE / NO_SELECTION
+→ regression protection
+→ documentation + evidence synchronization
 ```
 
-When tasks compete:
+No framework, provider, model, database, IAM, hosting, telemetry or architecture component is promoted merely because it is modern, popular or already implemented.
 
-1. hard-constraint violation first;
-2. production blocker next;
-3. safety/security blocker next;
-4. missing evidence for a claim next;
-5. measurable value/quality experiment next;
-6. sophistication-only change last.
+## 3. Mandatory change synchronization
 
-## 3. Phase 0 — repository/governance cleanup
+Every material implementation change is incomplete until all applicable records are synchronized in the same development flow:
 
-**Priority:** P0  
-**State:** in progress on cleanup PR
+1. **Code / infrastructure** — actual implementation or platform state.
+2. **Validation evidence** — tests, remote checks, experiment or explicit blocker.
+3. **Documentation** — current truth, plan progress and architecture/decision records when relevant.
 
-### Deliver
+Document ownership:
 
-- one canonical document per question;
-- accurate root navigation;
-- current architecture/status/plan/principles synchronized;
-- USD0 preserved as a hard project constraint everywhere;
-- historical research workflows removed from normal product-PR triggers;
-- evidence lifecycle documented;
-- code domains mapped;
-- dead-code removal only after reachability proof;
-- no cosmetic movement of frozen/source-pinned evidence.
+- current state → `ACTIVE-PROJECT-STATUS.md`;
+- execution order/progress → this file;
+- architecture → `ARCHITECTURE.md` + `architecture_manifest.py` when product-visible;
+- material choices → `decision-registry.yaml` + ADR/evidence where warranted;
+- final acceptance → `DELIVERY-ACCEPTANCE.md`;
+- TAPI mapping → `TAPI-DELIVERY-COVERAGE-2026-09-02.md`;
+- operational commands/recovery → `FINAL-HANDOFF-RUNBOOK.md`.
+
+Frozen/source-pinned documents are never rewritten to match later state.
+
+## 4. Progress ledger
+
+States: `DONE`, `IN_PROGRESS`, `BLOCKED`, `PLANNED`, `NOT_READY`, `NO_SELECTION`.
+
+| # | Workstream | State | Evidence / next gate |
+|---:|---|---|---|
+| 01 | Rebaseline active project truth | DONE | `ACTIVE-PROJECT-STATUS.md` updated on final branch |
+| 02 | Material decision registry | DONE | `decision-registry.yaml` created |
+| 03 | Architecture manifest truthfulness | IN_PROGRESS | remove legacy DuckDB promoted representation; add actual PostgreSQL/identity/action boundaries |
+| 04 | Final remote hosting topology | IN_PROGRESS | clean Railway `production-api` service created from `release/production-final`; Dockerfile path configured |
+| 05 | Remote PostgreSQL role/schema promotion | IN_PROGRESS | Neon project exists; safe `NOBYPASSRLS` role identified; migration and ownership/grants validation pending |
+| 06 | Remote backend boot / health / release identity | IN_PROGRESS | public Railway domain created; non-secret production configuration installed; secret injection + DB migration pending |
+| 07 | Standards-based browser IAM | PLANNED | BFF/OIDC decision and implementation required |
+| 08 | Multi-user / tenant negative acceptance | PLANNED | requires IAM + migrated RLS schema |
+| 09 | Hosted provider/model tournament | NO_SELECTION | new USD0 eligible experiment required |
+| 10 | Real provider DecisionSource composition | BLOCKED | blocked on provider promotion |
+| 11 | Real TRACTIAN production transport | PLANNED | direct typed HTTP adapter baseline |
+| 12 | Real action authorization resolver | PLANNED | requires authenticated identity/resource mapping |
+| 13 | Consequential action remote E2E | PLANNED | preserve custody/idempotency/non-transferable lease semantics |
+| 14 | Production frontend deployment | PLANNED | React/Vite stack retained; remote host/topology to be selected |
+| 15 | Authenticated REST + SSE | PLANNED | same-origin/BFF preferred baseline |
+| 16 | Production Control Room completeness | PLANNED | live architecture/evidence/lineage/eval/health |
+| 17 | Infrastructure telemetry | PLANNED | RunTrace remains domain truth; OTel-compatible challenger |
+| 18 | Realtime reconnect/recovery campaign | PLANNED | must include DB sleep/wake and cursor catch-up |
+| 19 | Adversarial security campaign | PLANNED | tenant/prompt/tool/action/evaluator failure families |
+| 20 | Remote load/capacity campaign | PLANNED | derive measured free-tier envelope and SLO claims |
+| 21 | GitHub main protection | PLANNED | require PR + `final-ci-required / required-gate` |
+| 22 | CI/CD + rollback + provenance | PLANNED | staging/prod smoke, rollback, SBOM/attestation when eligible |
+| 23 | Human semantic calibration | NOT_READY | real blinded labels required before semantic judge gates |
+| 24 | Operational-value experiment | NOT_READY | real MANUAL vs AGENT-ASSISTED observations required |
+| 25 | Adaptive runtime challengers | PLANNED / P1 | only after P0 production closure |
+| 26 | Final remote E2E / evidence freeze / release | PLANNED | all applicable P0 gates must be evidence-backed |
+
+## 5. Exact critical-path order
+
+Do not displace this sequence with optional complexity:
+
+```text
+01 active truth
+02 decision registry
+03 architecture truth
+04 remote hosting
+05 PostgreSQL roles + migration
+06 backend live shell + health/version
+07 IAM/BFF/OIDC
+08 multi-user/RLS acceptance
+09 provider tournament
+10 real DecisionSource
+11 TRACTIAN transport
+12 authorization resolver
+13 action E2E
+14 frontend hosting
+15 authenticated REST/SSE
+16 Control Room completeness
+17 telemetry
+18 realtime recovery
+19 adversarial security
+20 remote load/capacity
+21 GitHub protection
+22 CI/CD + rollback/provenance
+23 semantic calibration where feasible
+24 operational value where feasible
+25 adaptive challengers only after P0
+26 final E2E + evidence bundle + release
+```
+
+## 6. P0-A — Architecture and governance truth
+
+### Required
+
+- active docs reflect current branch/release/infrastructure state;
+- `architecture_manifest.py` represents PostgreSQL, identity, runtime handoff and action boundaries accurately;
+- no active document describes the historical Railway pilot as current production;
+- no active document describes DuckDB as production serving truth;
+- material decisions are registered before promotion.
 
 ### Gate
 
-- `final-ci-required` green;
-- product PR triggers contain no historical one-shot research suites;
-- runtime behavior unchanged;
-- no frozen evidence path broken;
-- no canonical document treats paid infrastructure/provider usage as selectable.
+Architecture UI, code and active docs agree on promoted components and known blockers.
 
-No feature development starts from a dirty/contradictory baseline.
+## 7. P0-B — Remote PostgreSQL production substrate
 
-## 4. Phase 1 — USD0 remote production deployment
+### Current evidence
 
-**Priority:** P0 / blocker
+A Neon `academy-tractian-hosted-pilot` project and `academy_tractian` database already exist. Safe login roles with `BYPASSRLS=false` exist; the previously observed `academy_live_scoped` role must not be used as tenant-scoped production evidence because it can bypass RLS.
 
-### Objective
+### Required
 
-Turn the production-path repository into an actually remote service at **USD 0 actual cash cost**. No developer machine may be required for serving.
-
-### Work
-
-- systematic hosting/database research restricted at selection time to USD0-eligible remote candidates;
-- record paid candidates only as external benchmarks when useful;
-- evaluate free-tier durability, quotas, sleep/scale-to-zero, billing requirements and paid-spillover risk;
-- immutable backend build/container artifact or equivalent;
-- remote frontend build/hosting;
-- remote durable PostgreSQL-compatible serving state;
-- secret/environment management;
-- TLS/HTTPS;
-- health/readiness endpoints;
-- graceful shutdown;
-- controlled DB migrations;
-- remote API/SSE integration;
-- production startup validator that rejects forbidden local dependencies;
-- fail-closed cost guard so normal operation cannot silently become paid;
-- immutable release metadata: commit SHA, build/image digest or equivalent, schema version.
-
-### Production-mode hard gates
-
-Reject/invalidate a production candidate when configuration or operation requires:
-
-- actual project cash cost > USD 0;
-- automatic paid spillover;
-- localhost/loopback;
-- local model server;
-- SQLite/DuckDB/filesystem serving truth;
-- mock/test decision source;
-- development identity bypass.
-
-### Acceptance
-
-From a fresh unrelated device/network:
-
-1. open the product URL;
-2. authenticate;
-3. create a run;
-4. observe it live;
-5. reconnect;
-6. recover persisted state;
-7. do all of the above without any developer laptop/process;
-8. demonstrate that the selected serving path remains USD0 and cannot silently spill into paid usage.
-
-If no USD0 remote candidate satisfies the required production gates, the phase ends with an explicit blocker/`NO_SELECTION`, not a paid fallback.
-
-## 5. Phase 2 — USD0 real IAM and multi-user product
-
-**Priority:** P0
-
-### Objective
-
-Replace “signed internal runtime identity is enough” with a standards-based browser/user identity using a USD0-eligible path.
-
-### Work
-
-- systematic IAM comparison with USD0 as an eligibility gate;
-- OIDC/OAuth Authorization Code + PKCE or equivalent standards-based flow;
-- login/logout/session lifecycle;
-- token expiry/refresh semantics;
-- server-owned mapping to `user_id`, `identity_id`, `organization_id`, role and permissions;
-- preserve PostgreSQL RLS as independent enforcement;
-- cross-user/cross-tenant browser/API/SQL acceptance.
+- choose internal owner/admin DSN and distinct scoped `NOBYPASSRLS` DSN;
+- apply `academy_operational` production schema using the explicit migration path;
+- verify required tables;
+- verify scoped role is not superuser, not `BYPASSRLS`, and not table owner;
+- prove cross-tenant denial after migration;
+- test reconnect/catch-up semantics under free-tier suspend/wake behavior.
 
 ### Hard gates
 
-- actual cash cost = USD 0;
-- frontend never owns tenant authorization;
-- organization B cannot observe organization A;
-- privilege escalation/token manipulation fails closed;
-- expired/invalid identities fail closed.
-
-## 6. Phase 3 — repository protection and USD0 CI/CD
-
-**Priority:** P0
-
-### Work
-
-- protect `main` with ruleset/branch protection;
-- require PRs;
-- require stable `final-ci-required / required-gate`;
-- block force/direct pushes as appropriate;
-- staging deployment after merge using USD0-eligible infrastructure;
-- remote smoke/E2E before production promotion;
-- production smoke;
-- rollback target and tested rollback procedure;
-- release/build provenance;
-- ensure CI/CD additions do not require paid add-ons.
-
-### Gate
-
-Intentionally bad candidate must be stopped before production or safely rolled back in a controlled test, with actual project cash cost remaining USD0.
-
-## 7. Phase 4 — production observability
-
-**Priority:** P0
-
-### Preserve
-
-The domain-specific PostgreSQL observability/control-room model remains product truth.
-
-### Add/compare
-
-Use a systematic decision for external/platform telemetry. OpenTelemetry is a technical baseline candidate, but any selected hosted telemetry backend must itself be USD0-eligible; a paid backend cannot be selected.
-
-### Correlation contract
-
-Every production request/run should be correlatable through:
-
-- request ID;
-- run ID;
-- trace ID where external telemetry is used;
-- user/organization scope in safe server-side telemetry;
-- build/deploy revision;
-- provider/model/tool identifiers where safe.
-
-### Frontend Production Health
-
-Expose live safe state such as:
-
-- environment/build/commit;
-- API/database/provider health;
-- request/error/latency distributions;
-- SSE lag/reconnect/gaps;
-- action uncertainty/lease state;
-- last backup/restore-drill status once available;
-- quota/free-tier/cost-boundary health where relevant without exposing secrets.
-
-## 8. Phase 5 — remote load, capacity and SLO
-
-**Priority:** P0
-
-### Method
-
-Run on the selected USD0 deployed path with increasing concurrency until saturation/inflexion, respecting free-tier limits and without enabling paid spillover.
-
 ```text
-1 → 5 → 10 → 25 → 50 → 100 → ... only while the eligible platform safely supports it
+scoped_rolsuper = false
+scoped_rolbypassrls = false
+scoped_table_owner = false
+required_tables_ready = true
+cross_tenant_access = 0
 ```
 
-Stop based on measured saturation, quota boundaries or hard constraints, not an arbitrary target.
+## 8. P0-C — Remote backend promotion
 
-### Measure
+### Current evidence
 
-- throughput;
-- p50/p95/p99;
-- error/timeout rate;
-- CPU/memory or provider-exposed resource proxies;
-- DB pool/connections;
-- provider latency/errors;
-- event persistence/SSE delivery lag;
-- reconnect/duplicate/gap rate;
-- action throughput where safe;
-- quota/resource consumption;
-- actual cash cost, which must remain USD 0.
+A clean Railway service named `production-api` has been created from `release/production-final`, separate from the stale historical `hosted-pilot`. The service is configured to use the repository Dockerfile and restart on failure. A public Railway domain exists. Non-secret fail-closed production settings have been installed.
 
-Then run a soak campaign within the same hard constraints.
+### Required next
 
-### Gate
+- provide secret production variables through an approved secret channel;
+- run explicit remote migration before serving boot;
+- redeploy current final-branch SHA;
+- expose/verify release metadata and health/readiness;
+- prove restart/persistence;
+- keep provider calls disabled until DP-004 promotes a candidate.
 
-Production capacity/SLO claims are forbidden until derived from remote evidence. If free-tier ceilings are the limiting factor, report the measured ceiling honestly instead of paying to exceed it.
+### Secret-handling rule
 
-## 9. Phase 6 — HA, backup, recovery, RTO/RPO
+DSNs/signing secrets are never committed or copied into documentation. If a platform connector refuses transmitting a secret, use the platform's secret UI/approved secret mechanism rather than weakening the application's fail-closed config.
 
-**Priority:** P0
+## 9. P0-D — Browser IAM and multi-user product
 
-### Failure campaign
-
-Test deployed behavior under capabilities available in the selected USD0 topology:
-
-- backend instance restart/failure;
-- DB connection loss/failover where supported;
-- provider timeout/outage;
-- SSE disconnect/reconnect;
-- deployment during execution;
-- read-only runtime lease expiry/takeover;
-- action lease ownership loss;
-- rollback.
-
-### Data protection campaign
-
-- use the strongest USD0-eligible backup/PITR/export mechanism available;
-- controlled restore drill;
-- integrity verification.
-
-### Derive from evidence
-
-- measured recovery time → basis for RTO;
-- observed possible data-loss window → basis for RPO.
-
-Do not invent RTO/RPO from provider marketing. If a desired HA/backup feature exists only on a paid plan, it is ineligible and must be reported as a limitation rather than purchased.
-
-## 10. Phase 7 — human semantic calibration
-
-**Priority:** P1
-
-### Dataset
-
-Stratified cases across:
-
-- complete/partial/conflicting/unavailable evidence;
-- clarification;
-- escalation;
-- abstention;
-- action proposal.
-
-### Process
-
-- independent blinded human labels;
-- adjudication where required;
-- compare automated semantic evaluator/judge to humans.
-
-### Metrics
-
-- agreement;
-- Cohen's kappa or appropriate multi-rater statistic;
-- confusion matrix;
-- precision/recall/F1 by verdict/slice;
-- false-safe and missed-escalation rates.
-
-### Gate
-
-A semantic judge cannot gate promotions until its reliability is measured and accepted.
-
-## 11. Phase 8 — operational-value study
-
-**Priority:** P1 / high partner value
-
-### Comparison
-
-Same cases, paired conditions:
+Target baseline:
 
 ```text
-MANUAL investigation
-vs
-AGENT-ASSISTED investigation
+Browser
+→ OIDC Authorization Code + PKCE
+→ BFF / FastAPI
+→ Secure HttpOnly session
+→ server-owned user/org/permissions
+→ PostgreSQL tenant boundary
 ```
 
-### Primary metric
+The internal HMAC runtime bearer may remain behind this boundary but must not be marketed as end-user IAM.
 
-`time to correct operational decision`
+Acceptance includes login/logout/session lifecycle, authenticated SSE, manipulated/expired session failure, cross-tenant REST/SSE/SQL denial and zero browser-owned privilege authority.
 
-### Secondary metrics
+## 10. P0-E — Provider/model selection
 
-- correctness;
-- unsafe-action rate;
-- escalation precision/burden;
-- evidence coverage;
-- tool count;
-- retries;
-- human interventions.
+Current state is `NO_SELECTION`.
 
-### Analysis
+Run a new preregistered tournament among currently hosted USD0-eligible candidates. Paid candidates may appear only as non-selectable references.
 
-Report distributions, median paired delta, bootstrap confidence interval and effect size where meaningful.
+Primary dimensions:
 
-No engineer-time/business-value claim before real human data exists.
-
-## 12. Phase 9 — hosted USD0 provider/model tournament
-
-**Priority:** P1
-
-Production candidates must be **remotely hosted and USD0-eligible**. Local model serving and paid APIs are not selectable production candidates.
-
-### Eligibility filter
-
-Before task-quality comparison, candidate must prove:
-
-- expected and observed project cash cost = USD 0;
-- no automatic paid spillover;
-- usable remote API/runtime path;
-- quotas sufficient for the preregistered experiment;
-- required privacy/security conditions.
-
-Candidates failing this filter are `INELIGIBLE`, not low-scoring alternatives.
-
-### Controlled workload
-
-Use the same locked workload/evaluator boundaries across eligible candidates.
-
-### Compare
-
-- operational correctness;
-- evidence/tool/argument quality;
-- clarification/escalation/abstention;
-- safety hard gates;
-- p50/p95/p99;
-- token/resource use;
-- quota headroom;
-- timeout/error/malformed-output rate;
+- operational conclusion accuracy;
+- required-tool recall / unnecessary-tool count;
+- semantic argument accuracy;
+- evidence correctness;
+- clarification/escalation/abstention correctness;
+- consequential-action safety;
 - repeated-run stability;
-- actual cash cost (= USD0 hard gate).
+- p50/p95/p99 latency;
+- failure/quota behavior;
+- actual cash cost.
 
-### Decision
+No candidate may be promoted if a hard integrity/safety gate fails.
 
-Among eligible candidates use Pareto reasoning:
+## 11. P0-F — Real TRACTIAN path and governed actions
 
-`quality × safety × latency × reliability × resource/quota efficiency`
+Compose the real typed TRACTIAN HTTP transport only after server-managed credentials, timeout/error normalization and retry semantics are explicit.
 
-Valid results include `PROMOTE`, `KEEP_BASELINE` and `NO_SELECTION`.
+Read retries may be safe when bounded. Consequential writes must retain the existing contract:
 
-**Cloudflare status:** D01/D02 proved cost eligibility (USD0) but the tested candidates failed M1/M4/M7, therefore `NO_SELECTION`. A new Cloudflare model/configuration may compete only under a new preregistered experiment; consumed D01/D02 packets are not replayed.
+```text
+proposal
+→ deterministic validation
+→ private custody
+→ confirmation
+→ current authorization
+→ idempotency
+→ non-transferable execution lease
+→ one transport attempt
+→ SUCCEEDED | FAILED | UNCERTAIN
+```
 
-Provider fallback is a separate challenger. Every fallback candidate must independently satisfy USD0 and the technical gates; there is no paid emergency fallback.
+Blind replacement/replay remains forbidden.
 
-## 13. Phase 10 — adaptive agent challengers
+## 12. P0-G — Frontend production and live visibility
 
-**Priority:** P1
+Retain React 19 + TypeScript + Vite + TanStack Query + ECharts + React Flow + Vitest + Playwright.
 
-Potential isolated experiments:
-
-- adaptive evidence/stopping;
-- tool ordering;
-- clarification threshold;
-- escalation threshold;
-- provider/model routing among eligible USD0 candidates;
-- contextual time/resource/quota budget.
-
-Keep auth/RLS/permissions/action confirmation/custody/idempotency/leases/privacy and zero-cost boundaries deterministic.
-
-Every adaptive challenger must beat the static/simple baseline on locked quantitative evaluation without weakening safety or USD0 eligibility.
-
-## 14. Phase 11 — frontend as live production control room
-
-**Priority:** P1
-
-The frontend should expose real server-owned data for:
+Production areas should expose safe real state for:
 
 - Mission Control;
 - Live Run Cockpit;
-- Run Explorer;
-- Timeline/waterfall;
-- Trace/Architecture graph;
+- Timeline/Waterfall;
+- Trace Graph;
+- Architecture Explorer;
 - Evidence Explorer;
 - Output Lineage;
 - Action Control;
 - Eval Lab;
 - Provider Lab;
+- Dynamic Data Explorer;
 - Production Health;
-- Operational Value.
+- Operational Value when real evidence exists.
 
-Architecture visualization should identify active components, path, latency, provider/tool usage and safe health state live.
+Never expose secrets, private evaluator/gold material or hidden chain-of-thought.
 
-Show structured provenance and reason codes; never expose hidden chain-of-thought.
+## 13. P0-H — Production proof campaigns
 
-## 15. Phase 12 — security hardening
+### Realtime/recovery
 
-**Priority:** P1
+Prove durable rows/cursors recover all committed events after SSE disconnect, backend restart, listener loss and DB suspend/wake. `LISTEN/NOTIFY` remains wake-up only.
 
-Test at minimum:
+### Adversarial security
 
-- tenant spoofing/cross-tenant access;
-- token replay/expiry/manipulation;
-- privilege escalation;
-- prompt/tool-argument injection;
-- confirmation bypass;
-- duplicate/replayed actions;
-- DB role/RLS bypass;
-- unauthorized SSE subscriptions;
-- secret/dependency/container vulnerabilities;
-- cost-boundary bypass / accidental paid-spillover paths.
+At minimum cover tenant spoofing/cross-tenant access, token/session manipulation, direct/indirect prompt injection, tool-output injection, permission bypass, action confirmation bypass/replay, evaluator/gold extraction and provider/tool/DB failures.
 
-Supply-chain checks should use USD0-eligible tooling and include dependency, secret, static and deploy-artifact scanning appropriate to the selected stack.
+Hard safety expectations include zero tenant escape, zero unauthorized consequential action, zero confirmation bypass, zero gold leakage and zero credential leakage.
 
-## 16. Phase 13 — optional architecture challengers
+### Remote capacity
 
-**Priority:** P2
+Run increasing concurrency on the actual selected free deployment until measured saturation or free-tier quota. Report p50/p95/p99, throughput, errors/timeouts, DB/provider/tool latency, SSE behavior, resource/quota use and actual cash cost. State the measured envelope rather than claiming unproved scale.
 
-Only after P0/P1 gaps are measured:
+## 14. P0-I — Repository protection and release
 
-- LangGraph/durable workflow framework;
-- multi-agent topology;
-- RAG/document retrieval;
-- persistent memory;
-- MCP;
-- Redis/Kafka/event bus;
-- microservices/Kubernetes.
+Before final production completion:
 
-Each must solve a measured problem, satisfy USD0 eligibility for the selected project path and beat the current simpler baseline.
+- protect `main`;
+- require PR;
+- require `final-ci-required / required-gate`;
+- restrict direct/force pushes;
+- execute staging/production smoke checks;
+- test rollback;
+- preserve build/release provenance;
+- produce SBOM/artifact attestation if available under the project constraints;
+- freeze a final evidence index linking URLs, release SHA, architecture, decisions, experiments, security/load/recovery evidence and limitations.
 
-## 17. Final production freeze
+## 15. P1 — Adaptive challengers
 
-Freeze only after evidence is sufficient.
+Do not start until the P0 remote product path is closed.
 
-Final bundle should include:
+Eligible challenger areas:
 
-- production URL and release/build identity;
-- proof that the selected production path remains USD 0 and has no paid spillover;
-- final architecture + ADRs;
-- deployment/IAM/storage decisions;
-- dataset/evaluator hashes;
-- baseline/candidate results;
-- provider decision or `NO_SELECTION`;
-- load/SLO evidence;
-- recovery/backup/RTO/RPO evidence where claimed;
-- auth/RLS/action-safety evidence;
-- semantic-calibration result or explicit limitation;
-- operational-value result or explicit limitation;
-- live frontend evidence;
-- reproducible runbook and rollback.
+- adaptive investigation depth;
+- adaptive tool/evidence ordering;
+- adaptive clarification/abstention/escalation thresholds;
+- provider routing among multiple already-qualified USD0 candidates;
+- bounded retry/backoff/resource budgets.
 
-## 18. Definition of Done
+Always deterministic:
 
-The project is not finished until all applicable statements are true:
+- authentication/tenant binding;
+- RLS/authorization;
+- schemas/permissions;
+- consequential-action confirmation/custody/idempotency/leases;
+- privacy deny-lists;
+- evaluator/gold isolation;
+- hard resource/cost boundaries.
 
-- [ ] actual project cash cost remains USD 0;
-- [ ] selected external components cannot silently spill into paid usage;
-- [ ] remote product URL exists;
-- [ ] production serving depends on no local machine/service/model/store;
-- [ ] multiple users can operate concurrently;
-- [ ] tenant isolation is enforced server-side/RLS;
-- [ ] USD0-eligible standards-based user auth is deployed before IAM claims;
-- [ ] protected CI/CD controls production changes;
-- [ ] durable state survives tested restart/recovery scenarios;
-- [ ] consequential actions remain confirmation/custody/lease/fencing safe;
-- [ ] remote capacity is measured and SLOs are evidence-based;
-- [ ] backup/restore is tested before data-protection claims;
-- [ ] production health is observable;
-- [ ] architecture/runs/evidence/evals/outputs are visible live in the frontend;
-- [ ] semantic evaluator is human-calibrated before semantic promotion gates;
-- [ ] operational value is measured before business-value claims;
-- [ ] hosted provider/model decision is experiment-backed and USD0-eligible, or explicitly `NO_SELECTION`;
-- [ ] material technology decisions have systematic research + ADRs;
-- [ ] unused components are removed only when proven safe;
-- [ ] claims never exceed evidence.
+Promotion requires a measured win versus the static baseline without safety regression.
 
-If no candidate can satisfy both USD0 and the technical production gates, document the unresolved blocker; never solve it by silently changing a user-specified hard constraint.
+## 16. Explicitly deferred unless a measured gap appears
+
+The following must not displace the critical path:
+
+- LangGraph/LangChain/PydanticAI migration;
+- multi-agent decomposition;
+- RAG/vector database;
+- persistent semantic memory;
+- MCP conversion;
+- Redis/Kafka;
+- Kubernetes/microservice decomposition;
+- frontend framework rewrite.
+
+They remain valid future challengers only when a concrete measured problem justifies evaluation.
+
+## 17. Final release gate
+
+Use capability-scoped truth rather than one vague `production-ready` label. Each final capability is classified as one of:
+
+`READY`, `LIMITED`, `NOT_READY`, `NO_SELECTION`.
+
+The final remote E2E should prove, from an unrelated device/network:
+
+```text
+public URL
+→ user authentication
+→ tenant-bound request
+→ live agent execution
+→ real provider
+→ real TRACTIAN tools
+→ safe final/escalation/action behavior
+→ post-runtime evaluation
+→ trace/evidence/output lineage
+→ reconnect and persisted history
+→ architecture + release identity + production health
+```
+
+A second tenant must be unable to see the first tenant's private state.
+
+## 18. Completion discipline
+
+The objective is to become usable as fast as possible without creating unsupported production claims. Therefore:
+
+- finish the smallest safe end-to-end production path before optional refinements;
+- fix blockers in dependency order;
+- preserve accepted working core architecture;
+- prefer an explicit blocker over an unsafe workaround;
+- continuously update this ledger, active state and relevant architecture/decision records as work lands.
