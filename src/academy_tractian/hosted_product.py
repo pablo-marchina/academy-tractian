@@ -92,6 +92,7 @@ def build_hosted_product(config: HostedProductConfig | None = None) -> FastAPI:
             provider=active.provider or "",
             model=active.model or "",
             api_key=active.provider_api_key or "",
+            account_id=active.provider_account_id,
         )
 
     def transport_factory():
