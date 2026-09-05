@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 from time import sleep
 
 from fastapi import Request
@@ -140,7 +139,7 @@ class ProviderFreeScenarioDecisionSource(DecisionSource):
 
 
 class ProviderFreeTransport(RequestTransport):
-    """Local deterministic dependency substitute; never presented as a TRACTIAN live call."""
+    """Deterministic acceptance dependency; never presented as a TRACTIAN live call."""
 
     def request(self, request: BoundRequest) -> TransportResponse:
         if request.path == "/assets/asset-error":
@@ -215,10 +214,7 @@ def build_provider_free_product():
     internal_dsn = os.environ["ACADEMY_POSTGRES_INTERNAL_DSN"]
     scoped_dsn = os.environ["ACADEMY_POSTGRES_SCOPED_DSN"]
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_e2e")
-    db_path = Path(os.environ.get("ACADEMY_OBSERVABILITY_DB", ".runtime/provider-free-e2e.duckdb"))
-    db_path.parent.mkdir(parents=True, exist_ok=True)
     app = create_postgres_action_capable_product_app(
-        db_path=db_path,
         internal_dsn=internal_dsn,
         scoped_dsn=scoped_dsn,
         schema=schema,
