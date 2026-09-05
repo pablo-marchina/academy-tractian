@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from .observability_store import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStore
+from .observability_contract import OBSERVABILITY_SCHEMA_VERSION, ObservabilityStoreContract
 from .provider_experiments import provider_experiment_registry
 
 
@@ -177,7 +177,7 @@ def _latency_summary(values: list[float]) -> dict[str, int | float | None]:
 class OperationalReadModel:
     """Provider-free analytics over the persisted sanitized observability projection only."""
 
-    def __init__(self, store: ObservabilityStore) -> None:
+    def __init__(self, store: ObservabilityStoreContract) -> None:
         self.store = store
 
     def _runs(self, run_id: str | None = None) -> list[dict[str, Any]]:
@@ -339,7 +339,7 @@ class OperationalReadModel:
             "store_schema_version": OBSERVABILITY_SCHEMA_VERSION,
             "overall_status": "ready" if overall_ready else "degraded",
             "components": [
-                {"component": "observability_store", "status": "ready" if self.store.ready() else "unavailable", "detail": "persistent sanitized DuckDB read model"},
+                {"component": "observability_store", "status": "ready" if self.store.ready() else "unavailable", "detail": "persistent sanitized observability read model"},
                 {"component": "observability_api", "status": "ready", "detail": "REST/SSE control plane process is serving this response"},
                 {"component": "evaluator_path", "status": "available", "detail": "post-runtime safe evaluation persistence path is configured"},
                 {"component": "provider_selection", "status": provider_selection_state, "detail": "governed provider experiment selection state"},
