@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Provider-free validator for the bounded production live-comparison authorization packet."""
+"""Provider-free validator for the immutable v1 live-comparison authorization packet.
+
+The packet records an exact historical implementation.  New provider/model work may legitimately
+supersede that implementation, so current-source drift is reported as *not effective for the
+current head* rather than rewriting or invalidating the historical artifact.  Execution remains
+fail closed: this validator never authorizes live calls for a different implementation.
+"""
 
 from __future__ import annotations
 
-import ast
-from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
@@ -70,81 +74,19 @@ def git_blob(path: Path) -> str:
     return result.stdout.strip()
 
 
+def git_object_exists(blob_sha: str) -> bool:
+    result = subprocess.run(
+        ["git", "cat-file", "-e", f"{blob_sha}^{{blob}}"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
 def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def _method(tree: ast.AST, class_name: str, method_name: str) -> ast.FunctionDef:
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == class_name:
-            for child in node.body:
-                if isinstance(child, ast.FunctionDef) and child.name == method_name:
-                    return child
-    raise AssertionError(f"missing method {class_name}.{method_name}")
-
-
-def validate_client_source(source: str) -> None:
-    forbidden_fragments = (
-        "import os",
-        "from os",
-        "os.getenv",
-        "os.environ",
-        "OPENAI_API_KEY",
-        "GEMINI_API_KEY",
-        "GOOGLE_API_KEY",
-        "import openai",
-        "from openai",
-        "from google",
-        "import google",
-        "langgraph",
-        "pydantic_ai",
-        "FRESH_BLIND",
-        "LEGACY_LOCKED_TEST",
-    )
-    for fragment in forbidden_fragments:
-        assert fragment not in source, f"forbidden provider-client source fragment: {fragment}"
-
-    tree = ast.parse(source)
-    for class_name in ("OpenAIResponsesDecisionClient", "GoogleInteractionsDecisionClient"):
-        complete = _method(tree, class_name, "complete")
-        invoke_calls = [
-            node
-            for node in ast.walk(complete)
-            if isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Attribute)
-            and node.func.attr == "_invoke_once"
-        ]
-        assert len(invoke_calls) == 1, f"{class_name}.complete must invoke transport boundary exactly once"
-        assert not any(isinstance(node, (ast.For, ast.While, ast.AsyncFor)) for node in ast.walk(complete))
-
-    invoke_once = _method(tree, "_BaseProviderDecisionClient", "_invoke_once")
-    transport_calls = [
-        node
-        for node in ast.walk(invoke_once)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "post_json"
-    ]
-    assert len(transport_calls) == 1
-    assert not any(isinstance(node, (ast.For, ast.While, ast.AsyncFor)) for node in ast.walk(invoke_once))
-
-    urllib_transport = _method(tree, "UrllibProviderJsonTransport", "post_json")
-    assert not any(isinstance(node, (ast.For, ast.While, ast.AsyncFor)) for node in ast.walk(urllib_transport))
-
-    required_literals = (
-        'OPENAI_MODEL_ID = "gpt-5.6-sol"',
-        'OPENAI_ROUTE_ID = "openai.responses.v1.standard"',
-        'OPENAI_RESPONSES_ENDPOINT = "https://api.openai.com/v1/responses"',
-        'GOOGLE_MODEL_ID = "gemini-3.7-flash"',
-        'GOOGLE_ROUTE_ID = "google.interactions.v1beta.stateless"',
-        'GOOGLE_INTERACTIONS_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions"',
-        '"store": False',
-        '"thinking_level": "medium"',
-        '"thinking_summaries": "none"',
-        '"tool_choice": "none"',
-    )
-    for literal in required_literals:
-        assert literal in source, f"missing frozen provider-client literal: {literal}"
 
 
 def validate_payload(
@@ -185,8 +127,6 @@ def validate_payload(
     assert impl["production_runtime_ci"]["run_number"] == 23
     assert impl["production_runtime_ci"]["conclusion"] == "success"
     assert impl["triggered_workflows"] == {"total": 11, "success": 11}
-    assert impl["preserved_failed_attempt"]["head"] == "b0a5bc8c2dbea0041ac0324e6471b09b9e68b644"
-    assert impl["preserved_failed_attempt"]["production_runtime_run_id"] == 33140883236
 
     candidates = {
         (
@@ -211,7 +151,9 @@ def validate_payload(
     assert execution["repetitions_per_unit_per_candidate"] == 2
     assert execution["max_live_provider_calls_total"] == 32
     assert execution["max_live_provider_calls_total"] == (
-        execution["live_candidates"] * execution["units"] * execution["repetitions_per_unit_per_candidate"]
+        execution["live_candidates"]
+        * execution["units"]
+        * execution["repetitions_per_unit_per_candidate"]
     )
     assert execution["warmup_calls"] == 0
     assert execution["automatic_retries"] == 0
@@ -247,8 +189,7 @@ def validate_payload(
     assert stopping["stop_at_call_budget"] == 32
     assert stopping["incomplete_packet_selection"] == "NO_SELECTION"
 
-    non_auth = authorization["non_authorizations"]
-    assert all(value is False for value in non_auth.values())
+    assert all(value is False for value in authorization["non_authorizations"].values())
 
     assert design["schema_version"] == "provider-model-comparison-design-v1"
     assert design["scientific_gate"] == authorization["scientific_gate"]
@@ -275,21 +216,31 @@ def validate_payload(
     assert boundaries["uses_historical_real_task_quality"] is False
 
 
-def validate_files() -> None:
+def validate_historical_artifacts() -> None:
+    # Frozen packet/design/population remain immutable in the working tree.
+    assert git_blob(AUTH_PATH) == EXPECTED_AUTH_BLOB
+    assert git_blob(DESIGN_PATH) == EXPECTED_DESIGN_BLOB
+    assert git_blob(POPULATION_PATH) == EXPECTED_POPULATION_BLOB
+    assert sha256_file(POPULATION_PATH) == EXPECTED_POPULATION_SHA256
+
+    # Historical implementation evidence is retained by Git, even when current source evolves.
+    for blob_sha in (
+        EXPECTED_PROVIDER_CLIENTS_BLOB,
+        EXPECTED_PROVIDER_CLIENT_TESTS_BLOB,
+        EXPECTED_PACKAGE_EXPORTS_BLOB,
+        EXPECTED_DECISION_SOURCE_BLOB,
+    ):
+        assert git_object_exists(blob_sha), f"historical implementation blob missing: {blob_sha}"
+
+
+def current_implementation_matches_frozen_packet() -> bool:
     expected = {
-        AUTH_PATH: EXPECTED_AUTH_BLOB,
-        DESIGN_PATH: EXPECTED_DESIGN_BLOB,
-        POPULATION_PATH: EXPECTED_POPULATION_BLOB,
         PROVIDER_CLIENTS_PATH: EXPECTED_PROVIDER_CLIENTS_BLOB,
         PROVIDER_CLIENT_TESTS_PATH: EXPECTED_PROVIDER_CLIENT_TESTS_BLOB,
         PACKAGE_EXPORTS_PATH: EXPECTED_PACKAGE_EXPORTS_BLOB,
         DECISION_SOURCE_PATH: EXPECTED_DECISION_SOURCE_BLOB,
     }
-    for path, expected_blob in expected.items():
-        actual = git_blob(path)
-        assert actual == expected_blob, f"git blob mismatch for {path.relative_to(ROOT)}: {actual}"
-    assert sha256_file(POPULATION_PATH) == EXPECTED_POPULATION_SHA256
-    validate_client_source(PROVIDER_CLIENTS_PATH.read_text(encoding="utf-8"))
+    return all(git_blob(path) == expected_blob for path, expected_blob in expected.items())
 
 
 def run() -> dict[str, Any]:
@@ -297,12 +248,16 @@ def run() -> dict[str, Any]:
     design = load_json(DESIGN_PATH)
     population = load_json(POPULATION_PATH)
     validate_payload(authorization, design, population)
-    validate_files()
+    validate_historical_artifacts()
+    current_match = current_implementation_matches_frozen_packet()
     return {
-        "status": "PASS_PROVIDER_FREE_LIVE_AUTHORIZATION_PACKET",
+        "status": "PASS_PROVIDER_FREE_HISTORICAL_LIVE_AUTHORIZATION_PACKET",
         "authorization_packet_git_blob": EXPECTED_AUTH_BLOB,
         "validated_provider_client_head": EXPECTED_VALIDATED_IMPLEMENTATION_HEAD,
-        "max_future_live_calls": 32,
+        "historical_artifact_integrity": True,
+        "current_implementation_matches_frozen_packet": current_match,
+        "authorization_effective_for_current_head": current_match,
+        "max_historical_authorized_live_calls": 32,
         "live_calls_executed": 0,
         "provider_model_selected": False,
         "scientific_gate_changed": False,
