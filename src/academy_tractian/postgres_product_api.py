@@ -15,6 +15,7 @@ from .postgres_action_operational import (
     PostgresActionIdempotencyLedger,
     PostgresPendingActionCustody,
 )
+from .postgres_observability_store import PostgresObservabilityStore
 from .postgres_operational import (
     PostgresOperationalDatabase,
     PostgresRunAccessStore,
@@ -28,6 +29,15 @@ from .semantic_human_calibration import SemanticAnnotationManifest, SemanticRevi
 from .semantic_review_collection import attach_semantic_review_collection_api
 
 
+_OBSERVABILITY_TABLES = (
+    "observability_meta",
+    "observability_runs",
+    "observability_events",
+    "observability_evidence",
+    "observability_evaluations",
+)
+
+
 def _required_tables_ready(database: PostgresOperationalDatabase) -> bool:
     names = (
         "run_ownership",
@@ -38,6 +48,7 @@ def _required_tables_ready(database: PostgresOperationalDatabase) -> bool:
         "operational_pilot_assignments",
         "semantic_review_tasks",
         "semantic_review_assignments",
+        *_OBSERVABILITY_TABLES,
     )
     with database.internal_pool.connection() as connection:
         rows = connection.execute(
@@ -58,7 +69,7 @@ def initialize_postgres_operational_schema(
     scoped_dsn: str,
     schema: str = "academy_operational",
 ) -> None:
-    """Explicit migration/bootstrap entrypoint for mutable operational state."""
+    """Explicit migration/bootstrap entrypoint for all PostgreSQL production state."""
 
     database = PostgresOperationalDatabase(
         internal_dsn=internal_dsn,
@@ -71,10 +82,12 @@ def initialize_postgres_operational_schema(
         PostgresActionIdempotencyLedger(database, initialize=True)
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=True)
         semantic_store = PostgresSemanticReviewStore(database, initialize=True)
+        observability_store = PostgresObservabilityStore(database, initialize=True)
         if (
             not database.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
+            or not observability_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready_after_initialize")
@@ -101,7 +114,13 @@ def register_postgres_operational_pilot_packet(
     )
     try:
         store = PostgresOperationalPilotStoreV5(database, initialize=False)
-        if not database.ready() or not store.ready() or not _required_tables_ready(database):
+        observability_store = PostgresObservabilityStore(database, initialize=False)
+        if (
+            not database.ready()
+            or not store.ready()
+            or not observability_store.ready()
+            or not _required_tables_ready(database)
+        ):
             raise RuntimeError("postgres_operational_schema_not_ready")
         store.register_packet(
             organization_id=organization_id,
@@ -131,7 +150,13 @@ def register_postgres_semantic_review_packet(
     )
     try:
         store = PostgresSemanticReviewStore(database, initialize=False)
-        if not database.ready() or not store.ready() or not _required_tables_ready(database):
+        observability_store = PostgresObservabilityStore(database, initialize=False)
+        if (
+            not database.ready()
+            or not store.ready()
+            or not observability_store.ready()
+            or not _required_tables_ready(database)
+        ):
             raise RuntimeError("postgres_operational_schema_not_ready")
         store.register_packet(
             organization_id=organization_id,
@@ -144,13 +169,13 @@ def register_postgres_semantic_review_packet(
 
 def create_postgres_action_capable_product_app(
     *,
-    db_path: str | Path,
     internal_dsn: str,
     scoped_dsn: str,
     decision_source_factory: Callable[[], DecisionSource],
     transport_factory: Callable[[], RequestTransport],
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
+    db_path: str | Path | None = None,
     schema: str = "academy_operational",
     initialize_schema: bool = False,
     max_workers: int = 4,
@@ -158,13 +183,16 @@ def create_postgres_action_capable_product_app(
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    """Create the promoted production topology.
+    """Create the promoted PostgreSQL production topology.
 
-    PostgreSQL owns mutable multi-user operational state. DuckDB still owns the sanitized
-    observability/evaluation read model at ``db_path``. Serving with ``initialize_schema=False``
-    is the recommended production path after an explicit migration step.
+    All mutable operational state and the sanitized observability/evaluation read model share
+    the qualified PostgreSQL substrate. ``db_path`` is a temporary source-compatibility argument
+    for existing callers and is deliberately ignored; no local observability file is created or
+    read by this production constructor. Serving with ``initialize_schema=False`` remains
+    fail-closed after the explicit migration step.
     """
 
+    del db_path
     database = PostgresOperationalDatabase(
         internal_dsn=internal_dsn,
         scoped_dsn=scoped_dsn,
@@ -177,15 +205,20 @@ def create_postgres_action_capable_product_app(
         ledger = PostgresActionIdempotencyLedger(database, initialize=initialize_schema)
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=initialize_schema)
         semantic_store = PostgresSemanticReviewStore(database, initialize=initialize_schema)
+        observability_store = PostgresObservabilityStore(database, initialize=initialize_schema)
         if (
             not database.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
+            or not observability_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
         app = create_action_capable_product_app(
-            db_path=db_path,
+            # Internal compatibility seam: create_product_app still names this parameter
+            # ``db_path``. ObservabilityStore dispatches this shared database object to the
+            # PostgreSQL implementation, while access/execution stores are explicitly injected.
+            db_path=database,  # type: ignore[arg-type]
             decision_source_factory=decision_source_factory,
             transport_factory=transport_factory,
             context_provider=context_provider,
@@ -217,5 +250,6 @@ def create_postgres_action_capable_product_app(
     app.state.postgres_operational_database = database
     app.state.operational_value_collection_store = pilot_store
     app.state.semantic_review_collection_store = semantic_store
+    app.state.observability_backend = "postgresql"
     app.state.operational_backend = "postgresql"
     return app

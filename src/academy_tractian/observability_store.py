@@ -25,14 +25,9 @@ OBSERVABILITY_SCHEMA_VERSION = "observability-store-v1"
 class _SerializedDuckDBConnection:
     """Own one DuckDB file handle at a time for the browser-safe read model.
 
-    DuckDB remains the analytical/evaluation store, but the product frontend performs many
-    small concurrent REST/SSE reads while realtime publication writes safe events. DuckDB 1.5
-    can otherwise race while repeatedly attaching the same file from multiple Python threads
-    (`Unique file handle conflict`). Holding this process-local lock for the lifetime of each
-    short store operation removes that file-handle race without changing persisted semantics.
-
-    Mutable multi-user operational state is not routed through this lock; it lives in the
-    PostgreSQL production stores selected by OPS-STORE-001.
+    This compatibility implementation is retained while non-PostgreSQL callers are migrated.
+    The promoted production topology no longer selects it: production injects the shared
+    PostgreSQL substrate and therefore has no file-backed observability dependency.
     """
 
     def __init__(self, *, path: str, lock: RLock) -> None:
@@ -59,12 +54,22 @@ class _SerializedDuckDBConnection:
 
 
 class ObservabilityStore:
-    """DuckDB-backed persistence for browser-safe observability projections only.
+    """Browser-safe observability store facade.
 
-    Raw RunTrace objects may enter this class through `persist_trace()`, but only their
-    allow-listed projections are persisted. The database is therefore a safe read model,
-    not a second raw-trace store.
+    A ``PostgresOperationalDatabase`` selects the shared production implementation. A path
+    selects the legacy DuckDB compatibility implementation while remaining callers are removed.
+    This keeps the API/read-model contract stable while the production topology becomes
+    replica-independent first, before deleting the compatibility path in the next migration.
     """
+
+    def __new__(cls, backend: Any):
+        from .postgres_operational import PostgresOperationalDatabase
+
+        if isinstance(backend, PostgresOperationalDatabase):
+            from .postgres_observability_store import PostgresObservabilityStore
+
+            return PostgresObservabilityStore(backend)
+        return super().__new__(cls)
 
     def __init__(self, path: str | Path) -> None:
         self.path = str(path)

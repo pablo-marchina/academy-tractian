@@ -21,7 +21,7 @@
     },
     {
       "path": ".github/workflows/full-product-playwright.yml",
-      "git_blob_sha1": "46ceab493869ec99abb4aed113b3bda45d91add7",
+      "git_blob_sha1": "7b5a92cb2a2aaa380eaf857da74cb6d09f55c617",
       "role": "current_reproduction",
       "description": "Reusable Chromium full-product acceptance workflow."
     },
@@ -245,5 +245,5 @@
     "restart_ci_proves_rto_rpo_ha",
     "unconditional_production_readiness"
   ],
-  "manifest_sha256": "bd3d4df0cb74b88f602b371873c89ff22db49c355a472568783b41a37af5a793"
+  "manifest_sha256": "e863f6b8643f667264fa52255a3458b83bd97b9f596519e80fa4b58861c99657"
 }
