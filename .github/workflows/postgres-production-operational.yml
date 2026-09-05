@@ -8,6 +8,9 @@ on:
       - "src/academy_tractian/runtime_identity.py"
       - "src/academy_tractian/product_api.py"
       - "src/academy_tractian/action_product_api.py"
+      - "src/academy_tractian/runtime_handoff_supervisor.py"
+      - "src/academy_tractian/product_storage_contracts.py"
+      - "src/academy_tractian/production_actions_v2.py"
       - "src/academy_tractian/operational_value_collection.py"
       - "src/academy_tractian/operational_value_pilot.py"
       - "src/academy_tractian/operational_value_analysis.py"
@@ -20,6 +23,7 @@ on:
       - "tests/test_postgres_product_api.py"
       - "tests/test_postgres_observability_store.py"
       - "tests/test_postgres_multi_instance_product.py"
+      - "tests/test_postgres_runtime_handoff.py"
       - "tests/test_postgres_authenticated_product_api.py"
       - "tests/test_runtime_identity.py"
       - "tests/test_authenticated_product_api.py"
@@ -73,6 +77,7 @@ jobs:
           tests/test_postgres_product_api.py
           tests/test_postgres_observability_store.py
           tests/test_postgres_multi_instance_product.py
+          tests/test_postgres_runtime_handoff.py
           tests/test_postgres_authenticated_product_api.py
           tests/test_postgres_operational_value_collection.py
           tests/test_postgres_operational_value_v5.py
@@ -110,7 +115,9 @@ jobs:
           from academy_tractian.postgres_operational_value_analysis import (
               PostgresOperationalValueAnalysisStore,
           )
+          from academy_tractian.postgres_runtime_handoff import PostgresRuntimeHandoffStore
           from academy_tractian.postgres_semantic_review import PostgresSemanticReviewStore
+          from academy_tractian.runtime_handoff_supervisor import HorizontalRuntimeSupervisor
           from academy_tractian.runtime_identity import SignedBearerRuntimeContextProvider
           assert callable(create_authenticated_postgres_action_capable_product_app)
           assert callable(create_postgres_action_capable_product_app)
@@ -118,6 +125,8 @@ jobs:
           assert callable(register_postgres_operational_pilot_packet)
           assert callable(register_postgres_semantic_review_packet)
           assert PostgresObservabilityStore is not None
+          assert PostgresRuntimeHandoffStore is not None
+          assert HorizontalRuntimeSupervisor is not None
           assert SignedBearerRuntimeContextProvider is not None
           assert PostgresOperationalValueAnalysisStore is not None
           assert PostgresSemanticReviewStore is not None
