@@ -29,12 +29,9 @@ class _StrictModel(BaseModel):
 
 def _canonical_sha256(payload: object) -> str:
     return sha256(
-        json.dumps(
-            payload,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-        ).encode("utf-8")
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+            "utf-8"
+        )
     ).hexdigest()
 
 
@@ -120,7 +117,7 @@ class ProviderFrontierManifestV3(_StrictModel):
 
 
 class ProviderFrontierEligibilityEvidence(_StrictModel):
-    """Candidate/config-bound eligibility evidence; contains no credentials or raw model data."""
+    """Candidate/config-bound eligibility evidence with no credentials or raw model data."""
 
     schema_version: Literal["provider-frontier-eligibility-v1"] = "provider-frontier-eligibility-v1"
     manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -161,6 +158,7 @@ _REASON_ORDER = (
     "MANIFEST_HASH_MISMATCH",
     "PROMOTION_POLICY_FRONTIER_MISMATCH",
     "HOSTED_REGISTRY_MISMATCH",
+    "ELIGIBILITY_EVIDENCE_DUPLICATE",
     "ELIGIBILITY_EVIDENCE_MISSING",
     "ELIGIBILITY_MANIFEST_MISMATCH",
     "BENCHMARK_CANDIDATE_MISSING",
@@ -180,9 +178,7 @@ _REASON_ORDER = (
 
 def _ordered_reasons(reasons: list[str]) -> tuple[str, ...]:
     rank = {reason: index for index, reason in enumerate(_REASON_ORDER)}
-    return tuple(
-        dict.fromkeys(sorted(reasons, key=lambda reason: (rank.get(reason, len(rank)), reason)))
-    )
+    return tuple(dict.fromkeys(sorted(reasons, key=lambda item: (rank.get(item, len(rank)), item))))
 
 
 def build_provider_frontier_eligibility_artifact(
@@ -200,33 +196,45 @@ def build_provider_frontier_eligibility_artifact(
     live_attempt_count: int,
     qualification_source_sha256: str,
 ) -> ProviderFrontierEligibilityEvidence:
-    material = {
+    material: dict[str, object] = {
         "schema_version": "provider-frontier-eligibility-v1",
         "manifest_sha256": manifest_sha256,
         "candidate_id": candidate_id,
         "config_hash": config_hash,
-        "generated_at": generated_at,
+        "generated_at": generated_at.isoformat(),
         "hosted_only": hosted_only,
         "required_local_components": required_local_components,
         "strict_usd0_eligible": strict_usd0_eligible,
-        "observed_cash_cost_usd": observed_cash_cost_usd,
+        "observed_cash_cost_usd": float(observed_cash_cost_usd),
         "privacy_eligible": privacy_eligible,
         "live_evidence_complete": live_evidence_complete,
         "live_attempt_count": live_attempt_count,
         "qualification_source_sha256": qualification_source_sha256,
     }
-    json_material = ProviderFrontierEligibilityEvidence.model_validate(
-        {
-            **material,
-            "artifact_sha256": "0" * 64,
-        },
-        context={"skip_hash": True},
-    ).model_dump(mode="json", exclude={"artifact_sha256"})
     return ProviderFrontierEligibilityEvidence.model_validate(
-        {
-            **json_material,
-            "artifact_sha256": _canonical_sha256(json_material),
-        }
+        {**material, "artifact_sha256": _canonical_sha256(material)}
+    )
+
+
+def _no_selection(
+    *,
+    manifest_hash: str,
+    promotable_ids: tuple[str, ...],
+    reference_ids: tuple[str, ...],
+    eligible: tuple[str, ...] = (),
+    excluded: tuple[str, ...] | None = None,
+    reasons: tuple[str, ...],
+    delegated: ProviderPromotionDecision | None = None,
+) -> ProviderFrontierDecisionV3:
+    return ProviderFrontierDecisionV3(
+        manifest_sha256=manifest_hash,
+        outcome="NO_SELECTION",
+        selected_candidate_id=None,
+        eligible_promotable_candidate_ids=eligible,
+        excluded_promotable_candidate_ids=promotable_ids if excluded is None else excluded,
+        reference_only_candidate_ids=reference_ids,
+        reason_codes=reasons,
+        delegated_promotion=delegated,
     )
 
 
@@ -237,78 +245,59 @@ def decide_provider_frontier_v3(
     benchmark_evidence: ProviderBenchmarkEvidence,
     promotion_policy: ProviderPromotionPolicy,
 ) -> ProviderFrontierDecisionV3:
-    """Apply non-compensatory frontier eligibility before the existing EDD promotion gate."""
+    """Apply non-compensatory eligibility before the existing human-calibrated EDD gate."""
 
     manifest_hash = manifest.canonical_sha256
-    promotable_rules = tuple(
-        candidate for candidate in manifest.candidate_set if candidate.role == "promotable"
-    )
+    promotable_rules = tuple(item for item in manifest.candidate_set if item.role == "promotable")
+    promotable_ids = tuple(item.candidate_id for item in promotable_rules)
     reference_ids = tuple(
-        candidate.candidate_id
-        for candidate in manifest.candidate_set
-        if candidate.role == "reference_only"
+        item.candidate_id for item in manifest.candidate_set if item.role == "reference_only"
     )
-    all_promotable_ids = tuple(candidate.candidate_id for candidate in promotable_rules)
 
     if manifest_hash != EXPECTED_PROVIDER_FRONTIER_V3_MANIFEST_SHA256:
-        return ProviderFrontierDecisionV3(
-            manifest_sha256=manifest_hash,
-            outcome="NO_SELECTION",
-            selected_candidate_id=None,
-            eligible_promotable_candidate_ids=(),
-            excluded_promotable_candidate_ids=all_promotable_ids,
-            reference_only_candidate_ids=reference_ids,
-            reason_codes=("MANIFEST_HASH_MISMATCH",),
+        return _no_selection(
+            manifest_hash=manifest_hash,
+            promotable_ids=promotable_ids,
+            reference_ids=reference_ids,
+            reasons=("MANIFEST_HASH_MISMATCH",),
         )
-
-    if promotion_policy.required_candidate_ids != all_promotable_ids:
-        return ProviderFrontierDecisionV3(
-            manifest_sha256=manifest_hash,
-            outcome="NO_SELECTION",
-            selected_candidate_id=None,
-            eligible_promotable_candidate_ids=(),
-            excluded_promotable_candidate_ids=all_promotable_ids,
-            reference_only_candidate_ids=reference_ids,
-            reason_codes=("PROMOTION_POLICY_FRONTIER_MISMATCH",),
+    if promotion_policy.required_candidate_ids != promotable_ids:
+        return _no_selection(
+            manifest_hash=manifest_hash,
+            promotable_ids=promotable_ids,
+            reference_ids=reference_ids,
+            reasons=("PROMOTION_POLICY_FRONTIER_MISMATCH",),
         )
 
     evidence_by_id: dict[str, ProviderFrontierEligibilityEvidence] = {}
-    duplicate_eligibility_ids: set[str] = set()
     for item in eligibility_evidence:
         if item.candidate_id in evidence_by_id:
-            duplicate_eligibility_ids.add(item.candidate_id)
+            return _no_selection(
+                manifest_hash=manifest_hash,
+                promotable_ids=promotable_ids,
+                reference_ids=reference_ids,
+                reasons=("ELIGIBILITY_EVIDENCE_DUPLICATE",),
+            )
         evidence_by_id[item.candidate_id] = item
-    if duplicate_eligibility_ids:
-        return ProviderFrontierDecisionV3(
-            manifest_sha256=manifest_hash,
-            outcome="NO_SELECTION",
-            selected_candidate_id=None,
-            eligible_promotable_candidate_ids=(),
-            excluded_promotable_candidate_ids=all_promotable_ids,
-            reference_only_candidate_ids=reference_ids,
-            reason_codes=("ELIGIBILITY_EVIDENCE_DUPLICATE",),
-        )
 
-    benchmark_candidates = {
-        candidate.candidate_id: candidate for candidate in benchmark_evidence.candidates
-    }
+    benchmark_by_id = {item.candidate_id: item for item in benchmark_evidence.candidates}
     eligible: list[str] = []
     excluded: list[str] = []
     reasons: list[str] = []
 
     for rule in promotable_rules:
         candidate_reasons: list[str] = []
-        if rule.hosted_registry_required:
-            try:
-                registered = resolve_hosted_candidate(rule.provider_id, rule.model_id)
-            except ValueError:
-                candidate_reasons.append("HOSTED_REGISTRY_MISMATCH")
-            else:
-                if registered.candidate_id != rule.candidate_id:
-                    candidate_reasons.append("HOSTED_REGISTRY_MISMATCH")
+        try:
+            registered = resolve_hosted_candidate(rule.provider_id, rule.model_id)
+        except ValueError:
+            registered = None
+        if rule.hosted_registry_required and (
+            registered is None or registered.candidate_id != rule.candidate_id
+        ):
+            candidate_reasons.append("HOSTED_REGISTRY_MISMATCH")
 
         eligibility = evidence_by_id.get(rule.candidate_id)
-        benchmark_candidate = benchmark_candidates.get(rule.candidate_id)
+        benchmark_candidate = benchmark_by_id.get(rule.candidate_id)
         if eligibility is None:
             candidate_reasons.append("ELIGIBILITY_EVIDENCE_MISSING")
         elif eligibility.manifest_sha256 != manifest_hash:
@@ -348,14 +337,13 @@ def decide_provider_frontier_v3(
 
     if len(eligible) < manifest.minimum_eligible_promotable_candidates:
         reasons.append("INSUFFICIENT_ELIGIBLE_PROMOTABLES")
-        return ProviderFrontierDecisionV3(
-            manifest_sha256=manifest_hash,
-            outcome="NO_SELECTION",
-            selected_candidate_id=None,
-            eligible_promotable_candidate_ids=tuple(eligible),
-            excluded_promotable_candidate_ids=tuple(excluded),
-            reference_only_candidate_ids=reference_ids,
-            reason_codes=_ordered_reasons(reasons),
+        return _no_selection(
+            manifest_hash=manifest_hash,
+            promotable_ids=promotable_ids,
+            reference_ids=reference_ids,
+            eligible=tuple(eligible),
+            excluded=tuple(excluded),
+            reasons=_ordered_reasons(reasons),
         )
 
     eligible_set = set(eligible)
@@ -363,9 +351,9 @@ def decide_provider_frontier_v3(
         {
             **benchmark_evidence.model_dump(mode="json"),
             "candidates": [
-                candidate.model_dump(mode="json")
-                for candidate in benchmark_evidence.candidates
-                if candidate.candidate_id in eligible_set
+                item.model_dump(mode="json")
+                for item in benchmark_evidence.candidates
+                if item.candidate_id in eligible_set
             ],
             "pairwise_reports": [
                 report.model_dump(mode="json")
@@ -376,38 +364,28 @@ def decide_provider_frontier_v3(
         }
     )
     filtered_policy = ProviderPromotionPolicy.model_validate(
-        {
-            **promotion_policy.model_dump(mode="json"),
-            "required_candidate_ids": eligible,
-        }
+        {**promotion_policy.model_dump(mode="json"), "required_candidate_ids": eligible}
     )
-    delegated = decide_provider_promotion(
-        evidence=filtered_benchmark,
-        policy=filtered_policy,
-    )
-
+    delegated = decide_provider_promotion(evidence=filtered_benchmark, policy=filtered_policy)
     if delegated.outcome != "PROMOTE" or delegated.selected_candidate_id is None:
-        return ProviderFrontierDecisionV3(
-            manifest_sha256=manifest_hash,
-            outcome="NO_SELECTION",
-            selected_candidate_id=None,
-            eligible_promotable_candidate_ids=tuple(eligible),
-            excluded_promotable_candidate_ids=tuple(excluded),
-            reference_only_candidate_ids=reference_ids,
-            reason_codes=_ordered_reasons(reasons + list(delegated.reason_codes)),
-            delegated_promotion=delegated,
+        return _no_selection(
+            manifest_hash=manifest_hash,
+            promotable_ids=promotable_ids,
+            reference_ids=reference_ids,
+            eligible=tuple(eligible),
+            excluded=tuple(excluded),
+            reasons=_ordered_reasons(reasons + list(delegated.reason_codes)),
+            delegated=delegated,
         )
-
     if delegated.selected_candidate_id in reference_ids:
-        return ProviderFrontierDecisionV3(
-            manifest_sha256=manifest_hash,
-            outcome="NO_SELECTION",
-            selected_candidate_id=None,
-            eligible_promotable_candidate_ids=tuple(eligible),
-            excluded_promotable_candidate_ids=tuple(excluded),
-            reference_only_candidate_ids=reference_ids,
-            reason_codes=_ordered_reasons(reasons + ["REFERENCE_ONLY_SELECTION_FORBIDDEN"]),
-            delegated_promotion=delegated,
+        return _no_selection(
+            manifest_hash=manifest_hash,
+            promotable_ids=promotable_ids,
+            reference_ids=reference_ids,
+            eligible=tuple(eligible),
+            excluded=tuple(excluded),
+            reasons=_ordered_reasons(reasons + ["REFERENCE_ONLY_SELECTION_FORBIDDEN"]),
+            delegated=delegated,
         )
 
     return ProviderFrontierDecisionV3(
