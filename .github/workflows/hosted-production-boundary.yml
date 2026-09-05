@@ -5,11 +5,13 @@ on:
     paths:
       - "src/academy_tractian/hosted_*.py"
       - "src/academy_tractian/oidc_runtime_identity.py"
+      - "src/academy_tractian/tractian_authority.py"
       - "src/academy_tractian/groq_provider_client.py"
       - "src/academy_tractian/cloudflare_provider_client.py"
       - "src/academy_tractian/provider_clients.py"
       - "tests/test_hosted_*.py"
       - "tests/test_oidc_runtime_identity.py"
+      - "tests/test_tractian_authority.py"
       - "pyproject.toml"
       - "sandbox/tractian_upstream/**"
       - ".github/workflows/hosted-production-boundary.yml"
@@ -18,8 +20,10 @@ on:
     paths:
       - "src/academy_tractian/hosted_*.py"
       - "src/academy_tractian/oidc_runtime_identity.py"
+      - "src/academy_tractian/tractian_authority.py"
       - "tests/test_hosted_*.py"
       - "tests/test_oidc_runtime_identity.py"
+      - "tests/test_tractian_authority.py"
       - "pyproject.toml"
       - "sandbox/tractian_upstream/**"
       - ".github/workflows/hosted-production-boundary.yml"
@@ -57,16 +61,17 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]" -e "research/e2[dev]"
 
-      - name: Gate OIDC and hosted serving boundary
+      - name: Gate OIDC, tenant authority, and hosted serving boundary
         run: >-
           python -m pytest -q
           tests/test_oidc_runtime_identity.py
+          tests/test_tractian_authority.py
           tests/test_hosted_production_boundary.py
 
       - name: Prove least-privilege provisioning on PostgreSQL 18
         run: python -m pytest -q tests/test_hosted_postgres_provisioning.py
 
-      - name: Reject demo-only serving shortcuts from production composition
+      - name: Reject demo-only serving shortcuts and unguarded TRACTIAN transport
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -82,9 +87,17 @@ jobs:
               "ACADEMY_POSTGRES_INTERNAL_DSN",
           ):
               assert forbidden not in source, forbidden
-          assert "initialize_schema=False" in source
-          assert "hosted_runtime_ddl_credential_present = False" in source
-          print("production hosted composition contains no demo/runtime-DDL escape hatch")
+          for required in (
+              "initialize_schema=False",
+              "TenantGuardedTractianTransport",
+              "TractianAuthority",
+              "oidc_tractian_tenant_mismatch",
+              "hosted_cross_tenant_tool_reads_blocked = True",
+              "hosted_runtime_ddl_credential_present = False",
+          ):
+              assert required in source, required
+          assert "actions_enabled=False" in source
+          print("production hosted composition is tenant-guarded and contains no demo/runtime-DDL escape hatch")
           PY
 
       - name: Build and import production wheel without DuckDB
@@ -99,6 +112,7 @@ jobs:
           from academy_tractian.hosted_config import HostedProductConfig
           from academy_tractian.hosted_product import build_hosted_product
           from academy_tractian.oidc_runtime_identity import OIDCRuntimeContextProvider
-          assert HostedProductConfig and callable(build_hosted_product) and OIDCRuntimeContextProvider
+          from academy_tractian.tractian_authority import TractianAuthority
+          assert HostedProductConfig and callable(build_hosted_product) and OIDCRuntimeContextProvider and TractianAuthority
           print("production hosted wheel import passed with DuckDB absent")
           PY
