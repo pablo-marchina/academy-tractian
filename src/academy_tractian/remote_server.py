@@ -7,6 +7,7 @@ from research.e2.models import BoundRequest
 from research.e2.transport import RequestTransport, TransportResponse
 
 from .production_actions_v2 import ProductionActionPrincipal
+from .release_identity import load_artifact_release_identity
 from .remote_production import create_remote_production_app, load_remote_production_config
 
 
@@ -39,6 +40,7 @@ def app_factory():
     """
 
     config = load_remote_production_config()
+    artifact_release_identity = load_artifact_release_identity()
     if config.provider_calls_enabled:
         raise RuntimeError(
             "provider calls cannot be enabled by the infrastructure-probe entrypoint while provider state is NO_SELECTION"
@@ -46,6 +48,8 @@ def app_factory():
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_operational")
     app = create_remote_production_app(
         config=config,
+        artifact_release_identity=artifact_release_identity,
+        railway_runtime_git_sha=os.environ.get("RAILWAY_GIT_COMMIT_SHA"),
         decision_source_factory=NoSelectedProviderDecisionSource,
         transport_factory=NoSelectedProviderTransport,
         authorization_resolver=deny_production_action_principal,
