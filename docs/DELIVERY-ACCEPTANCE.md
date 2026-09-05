@@ -1,57 +1,62 @@
 # Academy × TRACTIAN — Delivery Acceptance
 
 **Status:** ACTIVE / canonical Definition of Done  
-**Checkpoint:** 2026-09-02 20:20 BRT  
+**Checkpoint:** 2026-09-05 production rebaseline  
 **Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
+**Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)  
 **TAPI coverage:** [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md)
 
-This document answers one question: **what must be demonstrably true before the final project can be called complete?**
+This document answers one question: **what must be demonstrably true before the project may be called complete?**
 
 ## 1. Final acceptance rule
 
 ```text
-UPDATED TAPI agent behavior covered
+TAPI Agent behavior covered
 +
-UPDATED TAPI evaluation framework covered
+TAPI Evaluation framework covered
 +
-API/tool/action safety and evaluator integrity preserved
+real typed TRACTIAN integration
 +
-material stack/architecture choices evidence-backed
+remote multi-user production deployment
 +
-D01/D02/provider claims bounded by evidence
+no local dependency in production serving path
 +
-semantic response-quality evaluation valid where needed
+standards-based user IAM + tenant isolation
 +
-adaptive behavior either quantitatively promoted or explicitly rejected
+safe consequential-action execution
 +
-runtime/HITL and operational-store final choices bounded by evidence
+PostgreSQL durable state + tested recovery semantics
 +
-genuine realtime safe observability + frontend demonstrated
+production observability + live frontend
 +
-Playwright full-product E2E passes
+remote load/capacity evidence + evidence-based SLO
 +
-production start/restart + clean reproduction pass
+backup/restore/recovery evidence for any RTO/RPO/HA claim
 +
-README/runbook/results/limitations match actual product
+valid deterministic + human-calibrated semantic evaluation where needed
++
+quantitative EDD for material choices
++
+operational-value evidence before business claims
++
+hosted provider/model decision or explicit NO_SELECTION
++
+protected CI/CD + rollback
++
+clean reproduction + accurate documentation
 ```
 
-Any uncovered P0 is a blocker unless final scope is explicitly reduced with an evidence-honest limitation.
+Any uncovered P0 is a blocker unless the final claim is explicitly narrowed and the limitation remains visible.
 
-## 2. Updated-TAPI product acceptance
+## 2. TAPI product acceptance
 
-The final solution must include both:
+The final solution must contain both:
 
-1. **Industrial Agent** — interpret requests, consult the supplied TRACTIAN API and conduct appropriate behavior/actions.
-2. **Agent Evaluation Framework** — investigate the quality and reliability of agents using the supplied API.
+1. **Industrial Agent** — interpret requests, use the supplied TRACTIAN API and produce operationally appropriate behavior/actions.
+2. **Agent Evaluation Framework** — measure agent quality, reliability, trajectory, evidence use, safety and failure behavior.
 
-Every final delivery must also include:
-
-- API integration;
-- technical experiment;
-- documented results and limitations.
-
-The final product must cover the support modes:
+The product must visibly support the operational modes:
 
 ```text
 CONTEXTUALIZE
@@ -59,257 +64,343 @@ INVESTIGATE
 EXECUTE
 ```
 
-## 3. Agent acceptance
+and the outcomes:
 
-The delivered agent must demonstrate on real integrated paths:
+```text
+FINAL / ORIENT
+CLARIFY
+ABSTAIN
+ESCALATE
+ACTION PROPOSAL / CONFIRMED ACTION
+```
 
-- contextualize/orient using grounded evidence;
-- investigate with appropriate TRACTIAN read tools;
-- select valid functions;
-- construct valid typed arguments;
-- handle complete, partial, inconclusive, conflicting and unavailable API evidence;
-- ask clarification when required;
-- abstain safely when no justified path exists;
-- escalate with a structured human handoff;
-- contain unauthorized/invalid consequential actions;
-- propose and execute only explicitly governed consequential actions;
-- produce customer-safe terminal communication;
-- preserve inspectable trajectory/provenance;
-- fail safely when provider/tool/runtime boundaries fail.
+## 3. Industrial-agent acceptance
 
-Required evidence includes real traces, negative cases and degraded-response cases, not final text only.
+On integrated paths the agent must demonstrate:
 
-## 4. Consequential-action acceptance
+- grounded contextualization/orientation;
+- investigation through appropriate typed TRACTIAN tools;
+- valid function selection and typed arguments;
+- handling of complete, partial, inconclusive, conflicting and unavailable evidence;
+- clarification when information is required;
+- safe abstention when no justified answer/action exists;
+- structured human escalation/handoff;
+- containment of invalid/unauthorized consequential actions;
+- governed consequential action proposal/execution;
+- customer-safe terminal communication;
+- inspectable structured trajectory/provenance;
+- safe behavior under tool/provider/runtime failure.
+
+Correctness should be evaluated by the operational conclusion and observable process, not exact wording alone.
+
+## 4. Remote deployment acceptance
+
+Production is a remotely reachable product, not a local demo.
+
+Must prove:
+
+- stable remote frontend URL;
+- stable remote backend/API endpoint;
+- managed/durable remote PostgreSQL;
+- HTTPS/TLS;
+- production environment/secrets management;
+- immutable build/release identity (commit + artifact/image digest or equivalent);
+- health/readiness/version surfaces;
+- controlled migrations;
+- graceful restart/shutdown behavior;
+- no mock/test decision source in production;
+- no serving dependency on developer laptop/process.
+
+Production configuration must reject or otherwise make impossible serving dependencies on:
+
+- `localhost` / loopback services;
+- local/open-weight model server;
+- SQLite/DuckDB/filesystem as production source of truth;
+- development identity bypass;
+- mock provider/decision source.
+
+### Remote user proof
+
+From an unrelated fresh device/network, a user must be able to:
+
+1. open the remote product;
+2. authenticate;
+3. submit a run;
+4. observe genuine live progress;
+5. reconnect after interruption;
+6. recover persisted run state;
+7. inspect safe evidence/evaluation/output lineage;
+8. do all of the above with no developer machine participating.
+
+## 5. IAM and multi-user acceptance
+
+Before production IAM is claimed, browser/end-user identity must use a standards-based flow such as OIDC/OAuth Authorization Code + PKCE or another systematically selected equivalent.
+
+Must prove:
+
+- login/logout/session lifecycle;
+- expiry/refresh or equivalent secure re-authentication semantics;
+- server-owned mapping to user/identity/organization/permissions;
+- browser cannot assert tenant or privilege authority;
+- PostgreSQL RLS remains an independent tenant boundary;
+- cross-user/cross-tenant browser/API/SQL negative tests;
+- invalid/expired/manipulated identity fails closed;
+- privileged access is explicit and audited.
+
+The existing signed bearer runtime envelope may remain as an internal/trusted runtime boundary, but it is not by itself a complete end-user IAM claim.
+
+## 6. Consequential-action acceptance
 
 The production action path must prove:
 
 - proposal is not execution;
-- permission/resource/schema/justification validation is deterministic;
-- action payload is held in private server-side custody;
-- operator/browser confirms only an opaque action identity and explicit consent;
-- browser cannot inject arguments, permissions, requester identity, scope or idempotency key at confirmation;
-- current authorization and host-owned action kill switch are revalidated at execution time;
-- idempotency is persistently claimed before transport;
-- one logical action cannot execute twice under tested concurrency/restart semantics;
-- ambiguous post-claim failure becomes `UNCERTAIN` and is never automatically replayed;
-- accepted action produces a separate realtime execution RunTrace;
-- action execution has a dedicated trace-only evaluator;
-- another requester cannot enumerate or confirm the action.
+- permission/resource/schema/evidence/justification validation is deterministic;
+- action payload lives in private server-side custody;
+- operator confirms only opaque action identity + consent;
+- browser cannot inject arguments, tenant, requester identity, permissions or idempotency material during confirmation;
+- current authorization and host kill switch are revalidated before execution;
+- persistent idempotency claim precedes transport;
+- non-transferable execution lease/fencing prevents another replica from replacing an ambiguous action attempt;
+- duplicate confirmation does not produce a duplicate transport attempt;
+- ownership loss/staleness converges to `UNCERTAIN`;
+- stale late responses cannot overwrite uncertainty with false success/failure;
+- no automatic blind replay occurs;
+- accepted/failed/uncertain execution receives a distinct auditable trace/evaluation;
+- unauthorized requesters cannot enumerate/confirm another requester’s action.
 
-The frozen read-only ProductionRuntime/ProductionEvaluator must not be weakened to satisfy this.
+Do not claim distributed exactly-once external side effects unless the external API participates in a compatible idempotency/fencing protocol.
 
-## 5. Evaluation-framework acceptance
+## 7. Evaluation-framework acceptance
 
-The evaluation framework must support and demonstrate:
+Must support and demonstrate:
 
 - scenario execution;
-- function/tool-selection evaluation;
+- tool/function selection quality;
 - argument validity/semantic correctness where measurable;
-- execution trajectory integrity;
+- trajectory integrity;
 - evidence/provenance use;
-- response/terminal outcome quality;
+- terminal/outcome quality;
 - safety/containment;
-- performance under failures/degraded API modes;
+- degraded/failure behavior;
 - repeated-run stability;
 - high-impact-action behavior;
 - escalation/handoff quality;
 - customer-safe communication;
 - evaluator/runtime isolation;
-- reproducible result/config identities;
-- baseline-vs-candidate delta reporting for material changes.
+- reproducible config/result identities;
+- baseline-vs-candidate delta reporting.
 
-Private benchmark/gold truth must never enter runtime/model context.
+Private benchmark/gold/evaluator truth must never enter runtime/model context.
 
-## 6. Semantic response-quality acceptance
+## 8. Semantic-evaluation acceptance
 
-Deterministic evaluation remains authoritative wherever exact evidence exists.
+Deterministic checks remain authoritative where exact truth exists.
 
-Where the TAPI quality dimension cannot be adequately scored deterministically, add a separately identified semantic layer for:
-
-- operational conclusion quality;
-- groundedness/evidence support;
-- unsupported claims;
-- escalation/handoff usefulness;
-- customer-safe communication;
-- relevant completeness/clarity.
-
-Any LLM/semantic judge used as a gate must first be calibrated against a human-labelled sample.
-
-Required evidence:
+For dimensions requiring semantic judgment, the project must provide:
 
 - explicit rubric;
-- blind human-labelled calibration rows;
+- blinded human-labelled calibration sample;
+- independent adjudication where required;
 - judge-vs-human agreement/error analysis;
-- response-mode slices;
-- disagreement/failure examples;
-- no judge promotion if calibration is insufficient;
-- deterministic and semantic Eval Lab outputs visually separated.
+- response-mode/evidence-mode slices;
+- confusion matrix and relevant precision/recall/F1;
+- inter-rater agreement statistic appropriate to the design;
+- failure/disagreement examples;
+- explicit acceptance/rejection thresholds defined before final judge promotion.
 
-## 7. Eval-Driven Development acceptance
+No semantic judge may gate candidates before reliability against real human labels is established.
 
-For every material behavior/architecture candidate:
+If real human labels are unavailable, the correct state is `NOT READY`, not synthetic calibration masquerading as human truth.
+
+## 9. Eval-Driven Development acceptance
+
+Every material behavior/architecture/model/provider candidate follows:
 
 ```text
-requirement
+requirement / measured gap
 → metric/evaluator
-→ frozen baseline
-→ preregistered hypothesis/candidate
+→ baseline
+→ preregistered candidate
 → controlled implementation
 → repeated/sliced comparison
 → uncertainty/failure analysis
-→ PROMOTE / REJECT / INCONCLUSIVE
+→ PROMOTE / REJECT / INCONCLUSIVE / NO_CHANGE
 → regression gate
 ```
 
-The comparison must be group-aware for the delivered 16 narrative scenarios / 17 coupled rows and must not treat coupled rows as independent evidence.
+Hard integrity gates include as applicable:
 
-Hard gates include:
-
-- gold leakage = 0;
+- evaluator/gold leakage = 0;
 - credential/private-field leakage = 0;
-- unauthorized action = 0;
-- duplicate consequential action = 0;
-- known-tool validity = 100%;
-- trace integrity = 100% for accepted runs;
-- no safety/integrity regression hidden by an aggregate score.
+- unauthorized consequential action = 0;
+- duplicate replacement consequential action = 0;
+- known-tool/schema validity = 100%;
+- trace-integrity failures cannot be hidden by aggregate score;
+- tenant isolation failures = 0.
 
-## 8. Adaptive-policy acceptance
+A fashionable framework/component is never an acceptance requirement by itself.
 
-Adaptation is allowed only inside deterministic safety boundaries.
+## 10. Adaptive-policy acceptance
 
-Candidate dimensions:
+Adaptation is optional and must remain inside deterministic safety boundaries.
 
-- adaptive investigation budget;
+Candidate areas may include:
+
+- investigation depth;
 - evidence-sufficiency/marginal-gain stopping;
-- calibrated clarification/abstention/escalation from risk × uncertainty × contradiction.
+- tool ordering;
+- clarification/abstention/escalation thresholds;
+- hosted provider/model routing;
+- contextual resource/time budgets.
 
-The system must keep deterministic:
+Always deterministic/hard-gated:
 
-- authentication/authorization;
-- identity/evaluation seed;
+- auth and tenant scope;
+- RLS/permissions;
 - ToolSpec/schema validation;
-- permissions/resource scope;
-- action confirmation/idempotency/no-replay;
-- privacy/leakage controls;
-- hard maximum execution/resource limits.
+- action confirmation/custody/idempotency/lease/fencing;
+- privacy controls;
+- evaluator partition isolation;
+- hard resource/execution caps.
 
-An adaptive candidate enters production only if it materially improves at least one required quality/reliability/efficiency dimension without critical regression. Otherwise the fixed/simple baseline remains final and the negative experiment remains documented.
+An adaptive candidate enters production only after a controlled locked comparison shows material benefit without critical regression. `NO_CHANGE` is fully acceptable.
 
-## 9. Runtime/HITL architecture acceptance
+## 11. Storage and realtime acceptance
 
-The original custom AgentController remains the baseline.
-
-Because the final product now includes pending-action custody + human confirmation/resume, final architecture freeze must prospectively revalidate whether the current runtime remains preferable to a durable-checkpoint/HITL orchestration alternative.
-
-Minimum comparison when material:
-
-```text
-A — current custom controller + action custody
-B — LangGraph-compatible persistent checkpoint/HITL adapter
-```
-
-Hold provider, tools, HarnessRunner, safety, cases and evaluators constant.
-
-Evaluate:
-
-- task/trace equivalence;
-- pause/resume correctness;
-- restart recovery;
-- duplicate action rate;
-- failure containment;
-- latency/resource overhead;
-- implementation/dependency complexity;
-- clean reproduction;
-- debug/trace clarity.
-
-`NO_CHANGE` is accepted and preferred if the current runtime remains on the best-supported Pareto frontier.
-
-## 10. Operational storage acceptance
-
-DuckDB remains the analytics baseline.
-
-Final mutable operational state must be bounded by the production claim actually demonstrated.
-
-If the product claims only a tested single-process/single-node action executor, current DuckDB custody/idempotency may be accepted after restart/concurrency tests.
-
-If a broader multi-process durable claim is made, compare against a production-appropriate local operational store such as PostgreSQL before freeze.
-
-Acceptance measurements:
-
-- concurrent claims;
-- duplicate-action rate;
-- restart/crash recovery;
-- atomicity/transaction behavior;
-- p50/p95 state latency where meaningful;
-- setup/migration complexity;
-- resource footprint;
-- clean reproduction;
-- USD0 compliance.
-
-Do not claim multi-process mutation/realtime durability unless tested.
-
-## 11. Provider experiment acceptance
-
-D01 historical evidence remains immutable:
-
-- 32/32 completed attempts;
-- USD0;
-- complete resource accounting;
-- `NO_SELECTION`;
-- no raw provider material recorded;
-- 24/24 generic `CLIENT_FAILURE` at exact 512 completion ceiling.
-
-D02 acceptance requires:
-
-- exact prospective 1024-token protocol;
-- fresh post-reset governed authorization;
-- no paid spillover;
-- write-ahead custody/no replay;
-- complete or explicitly stopped accounting;
-- sanitized failure subtypes;
-- D01 vs D02 controlled analysis;
-- frozen hard-gate/Pareto decision, including `NO_SELECTION` when appropriate.
-
-No architecture change is accepted merely because a provider performs poorly.
-
-## 12. Realtime observability acceptance
-
-Browser-visible telemetry must derive from the deterministic safe projection, never raw RunTrace.
+Promoted production state is PostgreSQL.
 
 Must prove:
 
+- no local-file/DuckDB production truth;
+- tenant RLS on applicable production data;
+- durable run ownership/execution state;
+- durable runtime handoff/generation fencing;
+- durable action custody/idempotency/leases;
+- durable sanitized observability/evaluation rows;
+- transactionally correct state transitions for tested concurrent/restart cases.
+
+DuckDB may remain in dev/benchmark compatibility only.
+
+Realtime must prove:
+
+- durable PostgreSQL rows/cursors are authoritative;
 - live run appears without refresh;
-- genuine runtime events update timeline/trace graph/architecture/counters;
-- event order is preserved;
-- connection state is explicit (`LIVE`, `RECONNECTING`, `CAUGHT_UP`, `HISTORICAL`);
-- persisted cursor/Last-Event-ID catch-up works;
+- genuine runtime events update the UI;
+- ordering is preserved;
+- reconnect/catch-up works;
 - duplicate delivery is logically idempotent;
 - event gaps are detected/measured;
-- slow/disconnected browser cannot materially block runtime;
-- terminal UI appears only after genuine terminal evidence;
-- no fabricated thinking/progress is presented as telemetry;
-- realtime/action/health metrics are derived from real instrumentation.
+- `LISTEN/NOTIFY` or any wake-up mechanism is never used as tenant/auth truth;
+- browser disconnect/slow client does not block runtime execution materially;
+- terminal UI appears only from genuine terminal evidence;
+- no fabricated thinking/progress is shown.
 
-## 13. Security/privacy acceptance
+## 12. Production observability acceptance
 
-Browser/API/SSE must never receive:
+The product control room must expose safe server-owned live production evidence, including where applicable:
 
-- provider credentials/tokens;
-- account IDs/auth headers;
-- runtime identity binding/user ID;
-- evaluation seed;
-- raw provider request/response;
-- forbidden raw prompt/system material;
-- forbidden raw tool/observation bodies;
-- raw action custody payload/idempotency key;
-- hidden chain-of-thought;
-- evaluator-private truth/oracles/gold.
+- environment/build/commit/deploy revision;
+- API health/request/error/latency;
+- DB health/pool/connection behavior;
+- provider/model call latency/failure/token or resource accounting;
+- tool/policy outcomes;
+- run/event persistence latency;
+- SSE delivery/reconnect/gap/duplicate behavior;
+- action lease/uncertainty state;
+- backup/restore-drill status after those controls exist.
 
-Required tests must prove deny-list behavior.
+A standardized external telemetry layer may be added through a systematic decision, but it must not replace the domain-specific product truth.
 
-## 14. Frontend product acceptance
+Prompts/tool arguments/raw provider material containing sensitive data should not be captured by default.
 
-Required connected product areas:
+## 13. Remote load, capacity and SLO acceptance
+
+Repository CI load tests are insufficient for a production-capacity claim.
+
+Run a remote campaign against the deployed path with increasing concurrency until measured saturation/inflexion, then a soak test.
+
+Report at minimum:
+
+- throughput;
+- p50/p95/p99 request/run latency;
+- error/timeout rate;
+- CPU/memory;
+- DB pool/connections;
+- provider latency/error rate;
+- event persistence and SSE-delivery latency;
+- reconnect/gap/duplicate rate;
+- action throughput/queueing where safely measurable.
+
+SLOs must be derived from measured behavior plus product requirements, not invented post hoc.
+
+No `capacity-tested`, `production SLO` or worker-sizing claim is allowed before this evidence exists.
+
+## 14. Backup, recovery, HA, RTO/RPO acceptance
+
+If the product claims durability/recovery/HA, it must test the deployed path under relevant failures:
+
+- backend restart/instance loss;
+- DB connection loss/failover;
+- provider timeout/outage;
+- SSE disconnect/reconnect;
+- deployment during work;
+- read-only runtime lease expiry/takeover;
+- action ownership loss;
+- rollback.
+
+Data protection must include:
+
+- automated backup/PITR or selected equivalent;
+- controlled restore drill;
+- restored-data integrity verification.
+
+RTO/RPO must be derived from measured recovery/data-loss behavior. Provider SLA alone is not application RTO/RPO evidence.
+
+## 15. Provider/model acceptance
+
+Historical D01/D02 evidence remains immutable and currently concludes `NO_SELECTION`.
+
+A production provider/model decision requires a new hosted-candidate experiment because local model serving is not eligible for the remote production path.
+
+Compare candidates under the same locked workload and hard gates across:
+
+- operational correctness;
+- evidence/tool/argument quality;
+- clarification/escalation/abstention;
+- safety;
+- p50/p95/p99;
+- reliability/timeouts/malformed-output rate;
+- repeated-run stability;
+- tokens/resources;
+- cost/run.
+
+Use Pareto reasoning. Valid outcomes include `PROMOTE`, `KEEP_BASELINE` and `NO_SELECTION`.
+
+Provider fallback is a separate challenger and must demonstrate net reliability value before adoption.
+
+## 16. Operational-value acceptance
+
+Before any business/value claim, compare the same cases under:
+
+```text
+MANUAL
+vs
+AGENT-ASSISTED
+```
+
+Primary metric:
+
+`time to correct operational decision`
+
+Also capture correctness, safety, escalation burden, evidence coverage, tool/retry count and human interventions.
+
+Report paired distributions/deltas and uncertainty (for example bootstrap confidence intervals) where appropriate.
+
+No engineer-minutes-saved/auto-resolution/value claim without real human observations.
+
+## 17. Frontend product acceptance
+
+Required connected areas should include, as applicable to the current product:
 
 1. Mission Control;
 2. Live Run Cockpit;
@@ -322,220 +413,166 @@ Required connected product areas:
 9. Action Control;
 10. Tools & Policy analytics;
 11. Eval Lab;
-12. Provider D01/D02 Lab;
+12. Provider Lab;
 13. Dynamic Data Explorer;
-14. Production Health.
+14. Production Health;
+15. Operational Value once real data exists.
 
-Every semantically meaningful KPI/chart/aggregate must drill toward underlying safe run/event/evidence records.
-
-For representative runs, the UI must answer:
+Representative runs must let a reviewer answer:
 
 - what happened;
-- which actual architecture components participated;
-- what each component produced;
-- what safe evidence/input fed it;
-- what happened next;
-- which output became terminal;
+- which real components participated;
+- which safe evidence/tool/policy transitions occurred;
+- what became terminal and why at structured reason-code level;
 - what evaluation happened afterward;
-- which action/confirmation state exists where relevant.
-
-Origin vocabulary:
-
-```text
-MODEL
-CONTROLLER
-POLICY
-TOOL
-OBSERVATION
-EVALUATOR
-SYSTEM
-```
+- what action state exists where relevant;
+- which deployed build produced the run.
 
 No hidden chain-of-thought.
 
-## 15. Dynamic visualization acceptance
+## 18. Dynamic visualization acceptance
 
-The Data Explorer must:
+Dynamic analysis must:
 
 - expose only allow-listed safe datasets/fields;
-- support global run scope plus compatible local filters;
-- support semantically valid rates/p50/p95/distributions;
+- support valid global/local filters;
+- report semantically valid rates/distributions/quantiles;
 - validate chart compatibility deterministically;
-- provide table/bar/line/scatter/heatmap/histogram where applicable;
-- update without full-page reload;
-- permit drill-down to safe source records;
+- update without full-page reload where live behavior matters;
+- drill down to safe source records;
 - reject unsupported combinations clearly;
 - never execute arbitrary browser SQL.
 
-Required ready-made analysis includes:
+Visualizations must be driven by real data, not static presentation fixtures in production.
 
-- outcomes over time;
-- runtime/API p50/p95;
-- tools/policy blocks;
-- failure subtypes;
-- output tokens vs outcome where measured;
-- D01/D02 comparison;
-- Neuron/resource accounting;
-- evaluator pass/bounded rates;
-- production-health instrumentation.
+## 19. Security and privacy acceptance
 
-## 16. Quantitative production acceptance
+Browser/API/SSE/artifacts must not expose:
 
-Use measured provider-free baselines to preregister targets before looking at final candidate/rehearsal results.
+- provider credentials/tokens/auth headers;
+- signing secrets;
+- evaluator/gold seeds/private truth;
+- raw sensitive provider prompt/response material;
+- forbidden raw tool/observation bodies;
+- private action arguments/idempotency keys;
+- hidden chain-of-thought.
 
-Report at minimum:
+Security testing must also cover:
 
-- startup/readiness time;
-- runtime request/execution p50/p95;
-- API/query p50/p95;
-- observability publish/persistence overhead;
-- runtime-event → persistence p50/p95;
-- persistence → browser/SSE p50/p95;
-- reconnect recovery rate/time;
-- detected event-gap rate;
-- logical duplicate rate;
-- executor utilization/concurrency pressure;
-- process CPU/load/RSS;
-- passive provider failure/latency observations;
-- TRACTIAN HTTP status distribution;
-- forbidden-field leakage.
+- tenant spoofing/cross-tenant access;
+- token replay/expiry/manipulation;
+- privilege escalation;
+- prompt/tool-argument injection;
+- confirmation bypass;
+- duplicate/replayed action attempts;
+- DB role/RLS bypass;
+- unauthorized SSE access.
 
-Do not invent post-hoc thresholds from final results.
+Supply-chain controls should include dependency/secret/static/deploy-artifact scanning appropriate to the selected production stack.
 
-## 17. Browser/E2E acceptance
+## 20. Browser/E2E acceptance
 
-The final dependency graph must be frozen with a committed frontend lockfile and deterministic lockfile install (`npm ci` or equivalent).
+Playwright or equivalent browser acceptance must exercise real product contracts, including:
 
-Playwright must exercise the real provider-free product path:
+- remote or staging-compatible authenticated run submission;
+- genuine SSE events and ordering;
+- reconnect/catch-up/idempotency;
+- trace/architecture/evidence/lineage;
+- success, clarify, abstain, escalation and failure states;
+- pending/confirmed/blocked action profiles where safe;
+- evaluator post-runtime ordering;
+- forbidden-field absence;
+- loading/empty/long/error states;
+- multi-user/tenant negative cases once IAM is deployed.
 
-1. submit a production request;
-2. observe genuine SSE events;
-3. validate ordering and logical idempotency;
-4. disconnect/reconnect and catch up;
-5. inspect trace + architecture;
-6. inspect evidence + lineage;
-7. use global scope/cross-filter/drill-down;
-8. observe real Production Health values;
-9. cover success, clarify, abstain, escalation, error and blocked action;
-10. confirm a pending action in an authorized test profile and follow its separate live execution run;
-11. verify terminal output timing;
-12. verify evaluator remains post-runtime;
-13. verify forbidden data is absent;
-14. test loading/empty/long/unsupported-query states and presentation viewport.
+Provider-free deterministic acceptance remains useful for reproducibility but is not evidence that a production model/provider works remotely.
 
-## 18. Production deployment/recovery acceptance
+## 21. CI/CD and repository-governance acceptance
 
-From a clean checkout a reviewer must be able to:
+Before production completion:
 
-- install pinned backend dependencies;
-- install frontend from lockfile;
-- start the whole product through one documented production path (`docker compose` or equivalent);
-- validate environment/config before serving;
-- inject secrets only through environment/secret mechanisms;
-- obtain truthful `/health`, `/ready`, version/config state;
-- gracefully shut down and restart;
-- preserve/recover applicable persistent state according to the bounded production claim;
-- execute the provider-independent product path;
-- run the complete backend/frontend/eval/E2E suite;
-- inspect final results/architecture/lineage/limitations.
+- `main` is protected by ruleset/branch protection;
+- PR is required for production changes;
+- stable `final-ci-required / required-gate` is required;
+- direct/force push behavior is appropriately restricted;
+- staging deploy/smoke precedes production promotion;
+- production smoke exists;
+- build/release provenance is recorded;
+- rollback target exists and rollback is tested;
+- historical research workflows are not ordinary product-PR gates.
 
-No demo-only service/path may be required.
+## 22. Reproduction acceptance
 
-## 19. Required outcome/state matrix
+A clean checkout must still be able to reproduce repository-level evidence locally/CI with pinned dependencies and no secrets where provider-free evidence is intended.
 
-At minimum test and visibly support:
+This local reproduction path is **not the production serving path**.
 
-- success/orient;
-- investigate/tool use;
-- ask clarification;
-- abstain/unavailable evidence;
-- human escalation + handoff;
-- pending consequential action;
-- confirmed action execution;
-- policy/action blocked;
-- tool/provider error;
-- partial/inconclusive/conflict;
-- live run in progress;
-- SSE disconnected/reconnecting/caught-up;
-- loading;
-- empty;
-- long/overflow content;
-- invalid dynamic query/chart;
-- trace validation failure representation;
-- D01/D02 experiment state;
-- production health degraded state.
+The runbook must clearly distinguish:
 
-## 20. Documentation/reproduction acceptance
+- local/CI deterministic reproduction;
+- remote staging/production operation;
+- historical experiment reproduction.
 
-README and canonical docs must accurately state:
+Frozen historical workflow/result identities must not be rewritten to make later gates pass.
 
-- updated-TAPI integrated Agent + Evaluation scope;
-- current real architecture;
-- exact stack/versions or authoritative dependency sources;
-- installation/start/restart;
-- models/providers/configuration;
-- EDD methodology;
-- D01/D02 results;
-- adaptive/runtime/storage decision results;
-- semantic evaluator calibration result;
-- production measurements;
-- limitations/non-claims;
-- opportunities/reversal triggers;
-- rubric → evidence navigation.
+## 23. Final evidence bundle
 
-No canonical document may still call already implemented frontend/observability work merely `planned`.
+The final production freeze must capture or link to:
 
-## 21. Freeze acceptance
+- production URL(s);
+- release/build/commit identity;
+- selected deployment/IAM/database decisions and ADRs;
+- final architecture;
+- dataset/evaluator identities;
+- baseline/candidate results;
+- provider/model decision or `NO_SELECTION`;
+- remote load/SLO evidence;
+- backup/restore/recovery/RTO/RPO evidence where claimed;
+- auth/RLS/action-safety evidence;
+- semantic calibration result or explicit `NOT READY` limitation;
+- operational-value result or explicit `NOT READY` limitation;
+- live frontend evidence;
+- reproduction/operations/rollback runbook;
+- limitations and reversal triggers.
 
-By end of 2026-09-05:
+## 24. Final presentation acceptance
 
-- feature set frozen;
-- visual/information hierarchy frozen;
-- runtime→telemetry→frontend contracts frozen;
-- production action contract frozen;
-- semantic-eval gating decision frozen;
-- adaptive policy either promoted or rejected;
-- runtime/HITL choice frozen or explicitly bounded `NO_CHANGE`;
-- operational store/deployment claim frozen;
-- no open unbounded P0 defect;
-- remaining P1 explicitly bounded.
+The presentation must use the normal deployed product path, not a separate demo implementation.
 
-After freeze, only delivery-blocking fixes are allowed and each requires targeted regression.
-
-## 22. Final presentation acceptance
-
-The final presentation operates the normal product path and visibly shows:
+It should visibly demonstrate:
 
 ```text
-request
+authenticated user
+→ remote request
 → live run
 → architecture activation
-→ model/decision metadata
-→ typed tool proposal
-→ deterministic policy/safety
-→ TRACTIAN call metadata
-→ safe evidence
-→ next decision
+→ decision/tool/policy/evidence transitions
 → final / clarify / abstain / escalation / governed action
-→ completed RunTrace
+→ completed trace
 → post-runtime evaluation
 → output lineage
 → production health
-→ dynamic quantitative analytics
-→ D01/D02 + final architecture-decision evidence
+→ quantitative analytics/evidence
 ```
 
-It must include multiple outcome/failure classes and preserve a provider-independent fallback.
+Provider/model or external failure must not make the entire support workflow unavailable; safe abstention/escalation/fallback behavior should remain demonstrable.
 
-## 23. Evidence-honest non-claims
+## 25. Evidence-honest non-claims
 
-The final project may legitimately contain:
+Negative decisions strengthen the project when evidence-backed. It is acceptable to end with:
 
-- `NO_SELECTION` for provider;
-- `REJECT` for adaptive policy;
-- `NO_CHANGE` for custom controller vs LangGraph;
-- `NO_CHANGE` for DuckDB operational baseline if only single-process production is claimed.
+- `NO_SELECTION` for provider/model;
+- `NO_CHANGE` for LangGraph/multi-agent/RAG/memory/MCP;
+- `REJECT` for an adaptive policy;
+- `NOT READY` for human semantic/business-value claims when real data is unavailable.
 
-Negative decisions backed by controlled evidence strengthen the project. They must never be replaced by invented winners or fashionable complexity.
+It is **not** acceptable to claim:
 
-The missing exact C4 evaluator artifact remains an external blocker for claims requiring that exact material and must not be reconstructed or substituted.
+- remote production readiness from local CI alone;
+- enterprise IAM from the signed runtime bearer alone;
+- capacity/SLO/HA/RTO/RPO from repository tests alone;
+- a model/provider winner that did not cross the frozen gates;
+- value/human calibration that was not measured;
+- local/DuckDB serving as the final production topology under the current remote-production requirement.
+
+The missing exact historical C4 evaluator artifact remains an external blocker for claims requiring that exact material and must not be reconstructed or substituted.
