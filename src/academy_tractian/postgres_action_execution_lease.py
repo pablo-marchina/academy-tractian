@@ -192,18 +192,19 @@ class PostgresActionExecutionLeaseStore:
         return row is not None
 
     def is_current_owner(self, claim: ActionExecutionLeaseClaim) -> bool:
+        # Ownership remains valid through the final guarded persistence step even after custody
+        # transitions from EXECUTING to its terminal state. The lease row itself is the fencing
+        # token; terminal release deletes it immediately after the final trace/evaluation commit.
         with self.database.internal_pool.connection() as connection:
             row = connection.execute(
                 f"""
                 SELECT 1
                 FROM {self._table()} AS l
-                JOIN "{self.schema}".pending_actions AS a USING (action_id)
                 WHERE l.action_id = %s
                   AND l.execution_run_id = %s
                   AND l.owner_instance_id = %s
                   AND l.generation = %s
                   AND l.lease_expires_at > CURRENT_TIMESTAMP
-                  AND a.state = 'EXECUTING'
                 """,
                 (
                     claim.action_id,
@@ -219,13 +220,17 @@ class PostgresActionExecutionLeaseStore:
             with connection.transaction():
                 row = connection.execute(
                     f"""
-                    DELETE FROM {self._table()}
-                    WHERE action_id = %s
-                      AND execution_run_id = %s
-                      AND owner_instance_id = %s
-                      AND generation = %s
-                      AND lease_expires_at > CURRENT_TIMESTAMP
-                    RETURNING action_id
+                    DELETE FROM {self._table()} AS l
+                    WHERE l.action_id = %s
+                      AND l.execution_run_id = %s
+                      AND l.owner_instance_id = %s
+                      AND l.generation = %s
+                      AND l.lease_expires_at > CURRENT_TIMESTAMP
+                      AND EXISTS (
+                          SELECT 1 FROM "{self.schema}".pending_actions AS a
+                          WHERE a.action_id = l.action_id AND a.state <> 'EXECUTING'
+                      )
+                    RETURNING l.action_id
                     """,
                     (
                         claim.action_id,
