@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from io import BytesIO
 import json
+from urllib.error import HTTPError
 
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 import pytest
 
+import academy_tractian.neon_auth_identity as neon_auth_identity
 from academy_tractian.neon_auth_identity import NeonAuthRuntimeContextProvider
 from academy_tractian.product_api import DEFAULT_RUNTIME_PERMISSIONS
 
@@ -14,7 +17,7 @@ def _payload(
     *,
     user_id: str = "user-a",
     session_user_id: str | None = None,
-    active_organization_id: str | None = None,
+    active_organization_id: object = None,
     impersonated_by: str | None = None,
 ) -> bytes:
     return json.dumps(
@@ -30,7 +33,7 @@ def _payload(
     ).encode("utf-8")
 
 
-def _client(fetch_session):
+def _client(fetch_session=None):
     provider = NeonAuthRuntimeContextProvider(
         base_url="https://example.neonauth.example/academy/auth",
         fetch_session=fetch_session,
@@ -63,7 +66,12 @@ def test_valid_managed_session_derives_personal_tenant_without_browser_authority
         response = client.get(
             "/context",
             cookies={"better-auth.session_token": "opaque-session"},
-            headers={"x-organization-id": "attacker-org", "x-role": "admin"},
+            headers={
+                "x-organization-id": "attacker-org",
+                "x-user-id": "attacker-user",
+                "x-role": "admin",
+                "x-permissions": "*",
+            },
         )
 
     assert response.status_code == 200
@@ -102,17 +110,73 @@ def test_missing_cookie_fails_closed_without_calling_auth_service() -> None:
     assert called is False
 
 
+def test_duplicate_cookie_headers_fail_closed_before_auth_service() -> None:
+    called = False
+
+    def fetch(_cookie: str):
+        nonlocal called
+        called = True
+        return 200, _payload()
+
+    with _client(fetch) as client:
+        response = client.get(
+            "/context",
+            headers=[
+                ("cookie", "better-auth.session_token=first"),
+                ("cookie", "better-auth.session_token=second"),
+            ],
+        )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "managed_session_required"
+    assert called is False
+
+
+def test_oversized_cookie_fails_closed_before_auth_service() -> None:
+    called = False
+
+    def fetch(_cookie: str):
+        nonlocal called
+        called = True
+        return 200, _payload()
+
+    with _client(fetch) as client:
+        response = client.get(
+            "/context",
+            headers={"cookie": f"better-auth.session_token={'x' * (16 * 1024)}"},
+        )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "managed_session_required"
+    assert called is False
+
+
 @pytest.mark.parametrize(
     "body",
     [
         _payload(user_id="user-a", session_user_id="user-b"),
         _payload(impersonated_by="admin-user"),
+        _payload(user_id=" user-a "),
+        _payload(user_id="user-a\nadmin"),
+        _payload(user_id="x" * 257),
+        _payload(active_organization_id=" org-a "),
+        _payload(active_organization_id="org-a\norg-b"),
+        _payload(active_organization_id="x" * 257),
+        _payload(active_organization_id={"id": "org-a"}),
         b"{}",
         b"not-json",
     ],
 )
 def test_malformed_mismatched_or_impersonated_session_fails_closed(body: bytes) -> None:
     with _client(lambda _cookie: (200, body)) as client:
+        response = client.get("/context", cookies={"better-auth.session_token": "opaque"})
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "managed_session_invalid"
+
+
+def test_oversized_managed_session_response_fails_closed() -> None:
+    with _client(lambda _cookie: (200, b"{" + b"x" * (64 * 1024) + b"}")) as client:
         response = client.get("/context", cookies={"better-auth.session_token": "opaque"})
 
     assert response.status_code == 401
@@ -130,6 +194,59 @@ def test_expired_or_rejected_managed_session_is_unauthorized(auth_status: int) -
 
 def test_managed_auth_service_failure_fails_closed() -> None:
     with _client(lambda _cookie: (503, b"{}")) as client:
+        response = client.get("/context", cookies={"better-auth.session_token": "opaque"})
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "managed_session_unavailable"
+
+
+def test_network_session_fetch_disables_redirects_before_forwarding_cookie(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: dict[str, object] = {}
+
+    class FakeOpener:
+        def open(self, request, timeout):  # noqa: ANN001, ANN201
+            seen["request"] = request
+            seen["timeout"] = timeout
+            raise HTTPError(
+                request.full_url,
+                302,
+                "redirect forbidden",
+                {"Location": "https://attacker.example/steal"},
+                BytesIO(b"redirect forbidden"),
+            )
+
+    def fake_build_opener(handler):  # noqa: ANN001, ANN201
+        seen["handler"] = handler
+        return FakeOpener()
+
+    monkeypatch.setattr(neon_auth_identity, "build_opener", fake_build_opener)
+    provider = NeonAuthRuntimeContextProvider(
+        base_url="https://auth.example.com/academy/auth",
+    )
+
+    status_code, body = provider._network_fetch("better-auth.session_token=opaque")
+
+    assert status_code == 302
+    assert body == b"redirect forbidden"
+    assert isinstance(seen["handler"], neon_auth_identity._NoAuthRedirectHandler)
+    request = seen["request"]
+    assert request.get_header("Cookie") == "better-auth.session_token=opaque"
+    assert request.full_url == "https://auth.example.com/academy/auth/get-session?disableCookieCache=true"
+    assert seen["handler"].redirect_request(None, None, 302, "", {}, "https://attacker.example") is None
+
+
+def test_redirect_response_is_never_treated_as_a_valid_session(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        NeonAuthRuntimeContextProvider,
+        "_network_fetch",
+        lambda self, _cookie: (302, b"redirect"),
+    )
+
+    with _client() as client:
         response = client.get("/context", cookies={"better-auth.session_token": "opaque"})
 
     assert response.status_code == 401
