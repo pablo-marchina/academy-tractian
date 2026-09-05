@@ -17,6 +17,7 @@ from .neon_authenticated_postgres_product_api import (
 )
 from .production_actions_v2 import ActionAuthorizationResolver
 from .production_config import RemoteProductionConfig
+from .release_identity import ArtifactReleaseIdentity, build_verified_release_metadata
 
 
 def load_remote_production_config(
@@ -30,23 +31,29 @@ def load_remote_production_config(
 def create_remote_production_app(
     *,
     config: RemoteProductionConfig,
+    artifact_release_identity: ArtifactReleaseIdentity,
     decision_source_factory: Callable[[], DecisionSource],
     transport_factory: Callable[[], RequestTransport],
     authorization_resolver: ActionAuthorizationResolver,
+    railway_runtime_git_sha: str | None = None,
     schema: str = "academy_operational",
     max_workers: int = 4,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
     """Build the only production composition allowed to call itself remote-serving ready.
 
-    Configuration validation happens before PostgreSQL pools, realtime listeners or runtime
-    workers are created. Schema migration is intentionally disabled at serving boot. Provider
-    execution remains under the explicit provider-selection gate and consequential actions stay
-    disabled at this infrastructure/IAM boundary.
+    Configuration and baked-artifact identity validation happen before PostgreSQL pools,
+    realtime listeners or runtime workers are created. Schema migration is intentionally
+    disabled at serving boot. Provider execution remains under the explicit provider-selection
+    gate and consequential actions stay disabled at this infrastructure/IAM boundary.
     """
 
     config = RemoteProductionConfig.model_validate(config.model_dump())
-    release_metadata = config.safe_metadata()
+    release_metadata = build_verified_release_metadata(
+        configured_metadata=config.safe_metadata(),
+        artifact_identity=artifact_release_identity,
+        railway_runtime_git_sha=railway_runtime_git_sha,
+    )
 
     common = dict(
         internal_dsn=config.internal_dsn.get_secret_value(),
