@@ -1,7 +1,7 @@
 # Academy × TRACTIAN — Architecture, Stack and Techniques
 
 **Status:** ACTIVE / canonical architecture document  
-**Checkpoint:** 2026-09-05 BRT  
+**Checkpoint:** 2026-09-05 corrected production rebaseline  
 **Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
 **Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
 **Code map:** [`CODEBASE-MAP.md`](CODEBASE-MAP.md)  
@@ -20,9 +20,30 @@ This document owns the **promoted current architecture, stack and technique deci
 - Frontend surfaces safe structured provenance, not raw sensitive traces or hidden chain-of-thought.
 - Adaptive/model/framework changes are challengers, not automatic upgrades; promotion requires measured Pareto benefit and hard-gate preservation.
 - Claims must remain narrower than the evidence that supports them.
-- The current project governance still records the USD0 external-service constraint for the existing evidence program; any production-hosting policy change requires an explicit new decision rather than silent drift.
+- **USD 0 actual project cash cost is a permanent hard eligibility constraint unless the user explicitly changes it.** Paid candidates may be researched as references but cannot be selected.
+- Production must be remote and must not rely on a developer machine/local serving dependency; the architecture must satisfy remote production **inside** the USD0 constraint rather than trading one requirement against the other.
 
-## 2. Promoted product architecture
+## 2. Architecture eligibility envelope
+
+Every material hosted/external component must satisfy all project hard constraints before it can enter a promotion comparison:
+
+```text
+actual cash cost = USD 0
+AND no automatic paid spillover
+AND remote / no local production dependency
+AND required privacy/security constraints
+AND compatible with multi-user production path
+        ↓
+ELIGIBLE
+        ↓
+quality / safety / reliability / latency / production-fit evaluation
+        ↓
+PREFERRED / PROMOTED / NO_SELECTION
+```
+
+A component that violates USD0 is `INELIGIBLE`, not merely a higher-cost point on the project Pareto frontier.
+
+## 3. Promoted product architecture
 
 ```text
 Browser / React Operator Control Room
@@ -72,7 +93,9 @@ REST / SSE / React control room
 
 `POST /api/runs` exercises the promoted product path. Provider-free acceptance substitutes the model decision source only; runtime, tools, policies, persistence, evaluation, SSE and frontend remain the product path.
 
-## 3. Runtime ownership and horizontal handoff
+The final remote deployment layer, IAM provider, database hosting, telemetry backend and production model/provider are not yet selected. Every selected option must satisfy the eligibility envelope above.
+
+## 4. Runtime ownership and horizontal handoff
 
 Read-only runtime work is durable and replica-safe at the tested repository-algorithm level.
 
@@ -95,7 +118,7 @@ Properties proven by PostgreSQL-real tests:
 
 This is a repository-level correctness claim, not proof of deployed HA, autoscaling, multi-region failover, RTO/RPO or uptime.
 
-## 4. Consequential-action architecture
+## 5. Consequential-action architecture
 
 Consequential actions use a distinct non-transferable ownership contract:
 
@@ -128,7 +151,7 @@ Safety properties:
 
 The product deliberately does **not** claim distributed exactly-once external side effects because the external TRACTIAN API does not participate in a shared fencing/idempotency transaction.
 
-## 5. Identity and tenant isolation
+## 6. Identity and tenant isolation
 
 The current promoted identity boundary is the project-owned `academy-runtime-v1` signed bearer envelope:
 
@@ -142,7 +165,9 @@ It is intentionally **not** described as OAuth/OIDC/JWT, enterprise SSO or compl
 
 PostgreSQL provides an independent tenant boundary through RLS using a non-superuser, non-`BYPASSRLS`, non-owner application role and transaction-local organization scope. Integration tests prove cross-tenant denial for tested rows.
 
-## 6. Persistence architecture
+The final end-user IAM solution must be standards-based **and USD0-eligible**.
+
+## 7. Persistence architecture
 
 Promoted production-path persistence:
 
@@ -158,7 +183,9 @@ DuckDB      optional dev/benchmark compatibility only
 
 The root production package depends on PostgreSQL/psycopg, not DuckDB. DuckDB remains an optional development/benchmark extra and must not be described as the promoted serving/read-model truth.
 
-## 7. Realtime observability
+The final remote PostgreSQL-compatible hosting choice must remain USD0 and must be selected by systematic comparison of eligible candidates. If no eligible remote persistence option satisfies the required gates, record the blocker rather than moving to a paid plan.
+
+## 8. Realtime observability
 
 ```text
 canonical runtime transition
@@ -184,7 +211,7 @@ Rules:
 
 The RT-WAKEUP comparison promoted LISTEN/NOTIFY over polling after hard gates remained green and the successful rerun measured event p95 improvement plus lower idle durable-read volume. Runner variance remains part of the evidence record.
 
-## 8. Frontend architecture
+## 9. Frontend architecture
 
 ```text
 FastAPI REST/SSE
@@ -221,7 +248,7 @@ A selected run should be able to answer, from safe structured data:
 
 Do not expose hidden model chain-of-thought.
 
-## 9. Current dependency stack
+## 10. Current dependency stack
 
 ### Backend/runtime
 
@@ -256,7 +283,7 @@ Do not expose hidden model chain-of-thought.
 
 `frontend/package-lock.json` is committed and CI uses deterministic `npm ci` in the current reproduction/browser paths.
 
-## 10. Agent techniques
+## 11. Agent techniques
 
 ### Typed tool-augmented iterative loop
 
@@ -285,13 +312,14 @@ First-class terminal/interaction behavior:
 - hard turn/tool budgets;
 - deterministic safety caps;
 - safe terminal behavior on exhaustion/failure;
-- no uncontrolled retry/fallback on governed experiment paths.
+- no uncontrolled retry/fallback on governed experiment paths;
+- resource/quota ceilings must preserve the USD0 boundary.
 
 ### Robustness dimensions
 
 Evaluation explicitly covers complete, partial, inconclusive, conflicting and unavailable evidence; tool/provider failures; invalid arguments; denied actions; and insufficient evidence.
 
-## 11. Evaluation architecture
+## 12. Evaluation architecture
 
 Primary promoted layer:
 
@@ -316,7 +344,7 @@ Semantic judges cannot receive runtime-hidden gold/private evaluator information
 
 Current repository includes the collector, rubric, calibration protocol and trusted VALIDATION source generation, but **real human labels/adjudication do not yet exist**, so a human semantic-calibration claim is not authorized.
 
-## 12. Operational-value architecture
+## 13. Operational-value architecture
 
 The project provides server-owned collection and frozen paired analysis for MANUAL × ASSISTED investigations.
 
@@ -324,38 +352,38 @@ The intended primary business metric is elapsed time to a correct operational de
 
 Real human observations are still required. The repository must not fabricate engineer-time savings or auto-resolution value.
 
-## 13. Adaptive-policy state
+## 14. Adaptive-policy state
 
 The current runtime baseline remains bounded/fixed. Adaptive stopping exists as an evaluator/replay diagnostic only.
 
-Potential future adaptive choices may include investigation continuation, clarification/escalation thresholds or routing, but promotion requires:
+Potential future adaptive choices may include investigation continuation, clarification/escalation thresholds or provider routing among USD0-eligible candidates, but promotion requires:
 
 ```text
 observable runtime features only
 → preregistered challenger
-→ same hard safety envelope
+→ same hard safety + USD0 envelope
 → locked controlled evaluation
 → material Pareto improvement
 → promotion decision
 ```
 
-Auth, tenant isolation, permissions, action confirmation, custody, idempotency, leases/fencing and other hard safety boundaries remain deterministic.
+Auth, tenant isolation, permissions, action confirmation, custody, idempotency, leases/fencing, privacy and the no-paid-spillover boundary remain deterministic.
 
 No adaptive runtime-stopping policy is currently promoted.
 
-## 14. Framework and topology decision states
+## 15. Framework and topology decision states
 
 | Area | Current state | Rule |
 |---|---|---|
 | Native typed tools | PREFERRED | current hard tool boundary |
-| MCP | NO_CHANGE | add only for measured interoperability need |
+| MCP | NO_CHANGE | add only for measured interoperability need and USD0 eligibility |
 | Custom AgentController | PREFERRED | current promoted controller |
 | LangGraph | QUALIFIED/HISTORICAL challenger | no migration without measured advantage |
 | Multi-agent | NO_CHANGE | no measured topology gap |
-| RAG/vector/hybrid/reranking | NO_CHANGE | no measured retrieval gap |
+| RAG/vector/hybrid/reranking | NO_CHANGE | no demonstrated retrieval gap |
 | Persistent memory | NO_CHANGE | no demonstrated cross-request need |
 | Adaptive stopping | EVALUATOR-ONLY | runtime promotion requires oracle-free challenger win |
-| Provider routing | DEFERRED | requires production-eligible alternatives and new experiment |
+| Provider routing | DEFERRED | requires USD0 production-eligible alternatives and new experiment |
 | FastAPI | PREFERRED | current Python API/SSE fit |
 | REST + SSE | PREFERRED | one-way telemetry + REST commands |
 | React + Vite | PREFERRED | operator SPA fit |
@@ -364,22 +392,30 @@ No adaptive runtime-stopping policy is currently promoted.
 | PostgreSQL serving state | PROMOTED | operational + observability/evaluation truth |
 | DuckDB | DEV/BENCHMARK ONLY | no production serving claim |
 | PostgreSQL LISTEN/NOTIFY | PROMOTED WAKE-UP | durable rows remain truth |
-| OpenTelemetry | NOT YET PROMOTED | candidate for external/platform telemetry, not product truth |
-| Redis/Kafka/shared bus | NO_CHANGE | require measured throughput/realtime gap |
+| OpenTelemetry | NOT YET PROMOTED | library/standard candidate; selected backend must be USD0 |
+| Redis/Kafka/shared bus | NO_CHANGE | require measured gap and USD0-compatible production path |
 
-## 15. Provider experiment state
+## 16. Provider experiment state
 
-Historical D01/D02 Cloudflare experiments are complete and consumed. D02 improved several public metrics after the controlled completion-budget change, but no candidate crossed all frozen promotion gates.
+Historical D01/D02 Cloudflare experiments are complete and consumed. Both were USD0-eligible experiments. D02 improved several public metrics after the controlled completion-budget change, but no tested candidate crossed all frozen promotion gates; both failed M1, M4 and M7.
 
 Current provider decision:
 
 **`NO_SELECTION` / no production provider claim.**
 
-The Cloudflare implementation/workflow/ADR family is retained as historical research evidence. Its presence does not make Cloudflare the promoted production provider and does not authorize replay of consumed experiment packets.
+The logic is explicit:
 
-A future hosted-provider tournament requires a new experiment/protocol and must compare quality, safety, latency, reliability and cost under the same workload/hard gates.
+```text
+Cloudflare D02 cash cost = USD 0      PASS eligibility
+M1/M4/M7 promotion gates             FAIL
+final provider decision              NO_SELECTION
+```
 
-## 16. Reproduction and CI architecture
+Zero cost is necessary but not sufficient. Cloudflare remains a possible future challenger only if a materially new USD0-eligible model/configuration/hypothesis justifies a new preregistered experiment. Consumed D01/D02 packets are not replayed.
+
+A future hosted-provider tournament may select **only USD0-eligible hosted candidates** and must compare quality, safety, latency, reliability and resource/quota use under the same workload/hard gates. Paid APIs are ineligible for final selection.
+
+## 17. Reproduction and CI architecture
 
 The stable top-level product CI contract is:
 
@@ -399,11 +435,13 @@ Full Chromium acceptance exercises real backend/frontend/PostgreSQL/SSE behavior
 
 Historical E-series/BIG-B/provider experiment workflows are evidence/reproduction surfaces and are not ordinary product-PR gates.
 
-## 17. Current non-claims
+## 18. Current non-claims
 
 Do not claim:
 
 - a production provider/model has been selected;
+- Cloudflare is selected solely because it is free;
+- a paid service is eligible for final selection;
 - OAuth/OIDC/enterprise SSO is implemented;
 - human semantic calibration is complete;
 - engineer minutes saved without real human observations;
@@ -414,21 +452,22 @@ Do not claim:
 - branch protection is enforced until GitHub reports it active;
 - LangGraph, multi-agent, RAG, memory, MCP, Kafka, Redis or another platform component is superior without a measured gap and challenger win.
 
-## 18. Architecture change gate
+## 19. Architecture change gate
 
 Any material framework, topology, store, model/provider, retrieval, memory, routing, deployment or frontend-data-path proposal must follow:
 
 ```text
 material requirement / measured gap
+→ hard-constraint eligibility (including USD0)
 → current/simple baseline
 → systematic research
-→ credible alternatives
+→ credible eligible alternatives
 → preregistered metrics + hard gates
 → controlled comparison
 → uncertainty/failure/production-fit analysis
-→ Pareto decision
+→ Pareto decision among eligible candidates
 → ADR + reversal trigger
 → regression protection
 ```
 
-Without evidence of material benefit, `NO_CHANGE` is the correct architecture decision.
+Without evidence of material benefit, `NO_CHANGE` is the correct architecture decision. If every technically interesting candidate violates a hard constraint or fails the gates, `NO_SELECTION` is the correct decision; the constraint is not silently relaxed.
