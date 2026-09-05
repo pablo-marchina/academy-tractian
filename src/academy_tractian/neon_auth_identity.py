@@ -5,7 +5,7 @@ import json
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import Request as UrlRequest, urlopen
+from urllib.request import HTTPRedirectHandler, Request as UrlRequest, build_opener
 
 from fastapi import HTTPException, Request, status
 
@@ -14,10 +14,18 @@ from .product_api import AuthenticatedRuntimeContext, DEFAULT_RUNTIME_PERMISSION
 
 _MAX_COOKIE_BYTES = 16 * 1024
 _MAX_SESSION_RESPONSE_BYTES = 64 * 1024
+_MAX_ID_BYTES = 256
 _DEFAULT_TIMEOUT_SECONDS = 5.0
 
 
 SessionFetcher = Callable[[str], tuple[int, bytes]]
+
+
+class _NoAuthRedirectHandler(HTTPRedirectHandler):
+    """Never forward a managed-session cookie across an HTTP redirect."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001, ANN201
+        return None
 
 
 def _validated_auth_base_url(value: str) -> str:
@@ -42,6 +50,17 @@ def _bounded_json_object(raw: bytes) -> dict[str, Any]:
         raise ValueError("invalid Neon Auth session JSON") from exc
     if not isinstance(value, dict):
         raise ValueError("invalid Neon Auth session payload")
+    return value
+
+
+def _validated_managed_id(value: object, *, label: str) -> str:
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise ValueError(f"invalid {label}")
+    encoded = value.encode("utf-8")
+    if len(encoded) > _MAX_ID_BYTES:
+        raise ValueError(f"invalid {label}")
+    if any(ord(character) < 0x20 or ord(character) == 0x7F for character in value):
+        raise ValueError(f"invalid {label}")
     return value
 
 
@@ -98,8 +117,9 @@ class NeonAuthRuntimeContextProvider:
             },
             method="GET",
         )
+        opener = build_opener(_NoAuthRedirectHandler())
         try:
-            with urlopen(request, timeout=self._timeout_seconds) as response:  # noqa: S310 - URL is validated HTTPS config
+            with opener.open(request, timeout=self._timeout_seconds) as response:  # noqa: S310 - URL is validated HTTPS config and redirects are disabled
                 raw = response.read(_MAX_SESSION_RESPONSE_BYTES + 1)
                 return int(response.status), raw
         except HTTPError as exc:
@@ -132,21 +152,24 @@ class NeonAuthRuntimeContextProvider:
             if not isinstance(user, dict) or not isinstance(session, dict):
                 raise ValueError("session/user missing")
 
-            user_id = user.get("id")
-            session_user_id = session.get("userId")
-            if not isinstance(user_id, str) or not user_id.strip() or session_user_id != user_id:
+            user_id = _validated_managed_id(user.get("id"), label="managed user id")
+            session_user_id = _validated_managed_id(
+                session.get("userId"),
+                label="managed session user id",
+            )
+            if session_user_id != user_id:
                 raise ValueError("session user mismatch")
             if session.get("impersonatedBy") not in {None, ""}:
                 raise ValueError("impersonated sessions are not eligible for production runtime")
 
             active_organization = session.get("activeOrganizationId")
-            if active_organization is not None and not isinstance(active_organization, str):
-                raise ValueError("invalid active organization")
-            organization_id = (
-                active_organization.strip()
-                if isinstance(active_organization, str) and active_organization.strip()
-                else f"user:{user_id}"
-            )
+            if active_organization in {None, ""}:
+                organization_id = f"user:{user_id}"
+            else:
+                organization_id = _validated_managed_id(
+                    active_organization,
+                    label="managed active organization id",
+                )
         except (TypeError, ValueError, KeyError) as exc:
             raise self._unauthorized("managed_session_invalid") from exc
 
