@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Callable
 
 from fastapi import FastAPI
@@ -175,7 +174,6 @@ def create_postgres_action_capable_product_app(
     transport_factory: Callable[[], RequestTransport],
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
-    db_path: str | Path | None = None,
     schema: str = "academy_operational",
     initialize_schema: bool = False,
     max_workers: int = 4,
@@ -183,16 +181,15 @@ def create_postgres_action_capable_product_app(
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    """Create the promoted PostgreSQL production topology.
+    """Create the promoted no-local PostgreSQL production topology.
 
     All mutable operational state and the sanitized observability/evaluation read model share
-    the qualified PostgreSQL substrate. ``db_path`` is a temporary source-compatibility argument
-    for existing callers and is deliberately ignored; no local observability file is created or
-    read by this production constructor. Serving with ``initialize_schema=False`` remains
-    fail-closed after the explicit migration step.
+    the qualified PostgreSQL substrate. The production entrypoint intentionally exposes no file
+    path parameter: serving cannot select a local persistence backend by configuration accident.
+    With ``initialize_schema=False`` it remains fail-closed until the explicit migration step has
+    established every required table and policy.
     """
 
-    del db_path
     database = PostgresOperationalDatabase(
         internal_dsn=internal_dsn,
         scoped_dsn=scoped_dsn,
@@ -215,9 +212,8 @@ def create_postgres_action_capable_product_app(
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
         app = create_action_capable_product_app(
-            # Internal compatibility seam: create_product_app still names this parameter
-            # ``db_path``. ObservabilityStore dispatches this shared database object to the
-            # PostgreSQL implementation, while access/execution stores are explicitly injected.
+            # The generic composition seam still calls this argument ``db_path``. Passing the
+            # shared database object selects PostgresObservabilityStore; it never becomes a path.
             db_path=database,  # type: ignore[arg-type]
             decision_source_factory=decision_source_factory,
             transport_factory=transport_factory,
@@ -252,4 +248,5 @@ def create_postgres_action_capable_product_app(
     app.state.semantic_review_collection_store = semantic_store
     app.state.observability_backend = "postgresql"
     app.state.operational_backend = "postgresql"
+    app.state.local_test_storage_enabled = False
     return app
