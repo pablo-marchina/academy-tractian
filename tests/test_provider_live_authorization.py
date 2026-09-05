@@ -101,9 +101,15 @@ def test_provider_client_blob_tampering_fails_closed() -> None:
         validator.validate_payload(authorization, design, population)
 
 
-def test_historical_implementation_blobs_remain_retrievable() -> None:
+def test_historical_implementation_identity_is_self_contained_in_packet() -> None:
+    authorization, _, _ = _payloads()
+    implementation = authorization["validated_provider_client_implementation"]
+    assert implementation["head"] == validator.EXPECTED_VALIDATED_IMPLEMENTATION_HEAD
+    assert implementation["provider_clients_git_blob"] == validator.EXPECTED_PROVIDER_CLIENTS_BLOB
+    assert implementation["provider_client_tests_git_blob"] == validator.EXPECTED_PROVIDER_CLIENT_TESTS_BLOB
+    assert implementation["package_exports_git_blob"] == validator.EXPECTED_PACKAGE_EXPORTS_BLOB
+    assert implementation["provider_neutral_adapter_git_blob"] == validator.EXPECTED_DECISION_SOURCE_BLOB
     validator.validate_historical_artifacts()
-    assert validator.git_object_exists(validator.EXPECTED_DECISION_SOURCE_BLOB)
 
 
 def test_superseded_packet_cannot_authorize_current_implementation() -> None:
