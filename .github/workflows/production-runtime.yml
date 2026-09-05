@@ -23,6 +23,51 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  diagnostic-test-shards:
+    name: diagnostic-tests-${{ matrix.shard }}-of-4
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install production and E2 test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" -e "research/e2[dev]"
+
+      - name: Run deterministic test shard
+        env:
+          TEST_SHARD: ${{ matrix.shard }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          shard = int(os.environ["TEST_SHARD"])
+          files = sorted(Path("tests").glob("test_*.py"))
+          selected = files[shard::4]
+          if not selected:
+              raise SystemExit("empty diagnostic shard")
+          print(f"shard={shard} files={len(selected)}")
+          for path in selected:
+              print(path)
+          subprocess.run(
+              [sys.executable, "-m", "pytest", "-q", *(str(path) for path in selected)],
+              check=True,
+          )
+          PY
+
   production-runtime-unit:
     runs-on: ubuntu-latest
     steps:
@@ -38,35 +83,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]" -e "research/e2[dev]"
-
-      # Diagnostic groups are intentionally non-authoritative. They keep the final full-suite gate
-      # unchanged while making failures attributable when a broad regression surface moves.
-      - name: Diagnose hosted provider and provenance regressions
-        continue-on-error: true
-        run: >-
-          python -m pytest -q
-          tests/test_cloudflare_hosted_provenance.py
-          tests/test_hosted_provider.py
-          tests/test_provider_frontier_v3.py
-          tests/test_model_call_provenance.py
-
-      - name: Diagnose historical provider authorization regressions
-        continue-on-error: true
-        run: >-
-          python -m pytest -q
-          tests/test_provider_live_authorization.py
-          tests/test_provider_promotion.py
-
-      - name: Diagnose freeze and final-delivery regressions
-        continue-on-error: true
-        shell: bash
-        run: |
-          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name 'test_final*' -o -name 'test_hard_freeze*' -o -name 'test_*reproduction*' \) | sort)
-          if (( ${#files[@]} )); then
-            python -m pytest -q "${files[@]}"
-          else
-            echo "No freeze/final diagnostic files matched."
-          fi
 
       - name: Run authoritative production runtime tests
         run: python -m pytest -q tests
