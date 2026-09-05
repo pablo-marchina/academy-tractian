@@ -37,8 +37,9 @@ decisions:
       - repository Dockerfile configured as service build path
       - HTTPS Railway service domain allocated
       - backend source branch corrected to release/production-final
-      - non-secret fail-closed production configuration installed
+      - service moved to Railway US East Metal
       - managed IAM mode removes the old browser HMAC signing secret requirement
+      - current fail-closed boot reports only ACADEMY_POSTGRES_INTERNAL_DSN and ACADEMY_POSTGRES_SCOPED_DSN missing
       - serving boot remains unproved until approved PostgreSQL DSN secret injection
     decision_state: QUALIFIED
     reversal_trigger: A currently eligible hosted alternative materially improves production fit under the same hard gates or Railway fails the remote boot/capacity/cost gates.
@@ -72,17 +73,24 @@ decisions:
     metrics: [login_success_rate, session_failure_rate, auth_latency_ms, session_validation_latency_ms]
     hard_gates: [cross_tenant_access_equals_0, privilege_escalation_equals_0, browser_cannot_assert_tenant, invalid_session_acceptance_equals_0]
     evidence:
-      - Neon Auth Better Auth provisioned only on isolated validation branch before production promotion
-      - production-web origin added as validation trusted origin
+      - Neon Auth Better Auth first provisioned on isolated validation branch before production promotion
       - managed auth schema exposes server-side user/session/organization/member state
       - React AuthBoundary implements same-origin sign-in/sign-up/sign-out/session gate without storing tenant or permission authority in browser state
+      - production Docker build forces browser auth enabled while provider-free dev/CI remains independent of external IAM
       - Caddy proxies /auth on the same public origin and /api to the Railway private backend
-      - backend NeonAuthRuntimeContextProvider revalidates the managed session server-side with cookie-cache bypass
+      - backend NeonAuthRuntimeContextProvider revalidates managed session server-side with cookie-cache bypass
       - backend ignores browser organization/role headers and derives a personal tenant from authenticated user id when no managed active organization exists
-      - impersonated, mismatched, missing and unavailable sessions fail closed in regression tests added to PR 196
-      - PR 196 CI is still running; remote authenticated backend E2E remains blocked on PostgreSQL secret injection
+      - impersonated, mismatched, missing and unavailable sessions fail closed in regression tests
+      - production-runtime regression passed for the managed-session backend composition
+      - provider-free full Chromium acceptance passed after production-only auth gating
+      - final-ci-required checkpoint completed required-gate SUCCESS across clean clone, browser, horizontal runtime and action lease
+      - Neon Auth Better Auth is now provisioned on Neon production main
+      - production-web origin is trusted on production-main Auth
+      - production-web redeployed SUCCESS against production-main Auth host
+      - current email/password configuration does not require email verification, so verified-email identity is not claimed
+      - remote authenticated backend E2E remains blocked on PostgreSQL secret injection
     decision_state: QUALIFIED
-    reversal_trigger: Managed-session regression or remote multi-tenant acceptance fails, OAuth/OIDC becomes an explicit delivery requirement, or another eligible design proves materially better under the same security gates.
+    reversal_trigger: Managed-session remote multi-tenant acceptance fails, OAuth/OIDC becomes an explicit delivery requirement, email-verification requirements cannot be satisfied under the production envelope, or another eligible design proves materially better under the same security gates.
 
   - id: DP-004
     question: Which hosted model/provider should supply production controller decisions?
@@ -134,8 +142,11 @@ decisions:
       - service moved to Railway US East Metal with one replica
       - public HTTPS domain allocated
       - source-branch misconfiguration was identified and corrected rather than bypassed
-      - deployment b9bcb800-1a45-4687-8285-12cb63ba4984 reached SUCCESS after auth boundary/proxy configuration
-      - Caddy routes /auth same-origin to managed auth and /api plus SSE to production-api over Railway private networking
+      - Caddy routes /auth same-origin and /api plus SSE to production-api over Railway private networking
+      - production Docker image forces VITE_BROWSER_AUTH_ENABLED=true
+      - production-main Neon Auth host installed as the /auth upstream
+      - post-production-Auth-host Railway deployment reached SUCCESS
+      - provider-free Chromium acceptance remains green because external IAM is not required in the test Vite build
     decision_state: PREFERRED
     reversal_trigger: Remote page/auth/API acceptance or cost/availability gates fail, or a simpler eligible host materially improves measured production fit.
 
