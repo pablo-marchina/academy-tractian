@@ -1,9 +1,18 @@
 :{$PORT:8080} {
     encode zstd gzip
 
+    # Browser authentication stays on the product origin. Neon Auth remains the managed session
+    # authority, but cookies are issued through this reverse-proxy boundary so the browser never
+    # needs cross-origin tenant/API credentials.
+    handle_path /auth/* {
+        rewrite * {$NEON_AUTH_BASE_PATH:/academy_tractian/auth}{uri}
+        reverse_proxy https://{$NEON_AUTH_HOST} {
+            header_up Host {$NEON_AUTH_HOST}
+        }
+    }
+
     # Keep API and SSE browser traffic same-origin. Railway private networking carries the
-    # service-to-service hop over its encrypted project network; no public API URL is required by
-    # the browser for normal product use.
+    # service-to-service hop; no public API URL is required by the browser for normal product use.
     @backend path /api/* /health
     handle @backend {
         reverse_proxy http://production-api.railway.internal:8000 {
