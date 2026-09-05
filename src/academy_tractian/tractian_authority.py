@@ -13,6 +13,9 @@ from .production_actions_v2 import ProductionActionPrincipal
 
 _KNOWN_UPSTREAM_PERMISSIONS = frozenset(permission.value for permission in Permission)
 _GLOBAL_READ_PREFIXES = ("/knowledge/", "/models/")
+_MAX_AUTHORITY_ASSETS = 256
+_MAX_AUTHORITY_ANALYSES_PER_ASSET = 256
+_MAX_AUTHORITY_BINDINGS = 4096
 
 
 class TractianAuthorityError(RuntimeError):
@@ -195,6 +198,88 @@ class TractianAuthority:
             resource_company_bindings=bindings,
         )
 
+    def principal_snapshot(self, *, user_id: str) -> ProductionActionPrincipal:
+        """Build a bounded server-owned principal for the legacy action-policy interface.
+
+        The accepted core currently asks for authorization by user before the model chooses an
+        action target. Until the target-aware interface is promoted, this adapter enumerates only
+        the authenticated user's own company assets and analyses. Hard caps turn unexpected
+        cardinality into a safe denial rather than unbounded upstream fan-out. Model and case
+        targets are intentionally absent because ownership cannot be proven by the public API.
+        """
+
+        user = self.current_user(user_id=user_id)
+        body = self._get(
+            path=f"/companies/{quote(user.company_id, safe='')}/assets",
+            user_id=user_id,
+            query={"seed": "complete"},
+        )
+        data = self._envelope_data(body)
+        raw_assets = data.get("assets")
+        if not isinstance(raw_assets, list) or len(raw_assets) > _MAX_AUTHORITY_ASSETS:
+            raise TractianAuthorityError("TRACTIAN_AUTHORITY_ASSET_SET_UNBOUNDED")
+
+        bindings: list[ResourceCompanyBinding] = []
+        seen: set[str] = set()
+        asset_ids: list[str] = []
+        for item in raw_assets:
+            if not isinstance(item, Mapping):
+                raise TractianAuthorityError("TRACTIAN_AUTHORITY_MALFORMED_ASSET_SET")
+            asset_id = self._required_string(
+                item,
+                "id",
+                code="TRACTIAN_AUTHORITY_MALFORMED_ASSET_SET",
+            )
+            company_id = self._required_string(
+                item,
+                "company_id",
+                code="TRACTIAN_AUTHORITY_MALFORMED_ASSET_SET",
+            )
+            if company_id != user.company_id or asset_id in seen:
+                raise TractianAuthorityError("TRACTIAN_AUTHORITY_ASSET_SET_SCOPE_MISMATCH")
+            seen.add(asset_id)
+            asset_ids.append(asset_id)
+            bindings.append(ResourceCompanyBinding(resource_id=asset_id, company_id=company_id))
+
+        for asset_id in asset_ids:
+            body = self._get(
+                path=f"/assets/{quote(asset_id, safe='')}/analyses",
+                user_id=user_id,
+                query={"seed": "complete"},
+            )
+            data = self._envelope_data(body)
+            raw_analyses = data.get("analyses")
+            if not isinstance(raw_analyses, list) or len(raw_analyses) > _MAX_AUTHORITY_ANALYSES_PER_ASSET:
+                raise TractianAuthorityError("TRACTIAN_AUTHORITY_ANALYSIS_SET_UNBOUNDED")
+            for item in raw_analyses:
+                if not isinstance(item, Mapping):
+                    raise TractianAuthorityError("TRACTIAN_AUTHORITY_MALFORMED_ANALYSIS_SET")
+                analysis_id = self._required_string(
+                    item,
+                    "id",
+                    code="TRACTIAN_AUTHORITY_MALFORMED_ANALYSIS_SET",
+                )
+                observed_asset_id = self._required_string(
+                    item,
+                    "asset_id",
+                    code="TRACTIAN_AUTHORITY_MALFORMED_ANALYSIS_SET",
+                )
+                if observed_asset_id != asset_id or analysis_id in seen:
+                    raise TractianAuthorityError("TRACTIAN_AUTHORITY_ANALYSIS_SET_SCOPE_MISMATCH")
+                seen.add(analysis_id)
+                bindings.append(
+                    ResourceCompanyBinding(resource_id=analysis_id, company_id=user.company_id)
+                )
+                if len(bindings) > _MAX_AUTHORITY_BINDINGS:
+                    raise TractianAuthorityError("TRACTIAN_AUTHORITY_BINDING_SET_UNBOUNDED")
+
+        return ProductionActionPrincipal(
+            user_id=user.user_id,
+            user_company_id=user.company_id,
+            permissions=user.permissions,
+            resource_company_bindings=tuple(bindings),
+        )
+
     def authorize_bound_request(self, request: BoundRequest) -> TractianUserAuthority:
         """Authorize a canonical tool HTTP request before its response may reach the model."""
 
@@ -270,6 +355,9 @@ class TenantGuardedTractianTransport(RequestTransport):
             return TransportResponse(
                 status_code=status_code,
                 headers={"content-type": "application/json"},
-                body={"code": exc.code, "message": "Request blocked by server-owned resource authorization."},
+                body={
+                    "code": exc.code,
+                    "message": "Request blocked by server-owned resource authorization.",
+                },
             )
         return self._transport.request(request)
