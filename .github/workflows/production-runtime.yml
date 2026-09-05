@@ -39,7 +39,36 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]" -e "research/e2[dev]"
 
-      - name: Run production runtime tests
+      # Diagnostic groups are intentionally non-authoritative. They keep the final full-suite gate
+      # unchanged while making failures attributable when a broad regression surface moves.
+      - name: Diagnose hosted provider and provenance regressions
+        continue-on-error: true
+        run: >-
+          python -m pytest -q
+          tests/test_cloudflare_hosted_provenance.py
+          tests/test_hosted_provider.py
+          tests/test_provider_frontier_v3.py
+          tests/test_model_call_provenance.py
+
+      - name: Diagnose historical provider authorization regressions
+        continue-on-error: true
+        run: >-
+          python -m pytest -q
+          tests/test_provider_live_authorization.py
+          tests/test_provider_promotion.py
+
+      - name: Diagnose freeze and final-delivery regressions
+        continue-on-error: true
+        shell: bash
+        run: |
+          mapfile -t files < <(find tests -maxdepth 1 -type f \( -name 'test_final*' -o -name 'test_hard_freeze*' -o -name 'test_*reproduction*' \) | sort)
+          if (( ${#files[@]} )); then
+            python -m pytest -q "${files[@]}"
+          else
+            echo "No freeze/final diagnostic files matched."
+          fi
+
+      - name: Run authoritative production runtime tests
         run: python -m pytest -q tests
 
       - name: Regress accepted ADR-004 controller boundary
