@@ -1,0 +1,59 @@
+name: hosted-oidc-live-attestation-provider-free
+
+on:
+  pull_request:
+    paths:
+      - "src/academy_tractian/hosted_oidc_live_attestation.py"
+      - "src/academy_tractian/oidc_candidate_profiles.py"
+      - "src/academy_tractian/oidc_runtime_identity.py"
+      - "src/academy_tractian/hosted_state_identity_pilot.py"
+      - "scripts/check_hosted_oidc_live_attestation.py"
+      - "scripts/check_hosted_state_identity_pilot.py"
+      - "tests/test_hosted_oidc_live_attestation.py"
+      - "tests/test_check_hosted_state_identity_pilot_oidc_binding.py"
+      - ".github/workflows/hosted-oidc-live-attestation-provider-free.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/academy_tractian/hosted_oidc_live_attestation.py"
+      - "src/academy_tractian/oidc_candidate_profiles.py"
+      - "src/academy_tractian/oidc_runtime_identity.py"
+      - "src/academy_tractian/hosted_state_identity_pilot.py"
+      - "scripts/check_hosted_oidc_live_attestation.py"
+      - "scripts/check_hosted_state_identity_pilot.py"
+      - "tests/test_hosted_oidc_live_attestation.py"
+      - "tests/test_check_hosted_state_identity_pilot_oidc_binding.py"
+      - ".github/workflows/hosted-oidc-live-attestation-provider-free.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-oidc-live-attestation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  provider-free-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install product test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Validate OIDC live evidence and state-identity binding contracts
+        run: >-
+          python -m pytest -q
+          tests/test_hosted_oidc_live_attestation.py
+          tests/test_check_hosted_state_identity_pilot_oidc_binding.py
+          tests/test_auth0_oidc_pilot_profile.py
+          tests/test_oidc_runtime_identity.py
+      - name: Prove no live credential surface is configured
+        shell: bash
+        run: |
+          test -z "${AUTH0_CLIENT_SECRET:-}"
+          test -z "${ACADEMY_OIDC_TEST_TOKEN:-}"
+          test -z "${ACADEMY_OIDC_PRIVATE_KEY:-}"
