@@ -59,6 +59,17 @@ def _manifest(tmp_path: Path) -> FinalFreezeManifest:
     )
 
 
+def _with_artifact_role(
+    manifest: FinalFreezeManifest,
+    *,
+    index: int,
+    role: str,
+) -> FinalFreezeManifest:
+    payload = manifest.model_dump(mode="json", exclude={"manifest_sha256"})
+    payload["artifacts"][index]["role"] = role
+    return build_manifest(**payload)
+
+
 def test_final_freeze_manifest_is_hash_bound_and_validates_registered_blobs(tmp_path: Path) -> None:
     manifest = _manifest(tmp_path)
 
@@ -67,13 +78,60 @@ def test_final_freeze_manifest_is_hash_bound_and_validates_registered_blobs(tmp_
     assert manifest.branch_protection_enforced is False
 
 
-def test_final_freeze_manifest_fails_closed_on_artifact_tamper(tmp_path: Path) -> None:
+def test_current_head_validation_fails_closed_on_any_artifact_tamper(tmp_path: Path) -> None:
     manifest = _manifest(tmp_path)
     target = tmp_path / manifest.artifacts[0].path
     target.write_text("tampered\n", encoding="utf-8")
 
-    failures = validate_final_freeze_manifest(manifest, tmp_path)
+    failures = validate_final_freeze_manifest(manifest, tmp_path, artifact_mode="current-head")
     assert "artifact_0_blob_mismatch" in failures
+
+
+def test_historical_snapshot_allows_expected_drift_for_current_roles(tmp_path: Path) -> None:
+    manifest = _manifest(tmp_path)
+    target = tmp_path / manifest.artifacts[0].path
+    target.write_text("legitimate future head evolution\n", encoding="utf-8")
+
+    failures = validate_final_freeze_manifest(
+        manifest,
+        tmp_path,
+        artifact_mode="historical-snapshot",
+    )
+
+    assert "artifact_0_blob_mismatch" not in failures
+    assert failures == []
+
+
+def test_historical_snapshot_keeps_frozen_historical_evidence_byte_pinned(tmp_path: Path) -> None:
+    manifest = _with_artifact_role(
+        _manifest(tmp_path),
+        index=0,
+        role="frozen_historical_evidence",
+    )
+    target = tmp_path / manifest.artifacts[0].path
+    target.write_text("tampered frozen evidence\n", encoding="utf-8")
+
+    failures = validate_final_freeze_manifest(
+        manifest,
+        tmp_path,
+        artifact_mode="historical-snapshot",
+    )
+
+    assert "artifact_0_blob_mismatch" in failures
+
+
+def test_historical_snapshot_still_requires_registered_artifact_paths_to_exist(tmp_path: Path) -> None:
+    manifest = _manifest(tmp_path)
+    target = tmp_path / manifest.artifacts[0].path
+    target.unlink()
+
+    failures = validate_final_freeze_manifest(
+        manifest,
+        tmp_path,
+        artifact_mode="historical-snapshot",
+    )
+
+    assert "artifact_0_missing" in failures
 
 
 def test_final_freeze_manifest_rejects_hash_tampering(tmp_path: Path) -> None:
