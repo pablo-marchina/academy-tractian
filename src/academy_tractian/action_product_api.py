@@ -29,6 +29,7 @@ from .production_actions_v2 import (
     ProductionActionExecutor,
 )
 from .realtime_observability import DuckDBObservabilityEventSink
+from .realtime_wakeup import RealtimeWakeup
 
 
 class _FrozenModel(BaseModel):
@@ -76,6 +77,8 @@ def create_action_capable_product_app(
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
+    realtime_wakeup: RealtimeWakeup | None = None,
+    realtime_fallback_poll_ms: int = 1000,
     allow_local_test_storage: bool = False,
 ) -> FastAPI:
     """Create the action-capable product while failing closed on local storage.
@@ -170,6 +173,8 @@ def create_action_capable_product_app(
         max_workers=max_workers,
         provider_calls_enabled=provider_calls_enabled,
         heartbeat_interval_ms=heartbeat_interval_ms,
+        realtime_wakeup=realtime_wakeup,
+        realtime_fallback_poll_ms=realtime_fallback_poll_ms,
     )
     controls = app.state.production_controls
     controls.set_actions_enabled(actions_enabled)
