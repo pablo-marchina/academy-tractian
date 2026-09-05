@@ -1,121 +1,226 @@
 # Academy × TRACTIAN — Rubric-to-Evidence Crosswalk
 
-This is reviewer navigation, not a new source of authorization. Exact current state remains in `CURRENT-PROJECT-STATUS.md`; exact acceptance semantics remain in `DELIVERY-ACCEPTANCE.md`; frozen artifacts/ADRs remain authoritative for their scoped results.
+**Status:** ACTIVE reviewer navigation  
+**Checkpoint:** 2026-09-05 production rebaseline  
+**Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
+**Acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
+**Runbook:** [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md)
 
-## Fast review path
+This file is reviewer navigation, not a new source of authorization. Exact current state lives in `CURRENT-PROJECT-STATUS.md`; exact Definition of Done lives in `DELIVERY-ACCEPTANCE.md`; historical ADRs/results remain authoritative for their original scopes.
 
-1. Read [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md) for what is frozen, blocked, gated and forbidden.
-2. Run the sequence in [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md).
-3. Inspect [`../research/results/final-delivery-evidence-index-2026-08-28.json`](../research/results/final-delivery-evidence-index-2026-08-28.json) for exact evidence identities.
-4. Inspect [`../research/results/provider-free-final-delivery-demo-result-2026-08-28.json`](../research/results/provider-free-final-delivery-demo-result-2026-08-28.json) for the five integrated demo traces/results.
-5. Use the final machine audit (`../research/results/final-handoff-acceptance-audit-2026-08-28.json`) for all 83 preregistered acceptance dispositions.
+## 1. Fast review path
 
-## Official academic excellence dimensions
+1. Read [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md) for what is implemented, blocked and explicitly not claimed.
+2. Read [`ARCHITECTURE.md`](ARCHITECTURE.md) for the promoted current architecture.
+3. Read [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md) for requirement/output mapping.
+4. Run repository-level reproduction from [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md).
+5. Inspect frozen machine evidence under `research/results/` and relevant ADRs for exact historical experiment identities.
+6. Distinguish repository-level evidence from remote-production evidence; the latter is still a P0 workstream where marked.
 
-| Dimension | Strongest evidence | What it establishes | Boundary |
+## 2. Academic excellence dimensions
+
+| Dimension | Strongest current evidence | What it establishes | Current boundary |
 |---|---|---|---|
-| API integration quality | `research/results/tractian-api-contract-conformance-2026-08-27.json`; `research/e2/tool_registry.py`; `tests/test_runtime.py` | authored OpenAPI, registry and executable implementation agree on 18 normalized operations; strict tool boundary, identity/seed binding and negative action tests | only the production-path `get_asset` route is explicitly recorded as route-tested in the conformance artifact; do not claim live exercise of all 18 operations |
-| Technical coherence | ADR-004…ADR-016; `docs/ARCHITECTURE-ROADMAP.md`; `docs/PROJECT-PRINCIPLES.md` | controller/runtime/evaluator/action/provider boundaries were decided prospectively and kept separate; optional complexity is gated by evidence | global final architecture is not frozen |
-| Experiment clarity | `research/experiments/`; `docs/BENCHMARK-INTEGRITY-GATE.md`; ADR-013/014/015/016 | preregistered geometry, denominators, falsifications, fixed metrics and change rules | historical exposed data is not independent generalization evidence |
-| Result analysis quality | frozen P12-C4 deterministic/bootstrap/LOGO artifacts; EV-007/008/011 results; ADR-016 demo | deterministic scoring, uncertainty/sensitivity, failure slices, repeated-run stability and communication safety are preserved with exact identities | C4 per-group/slice continuation is blocked on the exact unavailable score-row artifact |
-| Limitations / risks | `docs/CURRENT-PROJECT-STATUS.md`; `docs/BENCHMARK-INTEGRITY-GATE.md`; `docs/FINAL-HANDOFF-RUNBOOK.md` | provider, blind-evaluation, action, replay, privacy and C4 limits are explicit and fail closed | no provider selection, fresh-blind generalization or production-readiness claim |
-| Reproducibility | ADR-016; `.github/workflows/final-delivery-provider-free-reproduction.yml`; `scripts/validate_delivery_reproduction.py`; final handoff validator | clean checkout can install, regress frozen campaigns, rerun the integrated demo and resolve exact evidence | provider-free scope only |
-| Documentation | root `README.md`; `docs/REPOSITORY-GUIDE.md`; this crosswalk; final runbook; delivery acceptance matrix | reviewer can navigate source of truth, setup, evidence, operations and non-claims | documentation cannot substitute for externally unavailable evidence |
-| Demonstration quality | `research/results/provider-free-final-delivery-demo-result-2026-08-28.json`; EV-007/008/011 | real runtime/evaluator traces cover investigate, clarify, abstain, escalate and one governed supplied/test action, plus failure/reliability/communication campaigns | synthetic/provider-free demonstration; zero real-customer mutations |
+| API integration quality | typed 18-tool registry, HTTP transport, conformance/integration tests | stable typed TRACTIAN tool boundary, validation and execution contracts | do not claim every real route/provider condition has been exercised in production |
+| Technical coherence | `ARCHITECTURE.md`, ADR-004+, PostgreSQL/action/realtime implementations, required CI | controller/tool/evaluator separation, deterministic safety, PostgreSQL durable state, safe realtime | remote hosting/IAM/HA/capacity are not yet proved |
+| Experiment clarity | `research/experiments/`, frozen manifests/results, ADRs | preregistered hypotheses, controlled variables, hard gates and negative outcomes | historical consumed experiments cannot be replayed merely to seek a better result |
+| Result analysis quality | frozen provider-free campaigns, D01/D02 results, wake-up/load/recovery evidence, EDD machinery | quantitative failure/stability/provider/realtime analysis with explicit non-claims | human semantic/value evidence still requires real participants |
+| Limitations / risks | `CURRENT-PROJECT-STATUS.md`, `DELIVERY-ACCEPTANCE.md`, runbook | production/provider/IAM/capacity/HA/human-data boundaries are explicit | no remote-production-readiness claim yet |
+| Reproducibility | `final-ci-required`, clean-clone workflow, Playwright, lockfile, runbook | clean repository-level product reproduction and browser acceptance | provider-free CI is not remote provider/IAM evidence |
+| Documentation | root README + canonical docs hub + architecture/status/plan/acceptance/runbook | one current source per question plus preserved history | frozen historical docs/results are context/evidence, not current truth |
+| Demonstration quality | React control room + Playwright + safe trace/evidence/lineage + historical integrated scenarios | real product UI/runtime/persistence/evaluation path can be inspected | final production presentation should use the future remote deployed path, not local/provider-free serving |
 
-## P0 project acceptance
+## 3. TAPI / core product evidence
 
-| Requirement | Primary evidence |
-|---|---|
-| REQ-001 individual project | repository history, source tree and final handoff package |
-| REQ-003 technical experiment | BIG-B2/B3/B4 protocol work; frozen P12-C4 analysis; EV-007/008/011 campaigns |
-| REQ-004 / REQ-020 document results | root README; ADRs; progress/frozen result artifacts; this crosswalk |
-| REQ-021 reproducible handoff | ADR-016 workflow/validator plus `FINAL-HANDOFF-RUNBOOK.md` |
-| REQ-017 agent + evaluation framework | `src/academy_tractian/runtime.py`, `src/academy_tractian/evaluation.py`, E2 runner/controller and ADR-016 integrated demo |
-
-## Agent/evaluator capability evidence
-
-| Capability | Strongest evidence | Scope note |
+| Requirement / capability | Primary current evidence | Scope note |
 |---|---|---|
-| Industrial API / tool contract | `research/results/tractian-api-contract-conformance-2026-08-27.json`; `research/e2/tool_registry.py` | 18 normalized operations; one stable typed agent-facing registry |
-| Investigate/read | DEMO-01; runtime/controller tests | supplied/local `get_asset` evidence path |
-| Clarify / abstain | DEMO-02/03; EV-011 | deterministic missing-context/no-safe-path behavior |
-| Escalate | DEMO-04; EV-011 COMM-09/other escalation cases | provider-free handoff behavior |
-| Consequential action | DEMO-05; ADR-012; controlled action tests | supplied/test authorized action only; default ProductionRuntime remains disabled |
-| Failure continuity | EV-007; runtime fault tests | deterministic faults, safe containment, no hidden retry |
-| Stability | EV-008 | 30/30 runs; 66/66 stability dimensions |
-| Customer-safe communication | EV-011 | 60/60 applicable predicates; COMM-07 remains evaluator FAIL by design |
-| Per-run evaluator / trace | `src/academy_tractian/evaluation.py`; `research/e2/models.py`; ADR-016 demo | same trace object is evaluated without runtime access to private gold |
-| Evaluation integrity | `docs/BENCHMARK-INTEGRITY-GATE.md`; BIG-B0…B4 artifacts | contamination/exposure roles and blind-access rules are frozen; fresh blind remains unavailable |
+| Agent + Evaluation integrated solution | `src/academy_tractian/runtime.py`, evaluation modules, product API, TAPI crosswalk | implemented in one repository/product path |
+| 18-operation TRACTIAN integration | typed registry + transport/conformance tests | normalized typed contract |
+| Contextualize / investigate | controller/runtime scenarios and traces | grounded tool/evidence path |
+| Clarify / abstain | deterministic scenario/failure/communication evidence | explicit safe outcomes |
+| Escalate / human handoff | escalation/communication campaign and product traces | structured handoff behavior |
+| Consequential action | action custody/confirmation/idempotency/lease/fencing tests | governed supplied/test profile; no blanket customer mutation authorization |
+| Tool selection / arguments | evaluator + schema/policy tests | deterministic validity where exact truth exists |
+| Execution trajectory | `RunTrace`, timeline/trace graph, evaluator | inspectable structured process, no chain-of-thought claim |
+| Evidence use | evidence projection/lineage + degraded evidence cases | complete/partial/conflict/unavailable behavior |
+| Failure continuity | EV-007 + product fault/recovery tests | safe containment and conservative recovery |
+| Stability | EV-008 + repeated-run machinery | repeated behavior evidence for frozen scope |
+| Customer-safe communication | EV-011 + terminal outcome contracts | frozen provider-free communication evidence |
+| Realtime observability | PostgreSQL observability store + LISTEN/NOTIFY wake-up + SSE + frontend | durable rows/cursors are truth; wake-up is not auth/correctness boundary |
+| Cross-replica read-only handoff | PostgreSQL runtime handoff + generation fencing tests | repository-level distributed correctness for tested algorithm |
+| Action ownership safety | non-transferable action lease + uncertainty/fencing tests | lost ownership → `UNCERTAIN`, no replacement replay |
 
-## P1 production/quality evidence
+## 4. Current architecture evidence
 
-| Area | Evidence | Disposition boundary |
-|---|---|---|
-| Contracts | API conformance result + registry + runtime tests | evidenced provider-free contract; not all routes live-exercised |
-| Authorization | ADR-005, ADR-012, action safety tests | deterministic local/supplied boundary; no blanket customer authorization |
-| Consequential actions | ADR-012 + DEMO-05 + idempotency tests | exactly controlled action profile; uncertain post-claim attempts are non-replayable |
-| Failure continuity | EV-007 + EV-011 + runtime transport-failure tests | safe fallback/handoff in deterministic/provider-free campaign |
-| Escalation handoff | DEMO-04 + EV-011 | provider-free evidence |
-| Customer communication | EV-011 | provider-free evidence; no subjective claim beyond frozen predicates |
-| State/context | controller/runtime trace models | explicit per-request trace lifecycle; no persistent memory claimed |
-| Configuration | `pyproject.toml`, `research/e2/pyproject.toml`, frozen config/result hashes | Python/dependency constraints and deterministic identities; no deployment platform lock |
-| Secrets/privacy | provider authorization tests, EV-007/011 sentinels, benchmark-integrity guard | zero real credential probes and no private/blind access in handoff campaigns |
-| Observability | `RunTrace`, evaluators, failure/stability/communication reports | structured inspectable events/metrics; no external observability backend claimed |
-| Model/provider quality | ADR-008…011 and issue #44 | **UNEXECUTED_GATED**: 0/32 live calls, no provider selected |
-| Performance | controller limits + EV-007/008 no hidden retry/replay evidence | bounded loops/reliability only; live latency, cost and provider resource behavior unmeasured |
-| Reproducibility | ADR-016 + clean workflow + runbook | provider-free clean-checkout evidence |
-| Rollback | `FINAL-HANDOFF-RUNBOOK.md` + fail-closed runtime/action/custody rules | code/config/reversal path documented; no exercised deployment-infrastructure rollback claimed |
-
-## Demonstration coverage
-
-The five-scenario ADR-016 demo is intentionally compact. Additional frozen campaigns provide the remaining demonstration dimensions rather than adding a second runtime path.
-
-| Final demo requirement | Evidence |
-|---|---|
-| Contextualize | DEMO-01 + evaluator-supported final orientation |
-| Investigate | DEMO-01 tool proposal/call/result/observation trace |
-| Execute | DEMO-05 controlled accepted `reprocess_analysis` |
-| Clarify / insufficient evidence | DEMO-02 and DEMO-03 |
-| Escalate | DEMO-04 |
-| Conflict / uncertainty | EV-007 failure profiles and EV-011 partial/unavailable/uncertain cases |
-| Failure / robustness | EV-007 |
-| Customer-safe response | EV-011 |
-| Per-run evaluation | all ADR-016 demo traces are evaluated |
-| Reliability view | EV-008 + EV-007 aggregate campaigns |
-
-## Benchmark/security integrity
-
-The key source is [`BENCHMARK-INTEGRITY-GATE.md`](BENCHMARK-INTEGRITY-GATE.md), backed by BIG-B0→BIG-B4 machine artifacts and workflow guards. Important review facts:
-
-- historical DEV + VALIDATION are an exposed development/selection pool;
-- legacy LOCKED_TEST is not described as pristine/untouched;
-- no fresh blind source is currently authorized;
-- private gold is evaluation-only and never runtime prompt material;
-- identity and seed are runner/runtime-owned;
-- API permissions and project/system policy are separate;
-- accepted action-event semantics are used instead of false final-state equality;
-- grouping unit for scientific generalization is `asset_story_group` to prevent split leakage.
-
-## External/gated items reviewers should not mistake for completed work
-
-### Live provider selection
-
-Issue #44 has a frozen 32-attempt comparison plan, clients, executor and custody wrapper. It remains **unexecuted** at 0/32 because explicit secrets plus a canonical durable custody root are required. No provider/model is selected; no live latency/cost/quality result exists.
-
-### C4 continuation
-
-The exact evaluator-side score-row artifact required for per-group/slice reporting is externally unavailable:
+Promoted repository architecture:
 
 ```text
-SHA-256  b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c
-bytes    177350
-rows     144
-geometry 36 common parents × 4 arms
+browser
+→ trusted identity context
+→ FastAPI
+→ PostgreSQL RLS / durable operational state
+→ runtime handoff / leases / generation fencing
+→ RealtimeProductionRuntime
+→ provider-neutral DecisionSource
+→ AgentController
+→ HarnessRunner
+→ 18 typed TRACTIAN tools
+→ deterministic safety boundaries
+→ normalized evidence
+→ terminal/action proposal
+→ RunTrace / ProductionEvaluator
+→ sanitized PostgreSQL observability/evaluation
+→ durable cursor + LISTEN/NOTIFY wake-up
+→ REST/SSE
+→ React control room
 ```
 
-Reconstruction, rescoring or substitution is forbidden. This blocks the next C4 reporting step; it does not invalidate already frozen deterministic/bootstrap/LOGO evidence.
+Important current decisions:
 
-## Final reviewer rule
+- PostgreSQL is the promoted serving/observability/evaluation truth.
+- DuckDB is dev/benchmark compatibility only.
+- custom controller remains the promoted baseline.
+- LangGraph/multi-agent/RAG/memory/MCP are `NO_CHANGE`/unpromoted absent a measured gap.
+- historical Cloudflare/provider modules are preserved as experiment evidence, not current provider selection.
 
-Treat a row as satisfied only within the scope of the exact linked evidence. A green provider-free validator does not imply live-provider quality, a safe supplied/test action does not authorize real customer mutation, and benchmark-integrity controls do not create fresh-blind evidence that does not exist.
+## 5. Provider/model evidence
+
+Historical D01/D02 provider experiments are **complete**, not pending.
+
+Current scientific decision:
+
+**`NO_SELECTION`**
+
+Neither candidate crossed the frozen promotion gates. Historical attempt/result/custody artifacts must remain immutable for their scope.
+
+Current production gap:
+
+- no production hosted model/provider is selected;
+- the remote-production plan requires a new hosted-provider tournament under a new preregistered protocol;
+- local model serving is not a production candidate under the current no-local-serving requirement.
+
+Do not confuse “historical provider experiment completed” with “production provider selected.”
+
+## 6. Evaluation evidence and human-data boundary
+
+### Implemented
+
+- deterministic structural/safety/trajectory evaluation;
+- baseline/candidate EDD machinery;
+- failure/stability/communication campaigns;
+- semantic-review collector/rubric/protocol/source generation;
+- operational-value collection + paired analysis machinery;
+- evaluator-only adaptive-stopping replay diagnostic.
+
+### Not yet claimable
+
+- human semantic calibration;
+- judge-vs-human reliability metrics;
+- real manual-vs-assisted engineer-time savings;
+- business-value/auto-resolution claims.
+
+Those require real human observations and must remain `NOT READY` until collected.
+
+## 7. Production-quality evidence: implemented vs missing
+
+The project intentionally sets stronger production gates than the minimum assignment.
+
+| Area | Current evidence | Disposition |
+|---|---|---|
+| PostgreSQL durable product state | real integration/concurrency/recovery tests | implemented in repository |
+| Tenant RLS | non-owner/non-bypass role + cross-tenant SQL/API tests | implemented/tested |
+| Realtime SSE/catch-up | PostgreSQL rows/cursor + wake-up + browser tests | implemented/tested |
+| Cross-replica read-only ownership | lease/generation-fencing tests | implemented/tested algorithmically |
+| Consequential action ownership | custody/idempotency/non-transferable lease/fencing | implemented/tested algorithmically |
+| Frontend lock/build/E2E | committed lockfile + `npm ci` + Vitest/Playwright | implemented/gated |
+| Stable product CI | `final-ci-required / required-gate` | implemented; repository branch protection still pending |
+| Remote production deployment | none yet | P0 blocker |
+| Standards-based end-user IAM | signed runtime bearer only | P0 blocker; OAuth/OIDC/SSO not yet implemented |
+| Branch protection | GitHub reports `main.protected=false` | P0 external/repository-control blocker |
+| Remote capacity/SLO | current CI load is descriptive | P0 evidence missing |
+| Backup/restore/RTO/RPO/HA | repository recovery tests only | P0 evidence missing for deployed claims |
+| Human semantic calibration | collection framework only | P1 human evidence missing |
+| Operational value | analysis framework only | P1 human evidence missing |
+| Production provider/model | historical `NO_SELECTION` | P1 new hosted tournament required |
+
+## 8. Realtime / frontend evidence
+
+Current product surfaces include or are structured around:
+
+- Mission Control;
+- Live Run Cockpit;
+- Run Explorer;
+- Timeline/Waterfall;
+- Trace Graph;
+- Architecture Explorer;
+- Evidence Explorer;
+- Output Lineage;
+- Action Control;
+- Tools & Policy analytics;
+- Eval Lab;
+- Provider Lab;
+- Dynamic Data Explorer;
+- Production Health.
+
+The frontend consumes safe server-owned projections. It must not receive private action custody, evaluator gold, secrets, raw sensitive provider material or hidden chain-of-thought.
+
+Final production acceptance adds remote build/deploy identity, IAM, capacity/recovery and operational-value evidence to these views where available.
+
+## 9. Security/integrity evidence
+
+Reviewer should verify:
+
+- runtime identity/tenant/permissions are server-owned;
+- PostgreSQL RLS is an independent tenant boundary;
+- private benchmark/gold truth never enters runtime/model context;
+- raw sensitive provider/action material is not exposed to browser/SSE;
+- consequential actions require explicit governed confirmation;
+- idempotency is persistent;
+- action execution leases are non-transferable;
+- ambiguous ownership loss becomes `UNCERTAIN`;
+- stale responses cannot publish false terminal success;
+- no blind replay occurs;
+- provider/evaluator failures do not fabricate an operational conclusion.
+
+The signed runtime bearer is not an enterprise IAM/SSO claim.
+
+## 10. Reproduction evidence
+
+Repository-level current gate:
+
+```text
+final-ci-required
+  ├── clean-clone-full-product-reproduction
+  ├── full-product-playwright
+  ├── horizontal-runtime-handoff
+  └── action-execution-lease
+       ↓
+  required-gate
+```
+
+Local/CI reproduction is documented in `FINAL-HANDOFF-RUNBOOK.md` and remains distinct from the future remote production operations path.
+
+Historical research workflows remain available for provenance/manual reproduction but are not ordinary product-PR gates after repository cleanup.
+
+## 11. Historical benchmark/C4 boundary
+
+The exact evaluator-side score-row artifact with SHA-256
+
+`b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`
+
+remains externally unavailable for claims that require that exact historical material. Reconstruction/rescoring/substitution is forbidden. This does not invalidate already frozen evidence for other scoped analyses.
+
+## 12. Reviewer rule
+
+Treat every claim only within the scope of the exact evidence:
+
+- provider-free acceptance ≠ live production provider quality;
+- repository cross-replica tests ≠ deployed HA/RTO/RPO;
+- signed runtime identity ≠ OIDC/SSO;
+- safe supplied/test action ≠ blanket customer mutation authorization;
+- semantic collection machinery ≠ human calibration;
+- operational-value analysis code ≠ measured business value;
+- historical D01/D02 completion ≠ production provider selection;
+- green CI ≠ protected branch until GitHub enforcement is active.
+
+Negative outcomes such as `NO_SELECTION`, `NO_CHANGE`, `REJECT` and `NOT READY` are valid evidence-backed results and must not be replaced by invented winners.
