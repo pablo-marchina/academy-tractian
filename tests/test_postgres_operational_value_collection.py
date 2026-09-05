@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -179,9 +178,8 @@ def _packet():
     )
 
 
-def _app(tmp_path: Path, fixture: _PgFixture, *, initialize_schema: bool):
+def _app(fixture: _PgFixture, *, initialize_schema: bool):
     return create_postgres_action_capable_product_app(
-        db_path=tmp_path / "pilot-observability.duckdb",
         internal_dsn=fixture.admin_dsn,
         scoped_dsn=fixture.scoped_dsn,
         schema=fixture.schema,
@@ -196,11 +194,11 @@ def _app(tmp_path: Path, fixture: _PgFixture, *, initialize_schema: bool):
 
 
 def test_postgres_store_serializes_same_principal_assignment(
-    tmp_path: Path,
     postgres_fixture: _PgFixture,
 ) -> None:
     packet, manifest = _packet()
-    app = _app(tmp_path, postgres_fixture, initialize_schema=True)
+    app = _app(postgres_fixture, initialize_schema=True)
+    assert app.state.local_test_storage_enabled is False
     store = app.state.operational_value_collection_store
     store.register_packet(organization_id="org-a", packet=packet, manifest=manifest)
     host_session_id = app.state.operational_value_timer_registry.host_session_id
@@ -224,11 +222,10 @@ def test_postgres_store_serializes_same_principal_assignment(
 
 
 def test_postgres_rejects_structurally_invalid_valid_measurement(
-    tmp_path: Path,
     postgres_fixture: _PgFixture,
 ) -> None:
     packet, manifest = _packet()
-    app = _app(tmp_path, postgres_fixture, initialize_schema=True)
+    app = _app(postgres_fixture, initialize_schema=True)
     store = app.state.operational_value_collection_store
     store.register_packet(organization_id="org-a", packet=packet, manifest=manifest)
     task = packet.tasks[0]
@@ -267,11 +264,10 @@ def test_postgres_rejects_structurally_invalid_valid_measurement(
 
 
 def test_postgres_rejects_assignment_with_noncanonical_pair_binding(
-    tmp_path: Path,
     postgres_fixture: _PgFixture,
 ) -> None:
     packet, manifest = _packet()
-    app = _app(tmp_path, postgres_fixture, initialize_schema=True)
+    app = _app(postgres_fixture, initialize_schema=True)
     store = app.state.operational_value_collection_store
     store.register_packet(organization_id="org-a", packet=packet, manifest=manifest)
     task = packet.tasks[0]
@@ -303,11 +299,10 @@ def test_postgres_rejects_assignment_with_noncanonical_pair_binding(
 
 
 def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
-    tmp_path: Path,
     postgres_fixture: _PgFixture,
 ) -> None:
     packet, manifest = _packet()
-    app = _app(tmp_path, postgres_fixture, initialize_schema=True)
+    app = _app(postgres_fixture, initialize_schema=True)
     app.state.operational_value_collection_store.register_packet(
         organization_id="org-a",
         packet=packet,
@@ -417,12 +412,11 @@ def test_postgres_collection_is_authenticated_server_timed_and_pair_safe(
 
 
 def test_postgres_collection_restart_invalidates_orphaned_monotonic_timer(
-    tmp_path: Path,
     postgres_fixture: _PgFixture,
 ) -> None:
     packet, manifest = _packet()
     pair_by_task = {entry.task_id: entry.pair_id for entry in manifest.entries}
-    first = _app(tmp_path, postgres_fixture, initialize_schema=True)
+    first = _app(postgres_fixture, initialize_schema=True)
     first.state.operational_value_collection_store.register_packet(
         organization_id="org-a",
         packet=packet,
@@ -438,8 +432,7 @@ def test_postgres_collection_restart_invalidates_orphaned_monotonic_timer(
         orphaned_assignment = assigned.json()["assignment_id"]
         orphaned_task = assigned.json()["task"]["task_id"]
 
-    second = _app(tmp_path, postgres_fixture, initialize_schema=False)
-    # Merely constructing/importing the replacement app is not enough to invalidate a human trial.
+    second = _app(postgres_fixture, initialize_schema=False)
     assert second.state.operational_value_recovered_assignments == ()
     with TestClient(second) as client:
         stale_completion = client.post(
