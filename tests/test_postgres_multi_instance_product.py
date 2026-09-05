@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from time import monotonic, sleep
 from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
 
@@ -127,6 +128,15 @@ def _headers() -> dict[str, str]:
     return {"x-test-user": "user-a", "x-test-organization": "org-a"}
 
 
+def _wait_until(predicate, *, timeout_seconds: float = 5.0) -> None:
+    deadline = monotonic() + timeout_seconds
+    while monotonic() < deadline:
+        if predicate():
+            return
+        sleep(0.02)
+    raise AssertionError("condition was not satisfied before timeout")
+
+
 def test_second_app_instance_reads_execution_trace_and_replays_sse(postgres_fixture) -> None:
     """Prove a request can continue its read/replay path on a different stateless replica."""
 
@@ -134,6 +144,10 @@ def test_second_app_instance_reads_execution_trace_and_replays_sse(postgres_fixt
     second = _app(postgres_fixture, initialize=False)
 
     with TestClient(first) as client_a, TestClient(second) as client_b:
+        # Both replicas own one dedicated listener. Wait for B to be LISTENing before A writes so
+        # this test proves a real cross-replica notification rather than timeout-only catch-up.
+        _wait_until(lambda: second.state.realtime_wakeup.snapshot()["connected"] is True)
+
         accepted = client_a.post(
             "/api/runs",
             headers=_headers(),
@@ -144,6 +158,14 @@ def test_second_app_instance_reads_execution_trace_and_replays_sse(postgres_fixt
         future = first.state.run_execution_registry.future(run_id)
         assert future is not None
         future.result(timeout=15)
+
+        _wait_until(lambda: second.state.realtime_wakeup.generation(run_id) >= 0)
+        wakeup_snapshot = second.state.realtime_wakeup.snapshot()
+        assert wakeup_snapshot["backend"] == "postgresql_listen_notify"
+        assert wakeup_snapshot["notifications_received"] >= 1
+        assert wakeup_snapshot["valid_notifications"] >= 1
+        assert wakeup_snapshot["payload_rejections"] == 0
+        assert second.state.realtime_backend == "postgresql_listen_notify"
 
         # No affinity to instance A: instance B authorizes the same tenant/user against shared
         # ownership state and reads durable execution + safe observability from PostgreSQL.
