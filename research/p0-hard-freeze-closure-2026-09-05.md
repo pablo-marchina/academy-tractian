@@ -4,7 +4,7 @@
 
 Close the repository-side P0 distributed-product work as **`READY_FOR_HARD_FREEZE`**, subject only to the already-scheduled end-of-day hard freeze and final rehearsal/delivery checks.
 
-This addendum supersedes only the mutable topology/status statements that changed after the 2026-09-04 freeze candidate. Historical experiment and decision artifacts remain immutable for their original scopes.
+This addendum supersedes only mutable topology/status statements that changed after the 2026-09-04 freeze candidate. Historical experiment and decision artifacts remain immutable for their original scopes.
 
 ## Exact accepted integration
 
@@ -13,11 +13,21 @@ The final P0 architecture increments were merged to `main` through:
 - PR #187 — read-only runtime cross-replica handoff;
 - PR #188 — non-transferable consequential-action execution leases.
 
-PR #188 squash merge SHA:
+PR #188 squash merge SHA and current accepted `main` baseline:
 
 `9e160e9badcf6ba0d5ebba39b7d64d24380408c6`
 
-The promoted `final-ci-required` contract now requires four reusable acceptance jobs before `required-gate` can pass:
+Post-merge `final-ci-required` run `33970100750` / run #384 completed successfully on that exact SHA. All reusable jobs and the aggregate gate passed:
+
+```text
+clean-clone / reproduce-current-product                  success
+full-product-browser / chromium-full-product              success
+horizontal-runtime-handoff / postgres-horizontal-runtime  success
+action-execution-lease / postgres-action-lease            success
+required-gate                                             success
+```
+
+The promoted `final-ci-required` contract therefore now requires four reusable acceptance jobs before `required-gate` can pass:
 
 1. current clean-clone reproduction;
 2. full Chromium product acceptance;
@@ -40,7 +50,7 @@ The promoted serving topology uses PostgreSQL for:
 - safe observability runs/events/evidence/evaluations;
 - semantic-review and operational-value collection state.
 
-The production package does not require DuckDB. DuckDB remains available only through explicit dev/benchmark compatibility extras.
+The root production package does not require DuckDB. DuckDB remains available only through explicit dev/benchmark compatibility extras.
 
 ### Realtime
 
@@ -102,6 +112,17 @@ One hosted-CI sample of the previously promoted realtime wakeup benchmark kept a
 
 The first sample remains visible as hosted-runner timing variance; no criterion was relaxed to obtain a pass.
 
+## External enforcement observation
+
+Repository-side CI is ready to be enforced through the stable `required-gate`, but GitHub administration remains an external control. The 2026-09-05 branch/ruleset reads still report:
+
+```text
+main.protected = false
+repository rulesets = []
+```
+
+Therefore branch-protection enforcement remains `PENDING_EXTERNAL_ENFORCEMENT`; this addendum does not claim otherwise.
+
 ## Bounded claims
 
 Repository evidence now supports a **cross-replica correctness claim for the tested PostgreSQL product algorithms**: read-only runtime takeover plus healthy-action non-interference/stale fencing.
@@ -123,11 +144,10 @@ It does **not** support claims of:
 
 Before the 2026-09-08 delivery, the P0 path is limited to:
 
-1. successful post-merge `required-gate` on the accepted `main` SHA;
-2. synchronize the canonical current-status/freeze bundle with this closure;
-3. end-of-2026-09-05 hard feature/visual/architecture freeze;
-4. apply/verify GitHub branch protection if repository administration access becomes available;
-5. final rehearsal and evidence inspection on 2026-09-06/07;
-6. delivery on 2026-09-08.
+1. synchronize the canonical current-status/freeze bundle with this closure;
+2. end-of-2026-09-05 hard feature/visual/architecture freeze;
+3. apply/verify GitHub branch protection if repository administration access becomes available;
+4. final rehearsal and evidence inspection on 2026-09-06/07;
+5. delivery on 2026-09-08.
 
 Provider/model expansion is P1. D01/D02 are consumed governed experiments and must not be replayed. Any new provider/model campaign requires a new preregistered experiment ID and frozen evaluation protocol.
