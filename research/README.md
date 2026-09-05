@@ -1,64 +1,50 @@
 # Systematic Research Hub
 
-This directory is the **research evidence/history surface**, not the canonical project-status page.
+This directory is the **research/evidence history surface**, not the canonical project-status page.
 
-For project-source truth and current planning, start with:
+For current project truth, start with:
 
-- [`tractian-source-baseline-2026-08-27.md`](tractian-source-baseline-2026-08-27.md) — audited updated TAPI + delivered package + kickoff baseline and discrepancies;
-- [`01-requirements-matrix.md`](01-requirements-matrix.md) — reconciled requirement/partner-guidance matrix;
-- [`../docs/PROJECT-PRINCIPLES.md`](../docs/PROJECT-PRINCIPLES.md) — fixed North Star and development rules;
-- [`../docs/CURRENT-PROJECT-STATUS.md`](../docs/CURRENT-PROJECT-STATUS.md) — current state/authorization;
-- [`../docs/NEXT-STEPS.md`](../docs/NEXT-STEPS.md) — current execution plan;
-- [`../docs/DELIVERY-ACCEPTANCE.md`](../docs/DELIVERY-ACCEPTANCE.md) — final evidence obligations;
-- [`../docs/ARCHITECTURE-ROADMAP.md`](../docs/ARCHITECTURE-ROADMAP.md) — integrated agent/evaluator architecture path;
-- [`../docs/PROJECT-PLAN.md`](../docs/PROJECT-PLAN.md) — macro phases/deadline protection;
-- [`../docs/REPOSITORY-GUIDE.md`](../docs/REPOSITORY-GUIDE.md) — source reconciliation and repository maintenance.
+- [`../docs/CURRENT-PROJECT-STATUS.md`](../docs/CURRENT-PROJECT-STATUS.md) — current state and claim authorization;
+- [`../docs/DELIVERY-PLAN.md`](../docs/DELIVERY-PLAN.md) — active execution plan;
+- [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) — promoted architecture and stack;
+- [`../docs/DELIVERY-ACCEPTANCE.md`](../docs/DELIVERY-ACCEPTANCE.md) — acceptance obligations;
+- [`../docs/PROJECT-PRINCIPLES.md`](../docs/PROJECT-PRINCIPLES.md) — governance and evaluation-driven development rules;
+- [`../docs/README.md`](../docs/README.md) — documentation lifecycle and evidence hierarchy.
 
-This README intentionally does **not** restate the current experiment gate or checkpoint. Do not infer authorization from an older numbered research record, script, workflow or filename.
+For upstream assignment/source reconciliation, use:
 
-## Source-baseline rule
+- [`tractian-source-baseline-2026-08-27.md`](tractian-source-baseline-2026-08-27.md);
+- [`01-requirements-matrix.md`](01-requirements-matrix.md).
 
-Upstream project sources and experiment evidence answer different questions:
-
-```text
-What must we deliver?
-  → updated TAPI → delivered package → executable supplied API → compatible kickoff guidance
-
-What happened/is authorized in a specific experiment?
-  → frozen manifests/results/closures → current status
-```
-
-Do not let a historical experiment redefine the assignment, and do not let a new project-summary document silently rewrite frozen experiment semantics.
+This README intentionally does **not** restate the current experiment gate. Historical filenames, workflows and scripts are not authorization.
 
 ## Directory semantics
 
-- numbered Markdown files at `research/` root: chronological/systematic research history, retained for provenance;
-- `tractian-source-baseline-*.md`: audited upstream-source identity and reconciliation records;
-- `experiments/`: preregistrations, experiment definitions and eligibility/design artifacts;
-- `frozen/`: immutable contracts, maps, inputs and authorizations;
-- `fixtures/`: allowed fixture/public test material;
-- `results/`: canonical machine-readable results, closures and time-specific checkpoints;
-- `live/`: intentionally committed live evidence, when present;
-- `execution-bundles/`: frozen/materialized execution code bundles used by historical or active experiments.
-
-Exact experiment semantics come from the relevant frozen artifact/result, not this README.
+| Path | Role |
+|---|---|
+| numbered Markdown files at `research/` root | legacy chronological research/evidence trail retained for provenance |
+| `experiments/` | preregistration, design and experiment-eligibility material |
+| `frozen/` | immutable contracts, maps, inputs and authorizations |
+| `fixtures/` | allowed fixture/public test material |
+| `results/` | canonical machine-readable results, closures and checkpoints |
+| `live/` | intentionally committed live evidence |
+| `execution-bundles/` | frozen/materialized execution code used by historical or active experiments |
+| `e2/` | accepted controller/tool/trace/evaluation harness |
 
 ## Historical-record policy
 
-The large numbered E-series/BIG-B/P12 research trail is intentionally retained. Many records are historical, failed, superseded or consumed, but they remain evidence.
+The large numbered E-series/BIG-B/P12 trail remains intentionally present. Some records are failed, consumed, superseded or historical, but they are still evidence.
 
-Do not bulk-rename, renumber or move these files merely to make the tree visually cleaner. First prove that the path is not:
+Do **not** bulk-rename, renumber or move those files merely to make the tree prettier. First prove that a path is not:
 
 - referenced by a frozen JSON/manifest;
-- pinned as a source path/blob;
-- linked from a result/ADR/workflow;
+- pinned as a source path or blob;
+- linked from a result, ADR or workflow;
 - required for reproduction of a consumed or failed experiment.
 
-Logical classification/indexing is preferred over breaking provenance.
+When uncertain, classify logically and preserve the physical path.
 
-## Evidence lifecycle
-
-Useful interpretation labels:
+## Lifecycle labels
 
 ```text
 ACTIVE       current authorized workstream
@@ -68,17 +54,36 @@ HISTORICAL   retained for reproducibility/context
 SUPERSEDED   replaced by stronger evidence/decision
 ```
 
-A historical file may remain physically present without being active.
+A file remaining in the repository does not make it active.
 
-## Development rule
+## Rule for new research
 
-Any new material candidate or architecture change follows `PROJECT-PRINCIPLES.md` and must first map to the actual requested delivery:
+Do not continue growing the loose numbered root unless a source-pinned historical protocol requires it.
+
+New work should normally be placed as follows:
 
 ```text
-formal requirement / rubric objective / material risk
-→ question → systematic research → alternatives + baseline
-→ preregistration → quantitative controlled evaluation → robustness
-→ production/partner-quality fit → ADR/decision → regression
+research/experiments/<decision-or-experiment>/
+research/frozen/<decision-or-experiment>/
+research/results/<decision-or-experiment>/
 ```
 
-The research tree is evidence for that process; it is not a substitute for it.
+Use stable machine-readable IDs inside artifacts; do not rely on filename order as the experiment identity.
+
+Every material candidate follows:
+
+```text
+requirement / measured gap
+→ research question
+→ alternatives + baseline
+→ preregistration
+→ quantitative controlled evaluation
+→ robustness/failure analysis
+→ production fit
+→ ADR / decision
+→ regression
+```
+
+## Cleanup rule
+
+Before deleting or relocating research evidence, follow the repository-wide cleanup policy in [`../docs/README.md`](../docs/README.md). The default is preservation unless reference/pinning/reproduction safety is proven.

@@ -1,7 +1,6 @@
 name: research-e14m-r1-tooling
 
 on:
-  pull_request:
   workflow_dispatch:
 
 jobs:
