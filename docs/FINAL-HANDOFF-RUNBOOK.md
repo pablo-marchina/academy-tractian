@@ -1,28 +1,45 @@
 # Academy × TRACTIAN — Handoff and Operations Runbook
 
 **Status:** ACTIVE operational runbook  
-**Checkpoint:** 2026-09-05 production rebaseline  
-**Authority:** subordinate to [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md), [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md), accepted ADRs and frozen experiment evidence.
+**Checkpoint:** 2026-09-05 corrected production rebaseline  
+**Authority:** subordinate to [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md), [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md), [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md), accepted ADRs and frozen experiment evidence.
 
-This runbook deliberately separates three paths:
+This runbook separates three paths:
 
 1. **local/CI reproduction** — deterministic evidence and developer verification;
-2. **remote staging/production operation** — the required final serving path;
+2. **remote USD0 staging/production operation** — the required final serving path;
 3. **historical experiment reproduction** — frozen evidence only.
 
-Local reproducibility is important, but local execution must never be presented as the final production topology.
+Local reproducibility is important, but local execution must never be presented as the final production topology. Likewise, a paid hosted path must never be presented as project-compliant while the USD0 hard constraint applies.
 
-## 1. Promoted product architecture
+## 1. Hard operational envelope
+
+The selectable production path must satisfy all of the following simultaneously:
+
+```text
+actual project cash cost = USD 0
+no automatic paid spillover
+remote serving; no developer-machine dependency
+standards-based user identity
+multi-user tenant isolation
+safe consequential actions
+remote durable PostgreSQL-compatible state
+observable/reproducible release
+```
+
+If no available topology satisfies this envelope plus the technical gates, the correct state is an explicit blocker/`NO_SELECTION`, not a paid fallback.
+
+## 2. Promoted logical product architecture
 
 ```text
 remote browser
-→ standards-based user identity (target production IAM)
+→ standards-based USD0 user identity (target production IAM)
 → FastAPI product API
 → trusted server-owned runtime context
 → PostgreSQL tenant RLS + mutable/durable product state
 → runtime handoff / leases / generation fencing
 → RealtimeProductionRuntime
-→ hosted provider DecisionSource
+→ USD0 hosted provider DecisionSource
 → AgentController
 → HarnessRunner
 → 18 typed TRACTIAN tools
@@ -40,16 +57,11 @@ The currently implemented signed bearer runtime identity and provider-free decis
 
 Consequential actions remain governed by private PostgreSQL custody, explicit confirmation, current authorization, host kill switch, persistent idempotency and non-transferable execution leases. Ambiguous ownership loss becomes `UNCERTAIN` and is never blindly replayed.
 
-## 2. Local/CI reproduction prerequisites
+## 3. Local/CI reproduction prerequisites
 
-Canonical CI toolchain currently uses:
+Canonical CI toolchain currently uses Python 3.11+, Node compatible with `frontend/package.json`, PostgreSQL in the current Actions contracts, dependencies from `pyproject.toml` and committed `frontend/package-lock.json`.
 
-- Python 3.11+
-- Node compatible with `frontend/package.json`
-- PostgreSQL 18 in current GitHub Actions contracts
-- dependencies from `pyproject.toml` and committed `frontend/package-lock.json`
-
-Python development/reproduction install from repository root:
+Backend/dev installation:
 
 ```bash
 python -m pip install --upgrade pip
@@ -66,13 +78,13 @@ cd ..
 
 Provider-free reproduction requires no live model/provider secret.
 
-## 3. Canonical clean-clone reproduction
+## 4. Canonical clean-clone reproduction
 
 The authoritative current-product repository reproduction workflow is:
 
 `.github/workflows/clean-clone-full-product-reproduction.yml`
 
-The older `.github/workflows/final-delivery-provider-free-reproduction.yml` is historical evidence and is intentionally distinct.
+The older `.github/workflows/final-delivery-provider-free-reproduction.yml` is historical evidence and intentionally distinct.
 
 Current clean-clone coverage includes:
 
@@ -80,29 +92,30 @@ Current clean-clone coverage includes:
 clean tracked checkout
 → install backend/E2 dependencies
 → PostgreSQL-backed Python product suite
-→ promoted identity/RLS/load/recovery checks
-→ cross-replica/action correctness regressions through required workflows
+→ identity/RLS/load/recovery checks
+→ distributed/action correctness regressions through required workflows
 → accepted controller/safety evidence
-→ frozen EV-007 / EV-008 / EV-011 reproduction
-→ final evidence/handoff validation
+→ frozen historical evidence validation
 → npm ci
 → frontend typecheck + unit tests + production build
 → no tracked repository mutation
 ```
 
-Do not modify frozen expected identities or historical evidence merely to make a later reproduction gate pass.
+Do not modify frozen expected identities or historical evidence merely to make a later gate pass.
 
-## 4. Manual local reproduction
+## 5. Manual local reproduction
 
-This section is **developer/reviewer reproduction only**, not production serving.
+This is developer/reviewer reproduction only, not production serving.
 
-Start an isolated local PostgreSQL instance and expose the test DSN to the test process, for example:
+A local PostgreSQL DSN such as:
 
 ```text
 POSTGRES_OPERATIONAL_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
 ```
 
-Then from repository root:
+is allowed for local tests. The production environment must reject loopback/local serving dependencies.
+
+Representative local commands:
 
 ```bash
 python -m pytest -q tests
@@ -119,158 +132,128 @@ npm test
 npm run build
 ```
 
-PowerShell example:
+## 6. Full browser acceptance in CI/staging
 
-```powershell
-$env:POSTGRES_OPERATIONAL_TEST_DSN = "postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian"
-```
+Current Chromium acceptance is `.github/workflows/full-product-playwright.yml`.
 
-A localhost DSN is valid here because this section is explicitly local reproduction. The production environment must reject local serving dependencies.
+It exercises the real product controller/tool/persistence/evaluation/SSE/frontend path with a deterministic provider-free decision source. This proves product integration/browser semantics, not remote provider/IAM production quality.
 
-## 5. Full browser acceptance in CI/staging
+After remote deployment exists, staging-compatible browser acceptance must cover the selected USD0 IAM/deployment topology without unsafe customer actions/data.
 
-Current repository Chromium acceptance is:
+## 7. Remote production prerequisites
 
-`.github/workflows/full-product-playwright.yml`
+Before a deployment may be called production, record the systematic infrastructure decision/ADR and provide:
 
-It exercises the real product controller/tool/persistence/evaluation/SSE/frontend path with a deterministic provider-free decision source.
-
-This proves product integration and browser semantics, including reconnect/catch-up and safe projection. It does **not** prove that a remote production provider/model or production IAM works.
-
-After remote deployment exists, add/retain a staging-compatible browser suite that covers the selected IAM and deployment topology without using customer data or unsafe consequential actions.
-
-## 6. Remote production prerequisites
-
-Before the runbook may call a deployment “production”, record the selected infrastructure decision/ADR and provide:
-
-- production frontend URL;
-- production API URL;
-- managed PostgreSQL endpoint/service identity without publishing secrets;
-- selected IAM/identity provider configuration;
-- selected hosted model/provider configuration;
-- secret manager/environment contract;
-- deployment region/topology;
+- remote frontend/API URL(s);
+- selected USD0 remote PostgreSQL-compatible store;
+- selected USD0 IAM configuration;
+- selected USD0 hosted model/provider configuration;
+- selected USD0 telemetry/monitoring path where external tooling is used;
+- secret/environment contract;
+- deployment topology/region;
 - migration strategy;
 - health/readiness/version endpoints;
 - build/commit/artifact identity;
 - rollback target/procedure;
-- backup/PITR configuration where selected.
+- strongest USD0 backup/export/PITR mechanism available;
+- quota/free-tier limits and fail-closed behavior;
+- evidence that actual cash cost remains USD0 and automatic paid spillover is impossible/disabled.
 
-Production startup/config validation must fail closed on forbidden local/test configuration such as:
+Paid candidates may appear in research comparisons as references but cannot populate these selected-production fields.
 
-- localhost/loopback backend/DB/model endpoint;
+## 8. Production startup/configuration guards
+
+Production must fail closed or be considered ineligible when configured with:
+
+- localhost/loopback backend/DB/model endpoints;
 - local model server;
 - SQLite/DuckDB/filesystem production state;
 - provider-free/mock decision source;
-- test identity bypass.
+- development identity bypass;
+- a component requiring non-zero project cash spend;
+- automatic paid-overage/spillover behavior.
 
-## 7. Remote deployment procedure — contract
+Quota exhaustion must degrade/fail safely rather than authorize spending.
 
-The exact commands depend on the infrastructure selected by systematic comparison. Once selected, this section must contain executable provider-specific steps rather than placeholders.
+## 9. Remote deployment procedure — contract
 
-The deployment contract is:
+Exact commands depend on the USD0 infrastructure selected by systematic comparison. Once selected, replace the provider-specific placeholders with executable steps.
 
 ```text
 merge protected main
 → immutable build artifact
-→ deploy/migrate staging
+→ deploy/migrate USD0 staging
 → staging health + smoke
 → staging authenticated browser E2E
+→ verify quota/cost guard
 → production promotion
 → production health + smoke
 → synthetic safe run
-→ monitor errors/latency/event delivery
-→ keep previous release available for rollback
+→ monitor errors/latency/event delivery/quota
+→ keep known-good rollback target where the selected free platform permits it
 ```
 
-A deployment is not complete because the build succeeded. Remote health, persistence, authenticated access and live run behavior must be verified.
+A deployment is not complete because a build succeeded. Remote health, persistence, authenticated access, live run behavior and zero-cost enforcement must be verified.
 
-## 8. Production smoke checklist
+## 10. Production smoke checklist
 
-After every production promotion, verify at minimum:
+After every production promotion verify:
 
-- expected commit/build/deploy revision is visible;
-- `/health` and `/ready` are truthful;
-- database connectivity/RLS scope is healthy;
-- authentication succeeds for an authorized test user;
+- expected commit/build/deploy revision;
+- health/readiness truthfulness;
+- DB connectivity/RLS scope;
+- authentication succeeds for authorized test user;
 - unauthorized/expired identity fails closed;
-- one safe run can be submitted;
-- genuine runtime events arrive over SSE;
-- terminal state/evaluation is persisted;
-- reconnect/catch-up works;
-- safe evidence/lineage is visible;
-- no forbidden fields appear in browser/API/SSE;
-- provider errors, if induced/observed, fail safely;
-- no consequential action executes without explicit governed confirmation.
+- safe run submission;
+- genuine SSE events;
+- terminal state/evaluation persistence;
+- reconnect/catch-up;
+- evidence/lineage visibility;
+- no forbidden fields;
+- provider errors fail safely;
+- no action executes without governed confirmation;
+- free-tier/quota state is healthy;
+- actual project cash cost remains USD0;
+- no automatic paid spillover is enabled.
 
-## 9. Failure/recovery behavior
+## 11. Failure/recovery behavior
 
-### Invalid arguments
+- **Invalid arguments:** B1 blocks before transport.
+- **Authorization/policy denial:** stop before consequential transport and preserve safe denial/audit evidence.
+- **Missing/conflicting evidence:** clarify, abstain or escalate; never fabricate certainty.
+- **Provider failure:** never manufacture a conclusion/action from malformed/unavailable output.
+- **Read-only runtime ownership loss:** generation fencing prevents stale finalization; eligible expired read-only work may transfer according to the handoff contract.
+- **Consequential action ownership loss:** converge to `UNCERTAIN`; never start a replacement external transport automatically.
+- **Process/deployment restart:** recovery remains conservative/idempotent and never authorizes blind action replay.
+- **Quota exhaustion/free-tier suspension:** fail/degrade safely, expose status and preserve durable state; never cross to paid operation automatically.
+- **Database/provider outage:** preserve safe user-visible state/handoff according to the selected topology and record recovery evidence.
 
-B1 blocks before transport. Never convert denial into invented success.
+## 12. Backup and restore
 
-### Authorization/policy denial
+For the selected USD0 database topology:
 
-Stop before consequential transport and preserve the safe denial/audit record.
-
-### Missing/conflicting evidence
-
-Clarify, abstain or escalate. Never fabricate certainty.
-
-### Provider/decision-source failure
-
-Do not manufacture a conclusion/action from malformed or unavailable output. Raw sensitive provider material remains private.
-
-### Read-only runtime ownership loss
-
-Generation fencing prevents stale owner finalization. An expired read-only lease may be recovered by another replica only according to the promoted handoff contract.
-
-### Consequential action ownership loss
-
-Action execution leases are non-transferable. Lost/stale ownership converges to `UNCERTAIN`; no replacement external transport attempt is started automatically.
-
-### Process/deployment restart
-
-Recovery must remain conservative and idempotent. Restart/deploy never authorizes blind action replay.
-
-### Database/provider outage
-
-Production response must preserve user-visible safe status/handoff and durable-state guarantees demonstrated by the selected deployed topology. Record the incident/recovery metrics instead of hiding outages with uncontrolled retries.
-
-## 10. Backup and restore
-
-Once the managed database is selected:
-
-1. verify automated backup/PITR configuration;
+1. identify the strongest free backup/PITR/export capability;
 2. create known test state;
-3. execute a controlled restore/PITR drill in an isolated environment;
+3. run a controlled restore/reconstruction drill in isolation;
 4. verify tenant/action/run/evaluation integrity;
-5. record measured recovery time and possible data-loss window;
-6. update production RTO/RPO claims only from measured evidence.
+5. record recovery time and possible data-loss window;
+6. update RTO/RPO claims only from measured evidence.
 
-Provider SLA is not a substitute for this drill.
+If a stronger backup/HA feature is paid-only, document that limitation; do not enable it.
 
-## 11. Security/privacy rules
+## 13. Security/privacy rules
 
-Never expose through browser/API/SSE/artifacts/logs:
+Never expose provider secrets, auth headers, signing secrets, benchmark/gold truth, raw sensitive provider/tool material, private action arguments/idempotency keys or hidden chain-of-thought.
 
-- provider secrets/tokens;
-- account/auth headers;
-- signing/identity secrets;
-- benchmark/evaluator seed or gold truth;
-- raw sensitive provider prompt/response content;
-- forbidden raw tool/observation bodies;
-- private action arguments/idempotency keys;
-- hidden chain-of-thought.
+Tenant/permission authority remains server-owned. Production end-user auth is not described as OIDC/SSO until the standards-based flow is actually deployed/tested.
 
-Tenant and permission authority must remain server-owned. Production end-user auth must not be described as enterprise/OIDC until the standards-based flow is actually deployed and tested.
+Also treat cost-boundary bypass as a security/operations failure: credentials/config must not allow normal workflows to silently incur paid charges.
 
-## 12. Operational diagnosis order
-
-Diagnose the earliest failing boundary:
+## 14. Operational diagnosis order
 
 ```text
 DNS/TLS/deployment health
+→ USD0 quota/cost guard
 → user authentication/session
 → tenant ownership/RLS
 → runtime preparation/ownership
@@ -288,85 +271,77 @@ DNS/TLS/deployment health
 → browser reducer/render
 ```
 
-Do not mask one layer with retries/fallbacks from another.
+Do not mask one layer with uncontrolled retries/fallbacks from another.
 
-Correlate with request/run/build/trace identifiers where the production observability design supports them.
-
-## 13. Rollback procedure — contract
-
-A production rollback must be tested before final freeze.
-
-Required behavior:
+## 15. Rollback procedure — contract
 
 ```text
 identify bad deployment
 → stop further promotion
 → preserve evidence/logs
 → verify DB migration compatibility
-→ route/deploy previous known-good artifact
+→ route/deploy previous known-good eligible artifact
 → production smoke
-→ verify durable runs/actions remain semantically safe
+→ verify durable runs/actions remain safe
+→ verify USD0/cost guard
 → document incident + regression
 ```
 
-Never roll back schema/application combinations blindly when a migration is not backward compatible. Migration/rollback design is part of the infrastructure decision.
+Never use a paid rollback service/plan as an implicit fallback if that would violate the project constraint.
 
-## 14. Historical provider-free campaigns
+## 16. Provider experiment state
 
-Historical frozen identities remain evidence for their original scopes:
+Historical D01/D02 Cloudflare packets remain frozen evidence.
 
-```text
-EV-007  7b281d3ad6b2d7e2f1407c6321b5200b4185625a284b1c8a20bd1818ced9ddf9
-EV-008  1542a7cbb69e64e72e78e24e28163d22372eb70aa2438b062845a1ab6b181dd8
-EV-011  cfa811da3af43a9577e0512c8da1fb8423bdf1d2b55a80023c18199033f65a2e
-DEMO    43903731c34573df259461596e9659e11c55699450d2bbd1cb4b617acde32445
-```
+D02 completed 32/32 attempts at USD0 and preserved safe failure/trace behavior, but the tested GLM and Nemotron candidates failed frozen M1/M4/M7 promotion gates. Therefore current provider state is `NO_SELECTION`.
 
-They are reproducibility evidence, not proof of remote provider/IAM/capacity/HA readiness.
+Cloudflare is not rejected for being expensive; it passed the cost gate. It is not selected because the tested candidates did not pass the technical gates. A materially new USD0 Cloudflare candidate may be evaluated only through a new preregistered experiment; consumed D01/D02 packets are not replayed.
 
-Historical D01/D02 currently conclude `NO_SELECTION`; do not replay consumed protocols simply to search for a more attractive outcome.
+There is no paid provider fallback.
 
-## 15. Final presentation sequence
+## 17. Final presentation sequence
 
-The final presentation should operate the same normal remote product used by authorized users:
+The final presentation should operate the normal remote USD0 product:
 
 ```text
-1. open Production Health / build identity
+1. show Production Health / build identity / USD0 boundary health
 2. authenticate as a normal authorized user
 3. submit a representative industrial request
-4. watch LIVE run + architecture/trace growth
+4. watch live run + architecture/trace growth
 5. inspect tool/policy/evidence path
-6. inspect terminal operational conclusion
+6. inspect terminal conclusion
 7. inspect evaluator after runtime completion
 8. inspect output lineage / dynamic analytics
 9. show clarify/abstain/escalate safe behavior
-10. show governed pending action + explicit confirmation in an authorized safe profile
-11. show provider/model evaluation state
-12. show remote production/load/recovery evidence and explicit non-claims
+10. show governed pending action + confirmation in authorized safe profile
+11. show provider/model state
+12. show remote production/load/recovery evidence and exact limitations
 ```
 
-Do not use a separate demo-only serving stack.
+Do not use a separate demo-only or paid serving stack.
 
-## 16. Final completion checklist
+## 18. Final completion checklist
 
 Before final production freeze:
 
 - repository cleanup/rebaseline merged;
-- current-product `final-ci-required` green on exact final SHA;
-- historical evidence remains intact;
-- remote deployment URL works independently of developer machines;
-- production-local-dependency guard passes;
-- standards-based IAM + multi-user/tenant tests pass;
-- branch protection + CI/CD are enforced;
-- staging/production smoke and rollback are tested;
-- production observability is live;
+- `final-ci-required` green on exact final SHA;
+- historical evidence intact;
+- actual project cash cost remains USD0;
+- no selected component can silently spill into paid usage;
+- remote product works independently of developer machines;
+- local-dependency guard passes;
+- USD0 standards-based IAM + multi-user/tenant tests pass;
+- branch protection + CI/CD enforced;
+- staging/production smoke + rollback tested;
+- production observability live;
 - remote load/soak evidence exists before capacity/SLO claims;
 - backup/restore/recovery evidence exists before RTO/RPO/HA claims;
 - semantic calibration remains `NOT READY` unless real labels exist;
 - operational-value claims remain `NOT READY` unless real human measurements exist;
-- provider/model state remains truthful (`NO_SELECTION` unless a new hosted challenger wins);
-- no secrets/private evaluator material is present in repo/artifacts/frontend;
-- documentation commands and URLs match the deployed/code state;
+- provider/model remains truthful (`NO_SELECTION` unless a new USD0 hosted challenger wins);
+- no secrets/private evaluator material in repo/artifacts/frontend;
+- documentation matches deployed/code state;
 - no last-minute framework expansion without measured need.
 
-If a gate is not closed, report the exact limitation instead of broadening the claim.
+If a gate is not closed, report the exact limitation instead of broadening the claim or relaxing a user-specified hard constraint.
