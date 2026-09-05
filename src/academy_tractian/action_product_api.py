@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Callable, Literal
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict
@@ -10,6 +11,16 @@ from research.e2.controller import DecisionSource
 from research.e2.transport import RequestTransport
 
 from .action_evaluation import ProductionActionEvaluator
+from .action_execution_lease import (
+    ActionExecutionLeaseContext,
+    ActionExecutionLeaseLost,
+    ActionExecutionLeaseStore,
+    ActionExecutionLeaseSupervisor,
+    LeaseContextGuardedCustody,
+    LeaseContextGuardedLedger,
+    LeaseContextGuardedObservabilitySink,
+    LeaseContextGuardedTransport,
+)
 from .action_recovery import reconcile_orphaned_actions
 from .observability_contract import ObservabilityStoreContract
 from .product_api import (
@@ -68,6 +79,7 @@ def create_action_capable_product_app(
     action_ledger_path: str | Path | None = None,
     custody_store: Any | None = None,
     action_ledger: Any | None = None,
+    action_execution_lease_store: ActionExecutionLeaseStore | None = None,
     access_db_path: str | Path | None = None,
     execution_db_path: str | Path | None = None,
     run_access_store: RunAccessStore | None = None,
@@ -82,6 +94,8 @@ def create_action_capable_product_app(
     realtime_fallback_poll_ms: int = 1000,
     runtime_handoff_lease_seconds: float = 15.0,
     runtime_handoff_scan_ms: int = 500,
+    action_execution_lease_seconds: float = 15.0,
+    action_execution_lease_scan_ms: int = 500,
     allow_local_test_storage: bool = False,
 ) -> FastAPI:
     """Create the action-capable product while failing closed on local storage.
@@ -91,8 +105,9 @@ def create_action_capable_product_app(
     product factory never receives a path and cannot infer a local persistence topology.
 
     ``runtime_handoff_store`` applies only to read-only investigation runtimes. Consequential
-    action executions retain their separate custody/idempotency contract and are never blindly
-    replayed after process loss.
+    action executions use a separate non-transferable lease when supplied. A healthy action lease
+    prevents another replica's startup/reconciler from declaring the attempt orphaned; an expired
+    lease converges to UNCERTAIN and is never permission to replay the external side effect.
     """
 
     if custody_store is not None and action_custody_path is not None:
@@ -105,6 +120,10 @@ def create_action_capable_product_app(
         raise ValueError("provide execution_store or execution_db_path, not both")
     if observability_store is not None and db_path is not None:
         raise ValueError("provide observability_store or db_path, not both")
+    if not 3.0 <= action_execution_lease_seconds <= 3600.0:
+        raise ValueError("action_execution_lease_seconds must be within [3, 3600]")
+    if not 100 <= action_execution_lease_scan_ms <= 10000:
+        raise ValueError("action_execution_lease_scan_ms must be within [100, 10000]")
 
     if allow_local_test_storage:
         if db_path is None and observability_store is None:
@@ -159,7 +178,22 @@ def create_action_capable_product_app(
 
     custody = custody_store or PendingActionCustody(action_custody_path)  # type: ignore[arg-type]
     ledger = action_ledger or DuckDBActionIdempotencyLedger(action_ledger_path)  # type: ignore[arg-type]
-    action_recovery = reconcile_orphaned_actions(custody=custody, ledger=ledger)
+    lease_context = ActionExecutionLeaseContext()
+    lease_supervisor = (
+        ActionExecutionLeaseSupervisor(
+            store=action_execution_lease_store,
+            instance_id=f"action-{uuid4().hex}",
+            lease_seconds=action_execution_lease_seconds,
+            scan_interval_seconds=action_execution_lease_scan_ms / 1000.0,
+        )
+        if action_execution_lease_store is not None
+        else None
+    )
+    action_recovery = reconcile_orphaned_actions(
+        custody=custody,
+        ledger=ledger,
+        lease_store=action_execution_lease_store,
+    )
 
     def runtime_factory(sink):
         return ActionProposalRealtimeProductionRuntime(
@@ -170,6 +204,14 @@ def create_action_capable_product_app(
             custody=custody,
         )
 
+    original_operational_close = operational_close
+
+    def close_operational_dependencies() -> None:
+        if lease_supervisor is not None:
+            lease_supervisor.close()
+        if original_operational_close is not None:
+            original_operational_close()
+
     app = create_product_app(
         observability_store=observability_store,
         runtime_factory=runtime_factory,
@@ -177,7 +219,7 @@ def create_action_capable_product_app(
         run_access_store=run_access_store,
         execution_store=execution_store,
         runtime_handoff_store=runtime_handoff_store,
-        operational_close=operational_close,
+        operational_close=close_operational_dependencies,
         max_workers=max_workers,
         provider_calls_enabled=provider_calls_enabled,
         heartbeat_interval_ms=heartbeat_interval_ms,
@@ -191,20 +233,54 @@ def create_action_capable_product_app(
     store = app.state.observability_store
     telemetry = app.state.production_telemetry
     active_run_access_store: RunAccessStore = app.state.run_access_store
+    active_execution_store: RunExecutionStore = app.state.run_execution_store
     access_policy = app.state.product_access_policy
     sink = DuckDBObservabilityEventSink(store, telemetry=telemetry)
+
+    executor_custody = (
+        LeaseContextGuardedCustody(custody, lease_context)
+        if lease_supervisor is not None
+        else custody
+    )
+    executor_ledger = (
+        LeaseContextGuardedLedger(ledger, lease_context)
+        if lease_supervisor is not None
+        else ledger
+    )
+    executor_sink = (
+        LeaseContextGuardedObservabilitySink(sink, lease_context)
+        if lease_supervisor is not None
+        else sink
+    )
+
+    def action_transport_factory() -> RequestTransport:
+        transport = transport_factory()
+        if lease_supervisor is None:
+            return transport
+        return LeaseContextGuardedTransport(transport, lease_context)  # type: ignore[return-value]
+
     executor = ProductionActionExecutor(
-        custody=custody,
-        ledger=ledger,
+        custody=executor_custody,
+        ledger=executor_ledger,
         authorization_resolver=authorization_resolver,
-        transport_factory=transport_factory,
-        observability_sink=sink,
+        transport_factory=action_transport_factory,
+        observability_sink=executor_sink,
         actions_enabled=actions_enabled,
     )
+    if lease_supervisor is not None:
+        lease_supervisor.start()
+
     app.state.pending_action_custody = custody
     app.state.action_idempotency_ledger = ledger
     app.state.production_action_executor = executor
     app.state.action_recovery_report = action_recovery
+    app.state.action_execution_lease_store = action_execution_lease_store
+    app.state.action_execution_lease_supervisor = lease_supervisor
+    app.state.action_execution_lease_backend = (
+        "non_transferable_shared_lease"
+        if action_execution_lease_store is not None
+        else "legacy_no_lease"
+    )
     app.state.local_test_storage_enabled = allow_local_test_storage
 
     def trusted_context(request: Request) -> AuthenticatedRuntimeContext:
@@ -246,30 +322,72 @@ def create_action_capable_product_app(
         _, safe = authorize_action(action_id, request, "actions:read:self")
         return safe
 
-    def execute_confirmed_action(execution_run_id: str, action_id: str, prepared) -> None:
+    def converge_worker_failure(execution_run_id: str, action_id: str) -> None:
+        try:
+            current = active_execution_store.get(execution_run_id)
+            if current is not None and current.state in {"accepted", "running"}:
+                active_execution_store.transition(
+                    run_id=execution_run_id,
+                    expected_states=frozenset({current.state}),
+                    new_state="failed",
+                )
+                app.state.run_execution_registry.observe(execution_run_id, "failed")
+            executor_custody.transition(
+                action_id=action_id,
+                expected_states=frozenset({"EXECUTING"}),
+                new_state="UNCERTAIN",
+            )
+        except ActionExecutionLeaseLost:
+            # Ownership was lost. The shared reconciler is the only component allowed to converge
+            # an expired action attempt; this worker must not write any further state.
+            return
+
+    def execute_confirmed_action(execution_run_id: str, action_id: str, prepared, claim) -> None:
         registry = app.state.run_execution_registry
-        try:
-            registry.running(execution_run_id)
-        except Exception:
-            custody.transition(
-                action_id=action_id,
-                expected_states=frozenset({"EXECUTING"}),
-                new_state="UNCERTAIN",
-            )
+        if lease_supervisor is None or claim is None:
+            try:
+                registry.running(execution_run_id)
+            except Exception:
+                custody.transition(
+                    action_id=action_id,
+                    expected_states=frozenset({"EXECUTING"}),
+                    new_state="UNCERTAIN",
+                )
+                return
+            try:
+                trace = prepared.execute()
+                report = ProductionActionEvaluator().evaluate(trace)
+                store.persist_trace(trace, evaluation=report)
+            except Exception:
+                registry.failed(execution_run_id)
+                custody.transition(
+                    action_id=action_id,
+                    expected_states=frozenset({"EXECUTING"}),
+                    new_state="UNCERTAIN",
+                )
+                return
+            registry.completed(execution_run_id)
             return
-        try:
-            trace = prepared.execute()
-            report = ProductionActionEvaluator().evaluate(trace)
-            store.persist_trace(trace, evaluation=report)
-        except Exception:
-            registry.failed(execution_run_id)
-            custody.transition(
-                action_id=action_id,
-                expected_states=frozenset({"EXECUTING"}),
-                new_state="UNCERTAIN",
-            )
-            return
-        registry.completed(execution_run_id)
+
+        guard = lease_supervisor.guard(claim)
+        with lease_context.activate(guard):
+            try:
+                guard.assert_active()
+                registry.running(execution_run_id)
+                guard.assert_active()
+                trace = prepared.execute()
+                guard.assert_active()
+                report = ProductionActionEvaluator().evaluate(trace)
+                guard.assert_active()
+                store.persist_trace(trace, evaluation=report)
+                guard.assert_active()
+                registry.completed(execution_run_id)
+            except ActionExecutionLeaseLost:
+                return
+            except Exception:
+                converge_worker_failure(execution_run_id, action_id)
+                return
+        lease_supervisor.release_terminal(claim)
 
     @app.post(
         "/api/actions/{action_id}/confirm",
@@ -328,12 +446,37 @@ def create_action_capable_product_app(
                 detail="action_execution_operational_state_persist_failed",
             ) from exc
 
+        claim = None
+        if lease_supervisor is not None:
+            try:
+                claim = lease_supervisor.acquire(
+                    action_id=action_id,
+                    execution_run_id=execution_run_id,
+                )
+            except ActionExecutionLeaseLost as exc:
+                active_execution_store.transition(
+                    run_id=execution_run_id,
+                    expected_states=frozenset({"accepted"}),
+                    new_state="uncertain",
+                )
+                registry.observe(execution_run_id, "uncertain")
+                custody.transition(
+                    action_id=action_id,
+                    expected_states=frozenset({"EXECUTING"}),
+                    new_state="UNCERTAIN",
+                )
+                raise HTTPException(
+                    status_code=503,
+                    detail="action_execution_lease_acquire_failed",
+                ) from exc
+
         try:
             future = app.state.product_executor.submit(
                 execute_confirmed_action,
                 execution_run_id,
                 action_id,
                 prepared,
+                claim,
             )
         except Exception as exc:
             registry.failed(execution_run_id)
@@ -342,8 +485,12 @@ def create_action_capable_product_app(
                 expected_states=frozenset({"EXECUTING"}),
                 new_state="UNCERTAIN",
             )
+            if lease_supervisor is not None and claim is not None:
+                lease_supervisor.release_terminal(claim)
             raise HTTPException(status_code=503, detail="action_dispatch_failed") from exc
         registry.bind_future(execution_run_id, future)
+        if lease_supervisor is not None and claim is not None:
+            lease_supervisor.bind_future(claim, future)
 
         return ActionExecutionAccepted(
             action_id=action_id,
