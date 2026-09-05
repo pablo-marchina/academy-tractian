@@ -44,29 +44,48 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]" -e "research/e2[dev]"
 
-      - name: Run deterministic test shard
+      - name: Run deterministic test shard per file
         env:
           TEST_SHARD: ${{ matrix.shard }}
+        shell: bash
         run: |
-          python - <<'PY'
+          set -u
+          mkdir -p /tmp/academy-runtime-diagnostics/logs
+          : > /tmp/academy-runtime-diagnostics/failures.txt
+          python - <<'PY' > /tmp/academy-runtime-diagnostics/selected.txt
           import os
           from pathlib import Path
-          import subprocess
-          import sys
 
           shard = int(os.environ["TEST_SHARD"])
           files = sorted(Path("tests").glob("test_*.py"))
           selected = files[shard::4]
           if not selected:
               raise SystemExit("empty diagnostic shard")
-          print(f"shard={shard} files={len(selected)}")
           for path in selected:
               print(path)
-          subprocess.run(
-              [sys.executable, "-m", "pytest", "-q", *(str(path) for path in selected)],
-              check=True,
-          )
           PY
+
+          while IFS= read -r path; do
+            safe_name="${path//\//__}"
+            if ! python -m pytest -q "$path" > "/tmp/academy-runtime-diagnostics/logs/${safe_name}.log" 2>&1; then
+              echo "$path" >> /tmp/academy-runtime-diagnostics/failures.txt
+            fi
+          done < /tmp/academy-runtime-diagnostics/selected.txt
+
+          echo "Selected files:"
+          cat /tmp/academy-runtime-diagnostics/selected.txt
+          echo "Failed files:"
+          cat /tmp/academy-runtime-diagnostics/failures.txt
+          test ! -s /tmp/academy-runtime-diagnostics/failures.txt
+
+      - name: Upload per-file diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-diagnostic-shard-${{ matrix.shard }}
+          path: /tmp/academy-runtime-diagnostics
+          if-no-files-found: error
+          retention-days: 3
 
   production-runtime-unit:
     runs-on: ubuntu-latest
