@@ -7,6 +7,8 @@ on:
       - "tests/**"
       - "pyproject.toml"
       - "requirements-production.lock"
+      - "Dockerfile"
+      - ".dockerignore"
       - "research/e2/**"
       - ".github/workflows/production-runtime.yml"
   push:
@@ -17,6 +19,8 @@ on:
       - "tests/**"
       - "pyproject.toml"
       - "requirements-production.lock"
+      - "Dockerfile"
+      - ".dockerignore"
       - "research/e2/**"
       - ".github/workflows/production-runtime.yml"
   workflow_dispatch:
@@ -185,3 +189,59 @@ jobs:
           finally:
               app.state.postgres_operational_database.close()
           PY
+
+  remote-production-image-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Assert immutable multi-architecture Python base
+        run: |
+          grep -F 'python:3.11.16-slim-bookworm@sha256:528257d48c1da0dcecc2e725d1ae34498d60c965f1241e39cd6a85a8859bdf84' Dockerfile
+
+      - name: Build provider-neutral production image
+        run: |
+          docker build \
+            --build-arg ACADEMY_RELEASE_GIT_SHA="${GITHUB_SHA}" \
+            --build-arg ACADEMY_BUILD_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --tag academy-tractian-remote:${GITHUB_SHA} \
+            .
+
+      - name: Verify release identity and non-root runtime contract
+        run: |
+          IMAGE="academy-tractian-remote:${GITHUB_SHA}"
+          test "$(docker image inspect "$IMAGE" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "${GITHUB_SHA}"
+          test "$(docker image inspect "$IMAGE" --format '{{index .Config.Labels "academy.tractian.cost-policy"}}')" = "usd0-hard-gate"
+          test "$(docker image inspect "$IMAGE" --format '{{index .Config.Labels "academy.tractian.provider-selection"}}')" = "NO_SELECTION"
+          test "$(docker image inspect "$IMAGE" --format '{{.Config.User}}')" = "10001:10001"
+          test "$(docker run --rm --entrypoint sh "$IMAGE" -c 'id -u')" = "10001"
+          test "$(docker run --rm --entrypoint sh "$IMAGE" -c 'id -g')" = "10001"
+
+      - name: Verify production-only dependency surface inside image
+        run: |
+          IMAGE="academy-tractian-remote:${GITHUB_SHA}"
+          docker run --rm --entrypoint python "$IMAGE" - <<'PY'
+          import importlib.util
+          from academy_tractian.production_config import RemoteProductionConfig
+          from academy_tractian.remote_migrate import migrate
+          from academy_tractian.remote_server import app_factory
+
+          assert importlib.util.find_spec("duckdb") is None
+          assert importlib.util.find_spec("httpx") is None
+          assert callable(RemoteProductionConfig.from_env)
+          assert callable(migrate)
+          assert callable(app_factory)
+          print("production image runtime surface verified")
+          PY
+
+      - name: Prove serving image fails closed without production environment
+        run: |
+          IMAGE="academy-tractian-remote:${GITHUB_SHA}"
+          if docker run --rm "$IMAGE" > /tmp/remote-production-boot.log 2>&1; then
+            cat /tmp/remote-production-boot.log
+            echo "production image unexpectedly booted without mandatory remote configuration" >&2
+            exit 1
+          fi
+          grep -F "missing required production environment variables" /tmp/remote-production-boot.log
+          echo "remote production image fail-closed boot verified"
