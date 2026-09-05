@@ -1,0 +1,29 @@
+:{$PORT:8080} {
+    encode zstd gzip
+
+    # Keep API and SSE browser traffic same-origin. Railway private networking carries the
+    # service-to-service hop over its encrypted project network; no public API URL is required by
+    # the browser for normal product use.
+    @backend path /api/* /health
+    handle @backend {
+        reverse_proxy http://production-api.railway.internal:8000 {
+            # Explicitly disable response buffering so Server-Sent Events are forwarded live.
+            flush_interval -1
+        }
+    }
+
+    # SPA fallback: real static files win, otherwise route to index.html.
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+}
