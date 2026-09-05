@@ -68,7 +68,8 @@ Document ownership:
 - material choices → `decision-registry.yaml` + ADR/evidence where warranted;
 - final acceptance → `DELIVERY-ACCEPTANCE.md`;
 - TAPI mapping → `TAPI-DELIVERY-COVERAGE-2026-09-02.md`;
-- operational commands/recovery → `FINAL-HANDOFF-RUNBOOK.md`.
+- operational commands/recovery → `FINAL-HANDOFF-RUNBOOK.md`;
+- chronological implementation evidence → `docs/progress/`.
 
 Frozen/source-pinned documents are never rewritten to match later state.
 
@@ -78,17 +79,17 @@ States: `DONE`, `IN_PROGRESS`, `BLOCKED`, `PLANNED`, `NOT_READY`, `NO_SELECTION`
 
 | # | Workstream | State | Evidence / next gate |
 |---:|---|---|---|
-| 01 | Rebaseline active project truth | DONE | `ACTIVE-PROJECT-STATUS.md` updated on final branch |
+| 01 | Rebaseline active project truth | DONE | `ACTIVE-PROJECT-STATUS.md` synchronized |
 | 02 | Material decision registry | DONE | `decision-registry.yaml` created |
-| 03 | Architecture manifest truthfulness | IN_PROGRESS | remove legacy DuckDB promoted representation; add actual PostgreSQL/identity/action boundaries |
-| 04 | Final remote hosting topology | IN_PROGRESS | clean Railway `production-api` service created from `release/production-final`; Dockerfile path configured |
-| 05 | Remote PostgreSQL role/schema promotion | IN_PROGRESS | Neon project exists; safe `NOBYPASSRLS` role identified; migration and ownership/grants validation pending |
-| 06 | Remote backend boot / health / release identity | IN_PROGRESS | public Railway domain created; non-secret production configuration installed; secret injection + DB migration pending |
+| 03 | Architecture manifest truthfulness | DONE | promoted PostgreSQL/identity/handoff/action/realtime architecture encoded + regression test added |
+| 04 | Final remote hosting topology | IN_PROGRESS | clean Railway `production-api` from final branch; Dockerfile + public domain configured; final eligibility/latency evidence still open |
+| 05 | Remote PostgreSQL role/schema promotion | DONE | Neon main: 15/15 required tables, 7/7 metadata, safe scoped role, owner validation; cross-tenant RLS test PASS on isolated validation branch |
+| 06 | Remote backend boot / health / release identity | IN_PROGRESS | public domain + non-secret configuration present; approved secret injection and live boot still pending |
 | 07 | Standards-based browser IAM | PLANNED | BFF/OIDC decision and implementation required |
-| 08 | Multi-user / tenant negative acceptance | PLANNED | requires IAM + migrated RLS schema |
+| 08 | Multi-user / tenant negative acceptance | PLANNED | DB boundary ready; requires browser IAM and remote E2E |
 | 09 | Hosted provider/model tournament | NO_SELECTION | new USD0 eligible experiment required |
 | 10 | Real provider DecisionSource composition | BLOCKED | blocked on provider promotion |
-| 11 | Real TRACTIAN production transport | PLANNED | direct typed HTTP adapter baseline |
+| 11 | Real TRACTIAN production transport | PLANNED | direct typed HTTP adapter baseline; exact supplied contract/config must drive implementation |
 | 12 | Real action authorization resolver | PLANNED | requires authenticated identity/resource mapping |
 | 13 | Consequential action remote E2E | PLANNED | preserve custody/idempotency/non-transferable lease semantics |
 | 14 | Production frontend deployment | PLANNED | React/Vite stack retained; remote host/topology to be selected |
@@ -110,13 +111,13 @@ States: `DONE`, `IN_PROGRESS`, `BLOCKED`, `PLANNED`, `NOT_READY`, `NO_SELECTION`
 Do not displace this sequence with optional complexity:
 
 ```text
-01 active truth
-02 decision registry
-03 architecture truth
-04 remote hosting
-05 PostgreSQL roles + migration
-06 backend live shell + health/version
-07 IAM/BFF/OIDC
+01 active truth                                      DONE
+02 decision registry                                 DONE
+03 architecture truth                                DONE
+04 remote hosting                                    IN_PROGRESS
+05 PostgreSQL roles + migration                      DONE
+06 backend live shell + health/version               IN_PROGRESS
+07 IAM/BFF/OIDC                                      NEXT PRODUCT BLOCKER
 08 multi-user/RLS acceptance
 09 provider tournament
 10 real DecisionSource
@@ -140,61 +141,71 @@ Do not displace this sequence with optional complexity:
 
 ## 6. P0-A — Architecture and governance truth
 
-### Required
+### Status: DONE for current baseline
 
-- active docs reflect current branch/release/infrastructure state;
-- `architecture_manifest.py` represents PostgreSQL, identity, runtime handoff and action boundaries accurately;
-- no active document describes the historical Railway pilot as current production;
-- no active document describes DuckDB as production serving truth;
-- material decisions are registered before promotion.
+- active status is rebaselined to the actual final branch and external infrastructure state;
+- `architecture_manifest.py` now represents PostgreSQL operational truth, trusted identity, runtime handoff, action custody/lease, human review/value and non-authoritative realtime wake-up;
+- the legacy `DuckDB Safe Read Model` label is removed from the promoted architecture;
+- a regression test prevents that storage truth from silently reverting;
+- material decisions have an explicit registry.
 
-### Gate
-
-Architecture UI, code and active docs agree on promoted components and known blockers.
+Architecture must continue to be updated whenever the runtime composition changes.
 
 ## 7. P0-B — Remote PostgreSQL production substrate
 
-### Current evidence
+### Status: STRUCTURAL PROMOTION DONE; runtime recovery campaign remains separate
 
-A Neon `academy-tractian-hosted-pilot` project and `academy_tractian` database already exist. Safe login roles with `BYPASSRLS=false` exist; the previously observed `academy_live_scoped` role must not be used as tenant-scoped production evidence because it can bypass RLS.
+The existing Neon `academy-tractian-hosted-pilot` / `academy_tractian` database now contains the promoted `academy_operational` schema.
 
-### Required
+Migration was first validated on an isolated Neon branch, then applied to main using the same idempotent DDL groups derived from the production runtime initializers.
 
-- choose internal owner/admin DSN and distinct scoped `NOBYPASSRLS` DSN;
-- apply `academy_operational` production schema using the explicit migration path;
-- verify required tables;
-- verify scoped role is not superuser, not `BYPASSRLS`, and not table owner;
-- prove cross-tenant denial after migration;
-- test reconnect/catch-up semantics under free-tier suspend/wake behavior.
-
-### Hard gates
+Production-branch structural evidence:
 
 ```text
-scoped_rolsuper = false
-scoped_rolbypassrls = false
-scoped_table_owner = false
-required_tables_ready = true
-cross_tenant_access = 0
+required tables                    15 / 15
+required operational meta           7 / 7
+observability schema meta            PASS
+scoped role                          academy_tractian_rls
+scoped role superuser                false
+scoped role BYPASSRLS                false
+run_ownership owner                  academy_tractian_owner
+tenant SELECT policies               5
 ```
+
+RLS evidence on the isolated migration-validation branch:
+
+```text
+stored org-a row                     yes
+stored org-b row                     yes
+SET ROLE academy_tractian_rls        yes
+academy.organization_id=org-a        yes
+visible org-a row                    yes
+visible org-b row                    no
+result                               PASS
+```
+
+The unsafe `academy_live_scoped` role remains excluded because it can bypass RLS.
+
+Remaining database evidence belongs to P0-H rather than schema promotion: remote application connection, suspend/wake reconnect, cursor catch-up, capacity and recovery.
 
 ## 8. P0-C — Remote backend promotion
 
 ### Current evidence
 
-A clean Railway service named `production-api` has been created from `release/production-final`, separate from the stale historical `hosted-pilot`. The service is configured to use the repository Dockerfile and restart on failure. A public Railway domain exists. Non-secret fail-closed production settings have been installed.
+A clean Railway service named `production-api` has been created from `release/production-final`, separate from the stale historical `hosted-pilot`. The service is configured to use the repository Dockerfile, restart on failure and expose a Railway HTTPS service domain. Non-secret fail-closed production settings are installed.
 
 ### Required next
 
-- provide secret production variables through an approved secret channel;
-- run explicit remote migration before serving boot;
-- redeploy current final-branch SHA;
-- expose/verify release metadata and health/readiness;
+- provide `ACADEMY_POSTGRES_INTERNAL_DSN`, `ACADEMY_POSTGRES_SCOPED_DSN` and `ACADEMY_RUNTIME_IDENTITY_SECRET` through an approved secret channel;
+- update `ACADEMY_RELEASE_GIT_SHA` to the exact final-branch deployment commit;
+- redeploy the current branch;
+- verify database connectivity, release identity and health/readiness;
 - prove restart/persistence;
 - keep provider calls disabled until DP-004 promotes a candidate.
 
 ### Secret-handling rule
 
-DSNs/signing secrets are never committed or copied into documentation. If a platform connector refuses transmitting a secret, use the platform's secret UI/approved secret mechanism rather than weakening the application's fail-closed config.
+DSNs/signing secrets are never committed, written to project documentation or exposed to the browser. If an automation connector rejects secret transmission, use the platform secret UI or another approved native secret mechanism rather than weakening fail-closed configuration.
 
 ## 9. P0-D — Browser IAM and multi-user product
 
@@ -236,7 +247,7 @@ No candidate may be promoted if a hard integrity/safety gate fails.
 
 ## 11. P0-F — Real TRACTIAN path and governed actions
 
-Compose the real typed TRACTIAN HTTP transport only after server-managed credentials, timeout/error normalization and retry semantics are explicit.
+Compose the real typed TRACTIAN HTTP transport only after server-managed credentials, timeout/error normalization and retry semantics are explicit. The supplied TRACTIAN contract/package is authoritative; do not guess endpoint URLs or parameters from generic expectations.
 
 Read retries may be safe when bounded. Consequential writes must retain the existing contract:
 
