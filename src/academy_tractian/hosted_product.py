@@ -15,10 +15,13 @@ from research.e2.transport import RequestTransport, TransportResponse
 from .cloudflare_provider_client import CloudflareWorkersAIChatCompletionsDecisionClient
 from .decision_source import ProviderCallIdentity, ProviderDecisionSource
 from .groq_provider_client import GroqChatCompletionsDecisionClient
+from .hosted_action_authorization import (
+    HostedActionAuthorizationResolver,
+    HostedTractianAuthority,
+)
 from .hosted_config import HostedProductConfig
 from .oidc_runtime_identity import OIDCClaimMapping, OIDCRuntimeContextProvider
 from .postgres_product_api import create_postgres_action_capable_product_app
-from .production_actions_v2 import ProductionActionPrincipal
 from .provider_clients import (
     GOOGLE_MODEL_ID,
     OPENAI_MODEL_ID,
@@ -27,11 +30,7 @@ from .provider_clients import (
     UrllibProviderJsonTransport,
 )
 from .runtime import canonical_tool_registry
-from .tractian_authority import (
-    TenantGuardedTractianTransport,
-    TractianAuthority,
-    TractianAuthorityError,
-)
+from .tractian_authority import TenantGuardedTractianTransport, TractianAuthorityError
 
 
 class HostedTractianTransport(RequestTransport):
@@ -156,17 +155,6 @@ def _decision_source_factory(config: HostedProductConfig):
     return factory
 
 
-def _deny_unqualified_actions(*, user_id: str) -> ProductionActionPrincipal:
-    """Fail closed until exact-target action authorization is promoted."""
-
-    return ProductionActionPrincipal(
-        user_id=user_id,
-        user_company_id="unbound",
-        permissions=frozenset(),
-        resource_company_bindings=(),
-    )
-
-
 def _raw_tractian_transport(config: HostedProductConfig) -> HostedTractianTransport:
     return HostedTractianTransport(
         base_url=config.tractian_base_url,
@@ -192,7 +180,8 @@ def build_hosted_product(config: HostedProductConfig | None = None):
         allowed_privileged_permissions=(),
         authorized_parties=active.oidc_authorized_parties,
     )
-    authority = TractianAuthority(transport=_raw_tractian_transport(active))
+    authority = HostedTractianAuthority(transport=_raw_tractian_transport(active))
+    action_authorization_resolver = HostedActionAuthorizationResolver(authority=authority)
 
     def context_provider(request: Request):
         context = oidc_context_provider(request)
@@ -229,14 +218,15 @@ def build_hosted_product(config: HostedProductConfig | None = None):
         decision_source_factory=_decision_source_factory(active),
         transport_factory=transport_factory,
         context_provider=context_provider,
-        authorization_resolver=_deny_unqualified_actions,
+        authorization_resolver=action_authorization_resolver,
         schema=active.postgres_schema,
         initialize_schema=False,
         max_workers=active.max_workers,
         provider_calls_enabled=True,
-        # Do not wire the environment switch until exact-target authorization is integrated into
-        # both proposal and confirmation. A config flag alone must never enable side effects.
-        actions_enabled=False,
+        # The switch is now safe to expose because the resolver is exact-target and is invoked at
+        # proposal + confirmation, while the guarded transport rechecks permission/scope again
+        # immediately before the external HTTP side effect.
+        actions_enabled=active.actions_enabled,
         heartbeat_interval_ms=active.heartbeat_interval_ms,
     )
     app.add_middleware(
@@ -254,8 +244,12 @@ def build_hosted_product(config: HostedProductConfig | None = None):
     app.state.hosted_local_persistent_state_required = False
     app.state.hosted_runtime_ddl_credential_present = False
     app.state.hosted_cross_tenant_tool_reads_blocked = True
-    app.state.hosted_actions_qualified = False
-    app.state.hosted_action_block_reason = "EXACT_TARGET_ACTION_AUTHORIZATION_NOT_YET_PROMOTED"
+    app.state.hosted_actions_qualified = True
+    app.state.hosted_action_authorization_backend = "exact-target-revalidated-v1"
+    app.state.hosted_unqualified_action_tools = (
+        "request_retraining",
+        "escalate_case",
+    )
     return app
 
 
