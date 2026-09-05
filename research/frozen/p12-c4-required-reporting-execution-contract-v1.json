@@ -1,0 +1,162 @@
+{
+  "schema_version": "p12-c4-required-reporting-execution-contract-v1",
+  "status": "FROZEN_REQUIRED_REPORTING_EXECUTION_CONTRACT",
+  "experiment_id": "P12-C4-PROSPECTIVE-EXPOSED-POOL",
+  "partition": "EXPOSED_POOL",
+  "task_issue": 9,
+  "authorization_source": {
+    "path": "research/results/p12-c4-logo-sensitivity-freeze-2026-08-27.json",
+    "git_blob_sha": "87a1462d1a404a769ce482b33678506003c71fcd",
+    "status": "FROZEN_C4_LEAVE_ONE_GROUP_OUT_SENSITIVITY",
+    "next_gate": "REQUIRED_PER_GROUP_AND_SLICE_REPORTING"
+  },
+  "frozen_inputs": {
+    "deterministic_score_rows": {
+      "sha256": "b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c",
+      "schema_version": "p12-c4-deterministic-private-scoring-rows-v1",
+      "status": "PASS_144_OF_144_DETERMINISTIC_SCORES",
+      "rows": 144,
+      "common_parents": 36,
+      "arms": ["A00", "A10", "A01", "A11"],
+      "committed": false,
+      "provisioning": "evaluator_side_only",
+      "reconstruction_forbidden": true
+    },
+    "bootstrap_result_sha256": "08977c0d419144b885a7d2da6ffb73796ca43d80aa4e330a462d33c058464526",
+    "logo_result_sha256": "bc62cc45b4e3344861a152825096a8a1b28f41f2d831f86fd81de35964363f8c",
+    "preregistration": {
+      "path": "research/experiments/p12-c2-exposed-pool-factorial-evidence-safety-preregistration-v1.json",
+      "git_blob_sha": "0d0637a954ef544824bc69df88e47d7c790f0714"
+    },
+    "deterministic_scoring_freeze": {
+      "path": "research/results/p12-c4-deterministic-scoring-freeze-2026-08-27.json",
+      "git_blob_sha": "9db9c14c38da0edc83dd69147fb5b884926fcbe9"
+    },
+    "bootstrap_freeze": {
+      "path": "research/results/p12-c4-bootstrap-20000-freeze-2026-08-27.json",
+      "git_blob_sha": "65332e227b950bc599ac6080f019c5563562af11"
+    },
+    "logo_freeze": {
+      "path": "research/results/p12-c4-logo-sensitivity-freeze-2026-08-27.json",
+      "git_blob_sha": "87a1462d1a404a769ce482b33678506003c71fcd"
+    },
+    "complete_packet_freeze": {
+      "path": "research/results/p12-c4-complete-packet-freeze-2026-08-26.json",
+      "git_blob_sha": "03b7d5a27ffdec9173e25bdf47377858bf6aeb30"
+    },
+    "historical_factorial_scorer": {
+      "path": "scripts/research/p12_c2_factorial_score.py",
+      "git_blob_sha": "dc20be4896ff023989ee6deb012ad440c39ec531"
+    }
+  },
+  "geometry": {
+    "rows": 144,
+    "common_parents": 36,
+    "arms": ["A00", "A10", "A01", "A11"],
+    "group_ids": [
+      "asset_B204",
+      "asset_C710",
+      "asset_G501",
+      "asset_M101",
+      "asset_M102",
+      "asset_M208",
+      "asset_S420"
+    ],
+    "modalities": ["investigate", "execute", "contextualize"]
+  },
+  "aggregation": {
+    "primary_unit": "asset_story_group",
+    "within_ticket_repeat": "mean",
+    "within_asset_story_group": "mean_across_tickets_via_scenario_then_group_hierarchy",
+    "across_asset_story_groups": "mean_of_group_means",
+    "pairing": "paired_within_common_parent_and_then_aggregated_by_asset_story_group",
+    "historical_implementation_semantics": "p12_c2_factorial_score.py nested_group_metrics / metric_slice"
+  },
+  "required_reporting": {
+    "per_asset_story_group": true,
+    "modality_slices": ["investigate", "execute", "contextualize"],
+    "safety_and_failure_family_slices": true,
+    "operational_failure_counts_and_denominators": true
+  },
+  "report_metrics": [
+    "evidence_correctness",
+    "mean_expected_read_recall",
+    "mean_extra_public_read_count",
+    "task_or_reference_quality",
+    "decision_correctness",
+    "action_correctness",
+    "escalation_correctness",
+    "premature_action_rate",
+    "unsupported_action_or_escalation_rate",
+    "locked_test_or_gold_leakage_rate",
+    "confirmed_p12_hard_safety_violation_rate"
+  ],
+  "failure_families": [
+    "premature_action",
+    "unsupported_action_or_escalation",
+    "locked_test_claim",
+    "gold_claim",
+    "confirmed_p12_hard_safety_violation"
+  ],
+  "operational_reporting_sources": {
+    "successful_common_parent_run": {
+      "denominator_common_parents": 36,
+      "completed_common_parents": 36,
+      "http_failures": 0
+    },
+    "successful_local_factorial_run": {
+      "denominator_arm_outputs": 144,
+      "completed_arm_outputs": 144,
+      "validation_errors": 0
+    },
+    "pre_transform_infrastructure_attempts": {
+      "denominator_attempts": 3,
+      "failed_attempts": 3,
+      "scientific_arm_outputs_materialized": 0,
+      "provider_calls": 0,
+      "classification": "operational_history_separate_from_scored_packet"
+    }
+  },
+  "fail_closed": [
+    "deterministic_score_row_sha256_mismatch",
+    "logo_freeze_git_blob_or_authorization_mismatch",
+    "bootstrap_or_logo_result_binding_mismatch",
+    "geometry_not_144_rows_36_parents_4_arms",
+    "group_set_mismatch",
+    "modality_set_mismatch_or_ambiguity",
+    "missing_denominator",
+    "private_oracle_access",
+    "semantic_evaluation_access",
+    "fresh_blind_access",
+    "legacy_locked_test_access",
+    "provider_or_model_access",
+    "score_recomputation_or_mutation",
+    "candidate_regeneration",
+    "survivor_or_preferred_inference"
+  ],
+  "explicitly_forbidden": {
+    "provider_calls": 0,
+    "model_calls": 0,
+    "score_recomputation": false,
+    "score_mutation": false,
+    "candidate_regeneration": false,
+    "private_oracle_loading": false,
+    "semantic_evaluation": false,
+    "fresh_blind_accesses": 0,
+    "legacy_locked_test_accesses": 0,
+    "survivor_decision": false,
+    "preferred_decision": false,
+    "architecture_freeze": false
+  },
+  "claim_boundary": {
+    "allowed": "descriptive preregistered per-group, modality, safety/failure-family and operational reporting over the exact frozen C4 deterministic rows and frozen metadata",
+    "not_allowed": [
+      "candidate promotion",
+      "survivor/no-survivor decision",
+      "semantic eligibility",
+      "independent generalization",
+      "production readiness"
+    ]
+  },
+  "next_gate_authorized_by_contract": null
+}
