@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from research.e2.controller import DecisionSource
 
+from .cloudflare_provider_client import (
+    CLOUDFLARE_PROVIDER_ID,
+    CloudflareWorkersAIChatCompletionsDecisionClient,
+)
 from .decision_source import (
     PROVIDER_DECISION_ADAPTER_VERSION,
     ProviderCallIdentity,
@@ -26,7 +30,7 @@ from .runtime import canonical_tool_registry
 from .runtime_configuration_identity import RuntimeConfigurationIdentity
 
 
-HOSTED_PROVIDER_CLIENTS_VERSION = "hosted-provider-clients-v3"
+HOSTED_PROVIDER_CLIENTS_VERSION = "hosted-provider-clients-v4"
 SUPPORTED_HOSTED_CANDIDATES = frozenset(
     (spec.provider_id, spec.model_id) for spec in HOSTED_CANDIDATE_SPECS
 )
@@ -50,7 +54,13 @@ def hosted_runtime_configuration_identity(provider: str, model: str) -> RuntimeC
     )
 
 
-def create_hosted_decision_source(*, provider: str, model: str, api_key: str) -> DecisionSource:
+def create_hosted_decision_source(
+    *,
+    provider: str,
+    model: str,
+    api_key: str,
+    account_id: str | None = None,
+) -> DecisionSource:
     """Build one explicit live candidate without changing application-owned agent semantics."""
 
     spec = resolve_hosted_candidate(provider, model)
@@ -65,6 +75,15 @@ def create_hosted_decision_source(*, provider: str, model: str, api_key: str) ->
         )
     elif spec.provider_id == GROQ_PROVIDER_ID:
         client = GroqChatCompletionsDecisionClient(api_key=api_key, transport=transport)
+    elif spec.provider_id == CLOUDFLARE_PROVIDER_ID:
+        if not isinstance(account_id, str) or not account_id.strip():
+            raise ValueError("cloudflare_account_id_required")
+        client = CloudflareWorkersAIChatCompletionsDecisionClient(
+            api_token=api_key,
+            account_id=account_id,
+            model_id=spec.model_id,
+            transport=transport,
+        )
     else:  # pragma: no cover - registry construction makes this unreachable.
         raise ValueError("unsupported_hosted_provider")
 
