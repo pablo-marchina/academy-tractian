@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { resolveStreamUrl } from "../api/baseUrl";
 import { submitRun } from "../api/client";
 import type { RunAccepted, SafeEvent } from "../api/types";
 import {
@@ -39,12 +40,6 @@ function parseSafeEvent(value: string): SafeEvent {
     throw new Error("invalid_safe_event");
   }
   return parsed as SafeEvent;
-}
-
-function resumedStreamPath(run: RunAccepted, afterSequence: number): string {
-  const url = new URL(run.stream_path, window.location.origin);
-  url.searchParams.set("after_sequence", String(afterSequence));
-  return `${url.pathname}${url.search}`;
 }
 
 export interface LiveRunState {
@@ -87,9 +82,11 @@ export function useLiveRun(): LiveRunState {
     (run: RunAccepted, resume = false) => {
       closeSource();
       setConnection(resume ? "reconnecting" : "connecting");
-      const source = new EventSource(
-        resume ? resumedStreamPath(run, lastSequenceRef.current) : run.stream_path,
+      const streamUrl = resolveStreamUrl(
+        run.stream_path,
+        resume ? lastSequenceRef.current : undefined,
       );
+      const source = new EventSource(streamUrl);
       sourceRef.current = source;
 
       source.onopen = () => {

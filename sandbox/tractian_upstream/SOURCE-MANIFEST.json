@@ -1,0 +1,10 @@
+{
+  "schema_version": "tractian-upstream-runtime-source-v1",
+  "source_zip_sha256": "37546f7abad4c573ab36384a171161f3ba6c7258024341cc42f0881d9606d134",
+  "runtime_archive_sha256": "8fe94d9fa66a09b78b5edb389596090d463bc1d0ec500dcf1358575e9891ef9c",
+  "runtime_archive_bytes": 49227,
+  "runtime_b64_chars": 65636,
+  "included_roots": ["api/", "data/"],
+  "excluded_roots": ["eval/", "agent-input/", "docs/", "__MACOSX/"],
+  "boundary": "Exact upstream executable API and data bytes only. Evaluation/gold material is excluded from the runtime artifact."
+}

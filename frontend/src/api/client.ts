@@ -1,4 +1,5 @@
 import type { ActionExecutionAccepted, PendingActionSafe } from "./actionTypes";
+import { resolveApiUrl } from "./baseUrl";
 import type {
   OperationalPilotAssignment,
   OperationalPilotCompletionAccepted,
@@ -34,7 +35,7 @@ import type {
 } from "./types";
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetch(resolveApiUrl(path), {
     ...init,
     headers: {
       Accept: "application/json",

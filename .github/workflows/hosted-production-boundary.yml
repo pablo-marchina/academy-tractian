@@ -1,0 +1,127 @@
+name: hosted-production-boundary
+
+on:
+  pull_request:
+    paths:
+      - "src/academy_tractian/hosted_*.py"
+      - "src/academy_tractian/oidc_runtime_identity.py"
+      - "src/academy_tractian/tractian_authority.py"
+      - "src/academy_tractian/target_action_authorization.py"
+      - "src/academy_tractian/groq_provider_client.py"
+      - "src/academy_tractian/cloudflare_provider_client.py"
+      - "src/academy_tractian/provider_clients.py"
+      - "tests/test_hosted_*.py"
+      - "tests/test_oidc_runtime_identity.py"
+      - "tests/test_tractian_authority.py"
+      - "tests/test_target_action_authorization.py"
+      - "pyproject.toml"
+      - "sandbox/tractian_upstream/**"
+      - ".github/workflows/hosted-production-boundary.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/academy_tractian/hosted_*.py"
+      - "src/academy_tractian/oidc_runtime_identity.py"
+      - "src/academy_tractian/tractian_authority.py"
+      - "src/academy_tractian/target_action_authorization.py"
+      - "tests/test_hosted_*.py"
+      - "tests/test_oidc_runtime_identity.py"
+      - "tests/test_tractian_authority.py"
+      - "tests/test_target_action_authorization.py"
+      - "pyproject.toml"
+      - "sandbox/tractian_upstream/**"
+      - ".github/workflows/hosted-production-boundary.yml"
+
+jobs:
+  hosted-boundary:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: academy_tractian
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d academy_tractian"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      HOSTED_TEST_MIGRATION_DSN: postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
+      HOSTED_TEST_SERVICE_DSN: postgresql://academy_hosted_service:hosted-service-ci@127.0.0.1:5432/academy_tractian
+      HOSTED_TEST_SCOPED_DSN: postgresql://academy_hosted_scoped:hosted-scoped-ci@127.0.0.1:5432/academy_tractian
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install production and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" -e "research/e2[dev]"
+
+      - name: Gate OIDC, tenant authority, exact-target actions, Cloud SQL, and hosted serving boundary
+        run: >-
+          python -m pytest -q
+          tests/test_oidc_runtime_identity.py
+          tests/test_tractian_authority.py
+          tests/test_target_action_authorization.py
+          tests/test_hosted_action_last_mile.py
+          tests/test_hosted_cloud_sql_config.py
+          tests/test_hosted_production_boundary.py
+
+      - name: Prove least-privilege provisioning on PostgreSQL 18
+        run: python -m pytest -q tests/test_hosted_postgres_provisioning.py
+
+      - name: Reject demo-only serving shortcuts and unguarded TRACTIAN transport
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source = Path("src/academy_tractian/hosted_product.py").read_text(encoding="utf-8")
+          for forbidden in (
+              "DEMO_MODE",
+              "x-demo-user",
+              "x-demo-organization",
+              "ProviderFreeScenarioDecisionSource",
+              "ProviderFreeTransport",
+              "initialize_schema=True",
+              "ACADEMY_POSTGRES_INTERNAL_DSN",
+          ):
+              assert forbidden not in source, forbidden
+          for required in (
+              "initialize_schema=False",
+              "TenantGuardedTractianTransport",
+              "HostedActionAuthorizationResolver",
+              "oidc_tractian_tenant_mismatch",
+              "hosted_cross_tenant_tool_reads_blocked = True",
+              "hosted_action_authorization_backend = \"exact-target-revalidated-v1\"",
+              "hosted_runtime_ddl_credential_present = False",
+              "actions_enabled=active.actions_enabled",
+          ):
+              assert required in source, required
+          print("production hosted composition is tenant-guarded, exact-target action guarded, and contains no demo/runtime-DDL escape hatch")
+          PY
+
+      - name: Build and import production wheel without DuckDB
+        run: |
+          python -m pip wheel . --no-deps --wheel-dir dist
+          python -m venv /tmp/hosted-wheel
+          /tmp/hosted-wheel/bin/python -m pip install --upgrade pip
+          /tmp/hosted-wheel/bin/python -m pip install dist/academy_tractian-*.whl
+          /tmp/hosted-wheel/bin/python - <<'PY'
+          import importlib.util
+          assert importlib.util.find_spec("duckdb") is None
+          from academy_tractian.hosted_action_authorization import HostedTractianAuthority
+          from academy_tractian.hosted_config import HostedProductConfig
+          from academy_tractian.hosted_product import build_hosted_product
+          from academy_tractian.oidc_runtime_identity import OIDCRuntimeContextProvider
+          from academy_tractian.tractian_authority import TractianAuthority
+          assert HostedProductConfig and callable(build_hosted_product) and OIDCRuntimeContextProvider and TractianAuthority and HostedTractianAuthority
+          print("production hosted wheel import passed with DuckDB absent")
+          PY
