@@ -59,11 +59,12 @@ Do not add LangGraph, multi-agent, MCP, RAG/vector DB, Redis/Kafka, microservice
 | 02 | Decision registry / active docs | DONE | current mutable truth separated from frozen evidence |
 | 03 | Main branch protection | BLOCKED_USER_ACTION | admin write unavailable through current GitHub connector |
 | 04 | Railway topology reproducibility | IN_PROGRESS | `.railway/railway.ts`, static validator and CI versioned; live plan/apply pending |
+| 04A | Backend release artifact identity | IN_PROGRESS | baked Railway Git SHA + OCI label + boot cross-check + required CI implemented; complete-head CI pending |
 | 05 | Neon schema/RLS promotion | DONE | 15/15 tables, 7/7 metadata, NOBYPASSRLS scoped role, RLS negative PASS |
 | 06 | Railway frontend production | DONE | HTTPS `production-web`, Caddy same-origin auth/API/SSE, deploy SUCCESS |
-| 07 | Railway backend boot | BLOCKED_USER_ACTION | exactly two PostgreSQL DSNs absent |
-| 08 | Live IAM / multi-user acceptance | WAITING_DEPENDENCY | requires #07 |
-| 09 | Provider tournament | NO_SELECTION | requires hosted DB-backed baseline |
+| 07 | Railway backend boot | BLOCKED_USER_ACTION | exactly two PostgreSQL DSNs absent; next deploy must pass release identity v3 |
+| 08 | Live IAM / multi-user acceptance | WAITING_DEPENDENCY | offline negative-gap audit may continue; hosted acceptance requires #07 |
+| 09 | Provider tournament | PREREGISTERED / NO_SELECTION | v3: 17 fresh scenarios × 5 reps/candidate; USD0 quota packets + validator/test gate; live runs not executed |
 | 10 | Real DecisionSource composition | WAITING_DEPENDENCY | requires #09 promotion |
 | 11 | Real TRACTIAN transport | WAITING_DEPENDENCY | exact partner contract authoritative |
 | 12 | Real authorization resolver | WAITING_DEPENDENCY | requires live identity/resource mapping |
@@ -85,10 +86,11 @@ Do not add LangGraph, multi-agent, MCP, RAG/vector DB, Redis/Kafka, microservice
 ```text
 A. protect main                                      BLOCKED_USER_ACTION
 B. version/validate Railway topology                 IN_PROGRESS
+B.5 prove immutable backend release identity         IMPLEMENTED / CI PENDING
 C. inject two Railway PostgreSQL secrets             BLOCKED_USER_ACTION
-D. boot backend + health/release/DB/restart
+D. boot exact-SHA backend + health/release/DB/restart
 E. live IAM + two-user/two-tenant + shared-org tests
-F. provider tournament
+F. execute preregistered provider tournament
 G. promote and compose real DecisionSource
 H. compose real TRACTIAN typed transport
 I. validate Contextualize / Investigate / Clarify / Abstain / Escalate
@@ -119,11 +121,29 @@ Use current Railway Infrastructure as Code in `.railway/railway.ts`. The named `
 Current API deployment intent:
 
 ```text
-healthcheck   /health
-health timeout 60s
-restart       ON_FAILURE / 5 retries
-replicas      1 @ us-east4-eqdc4a
+healthcheck     /health
+health timeout  60s
+restart         ON_FAILURE / 5 retries
+replicas        1 @ us-east4-eqdc4a
 ```
+
+### P0-B.5 — Immutable release identity
+
+A production backend image must be attributable to the exact Git commit that built it, not merely to a mutable runtime variable.
+
+Required invariant:
+
+```text
+Railway Git-backed build SHA
+= /app/.academy-release-identity.json git_sha
+= OCI org.opencontainers.image.revision
+= configured ACADEMY_RELEASE_GIT_SHA
+= runtime RAILWAY_GIT_COMMIT_SHA when exposed
+= /api/meta/release release_git_sha
+= /api/meta/release artifact_git_sha
+```
+
+Missing/malformed identity or any mismatch must abort before PostgreSQL/IAM product builders open connections. `production-runtime` is part of `final-ci-required`, with positive image proof and negative mismatch/build-failure tests.
 
 ## 7. P0-C — Remote backend boot
 
@@ -134,15 +154,31 @@ ACADEMY_POSTGRES_INTERNAL_DSN
 ACADEMY_POSTGRES_SCOPED_DSN
 ```
 
-Then: exact-SHA redeploy → `/health` 200 → `/api/meta/release` exact SHA → internal/scoped DB connections PASS → schema/stores READY → create durable state → restart → state/cursor persist. Provider calls remain disabled.
+Then: exact-SHA redeploy → `/health` 200 → `/api/meta/release` v3 exact identity equality → internal/scoped DB connections PASS → schema/stores READY → create durable state → restart → state/cursor persist. Provider calls remain disabled.
+
+A G2 release check passes only if:
+
+```text
+release_git_sha == artifact_git_sha == expected deployed commit
+artifact_identity_verified == true
+railway_runtime_identity_verified == true   # when Railway exposes runtime SHA
+```
 
 ## 8. P0-D — IAM + multi-tenancy
 
 Live acceptance must prove separate tenants with zero cross-tenant REST/SSE/action access, intended same-organization multi-user behavior, browser organization/user/role/permission claims ignored or denied, invalid/expired/mismatched/impersonated sessions fail closed, and CSRF/origin/cookie/session invalidation behavior before actions are enabled.
 
+Provider-free/offline tests may harden these boundaries while G2 is blocked, but IAM cannot be promoted to READY without hosted two-user/two-tenant evidence.
+
 ## 9. P0-E — Provider tournament
 
-At least `17 canonical scenarios × >=5 repetitions = >=85 runs` per candidate, plus adversarial slices for partial/conflicting/missing/unavailable evidence, ambiguity, escalation and unsafe action pressure. Measure outcome accuracy, tool recall/irrelevance, argument validity, evidence correctness/coverage, clarification/abstention/escalation, unsupported claims/false precision, action safety, turns/tool calls, p50/p95/p99, failures/429/quota, stability and actual cash cost. USD0, zero gold leakage and zero unsafe unsupported consequential action are hard gates.
+The v3 campaign is preregistered over `17 fresh canonical scenarios × 5 repetitions = 85 runs` per candidate, 170 total across the two current Cloudflare candidates. Historical D01/D02 results are excluded from the v3 denominator.
+
+The USD0 campaign is partitioned into five UTC daily packets of 34 calls. No packet may start unless the free quota headroom passes the preregistered conservative gate; no paid spillover is authorized.
+
+Measure outcome accuracy, tool recall/irrelevance, argument validity, evidence correctness/coverage, clarification/abstention/escalation, unsupported claims/false precision, action safety, turns/tool calls, p50/p95/p99, failures/429/quota, stability and actual cash cost. USD0, zero gold leakage, zero unsafe unsupported consequential action, policy integrity and valid structured schema are hard gates.
+
+The only valid campaign decisions are `PROMOTE`, `REJECT`, `INCONCLUSIVE`, or `NO_SELECTION`. Preregistration alone does not select a provider.
 
 ## 10. P0-F — Real provider + TRACTIAN
 
@@ -200,7 +236,7 @@ Adaptive Evidence Stopping only after the static baseline and only if quality/sa
 
 ## 17. Hard release gate
 
-Any red hard gate = `NOT READY`. Required: remote frontend/backend/PostgreSQL/provider/TRACTIAN; real IAM and multi-user isolation; all required modes; governed remote action; full remote E2E; security/load/recovery/backup evidence; protected main + required CI; reproducible deployment + rollback; no local dependency/mocks/secrets/gold/cross-tenant leakage; synchronized docs and evidence.
+Any red hard gate = `NOT READY`. Required: remote frontend/backend/PostgreSQL/provider/TRACTIAN; real IAM and multi-user isolation; all required modes; governed remote action; full remote E2E; security/load/recovery/backup evidence; protected main + required CI; reproducible deployment + rollback; immutable exact-SHA release identity; no local dependency/mocks/secrets/gold/cross-tenant leakage; synchronized docs and evidence.
 
 ## 18. Documentation rule
 
