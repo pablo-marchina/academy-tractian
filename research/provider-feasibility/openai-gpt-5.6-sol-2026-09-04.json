@@ -1,0 +1,15 @@
+{
+  "artifact_sha256": "a6d72d1cc03690e8803cd94729a2af75b05c8be985bc252e64b71f491b6cd15e",
+  "candidate_id": "openai:gpt-5.6-sol",
+  "collected_at": "2026-09-04T19:35:00Z",
+  "free_requests_per_day": null,
+  "free_tokens_per_day": null,
+  "hosted_service": true,
+  "metered_input_usd_per_million": 4.0,
+  "metered_output_usd_per_million": 20.0,
+  "required_local_components": 0,
+  "schema_version": "provider-feasibility-evidence-v1",
+  "source_manifest_sha256": "50b52da24e5dc87025f4aeb07d059b9f71f61883bbea3c0eb44c7ae454462d0a",
+  "structured_output_supported": true,
+  "zero_cost_execution_status": "unknown"
+}

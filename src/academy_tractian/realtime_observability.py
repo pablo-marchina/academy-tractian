@@ -9,7 +9,7 @@ from research.e2.models import RunTrace
 from research.e2.runner import HarnessRunner
 
 from .observability import SafeEvidenceRef, SafeEvent, SafeRun, project_trace
-from .observability_store import ObservabilityStore
+from .observability_backend import ObservabilityStoreBackend
 from .production_telemetry import ProductionTelemetry
 
 
@@ -26,9 +26,11 @@ class SafeObservabilityEventSink(Protocol):
 
 
 class DuckDBObservabilityEventSink:
+    """Legacy public name for the safe store sink; the backend itself is now injectable."""
+
     def __init__(
         self,
-        store: ObservabilityStore,
+        store: ObservabilityStoreBackend,
         *,
         telemetry: ProductionTelemetry | None = None,
     ) -> None:

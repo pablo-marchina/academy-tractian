@@ -1,285 +1,378 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Status:** `READY_FOR_HARD_FREEZE` candidate / sole canonical human-readable state  
+**Status:** `FREEZE_REOPENED` / hosted-only P0 closure in progress  
 **Checkpoint:** 2026-09-04 BRT  
-**Scheduled hard feature/visual/architecture freeze:** end of 2026-09-05  
 **Final delivery:** 2026-09-08  
-**Freeze decision:** [`../research/final-freeze-decision-2026-09-04.md`](../research/final-freeze-decision-2026-09-04.md)
+**Canonical reopen manifest:** [`../research/results/final-freeze-reopen-2026-09-04.json`](../research/results/final-freeze-reopen-2026-09-04.json)
 
 ## 1. Executive status
 
 ```text
 updated TAPI scope                         Agent + Evaluation in one solution
 external API/hosted-service cash cost     USD 0 hard constraint
-production agent runtime                  IMPLEMENTED
-production deterministic evaluator        IMPLEMENTED
-TRACTIAN typed tool registry              18 operations
-safe realtime observability               IMPLEMENTED
-React operator control room               IMPLEMENTED
-full-product Playwright E2E                PASS / gated
-frontend lockfile + npm ci                 PASS / gated
+required local production components      TARGET 0 / hard constraint
+production path hosted-only               REQUIRED
+multi-user production path                REQUIRED
+no demo-only production path              REQUIRED
+
+hosted FastAPI product path                IMPLEMENTED / candidate
+hosted OIDC/JWKS boundary                  IMPLEMENTED / provider-neutral
+managed PostgreSQL production state        IMPLEMENTED / candidate
+PostgreSQL tenant RLS                      IMPLEMENTED / repository-tested
+hosted deployment live attestation         IMPLEMENTED / Railway connected path FAIL
+hosted PostgreSQL live preflight           IMPLEMENTED / live execution blocked by deployment attestation
+hosted TRACTIAN transport                  IMPLEMENTED / 18/18 proof pending
+hosted semantic certification              IMPLEMENTED / 18/18 proof pending
+hosted provider/model frontier             IMPLEMENTED / promotion pending
+hosted consequential actions               FAIL-CLOSED / qualification pending
+React operator control room                IMPLEMENTED
+full-product Playwright                    IMPLEMENTED / hosted-live run pending
+
+Python dependency lock                     IMPLEMENTED / gated
+frontend lockfile + npm ci                 IMPLEMENTED / gated
 current clean-clone reproduction           PASS / gated
-stable final required CI                   PASS / required-gate
+final required CI                          current head revalidating
 
-production consequential actions          IMPLEMENTED
-custody + explicit confirmation            IMPLEMENTED
-persistent idempotency/no blind replay     IMPLEMENTED
-
-request authentication                    SIGNED BEARER HMAC-SHA256 V1
-enterprise OIDC/SSO claim                  FALSE
-mutable operational state                 PostgreSQL
-analytics/read model                       DuckDB
-PostgreSQL tenant RLS                      IMPLEMENTED / tested
-
-human semantic-review collector            IMPLEMENTED
-VALIDATION source generation               IMPLEMENTED
-human semantic calibration claim           NOT READY — real labels required
-
-operational-value collector                IMPLEMENTED
-frozen paired time analysis                IMPLEMENTED
-engineer-minutes-saved business claim      NOT READY — real human data required
-
-adaptive stopping replay diagnostic        IMPLEMENTED / evaluator-only
-adaptive runtime stopping promoted         NO
-
-load/concurrency campaign                  MEASURED / descriptive only
-production capacity claim                  FALSE
-restart/recovery campaign                  VERIFIED safety contract
-RTO/RPO/availability claim                 FALSE
-
-D01/D02 provider comparison                COMPLETE
-D01/D02 cash cost                          USD 0.00
-provider selection                         NO_SELECTION
-
-main branch CI contract                    READY / one required-gate
-GitHub branch-protection enforcement       PENDING EXTERNAL
-last observed main.protected               false
-last observed repository rulesets          []
-
-final evidence bundle                      CURRENT P0 / READY candidate
-hard freeze effective now                  NO — scheduled end 2026-09-05
+human semantic calibration                 NOT READY — real labels required
+business-value MANUAL vs ASSISTED           NOT READY — real human data required
+adaptive runtime stopping                  NOT PROMOTED
+production SLO/capacity                    NOT CLAIMED
+branch protection enforcement              PENDING EXTERNAL
 ```
 
-## 2. Exact current integration evidence
+The pre-cloud-only freeze candidate is historical evidence only. It is not the current production-readiness claim.
 
-Repository-side final CI is integrated on merged `main` commit:
+## 2. Why the freeze is reopened
 
-`b86b15ef32762e5bc3cd474421c177eaa3f56787`
+The previous candidate was built before the final hard constraint that the delivered product must require **zero local runtime components**. That constraint is material and therefore reopens decisions that depended on local/provider-free production baselines.
 
-Post-merge `final-ci-required` run `33834299439` completed successfully on that exact SHA:
+The current manifest records:
 
 ```text
-clean-clone / reproduce-current-product     success
-full-product-browser / chromium-full-product success
-required-gate                               success
+state                              FREEZE_REOPENED
+local_required_components_target   0
+production_path_hosted_only        true
+multi_user_required                true
+no_demo_only_path                  true
 ```
 
-`required-gate` is the stable, always-triggered status context intended for branch protection. It runs on every PR and push to `main` and succeeds only if current clean-clone reproduction and Chromium full-product acceptance both succeed.
+Historical ADRs, experiments and frozen bundles remain immutable for their original scope. They are not rewritten to make the new architecture appear continuous.
 
-GitHub enforcement is a separate external control. Until GitHub reports protection active, the project must not claim that direct pushes/merges are technically blocked by a ruleset.
-
-## 3. Promoted product path
+## 3. Current production candidate
 
 ```text
-browser request
-→ signed RuntimeContextProvider
-→ organization/user/identity/permissions
-→ FastAPI product API
-→ PostgreSQL ownership + tenant RLS
-→ RealtimeProductionRuntime.prepare()
-→ provider-neutral DecisionSource
+hosted browser
+→ hosted OIDC/JWKS identity provider
+→ bearer-authenticated REST + fetch-stream SSE
+→ hosted FastAPI container
+→ managed PostgreSQL
+   - ownership/execution
+   - tenant RLS
+   - action custody/idempotency
+   - safe observability/evaluation read model
+   - transport + semantic campaign evidence
+→ selected hosted provider/model
 → AgentController
 → HarnessRunner
 → 18 typed TRACTIAN tools
-→ deterministic B1/B2/B3 boundaries
-→ normalized evidence
-→ FINAL / CLARIFY / ABSTAIN / ESCALATE / action proposal
-→ RunTrace
-→ ProductionEvaluator
-→ safe projection
-→ DuckDB analytics/read model
+→ deterministic safety boundaries
+→ supplied hosted TRACTIAN HTTPS API
+→ RunTrace + ProductionEvaluator
+→ PostgreSQL safe projection
 → REST/SSE
-→ React operator control room
+→ React control room
 ```
 
-Consequential action path:
+The hosted candidate requires no durable DuckDB/filesystem state. DuckDB and signed-HMAC paths remain only for bounded historical regression/reproduction where explicitly documented; they are not allowed to become required final-product dependencies.
+
+## 4. Identity and multi-tenant boundary
+
+The internet-facing candidate uses provider-neutral OIDC/JWKS with:
+
+- asymmetric algorithm allow-list;
+- issuer/audience/signature/time validation;
+- mandatory organization/tenant claim;
+- configurable required claims;
+- optional authorized-party allow-list;
+- external permissions intersected with application-owned allow-lists.
+
+A regression found that a configured Auth0 role claim could be absent while the token was accepted. The boundary was corrected to make configured required claims fail closed, and the full regression/handoff suite returned green.
+
+Signed HMAC bearer identity remains only a bounded backend/regression baseline and is not the hosted browser target.
+
+## 5. Managed PostgreSQL state
+
+`OPS-STORE-001` remains valid in its core conclusion: PostgreSQL is the mutable operational-state backend. The cloud-only revalidation changes the deployment requirement from local/self-hosted PostgreSQL to **managed hosted PostgreSQL**.
+
+The hosted path stores:
+
+```text
+operational ownership/execution
+consequential-action custody/idempotency
+browser-safe observability/evaluation
+TRACTIAN transport evidence
+semantic campaign certification
+```
+
+Serving is fail-closed and does not auto-migrate schemas.
+
+### Neon live pilot
+
+An isolated hosted pilot exists in Neon:
+
+```text
+project        academy-tractian-hosted-pilot
+region         AWS São Paulo (sa-east-1)
+PostgreSQL     18
+plan state     Free account project
+```
+
+Live pilot findings already observed:
+
+- clean hosted database baseline;
+- distinct internal and scoped credentials;
+- TLS-required application DSNs;
+- native Neon role creation produced a role incompatible with the project's RLS hard gate (`BYPASSRLS`); that path was rejected;
+- the scoped application role was instead created with `NOSUPERUSER`, `NOBYPASSRLS`, no `CREATEDB/CREATEROLE`, and `NOINHERIT`;
+- the incompatible experimental role was removed;
+- sanitized evidence is stored in `research/neon-hosted-pilot-live-baseline-2026-09-04.md`.
+
+This is qualification evidence, not a Neon production promotion decision.
+
+The database was intentionally **not migrated by the failed Railway deployment**. The deployment attestation failed before PostgreSQL preflight/migration, preserving the clean experimental boundary.
+
+## 6. Hosted deployment attestation and PostgreSQL preflight
+
+The hosted deployment chain is now explicitly non-compensatory:
+
+```text
+static feasibility
+→ live deployment source/build/runtime attestation
+→ hosted PostgreSQL preflight
+→ explicit migration
+→ RLS/isolation verification
+→ readiness
+```
+
+A provider's documentation or feature matrix can only admit it to a pilot. It cannot prove what source revision or build path actually executed.
+
+The repository contains the hash-bound live attestation gate:
+
+```bash
+python scripts/check_live_deployment_attestation.py <evidence.json>
+```
+
+It requires, by default:
+
+- exact expected source revision;
+- exact expected branch;
+- approved build contract (`root-dockerfile`);
+- approved Python runtime contract (`3.11`).
+
+Only after that gate passes may the read-only PostgreSQL preflight run:
+
+```bash
+python scripts/check_hosted_postgres_preflight.py
+```
+
+The PostgreSQL preflight validates before migration/serving that:
+
+- both endpoints are non-local;
+- internal and scoped connections resolve to distinct identities;
+- PostgreSQL major version matches the required production version;
+- the scoped role is not superuser and does not bypass RLS;
+- both real application sessions use TLS;
+- database identity is coherent.
+
+Both evidence paths are secret-safe and must not expose DSNs, passwords or raw credentials.
+
+## 7. Railway live deployment result
+
+An isolated Railway project was created only as a deployment/executor challenger. The connected deployment path was instructed to use the PR branch and the repository's root Dockerfile contract, but empirical deployment metadata/logs showed:
+
+```text
+candidate                     railway
+expected branch               feat/cloud-production-baseline
+observed branch               main
+expected source revision      PR candidate revision
+observed source revision      acb786e3a4cf45500fd68741e1ecedba1f624e5d
+expected build contract       root-dockerfile
+observed build contract       railpack
+expected Python               3.11
+observed Python               3.13.15
+live attestation outcome      LIVE_ATTESTATION_FAIL
+```
+
+The deploy then could not find `scripts/check_hosted_postgres_preflight.py`, consistent with having executed the older `main` revision rather than the intended PR source.
+
+Consequences:
+
+- Railway is **not qualified through the currently connected Git-source path**;
+- the run is not counted as hosted PostgreSQL evidence;
+- PostgreSQL preflight and migration were not credited or executed as valid evidence;
+- Neon remained unmodified by the wrong source revision;
+- Railway is not globally declared impossible: it may be reconsidered only through a path that independently proves exact immutable source/build provenance, such as an approved OCI image pinned by digest.
+
+The sanitized, hash-bound artifact is:
+
+`research/results/railway-live-deployment-attestation-2026-09-04.json`.
+
+## 8. Provider/model state
+
+The hosted candidate registry currently includes:
+
+```text
+OpenAI control candidate
+Google Gemini 3.7 Flash
+Google Gemini 3.8 Flash
+Groq GPT-OSS-120B
+```
+
+Provider/model deployment inputs are not selection evidence. The promotion decision remains governed by the project's EDD gates, USD-zero eligibility, reliability, tool/argument correctness, trajectory quality, safety, latency and reproducibility.
+
+Current production provider state remains:
+
+**`NO_SELECTION`**.
+
+## 9. TRACTIAN 18-operation evidence
+
+The canonical contract contains 18 operations: 13 reads and 5 consequential actions.
+
+The hosted campaign distinguishes three concepts that must never be conflated:
+
+1. route/schema registration;
+2. empirical hosted transport proof;
+3. semantic runtime/evaluator proof.
+
+Final claims require:
+
+```text
+TRACTIAN_TRANSPORT       18/18
+TRACTIAN_SEMANTIC        18/18
+combined end_to_end      PASS
+```
+
+Historical packaged evidence does not satisfy these hosted-live gates. No route is credited merely because it exists in code.
+
+## 10. Consequential actions
+
+The product runtime currently keeps hosted mutation capability fail-closed. This is intentional until production authorization and tenant/resource isolation are independently proven.
+
+The target governed path is:
 
 ```text
 agent proposes exact action
-→ deterministic scope/schema/permission validation
+→ deterministic schema/scope/permission validation
+→ tenant/resource authorization
 → private PostgreSQL custody
-→ PENDING_CONFIRMATION
-→ authenticated operator confirms opaque action_id
-→ authorization + kill switch revalidated
+→ explicit authenticated confirmation
+→ authorization + kill-switch revalidation
 → atomic persistent idempotency claim
-→ exact custodied action executes
-→ separate action execution/run trace
-→ ProductionActionEvaluator
-→ safe REST/SSE/frontend projection
+→ exact action execution
+→ action trace/evaluation
+→ safe frontend projection
 ```
 
-Ambiguous post-claim outcomes become `UNCERTAIN`. Restart is never permission to automatically replay a runtime execution or retry a consequential action.
+Integration-campaign approval is not production authorization.
 
-## 4. Identity and tenant isolation
+## 11. Evaluation / EDD state
 
-The promoted entrypoint uses the project-owned `academy-runtime-v1` signed bearer envelope with HMAC-SHA256 verification, issuer/audience/lifetime checks and explicit organization/user/identity/permission claims. Browser payloads cannot provide tenant, identity, role, permissions or benchmark seed.
-
-This is deliberately **not** described as OAuth/OIDC/JWT or enterprise SSO.
-
-PostgreSQL provides an independent tenant boundary. Scoped reads use a non-superuser, non-`BYPASSRLS`, non-owner role and transaction-local `academy.organization_id`; direct SQL integration proves tenant B cannot read a known tenant-A ownership row.
-
-## 5. Operational storage decision
-
-`OPS-STORE-001` selected `PROMOTE_POSTGRES_OPERATIONAL` after PostgreSQL passed every hard gate while the previous DuckDB operational-state baseline produced concurrent operational errors.
-
-The promoted split is:
-
-```text
-PostgreSQL  mutable ownership/execution/action custody/idempotency
-DuckDB      sanitized observability/evaluation/analytics read model
-```
-
-This supports the tested authenticated multi-user durable single-node product. Horizontal multi-instance execution, distributed queues and shared cross-instance SSE are not claimed.
-
-## 6. Evaluation and human evidence state
-
-Delivered:
+Implemented:
 
 - deterministic structural/safety/trajectory evaluation;
-- operational-conclusion/value contract;
-- blinded operational-value collection + server-owned timing;
-- frozen paired MANUAL × ASSISTED analysis;
-- semantic rubric + frozen calibration protocol v2;
-- blinded semantic review A/B + independent adjudication custody;
-- trusted VALIDATION source generation from sanitized read model;
-- evaluator-only adaptive evidence/stopping replay.
+- operation-level transport and semantic campaign gates;
+- bounded evidence persistence;
+- provider promotion decision gates;
+- semantic review collection/adjudication machinery;
+- paired MANUAL × ASSISTED business-value analysis machinery;
+- evaluator-only adaptive stopping diagnostics;
+- live deployment source/build/runtime attestation as a non-compensatory infrastructure gate.
 
-Still human-dependent and therefore **not ready**:
+Still intentionally not claimed:
 
-- real semantic labels/adjudication;
-- measured judge-vs-human agreement/error profile;
-- real manual vs assisted engineer-time observations;
-- Engineer Minutes Saved per Ticket;
-- useful auto-resolution/business-value claim.
+- calibrated judge-vs-human agreement from real labels;
+- real engineer-minutes-saved/business-value result;
+- production runtime gain from adaptive stopping;
+- production SLO/capacity from CI load tests.
 
-These values must not be fabricated. `LOCKED_TEST` remains excluded from tuning/calibration.
+Negative or `NO_SELECTION` experiment results remain valid evidence and must not be overwritten to manufacture a preferred architecture.
 
-## 7. Adaptive/runtime topology state
+## 12. Frontend target
 
-The merged adaptive stopping work is DEV-only and evaluator-only. It may quantify replay headroom but cannot authorize a runtime policy change; no oracle-free adaptive challenger has won EDD.
+The final frontend must expose the normal production path and make evidence provenance visible. Required operator surfaces include:
 
-The P0 topology therefore remains **`NO_CHANGE`**:
+- mission/runtime status;
+- run timeline and trace graph;
+- evidence lineage;
+- tool coverage and 18-operation campaign state;
+- evaluation results;
+- action custody/confirmation state;
+- provider/deployment decision evidence;
+- production health;
+- live architecture/dataflow explanation.
 
-`custom AgentController + HarnessRunner + PostgreSQL durable action custody/idempotency + conservative restart recovery`.
-
-Current evidence does not identify a LangGraph/multi-agent/RAG/memory/MCP topology bottleneck. Any LangGraph comparison is P1 and must demonstrate a material Pareto improvement without bypassing application-owned safety/tool boundaries.
-
-## 8. Load/concurrency and recovery evidence
-
-### Load
-
-The provider-free authenticated PostgreSQL campaign exercised concurrency 1 and 4 with 12 synthetic measured requests. All completed without errors and higher concurrency visibly saturated the two-worker executor. Latency/throughput/persistence/resource values are preserved in the aggregate artifact.
-
-Interpretation remains `descriptive_only`; CI data is not a production capacity/SLO/worker-sizing claim.
-
-### Restart/recovery
-
-Integrated PostgreSQL recovery proves:
+Truth provenance must distinguish at minimum:
 
 ```text
-2 orphan runtime executions       → interrupted
-1 orphan action execution         → uncertain
-1 custody EXECUTING row           → UNCERTAIN
-1 ledger CLAIMED row              → UNCERTAIN
-PENDING_CONFIRMATION              preserved
-completed / failed                preserved
-provider/action replay            0
-second-start new recoveries       0
+LIVE_PRODUCTION
+LIVE_EXPERIMENT
+HISTORICAL_EVIDENCE
+SYNTHETIC_TEST
+NOT_MEASURED
 ```
 
-A fresh authenticated run completes after recovery and remains tenant-isolated. This is a repository safety contract, not RTO/RPO/HA/uptime evidence.
+Visual density must improve understanding rather than turn the product into disconnected demo dashboards.
 
-## 9. Provider state
+## 13. Current CI and reproducibility
 
-D01 and D02 are complete governed USD-zero experiments. D02 improved multiple public metrics after the 512→1024 completion-budget change, but neither candidate crossed frozen M1/M4/M7 promotion gates.
+The pre-attestation baseline head `bf053129dea8293ca750dae52c00ddfe985d36d5` was fully green across the central required gates. The current head contains the new live deployment attestation module, tests, CLI and bound Railway artifact and is undergoing normal required-CI revalidation.
 
-Final provider state remains:
+Completed current-head jobs observed so far include green results for PostgreSQL operational/restart checks, frontend, observability, EDD, load/concurrency, final-delivery reproduction, final-handoff acceptance and provider comparison design. No production-readiness claim is upgraded until `final-ci-required` completes for the current head.
 
-**`NO_SELECTION` / no production provider claim.**
+The current clean-clone gate validates the canonical `FREEZE_REOPENED` state instead of demanding byte identity with a superseded freeze candidate.
 
-The consumed governed D02 packet must not be replayed merely to seek a preferable result.
-
-## 10. Reproduction and browser acceptance
-
-Current clean-clone reproduction proves from one fresh checkout:
+## 14. Remaining P0 gates before a new hard freeze
 
 ```text
-PostgreSQL 18
-→ complete Python suite with Postgres enabled
-→ identity/RLS + load + recovery P0 checks
-→ ADR-004 controller regression
-→ frozen EV-007 / EV-008 / EV-011
-→ historical delivery/evidence validation
-→ final handoff audit
-→ final freeze-bundle validation
-→ npm ci from committed package-lock
-→ TypeScript typecheck / Vitest / production build
-→ zero tracked repository mutation
+HOSTED_EXACT_SOURCE_ATTESTATION
+HOSTED_APPROVED_BUILD_RUNTIME
+HOSTED_POSTGRES_PREFLIGHT
+HOSTED_POSTGRES_MIGRATION
+HOSTED_POSTGRES_RLS_ISOLATION
+HOSTED_OIDC_LIVE
+HOSTED_PROVIDER_SELECTION
+TRACTIAN_TRANSPORT_18_OF_18
+TRACTIAN_SEMANTIC_18_OF_18
+HOSTED_ACTION_AUTHORIZATION
+HOSTED_FULL_PRODUCT_PLAYWRIGHT
+HOSTED_SECURITY_CAMPAIGN
+HOSTED_LOAD_CAMPAIGN_WITH_BOUNDED_CLAIM
+HUMAN_SEMANTIC_CALIBRATION
+CURRENT_DOCUMENTATION_RECONCILIATION
+BRANCH_PROTECTION_ENFORCEMENT
+EXACT_FINAL_SHA_EVIDENCE
 ```
 
-Full Chromium acceptance remains a separate reusable workflow and proves genuine backend/frontend/PostgreSQL execution, SSE reconnect/catch-up, post-runtime evaluation, action confirmation/follow-run, tenant isolation, safe browser projections and responsive product behavior.
+The new hard freeze is allowed only when every hard gate that applies to the final claim is either `PASS` or explicitly recorded as a bounded non-claim that does not contradict the TAPI/kickoff/delivery requirements.
 
-The historical final-delivery reproduction workflow remains immutable evidence and is intentionally distinct from the current-product reproduction contract.
-
-## 11. External blockers / explicit bounded state
-
-### Branch protection
-
-Repository CI is branch-protection-ready, but enforcement remains external. Last observed state on 2026-09-04:
-
-```text
-main.protected = false
-repository rulesets = []
-```
-
-Required settings and verification procedure are documented in `docs/BRANCH-PROTECTION.md`.
-
-### Historical C4 exact artifact
-
-The required evaluator-side artifact with SHA-256
-`b1c877f678b4c29be4bac362adfc7f05b84f73a9444db7f9903361858359719c`
-remains externally unavailable. Reconstruction, substitution or rescoring is forbidden. The blocker remains visible in final handoff and does not become resolved because current product CI is green.
-
-## 12. Critical path to delivery
-
-```text
-1. merge final freeze/evidence bundle candidate       CURRENT P0
-2. 2026-09-05 integrated test/fix only                scheduled
-3. hard feature/visual/architecture freeze            end 2026-09-05
-4. apply + verify GitHub branch protection            external control
-5. final rehearsal/evidence inspection                2026-09-06/07
-6. delivery                                           2026-09-08
-```
-
-Human semantic/value collection can proceed when reviewers/operators are available, but absent real data the final delivery must preserve `NOT READY` rather than manufacture a claim.
-
-P1 work — LangGraph comparison, additional provider/model benchmark, adaptive routing, OpenTelemetry standardization or frontend consolidation — must not displace the final P0 freeze/rehearsal path and requires measured materiality.
-
-## 13. Current non-claims
+## 15. Current non-claims
 
 Do not claim:
 
-- a production provider has been selected;
-- human semantic calibration is complete;
-- engineer minutes saved without real human observations;
-- adaptive stopping improves runtime behavior before an oracle-free challenger wins;
-- CI load measurements establish production capacity/SLOs;
-- restart safety establishes deployment RTO/RPO, HA, multi-region failover or uptime;
-- enterprise IAM/SSO is implemented;
-- LangGraph or another framework is needed/superior before a controlled comparison;
-- GitHub branch protection is enforced before GitHub reports it active;
-- RAG/GraphRAG/vector DB/Kubernetes/Kafka/Redis/multi-agent/Temporal/MCP migration is justified without a measured gap and challenger win.
+- the hard freeze is currently effective;
+- unconditional production readiness;
+- Neon or Railway has won the cloud decision;
+- Railway's currently connected Git-source deployment path is qualified;
+- a production provider/model has been selected;
+- hosted OIDC has been live-validated end to end;
+- TRACTIAN transport or semantic coverage is 18/18 before empirical proof;
+- hosted consequential actions are qualified;
+- hosted full-product browser E2E has passed before the live deployment campaign;
+- human semantic calibration or business-value measurement is complete;
+- CI load measurements establish production SLO/capacity;
+- branch protection is enforced before GitHub reports it active;
+- RAG, multi-agent, MCP, LangGraph, memory, Kubernetes, Kafka, Redis or another additional framework is superior without a measured gap and controlled challenger result.
 
-## 14. State update rule
+## 16. State update rule
 
-This file is the mutable current-state summary. Accepted changes update it. Historical ADRs, frozen experiment evidence, prior campaign artifacts and the historical delivery reproduction workflow remain immutable and authoritative for their original scopes.
+This file is the mutable, canonical human-readable state. New live evidence may update it. Historical ADRs, frozen experiment artifacts and superseded freeze bundles remain immutable and authoritative for their original scopes.

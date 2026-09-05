@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .evaluation import ProductionEvaluator
 from .observability import safe_run_id
 from .observability_api import ObservabilityAccessPolicy, create_observability_app
+from .observability_backend import ObservabilityStoreBackend
 from .production_controls import ProductionControlState
 from .production_telemetry import ProductionTelemetry
 from .realtime_observability import DuckDBObservabilityEventSink, SafeObservabilityEventSink
@@ -288,6 +289,7 @@ def create_product_app(
     db_path: str | Path,
     runtime_factory: RealtimeRuntimeFactory,
     context_provider: RuntimeContextProvider,
+    observability_store: ObservabilityStoreBackend | None = None,
     access_db_path: str | Path | None = None,
     execution_db_path: str | Path | None = None,
     run_access_store: RunAccessStore | None = None,
@@ -297,12 +299,12 @@ def create_product_app(
     provider_calls_enabled: bool = True,
     heartbeat_interval_ms: int = 1000,
 ) -> FastAPI:
-    """Create the product API over the safe observability/control plane.
+    """Create the product API over one safe observability/control plane.
 
-    Store injection preserves one API/runtime semantic contract while allowing the qualified
-    PostgreSQL backend to own mutable production state. If stores are not injected, persistent
-    DuckDB stores remain available for isolated tests and bounded fallback use. The safe
-    observability/evaluation read model remains DuckDB regardless of operational backend.
+    Store injection preserves one API/runtime semantic contract while allowing qualified
+    PostgreSQL backends to own mutable production state and the browser-safe observability read
+    model. If stores are not injected, persistent DuckDB stores remain available for isolated
+    tests and historical bounded reproduction.
     """
 
     if not 1 <= max_workers <= 64:
@@ -379,6 +381,7 @@ def create_product_app(
     try:
         app = create_observability_app(
             db_path=db_path,
+            store_backend=observability_store,
             lifespan=lifespan,
             production_telemetry=telemetry,
             live_operability_supplier=live_operability_snapshot,
@@ -390,7 +393,7 @@ def create_product_app(
             operational_close()
         raise
 
-    store = app.state.observability_store
+    store: ObservabilityStoreBackend = app.state.observability_store
     sink = DuckDBObservabilityEventSink(store, telemetry=telemetry)
     app.state.product_executor = executor
     app.state.run_execution_registry = registry

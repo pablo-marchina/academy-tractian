@@ -1,0 +1,21 @@
+{
+  "artifact_sha256": "6f76a9a64f5d95c4b029626d3c7465a77b3507b43da358c60fcde83adc0df923",
+  "candidate_id": "google-cloud-run-request-free-tier",
+  "collected_at": "2026-09-04T19:50:00Z",
+  "dockerfile_compatible": "yes",
+  "hosted_service": true,
+  "managed_postgres_connectivity": "yes",
+  "migration_class": "none",
+  "outbound_https_supported": "yes",
+  "persistent_local_disk_required": false,
+  "provider_explicitly_discourages_production": "no",
+  "published_compute_limit": "180,000 vCPU-seconds/month request-based free tier; usage above tier billed",
+  "published_memory_limit": "360,000 GiB-seconds/month request-based free tier",
+  "python_3_11_compatible": "yes",
+  "required_local_components": 0,
+  "runtime_maturity": "ga",
+  "schema_version": "deployment-feasibility-evidence-v1",
+  "source_manifest_sha256": "305b98b8ba65d3f495199fb58953603d063b6fa45eb09315fe253fdbc2dd0c4b",
+  "streaming_http_supported": "yes",
+  "zero_cost_guardrail": "no"
+}

@@ -1,3 +1,5 @@
+import { authorizationHeaders } from "./auth";
+import { apiUrl } from "./baseUrl";
 import type { ActionExecutionAccepted, PendingActionSafe } from "./actionTypes";
 import type {
   OperationalPilotAssignment,
@@ -11,6 +13,7 @@ import type {
   SemanticReviewSubmission,
   SemanticReviewWithdrawn,
 } from "./semanticReviewTypes";
+import type { ToolCampaignResponse, ToolCoverageResponse } from "./toolCoverageTypes";
 import type {
   AnalyticsQuerySpec,
   ArchitectureManifest,
@@ -34,12 +37,14 @@ import type {
 } from "./types";
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
+  const authHeaders = await authorizationHeaders();
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       Accept: "application/json",
       ...(init?.body ? { "Content-Type": "application/json" } : {}),
       ...init?.headers,
+      ...authHeaders,
     },
   });
 
@@ -193,6 +198,14 @@ export function fetchProductionHealth(): Promise<ProductionHealth> {
 
 export function fetchToolsMetrics(runId?: string | null): Promise<ToolsMetrics> {
   return requestJson<ToolsMetrics>(scopedPath("/api/tools/metrics", runId));
+}
+
+export function fetchToolCoverage(): Promise<ToolCoverageResponse> {
+  return requestJson<ToolCoverageResponse>("/api/tools/coverage");
+}
+
+export function fetchToolCampaign(): Promise<ToolCampaignResponse> {
+  return requestJson<ToolCampaignResponse>("/api/tools/campaign");
 }
 
 export function fetchPoliciesMetrics(runId?: string | null): Promise<PoliciesMetrics> {

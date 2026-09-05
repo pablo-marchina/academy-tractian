@@ -1,0 +1,102 @@
+{
+  "schema_version": "cloud-deployment-bakeoff-preregistration-v1",
+  "status": "PREREGISTERED_PROVIDER_FREE_DESIGN",
+  "date": "2026-09-04",
+  "decision_id": "D02-cloud-v1",
+  "live_cloud_actions_authorized_now": 0,
+  "cloud_resources_authorized_now": 0,
+  "production_cloud_selected": false,
+  "weighted_composite_score_forbidden": true,
+  "candidate_topologies": [
+    {
+      "candidate_id": "oracle-oci-always-free-a1+neon-plus-auth0",
+      "compute_candidate_id": "oracle-oci-always-free-a1",
+      "state_identity_bundle_id": "neon-plus-auth0"
+    },
+    {
+      "candidate_id": "google-cloud-run-request-free-tier+neon-plus-auth0",
+      "compute_candidate_id": "google-cloud-run-request-free-tier",
+      "state_identity_bundle_id": "neon-plus-auth0"
+    },
+    {
+      "candidate_id": "vercel-hobby-python+neon-plus-auth0",
+      "compute_candidate_id": "vercel-hobby-python",
+      "state_identity_bundle_id": "neon-plus-auth0"
+    },
+    {
+      "candidate_id": "cloudflare-python-workers-free+neon-plus-auth0",
+      "compute_candidate_id": "cloudflare-python-workers-free",
+      "state_identity_bundle_id": "neon-plus-auth0"
+    },
+    {
+      "candidate_id": "railway-free-docker+neon-plus-auth0",
+      "compute_candidate_id": "railway-free-docker",
+      "state_identity_bundle_id": "neon-plus-auth0"
+    }
+  ],
+  "static_inputs": {
+    "deployment_feasibility_manifest_sha256": "305b98b8ba65d3f495199fb58953603d063b6fa45eb09315fe253fdbc2dd0c4b",
+    "state_identity_source_manifest_sha256": "3449bcd5ba596c44e72b43314ee69cd368402f19aa51b949aff855346fb82def",
+    "required_state_identity_bundle": "neon-plus-auth0"
+  },
+  "live_protocol": {
+    "required_source_branch": "feat/cloud-production-baseline",
+    "required_python_major_minor": "3.11",
+    "approved_build_contracts": ["root-dockerfile"],
+    "required_local_components": 0,
+    "observed_cash_cost_usd": 0.0,
+    "concurrency_levels": [1, 5, 20, 50],
+    "requests_per_level": 20,
+    "warmup_requests": 0,
+    "load_protocol_id": "cloud-bakeoff-load-v1",
+    "load_protocol_sha256": "d1fec563a055d052fb221624a61aa5386ece4119c8c95921346ed39d9a2dc50f",
+    "candidate_frontier_exact_match_required": true,
+    "exact_code_sha_binding_required": true,
+    "deployment_origin_binding_required": true,
+    "image_digest_required": true,
+    "live_attestation_evidence_hash_binding_required": true,
+    "state_identity_evidence_hash_binding_required": true,
+    "required_zero_counts": [
+      "tenant_leak_count",
+      "forbidden_data_leak_count",
+      "duplicate_action_count",
+      "sse_gap_count",
+      "sse_duplicate_event_count",
+      "unrecoverable_sse_reconnect_count",
+      "recovery_failure_count",
+      "persistence_integrity_failure_count",
+      "load_error_count"
+    ],
+    "required_positive_measurements": [
+      "api_p95_ms",
+      "sse_first_event_p95_ms",
+      "sse_reconnect_p95_ms",
+      "cold_start_p95_ms",
+      "max_level_throughput_rps"
+    ],
+    "load_report_protocol_must_match": true,
+    "state_identity_pilot_must_pass": true,
+    "live_deployment_attestation_must_pass": true
+  },
+  "selection_rule": {
+    "hard_gates_first": true,
+    "static_reject_never_receives_live_evidence_credit": true,
+    "unique_live_qualified_survivor_may_be_selected": true,
+    "multiple_survivors_require_unique_pareto_dominance": true,
+    "pareto_lower_is_better": [
+      "api_p95_ms",
+      "sse_first_event_p95_ms",
+      "sse_reconnect_p95_ms",
+      "cold_start_p95_ms",
+      "persistence_p95_ms"
+    ],
+    "pareto_higher_is_better": ["max_level_throughput_rps"],
+    "ties_or_tradeoffs": "NO_SELECTION",
+    "allowed_outcomes": ["PROMOTE", "NO_SELECTION"]
+  },
+  "supersession": {
+    "static_feasibility_artifacts": "remain immutable admission evidence",
+    "live_deployment_attestation": "remains the exact deployed-source/build gate",
+    "load_concurrency_report": "remains descriptive measurement evidence; bakeoff owns qualification thresholds"
+  }
+}

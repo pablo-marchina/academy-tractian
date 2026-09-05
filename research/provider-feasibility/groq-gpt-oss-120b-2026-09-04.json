@@ -1,0 +1,15 @@
+{
+  "artifact_sha256": "d26b211deb263a0d1dd7c87952dd26a07b93b35c46aa63f54017565bf7db9f3a",
+  "candidate_id": "groq:openai/gpt-oss-120b",
+  "collected_at": "2026-09-04T19:35:00Z",
+  "free_requests_per_day": 1000,
+  "free_tokens_per_day": 200000,
+  "hosted_service": true,
+  "metered_input_usd_per_million": 0.15,
+  "metered_output_usd_per_million": 0.6,
+  "required_local_components": 0,
+  "schema_version": "provider-feasibility-evidence-v1",
+  "source_manifest_sha256": "50b52da24e5dc87025f4aeb07d059b9f71f61883bbea3c0eb44c7ae454462d0a",
+  "structured_output_supported": true,
+  "zero_cost_execution_status": "available"
+}

@@ -1,0 +1,21 @@
+{
+  "artifact_sha256": "d0e02bb5be1b14fa061c4f7a387b3cf82a70be5a8a91ae52e0c5bceefb3d38d5",
+  "candidate_id": "cloudflare-python-workers-free",
+  "collected_at": "2026-09-04T19:50:00Z",
+  "dockerfile_compatible": "no",
+  "hosted_service": true,
+  "managed_postgres_connectivity": "unknown",
+  "migration_class": "major",
+  "outbound_https_supported": "yes",
+  "persistent_local_disk_required": false,
+  "provider_explicitly_discourages_production": "no",
+  "published_compute_limit": "100,000 requests/day; 10 ms CPU/request",
+  "published_memory_limit": "128 MB/request",
+  "python_3_11_compatible": "no",
+  "required_local_components": 0,
+  "runtime_maturity": "unknown",
+  "schema_version": "deployment-feasibility-evidence-v1",
+  "source_manifest_sha256": "305b98b8ba65d3f495199fb58953603d063b6fa45eb09315fe253fdbc2dd0c4b",
+  "streaming_http_supported": "yes",
+  "zero_cost_guardrail": "yes"
+}

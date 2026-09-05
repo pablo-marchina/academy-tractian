@@ -7,6 +7,7 @@ import "./styles.css";
 import "./explorer.css";
 import "./operations.css";
 import "./operationalValue.css";
+import "./toolCoverage.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {

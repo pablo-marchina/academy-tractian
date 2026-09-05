@@ -11,6 +11,7 @@ from research.e2.transport import RequestTransport
 
 from .action_evaluation import ProductionActionEvaluator
 from .action_recovery import reconcile_orphaned_actions
+from .observability_backend import ObservabilityStoreBackend
 from .product_api import (
     AuthenticatedRuntimeContext,
     RuntimeContextProvider,
@@ -29,6 +30,10 @@ from .production_actions_v2 import (
 from .realtime_observability import DuckDBObservabilityEventSink
 from .run_access import RunAccessStore
 from .run_execution_store import RunExecutionStore
+from .runtime_configuration_identity import (
+    RuntimeConfigurationIdentity,
+    bind_runtime_configuration_identity,
+)
 
 
 class _FrozenModel(BaseModel):
@@ -55,6 +60,7 @@ def create_action_capable_product_app(
     transport_factory: Callable[[], RequestTransport],
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
+    observability_store: ObservabilityStoreBackend | None = None,
     action_custody_path: str | Path | None = None,
     action_ledger_path: str | Path | None = None,
     custody_store: Any | None = None,
@@ -68,6 +74,7 @@ def create_action_capable_product_app(
     provider_calls_enabled: bool = True,
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
+    runtime_configuration_identity: RuntimeConfigurationIdentity | None = None,
 ) -> FastAPI:
     if custody_store is not None and action_custody_path is not None:
         raise ValueError("provide custody_store or action_custody_path, not both")
@@ -83,18 +90,22 @@ def create_action_capable_product_app(
     action_recovery = reconcile_orphaned_actions(custody=custody, ledger=ledger)
 
     def runtime_factory(sink):
-        return ActionProposalRealtimeProductionRuntime(
+        runtime = ActionProposalRealtimeProductionRuntime(
             decision_source=decision_source_factory(),
             transport=transport_factory(),
             observability_sink=sink,
             authorization_resolver=authorization_resolver,
             custody=custody,
         )
+        if runtime_configuration_identity is not None:
+            bind_runtime_configuration_identity(runtime, runtime_configuration_identity)
+        return runtime
 
     app = create_product_app(
         db_path=db_path,
         runtime_factory=runtime_factory,
         context_provider=context_provider,
+        observability_store=observability_store,
         access_db_path=access_db_path,
         execution_db_path=execution_db_path,
         run_access_store=run_access_store,
@@ -106,7 +117,7 @@ def create_action_capable_product_app(
     )
     controls = app.state.production_controls
     controls.set_actions_enabled(actions_enabled)
-    store = app.state.observability_store
+    store: ObservabilityStoreBackend = app.state.observability_store
     telemetry = app.state.production_telemetry
     active_run_access_store: RunAccessStore = app.state.run_access_store
     access_policy = app.state.product_access_policy
@@ -123,6 +134,11 @@ def create_action_capable_product_app(
     app.state.action_idempotency_ledger = ledger
     app.state.production_action_executor = executor
     app.state.action_recovery_report = action_recovery
+    app.state.runtime_configuration_identity = (
+        None
+        if runtime_configuration_identity is None
+        else runtime_configuration_identity.model_dump(mode="json")
+    )
 
     def trusted_context(request: Request) -> AuthenticatedRuntimeContext:
         return trusted_runtime_context(context_provider, request)

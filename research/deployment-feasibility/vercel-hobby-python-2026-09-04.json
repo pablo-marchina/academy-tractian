@@ -1,0 +1,21 @@
+{
+  "artifact_sha256": "5756ff51afd654edf816718eebeb982f2347e1b1ab230e3f982214b970b11f22",
+  "candidate_id": "vercel-hobby-python",
+  "collected_at": "2026-09-04T19:50:00Z",
+  "dockerfile_compatible": "no",
+  "hosted_service": true,
+  "managed_postgres_connectivity": "yes",
+  "migration_class": "major",
+  "outbound_https_supported": "yes",
+  "persistent_local_disk_required": false,
+  "provider_explicitly_discourages_production": "unknown",
+  "published_compute_limit": "4 active CPU-hours/month; 1,000,000 function invocations/month; max function duration 60s",
+  "published_memory_limit": "360 GB-hours provisioned memory/month; 2 GB function memory limit",
+  "python_3_11_compatible": "unknown",
+  "required_local_components": 0,
+  "runtime_maturity": "beta",
+  "schema_version": "deployment-feasibility-evidence-v1",
+  "source_manifest_sha256": "305b98b8ba65d3f495199fb58953603d063b6fa45eb09315fe253fdbc2dd0c4b",
+  "streaming_http_supported": "yes",
+  "zero_cost_guardrail": "yes"
+}

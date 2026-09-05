@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { apiUrl } from "../api/baseUrl";
 import { submitRun } from "../api/client";
+import { SseHttpError, streamSse, type SseMessage } from "../api/sse";
 import type { RunAccepted, SafeEvent } from "../api/types";
 import {
   isRunFinished,
@@ -42,9 +44,22 @@ function parseSafeEvent(value: string): SafeEvent {
 }
 
 function resumedStreamPath(run: RunAccepted, afterSequence: number): string {
-  const url = new URL(run.stream_path, window.location.origin);
+  const url = new URL(apiUrl(run.stream_path), window.location.origin);
   url.searchParams.set("after_sequence", String(afterSequence));
-  return `${url.pathname}${url.search}`;
+  return url.toString();
+}
+
+function isAbortError(cause: unknown): boolean {
+  return cause instanceof Error && cause.name === "AbortError";
+}
+
+function isTerminalStreamFailure(cause: unknown): boolean {
+  if (cause instanceof SseHttpError) return [400, 401, 403, 404].includes(cause.status);
+  return cause instanceof Error && [
+    "invalid_sse_content_type",
+    "sse_body_unavailable",
+    "truncated_sse_frame",
+  ].includes(cause.message);
 }
 
 export interface LiveRunState {
@@ -60,7 +75,8 @@ export interface LiveRunState {
 
 export function useLiveRun(): LiveRunState {
   const queryClient = useQueryClient();
-  const sourceRef = useRef<EventSource | null>(null);
+  const sourceRef = useRef<AbortController | null>(null);
+  const completedRef = useRef(false);
   const lastSequenceRef = useRef(-1);
   const [accepted, setAccepted] = useState<RunAccepted | null>(null);
   const [events, setEvents] = useState<SafeEvent[]>([]);
@@ -68,7 +84,7 @@ export function useLiveRun(): LiveRunState {
   const [error, setError] = useState<string | null>(null);
 
   const closeSource = useCallback(() => {
-    sourceRef.current?.close();
+    sourceRef.current?.abort();
     sourceRef.current = null;
   }, []);
 
@@ -87,62 +103,83 @@ export function useLiveRun(): LiveRunState {
     (run: RunAccepted, resume = false) => {
       closeSource();
       setConnection(resume ? "reconnecting" : "connecting");
-      const source = new EventSource(
-        resume ? resumedStreamPath(run, lastSequenceRef.current) : run.stream_path,
-      );
-      sourceRef.current = source;
+      const controller = new AbortController();
+      sourceRef.current = controller;
+      const target = resume
+        ? resumedStreamPath(run, lastSequenceRef.current)
+        : apiUrl(run.stream_path);
 
-      source.onopen = () => {
-        setError(null);
-        setConnection((current) => (current === "reconnecting" ? current : "live"));
+      const failIntegrity = (cause: unknown) => {
+        controller.abort();
+        if (sourceRef.current === controller) sourceRef.current = null;
+        setConnection("failed");
+        setError(cause instanceof Error ? cause.message : "invalid_stream_event");
       };
 
-      source.addEventListener("stream_state", (message) => {
+      const onMessage = (message: SseMessage) => {
         try {
-          const state = parseStreamState((message as MessageEvent<string>).data);
-          if (state.run_id !== run.run_id) throw new Error("cross_run_stream_state_rejected");
-          if (state.after_sequence < lastSequenceRef.current) {
-            throw new Error("stream_cursor_regression_rejected");
+          if (message.event === "stream_state") {
+            if (message.id !== null) throw new Error("stream_state_id_forbidden");
+            const state = parseStreamState(message.data);
+            if (state.run_id !== run.run_id) throw new Error("cross_run_stream_state_rejected");
+            if (state.after_sequence < lastSequenceRef.current) {
+              throw new Error("stream_cursor_regression_rejected");
+            }
+            lastSequenceRef.current = state.after_sequence;
+            setConnection("caught_up");
+            return;
           }
-          lastSequenceRef.current = state.after_sequence;
-          setConnection("caught_up");
-        } catch (cause) {
-          source.close();
-          if (sourceRef.current === source) sourceRef.current = null;
-          setConnection("failed");
-          setError(cause instanceof Error ? cause.message : "invalid_stream_state");
-        }
-      });
 
-      source.addEventListener("trace_event", (message) => {
-        try {
-          const incoming = parseSafeEvent((message as MessageEvent<string>).data);
+          if (message.event !== "trace_event") {
+            throw new Error("unknown_sse_event_rejected");
+          }
+          const incoming = parseSafeEvent(message.data);
           if (incoming.run_id !== run.run_id) throw new Error("cross_run_event_rejected");
+          if (message.id !== null && message.id !== incoming.event_id) {
+            throw new Error("sse_event_id_mismatch");
+          }
           lastSequenceRef.current = Math.max(lastSequenceRef.current, incoming.sequence);
           setConnection((current) => (current === "caught_up" ? "live" : current));
           setEvents((current) => {
             const next = mergeSafeEvent(current, incoming);
             if (isRunFinished(next)) {
-              source.close();
-              if (sourceRef.current === source) sourceRef.current = null;
+              completedRef.current = true;
+              controller.abort();
+              if (sourceRef.current === controller) sourceRef.current = null;
               setConnection("completed");
               void refreshTerminalState(run);
             }
             return next;
           });
         } catch (cause) {
-          source.close();
-          if (sourceRef.current === source) sourceRef.current = null;
-          setConnection("failed");
-          setError(cause instanceof Error ? cause.message : "invalid_stream_event");
-        }
-      });
-
-      source.onerror = () => {
-        if (sourceRef.current === source) {
-          setConnection((current) => (current === "completed" ? current : "reconnecting"));
+          failIntegrity(cause);
         }
       };
+
+      void streamSse(target, {
+        signal: controller.signal,
+        onOpen: () => {
+          if (sourceRef.current !== controller) return;
+          setError(null);
+          setConnection((current) => (current === "reconnecting" ? current : "live"));
+        },
+        onMessage,
+      })
+        .then(() => {
+          if (sourceRef.current !== controller) return;
+          sourceRef.current = null;
+          if (!completedRef.current) setConnection("reconnecting");
+        })
+        .catch((cause: unknown) => {
+          if (isAbortError(cause) || sourceRef.current !== controller) return;
+          sourceRef.current = null;
+          if (isTerminalStreamFailure(cause)) {
+            setConnection("failed");
+            setError(cause instanceof Error ? cause.message : "stream_failed");
+            return;
+          }
+          if (!completedRef.current) setConnection("reconnecting");
+        });
     },
     [closeSource, refreshTerminalState],
   );
@@ -150,6 +187,7 @@ export function useLiveRun(): LiveRunState {
   const follow = useCallback(
     (run: RunAccepted) => {
       closeSource();
+      completedRef.current = false;
       lastSequenceRef.current = -1;
       setAccepted(run);
       setEvents([]);
@@ -171,6 +209,7 @@ export function useLiveRun(): LiveRunState {
   const submit = useCallback(
     async (userRequest: string) => {
       closeSource();
+      completedRef.current = false;
       lastSequenceRef.current = -1;
       setAccepted(null);
       setEvents([]);
@@ -183,12 +222,26 @@ export function useLiveRun(): LiveRunState {
 
   const clear = useCallback(() => {
     closeSource();
+    completedRef.current = false;
     lastSequenceRef.current = -1;
     setAccepted(null);
     setEvents([]);
     setConnection("idle");
     setError(null);
   }, [closeSource]);
+
+  useEffect(() => {
+    if (
+      !accepted ||
+      connection !== "reconnecting" ||
+      sourceRef.current !== null ||
+      !navigator.onLine
+    ) {
+      return;
+    }
+    const timer = window.setTimeout(() => connect(accepted, true), 350);
+    return () => window.clearTimeout(timer);
+  }, [accepted, connect, connection]);
 
   useEffect(() => {
     const handleOffline = () => {

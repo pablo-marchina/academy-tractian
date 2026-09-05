@@ -1,0 +1,144 @@
+{
+  "collected_at": "2026-09-04T19:35:00Z",
+  "schema_version": "provider-feasibility-source-manifest-v1",
+  "sources": [
+    {
+      "facts": {
+        "metered_input_usd_per_million": 4.0,
+        "metered_output_usd_per_million": 20.0
+      },
+      "source_id": "openai-gpt-5.6-sol-model",
+      "supports": [
+        "structured_outputs",
+        "responses_api"
+      ],
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
+    },
+    {
+      "facts": {
+        "account_eligibility_required": true,
+        "positive_balance_required": true,
+        "universal_free_api_tier_proven": false
+      },
+      "source_id": "openai-conditional-free-tokens",
+      "supports": [
+        "conditional_free_daily_tokens"
+      ],
+      "url": "https://help.openai.com/en/articles/10306912"
+    },
+    {
+      "facts": {
+        "free_tier_input": "free_of_charge",
+        "free_tier_output": "free_of_charge",
+        "paid_input_usd_per_million": 0.75,
+        "paid_output_usd_per_million": 3.75
+      },
+      "source_id": "google-gemini-pricing",
+      "supports": [
+        "gemini-3.7-flash",
+        "gemini-3.8-flash",
+        "free-tier-pricing"
+      ],
+      "url": "https://ai.google.dev/gemini-api/docs/pricing"
+    },
+    {
+      "facts": {
+        "active_limits_must_be_checked_in_ai_studio": true,
+        "published_limits_not_guaranteed": true
+      },
+      "source_id": "google-gemini-rate-limits",
+      "supports": [
+        "account-specific-capacity"
+      ],
+      "url": "https://ai.google.dev/gemini-api/docs/rate-limits"
+    },
+    {
+      "facts": {
+        "model_id": "gemini-3.7-flash",
+        "stable": true,
+        "structured_outputs": true
+      },
+      "source_id": "google-gemini-3.7-model",
+      "supports": [
+        "stable_model",
+        "structured_outputs"
+      ],
+      "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash"
+    },
+    {
+      "facts": {
+        "model_id": "gemini-3.8-flash",
+        "stable": true,
+        "structured_outputs": true
+      },
+      "source_id": "google-gemini-3.8-model",
+      "supports": [
+        "stable_model",
+        "structured_outputs"
+      ],
+      "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash"
+    },
+    {
+      "facts": {
+        "product_maturity": "ga",
+        "recommended_for_new_projects": true,
+        "store_false_supported": true
+      },
+      "source_id": "google-interactions-api",
+      "supports": [
+        "ga_interactions",
+        "stateless_store_false"
+      ],
+      "url": "https://ai.google.dev/gemini-api/docs/interactions-overview"
+    },
+    {
+      "facts": {
+        "post_endpoint": "https://generativelanguage.googleapis.com/v1beta/interactions"
+      },
+      "source_id": "google-interactions-rest-reference",
+      "supports": [
+        "current_rest_path"
+      ],
+      "url": "https://ai.google.dev/api/interactions-api-v1"
+    },
+    {
+      "facts": {
+        "metered_input_usd_per_million": 0.15,
+        "metered_output_usd_per_million": 0.6,
+        "model_id": "openai/gpt-oss-120b"
+      },
+      "source_id": "groq-gpt-oss-120b-model",
+      "supports": [
+        "hosted_model",
+        "json_schema",
+        "reasoning"
+      ],
+      "url": "https://console.groq.com/docs/model/openai/gpt-oss-120b"
+    },
+    {
+      "facts": {
+        "free_requests_per_day": 1000,
+        "free_requests_per_minute": 30,
+        "free_tokens_per_day": 200000,
+        "free_tokens_per_minute": 8000,
+        "model_id": "openai/gpt-oss-120b"
+      },
+      "source_id": "groq-free-rate-limits",
+      "supports": [
+        "free-plan-capacity"
+      ],
+      "url": "https://console.groq.com/docs/rate-limits"
+    },
+    {
+      "facts": {
+        "model_id": "openai/gpt-oss-120b",
+        "structured_outputs": true
+      },
+      "source_id": "groq-structured-outputs",
+      "supports": [
+        "json_schema"
+      ],
+      "url": "https://console.groq.com/docs/structured-outputs"
+    }
+  ]
+}

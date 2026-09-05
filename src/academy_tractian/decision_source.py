@@ -139,7 +139,7 @@ class ProviderCallIdentity(_FrozenModel):
     """Non-secret identity of the serving route used for one auditable client configuration."""
 
     provider_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
-    model_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,191}$")
+    model_id: str = Field(pattern=r"^[@A-Za-z0-9][@A-Za-z0-9._:/-]{0,191}$")
     route_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
     live_call: bool = False
 
@@ -198,7 +198,7 @@ class ProviderModelCallRecord(_FrozenModel):
     adapter_version: Literal["provider-decision-adapter-v1"] = PROVIDER_DECISION_ADAPTER_VERSION
     call_id: str = Field(pattern=r"^[0-9a-f]{64}$")
     provider_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
-    model_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,191}$")
+    model_id: str = Field(pattern=r"^[@A-Za-z0-9][@A-Za-z0-9._:/-]{0,191}$")
     route_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
     live_call: bool
     request_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")

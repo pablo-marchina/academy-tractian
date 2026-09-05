@@ -1,0 +1,16 @@
+{
+  "allowed_api_maturities": [
+    "ga"
+  ],
+  "allowed_model_maturities": [
+    "ga"
+  ],
+  "max_evidence_age_days": 7,
+  "max_required_local_components": 0,
+  "min_free_requests_per_day": 0,
+  "min_free_tokens_per_day": 0,
+  "require_hosted_service": true,
+  "require_structured_output": true,
+  "require_zero_cost_execution": true,
+  "schema_version": "provider-feasibility-policy-v1"
+}

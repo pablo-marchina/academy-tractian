@@ -1,0 +1,21 @@
+{
+  "artifact_sha256": "1fec4ede3930f40d39958e527801b6859c76c9fcdbde3c8eb2b456979695e75a",
+  "candidate_id": "oracle-oci-always-free-a1",
+  "collected_at": "2026-09-04T19:50:00Z",
+  "dockerfile_compatible": "yes",
+  "hosted_service": true,
+  "managed_postgres_connectivity": "yes",
+  "migration_class": "minor",
+  "outbound_https_supported": "yes",
+  "persistent_local_disk_required": false,
+  "provider_explicitly_discourages_production": "no",
+  "published_compute_limit": "1,500 OCPU-hours/month Always Free; equivalent to 2 OCPUs on A1",
+  "published_memory_limit": "9,000 GB-hours/month Always Free; equivalent to 12 GB on A1",
+  "python_3_11_compatible": "yes",
+  "required_local_components": 0,
+  "runtime_maturity": "ga",
+  "schema_version": "deployment-feasibility-evidence-v1",
+  "source_manifest_sha256": "305b98b8ba65d3f495199fb58953603d063b6fa45eb09315fe253fdbc2dd0c4b",
+  "streaming_http_supported": "yes",
+  "zero_cost_guardrail": "yes"
+}

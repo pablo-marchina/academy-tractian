@@ -2,26 +2,6 @@ name: full-product-playwright
 
 on:
   workflow_call:
-  pull_request:
-    paths:
-      - "frontend/**"
-      - "src/academy_tractian/provider_free_product.py"
-      - "src/academy_tractian/provider_free_operational_value.py"
-      - "src/academy_tractian/provider_free_semantic_review.py"
-      - "src/academy_tractian/operational_value_collection.py"
-      - "src/academy_tractian/semantic_review_collection.py"
-      - "src/academy_tractian/semantic_annotation_sources.py"
-      - "src/academy_tractian/observability_api.py"
-      - "src/academy_tractian/product_api.py"
-      - "src/academy_tractian/action_product_api.py"
-      - "src/academy_tractian/postgres_*.py"
-      - "src/academy_tractian/production_actions_v2.py"
-      - "tests/test_provider_free_product.py"
-      - "tests/test_operational_value_collection.py"
-      - "tests/test_semantic_review_collection.py"
-      - "tests/test_semantic_annotation_sources.py"
-      - "tests/test_postgres_operational_value_v5.py"
-      - ".github/workflows/full-product-playwright.yml"
   workflow_dispatch:
 
 permissions:

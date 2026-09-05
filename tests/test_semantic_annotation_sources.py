@@ -35,13 +35,14 @@ def _persist(
     *,
     run_id: str,
     scenario_id: str,
+    config_hash: str = "cfg-provider-a",
     completed: bool = True,
     message: str = "The sanitized evidence supports the operational conclusion.",
 ) -> None:
     run = SafeRun(
         run_id=run_id,
         scenario_id=scenario_id,
-        config_hash="cfg",
+        config_hash=config_hash,
         event_count=1,
         model_calls=1,
         tool_proposals=0,
@@ -82,14 +83,16 @@ def test_builds_hash_bound_sources_only_from_safe_validation_runs(tmp_path) -> N
     assert sources[0].safe_evidence_context == (
         "Evidence EV-CEN-VAL-A: tool=get_analysis; status=200.",
     )
+    assert manifest.schema_version == "semantic-annotation-source-manifest-v2"
     assert manifest.source_split == "VALIDATION"
     assert manifest.selection_sha256 == selection.selection_sha256
     assert manifest.source_count == 2
+    assert {binding.config_hash for binding in manifest.bindings} == {"cfg-provider-a"}
     assert len(manifest.manifest_sha256) == 64
     assert SemanticAnnotationSourceManifest.model_validate_json(manifest.model_dump_json()) == manifest
 
 
-def test_selection_and_manifest_hashes_reject_tampering(tmp_path) -> None:
+def test_selection_and_manifest_hashes_reject_tampering_including_config_hash(tmp_path) -> None:
     selection = freeze_semantic_source_selection(("run_a", "run_b"))
     payload = selection.model_dump(mode="json")
     payload["run_ids"] = ["run_a", "run_c"]
@@ -105,10 +108,42 @@ def test_selection_and_manifest_hashes_reject_tampering(tmp_path) -> None:
         frozen_split_payload=_split_payload(),
     )
     assert len(sources) == 2
-    tampered = manifest.model_dump(mode="json")
-    tampered["bindings"][0]["run_id"] = "run_other"
+
+    tampered_run = manifest.model_dump(mode="json")
+    tampered_run["bindings"][0]["run_id"] = "run_other"
     with pytest.raises(ValueError, match="manifest hash mismatch"):
-        SemanticAnnotationSourceManifest.model_validate(tampered)
+        SemanticAnnotationSourceManifest.model_validate(tampered_run)
+
+    tampered_config = manifest.model_dump(mode="json")
+    tampered_config["bindings"][0]["config_hash"] = "cfg-provider-b"
+    with pytest.raises(ValueError, match="manifest hash mismatch"):
+        SemanticAnnotationSourceManifest.model_validate(tampered_config)
+
+
+def test_source_manifest_preserves_mixed_configs_for_later_candidate_gate(tmp_path) -> None:
+    store = ObservabilityStore(tmp_path / "safe.duckdb")
+    _persist(
+        store,
+        run_id="run_a",
+        scenario_id="CEN-VAL-A",
+        config_hash="cfg-provider-a",
+    )
+    _persist(
+        store,
+        run_id="run_b",
+        scenario_id="CEN-VAL-B",
+        config_hash="cfg-provider-b",
+    )
+    _, manifest = build_validation_semantic_annotation_sources(
+        store=store,
+        selection=freeze_semantic_source_selection(("run_a", "run_b")),
+        frozen_split_payload=_split_payload(),
+    )
+
+    assert {binding.config_hash for binding in manifest.bindings} == {
+        "cfg-provider-a",
+        "cfg-provider-b",
+    }
 
 
 def test_dev_locked_incomplete_missing_terminal_and_duplicate_scenarios_fail_closed(tmp_path) -> None:

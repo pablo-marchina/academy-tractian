@@ -1,0 +1,105 @@
+name: hosted-postgres-migration-plan-provider-free
+
+on:
+  pull_request:
+    paths:
+      - "src/academy_tractian/postgres_*.py"
+      - "src/academy_tractian/hosted_postgres_migration_attestation.py"
+      - "scripts/migrate_hosted_postgres.py"
+      - "scripts/generate_hosted_postgres_migration_sql.py"
+      - "scripts/check_hosted_postgres_migration_attestation.py"
+      - "scripts/apply_hosted_postgres_migration_plan.py"
+      - "tests/test_hosted_postgres_migration_plan.py"
+      - "tests/test_hosted_postgres_migration_attestation.py"
+      - "tests/test_apply_hosted_postgres_migration_plan.py"
+      - ".github/workflows/hosted-postgres-migration-plan-provider-free.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/academy_tractian/postgres_*.py"
+      - "src/academy_tractian/hosted_postgres_migration_attestation.py"
+      - "scripts/migrate_hosted_postgres.py"
+      - "scripts/generate_hosted_postgres_migration_sql.py"
+      - "scripts/check_hosted_postgres_migration_attestation.py"
+      - "scripts/apply_hosted_postgres_migration_plan.py"
+      - "tests/test_hosted_postgres_migration_plan.py"
+      - "tests/test_hosted_postgres_migration_attestation.py"
+      - "tests/test_apply_hosted_postgres_migration_plan.py"
+      - ".github/workflows/hosted-postgres-migration-plan-provider-free.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-postgres-migration-plan-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install frozen product test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Validate recorder-backed migration generator, attestation and exact-artifact executor
+        run: >-
+          python -m pytest -q
+          tests/test_hosted_postgres_migration_plan.py
+          tests/test_hosted_postgres_migration_attestation.py
+          tests/test_apply_hosted_postgres_migration_plan.py
+
+      - name: Generate canonical migration plan artifact
+        run: >-
+          python scripts/generate_hosted_postgres_migration_sql.py
+          --sql-output /tmp/hosted-postgres-migration-v1.sql
+          --manifest-output /tmp/hosted-postgres-migration-v1.json
+
+      - name: Prove live attestation fails closed without DSN secrets
+        shell: bash
+        run: |
+          set +e
+          python scripts/check_hosted_postgres_migration_attestation.py \
+            --code-sha "${GITHUB_HEAD_SHA:-$GITHUB_SHA}" \
+            --migration-plan-manifest /tmp/hosted-postgres-migration-v1.json \
+            > /tmp/hosted-postgres-migration-no-secrets.json
+          code=$?
+          set -e
+          test "$code" -eq 2
+          grep -q 'POSTGRES_DSN_ENVIRONMENT_MISSING' /tmp/hosted-postgres-migration-no-secrets.json
+
+      - name: Prove exact-artifact migration cannot run without explicit authorization
+        shell: bash
+        run: |
+          set +e
+          python scripts/apply_hosted_postgres_migration_plan.py \
+            --code-sha "${GITHUB_HEAD_SHA:-$GITHUB_SHA}" \
+            --sql /tmp/hosted-postgres-migration-v1.sql \
+            --manifest /tmp/hosted-postgres-migration-v1.json \
+            --expected-preflight-artifact-sha256 "$(printf 0%.0s {1..64})" \
+            --expected-internal-endpoint-sha256 "$(printf 0%.0s {1..64})" \
+            --target-environment temporary_validation \
+            > /tmp/hosted-postgres-apply-not-authorized.json
+          code=$?
+          set -e
+          test "$code" -eq 2
+
+      - name: Upload exact provider-free migration plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosted-postgres-migration-plan-v1
+          path: |
+            /tmp/hosted-postgres-migration-v1.sql
+            /tmp/hosted-postgres-migration-v1.json
+          if-no-files-found: error
+          retention-days: 3

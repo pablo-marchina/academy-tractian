@@ -1,0 +1,15 @@
+{
+  "artifact_sha256": "6c12634e5f28518cf6f6bafca408018ba89298233583bf9399507c1b8cd0cd0c",
+  "candidate_id": "google:gemini-3.8-flash",
+  "collected_at": "2026-09-04T19:35:00Z",
+  "free_requests_per_day": null,
+  "free_tokens_per_day": null,
+  "hosted_service": true,
+  "metered_input_usd_per_million": 0.75,
+  "metered_output_usd_per_million": 3.75,
+  "required_local_components": 0,
+  "schema_version": "provider-feasibility-evidence-v1",
+  "source_manifest_sha256": "50b52da24e5dc87025f4aeb07d059b9f71f61883bbea3c0eb44c7ae454462d0a",
+  "structured_output_supported": true,
+  "zero_cost_execution_status": "available"
+}

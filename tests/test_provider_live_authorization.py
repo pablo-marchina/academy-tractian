@@ -23,10 +23,13 @@ def _payloads():
     )
 
 
-def test_live_authorization_packet_validates_provider_free() -> None:
+def test_live_authorization_packet_is_preserved_as_historical_evidence_only() -> None:
     result = validator.run()
-    assert result["status"] == "PASS_PROVIDER_FREE_LIVE_AUTHORIZATION_PACKET"
-    assert result["max_future_live_calls"] == 32
+    assert result["status"] == "PASS_PROVIDER_FREE_HISTORICAL_LIVE_AUTHORIZATION_PACKET"
+    assert result["historical_artifact_integrity"] is True
+    assert result["max_historical_authorized_live_calls"] == 32
+    assert result["current_implementation_matches_frozen_packet"] is False
+    assert result["authorization_effective_for_current_head"] is False
     assert result["live_calls_executed"] == 0
     assert result["provider_model_selected"] is False
     assert result["scientific_gate_changed"] is False
@@ -96,6 +99,21 @@ def test_provider_client_blob_tampering_fails_closed() -> None:
     authorization["validated_provider_client_implementation"]["provider_clients_git_blob"] = "0" * 40
     with pytest.raises(AssertionError):
         validator.validate_payload(authorization, design, population)
+
+
+def test_historical_implementation_identity_is_self_contained_in_packet() -> None:
+    authorization, _, _ = _payloads()
+    implementation = authorization["validated_provider_client_implementation"]
+    assert implementation["head"] == validator.EXPECTED_VALIDATED_IMPLEMENTATION_HEAD
+    assert implementation["provider_clients_git_blob"] == validator.EXPECTED_PROVIDER_CLIENTS_BLOB
+    assert implementation["provider_client_tests_git_blob"] == validator.EXPECTED_PROVIDER_CLIENT_TESTS_BLOB
+    assert implementation["package_exports_git_blob"] == validator.EXPECTED_PACKAGE_EXPORTS_BLOB
+    assert implementation["provider_neutral_adapter_git_blob"] == validator.EXPECTED_DECISION_SOURCE_BLOB
+    validator.validate_historical_artifacts()
+
+
+def test_superseded_packet_cannot_authorize_current_implementation() -> None:
+    assert validator.current_implementation_matches_frozen_packet() is False
 
 
 def test_authorization_stays_ineffective_before_adr_009() -> None:
