@@ -73,7 +73,11 @@ class ActionExecutionLeaseGuard:
         self.claim = claim
 
     def assert_active(self) -> None:
-        if not self.store.is_current_owner(self.claim):
+        try:
+            active = self.store.is_current_owner(self.claim)
+        except Exception as exc:
+            raise ActionExecutionLeaseLost("action_execution_lease_backend_unavailable") from exc
+        if not active:
             raise ActionExecutionLeaseLost("action_execution_lease_not_current")
 
 
@@ -188,6 +192,11 @@ class ActionExecutionLeaseSupervisor:
     maintains leases for action Futures already started by this replica and periodically asks the
     shared store to converge expired/missing ownership to UNCERTAIN. One daemon thread per product
     replica owns maintenance; it is closed before the shared PostgreSQL pool.
+
+    Backend readiness is checked before every maintenance tick. Losing the durable fencing backend
+    stops this supervisor instead of continuing an unbounded error loop; worker guards separately
+    fail closed when ownership cannot be verified. Another healthy replica can perform later
+    reconciliation when the shared store returns.
     """
 
     def __init__(
@@ -224,6 +233,7 @@ class ActionExecutionLeaseSupervisor:
         self._reconcile_ticks = 0
         self._reconcile_failures = 0
         self._reconciled_uncertain = 0
+        self._backend_unavailable_stops = 0
 
     def start(self) -> None:
         with self._lock:
@@ -239,6 +249,15 @@ class ActionExecutionLeaseSupervisor:
 
     def _run(self) -> None:
         while not self._stop.wait(self.scan_interval_seconds):
+            try:
+                ready = self.store.ready()
+            except Exception:
+                ready = False
+            if not ready:
+                with self._lock:
+                    self._backend_unavailable_stops += 1
+                self._stop.set()
+                return
             self.tick()
 
     def close(self) -> None:
@@ -343,7 +362,11 @@ class ActionExecutionLeaseSupervisor:
                 "reconcile_ticks": self._reconcile_ticks,
                 "reconcile_failures": self._reconcile_failures,
                 "reconciled_uncertain": self._reconciled_uncertain,
+                "backend_unavailable_stops": self._backend_unavailable_stops,
                 "automatic_replay_enabled": False,
             }
-        local["store"] = self.store.snapshot()
+        try:
+            local["store"] = self.store.snapshot()
+        except Exception:
+            local["store"] = {"ready": False, "automatic_replay_enabled": False}
         return local
