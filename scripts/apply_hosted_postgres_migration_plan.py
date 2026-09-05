@@ -7,6 +7,13 @@ from pathlib import Path
 import sys
 from typing import Any, Callable
 
+# Direct script execution puts scripts/ rather than the repository root on sys.path. Normalize the
+# import root before importing the sibling generator so the same CLI works both as
+# `python scripts/apply_hosted_postgres_migration_plan.py` and as a module imported by tests.
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from academy_tractian.hosted_postgres_migration_attestation import (
     HostedPostgresMigrationPolicy,
     build_hosted_postgres_migration_evidence,
