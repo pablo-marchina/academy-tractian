@@ -50,6 +50,12 @@
     "warmup_requests": 0,
     "load_protocol_id": "cloud-bakeoff-load-v1",
     "load_protocol_sha256": "d1fec563a055d052fb221624a61aa5386ece4119c8c95921346ed39d9a2dc50f",
+    "candidate_frontier_exact_match_required": true,
+    "exact_code_sha_binding_required": true,
+    "deployment_origin_binding_required": true,
+    "image_digest_required": true,
+    "live_attestation_evidence_hash_binding_required": true,
+    "state_identity_evidence_hash_binding_required": true,
     "required_zero_counts": [
       "tenant_leak_count",
       "forbidden_data_leak_count",
@@ -79,6 +85,7 @@
     "multiple_survivors_require_unique_pareto_dominance": true,
     "pareto_lower_is_better": [
       "api_p95_ms",
+      "sse_first_event_p95_ms",
       "sse_reconnect_p95_ms",
       "cold_start_p95_ms",
       "persistence_p95_ms"
