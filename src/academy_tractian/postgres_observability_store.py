@@ -14,6 +14,7 @@ from .observability import (
     project_trace,
 )
 from .postgres_operational import PostgresOperationalDatabase
+from .realtime_wakeup import encode_wakeup_payload
 
 
 # Safe-projection contract version. Storage technology is evidenced independently.
@@ -28,7 +29,10 @@ class PostgresObservabilityStore:
     read and write the same durable safe projection.
 
     Raw ``RunTrace`` objects may enter through ``persist_trace``. Only the allow-listed
-    projection produced by ``project_trace`` / ``project_evaluation`` is persisted.
+    projection produced by ``project_trace`` / ``project_evaluation`` is persisted. When a
+    notify channel is configured, pg_notify is emitted inside the same transaction after the
+    durable event write. PostgreSQL therefore releases the wakeup only after commit; the payload
+    contains only run_id/sequence and is never used as event truth.
     """
 
     def __init__(
@@ -36,14 +40,27 @@ class PostgresObservabilityStore:
         database: PostgresOperationalDatabase,
         *,
         initialize: bool = False,
+        notify_channel: str | None = None,
     ) -> None:
         self.database = database
         self.schema = database.schema
+        self.notify_channel = notify_channel
         if initialize:
             self.initialize_schema()
 
     def _table(self, name: str) -> str:
         return f'"{self.schema}".observability_{name}'
+
+    def _notify(self, connection: Any, *, run_id: str, sequence: int) -> None:
+        if self.notify_channel is None:
+            return
+        connection.execute(
+            "SELECT pg_notify(%s, %s)",
+            (
+                self.notify_channel,
+                encode_wakeup_payload(run_id=run_id, sequence=sequence),
+            ),
+        )
 
     def initialize_schema(self) -> None:
         meta = self._table("meta")
@@ -298,6 +315,12 @@ class PostgresObservabilityStore:
                                 evaluation.blocking_pass,
                             ),
                         )
+                if events:
+                    self._notify(
+                        connection,
+                        run_id=run.run_id,
+                        sequence=max(event.sequence for event in events),
+                    )
         return run.run_id
 
     def persist_live_update(
@@ -401,6 +424,8 @@ class PostgresObservabilityStore:
                             evidence.status_code,
                         ),
                     )
+                if not existed:
+                    self._notify(connection, run_id=run.run_id, sequence=event.sequence)
         return not existed
 
     @staticmethod
