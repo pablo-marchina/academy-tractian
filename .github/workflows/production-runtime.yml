@@ -220,9 +220,11 @@ jobs:
           test "$(docker image inspect "$IMAGE" --format '{{.Config.User}}')" = "10001:10001"
           test "$(docker run --rm --entrypoint sh "$IMAGE" -c 'id -u')" = "10001"
           test "$(docker run --rm --entrypoint sh "$IMAGE" -c 'id -g')" = "10001"
-          docker run --rm --entrypoint python "$IMAGE" -c \
-            'import json,os; p=json.load(open("/app/.academy-release-identity.json")); assert p == {"git_sha": os.environ["EXPECTED_SHA"], "schema_version": "academy-release-artifact-v1"}' \
-            -e EXPECTED_SHA="${GITHUB_SHA}"
+          docker run --rm \
+            -e EXPECTED_SHA="${GITHUB_SHA}" \
+            --entrypoint python \
+            "$IMAGE" \
+            -c 'import json,os; p=json.load(open("/app/.academy-release-identity.json")); assert p == {"git_sha": os.environ["EXPECTED_SHA"], "schema_version": "academy-release-artifact-v1"}'
 
       - name: Reject malformed or absent source identity at image build
         run: |
