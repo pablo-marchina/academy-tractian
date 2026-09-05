@@ -12,6 +12,9 @@ from research.e2.transport import RequestTransport
 from .authenticated_postgres_product_api import (
     create_authenticated_postgres_action_capable_product_app,
 )
+from .neon_authenticated_postgres_product_api import (
+    create_neon_authenticated_postgres_action_capable_product_app,
+)
 from .production_actions_v2 import ActionAuthorizationResolver
 from .production_config import RemoteProductionConfig
 
@@ -37,26 +40,20 @@ def create_remote_production_app(
     """Build the only production composition allowed to call itself remote-serving ready.
 
     Configuration validation happens before PostgreSQL pools, realtime listeners or runtime
-    workers are created. Schema migration is intentionally disabled at serving boot so a remote
-    deployment cannot retain an implicit DDL/bootstrap path. Provider execution remains under the
-    explicit project gate represented by ``config.provider_calls_enabled``; consequential actions
-    stay off at this P0 boundary until the later standards-IAM/action deployment gate is proved.
+    workers are created. Schema migration is intentionally disabled at serving boot. Provider
+    execution remains under the explicit provider-selection gate and consequential actions stay
+    disabled at this infrastructure/IAM boundary.
     """
 
-    # Revalidate even when a model was created programmatically, keeping this function as a
-    # defensive boot boundary rather than trusting an arbitrary object with similar attributes.
     config = RemoteProductionConfig.model_validate(config.model_dump())
     release_metadata = config.safe_metadata()
 
-    app = create_authenticated_postgres_action_capable_product_app(
+    common = dict(
         internal_dsn=config.internal_dsn.get_secret_value(),
         scoped_dsn=config.scoped_dsn.get_secret_value(),
         decision_source_factory=decision_source_factory,
         transport_factory=transport_factory,
         authorization_resolver=authorization_resolver,
-        runtime_identity_secret=config.runtime_identity_secret.get_secret_value(),
-        runtime_identity_issuer=config.runtime_identity_issuer,
-        runtime_identity_audience=config.runtime_identity_audience,
         schema=schema,
         initialize_schema=False,
         max_workers=max_workers,
@@ -64,11 +61,34 @@ def create_remote_production_app(
         actions_enabled=False,
         heartbeat_interval_ms=heartbeat_interval_ms,
     )
+
+    if config.browser_iam_mode == "neon-auth":
+        if config.neon_auth_base_url is None:
+            raise RuntimeError("validated neon-auth configuration is missing its base URL")
+        app = create_neon_authenticated_postgres_action_capable_product_app(
+            **common,
+            neon_auth_base_url=config.neon_auth_base_url,
+        )
+    else:
+        if (
+            config.runtime_identity_secret is None
+            or config.runtime_identity_issuer is None
+            or config.runtime_identity_audience is None
+        ):
+            raise RuntimeError("validated signed-bearer configuration is incomplete")
+        app = create_authenticated_postgres_action_capable_product_app(
+            **common,
+            runtime_identity_secret=config.runtime_identity_secret.get_secret_value(),
+            runtime_identity_issuer=config.runtime_identity_issuer,
+            runtime_identity_audience=config.runtime_identity_audience,
+        )
+
     app.state.remote_production = True
     app.state.release_metadata = release_metadata
     app.state.production_cost_policy = config.cost_policy
     app.state.paid_fallback_enabled = False
     app.state.local_serving_enabled = False
+    app.state.browser_iam_mode = config.browser_iam_mode
 
     @app.get("/api/meta/release")
     def release_identity() -> dict[str, object]:
