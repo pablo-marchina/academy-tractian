@@ -194,6 +194,11 @@ def create_action_capable_product_app(
         ledger=ledger,
         lease_store=action_execution_lease_store,
     )
+    action_recovered_executions = tuple(
+        item
+        for run_id in action_recovery.execution_runs_marked_uncertain
+        if (item := execution_store.get(run_id)) is not None
+    )
 
     def runtime_factory(sink):
         return ActionProposalRealtimeProductionRuntime(
@@ -228,6 +233,7 @@ def create_action_capable_product_app(
         runtime_handoff_lease_seconds=runtime_handoff_lease_seconds,
         runtime_handoff_scan_ms=runtime_handoff_scan_ms,
     )
+    app.state.recovered_executions = tuple(app.state.recovered_executions) + action_recovered_executions
     controls = app.state.production_controls
     controls.set_actions_enabled(actions_enabled)
     store = app.state.observability_store
