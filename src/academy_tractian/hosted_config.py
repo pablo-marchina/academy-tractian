@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import ipaddress
 import os
 from typing import Mapping
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlsplit
 
 
 _SUPPORTED_PROVIDERS = frozenset({"cloudflare", "google", "groq", "openai"})
@@ -18,6 +18,8 @@ _PROVIDER_KEY_ENV = {
     "openai": "OPENAI_API_KEY",
 }
 _LOCAL_NAMES = frozenset({"localhost", "localhost.localdomain", "host.docker.internal"})
+_CLOUD_SQL_SOCKET_PREFIX = "/cloudsql/"
+_POSTGRES_SOCKET_SUFFIX = "/.s.PGSQL.5432"
 
 
 def _required(env: Mapping[str, str], name: str) -> str:
@@ -81,12 +83,53 @@ def _https(value: str, *, name: str) -> str:
     return value.rstrip("/")
 
 
+def _validate_cloud_sql_socket(socket_dir: str, *, name: str) -> None:
+    if not socket_dir.startswith(_CLOUD_SQL_SOCKET_PREFIX):
+        raise ValueError(f"non_cloud_sql_socket_forbidden:{name}")
+    connection_name = socket_dir[len(_CLOUD_SQL_SOCKET_PREFIX) :]
+    if not connection_name or "/" in connection_name or any(character.isspace() for character in connection_name):
+        raise ValueError(f"invalid_cloud_sql_socket:{name}")
+    try:
+        project, region, instance = connection_name.rsplit(":", 2)
+    except ValueError as exc:
+        raise ValueError(f"invalid_cloud_sql_socket:{name}") from exc
+    if not project or not region or not instance:
+        raise ValueError(f"invalid_cloud_sql_socket:{name}")
+    if not all(character.isalnum() or character in {"-", ".", ":"} for character in project):
+        raise ValueError(f"invalid_cloud_sql_socket:{name}")
+    if not all(character.islower() or character.isdigit() or character == "-" for character in region):
+        raise ValueError(f"invalid_cloud_sql_socket:{name}")
+    if not all(character.islower() or character.isdigit() or character == "-" for character in instance):
+        raise ValueError(f"invalid_cloud_sql_socket:{name}")
+    # Linux sockaddr_un.sun_path is 108 bytes including the terminating NUL. libpq appends the
+    # PostgreSQL socket filename to the directory provided in the host parameter.
+    effective_socket_path = f"{socket_dir}{_POSTGRES_SOCKET_SUFFIX}".encode("utf-8")
+    if len(effective_socket_path) > 107:
+        raise ValueError(f"cloud_sql_socket_path_too_long:{name}")
+
+
 def _postgres(value: str, *, name: str) -> str:
     parsed = urlsplit(value)
-    if parsed.scheme not in {"postgres", "postgresql"} or not parsed.hostname or not parsed.path:
+    if parsed.scheme not in {"postgres", "postgresql"} or not parsed.path or parsed.path == "/" or parsed.fragment:
         raise ValueError(f"invalid_postgres_dsn:{name}")
-    if _is_local(parsed.hostname):
-        raise ValueError(f"local_postgres_forbidden:{name}")
+    query_pairs = parse_qsl(parsed.query, keep_blank_values=True)
+    host_values = [query_value for query_name, query_value in query_pairs if query_name == "host"]
+
+    if parsed.hostname is not None:
+        # A query-level host can override the URI authority in libpq; forbid that ambiguity so a
+        # superficially remote DSN cannot redirect the serving process to localhost or a socket.
+        if host_values:
+            raise ValueError(f"ambiguous_postgres_host:{name}")
+        if _is_local(parsed.hostname):
+            raise ValueError(f"local_postgres_forbidden:{name}")
+        return value
+
+    # Hostless PostgreSQL URIs are accepted only for Cloud Run's managed Cloud SQL Unix socket.
+    # Keep the shape intentionally narrow: arbitrary local sockets and extra libpq query overrides
+    # are not part of the production contract.
+    if len(query_pairs) != 1 or len(host_values) != 1:
+        raise ValueError(f"invalid_postgres_dsn:{name}")
+    _validate_cloud_sql_socket(host_values[0], name=name)
     return value
 
 
