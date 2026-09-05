@@ -201,7 +201,7 @@ def build_provider_frontier_eligibility_artifact(
         "manifest_sha256": manifest_sha256,
         "candidate_id": candidate_id,
         "config_hash": config_hash,
-        "generated_at": generated_at.isoformat(),
+        "generated_at": generated_at,
         "hosted_only": hosted_only,
         "required_local_components": required_local_components,
         "strict_usd0_eligible": strict_usd0_eligible,
@@ -211,8 +211,12 @@ def build_provider_frontier_eligibility_artifact(
         "live_attempt_count": live_attempt_count,
         "qualification_source_sha256": qualification_source_sha256,
     }
+    canonical_material = ProviderFrontierEligibilityEvidence.model_construct(
+        **material,
+        artifact_sha256="0" * 64,
+    ).model_dump(mode="json", exclude={"artifact_sha256"})
     return ProviderFrontierEligibilityEvidence.model_validate(
-        {**material, "artifact_sha256": _canonical_sha256(material)}
+        {**canonical_material, "artifact_sha256": _canonical_sha256(canonical_material)}
     )
 
 
