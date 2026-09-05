@@ -6,6 +6,7 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
+from fastapi import HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from research.e2.models import BoundRequest
@@ -26,6 +27,11 @@ from .provider_clients import (
     UrllibProviderJsonTransport,
 )
 from .runtime import canonical_tool_registry
+from .tractian_authority import (
+    TenantGuardedTractianTransport,
+    TractianAuthority,
+    TractianAuthorityError,
+)
 
 
 class HostedTractianTransport(RequestTransport):
@@ -34,9 +40,19 @@ class HostedTractianTransport(RequestTransport):
     The model sees only canonical ToolSpecs. Endpoint credentials stay application-owned. HTTP
     error responses are returned to the existing runner for deterministic policy handling;
     network/serialization failures fail closed and are never retried here.
+
+    Hosted production never exposes this raw adapter directly to a model-facing runtime. It is
+    wrapped by ``TenantGuardedTractianTransport`` so resource authorization happens before an
+    upstream response can become model evidence.
     """
 
-    def __init__(self, *, base_url: str, bearer_token: str | None = None, timeout_seconds: float = 30.0) -> None:
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        bearer_token: str | None = None,
+        timeout_seconds: float = 30.0,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self._bearer_token = bearer_token
         if timeout_seconds <= 0:
@@ -57,9 +73,17 @@ class HostedTractianTransport(RequestTransport):
         if self._bearer_token:
             headers["Authorization"] = f"Bearer {self._bearer_token}"
         payload = None if request.body is None else json.dumps(
-            request.body, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            request.body,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
         ).encode("utf-8")
-        raw_request = urllib_request.Request(url, data=payload, headers=headers, method=request.method)
+        raw_request = urllib_request.Request(
+            url,
+            data=payload,
+            headers=headers,
+            method=request.method,
+        )
         try:
             with urllib_request.urlopen(raw_request, timeout=self.timeout_seconds) as response:
                 status_code = int(response.status)
@@ -75,7 +99,11 @@ class HostedTractianTransport(RequestTransport):
             body = json.loads(raw_body) if raw_body else None
         except ValueError:
             body = raw_body
-        return TransportResponse(status_code=status_code, headers=response_headers, body=body)
+        return TransportResponse(
+            status_code=status_code,
+            headers=response_headers,
+            body=body,
+        )
 
 
 def _decision_source_factory(config: HostedProductConfig):
@@ -86,11 +114,19 @@ def _decision_source_factory(config: HostedProductConfig):
         if config.provider == "google":
             if config.model != GOOGLE_MODEL_ID:
                 raise ValueError("configured_google_model_not_implemented")
-            client = GoogleInteractionsDecisionClient(api_key=config.provider_api_key, transport=transport, timeout_seconds=45.0)
+            client = GoogleInteractionsDecisionClient(
+                api_key=config.provider_api_key,
+                transport=transport,
+                timeout_seconds=45.0,
+            )
         elif config.provider == "openai":
             if config.model != OPENAI_MODEL_ID:
                 raise ValueError("configured_openai_model_not_implemented")
-            client = OpenAIResponsesDecisionClient(api_key=config.provider_api_key, transport=transport, timeout_seconds=45.0)
+            client = OpenAIResponsesDecisionClient(
+                api_key=config.provider_api_key,
+                transport=transport,
+                timeout_seconds=45.0,
+            )
         elif config.provider == "groq":
             client = GroqChatCompletionsDecisionClient(
                 api_key=config.provider_api_key,
@@ -121,7 +157,8 @@ def _decision_source_factory(config: HostedProductConfig):
 
 
 def _deny_unqualified_actions(*, user_id: str) -> ProductionActionPrincipal:
-    """Server-side fail-closed boundary until resource authorization is qualified independently."""
+    """Fail closed until exact-target action authorization is promoted."""
+
     return ProductionActionPrincipal(
         user_id=user_id,
         user_company_id="unbound",
@@ -130,9 +167,16 @@ def _deny_unqualified_actions(*, user_id: str) -> ProductionActionPrincipal:
     )
 
 
+def _raw_tractian_transport(config: HostedProductConfig) -> HostedTractianTransport:
+    return HostedTractianTransport(
+        base_url=config.tractian_base_url,
+        bearer_token=config.tractian_bearer_token,
+    )
+
+
 def build_hosted_product(config: HostedProductConfig | None = None):
     active = config or HostedProductConfig.from_environment()
-    context_provider = OIDCRuntimeContextProvider(
+    oidc_context_provider = OIDCRuntimeContextProvider(
         issuer=active.oidc_issuer,
         audience=active.oidc_audience,
         jwks_url=active.oidc_jwks_url,
@@ -148,11 +192,33 @@ def build_hosted_product(config: HostedProductConfig | None = None):
         allowed_privileged_permissions=(),
         authorized_parties=active.oidc_authorized_parties,
     )
+    authority = TractianAuthority(transport=_raw_tractian_transport(active))
+
+    def context_provider(request: Request):
+        context = oidc_context_provider(request)
+        # Bind the trusted OIDC tenant to the independent TRACTIAN user directory at the point a
+        # new execution is created. Historical run reads stay available if TRACTIAN is temporarily
+        # unavailable; their organization/user ownership is already durable in PostgreSQL.
+        if request.method == "POST" and request.url.path == "/api/runs":
+            try:
+                upstream_user = authority.current_user(user_id=context.user_id)
+            except TractianAuthorityError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="tractian_identity_authority_unavailable",
+                ) from exc
+            if upstream_user.company_id != context.organization_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="oidc_tractian_tenant_mismatch",
+                )
+        return context
 
     def transport_factory() -> RequestTransport:
-        return HostedTractianTransport(
-            base_url=active.tractian_base_url,
-            bearer_token=active.tractian_bearer_token,
+        raw = _raw_tractian_transport(active)
+        return TenantGuardedTractianTransport(
+            authority=authority,
+            transport=raw,
         )
 
     app = create_postgres_action_capable_product_app(
@@ -168,6 +234,8 @@ def build_hosted_product(config: HostedProductConfig | None = None):
         initialize_schema=False,
         max_workers=active.max_workers,
         provider_calls_enabled=True,
+        # Do not wire the environment switch until exact-target authorization is integrated into
+        # both proposal and confirmation. A config flag alone must never enable side effects.
         actions_enabled=False,
         heartbeat_interval_ms=active.heartbeat_interval_ms,
     )
@@ -182,10 +250,12 @@ def build_hosted_product(config: HostedProductConfig | None = None):
     )
     app.state.hosted_config = active.sanitized_summary()
     app.state.runtime_identity_backend = "oidc-jwks-v1"
+    app.state.resource_authorization_backend = "tractian-authority-v1"
     app.state.hosted_local_persistent_state_required = False
     app.state.hosted_runtime_ddl_credential_present = False
+    app.state.hosted_cross_tenant_tool_reads_blocked = True
     app.state.hosted_actions_qualified = False
-    app.state.hosted_action_block_reason = "RESOURCE_AUTHORIZATION_NOT_YET_QUALIFIED"
+    app.state.hosted_action_block_reason = "EXACT_TARGET_ACTION_AUTHORIZATION_NOT_YET_PROMOTED"
     return app
 
 
