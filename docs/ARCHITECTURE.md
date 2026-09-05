@@ -1,18 +1,19 @@
 # Academy × TRACTIAN — Architecture, Stack and Techniques
 
 **Status:** ACTIVE / canonical architecture document  
-**Checkpoint:** 2026-09-05 corrected production rebaseline  
-**Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
+**Checkpoint:** 2026-09-05 final remote promotion  
+**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
 **Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
 **Code map:** [`CODEBASE-MAP.md`](CODEBASE-MAP.md)  
 **TAPI crosswalk:** [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md)
 
-This document owns the **promoted current architecture, stack and technique decisions**. Historical ADRs remain authoritative for their original scopes, but they do not override current state when later accepted evidence has superseded an earlier baseline.
+This document owns the **promoted current architecture, stack and technique decisions**. Historical ADRs remain authoritative for their original scopes, but they do not override current state when later accepted evidence has superseded an earlier baseline. Candidate production composition is labelled explicitly until its remote acceptance gates pass.
 
 ## 1. Architecture principles
 
 - Agent + Evaluation are one integrated product, with runtime/evaluator isolation.
 - Identity, tenant scope, permissions, evaluator truth and private custody stay outside model control.
+- Browser identity is accepted only after server-side validation; browser headers/request bodies never own tenant, role or permission authority.
 - All real TRACTIAN tools execute through the typed `HarnessRunner` boundary.
 - Consequential actions remain behind deterministic authorization, confirmation, custody, idempotency and lease/fencing controls.
 - PostgreSQL is the promoted durable serving substrate; no local-file store is the production source of truth.
@@ -43,17 +44,23 @@ PREFERRED / PROMOTED / NO_SELECTION
 
 A component that violates USD0 is `INELIGIBLE`, not merely a higher-cost point on the project Pareto frontier.
 
-## 3. Promoted product architecture
+## 3. Promoted core + current remote candidate composition
 
 ```text
 Browser / React Operator Control Room
-        ↑ REST commands/reads + SSE
-FastAPI Product / Observability API
-        ↑ trusted server-owned runtime context
-Signed bearer runtime identity
-        ↓
-PostgreSQL tenant RLS + operational state
-        ↓
+        ↓ HTTPS same-origin
+Railway production-web / Caddy
+        ├── /auth/* → managed Neon Auth challenger
+        └── /api/* + SSE → Railway private production-api
+                              ↓
+                     FastAPI Product / Observability API
+                              ↓ trusted server-owned runtime context
+                     Configured identity verifier
+                     ├── managed-session verifier (remote candidate)
+                     └── signed bearer (compatibility/rollback path)
+                              ↓
+                     PostgreSQL tenant RLS + operational state
+                              ↓
 PostgreSQL runtime handoff queue / generation-fenced lease
         ↓
 RealtimeProductionRuntime.prepare()/execute()
@@ -93,7 +100,14 @@ REST / SSE / React control room
 
 `POST /api/runs` exercises the promoted product path. Provider-free acceptance substitutes the model decision source only; runtime, tools, policies, persistence, evaluation, SSE and frontend remain the product path.
 
-The final remote deployment layer, IAM provider, database hosting, telemetry backend and production model/provider are not yet selected. Every selected option must satisfy the eligibility envelope above.
+Current hosted topology evidence:
+
+- Neon PostgreSQL is `PREFERRED` after schema/role/RLS validation, but suspend/wake/capacity evidence remains open;
+- Railway backend hosting is `QUALIFIED`; live backend boot remains blocked on approved PostgreSQL DSN injection;
+- Railway/Caddy frontend hosting is `PREFERRED` after successful remote deployment;
+- Neon Auth / Better Auth managed session is a `QUALIFIED` IAM challenger under regression and remote acceptance, not yet `READY`;
+- production model/provider remains `NO_SELECTION`;
+- real TRACTIAN transport is not yet composed.
 
 ## 4. Runtime ownership and horizontal handoff
 
@@ -153,19 +167,47 @@ The product deliberately does **not** claim distributed exactly-once external si
 
 ## 6. Identity and tenant isolation
 
-The current promoted identity boundary is the project-owned `academy-runtime-v1` signed bearer envelope:
+The production code supports two explicit identity compositions.
+
+### Signed-bearer compatibility path
+
+The existing `academy-runtime-v1` signed bearer remains available for controlled tests/rollback-compatible internal composition:
 
 - HMAC-SHA256 verification;
 - issuer/audience/lifetime checks;
-- explicit `organization_id`, `user_id`, `identity_id`, role and permissions;
-- tenant/identity/permission data is server-trusted, not taken from browser request bodies;
+- explicit organization/user/identity/permission claims;
 - privileged permissions require explicit server enablement.
 
-It is intentionally **not** described as OAuth/OIDC/JWT, enterprise SSO or complete production IAM.
+It is not marketed as browser end-user IAM.
 
-PostgreSQL provides an independent tenant boundary through RLS using a non-superuser, non-`BYPASSRLS`, non-owner application role and transaction-local organization scope. Integration tests prove cross-tenant denial for tested rows.
+### Managed-session browser challenger
 
-The final end-user IAM solution must be standards-based **and USD0-eligible**.
+The final branch adds `NeonAuthRuntimeContextProvider` behind the same-origin web boundary:
+
+```text
+managed HttpOnly browser cookie
+→ FastAPI receives cookie only
+→ server-side GET managed-auth get-session with cookie-cache bypass
+→ validated user + managed active organization
+→ AuthenticatedRuntimeContext
+```
+
+Rules:
+
+- browser organization/role/permission headers are ignored;
+- missing/rejected/malformed/mismatched/impersonated sessions fail closed;
+- managed-auth service failure fails closed;
+- an active organization from managed session state becomes tenant scope;
+- if no active organization exists, personal tenant is derived as `user:<verified-user-id>`;
+- default runtime permissions are server-defined;
+- no benchmark/replay seed enters from browser identity;
+- HTTPS auth endpoint, cookie size, response size and timeout are bounded by the verifier.
+
+The frontend `AuthBoundary` is compiled as mandatory in `Dockerfile.production`; provider-free dev/CI builds do not enable it, preserving deterministic acceptance without weakening the production image.
+
+PostgreSQL provides an independent tenant boundary through RLS using a non-superuser, non-`BYPASSRLS`, non-owner application role and transaction-local organization scope. Isolated Neon validation proved cross-tenant denial for the tested rows.
+
+The managed-session challenger is not yet labelled `READY`; live two-user/two-tenant REST/SSE acceptance is still required. OAuth/OIDC/enterprise SSO is not claimed.
 
 ## 7. Persistence architecture
 
@@ -183,7 +225,7 @@ DuckDB      optional dev/benchmark compatibility only
 
 The root production package depends on PostgreSQL/psycopg, not DuckDB. DuckDB remains an optional development/benchmark extra and must not be described as the promoted serving/read-model truth.
 
-The final remote PostgreSQL-compatible hosting choice must remain USD0 and must be selected by systematic comparison of eligible candidates. If no eligible remote persistence option satisfies the required gates, record the blocker rather than moving to a paid plan.
+Neon is the current preferred USD0 PostgreSQL host after structural/RLS qualification. It is reversible if reconnect/cursor/capacity/cost gates fail.
 
 ## 8. Realtime observability
 
@@ -214,11 +256,14 @@ The RT-WAKEUP comparison promoted LISTEN/NOTIFY over polling after hard gates re
 ## 9. Frontend architecture
 
 ```text
-FastAPI REST/SSE
-      ↓
+HTTPS product origin / Caddy
+      ├── /auth → managed auth
+      └── /api + SSE → FastAPI private service
+                         ↓
 TanStack Query + live event reducer
-      ↓
+                         ↓
 React application
+      ├── AuthBoundary (production build only)
       ├── Mission Control
       ├── Live Run Cockpit
       ├── Run Explorer
@@ -235,7 +280,7 @@ React application
       └── Production Health
 ```
 
-The frontend observes server-owned safe state. It is not an authorization source, policy engine, evaluator or owner of tenant scope.
+The frontend observes server-owned safe state. It is not an authorization source, policy engine, evaluator or owner of tenant scope. `EventSource` remains same-origin so browser cookies naturally accompany SSE when the authenticated backend is live.
 
 A selected run should be able to answer, from safe structured data:
 
@@ -259,6 +304,7 @@ Do not expose hidden model chain-of-thought.
 | Product/API | FastAPI >=0.141.1,<0.142 | preferred |
 | ASGI serving | Uvicorn >=0.52.4,<0.53 | preferred |
 | PostgreSQL client/pool | psycopg[binary,pool] >=3.2,<4 | promoted |
+| Browser session verifier | stdlib HTTPS + managed Neon Auth endpoint | qualified challenger |
 | Agent orchestration | custom `AgentController` | promoted baseline |
 | Tool execution | `HarnessRunner` | hard boundary |
 | Tool contracts | typed `ToolSpec` registry | current 18-operation scope |
@@ -269,8 +315,8 @@ Do not expose hidden model chain-of-thought.
 
 ### Frontend
 
-| Layer | Version |
-|---|---:|
+| Layer | Version / state |
+|---|---|
 | React | 19.2.8 |
 | React DOM | 19.2.8 |
 | TanStack Query | 5.102.8 |
@@ -280,6 +326,7 @@ Do not expose hidden model chain-of-thought.
 | Vite | 8.2.2 |
 | Vitest | 4.1.11 |
 | Playwright | 1.62.0 |
+| Production static/proxy server | Caddy 2.11.4 |
 
 `frontend/package-lock.json` is committed and CI uses deterministic `npm ci` in the current reproduction/browser paths.
 
@@ -387,12 +434,16 @@ No adaptive runtime-stopping policy is currently promoted.
 | FastAPI | PREFERRED | current Python API/SSE fit |
 | REST + SSE | PREFERRED | one-way telemetry + REST commands |
 | React + Vite | PREFERRED | operator SPA fit |
-| ECharts | PREFERRED | dynamic analytics |
-| React Flow | PREFERRED | trace/architecture graph |
+| Caddy same-origin frontend boundary | PREFERRED | remote deploy passed; final auth/API E2E open |
+| Neon Auth / Better Auth managed session | QUALIFIED | regression passed/active; live tenant acceptance required before promotion |
+| Signed bearer browser IAM | INTERNAL/COMPATIBILITY | not marketed as final end-user IAM |
+| Railway backend hosting | QUALIFIED | live DB-backed boot/capacity gates open |
+| Railway frontend hosting | PREFERRED | remote Docker deployment succeeded |
+| Neon PostgreSQL | PREFERRED | schema/RLS gates passed; recovery/capacity gates open |
 | PostgreSQL serving state | PROMOTED | operational + observability/evaluation truth |
 | DuckDB | DEV/BENCHMARK ONLY | no production serving claim |
 | PostgreSQL LISTEN/NOTIFY | PROMOTED WAKE-UP | durable rows remain truth |
-| OpenTelemetry | NOT YET PROMOTED | library/standard candidate; selected backend must be USD0 |
+| OpenTelemetry | NOT YET PROMOTED | add only for measured observability gap under USD0 |
 | Redis/Kafka/shared bus | NO_CHANGE | require measured gap and USD0-compatible production path |
 
 ## 16. Provider experiment state
@@ -402,8 +453,6 @@ Historical D01/D02 Cloudflare experiments are complete and consumed. Both were U
 Current provider decision:
 
 **`NO_SELECTION` / no production provider claim.**
-
-The logic is explicit:
 
 ```text
 Cloudflare D02 cash cost = USD 0      PASS eligibility
@@ -431,7 +480,7 @@ final-ci-required
 
 Clean-clone reproduction covers the Python/PostgreSQL product suite, distributed correctness regressions, accepted controller/safety evidence, historical final evidence validation, frontend lockfile install/typecheck/tests/build and repository cleanliness.
 
-Full Chromium acceptance exercises real backend/frontend/PostgreSQL/SSE behavior with provider-free deterministic decision input.
+Full Chromium acceptance exercises real backend/frontend/PostgreSQL/SSE behavior with provider-free deterministic decision input. Browser auth is intentionally disabled in that provider-free Vite fixture and forcibly enabled in the production frontend image, so CI does not require an external identity service and production does not silently inherit the test setting.
 
 Historical E-series/BIG-B/provider experiment workflows are evidence/reproduction surfaces and are not ordinary product-PR gates.
 
@@ -442,7 +491,9 @@ Do not claim:
 - a production provider/model has been selected;
 - Cloudflare is selected solely because it is free;
 - a paid service is eligible for final selection;
+- managed browser IAM is READY before live two-user/two-tenant acceptance;
 - OAuth/OIDC/enterprise SSO is implemented;
+- real TRACTIAN transport is live;
 - human semantic calibration is complete;
 - engineer minutes saved without real human observations;
 - adaptive stopping improves production runtime behavior;
