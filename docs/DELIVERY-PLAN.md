@@ -80,27 +80,27 @@ States: `DONE`, `IN_PROGRESS`, `BLOCKED`, `PLANNED`, `NOT_READY`, `NO_SELECTION`
 | # | Workstream | State | Evidence / next gate |
 |---:|---|---|---|
 | 01 | Rebaseline active project truth | DONE | `ACTIVE-PROJECT-STATUS.md` synchronized |
-| 02 | Material decision registry | DONE | `decision-registry.yaml` created |
-| 03 | Architecture manifest truthfulness | DONE | promoted PostgreSQL/identity/handoff/action/realtime architecture encoded + regression test added |
-| 04 | Final remote hosting topology | IN_PROGRESS | clean Railway `production-api` from final branch; Dockerfile + public domain configured; final eligibility/latency evidence still open |
-| 05 | Remote PostgreSQL role/schema promotion | DONE | Neon main: 15/15 required tables, 7/7 metadata, safe scoped role, owner validation; cross-tenant RLS test PASS on isolated validation branch |
-| 06 | Remote backend boot / health / release identity | IN_PROGRESS | public domain + non-secret configuration present; approved secret injection and live boot still pending |
-| 07 | Standards-based browser IAM | PLANNED | BFF/OIDC decision and implementation required |
-| 08 | Multi-user / tenant negative acceptance | PLANNED | DB boundary ready; requires browser IAM and remote E2E |
+| 02 | Material decision registry | DONE | `decision-registry.yaml` created and updated as promotion evidence changes |
+| 03 | Architecture manifest truthfulness | DONE | promoted PostgreSQL/identity/handoff/action/realtime architecture encoded + regression test |
+| 04 | Final remote hosting topology | IN_PROGRESS | Railway `production-api` + `production-web` on final branch; frontend remote deploy PASS; backend boot still blocked by approved DSN injection |
+| 05 | Remote PostgreSQL role/schema promotion | DONE | Neon main: 15/15 tables, 7/7 metadata, safe scoped role and RLS negative test PASS |
+| 06 | Remote backend boot / health / release identity | BLOCKED | managed-IAM mode removes browser HMAC secret; only internal/scoped PostgreSQL DSNs remain blocked by connector secret-transfer policy |
+| 07 | Browser IAM / managed session boundary | IN_PROGRESS | Neon Auth challenger + React AuthBoundary + server-side session verifier implemented; PR #196 regression/remote acceptance pending |
+| 08 | Multi-user / tenant negative acceptance | PLANNED | DB RLS gate ready; requires live backend managed-session path |
 | 09 | Hosted provider/model tournament | NO_SELECTION | new USD0 eligible experiment required |
 | 10 | Real provider DecisionSource composition | BLOCKED | blocked on provider promotion |
 | 11 | Real TRACTIAN production transport | PLANNED | direct typed HTTP adapter baseline; exact supplied contract/config must drive implementation |
 | 12 | Real action authorization resolver | PLANNED | requires authenticated identity/resource mapping |
 | 13 | Consequential action remote E2E | PLANNED | preserve custody/idempotency/non-transferable lease semantics |
-| 14 | Production frontend deployment | PLANNED | React/Vite stack retained; remote host/topology to be selected |
-| 15 | Authenticated REST + SSE | PLANNED | same-origin/BFF preferred baseline |
-| 16 | Production Control Room completeness | PLANNED | live architecture/evidence/lineage/eval/health |
-| 17 | Infrastructure telemetry | PLANNED | RunTrace remains domain truth; OTel-compatible challenger |
+| 14 | Production frontend deployment | IN_PROGRESS | Railway/Caddy production-web deployment PASS; authenticated backend E2E still pending |
+| 15 | Authenticated REST + SSE | IN_PROGRESS | Caddy same-origin `/auth` + `/api` proxy implemented; backend session composition under CI and remote boot blocked on DSNs |
+| 16 | Production Control Room completeness | PLANNED | live architecture/evidence/lineage/eval/health after remote data path closes |
+| 17 | Infrastructure telemetry | PLANNED | RunTrace remains domain truth; OTel-compatible challenger only if needed |
 | 18 | Realtime reconnect/recovery campaign | PLANNED | must include DB sleep/wake and cursor catch-up |
-| 19 | Adversarial security campaign | PLANNED | tenant/prompt/tool/action/evaluator failure families |
+| 19 | Adversarial security campaign | PLANNED | tenant/session/prompt/tool/action/evaluator failure families |
 | 20 | Remote load/capacity campaign | PLANNED | derive measured free-tier envelope and SLO claims |
-| 21 | GitHub main protection | PLANNED | require PR + `final-ci-required / required-gate` |
-| 22 | CI/CD + rollback + provenance | PLANNED | staging/prod smoke, rollback, SBOM/attestation when eligible |
+| 21 | GitHub main protection | PLANNED | PR #196 now supplies final-branch CI; main protection still must require `final-ci-required / required-gate` |
+| 22 | CI/CD + rollback + provenance | IN_PROGRESS | draft PR #196 created; PR workflows active; production deploy/rollback automation remains open |
 | 23 | Human semantic calibration | NOT_READY | real blinded labels required before semantic judge gates |
 | 24 | Operational-value experiment | NOT_READY | real MANUAL vs AGENT-ASSISTED observations required |
 | 25 | Adaptive runtime challengers | PLANNED / P1 | only after P0 production closure |
@@ -108,7 +108,7 @@ States: `DONE`, `IN_PROGRESS`, `BLOCKED`, `PLANNED`, `NOT_READY`, `NO_SELECTION`
 
 ## 5. Exact critical-path order
 
-Do not displace this sequence with optional complexity:
+Do not displace this sequence with optional complexity. A blocked dependency may allow implementation work on the immediately following item, but final promotion still respects dependency order.
 
 ```text
 01 active truth                                      DONE
@@ -116,23 +116,23 @@ Do not displace this sequence with optional complexity:
 03 architecture truth                                DONE
 04 remote hosting                                    IN_PROGRESS
 05 PostgreSQL roles + migration                      DONE
-06 backend live shell + health/version               IN_PROGRESS
-07 IAM/BFF/OIDC                                      NEXT PRODUCT BLOCKER
-08 multi-user/RLS acceptance
+06 backend live shell + health/version               BLOCKED ON APPROVED DSN INJECTION
+07 browser IAM / managed session                     IN_PROGRESS
+08 multi-user/RLS remote acceptance                  NEXT AFTER LIVE BACKEND
 09 provider tournament
 10 real DecisionSource
 11 TRACTIAN transport
 12 authorization resolver
 13 action E2E
-14 frontend hosting
-15 authenticated REST/SSE
+14 frontend hosting                                  REMOTE BASELINE PASS / E2E OPEN
+15 authenticated REST/SSE                            IN_PROGRESS
 16 Control Room completeness
 17 telemetry
 18 realtime recovery
 19 adversarial security
 20 remote load/capacity
 21 GitHub protection
-22 CI/CD + rollback/provenance
+22 CI/CD + rollback/provenance                       PR CI ACTIVE
 23 semantic calibration where feasible
 24 operational value where feasible
 25 adaptive challengers only after P0
@@ -144,10 +144,11 @@ Do not displace this sequence with optional complexity:
 ### Status: DONE for current baseline
 
 - active status is rebaselined to the actual final branch and external infrastructure state;
-- `architecture_manifest.py` now represents PostgreSQL operational truth, trusted identity, runtime handoff, action custody/lease, human review/value and non-authoritative realtime wake-up;
+- `architecture_manifest.py` represents PostgreSQL operational truth, trusted identity, runtime handoff, action custody/lease, human review/value and non-authoritative realtime wake-up;
 - the legacy `DuckDB Safe Read Model` label is removed from the promoted architecture;
 - a regression test prevents that storage truth from silently reverting;
-- material decisions have an explicit registry.
+- material decisions have an explicit registry;
+- PR #196 is the draft integration/review surface for the final branch.
 
 Architecture must continue to be updated whenever the runtime composition changes.
 
@@ -155,7 +156,7 @@ Architecture must continue to be updated whenever the runtime composition change
 
 ### Status: STRUCTURAL PROMOTION DONE; runtime recovery campaign remains separate
 
-The existing Neon `academy-tractian-hosted-pilot` / `academy_tractian` database now contains the promoted `academy_operational` schema.
+The existing Neon `academy-tractian-hosted-pilot` / `academy_tractian` database contains the promoted `academy_operational` schema.
 
 Migration was first validated on an isolated Neon branch, then applied to main using the same idempotent DDL groups derived from the production runtime initializers.
 
@@ -192,37 +193,53 @@ Remaining database evidence belongs to P0-H rather than schema promotion: remote
 
 ### Current evidence
 
-A clean Railway service named `production-api` has been created from `release/production-final`, separate from the stale historical `hosted-pilot`. The service is configured to use the repository Dockerfile, restart on failure and expose a Railway HTTPS service domain. Non-secret fail-closed production settings are installed.
+A clean Railway service named `production-api` exists separately from the stale historical `hosted-pilot`. Its GitHub source branch is explicitly `release/production-final`, it builds the repository Python 3.11 production Dockerfile, runs in Railway US East Metal, restarts on failure and has a Railway HTTPS service domain.
+
+The prior fail-closed deployment proved that missing production secrets stop serving boot rather than silently falling back.
 
 ### Required next
 
-- provide `ACADEMY_POSTGRES_INTERNAL_DSN`, `ACADEMY_POSTGRES_SCOPED_DSN` and `ACADEMY_RUNTIME_IDENTITY_SECRET` through an approved secret channel;
-- update `ACADEMY_RELEASE_GIT_SHA` to the exact final-branch deployment commit;
-- redeploy the current branch;
-- verify database connectivity, release identity and health/readiness;
-- prove restart/persistence;
+- install only the two remaining PostgreSQL DSNs through an approved Railway secret channel:
+  - `ACADEMY_POSTGRES_INTERNAL_DSN` using the owner/internal role;
+  - `ACADEMY_POSTGRES_SCOPED_DSN` using `academy_tractian_rls`;
+- do not commit, document or proxy those values through an unapproved connector;
+- redeploy the exact final-branch SHA;
+- verify database connectivity, `/health`, release identity and restart/persistence;
 - keep provider calls disabled until DP-004 promotes a candidate.
 
-### Secret-handling rule
-
-DSNs/signing secrets are never committed, written to project documentation or exposed to the browser. If an automation connector rejects secret transmission, use the platform secret UI or another approved native secret mechanism rather than weakening fail-closed configuration.
+The managed `neon-auth` browser IAM mode intentionally does **not** require `ACADEMY_RUNTIME_IDENTITY_SECRET`, issuer or audience for the browser path. This removes an obsolete browser-HMAC secret from the final web topology while preserving the old signed-bearer mode as a rollback-compatible composition.
 
 ## 9. P0-D — Browser IAM and multi-user product
 
-Target baseline:
+### Current challenger: Neon Auth / Better Auth managed session
+
+The original OIDC+BFF target remains a valid baseline, but the current USD0 challenger is a managed Neon Auth session behind the same-origin product boundary.
+
+Implemented in the final branch:
 
 ```text
 Browser
-→ OIDC Authorization Code + PKCE
-→ BFF / FastAPI
-→ Secure HttpOnly session
-→ server-owned user/org/permissions
+→ production-web HTTPS origin
+→ /auth/* same-origin Caddy proxy
+→ Neon Auth / Better Auth managed HttpOnly session
+→ /api/* same-origin Caddy proxy
+→ FastAPI NeonAuthRuntimeContextProvider
+→ server-side managed-session revalidation
+→ server-owned user / tenant / permissions
 → PostgreSQL tenant boundary
 ```
 
-The internal HMAC runtime bearer may remain behind this boundary but must not be marketed as end-user IAM.
+Security invariants:
 
-Acceptance includes login/logout/session lifecycle, authenticated SSE, manipulated/expired session failure, cross-tenant REST/SSE/SQL denial and zero browser-owned privilege authority.
+- browser request body/headers cannot assert organization, role or permissions;
+- missing/invalid/mismatched/impersonated sessions fail closed;
+- session service failure fails closed;
+- shared active organization comes only from managed session state;
+- without an active shared organization, tenant defaults to deterministic `user:<authenticated-user-id>` personal isolation;
+- default runtime permissions stay server-defined;
+- no auth token/DSN is stored in React state or committed to source.
+
+Promotion still requires PR regression success and live multi-user REST/SSE negative acceptance. If those gates fail, DP-003 remains reversible to OIDC+BFF or another eligible design.
 
 ## 10. P0-E — Provider/model selection
 
@@ -269,21 +286,20 @@ Blind replacement/replay remains forbidden.
 
 Retain React 19 + TypeScript + Vite + TanStack Query + ECharts + React Flow + Vitest + Playwright.
 
-Production areas should expose safe real state for:
+Current remote baseline:
 
-- Mission Control;
-- Live Run Cockpit;
-- Timeline/Waterfall;
-- Trace Graph;
-- Architecture Explorer;
-- Evidence Explorer;
-- Output Lineage;
-- Action Control;
-- Eval Lab;
-- Provider Lab;
-- Dynamic Data Explorer;
-- Production Health;
-- Operational Value when real evidence exists.
+- `production-web` Railway service;
+- React/Vite multi-stage production image;
+- Caddy static SPA serving;
+- HTTPS public Railway domain;
+- same-origin `/auth` and `/api` routing;
+- `/api` proxy targets Railway private `production-api` networking;
+- SSE buffering explicitly disabled at the Caddy reverse proxy;
+- authenticated React boundary prevents product queries from starting before a valid managed session is present.
+
+Remote deployment reached `SUCCESS`. Final frontend promotion still requires live auth/API/SSE behavior, browser acceptance and performance evidence.
+
+Production areas should expose safe real state for Mission Control, Live Run Cockpit, timeline/waterfall, Trace Graph, Architecture Explorer, evidence/output lineage, Action Control, Eval Lab, provider experiments, Dynamic Data Explorer, Production Health and real Operational Value evidence when available.
 
 Never expose secrets, private evaluator/gold material or hidden chain-of-thought.
 
@@ -295,7 +311,7 @@ Prove durable rows/cursors recover all committed events after SSE disconnect, ba
 
 ### Adversarial security
 
-At minimum cover tenant spoofing/cross-tenant access, token/session manipulation, direct/indirect prompt injection, tool-output injection, permission bypass, action confirmation bypass/replay, evaluator/gold extraction and provider/tool/DB failures.
+At minimum cover tenant spoofing/cross-tenant access, session manipulation, direct/indirect prompt injection, tool-output injection, permission bypass, action confirmation bypass/replay, evaluator/gold extraction and provider/tool/DB failures.
 
 Hard safety expectations include zero tenant escape, zero unauthorized consequential action, zero confirmation bypass, zero gold leakage and zero credential leakage.
 
@@ -304,6 +320,8 @@ Hard safety expectations include zero tenant escape, zero unauthorized consequen
 Run increasing concurrency on the actual selected free deployment until measured saturation or free-tier quota. Report p50/p95/p99, throughput, errors/timeouts, DB/provider/tool latency, SSE behavior, resource/quota use and actual cash cost. State the measured envelope rather than claiming unproved scale.
 
 ## 14. P0-I — Repository protection and release
+
+Draft PR #196 now provides the integration surface and triggers the PR CI matrix. It remains draft until applicable P0 gates are evidence-backed.
 
 Before final production completion:
 
@@ -321,23 +339,9 @@ Before final production completion:
 
 Do not start until the P0 remote product path is closed.
 
-Eligible challenger areas:
+Eligible challenger areas include adaptive investigation depth, adaptive tool/evidence ordering, adaptive clarification/abstention/escalation thresholds, provider routing among already-qualified USD0 candidates and bounded retry/backoff/resource budgets.
 
-- adaptive investigation depth;
-- adaptive tool/evidence ordering;
-- adaptive clarification/abstention/escalation thresholds;
-- provider routing among multiple already-qualified USD0 candidates;
-- bounded retry/backoff/resource budgets.
-
-Always deterministic:
-
-- authentication/tenant binding;
-- RLS/authorization;
-- schemas/permissions;
-- consequential-action confirmation/custody/idempotency/leases;
-- privacy deny-lists;
-- evaluator/gold isolation;
-- hard resource/cost boundaries.
+Always deterministic: authentication/tenant binding, RLS/authorization, schemas/permissions, consequential-action confirmation/custody/idempotency/leases, privacy deny-lists, evaluator/gold isolation and hard resource/cost boundaries.
 
 Promotion requires a measured win versus the static baseline without safety regression.
 
@@ -358,9 +362,7 @@ They remain valid future challengers only when a concrete measured problem justi
 
 ## 17. Final release gate
 
-Use capability-scoped truth rather than one vague `production-ready` label. Each final capability is classified as one of:
-
-`READY`, `LIMITED`, `NOT_READY`, `NO_SELECTION`.
+Use capability-scoped truth rather than one vague `production-ready` label. Each final capability is classified as one of `READY`, `LIMITED`, `NOT_READY`, `NO_SELECTION`.
 
 The final remote E2E should prove, from an unrelated device/network:
 
