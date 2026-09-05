@@ -15,7 +15,9 @@ from research.e2.models import BoundRequest, Permission
 from research.e2.transport import RequestTransport, TransportResponse
 
 from .action_safety import ResourceCompanyBinding
+from .cloudflare_provider_client import CloudflareWorkersAIChatCompletionsDecisionClient
 from .decision_source import ProviderCallIdentity, ProviderDecisionSource
+from .groq_provider_client import GroqChatCompletionsDecisionClient
 from .postgres_product_api import create_postgres_action_capable_product_app
 from .product_api import AuthenticatedRuntimeContext, DEFAULT_RUNTIME_PERMISSIONS
 from .production_actions_v2 import ProductionActionPrincipal
@@ -29,7 +31,7 @@ from .runtime import canonical_tool_registry
 
 
 DemoMode = Literal["live", "fallback"]
-DemoProvider = Literal["google", "openai"]
+DemoProvider = Literal["cloudflare", "google", "groq", "openai"]
 _LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "0.0.0.0", "::1"})
 
 
@@ -98,6 +100,8 @@ class LiveDemoConfig:
     actions_enabled: bool
     provider: DemoProvider | None = None
     provider_api_key: str | None = None
+    provider_account_id: str | None = None
+    provider_model_id: str | None = None
     tractian_base_url: str | None = None
     tractian_bearer_token: str | None = None
     organization_id: str = "demo-tractian"
@@ -114,7 +118,9 @@ class LiveDemoConfig:
             f"mode={self.mode!r}, schema={self.schema!r}, host={self.host!r}, port={self.port!r}, "
             f"frontend_origins={self.frontend_origins!r}, initialize_schema={self.initialize_schema!r}, "
             f"actions_enabled={self.actions_enabled!r}, provider={self.provider!r}, "
+            f"provider_model_id={self.provider_model_id!r}, "
             "internal_dsn=<redacted>, scoped_dsn=<redacted>, provider_api_key=<redacted>, "
+            "provider_account_id=<redacted>, "
             f"tractian_base_url={self.tractian_base_url!r}, tractian_bearer_token=<redacted>)"
         )
 
@@ -143,17 +149,29 @@ class LiveDemoConfig:
 
         provider: DemoProvider | None = None
         provider_api_key: str | None = None
+        provider_account_id: str | None = None
+        provider_model_id: str | None = None
         tractian_base_url: str | None = None
         tractian_bearer_token: str | None = None
         if mode == "live":
             provider_raw = _required(env, "LIVE_DEMO_PROVIDER").lower()
-            if provider_raw not in {"google", "openai"}:
+            if provider_raw not in {"cloudflare", "google", "groq", "openai"}:
                 raise LiveDemoConfigurationError("unsupported_live_demo_provider")
             provider = provider_raw  # type: ignore[assignment]
-            provider_api_key = _required(
-                env,
-                "GOOGLE_API_KEY" if provider == "google" else "OPENAI_API_KEY",
-            )
+            secret_name = {
+                "cloudflare": "CLOUDFLARE_API_TOKEN",
+                "google": "GOOGLE_API_KEY",
+                "groq": "GROQ_API_KEY",
+                "openai": "OPENAI_API_KEY",
+            }[provider]
+            provider_api_key = _required(env, secret_name)
+            if provider == "cloudflare":
+                provider_account_id = _required(env, "CLOUDFLARE_ACCOUNT_ID")
+                provider_model_id = _required(env, "LIVE_DEMO_MODEL_ID")
+            elif provider == "groq":
+                provider_model_id = env.get(
+                    "LIVE_DEMO_MODEL_ID", "openai/gpt-oss-120b"
+                ).strip() or "openai/gpt-oss-120b"
             tractian_base_url = _public_url(
                 _required(env, "TRACTIAN_API_BASE_URL"),
                 name="TRACTIAN_API_BASE_URL",
@@ -177,6 +195,8 @@ class LiveDemoConfig:
             actions_enabled=_boolean(env, "DEMO_ACTIONS_ENABLED", default=False),
             provider=provider,
             provider_api_key=provider_api_key,
+            provider_account_id=provider_account_id,
+            provider_model_id=provider_model_id,
             tractian_base_url=tractian_base_url,
             tractian_bearer_token=tractian_bearer_token,
             organization_id=env.get("DEMO_ORGANIZATION_ID", "demo-tractian").strip()
@@ -318,9 +338,24 @@ def _decision_source_factory(config: LiveDemoConfig):
                 transport=transport,
                 timeout_seconds=45.0,
             )
-        else:
+        elif config.provider == "openai":
             client = OpenAIResponsesDecisionClient(
                 api_key=config.provider_api_key or "",
+                transport=transport,
+                timeout_seconds=45.0,
+            )
+        elif config.provider == "groq":
+            client = GroqChatCompletionsDecisionClient(
+                api_key=config.provider_api_key or "",
+                model_id=config.provider_model_id or "openai/gpt-oss-120b",
+                transport=transport,
+                timeout_seconds=45.0,
+            )
+        else:
+            client = CloudflareWorkersAIChatCompletionsDecisionClient(
+                api_token=config.provider_api_key or "",
+                account_id=config.provider_account_id or "",
+                model_id=config.provider_model_id or "",
                 transport=transport,
                 timeout_seconds=45.0,
             )
