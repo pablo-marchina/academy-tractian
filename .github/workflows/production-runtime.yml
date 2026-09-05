@@ -6,6 +6,7 @@ on:
       - "src/**"
       - "tests/**"
       - "pyproject.toml"
+      - "requirements-production.lock"
       - "research/e2/**"
       - ".github/workflows/production-runtime.yml"
   push:
@@ -15,6 +16,7 @@ on:
       - "src/**"
       - "tests/**"
       - "pyproject.toml"
+      - "requirements-production.lock"
       - "research/e2/**"
       - ".github/workflows/production-runtime.yml"
   workflow_dispatch:
@@ -70,24 +72,38 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build production wheel
+      - name: Build production wheel with pinned backend
         run: |
           python -m pip install --upgrade pip
           python -m pip wheel . --no-deps --wheel-dir dist
 
-      - name: Install only the production wheel in a clean environment
+      - name: Install frozen production runtime plus application wheel
         run: |
           python -m venv /tmp/academy-tractian-wheel
           /tmp/academy-tractian-wheel/bin/python -m pip install --upgrade pip
-          /tmp/academy-tractian-wheel/bin/python -m pip install dist/academy_tractian-*.whl
+          /tmp/academy-tractian-wheel/bin/python -m pip install -r requirements-production.lock
+          /tmp/academy-tractian-wheel/bin/python -m pip install --no-deps dist/academy_tractian-*.whl
+          /tmp/academy-tractian-wheel/bin/python -m pip check
 
-      - name: Prove DuckDB is absent from production environment
+      - name: Prove runtime matches the frozen lock and excludes dev-only packages
         run: |
           /tmp/academy-tractian-wheel/bin/python - <<'PY'
+          from importlib.metadata import version
           import importlib.util
+          from pathlib import Path
 
+          expected = {}
+          for raw in Path("requirements-production.lock").read_text(encoding="utf-8").splitlines():
+              line = raw.strip()
+              if not line or line.startswith("#"):
+                  continue
+              name, pinned = line.split("==", 1)
+              expected[name] = pinned
+          observed = {name: version(name) for name in expected}
+          assert observed == expected, (expected, observed)
           assert importlib.util.find_spec("duckdb") is None, "DuckDB leaked into production dependencies"
-          print("duckdb absent from production wheel environment")
+          assert importlib.util.find_spec("httpx") is None, "httpx leaked into production dependencies"
+          print("frozen production dependency lock verified")
           PY
 
       - name: Smoke test promoted production imports outside repository checkout
