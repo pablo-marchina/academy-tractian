@@ -27,7 +27,9 @@ def test_architecture_manifest_is_stable_connected_and_evidence_mappable() -> No
     assert by_id["postgres_operational_store"].execution_role == "deterministic_boundary"
     assert by_id["runtime_handoff"].execution_role == "deterministic_boundary"
     assert by_id["action_control"].execution_role == "deterministic_boundary"
-    assert "not yet a complete browser OIDC claim" in by_id["runtime_identity"].trust_boundary
+    assert "managed browser session is not READY" in by_id["runtime_identity"].trust_boundary
+    assert "Managed session cookie" in by_id["runtime_identity"].input_contracts
+    assert "Authorization bearer (compatibility)" in by_id["runtime_identity"].input_contracts
     assert by_id["realtime_wakeup"].execution_role == "telemetry"
 
 
