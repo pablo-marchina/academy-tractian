@@ -102,6 +102,8 @@ jobs:
               create_authenticated_postgres_action_capable_product_app,
           )
           from academy_tractian.postgres_product_api import create_postgres_action_capable_product_app
+          from academy_tractian.production_config import RemoteProductionConfig
+          from academy_tractian.remote_production import create_remote_production_app
           from research.e2.controller import AgentController
 
           registry = canonical_tool_registry()
@@ -110,7 +112,9 @@ jobs:
           assert AgentController.__name__ == "AgentController"
           assert callable(create_postgres_action_capable_product_app)
           assert callable(create_authenticated_postgres_action_capable_product_app)
-          print("standalone no-DuckDB production wheel import smoke passed")
+          assert callable(RemoteProductionConfig.from_env)
+          assert callable(create_remote_production_app)
+          print("standalone no-DuckDB remote-production wheel import smoke passed")
           PY
 
       - name: Create non-owner scoped PostgreSQL role
