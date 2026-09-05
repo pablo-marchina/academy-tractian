@@ -25,11 +25,11 @@ The first cleanup commit passed `final-ci-required` successfully. No runtime, fr
 
 Opening a documentation-only cleanup PR exposed a CI-organization defect: historical research workflows were still subscribed to ordinary product pull requests.
 
-The PR triggered DEV-only and historical research jobs including E14j/E14k/E14l/E14m/E14o, benchmark-split audit, BIG-B protocol self-check, E9 scorer audit, E14m-R1 tooling and E9-v4 structural checks.
+The PR initially triggered DEV-only and historical research jobs including E14j/E14k/E14l/E14m/E14o, benchmark-split audit, BIG-B protocol self-check, E9 scorer audit, E14m-R1 tooling, E9-v4 structural checks and the old E2→E8 free-anywhere pilot suite.
 
-For those historical workflows, this pass removes only the automatic `pull_request` trigger. The workflow body remains available through `workflow_dispatch`; research-branch push triggers are retained where they already existed.
+This pass removes the automatic `pull_request` trigger from those historical/DEV-only research workflows. Workflow bodies remain available through `workflow_dispatch`; the dedicated `research/systematic-foundation` push trigger is retained where it already existed.
 
-`research-e2.yml` is deliberately not rewritten in this pass. It is a large legacy suite with explicit path filtering rather than a global PR trigger. It ran because this cleanup intentionally changed paths listed in its legacy filter (`README.md` / `research/README.md`). Its trigger/path contract should be simplified in a dedicated workflow-consolidation change rather than hidden inside a documentation cleanup.
+This changes workflow **activation policy**, not the historical experiment implementation. Previous exact workflow versions remain in Git history and existing Actions runs retain their source provenance.
 
 ## Current CI classes
 
@@ -48,18 +48,37 @@ Provider-free product/runtime/observability/eval/handoff checks remain available
 
 ### Historical / experiment-specific
 
-E-series, BIG-B and provider experiment workflows are evidence/reproduction surfaces. They should normally be manual or research-branch scoped, not automatic product-PR gates.
+E-series, BIG-B, Cloudflare D-series and other provider experiment workflows are evidence/reproduction surfaces. They should normally be manual or research-branch scoped, not automatic product-PR gates.
+
+## Preliminary source reachability classification
+
+The most visually noisy source families were inspected before any physical cleanup.
+
+### `ACTIVE_CORE`
+
+- `provider_clients.py` — exported by `academy_tractian.__init__` together with the provider-neutral decision boundary; not dead code.
+- core runtime/API/PostgreSQL/action/observability/evaluation modules represented in `docs/CODEBASE-MAP.md`.
+
+### `ACTIVE_SPECIALIZED`
+
+- `provider_free_product.py` and related provider-free helpers — exercise the real product/controller/storage/SSE/evaluation path in provider-free acceptance and CI. They are test/acceptance infrastructure, not production-provider selection.
+
+### `HISTORICAL_PINNED` / `RESEARCH_ONLY`
+
+- `cloudflare_*` modules — tied to explicit ADR-018 through ADR-027 records plus Cloudflare experiment workflows. They are historical/provider-experiment implementation evidence and are not safe bulk-deletion candidates.
+- historical provider comparison/live-execution surfaces covered by ADR-008 through ADR-012 likewise require provenance-aware treatment before relocation/deletion.
+
+No module from these named families has been classified `DEAD_SAFE_TO_REMOVE` on the evidence collected so far. Therefore this cleanup intentionally does not perform a cosmetic package move.
 
 ## Physical cleanup intentionally deferred
 
-The following areas look structurally noisy but require a reachability audit before removal or relocation:
+The following areas may still contain safe consolidation opportunities, but each requires exact-path reachability proof:
 
-1. `src/academy_tractian/provider_*`;
-2. `src/academy_tractian/cloudflare_*`;
-3. versioned implementation modules (`*_v1`, `*_v2`, etc.);
-4. duplicate/near-duplicate scripts under `scripts/research/`;
-5. experiment-specific workflows that may now be fully superseded;
-6. flat historical tests whose exact paths may be referenced by workflows/evidence.
+1. versioned implementation modules (`*_v1`, `*_v2`, etc.);
+2. duplicate/near-duplicate scripts under `scripts/research/`;
+3. experiment-specific workflows whose historical source is preserved elsewhere and no active/frozen record references the current path;
+4. flat historical tests whose exact paths may be referenced by workflows/evidence;
+5. specialized provider-free CI whose coverage may be redundant with `final-ci-required`.
 
 ## Required reachability proof before deletion/move
 
@@ -88,7 +107,7 @@ Only `DEAD_SAFE_TO_REMOVE` may be deleted without a compatibility shim. Moves of
 
 ## Package-layout target
 
-A future refactor may move the current flat package toward:
+A future non-functional refactor may move the current flat package toward:
 
 ```text
 academy_tractian/
@@ -101,7 +120,7 @@ academy_tractian/
   providers/
 ```
 
-That refactor is **not part of this cleanup pass**. It should start only after the reachability map exists and the full required CI is green.
+That refactor is **not part of this cleanup pass**. It should start only after exact import/path provenance is mapped and the full required CI proves compatibility. Historical pinned modules may remain outside that ideal layout if moving them would weaken evidence provenance.
 
 ## Exit criteria before feature development
 
@@ -111,5 +130,5 @@ Repository cleanup is ready to hand off to development when:
 - normal product PRs do not execute historical one-shot research campaigns;
 - required CI remains green;
 - frozen evidence/reproduction paths remain intact;
-- dead-code candidates are explicitly classified instead of guessed;
+- noisy source families are classified instead of guessed/deleted;
 - the next feature can be placed in an obvious product domain without creating another miscellaneous top-level module.
