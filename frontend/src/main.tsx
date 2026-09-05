@@ -3,10 +3,12 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import App from "./App";
+import { AuthBoundary } from "./auth/AuthBoundary";
 import "./styles.css";
 import "./explorer.css";
 import "./operations.css";
 import "./operationalValue.css";
+import "./auth.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,7 +29,9 @@ if (!root) throw new Error("root element missing");
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <AuthBoundary>
+        <App />
+      </AuthBoundary>
     </QueryClientProvider>
   </StrictMode>,
 );
