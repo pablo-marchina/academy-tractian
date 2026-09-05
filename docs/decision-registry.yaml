@@ -238,3 +238,24 @@ decisions:
       - current complete-head CI and hosted Railway v3 observation remain pending
     decision_state: PREFERRED
     reversal_trigger: Railway no longer supplies a trustworthy Git-backed build identity, the image build path changes so the baked file is not authoritative, or a stronger signed provenance/attestation mechanism becomes necessary under the same USD0 and complexity constraints.
+
+  - id: DP-013
+    question: How should a dated freeze-evidence bundle be validated after legitimate repository evolution?
+    requirement_or_risk: Comparing every hash recorded by a historical snapshot against a later worktree causes legitimate current CI/contract evolution to invalidate history, while re-pinning the old bundle would falsify its provenance.
+    baseline: The 2026-09-04 bundle hash-pinned all artifact roles and the validator compared every recorded blob to the current worktree; after final-ci-required legitimately evolved, clean-clone failed only with artifact_0_blob_mismatch.
+    alternatives: [repin_historical_manifest, disable_freeze_validation, separate_historical_snapshot_and_current_head_modes]
+    hard_constraints: [historical_manifest_immutable, prospective_freeze_strict, frozen_evidence_byte_pinned, registered_paths_exist, decision_and_nonclaim_integrity]
+    metrics: [historical_false_positive_count, current_head_tamper_acceptance_count, frozen_historical_tamper_acceptance_count, missing_artifact_acceptance_count]
+    hard_gates: [historical_manifest_rewrite_equals_0, current_head_tamper_acceptance_equals_0, frozen_historical_tamper_acceptance_equals_0, missing_artifact_acceptance_equals_0]
+    evidence:
+      - clean-clone failure isolated to the dated bundle artifact_0 blob while 651 Python tests and the PostgreSQL/controller/reproduction campaigns passed on the observed failing job
+      - artifact_0 is final-ci-required.yml recorded by the 2026-09-04 manifest before later required Railway IaC and production-runtime identity gates were added
+      - the historical JSON bundle remains unchanged rather than being re-pinned to future code
+      - validator now exposes explicit current-head and historical-snapshot artifact scopes
+      - current-head remains strict for every registered artifact and is the required behavior for a future final freeze
+      - historical-snapshot still checks manifest hash, schema, paths, decisions, evidence registration, non-claims, branch-protection truth and byte identity of frozen_historical_evidence
+      - regression tests cover current-head drift rejection, historical current-role evolution, frozen evidence tamper rejection and missing artifact rejection
+      - clean-clone script now prints HISTORICAL_SNAPSHOT explicitly instead of silently applying a relaxed rule
+      - complete-head CI after this correction remains pending
+    decision_state: PREFERRED
+    reversal_trigger: A stronger immutable snapshot mechanism records and retrieves historical Git blobs directly without relying on a later worktree, or the historical/current role model proves unable to preserve both provenance and strict future-freeze integrity.
