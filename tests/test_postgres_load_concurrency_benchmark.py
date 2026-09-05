@@ -158,7 +158,6 @@ def _pressure_sample(app, *, level: int, started: float) -> LoadPressureObservat
 
 
 def test_authenticated_postgres_load_campaign_measures_saturation_without_capacity_claim(
-    tmp_path: Path,
     postgres_fixture,
 ) -> None:
     protocol = LoadBenchmarkProtocol(
@@ -170,7 +169,6 @@ def test_authenticated_postgres_load_campaign_measures_saturation_without_capaci
         pressure_poll_interval_ms=5,
     )
     app = create_authenticated_postgres_action_capable_product_app(
-        db_path=tmp_path / "load-observability.duckdb",
         internal_dsn=postgres_fixture.admin_dsn,
         scoped_dsn=postgres_fixture.scoped_dsn,
         decision_source_factory=DelayedFinalSource,
@@ -186,6 +184,7 @@ def test_authenticated_postgres_load_campaign_measures_saturation_without_capaci
         actions_enabled=False,
         heartbeat_interval_ms=250,
     )
+    assert app.state.local_test_storage_enabled is False
 
     request_observations: list[LoadRequestObservation] = []
     pressure_observations: list[LoadPressureObservation] = []
@@ -193,7 +192,6 @@ def test_authenticated_postgres_load_campaign_measures_saturation_without_capaci
     run_scope: dict[str, tuple[str, str]] = {}
 
     with TestClient(app) as client:
-        # Warm the persistence/runtime path. Warmups are deliberately excluded from measured data.
         warm_headers = _headers(user_id="warm-user", organization_id="warm-org")
         warm = client.post(
             "/api/runs",
@@ -297,7 +295,6 @@ def test_authenticated_postgres_load_campaign_measures_saturation_without_capaci
         assert report.levels[1].peak_inflight_runs >= 3
         assert report.levels[1].persistence_p95_ms_max_observed is not None
 
-        # Every accepted run is present exactly once and remains hidden from the other tenant.
         assert len(run_scope) == 12
         assert len(set(run_scope)) == 12
         org_a_run = next(run_id for run_id, scope in run_scope.items() if scope[0] == "org-a")
