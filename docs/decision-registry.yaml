@@ -40,6 +40,8 @@ decisions:
       - service moved to Railway US East Metal
       - managed IAM mode removes the old browser HMAC signing secret requirement
       - current fail-closed boot reports only ACADEMY_POSTGRES_INTERNAL_DSN and ACADEMY_POSTGRES_SCOPED_DSN missing
+      - production-api deployment healthcheck is /health with 60 second timeout
+      - production-api restart policy is explicitly ON_FAILURE with five retries
       - serving boot remains unproved until approved PostgreSQL DSN secret injection
     decision_state: QUALIFIED
     reversal_trigger: A currently eligible hosted alternative materially improves production fit under the same hard gates or Railway fails the remote boot/capacity/cost gates.
@@ -146,6 +148,7 @@ decisions:
       - production Docker image forces VITE_BROWSER_AUTH_ENABLED=true
       - production-main Neon Auth host installed as the /auth upstream
       - post-production-Auth-host Railway deployment reached SUCCESS
+      - production-web restart policy is explicitly ON_FAILURE with five retries
       - provider-free Chromium acceptance remains green because external IAM is not required in the test Vite build
     decision_state: PREFERRED
     reversal_trigger: Remote page/auth/API acceptance or cost/availability gates fail, or a simpler eligible host materially improves measured production fit.
@@ -185,3 +188,24 @@ decisions:
     evidence: []
     decision_state: NO_CHANGE
     reversal_trigger: Controlled production-compatible challenger proves material benefit.
+
+  - id: DP-011
+    question: How should Railway production topology be made reproducible from source?
+    requirement_or_risk: Dashboard-only configuration can drift and cannot by itself prove reproducible deployment.
+    baseline: production-api and production-web were configured through Railway service state with Docker artifacts in Git but no project-level IaC.
+    alternatives: [Railway_IaC_TypeScript, deprecated_railway_toml_json, documentation_only_drift_check, Terraform_or_other_external_IaC]
+    hard_constraints: [no_secret_values_in_git, preserve_historical_hosted_pilot, current_supported_Railway_surface, minimal_added_complexity, USD0]
+    metrics: [plan_drift_count, unexpected_resource_changes, secret_literal_count, configuration_coverage]
+    hard_gates: [secret_literal_count_equals_0, historical_hosted_pilot_deletion_equals_0, production_service_scope_exact, healthcheck_present]
+    evidence:
+      - current Railway documentation identifies project-level TypeScript IaC as the supported replacement for deprecated railway.toml/json
+      - production-api and production-web live service state was inspected before authoring
+      - production-api healthcheck /health with 60 second timeout was added to live service state
+      - both production services use explicit ON_FAILURE restart policy with five retries
+      - .railway/railway.ts uses a named production partial and preserve() for Railway-managed values
+      - historical hosted-pilot is intentionally outside the production partial
+      - repository static validator rejects literal PostgreSQL URLs and accidental hosted-pilot management
+      - dedicated TypeScript DSL CI was added
+      - live railway config plan/apply is still required before claiming IaC ownership convergence
+    decision_state: PREFERRED
+    reversal_trigger: Railway IaC cannot produce a non-destructive converged plan for the two production services, current IaC defects block safe use, or another lower-complexity supported mechanism proves materially safer and more reproducible.
