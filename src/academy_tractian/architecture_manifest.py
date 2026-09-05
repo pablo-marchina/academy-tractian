@@ -86,9 +86,9 @@ def _components() -> tuple[ArchitectureComponent, ...]:
             component_id="runtime_identity",
             label="Trusted Runtime Identity",
             layer="safety",
-            responsibility="Validate the current signed server-trusted identity envelope before tenant, user and permission context is accepted.",
-            trust_boundary="identity verification boundary; not yet a complete browser OIDC claim",
-            input_contracts=("Authorization bearer",),
+            responsibility="Validate the configured server-trusted identity source before tenant, user and permission context is accepted; the current remote candidate uses managed-session revalidation while signed bearer remains a compatibility path.",
+            trust_boundary="identity verification boundary; managed browser session is not READY until live multi-user acceptance passes",
+            input_contracts=("Managed session cookie", "Authorization bearer (compatibility)"),
             output_contracts=("AuthenticatedRuntimeContext",),
             execution_role="deterministic_boundary",
         ),
@@ -360,7 +360,7 @@ def _components() -> tuple[ArchitectureComponent, ...]:
 def _edges() -> tuple[ArchitectureEdge, ...]:
     return (
         ArchitectureEdge(source="operator_frontend", target="product_api", label="RunSubmission / authenticated product traffic"),
-        ArchitectureEdge(source="product_api", target="runtime_identity", label="Verify trusted request context"),
+        ArchitectureEdge(source="product_api", target="runtime_identity", label="Verify configured managed-session or compatibility identity"),
         ArchitectureEdge(source="runtime_identity", target="postgres_operational_store", label="Server-owned user/org/permission scope"),
         ArchitectureEdge(source="product_api", target="postgres_operational_store", label="Persist ownership / execution state"),
         ArchitectureEdge(source="postgres_operational_store", target="runtime_handoff", label="Durable work item / lease"),
