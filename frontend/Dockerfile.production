@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1.7
 
-# Exact patch versions are intentional. The frontend is built once and served as static assets;
-# Node is not present in the runtime image.
-FROM node:24.20.0-alpine3.24 AS build
+# Exact patch versions and multi-platform index digests are intentional. The frontend is built
+# once and served as static assets; Node is not present in the runtime image. Digest changes must
+# be evidence-backed and revalidated through the frontend production build before promotion.
+FROM node:24.20.0-alpine3.24@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS build
 
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false \
     NPM_CONFIG_FUND=false \
@@ -16,7 +17,7 @@ COPY tsconfig*.json vite.config.ts index.html ./
 COPY src ./src
 RUN npm run build
 
-FROM caddy:2.11.4-alpine AS runtime
+FROM caddy:2.11.4-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648 AS runtime
 
 WORKDIR /srv
 COPY Caddyfile.production /etc/caddy/Caddyfile
