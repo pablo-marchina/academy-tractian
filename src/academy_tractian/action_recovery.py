@@ -3,10 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-import duckdb
-
-from .production_actions_v2 import DuckDBActionIdempotencyLedger, PendingActionCustody
-
 
 @dataclass(frozen=True, slots=True)
 class ActionRecoveryReport:
@@ -14,11 +10,18 @@ class ActionRecoveryReport:
     claimed_ledger_entries_marked_uncertain: tuple[str, ...]
 
 
-def _duckdb_recovery(
-    *,
-    custody: PendingActionCustody,
-    ledger: DuckDBActionIdempotencyLedger,
-) -> ActionRecoveryReport:
+def _duckdb_recovery(*, custody: Any, ledger: Any) -> ActionRecoveryReport:
+    """Legacy local-test recovery path.
+
+    DuckDB is intentionally imported only when the explicit legacy adapter is selected. The
+    promoted PostgreSQL product can therefore import and boot without DuckDB installed.
+    """
+
+    try:
+        import duckdb
+    except ImportError as exc:  # pragma: no cover - packaging guard for test-only adapter
+        raise RuntimeError("DuckDB recovery adapter requires the dev/test DuckDB extra") from exc
+
     custody_connection = duckdb.connect(custody.path)
     try:
         custody_connection.execute("BEGIN TRANSACTION")
@@ -100,12 +103,20 @@ def _duckdb_recovery(
     )
 
 
+def _is_legacy_duckdb_adapter(value: Any, class_name: str) -> bool:
+    value_type = type(value)
+    return (
+        value_type.__module__ == "academy_tractian.production_actions_v2"
+        and value_type.__name__ == class_name
+    )
+
+
 def reconcile_orphaned_actions(*, custody: Any, ledger: Any) -> ActionRecoveryReport:
     """Fail-safe action recovery across qualified operational backends.
 
     PostgreSQL stores own their recovery transaction boundaries. The legacy DuckDB baseline
-    keeps its existing recovery implementation for regression tests. No backend is allowed to
-    interpret restart as permission to retry a consequential action.
+    remains available only through the explicit dev/test adapter and is imported lazily. No
+    backend is allowed to interpret restart as permission to retry a consequential action.
     """
 
     recover_custody = getattr(custody, "reconcile_executing", None)
@@ -118,8 +129,8 @@ def reconcile_orphaned_actions(*, custody: Any, ledger: Any) -> ActionRecoveryRe
             claimed_ledger_entries_marked_uncertain=tuple(ledger_recovered),
         )
 
-    if isinstance(custody, PendingActionCustody) and isinstance(
-        ledger, DuckDBActionIdempotencyLedger
+    if _is_legacy_duckdb_adapter(custody, "PendingActionCustody") and _is_legacy_duckdb_adapter(
+        ledger, "DuckDBActionIdempotencyLedger"
     ):
         return _duckdb_recovery(custody=custody, ledger=ledger)
 
