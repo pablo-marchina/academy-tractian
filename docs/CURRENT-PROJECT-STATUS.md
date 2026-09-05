@@ -14,6 +14,7 @@ This file is the sole mutable human-readable summary of current project state. H
 
 ```text
 formal product scope                         Agent + Evaluation in one solution
+project cash-cost constraint                 USD 0 HARD CONSTRAINT
 production agent runtime                    IMPLEMENTED in repository
 production deterministic evaluator          IMPLEMENTED
 TRACTIAN typed tool registry                18 operations
@@ -49,7 +50,7 @@ operational-value collector/analysis         IMPLEMENTED
 real engineer-time/business-value claim      NOT READY — human observations required
 adaptive stopping                            evaluator/replay only
 adaptive runtime stopping                    NOT PROMOTED
-provider comparison D01/D02                  COMPLETE / historical
+provider comparison D01/D02                  COMPLETE / historical / USD0
 production provider/model                    NO_SELECTION
 
 repository cleanup                           IN PROGRESS / PR #192
@@ -119,7 +120,7 @@ It is a real server-trusted boundary but not a complete end-user IAM product. Do
 
 PostgreSQL RLS independently restricts tenant data using a non-superuser, non-`BYPASSRLS`, non-owner application role and transaction-local organization scope. Tested cross-tenant rows are denied.
 
-**P0 next state:** standards-based remote user authentication while preserving server-owned scope + RLS.
+**P0 next state:** select and deploy a **USD-zero eligible** standards-based remote user-authentication path while preserving server-owned scope + RLS.
 
 ## 5. Persistence and distributed correctness
 
@@ -178,15 +179,25 @@ Those values must not be fabricated.
 
 ## 8. Provider/model state
 
-D01/D02 are completed historical USD-zero provider experiments. Neither candidate crossed the frozen promotion gates.
+D01/D02 are completed historical **USD-zero** provider experiments. D02 completed 32/32 attempts at USD 0.00, but neither tested Cloudflare model candidate crossed the frozen M1, M4 and M7 promotion gates.
 
 Current state:
 
 **`NO_SELECTION` / no production provider-model claim.**
 
-The new production plan requires a future hosted-provider tournament under a new preregistered protocol. Local model serving is not a production candidate under the current remote-production requirement.
+This does **not** mean Cloudflare is rejected because of cost. Cloudflare was cost-eligible for D01/D02, but cost eligibility was not sufficient for technical promotion.
 
-Historical Cloudflare/provider files remain evidence and do not imply current provider promotion.
+The next production-provider experiment must satisfy both conditions:
+
+```text
+hosted + remote + actual cash cost USD 0
+AND
+all preregistered quality/safety/reliability/production gates
+```
+
+Only USD-zero eligible hosted candidates may be selected. If none pass all gates, the result remains `NO_SELECTION`; the cost-zero hard constraint is not relaxed.
+
+Historical D01/D02 packets are consumed and must not be replayed merely to search for a winner. Cloudflare can be reconsidered only through a new preregistered experiment if a materially new eligible model/configuration/hypothesis exists.
 
 ## 9. Load/recovery evidence boundaries
 
@@ -200,7 +211,7 @@ Existing restart/cross-replica campaigns prove conservative repository-level saf
 - database failover quality;
 - multi-region behavior.
 
-Those claims move to remote production campaigns in the current action plan.
+Those claims move to remote production campaigns in the current action plan, using only USD-zero eligible infrastructure for the selectable project path.
 
 ## 10. Repository/CI state
 
@@ -229,35 +240,36 @@ PR #192 is cleaning navigation, canonical documentation and workflow activation.
 
 The previous “hard freeze at end of 2026-09-05” sequence is superseded prospectively by the current requirement to make the system remotely deployable and production-usable rather than freezing known production blockers.
 
-The production target now requires:
+The production target requires **all** of the following simultaneously:
 
+- actual project cash cost = USD 0;
 - remote serving with no local dependency;
-- real user IAM;
+- real user IAM through a USD-zero eligible path;
 - protected CI/CD;
 - production observability;
 - remote load/SLO evidence;
 - backup/recovery/HA evidence where claimed;
 - human semantic calibration;
 - measured operational value;
-- hosted provider/model selection by controlled comparison;
+- hosted provider/model selection by controlled comparison among USD-zero eligible candidates;
 - complete live frontend visibility.
 
-Cost remains measured and bounded. Any non-zero spend requires explicit owner authorization; USD0 is no longer a universal architecture eligibility rule for the future production serving path.
+There is no paid fallback in the project-selection policy. Paid products may be researched as external references, but they are ineligible for final selection while the user-specified USD0 rule remains active.
 
 ## 12. Immediate critical path
 
 ```text
-1. merge repository cleanup / canonical rebaseline
-2. systematic remote hosting + managed PostgreSQL decision
-3. remote production deployment with production-local-dependency guard
-4. standards-based IAM + multi-user/tenant acceptance
+1. merge repository cleanup / corrected canonical rebaseline
+2. systematic USD0-eligible remote hosting + PostgreSQL decision
+3. remote USD0 production deployment with local-dependency + paid-spillover guards
+4. USD0 standards-based IAM + multi-user/tenant acceptance
 5. main protection + deploy pipeline + rollback
-6. production telemetry/health correlation
+6. production telemetry/health correlation using USD0-eligible components
 7. remote load/soak → evidence-based SLO
 8. backup/failover/recovery → measured RTO/RPO where claimed
 9. human semantic calibration
 10. manual-vs-assisted operational-value study
-11. hosted provider/model tournament
+11. hosted USD0 provider/model tournament
 12. adaptive challengers only after P0 closure
 13. final production freeze/evidence bundle
 ```
@@ -270,6 +282,8 @@ Do not claim:
 
 - the product is already remotely deployed production infrastructure;
 - a production provider/model is selected;
+- Cloudflare is selected merely because it satisfies USD0;
+- a paid service is eligible for final selection under the current hard constraint;
 - OAuth/OIDC/enterprise SSO is implemented;
 - human semantic calibration is complete;
 - engineer minutes saved without real human observations;
@@ -282,4 +296,4 @@ Do not claim:
 
 ## 14. State update rule
 
-Update this file when **current state** changes. Do not rewrite frozen ADRs/results to match newer decisions. New evidence may prospectively supersede old decision roles while preserving historical bytes/provenance.
+Update this file when **current state** changes. Do not rewrite frozen ADRs/results to match newer decisions. New evidence may prospectively supersede old decision roles while preserving historical bytes/provenance. User-specified hard constraints, including USD 0, remain binding until the user explicitly changes them.
