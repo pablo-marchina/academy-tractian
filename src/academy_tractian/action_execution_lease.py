@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from concurrent.futures import Future
+from contextlib import contextmanager
 from dataclasses import dataclass
-from threading import Event, Lock, Thread
+from threading import Event, Lock, Thread, local
 from time import perf_counter
-from typing import Any, Protocol
+from typing import Any, Iterator, Protocol
 
 
 ACTION_EXECUTION_LEASE_SCHEMA_VERSION = "action-execution-lease-v1"
@@ -74,6 +75,103 @@ class ActionExecutionLeaseGuard:
     def assert_active(self) -> None:
         if not self.store.is_current_owner(self.claim):
             raise ActionExecutionLeaseLost("action_execution_lease_not_current")
+
+
+class ActionExecutionLeaseContext:
+    """Thread-local guard context for the action worker only.
+
+    Confirmation/setup happens before a lease exists and therefore sees no active guard. Once the
+    worker starts, the exact claim is installed for that thread so transport, custody, ledger and
+    safe-observability adapters can fence every sensitive operation without changing the frozen
+    action engine's public interfaces.
+    """
+
+    def __init__(self) -> None:
+        self._local = local()
+
+    def current(self) -> ActionExecutionLeaseGuard | None:
+        value = getattr(self._local, "guard", None)
+        return value if isinstance(value, ActionExecutionLeaseGuard) else None
+
+    def assert_if_active(self) -> None:
+        guard = self.current()
+        if guard is not None:
+            guard.assert_active()
+
+    @contextmanager
+    def activate(self, guard: ActionExecutionLeaseGuard) -> Iterator[None]:
+        previous = getattr(self._local, "guard", None)
+        self._local.guard = guard
+        try:
+            yield
+        finally:
+            if previous is None:
+                try:
+                    delattr(self._local, "guard")
+                except AttributeError:
+                    pass
+            else:
+                self._local.guard = previous
+
+
+class LeaseContextGuardedTransport:
+    """Assert the action lease at the last boundary before an external request."""
+
+    def __init__(self, delegate: Any, context: ActionExecutionLeaseContext) -> None:
+        self.delegate = delegate
+        self.context = context
+
+    def request(self, request: Any) -> Any:
+        self.context.assert_if_active()
+        return self.delegate.request(request)
+
+
+class LeaseContextGuardedObservabilitySink:
+    """Fence browser-safe action projection when a worker has lost ownership."""
+
+    def __init__(self, delegate: Any, context: ActionExecutionLeaseContext) -> None:
+        self.delegate = delegate
+        self.context = context
+        # FailIsolatedObservabilityPublisher detects telemetry on storage-backed sinks.
+        self.telemetry = getattr(delegate, "telemetry", None)
+
+    def publish(self, *, run: Any, event: Any, evidence: Any) -> None:
+        self.context.assert_if_active()
+        self.delegate.publish(run=run, event=event, evidence=evidence)
+
+
+class LeaseContextGuardedCustody:
+    """Delegate custody reads; fence worker-time state transitions."""
+
+    def __init__(self, delegate: Any, context: ActionExecutionLeaseContext) -> None:
+        self.delegate = delegate
+        self.context = context
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.delegate, name)
+
+    def transition(self, **kwargs: Any) -> bool:
+        self.context.assert_if_active()
+        return bool(self.delegate.transition(**kwargs))
+
+
+class LeaseContextGuardedLedger:
+    """Fence idempotency claims and terminal ledger writes for the active worker."""
+
+    def __init__(self, delegate: Any, context: ActionExecutionLeaseContext) -> None:
+        self.delegate = delegate
+        self.context = context
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.delegate, name)
+
+    def claim(self, **kwargs: Any) -> bool:
+        self.context.assert_if_active()
+        return bool(self.delegate.claim(**kwargs))
+
+    def mark(self, **kwargs: Any) -> None:
+        self.context.assert_if_active()
+        self.delegate.mark(**kwargs)
 
 
 @dataclass(slots=True)
