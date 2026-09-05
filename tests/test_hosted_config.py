@@ -42,6 +42,17 @@ def _serving_env() -> dict[str, str]:
     }
 
 
+def _cloudflare_serving_env() -> dict[str, str]:
+    return {
+        **_oidc_env(),
+        "ACADEMY_PROVIDER": "cloudflare",
+        "ACADEMY_MODEL": "@cf/nvidia/nemotron-3-120b-a12b",
+        "CLOUDFLARE_API_TOKEN": "test-cloudflare-token",
+        "CLOUDFLARE_ACCOUNT_ID": "account123",
+        "ACADEMY_TRACTIAN_BASE_URL": "https://tractian.example.com",
+    }
+
+
 def test_hosted_config_allows_infrastructure_validation_before_provider_selection() -> None:
     env = _base_env()
     config = HostedProductConfig.from_environment(env)
@@ -124,6 +135,27 @@ def test_hosted_config_requires_provider_model_and_tractian_endpoint_for_serving
         "api_key_configured": True,
     }
     assert "test-provider-key" not in repr(ready.sanitized_summary())
+
+
+def test_cloudflare_hosted_config_requires_account_id_and_never_exposes_it() -> None:
+    env = _cloudflare_serving_env()
+    missing_account = dict(env)
+    missing_account.pop("CLOUDFLARE_ACCOUNT_ID")
+    with pytest.raises(ValueError, match="cloudflare_account_id_required"):
+        HostedProductConfig.from_environment(missing_account, require_serving_ready=True)
+
+    ready = HostedProductConfig.from_environment(env, require_serving_ready=True)
+    assert ready.provider_account_id == "account123"
+    assert ready.sanitized_summary()["provider"] == {
+        "selection": "cloudflare",
+        "model": "@cf/nvidia/nemotron-3-120b-a12b",
+        "candidate_id": "cloudflare:@cf/nvidia/nemotron-3-120b-a12b",
+        "api_key_configured": True,
+        "account_id_configured": True,
+    }
+    rendered = repr(ready.sanitized_summary())
+    assert env["CLOUDFLARE_API_TOKEN"] not in rendered
+    assert env["CLOUDFLARE_ACCOUNT_ID"] not in rendered
 
 
 def test_hosted_config_rejects_model_without_provider_or_invalid_pair() -> None:
