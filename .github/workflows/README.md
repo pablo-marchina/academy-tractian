@@ -2,7 +2,7 @@
 
 `.github/workflows/` contains both the **current product CI surface** and a large set of historical/experimental execution wrappers retained for provenance.
 
-Workflow presence is not authorization. Current project state comes from [`docs/CURRENT-PROJECT-STATUS.md`](../../docs/CURRENT-PROJECT-STATUS.md), and active execution priorities come from [`docs/DELIVERY-PLAN.md`](../../docs/DELIVERY-PLAN.md).
+Workflow presence is not authorization. Current project state comes from [`docs/ACTIVE-PROJECT-STATUS.md`](../../docs/ACTIVE-PROJECT-STATUS.md), and active execution priorities come from [`docs/DELIVERY-PLAN.md`](../../docs/DELIVERY-PLAN.md). The legacy `CURRENT-PROJECT-STATUS.md` path is frozen/hash-pinned evidence and must not be used as mutable state.
 
 ## Current required product CI
 
@@ -23,7 +23,14 @@ These workflows represent the active product regression surface. Changes to thei
 
 ## Specialized active validation
 
-Additional workflows may remain useful for targeted validation, benchmarking or diagnosis, for example PostgreSQL operational/recovery, load/concurrency and hard-freeze checks. Their presence does not make their outputs stronger than the current canonical status/acceptance documents.
+Additional workflows remain useful for targeted validation, benchmarking, diagnosis and production hardening. This includes PostgreSQL operational/recovery checks, remote-production build/runtime checks, load/concurrency checks and hard-freeze validation. Their presence does not make their outputs stronger than the current canonical status/acceptance documents.
+
+`repository-branch-hygiene.yml` is a repository-maintenance workflow, not a product acceptance gate. It has two deliberately narrow responsibilities:
+
+1. perform the one-time 2026-09-05 deletion sweep using the exact audited allowlist in `docs/archive/legacy-branches-2026-09-05.txt`;
+2. after that, delete only same-repository head branches of PRs that GitHub reports as actually merged.
+
+It never glob-deletes arbitrary new development branches and refuses to delete `main`.
 
 ## Historical / experimental workflows
 
@@ -67,4 +74,4 @@ Prefer:
 3. matrix jobs for equivalent variants;
 4. scripts/modules for shared logic rather than duplicated YAML.
 
-Every new workflow should have an explicit lifecycle: `required`, `specialized`, `experimental`, or `historical-one-shot`.
+Every new workflow should have an explicit lifecycle: `required`, `specialized`, `repository-maintenance`, `experimental`, or `historical-one-shot`.
