@@ -21,6 +21,8 @@ on:
       - "tests/test_semantic_review_collection.py"
       - "tests/test_semantic_annotation_sources.py"
       - "tests/test_postgres_operational_value_v5.py"
+      - "tests/test_postgres_observability_store.py"
+      - "tests/test_postgres_multi_instance_product.py"
       - ".github/workflows/full-product-playwright.yml"
   workflow_dispatch:
 
@@ -102,6 +104,7 @@ jobs:
           tests/test_postgres_operational_value_v5.py
           tests/test_postgres_product_api.py
           tests/test_postgres_observability_store.py
+          tests/test_postgres_multi_instance_product.py
           tests/test_multiuser_product_api.py
           tests/test_action_product_api.py
 
