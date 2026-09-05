@@ -113,7 +113,8 @@ class RuntimeHandoffStore(Protocol):
     """Durable multi-replica queue/lease contract for read-only runtime executions only.
 
     Consequential action executions deliberately do not use this automatic replay path.
-    A generation token fences completion/failure writes from stale workers after handoff.
+    A generation token fences tool access, projection writes and terminal state from stale workers
+    after handoff.
     """
 
     def ready(self) -> bool: ...
@@ -135,6 +136,14 @@ class RuntimeHandoffStore(Protocol):
         lease_seconds: float,
         limit: int,
     ) -> tuple[RuntimeHandoffClaim, ...]: ...
+
+    def is_current_owner(
+        self,
+        *,
+        run_id: str,
+        owner_instance_id: str,
+        claim_generation: int,
+    ) -> bool: ...
 
     def renew(
         self,
