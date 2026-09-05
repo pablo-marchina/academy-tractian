@@ -7,6 +7,7 @@ dependencies = [
   "pydantic>=2.6,<3",
   "fastapi>=0.141.1,<0.142",
   "psycopg[binary,pool]>=3.2,<4",
+  "PyJWT[crypto]>=2.10,<3",
   "uvicorn>=0.52.4,<0.53",
 ]
 
