@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Callable
 
 from fastapi import FastAPI
@@ -174,6 +175,7 @@ def create_postgres_action_capable_product_app(
     transport_factory: Callable[[], RequestTransport],
     context_provider: RuntimeContextProvider,
     authorization_resolver: ActionAuthorizationResolver,
+    db_path: str | Path | None = None,
     schema: str = "academy_operational",
     initialize_schema: bool = False,
     max_workers: int = 4,
@@ -184,11 +186,13 @@ def create_postgres_action_capable_product_app(
     """Create the promoted PostgreSQL production topology.
 
     All mutable operational state and the sanitized observability/evaluation read model share
-    the qualified PostgreSQL substrate. No local database/file path is accepted by this
-    production constructor. Serving with ``initialize_schema=False`` remains fail-closed and is
-    the recommended path after the explicit migration step.
+    the qualified PostgreSQL substrate. ``db_path`` is a temporary source-compatibility argument
+    for existing callers and is deliberately ignored; no local observability file is created or
+    read by this production constructor. Serving with ``initialize_schema=False`` remains
+    fail-closed after the explicit migration step.
     """
 
+    del db_path
     database = PostgresOperationalDatabase(
         internal_dsn=internal_dsn,
         scoped_dsn=scoped_dsn,
