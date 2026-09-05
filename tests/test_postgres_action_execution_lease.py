@@ -8,7 +8,6 @@ from uuid import uuid4
 import pytest
 from psycopg import connect, sql
 
-from academy_tractian.action_safety import ResourceCompanyBinding
 from academy_tractian.observability import safe_run_id
 from academy_tractian.postgres_action_execution_lease import PostgresActionExecutionLeaseStore
 from academy_tractian.postgres_action_operational import (
@@ -20,7 +19,6 @@ from academy_tractian.postgres_operational import (
     PostgresRunAccessStore,
     PostgresRunExecutionStore,
 )
-from academy_tractian.production_actions_v2 import ProductionActionPrincipal
 from academy_tractian.runtime import canonical_tool_registry
 
 
@@ -100,7 +98,11 @@ def _seed_action(database: PostgresOperationalDatabase):
 
     custody = PostgresPendingActionCustody(database, initialize=True)
     ledger = PostgresActionIdempotencyLedger(database, initialize=True)
-    lease_store = PostgresActionExecutionLeaseStore(database, initialize=True)
+    lease_store = PostgresActionExecutionLeaseStore(
+        database,
+        initialize=True,
+        orphan_grace_seconds=5,
+    )
     tool = canonical_tool_registry()["reprocess_analysis"]
     pending = custody.create_or_get(
         origin_raw_run_id=origin_raw,
@@ -146,10 +148,23 @@ def _expire(database: PostgresOperationalDatabase, action_id: str) -> None:
             )
 
 
+def _age_lease_less_action(database: PostgresOperationalDatabase, action_id: str) -> None:
+    with database.internal_pool.connection() as connection:
+        with connection.transaction():
+            connection.execute(
+                f"""
+                UPDATE "{database.schema}".pending_actions
+                SET updated_at = CURRENT_TIMESTAMP - INTERVAL '10 seconds'
+                WHERE action_id = %s
+                """,
+                (action_id,),
+            )
+
+
 def test_healthy_action_lease_is_not_reconciled_or_reclaimed(postgres_fixture) -> None:
     database = _database(postgres_fixture)
     try:
-        action_id, execution_run, custody, ledger, executions, leases, _ = _seed_action(database)
+        action_id, execution_run, custody, _, executions, leases, _ = _seed_action(database)
         claim = leases.acquire(
             action_id=action_id,
             execution_run_id=execution_run,
@@ -209,10 +224,24 @@ def test_expired_action_lease_converges_uncertain_and_never_transfers(postgres_f
         database.close()
 
 
-def test_executing_action_without_lease_is_fail_safe_uncertain(postgres_fixture) -> None:
+def test_recent_executing_action_without_lease_gets_setup_grace(postgres_fixture) -> None:
     database = _database(postgres_fixture)
     try:
         action_id, execution_run, custody, ledger, executions, leases, key_sha = _seed_action(database)
+        report = leases.reconcile_expired()
+        assert report.actions_marked_uncertain == ()
+        assert custody.get_safe(action_id).state == "EXECUTING"
+        assert ledger.get(key_sha)["state"] == "CLAIMED"  # type: ignore[index]
+        assert executions.get(execution_run).state == "accepted"  # type: ignore[union-attr]
+    finally:
+        database.close()
+
+
+def test_stale_executing_action_without_lease_is_fail_safe_uncertain(postgres_fixture) -> None:
+    database = _database(postgres_fixture)
+    try:
+        action_id, execution_run, custody, ledger, executions, leases, key_sha = _seed_action(database)
+        _age_lease_less_action(database, action_id)
         report = leases.reconcile_expired()
         assert report.actions_marked_uncertain == (action_id,)
         assert custody.get_safe(action_id).state == "UNCERTAIN"
