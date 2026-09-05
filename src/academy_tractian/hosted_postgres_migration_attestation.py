@@ -256,16 +256,20 @@ def inspect_hosted_postgres_migration(
             """,
             (list(schemas),),
         ).fetchall()
+        # Ask PostgreSQL's privilege engine directly instead of relying on information_schema's
+        # current-session role visibility. The attestation must prove what the scoped role can read,
+        # even when the internal/owner role is not a member of that scoped role.
         grants = connection.execute(
             """
-            SELECT table_schema || '.' || table_name
-            FROM information_schema.role_table_grants
-            WHERE grantee = %s
-              AND privilege_type = 'SELECT'
-              AND table_schema = ANY(%s)
+            SELECT n.nspname || '.' || c.relname
+            FROM pg_class AS c
+            JOIN pg_namespace AS n ON n.oid = c.relnamespace
+            WHERE n.nspname = ANY(%s)
+              AND c.relkind = 'r'
+              AND has_table_privilege(%s, c.oid, 'SELECT')
             ORDER BY 1
             """,
-            (scoped_role, list(schemas)),
+            (list(schemas), scoped_role),
         ).fetchall()
 
         meta: list[MetaVersion] = []
