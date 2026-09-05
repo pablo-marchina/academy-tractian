@@ -17,10 +17,11 @@ class PostgresActionExecutionLeaseStore:
     Reconciliation converts the action, its execution run and any consumed idempotency claim to
     UNCERTAIN, because the external side effect may already have occurred.
 
-    ``orphan_grace_seconds`` closes the small confirmation setup window in which custody has
-    atomically moved to EXECUTING but the accepted execution row/lease has not yet been written.
-    A recent lease-less action is left alone; a periodically observed lease-less action older than
-    the grace converges to UNCERTAIN. An explicitly expired lease is uncertain immediately.
+    ``orphan_grace_seconds`` closes only the small confirmation setup window in which custody has
+    atomically moved to EXECUTING and the action execution is still ``accepted`` before its lease
+    is written. A ``running`` action without a lease is never a healthy new-flow state: workers
+    transition to running only after acquiring the lease, so restart recovery fences that state
+    immediately. An explicitly expired lease is also uncertain immediately.
     """
 
     def __init__(
@@ -251,12 +252,23 @@ class PostgresActionExecutionLeaseStore:
                     SELECT a.action_id, a.execution_run_id
                     FROM "{self.schema}".pending_actions AS a
                     LEFT JOIN {self._table()} AS l USING (action_id)
+                    LEFT JOIN "{self.schema}".run_executions AS e
+                      ON e.run_id = a.execution_run_id
+                     AND e.execution_kind = 'action'
                     WHERE a.state = 'EXECUTING'
                       AND (
                           l.lease_expires_at <= CURRENT_TIMESTAMP
                           OR (
                               l.action_id IS NULL
-                              AND a.updated_at <= CURRENT_TIMESTAMP - (%s * INTERVAL '1 second')
+                              AND (
+                                  e.state = 'running'
+                                  OR e.state NOT IN ('accepted', 'running')
+                                  OR (
+                                      (e.state = 'accepted' OR e.state IS NULL)
+                                      AND a.updated_at <= CURRENT_TIMESTAMP
+                                          - (%s * INTERVAL '1 second')
+                                  )
+                              )
                           )
                       )
                     ORDER BY a.action_id
