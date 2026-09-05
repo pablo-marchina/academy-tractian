@@ -1,43 +1,49 @@
 # Academy × TRACTIAN — Architecture, Stack and Techniques
 
-**Status:** ACTIVE / canonical architecture document  
-**Checkpoint:** 2026-09-02 20:20 BRT  
-**Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
-**Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
-**TAPI crosswalk:** [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md)
+**Status:** ACTIVE / canonical final-P0 architecture  
+**Checkpoint:** 2026-09-05 BRT  
+**Accepted main baseline:** `d3bed06b132212c85b126f56708863d45f64e03e`  
+**Post-merge gate:** `final-ci-required` run #386 / `required-gate = success`  
+**Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)
 
-This document owns the current integrated architecture, stack, techniques and framework decision state. Historical ADRs remain authoritative for their original scopes.
+Historical ADRs and experiments remain authoritative for their original checkpoints. This document owns the current integrated architecture.
 
 ## 1. Architecture principles
 
-- updated TAPI requires one solution containing Agent + Evaluation;
+- Agent + Evaluation are one delivered product;
 - runtime and evaluator remain isolated;
-- model/provider never controls identity or evaluation seed;
-- all real TRACTIAN tools execute through one typed execution boundary;
-- consequential actions fail closed through deterministic authorization/confirmation/idempotency boundaries;
-- every meaningful observable transition is traceable;
-- frontend observes safe projections, never raw sensitive traces;
-- realtime telemetry cannot alter agent semantics;
-- adaptive intelligence may optimize investigation/stopping/escalation only inside hard deterministic safety caps;
-- every material stack/framework/topology choice is preceded by systematic comparison and evidence;
-- USD0 external-service constraint remains binding.
+- provider/model never owns identity, authorization, evaluation seed or gold truth;
+- `HarnessRunner` remains the exclusive real TRACTIAN tool-execution boundary;
+- consequential actions fail closed through deterministic validation, private custody, confirmation, idempotency and fencing;
+- PostgreSQL rows are the durable serving truth;
+- frontend observes sanitized projections, never raw sensitive traces or chain-of-thought;
+- realtime wakeups cannot alter agent semantics;
+- adaptive/provider/framework changes require EDD evidence and a material Pareto win;
+- P0 external-service cost remains USD0.
 
-## 2. Delivered main product architecture
+## 2. Delivered product topology
 
 ```text
 React Operator Control Room
-        ↑ REST reads/commands + genuine SSE
+        ↑ REST commands/reads + genuine SSE
 FastAPI Product / Observability API
-        ↑ safe projection / persisted telemetry
+        ↑ signed RuntimeContextProvider + tenant authorization
+PostgreSQL shared serving substrate
+        ├── run ownership / execution
+        ├── tenant RLS
+        ├── runtime handoff work items + lease generation
+        ├── action custody + idempotency claims
+        ├── non-transferable action execution leases
+        ├── safe observability/evaluation rows
+        └── semantic-review / operational-value state
+        ↑
 RealtimeProductionRuntime
         ↓
-trusted RuntimeContextProvider
-        ↓
-DecisionSource / provider-neutral model boundary
+provider-neutral DecisionSource
         ↓
 AgentController
         ↓
-HarnessRunner                         ← exclusive real tool boundary
+HarnessRunner                     ← exclusive real tool boundary
         ↓
 18-operation typed ToolSpec registry
         ↓
@@ -53,47 +59,70 @@ normalized observation/evidence
         ↓
 AgentController
         ↓
-FINAL | CLARIFY | ABSTAIN | ESCALATE
+FINAL | CLARIFY | ABSTAIN | ESCALATE | ACTION proposal
         ↓
 RunTrace
         ↓
-ProductionEvaluator                  ← post-runtime only
+ProductionEvaluator               ← post-runtime only
         ↓
-safe evaluation projection
+safe PostgreSQL projection
         ↓
-DuckDB analytical/read model
-        ↓
-FastAPI REST/SSE
+REST/SSE + LISTEN/NOTIFY wakeup + durable cursor fallback
         ↓
 frontend / analytics / evidence drill-down
 ```
 
-`POST /api/runs` uses this real path. There is no demo-only runtime.
+`POST /api/runs` uses this path. There is no demo-only runtime.
 
-## 3. Consequential-action architecture — PR #143
+## 3. Read-only cross-replica runtime handoff
 
-The final action design is intentionally two-phase:
+Read-only investigation work is represented by durable PostgreSQL work items. Claiming uses row locking (`FOR UPDATE ... SKIP LOCKED`) plus:
+
+- expiring owner lease;
+- monotonically increasing generation/fencing token;
+- private handoff payload unavailable to browser projections;
+- terminal cleanup of private handoff state.
+
+Tested semantics:
+
+```text
+healthy owner A        → B cannot double-claim/interfere
+expired owner A        → B may claim a new generation
+stale generation A     → cannot renew/finalize/publish as current owner
+recovered B            → may continue to evaluation/terminal persistence
+terminal completion    → private handoff payload removed
+```
+
+This proves repository-level algorithmic cross-replica correctness. It does not prove deployed HA, autoscaling, RTO/RPO or multi-region behavior.
+
+## 4. Consequential-action architecture
+
+Actions intentionally use different lease semantics from read-only work.
 
 ```text
 agent ACTION proposal
         ↓
 deterministic permission/scope/schema/justification validation
         ↓
-private Action Custody
+private PostgreSQL Action Custody
         ↓
 PENDING_CONFIRMATION
         ↓
-authenticated operator confirms opaque action_id
+authenticated operator confirms opaque action_id only
         ↓
 current authorization + host action kill switch revalidated
         ↓
 persistent atomic idempotency claim
         ↓
+non-transferable action execution lease
+        ↓
 exact custodied payload
         ↓
 HarnessRunner / B2 / TRACTIAN transport
         ↓
-accepted=true OR safe failure/UNCERTAIN
+lease-fenced custody/ledger/observability/terminal persistence
+        ↓
+ACCEPTED | NOT_ACCEPTED | safe failure | UNCERTAIN
         ↓
 separate realtime action RunTrace
         ↓
@@ -102,57 +131,188 @@ ProductionActionEvaluator
 
 Properties:
 
-- proposal is never equivalent to execution;
-- browser confirmation cannot provide raw args, identity, permissions, scope or idempotency key;
-- private action custody is separate from safe observability storage;
-- ambiguous post-claim failure is not automatically retried;
-- requester isolation hides action existence from other requesters;
-- confirmed action follows the same SSE/reducer/trace frontend mechanism as ordinary runs;
-- frozen read-only ProductionRuntime and ProductionEvaluator semantics remain unchanged.
+- proposal is never execution;
+- browser cannot inject action args, requester identity, permissions, scope or idempotency key at confirmation;
+- healthy action owner renews only its exact lease generation;
+- action lease expiry/missing stale ownership never transfers to another worker;
+- lost ownership converges ambiguous state to `UNCERTAIN`;
+- stale late responses cannot overwrite `UNCERTAIN` with success/failure terminal claims;
+- duplicate confirmation cannot produce a second product transport attempt;
+- restart/lease expiry never authorizes replay.
 
-This PR is currently open but its latest head has passed the full repository workflow gate.
+This is **not** distributed exactly-once external side effects. That stronger guarantee requires the TRACTIAN API to participate in a shared idempotency/fencing protocol.
 
-## 4. Realtime observability architecture — implemented
+## 5. Realtime observability
 
 ```text
-canonical runtime event creation
-        ↓
-append immutable RunTrace event
+runtime/evaluator transition
         ↓
 SafeObservabilityProjector
         ↓
-SafeEvent / SafeRun / SafeEvidence / SafeEvaluation
+PostgreSQL SafeRun / SafeEvent / SafeEvidence / SafeEvaluation rows
         ↓
-transactional DuckDB persistence
+commit durable row + bounded NOTIFY cursor payload
         ↓
-FastAPI REST reads + SSE cursor stream
+one LISTEN connection per application replica
         ↓
-idempotent React event reducer
+local wakeup fan-out to SSE waiters
         ↓
-Live Run / Trace / Architecture / Health / Analytics
+durable sequence read / Last-Event-ID catch-up
+        ↓
+idempotent React reducer
 ```
 
-Implemented properties:
+Durable rows remain authoritative. NOTIFY is only a latency optimization; missed notifications recover through bounded durable polling/cursor reads.
 
-- event publication is fail-isolated from runtime execution;
-- safe event sequence is canonical per run;
-- persisted catch-up supports `Last-Event-ID` reconnect;
-- browser reducer is idempotent by safe event id;
-- slow/disconnected clients are outside the runtime execution path;
-- no fake progress or hidden model-thinking event is generated;
-- provider/adapter operability is observed passively rather than by quota-consuming health probes;
-- production health exposes actual runtime/API/resource/SSE telemetry.
+RT-WAKEUP-001 evidence retained:
 
-The delivery currently makes only a tested single-process realtime claim. Horizontal multi-instance realtime requires a separately tested shared durable stream before it may be claimed.
+- one hosted-runner sample was efficiency-inconclusive with every hard safety/delivery gate green;
+- identical same-SHA rerun, with unchanged thresholds/protocol, passed;
+- passing rerun: polling p95 `52.10 ms`, LISTEN/NOTIFY p95 `23.71 ms`, idle durable-read reduction `62.5%`.
 
-## 5. Frontend architecture — implemented
+Do not infer a deterministic production latency SLO from hosted CI.
+
+## 6. Persistence and dependency stack
+
+### Serving
+
+| Layer | Technology | State |
+|---|---|---|
+| Language | Python >=3.11 | PREFERRED/FROZEN P0 |
+| Typed schemas | Pydantic >=2.6,<3 | PREFERRED |
+| API | FastAPI >=0.141.1,<0.142 | PREFERRED |
+| ASGI | Uvicorn >=0.52.4,<0.53 | PREFERRED |
+| Serving persistence | PostgreSQL + psycopg | PROMOTED |
+| Tenant boundary | PostgreSQL RLS + scoped role | PROMOTED/tested |
+| Realtime wakeup | PostgreSQL LISTEN/NOTIFY + durable fallback | PROMOTED |
+| Runtime handoff | PostgreSQL queue + generation lease | PROMOTED/tested |
+| Consequential action fencing | PostgreSQL non-transferable lease | PROMOTED/tested |
+| Agent orchestration | custom `AgentController` | P0 `NO_CHANGE` |
+| Tool execution | `HarnessRunner` | FROZEN hard boundary |
+| Tool contracts | 18 typed `ToolSpec`s | FROZEN P0 |
+| Evaluation | deterministic-first custom evaluator/campaigns | FROZEN primary layer |
+| Tests | pytest | PREFERRED |
+| Packaging | hatchling/wheel | PREFERRED/proved |
+
+DuckDB is **not** a production dependency. It remains only in optional `dev` / `operational-store-benchmark` extras for historical/test compatibility.
+
+### Frontend
+
+- React 19
+- TypeScript
+- Vite
+- TanStack Query
+- Apache ECharts
+- React Flow / `@xyflow/react`
+- Vitest
+- Playwright
+- committed `package-lock.json` + `npm ci`
+
+## 7. Identity and tenant isolation
+
+The promoted product uses the project-owned `academy-runtime-v1` signed bearer envelope with HMAC-SHA256 verification and server-owned organization/user/identity/permission claims.
+
+It is deliberately not described as OAuth/OIDC/JWT/enterprise SSO.
+
+PostgreSQL RLS is an independent data boundary: scoped serving reads use a non-owner, non-superuser, non-`BYPASSRLS` role plus transaction-local organization context.
+
+## 8. Agent/evaluation techniques
+
+### Typed iterative loop
+
+```text
+decision
+→ optional typed tool proposal
+→ deterministic B1/B2/B3 checks
+→ execution
+→ normalized observation
+→ next decision or terminal outcome
+```
+
+### First-class safe outcomes
+
+- orient/final;
+- investigate;
+- clarify;
+- abstain;
+- escalate;
+- bounded action proposal / governed confirmation.
+
+### Deterministic safety envelope
+
+Always deterministic:
+
+- identity/tenant/permissions;
+- ToolSpec/schema validation;
+- resource/action authorization;
+- confirmation/idempotency/no-replay;
+- privacy/field deny-list;
+- hard turn/tool/resource caps;
+- gold/evaluator-private boundary.
+
+### Evaluation
+
+```text
+RunTrace
+→ deterministic structural/safety/trajectory evaluation
+→ safe evaluation projection
+→ Eval Lab / EDD comparison
+```
+
+Semantic review infrastructure exists, but no semantic judge becomes a production gate without real blinded human labels, adjudication and measured judge-vs-human agreement. Current state remains `NOT_READY_HUMAN_DATA`.
+
+## 9. EDD and architecture decision state
+
+Material changes require:
+
+```text
+requirement/gap
+→ baseline
+→ systematic research
+→ preregistered metrics + hard gates
+→ controlled candidate
+→ repeated/sliced comparison
+→ uncertainty/failure analysis
+→ PROMOTE / REJECT / INCONCLUSIVE / NO_CHANGE
+→ regression
+```
+
+Current P0 decisions:
+
+| Area | State |
+|---|---|
+| PostgreSQL serving state | PROMOTED |
+| PostgreSQL safe observability/evaluation | PROMOTED |
+| LISTEN/NOTIFY wakeup | PROMOTED |
+| read-only cross-replica handoff | PROMOTED/tested |
+| consequential action non-transferable lease | PROMOTED/tested |
+| custom AgentController | `NO_CHANGE` / P0 baseline |
+| LangGraph | not promoted |
+| multi-agent | not justified |
+| RAG/vector/hybrid retrieval | not justified |
+| persistent cross-request memory | not justified |
+| adaptive runtime stopping | not promoted; evaluator-only diagnostic |
+| adaptive provider routing | deferred; no selected production providers |
+| provider/model | `NO_SELECTION` |
+
+## 10. Provider experiment state
+
+D01 and D02 are consumed governed experiments. D02's controlled 512→1024 completion-cap change improved several public metrics, but both candidates still failed frozen M1/M4/M7 promotion gates.
+
+Therefore:
+
+- production provider/model selection = `NO_SELECTION`;
+- D01/D02 must not be replayed;
+- any P1 provider/model comparison requires a new experiment ID, current factual revalidation, new preregistration and fresh authorization.
+
+## 11. Frontend architecture
 
 ```text
 FastAPI REST/SSE
       ↓
-TanStack Query + live event reducer
+TanStack Query + idempotent live reducer
       ↓
-React application
+React Operator Control Room
       ├── Mission Control
       ├── Live Run Cockpit
       ├── Run Explorer
@@ -161,7 +321,7 @@ React application
       ├── Architecture Explorer
       ├── Evidence Explorer
       ├── Output Lineage
-      ├── Action Control (PR #143)
+      ├── Action Control
       ├── Tools & Policy analytics
       ├── Eval Lab
       ├── Provider D01/D02 Lab
@@ -169,294 +329,23 @@ React application
       └── Production Health
 ```
 
-Every run-specific analytical surface uses the same safe run identity/scope and must drill toward exact safe event/evidence rows where semantically meaningful.
+Safe outputs may show component decisions, tools, evidence, policies/reason codes, latency/resource metrics and evaluation. Hidden chain-of-thought is never part of the product contract.
 
-## 6. Current dependency stack
+## 12. Bounded non-claims
 
-### Backend/runtime
+The final P0 architecture does not establish:
 
-| Layer | Current technology | Decision state |
-|---|---|---|
-| Language | Python >=3.11 | PREFERRED/FROZEN scope |
-| Typed schemas | Pydantic >=2.6,<3 | PREFERRED |
-| Product/API | FastAPI >=0.141.1,<0.142 | PREFERRED |
-| ASGI serving | Uvicorn >=0.52.4,<0.53 | PREFERRED |
-| Analytics/read store | DuckDB >=1.5.5,<1.6 | PREFERRED for analytics |
-| Agent orchestration | custom `AgentController` | PREFERRED baseline; HITL revalidation pending |
-| Tool execution | `HarnessRunner` | FROZEN hard boundary |
-| Tool contracts | typed `ToolSpec` registry | FROZEN current API scope |
-| Evaluation | deterministic-first custom evaluator/campaigns | FROZEN primary layer |
-| Tests | pytest | PREFERRED |
-| Packaging | hatchling/wheel | PREFERRED/proved |
-| Provider experiment route | direct Cloudflare Workers AI | D01/D02 experiment route, not yet production selection |
+- deployed Cloud Run/Cloud SQL HA;
+- production RTO/RPO/uptime/autoscaling/multi-region failover;
+- external exactly-once actions;
+- enterprise OIDC/SSO;
+- production provider selection;
+- completed human semantic calibration;
+- measured engineer-time savings/business value;
+- production capacity/SLO from CI load tests;
+- superiority/necessity of LangGraph, RAG, multi-agent, Redis/Kafka/Temporal/MCP;
+- GitHub branch-protection enforcement while GitHub reports it disabled.
 
-### Frontend
+## 13. Change gate after hard freeze
 
-Current pinned direct dependencies in `frontend/package.json`:
-
-| Layer | Version |
-|---|---:|
-| React | 19.2.8 |
-| React DOM | 19.2.8 |
-| TanStack Query | 5.102.8 |
-| React Flow / `@xyflow/react` | 12.11.5 |
-| Apache ECharts | 6.1.0 |
-| TypeScript | 7.0.2 |
-| Vite | 8.2.2 |
-| Vitest | 4.1.11 |
-
-The final freeze must additionally commit a deterministic transitive dependency lockfile and use lockfile installation in CI.
-
-## 7. Agent techniques
-
-### Typed tool-augmented iterative loop
-
-```text
-decision
-→ optional typed tool proposal
-→ deterministic policy/validation
-→ execution
-→ normalized observation
-→ next decision or terminal outcome
-```
-
-Do not claim hidden chain-of-thought. Observable structured decisions and traces are the evaluation surface.
-
-### Evidence-aware outcomes
-
-First-class behavior:
-
-- orient/final;
-- investigate;
-- clarify;
-- abstain;
-- escalate;
-- bounded action proposal.
-
-### Bounded planning/stopping
-
-- hard max turns;
-- hard max tool calls;
-- safe terminal behavior on exhaustion/failure;
-- no uncontrolled provider retries/fallbacks on governed experiment paths.
-
-### Deterministic safety envelope
-
-- B1 typed/schema validation;
-- B2 permission/resource/action authorization;
-- B3 evidence/authorization where applicable;
-- action confirmation/custody/idempotency/no-replay;
-- identity/seed outside model control;
-- browser privacy deny-list.
-
-### Robustness to probabilistic API behavior
-
-Explicitly evaluate:
-
-- complete;
-- partial;
-- inconclusive;
-- conflict;
-- unavailable;
-- tool/provider failures;
-- invalid arguments;
-- denied consequential actions;
-- insufficient evidence.
-
-### Repeated-run stability
-
-Use repeated execution and grouped/sliced metrics rather than one favorable run.
-
-### Eval-Driven Development
-
-Material candidates are compared against a frozen baseline with hard integrity gates, group-aware metrics and explicit `PROMOTE / REJECT / INCONCLUSIVE` semantics.
-
-## 8. Evaluation architecture
-
-Current primary layer:
-
-```text
-RunTrace
-→ deterministic structural/safety/trajectory evaluator
-→ safe evaluation projection
-→ Eval Lab / EDD delta gate
-```
-
-Required closure before final freeze where deterministic scoring is insufficient:
-
-```text
-human-labelled calibration sample
-        ↓
-semantic judge candidate(s)
-        ↓
-judge-vs-human agreement/error analysis
-        ↓
-accept or reject judge
-        ↓
-calibrated semantic layer
-```
-
-Semantic dimensions may include operational conclusion quality, evidence support, unsupported claims, escalation/handoff usefulness and customer-safe communication.
-
-Semantic judges cannot see evaluator-private/gold information that would leak into runtime, and they cannot displace deterministic ground truth where exact checks exist.
-
-## 9. Adaptive-policy candidate architecture
-
-The current fixed/bounded controller is the baseline.
-
-Authorized candidate under #129:
-
-```text
-observable evidence state
-  ├── evidence sufficiency
-  ├── contradiction/uncertainty
-  ├── previous response mode
-  ├── action risk
-  ├── remaining hard budget
-  └── marginal evidence gain
-        ↓
-adaptive choice
-  ├── continue investigation
-  ├── clarify
-  ├── finalize
-  ├── abstain
-  ├── escalate
-  └── propose bounded action
-```
-
-Hard authorization/schema/privacy/idempotency/resource limits remain deterministic. The adaptive layer is adopted only after a controlled EDD comparison proves material Pareto benefit.
-
-## 10. Runtime/HITL revalidation
-
-ADR-004 froze the custom controller for the original P0 scope, when durable pause/resume was not required.
-
-The two-phase action workflow creates a legitimate new materiality question.
-
-Prospective comparison under #92:
-
-```text
-A — current custom AgentController + private action custody
-B — LangGraph-compatible durable/checkpoint/HITL adapter
-```
-
-Provider, ToolSpecs, HarnessRunner, safety semantics, cases and evaluator must remain fixed.
-
-Measure task/trace equivalence, pause/resume, restart recovery, duplicate-action rate, failure containment, latency/resource overhead, dependency/maintenance complexity, clean reproduction and debuggability.
-
-No framework migration is pre-authorized. `NO_CHANGE` is preferred when the current architecture remains Pareto-optimal.
-
-## 11. Operational state/storage revalidation
-
-DuckDB is the selected sanitized analytics/read-model baseline.
-
-A separate decision applies to mutable action/HITL operational state:
-
-```text
-A — current DuckDB single-process custody/idempotency
-B — local PostgreSQL operational state
-```
-
-Compare only to support the production claim we intend to make.
-
-If single-process/single-node is the final bounded claim and restart/concurrency tests pass, the current baseline can remain.
-
-If multi-process durable action execution is claimed, a tested multi-process-capable operational store is required.
-
-Potential final separation if evidence supports it:
-
-```text
-PostgreSQL → mutable operational state
-DuckDB     → safe analytical telemetry
-```
-
-## 12. Provider experiment architecture
-
-D01:
-
-```text
-8 public probes × 2 repeats × 2 models = 32 attempts
-completion cap 512
-Workers Free / USD0
-no hidden retries/fallback
-Pareto / NO_SELECTION permitted
-```
-
-Observed: 24/24 generic CLIENT_FAILURE attempts landed at the exact 512 output-token cap.
-
-D02 holds provider/models/tasks/prompt/schema/evaluator/topology constant and changes only:
-
-```text
-completion cap 1024
-sanitized failure subtype
-```
-
-This is a controlled provider/interface diagnosis, not an architecture bake-off.
-
-## 13. Current framework/technology decision states
-
-| Technology/area | Current state | Rule |
-|---|---|---|
-| Native typed tools | PREFERRED | MCP only if interoperability need becomes material |
-| MCP | NO_CHANGE | not required by updated TAPI |
-| Custom AgentController | PREFERRED baseline | revalidate only for new HITL/restart requirement |
-| LangGraph | QUALIFIED alternative | compare prospectively under #92; no automatic migration |
-| Multi-agent | NO_CHANGE | no measured topology gap |
-| RAG/vector/hybrid/reranking | NO_CHANGE | no measured retrieval gap |
-| Persistent memory | NO_CHANGE | no demonstrated cross-request requirement |
-| Adaptive investigation/stopping | RESEARCH / #129 | adopt only on EDD Pareto improvement |
-| Adaptive provider routing | UNASSESSED/DEFERRED | requires >=2 production-eligible providers |
-| FastAPI | PREFERRED | strong fit for current Python product/API/SSE boundary |
-| REST + SSE | PREFERRED | one-way runtime telemetry + REST commands |
-| React + Vite | PREFERRED | internal SPA/control-room fit; no SSR/SEO requirement |
-| ECharts | PREFERRED | schema/dataset-driven dynamic analytics |
-| React Flow | PREFERRED | trace/architecture graph fit |
-| DuckDB analytics | PREFERRED | local analytical telemetry |
-| DuckDB operational mutation | REVALIDATE | bounded by final production topology claim |
-| PostgreSQL operational state | CANDIDATE | compare only if broader durability/concurrency claim is needed |
-| OpenTelemetry | OPTIONAL EXPORT | not primary product truth/UI |
-| Grafana/Phoenix/Langfuse | OPTIONAL | not primary delivery UI |
-| Redis/shared stream | CONDITIONAL | only for actually tested multi-instance realtime |
-
-## 14. Architecture/output explanation contract
-
-For a selected run, the frontend must be able to answer:
-
-1. which delivered components participated;
-2. which component produced each safe output;
-3. which safe evidence/input fed it;
-4. which policy/tool transition occurred next;
-5. which output became terminal;
-6. which evaluation occurred afterward;
-7. whether a consequential action was proposed, pending, confirmed, executed or uncertain.
-
-Output origin vocabulary:
-
-```text
-MODEL
-CONTROLLER
-POLICY
-TOOL
-OBSERVATION
-EVALUATOR
-SYSTEM
-```
-
-Runtime-time and evaluator-time information remain visually and architecturally separate.
-
-## 15. Architecture change gate
-
-Any material proposal — framework, topology, store, RAG, memory, routing, deployment or major frontend data path — must state:
-
-```text
-material TAPI/P0/P1 gap
-→ current/simple baseline
-→ systematic research
-→ credible alternatives
-→ preregistered metrics/hard gates
-→ controlled comparison
-→ uncertainty/failure/production-fit analysis
-→ Pareto decision
-→ ADR/reversal trigger
-```
-
-Without evidence of material benefit, `NO_CHANGE` is the correct architecture decision.
+At end of 2026-09-05, feature/visual/architecture contracts freeze. After that point, only delivery-blocking fixes are allowed, each with targeted regression and explicit evidence. P1 experiments must not alter the frozen delivery candidate.
