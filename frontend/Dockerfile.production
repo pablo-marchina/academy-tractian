@@ -6,7 +6,8 @@ FROM node:24.20.0-alpine3.24 AS build
 
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false \
     NPM_CONFIG_FUND=false \
-    NPM_CONFIG_AUDIT=false
+    NPM_CONFIG_AUDIT=false \
+    VITE_BROWSER_AUTH_ENABLED=true
 
 WORKDIR /build
 COPY package.json package-lock.json ./
