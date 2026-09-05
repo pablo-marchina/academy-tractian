@@ -50,7 +50,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
-      - name: Validate immutable provider-free preregistration
+      - name: Validate immutable provider-free preregistration and workflow surface
         run: python scripts/validate_cloud_deployment_bakeoff_preregistration.py
 
       - name: Regress bakeoff and prerequisite hard gates
@@ -61,12 +61,3 @@ jobs:
           tests/test_managed_state_identity_static_screening.py
           tests/test_hosted_state_identity_pilot.py
           tests/test_live_deployment_attestation.py
-
-      - name: Assert workflow contains no live cloud secret or deployment surface
-        shell: bash
-        run: |
-          if grep -Eni 'secrets\.|terraform|pulumi|kubectl|oci |gcloud |wrangler|vercel deploy|railway (up|deploy)|curl https?://' \
-            .github/workflows/cloud-deployment-bakeoff-preregistration-provider-free.yml; then
-            echo "Provider-free preregistration workflow contains a forbidden live-cloud surface." >&2
-            exit 1
-          fi

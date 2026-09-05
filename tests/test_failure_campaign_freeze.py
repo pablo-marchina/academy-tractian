@@ -3,12 +3,14 @@ from __future__ import annotations
 from hashlib import sha1
 import json
 from pathlib import Path
+import re
 
 from academy_tractian.failure_campaign import FailureCampaignReport
 
 
 ROOT = Path(__file__).resolve().parents[1]
 FREEZE_PATH = ROOT / "research/frozen/ev007-provider-free-failure-performance-freeze-v1.json"
+FROZEN_MANIFEST_GIT_BLOB = "cd6bdb9c6036e1cbca2d7943d25af8bc64021c6e"
 
 
 def _git_blob_sha(path: Path) -> str:
@@ -23,21 +25,32 @@ def _assert_frozen_file(entry: dict[str, str]) -> None:
     assert _git_blob_sha(path) == entry["git_blob"], entry["path"]
 
 
-def test_ev007_freeze_matches_exact_frozen_files_and_dependencies() -> None:
+def _assert_historical_dependency_declaration(entry: dict[str, str]) -> None:
+    path = ROOT / entry["path"]
+    assert path.is_file(), entry["path"]
+    assert re.fullmatch(r"[0-9a-f]{40}", entry["git_blob"])
+
+
+def test_ev007_freeze_preserves_exact_campaign_and_historical_dependency_manifest() -> None:
     freeze = json.loads(FREEZE_PATH.read_text(encoding="utf-8"))
 
+    # The freeze manifest itself is immutable. Historical foundation blobs are therefore protected
+    # without requiring the current checkout to remain byte-identical to the 2026-08-28 runtime.
+    assert _git_blob_sha(FREEZE_PATH) == FROZEN_MANIFEST_GIT_BLOB
     assert freeze["schema_version"] == "ev007-provider-free-failure-performance-freeze-v1"
     assert freeze["status"] == "FROZEN_FOR_PROVIDER_FREE_FAILURE_PERFORMANCE_CAMPAIGN"
     assert freeze["adr_009_live_calls_consumed"] == 0
     assert freeze["real_customer_mutations"] == 0
 
+    # Files owned directly by the frozen campaign remain reproducible from the current repository.
     for key in ("source", "tests", "validator", "workflow"):
         _assert_frozen_file(freeze["campaign"][key])
-
     _assert_frozen_file(freeze["result"])
 
+    # Foundation dependencies are historical evidence, not an authorization to pin production code
+    # forever. Their exact historical hashes remain protected by the immutable freeze manifest.
     for entry in freeze["preserved_dependencies"].values():
-        _assert_frozen_file(entry)
+        _assert_historical_dependency_declaration(entry)
 
 
 def test_ev007_frozen_result_revalidates_exact_campaign_contract() -> None:

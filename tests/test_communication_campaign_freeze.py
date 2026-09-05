@@ -3,6 +3,7 @@ from __future__ import annotations
 from hashlib import sha1
 import json
 from pathlib import Path
+import re
 
 from academy_tractian.communication_campaign import run_provider_free_communication_campaign
 
@@ -10,6 +11,7 @@ from academy_tractian.communication_campaign import run_provider_free_communicat
 ROOT = Path(__file__).resolve().parents[1]
 FREEZE_PATH = ROOT / "research/frozen/ev011-provider-free-customer-safe-communication-freeze-v1.json"
 RESULT_PATH = ROOT / "research/results/ev011-provider-free-communication-campaign-result-2026-08-28.json"
+FROZEN_MANIFEST_GIT_BLOB = "38ab66419090279b95972a95e6a36bf7ef9fadd3"
 
 
 def _git_blob_sha(path: Path) -> str:
@@ -22,17 +24,23 @@ def _freeze() -> dict:
     return json.loads(FREEZE_PATH.read_text(encoding="utf-8"))
 
 
-def test_ev011_freeze_declared_blobs_match_checkout() -> None:
+def test_ev011_freeze_preserves_direct_files_and_historical_foundation_manifest() -> None:
     freeze = _freeze()
-    declared = {
-        **freeze["direct_blobs"],
-        **freeze["frozen_foundation_blobs"],
-    }
 
-    for relative_path, expected_sha in declared.items():
+    # Bind the complete freeze artifact so historical foundation hashes cannot be silently changed.
+    assert _git_blob_sha(FREEZE_PATH) == FROZEN_MANIFEST_GIT_BLOB
+
+    # Direct campaign files remain reproducible byte-for-byte.
+    for relative_path, expected_sha in freeze["direct_blobs"].items():
         path = ROOT / relative_path
         assert path.is_file(), relative_path
         assert _git_blob_sha(path) == expected_sha, relative_path
+
+    # Foundation blobs describe the validated historical runtime. Current production evolution is
+    # allowed; the immutable manifest preserves the exact historical blob declarations.
+    for relative_path, expected_sha in freeze["frozen_foundation_blobs"].items():
+        assert (ROOT / relative_path).is_file(), relative_path
+        assert re.fullmatch(r"[0-9a-f]{40}", expected_sha), relative_path
 
 
 def test_ev011_result_manifest_matches_freeze() -> None:

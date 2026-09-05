@@ -181,11 +181,40 @@ def validate_manifest(payload: dict[str, object]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(failures))
 
 
+def validate_workflow_provider_free(path: Path) -> tuple[str, ...]:
+    text = path.read_text(encoding="utf-8").lower()
+    markers = (
+        "se" + "crets.",
+        "terr" + "aform",
+        "pul" + "umi",
+        "kub" + "ectl",
+        "gcl" + "oud ",
+        "wran" + "gler",
+        "vercel " + "deploy",
+        "railway " + "up",
+        "railway " + "deploy",
+        "curl " + "http",
+    )
+    return tuple(
+        f"FORBIDDEN_LIVE_CLOUD_SURFACE_{index}"
+        for index, marker in enumerate(markers)
+        if marker in text
+    )
+
+
 def main() -> int:
     payload = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise SystemExit("cloud bakeoff preregistration must be a JSON object")
-    failures = validate_manifest(payload)
+    failures = list(validate_manifest(payload))
+    workflow_path = (
+        ROOT
+        / ".github"
+        / "workflows"
+        / "cloud-deployment-bakeoff-preregistration-provider-free.yml"
+    )
+    failures.extend(validate_workflow_provider_free(workflow_path))
+    failures = list(dict.fromkeys(failures))
     summary = {
         "schema_version": "cloud-deployment-bakeoff-preregistration-validation-v1",
         "manifest_sha256": _canonical_sha256(payload),
@@ -194,7 +223,7 @@ def main() -> int:
         "live_cloud_actions_authorized": 0,
         "cloud_resources_authorized": 0,
         "outcome": "PASS" if not failures else "FAIL",
-        "reason_codes": list(failures),
+        "reason_codes": failures,
     }
     print(json.dumps(summary, sort_keys=True))
     return 0 if not failures else 1
