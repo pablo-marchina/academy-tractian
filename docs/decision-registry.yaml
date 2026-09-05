@@ -32,21 +32,34 @@ decisions:
     hard_constraints: [USD0, no_paid_spillover, HTTPS, remote, Docker_or_equivalent_reproducible_release]
     metrics: [deployment_success, cold_start_ms, http_p95_ms, availability_limits, quota_behavior]
     hard_gates: [cash_cost_usd_equals_0, no_local_dependency, tls, safe_quota_exhaustion]
-    evidence: []
-    decision_state: RESEARCHED
-    reversal_trigger: A currently eligible hosted alternative materially improves production fit under the same hard gates.
+    evidence:
+      - clean Railway production-api service created from release/production-final
+      - repository Dockerfile configured as service build path
+      - HTTPS Railway service domain allocated
+      - non-secret fail-closed production configuration installed
+      - serving boot remains unproved until approved secret injection
+    decision_state: QUALIFIED
+    reversal_trigger: A currently eligible hosted alternative materially improves production fit under the same hard gates or Railway fails the remote boot/capacity/cost gates.
 
   - id: DP-002
     question: Which remote PostgreSQL path should hold production operational truth?
     requirement_or_risk: Durable multi-user tenant-safe PostgreSQL state at USD0.
-    baseline: Existing Neon hosted-pilot is provisioned but not migrated; previously created scoped role is not yet acceptable evidence.
+    baseline: Existing Neon hosted-pilot was provisioned but initially had no product schema and included an unsafe BYPASSRLS role that must not be used as scoped evidence.
     alternatives: [Neon, other USD0 PostgreSQL-compatible candidates, NO_SELECTION]
     hard_constraints: [USD0, TLS, PostgreSQL, NOBYPASSRLS_scoped_role, durable_state]
-    metrics: [db_rtt_p95_ms, wake_latency_ms, connection_limits, reconnect_correctness]
+    metrics: [schema_readiness, tenant_isolation, db_rtt_p95_ms, wake_latency_ms, connection_limits, reconnect_correctness]
     hard_gates: [cash_cost_usd_equals_0, tenant_escape_equals_0, schema_migration_pass, reconnect_catchup_pass]
-    evidence: []
-    decision_state: RESEARCHED
-    reversal_trigger: Current free-tier limitations prevent the measured production envelope or another eligible candidate dominates it.
+    evidence:
+      - academy_operational schema applied to Neon main after isolated-branch validation
+      - 15/15 required product tables present on main
+      - 7/7 required operational metadata entries present
+      - observability schema metadata validated
+      - academy_tractian_rls has rolsuper=false and rolbypassrls=false
+      - run_ownership is owned by academy_tractian_owner, not the scoped role
+      - isolated validation branch RLS test exposed org-a and denied org-b under academy.organization_id=org-a
+      - academy_live_scoped explicitly excluded because it has BYPASSRLS
+    decision_state: PREFERRED
+    reversal_trigger: Neon fails remote reconnect/cursor-catch-up/capacity/cost gates, free-tier limitations prevent the required measured production envelope, or another eligible candidate materially dominates it.
 
   - id: DP-003
     question: Which standards-based browser IAM architecture should be promoted?
