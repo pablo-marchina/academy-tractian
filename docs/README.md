@@ -15,9 +15,10 @@ Use one document per question:
 | Where are we now? | [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md) |
 | What are we building next and by when? | [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md) |
 | What is the architecture/stack/technique set? | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| Where does code live / where should a change go? | [`CODEBASE-MAP.md`](CODEBASE-MAP.md) |
 | How does this satisfy the TAPI? | [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md) |
 | What must be true for final acceptance? | [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md) |
-| How do I install, reproduce, demo and recover? | [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md) |
+| How do I install, reproduce and recover? | [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md) |
 | What evidence supports the rubric? | [`RUBRIC-TO-EVIDENCE.md`](RUBRIC-TO-EVIDENCE.md) |
 | What governance rules constrain changes? | [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md) |
 | Why was a material decision made? | [`adr/README.md`](adr/README.md) + `adr/*` |
@@ -34,6 +35,7 @@ May be updated as evidence/state changes:
 - `CURRENT-PROJECT-STATUS.md`
 - `DELIVERY-PLAN.md`
 - `ARCHITECTURE.md`
+- `CODEBASE-MAP.md`
 - `TAPI-DELIVERY-COVERAGE-2026-09-02.md`
 - `DELIVERY-ACCEPTANCE.md`
 - `FINAL-HANDOFF-RUNBOOK.md`
@@ -92,16 +94,26 @@ A historical document does not become current truth merely because it remains in
 | Path | Role |
 |---|---|
 | `src/academy_tractian/` | production runtime/evaluator/provider/control surfaces |
+| `frontend/` | React/TypeScript product UI and browser tests |
 | `research/e2/` | accepted controller/tool/trace/evaluation harness |
 | `research/experiments/` | preregistration/design/eligibility artifacts |
 | `research/frozen/` | immutable experiment contracts/inputs |
 | `research/results/` | machine-readable results/closures/checkpoints |
 | `research/live/` | intentionally committed live evidence |
-| `scripts/` | deterministic validators/utilities |
-| `tests/` | production/regression tests |
+| `scripts/` | thin deterministic validators/utilities/reporting CLIs |
+| `tests/` | backend product/regression/integration tests |
 | `docs/adr/` | material decision history |
 | `docs/progress/` | chronological freeze/governance records |
 | `docs/archive/` | superseded narrative/planning material already safe to archive |
+| `.github/workflows/` | required CI plus preserved experimental/historical workflows |
+
+Navigation rules for the large code/research/test/script surfaces live in:
+
+- [`CODEBASE-MAP.md`](CODEBASE-MAP.md)
+- [`../research/README.md`](../research/README.md)
+- [`../scripts/README.md`](../scripts/README.md)
+- [`../tests/README.md`](../tests/README.md)
+- [`../.github/workflows/README.md`](../.github/workflows/README.md)
 
 ## 5. Cleanup policy
 
@@ -125,6 +137,7 @@ When a material state changes, update only the documents that own that question:
 - state/authorization → `CURRENT-PROJECT-STATUS.md`;
 - priorities/deadline → `DELIVERY-PLAN.md`;
 - durable architecture/stack → `ARCHITECTURE.md` + ADR when material;
+- code ownership/navigation → `CODEBASE-MAP.md`;
 - requirement/DoD → TAPI coverage + `DELIVERY-ACCEPTANCE.md`;
 - operator commands/recovery → `FINAL-HANDOFF-RUNBOOK.md`;
 - historical event → append to progress/evidence, never copy into every active document.
