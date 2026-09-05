@@ -10,6 +10,7 @@ from research.e2.transport import RequestTransport
 from .action_product_api import create_action_capable_product_app
 from .operational_value_collection import attach_operational_value_collection_api
 from .operational_value_pilot import OperationalPilotManifest, OperationalPilotPacket
+from .postgres_action_execution_lease import PostgresActionExecutionLeaseStore
 from .postgres_action_operational import (
     PostgresActionIdempotencyLedger,
     PostgresPendingActionCustody,
@@ -46,6 +47,7 @@ def _required_tables_ready(database: PostgresOperationalDatabase) -> bool:
         "runtime_work_items",
         "pending_actions",
         "action_claims",
+        "action_execution_leases",
         "operational_pilot_tasks",
         "operational_pilot_assignments",
         "semantic_review_tasks",
@@ -82,12 +84,14 @@ def initialize_postgres_operational_schema(
     try:
         PostgresPendingActionCustody(database, initialize=True)
         PostgresActionIdempotencyLedger(database, initialize=True)
+        action_lease_store = PostgresActionExecutionLeaseStore(database, initialize=True)
         runtime_handoff_store = PostgresRuntimeHandoffStore(database, initialize=True)
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=True)
         semantic_store = PostgresSemanticReviewStore(database, initialize=True)
         observability_store = PostgresObservabilityStore(database, initialize=True)
         if (
             not database.ready()
+            or not action_lease_store.ready()
             or not runtime_handoff_store.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
@@ -120,11 +124,13 @@ def register_postgres_operational_pilot_packet(
         store = PostgresOperationalPilotStoreV5(database, initialize=False)
         observability_store = PostgresObservabilityStore(database, initialize=False)
         runtime_handoff_store = PostgresRuntimeHandoffStore(database, initialize=False)
+        action_lease_store = PostgresActionExecutionLeaseStore(database, initialize=False)
         if (
             not database.ready()
             or not store.ready()
             or not observability_store.ready()
             or not runtime_handoff_store.ready()
+            or not action_lease_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
@@ -158,11 +164,13 @@ def register_postgres_semantic_review_packet(
         store = PostgresSemanticReviewStore(database, initialize=False)
         observability_store = PostgresObservabilityStore(database, initialize=False)
         runtime_handoff_store = PostgresRuntimeHandoffStore(database, initialize=False)
+        action_lease_store = PostgresActionExecutionLeaseStore(database, initialize=False)
         if (
             not database.ready()
             or not store.ready()
             or not observability_store.ready()
             or not runtime_handoff_store.ready()
+            or not action_lease_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
@@ -192,6 +200,9 @@ def create_postgres_action_capable_product_app(
     realtime_fallback_poll_ms: int = 1000,
     runtime_handoff_lease_seconds: float = 15.0,
     runtime_handoff_scan_ms: int = 500,
+    action_execution_lease_seconds: float = 15.0,
+    action_execution_lease_scan_ms: int = 500,
+    action_execution_orphan_grace_seconds: float = 5.0,
 ) -> FastAPI:
     """Create the promoted no-local PostgreSQL production topology.
 
@@ -205,9 +216,10 @@ def create_postgres_action_capable_product_app(
     rows remain authoritative; NOTIFY is only a wakeup and a bounded fallback cursor read
     preserves eventual delivery if a notification is missed.
 
-    Read-only runtime execution uses a PostgreSQL SKIP LOCKED lease queue. The HTTP replica may
-    claim immediately for latency, but ownership is durable and can move to another replica after
-    lease expiry. Consequential actions do not use this automatic replay path.
+    Read-only runtime execution uses a PostgreSQL SKIP LOCKED lease queue and may move to another
+    replica after expiry. Consequential action execution deliberately uses a different,
+    non-transferable lease: a healthy owner renews it, while expiry means UNCERTAIN and never
+    authorizes another transport attempt.
     """
 
     database = PostgresOperationalDatabase(
@@ -224,6 +236,11 @@ def create_postgres_action_capable_product_app(
     try:
         custody = PostgresPendingActionCustody(database, initialize=initialize_schema)
         ledger = PostgresActionIdempotencyLedger(database, initialize=initialize_schema)
+        action_lease_store = PostgresActionExecutionLeaseStore(
+            database,
+            initialize=initialize_schema,
+            orphan_grace_seconds=action_execution_orphan_grace_seconds,
+        )
         runtime_handoff_store = PostgresRuntimeHandoffStore(
             database,
             initialize=initialize_schema,
@@ -237,6 +254,7 @@ def create_postgres_action_capable_product_app(
         )
         if (
             not database.ready()
+            or not action_lease_store.ready()
             or not runtime_handoff_store.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
@@ -252,6 +270,7 @@ def create_postgres_action_capable_product_app(
             authorization_resolver=authorization_resolver,
             custody_store=custody,
             action_ledger=ledger,
+            action_execution_lease_store=action_lease_store,
             run_access_store=PostgresRunAccessStore(database),
             execution_store=PostgresRunExecutionStore(database),
             runtime_handoff_store=runtime_handoff_store,
@@ -264,6 +283,8 @@ def create_postgres_action_capable_product_app(
             realtime_fallback_poll_ms=realtime_fallback_poll_ms,
             runtime_handoff_lease_seconds=runtime_handoff_lease_seconds,
             runtime_handoff_scan_ms=runtime_handoff_scan_ms,
+            action_execution_lease_seconds=action_execution_lease_seconds,
+            action_execution_lease_scan_ms=action_execution_lease_scan_ms,
         )
         attach_operational_value_collection_api(
             app,
@@ -287,5 +308,6 @@ def create_postgres_action_capable_product_app(
     app.state.operational_backend = "postgresql"
     app.state.realtime_backend = "postgresql_listen_notify"
     app.state.runtime_handoff_backend = "postgresql_skip_locked_lease"
+    app.state.action_execution_lease_backend = "postgresql_non_transferable_lease"
     app.state.local_test_storage_enabled = False
     return app

@@ -3,11 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from .action_execution_lease import ActionExecutionLeaseStore
+
 
 @dataclass(frozen=True, slots=True)
 class ActionRecoveryReport:
     executing_actions_marked_uncertain: tuple[str, ...]
     claimed_ledger_entries_marked_uncertain: tuple[str, ...]
+    execution_runs_marked_uncertain: tuple[str, ...] = ()
 
 
 def _duckdb_recovery(*, custody: Any, ledger: Any) -> ActionRecoveryReport:
@@ -111,13 +114,32 @@ def _is_legacy_duckdb_adapter(value: Any, class_name: str) -> bool:
     )
 
 
-def reconcile_orphaned_actions(*, custody: Any, ledger: Any) -> ActionRecoveryReport:
-    """Fail-safe action recovery across qualified operational backends.
+def reconcile_orphaned_actions(
+    *,
+    custody: Any,
+    ledger: Any,
+    lease_store: ActionExecutionLeaseStore | None = None,
+) -> ActionRecoveryReport:
+    """Fail-safe action recovery without interpreting restart as retry permission.
 
-    PostgreSQL stores own their recovery transaction boundaries. The legacy DuckDB baseline
-    remains available only through the explicit dev/test adapter and is imported lazily. No
-    backend is allowed to interpret restart as permission to retry a consequential action.
+    Promoted multi-replica PostgreSQL composition supplies a non-replay action lease store. A
+    healthy lease proves that another replica still owns the single action attempt and therefore
+    startup must leave it untouched. Only missing/expired ownership converges to UNCERTAIN across
+    custody, idempotency ledger and execution state.
+
+    The legacy PostgreSQL and DuckDB recovery seams remain for compatibility tests that do not
+    enable multi-replica action liveness. They are deliberately conservative and never replay.
     """
+
+    if lease_store is not None:
+        if not lease_store.ready():
+            raise RuntimeError("action execution lease store is not ready")
+        recovered = lease_store.reconcile_expired()
+        return ActionRecoveryReport(
+            executing_actions_marked_uncertain=recovered.actions_marked_uncertain,
+            claimed_ledger_entries_marked_uncertain=recovered.ledger_entries_marked_uncertain,
+            execution_runs_marked_uncertain=recovered.execution_runs_marked_uncertain,
+        )
 
     recover_custody = getattr(custody, "reconcile_executing", None)
     recover_ledger = getattr(ledger, "reconcile_claimed_for_actions", None)
