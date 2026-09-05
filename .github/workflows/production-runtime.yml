@@ -1,6 +1,7 @@
 name: production-runtime
 
 on:
+  workflow_call:
   pull_request:
     paths:
       - "src/**"
@@ -124,6 +125,7 @@ jobs:
           )
           from academy_tractian.postgres_product_api import create_postgres_action_capable_product_app
           from academy_tractian.production_config import RemoteProductionConfig
+          from academy_tractian.release_identity import ArtifactReleaseIdentity
           from academy_tractian.remote_migrate import migrate
           from academy_tractian.remote_production import create_remote_production_app
           from academy_tractian.remote_server import app_factory
@@ -136,6 +138,7 @@ jobs:
           assert callable(create_postgres_action_capable_product_app)
           assert callable(create_authenticated_postgres_action_capable_product_app)
           assert callable(RemoteProductionConfig.from_env)
+          assert callable(ArtifactReleaseIdentity.model_validate)
           assert callable(create_remote_production_app)
           assert callable(app_factory)
           assert callable(migrate)
@@ -200,15 +203,15 @@ jobs:
         run: |
           grep -F 'python:3.11.16-slim-bookworm@sha256:528257d48c1da0dcecc2e725d1ae34498d60c965f1241e39cd6a85a8859bdf84' Dockerfile
 
-      - name: Build provider-neutral production image
+      - name: Build provider-neutral production image from immutable Git identity
         run: |
           docker build \
-            --build-arg ACADEMY_RELEASE_GIT_SHA="${GITHUB_SHA}" \
+            --build-arg RAILWAY_GIT_COMMIT_SHA="${GITHUB_SHA}" \
             --build-arg ACADEMY_BUILD_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             --tag academy-tractian-remote:${GITHUB_SHA} \
             .
 
-      - name: Verify release identity and non-root runtime contract
+      - name: Verify baked file, OCI label and non-root runtime contract
         run: |
           IMAGE="academy-tractian-remote:${GITHUB_SHA}"
           test "$(docker image inspect "$IMAGE" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "${GITHUB_SHA}"
@@ -217,6 +220,46 @@ jobs:
           test "$(docker image inspect "$IMAGE" --format '{{.Config.User}}')" = "10001:10001"
           test "$(docker run --rm --entrypoint sh "$IMAGE" -c 'id -u')" = "10001"
           test "$(docker run --rm --entrypoint sh "$IMAGE" -c 'id -g')" = "10001"
+          docker run --rm --entrypoint python "$IMAGE" -c \
+            'import json,os; p=json.load(open("/app/.academy-release-identity.json")); assert p == {"git_sha": os.environ["EXPECTED_SHA"], "schema_version": "academy-release-artifact-v1"}' \
+            -e EXPECTED_SHA="${GITHUB_SHA}"
+
+      - name: Reject malformed or absent source identity at image build
+        run: |
+          if docker build --build-arg RAILWAY_GIT_COMMIT_SHA=abc123 --tag academy-tractian-invalid-sha . >/tmp/invalid-sha.log 2>&1; then
+            cat /tmp/invalid-sha.log
+            echo "image unexpectedly accepted malformed release SHA" >&2
+            exit 1
+          fi
+          grep -F "RAILWAY_GIT_COMMIT_SHA must be an exact lowercase 40-character Git SHA" /tmp/invalid-sha.log
+
+      - name: Verify runtime rejects configured or Railway SHA drift before dependencies open
+        run: |
+          IMAGE="academy-tractian-remote:${GITHUB_SHA}"
+          BAD_SHA="0000000000000000000000000000000000000000"
+          if test "${GITHUB_SHA}" = "${BAD_SHA}"; then BAD_SHA="1111111111111111111111111111111111111111"; fi
+          if docker run --rm \
+            -e ACADEMY_ENVIRONMENT=production \
+            -e ACADEMY_POSTGRES_INTERNAL_DSN='postgresql://internal:secret@db.example.invalid:5432/academy?sslmode=require' \
+            -e ACADEMY_POSTGRES_SCOPED_DSN='postgresql://scoped:secret@db.example.invalid:5432/academy?sslmode=require' \
+            -e ACADEMY_RUNTIME_IDENTITY_SECRET='runtime-identity-secret-with-more-than-32-bytes' \
+            -e ACADEMY_RUNTIME_IDENTITY_ISSUER=academy-production \
+            -e ACADEMY_RUNTIME_IDENTITY_AUDIENCE=academy-product \
+            -e ACADEMY_PUBLIC_BASE_URL='https://app.example.invalid' \
+            -e ACADEMY_RELEASE_GIT_SHA="${BAD_SHA}" \
+            -e RAILWAY_GIT_COMMIT_SHA="${GITHUB_SHA}" \
+            -e ACADEMY_DEPLOYMENT_ID=ci-release-identity-negative \
+            -e ACADEMY_COST_POLICY=usd0-hard-gate \
+            -e ACADEMY_PAID_FALLBACK_ENABLED=false \
+            -e ACADEMY_LOCAL_SERVING_ENABLED=false \
+            -e ACADEMY_PROVIDER_CALLS_ENABLED=false \
+            "$IMAGE" >/tmp/release-identity-mismatch.log 2>&1; then
+            cat /tmp/release-identity-mismatch.log
+            echo "production image unexpectedly booted with configured/artifact SHA drift" >&2
+            exit 1
+          fi
+          grep -F "production_release_identity_config_artifact_mismatch" /tmp/release-identity-mismatch.log
+          ! grep -F "connection" /tmp/release-identity-mismatch.log
 
       - name: Verify production-only dependency surface inside image
         run: |
@@ -224,12 +267,14 @@ jobs:
           docker run --rm --entrypoint python "$IMAGE" - <<'PY'
           import importlib.util
           from academy_tractian.production_config import RemoteProductionConfig
+          from academy_tractian.release_identity import load_artifact_release_identity
           from academy_tractian.remote_migrate import migrate
           from academy_tractian.remote_server import app_factory
 
           assert importlib.util.find_spec("duckdb") is None
           assert importlib.util.find_spec("httpx") is None
           assert callable(RemoteProductionConfig.from_env)
+          assert callable(load_artifact_release_identity)
           assert callable(migrate)
           assert callable(app_factory)
           print("production image runtime surface verified")
