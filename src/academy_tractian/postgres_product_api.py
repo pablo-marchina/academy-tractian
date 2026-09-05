@@ -21,6 +21,7 @@ from .postgres_operational import (
     PostgresRunExecutionStore,
 )
 from .postgres_operational_value_v5 import PostgresOperationalPilotStoreV5
+from .postgres_runtime_handoff import PostgresRuntimeHandoffStore
 from .postgres_semantic_review import PostgresSemanticReviewStore
 from .product_api import RuntimeContextProvider
 from .production_actions_v2 import ActionAuthorizationResolver
@@ -42,6 +43,7 @@ def _required_tables_ready(database: PostgresOperationalDatabase) -> bool:
     names = (
         "run_ownership",
         "run_executions",
+        "runtime_work_items",
         "pending_actions",
         "action_claims",
         "operational_pilot_tasks",
@@ -80,11 +82,13 @@ def initialize_postgres_operational_schema(
     try:
         PostgresPendingActionCustody(database, initialize=True)
         PostgresActionIdempotencyLedger(database, initialize=True)
+        runtime_handoff_store = PostgresRuntimeHandoffStore(database, initialize=True)
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=True)
         semantic_store = PostgresSemanticReviewStore(database, initialize=True)
         observability_store = PostgresObservabilityStore(database, initialize=True)
         if (
             not database.ready()
+            or not runtime_handoff_store.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
             or not observability_store.ready()
@@ -115,10 +119,12 @@ def register_postgres_operational_pilot_packet(
     try:
         store = PostgresOperationalPilotStoreV5(database, initialize=False)
         observability_store = PostgresObservabilityStore(database, initialize=False)
+        runtime_handoff_store = PostgresRuntimeHandoffStore(database, initialize=False)
         if (
             not database.ready()
             or not store.ready()
             or not observability_store.ready()
+            or not runtime_handoff_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
@@ -151,10 +157,12 @@ def register_postgres_semantic_review_packet(
     try:
         store = PostgresSemanticReviewStore(database, initialize=False)
         observability_store = PostgresObservabilityStore(database, initialize=False)
+        runtime_handoff_store = PostgresRuntimeHandoffStore(database, initialize=False)
         if (
             not database.ready()
             or not store.ready()
             or not observability_store.ready()
+            or not runtime_handoff_store.ready()
             or not _required_tables_ready(database)
         ):
             raise RuntimeError("postgres_operational_schema_not_ready")
@@ -182,6 +190,8 @@ def create_postgres_action_capable_product_app(
     actions_enabled: bool = False,
     heartbeat_interval_ms: int = 1000,
     realtime_fallback_poll_ms: int = 1000,
+    runtime_handoff_lease_seconds: float = 15.0,
+    runtime_handoff_scan_ms: int = 500,
 ) -> FastAPI:
     """Create the promoted no-local PostgreSQL production topology.
 
@@ -194,6 +204,10 @@ def create_postgres_action_capable_product_app(
     Realtime coordination uses one LISTEN/NOTIFY listener per application replica. PostgreSQL
     rows remain authoritative; NOTIFY is only a wakeup and a bounded fallback cursor read
     preserves eventual delivery if a notification is missed.
+
+    Read-only runtime execution uses a PostgreSQL SKIP LOCKED lease queue. The HTTP replica may
+    claim immediately for latency, but ownership is durable and can move to another replica after
+    lease expiry. Consequential actions do not use this automatic replay path.
     """
 
     database = PostgresOperationalDatabase(
@@ -210,6 +224,10 @@ def create_postgres_action_capable_product_app(
     try:
         custody = PostgresPendingActionCustody(database, initialize=initialize_schema)
         ledger = PostgresActionIdempotencyLedger(database, initialize=initialize_schema)
+        runtime_handoff_store = PostgresRuntimeHandoffStore(
+            database,
+            initialize=initialize_schema,
+        )
         pilot_store = PostgresOperationalPilotStoreV5(database, initialize=initialize_schema)
         semantic_store = PostgresSemanticReviewStore(database, initialize=initialize_schema)
         observability_store = PostgresObservabilityStore(
@@ -219,6 +237,7 @@ def create_postgres_action_capable_product_app(
         )
         if (
             not database.ready()
+            or not runtime_handoff_store.ready()
             or not pilot_store.ready()
             or not semantic_store.ready()
             or not observability_store.ready()
@@ -235,6 +254,7 @@ def create_postgres_action_capable_product_app(
             action_ledger=ledger,
             run_access_store=PostgresRunAccessStore(database),
             execution_store=PostgresRunExecutionStore(database),
+            runtime_handoff_store=runtime_handoff_store,
             operational_close=database.close,
             max_workers=max_workers,
             provider_calls_enabled=provider_calls_enabled,
@@ -242,6 +262,8 @@ def create_postgres_action_capable_product_app(
             heartbeat_interval_ms=heartbeat_interval_ms,
             realtime_wakeup=wakeup,
             realtime_fallback_poll_ms=realtime_fallback_poll_ms,
+            runtime_handoff_lease_seconds=runtime_handoff_lease_seconds,
+            runtime_handoff_scan_ms=runtime_handoff_scan_ms,
         )
         attach_operational_value_collection_api(
             app,
@@ -264,5 +286,6 @@ def create_postgres_action_capable_product_app(
     app.state.observability_backend = "postgresql"
     app.state.operational_backend = "postgresql"
     app.state.realtime_backend = "postgresql_listen_notify"
+    app.state.runtime_handoff_backend = "postgresql_skip_locked_lease"
     app.state.local_test_storage_enabled = False
     return app
