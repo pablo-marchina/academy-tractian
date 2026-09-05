@@ -107,6 +107,10 @@ class HorizontalRuntimeSupervisor:
         self.lease_seconds = lease_seconds
         self._renew_every_seconds = max(1.0, lease_seconds / 3.0)
         self._lock = Lock()
+        # Capacity observation + durable claim + local submit form one replica-local reservation.
+        # Without this lock concurrent HTTP request threads can all observe the same free slot,
+        # over-claim PostgreSQL work and silently queue more "running" tasks than max_workers.
+        self._dispatch_lock = Lock()
         self._active: dict[str, _ActiveClaim] = {}
         self._claims_started = 0
         self._recovery_claims_started = 0
@@ -139,20 +143,21 @@ class HorizontalRuntimeSupervisor:
     def dispatch_specific(self, run_id: str) -> Future[object] | None:
         if not self.execution_enabled():
             return None
-        with self._lock:
-            existing = self._active.get(run_id)
-            if existing is not None and not existing.future.done():
-                return existing.future
-        if self._active_count() >= self.max_workers:
-            return None
-        claim = self.handoff_store.claim_specific(
-            run_id=run_id,
-            owner_instance_id=self.instance_id,
-            lease_seconds=self.lease_seconds,
-        )
-        if claim is None:
-            return None
-        return self._submit_claim(claim)
+        with self._dispatch_lock:
+            with self._lock:
+                existing = self._active.get(run_id)
+                if existing is not None and not existing.future.done():
+                    return existing.future
+            if self._active_count() >= self.max_workers:
+                return None
+            claim = self.handoff_store.claim_specific(
+                run_id=run_id,
+                owner_instance_id=self.instance_id,
+                lease_seconds=self.lease_seconds,
+            )
+            if claim is None:
+                return None
+            return self._submit_claim(claim)
 
     def _cleanup_and_renew(self) -> None:
         now = perf_counter()
@@ -188,16 +193,17 @@ class HorizontalRuntimeSupervisor:
         self._cleanup_and_renew()
         if not self.execution_enabled():
             return
-        capacity = self.max_workers - self._active_count()
-        if capacity <= 0:
-            return
-        claims = self.handoff_store.claim_available(
-            owner_instance_id=self.instance_id,
-            lease_seconds=self.lease_seconds,
-            limit=capacity,
-        )
-        for claim in claims:
-            self._submit_claim(claim)
+        with self._dispatch_lock:
+            capacity = self.max_workers - self._active_count()
+            if capacity <= 0:
+                return
+            claims = self.handoff_store.claim_available(
+                owner_instance_id=self.instance_id,
+                lease_seconds=self.lease_seconds,
+                limit=capacity,
+            )
+            for claim in claims:
+                self._submit_claim(claim)
 
     def _execute_claim(self, claim: RuntimeHandoffClaim) -> None:
         run_id = claim.envelope.run_id
