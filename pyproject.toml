@@ -19,7 +19,9 @@ dev = [
 operational-store-benchmark = ["duckdb>=1.5.5,<1.6"]
 
 [build-system]
-requires = ["hatchling"]
+# Application releases require a stable build backend. Runtime dependency versions are
+# independently frozen in requirements-production.lock.
+requires = ["hatchling==1.32.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
