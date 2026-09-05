@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 import academy_tractian.remote_server as remote_server
 from academy_tractian.production_config import RemoteProductionConfig
+from academy_tractian.release_identity import ArtifactReleaseIdentity
 
 
 CONFIG = RemoteProductionConfig.model_validate(
@@ -24,14 +25,23 @@ CONFIG = RemoteProductionConfig.model_validate(
         "provider_calls_enabled": False,
     }
 )
+ARTIFACT_IDENTITY = ArtifactReleaseIdentity(
+    schema_version="academy-release-artifact-v1",
+    git_sha="b" * 40,
+)
 
 
-def test_infrastructure_probe_uses_provider_closed_dependencies(
+def test_infrastructure_probe_uses_provider_closed_dependencies_and_baked_identity(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: dict[str, object] = {}
 
     monkeypatch.setattr(remote_server, "load_remote_production_config", lambda: CONFIG)
+    monkeypatch.setattr(
+        remote_server,
+        "load_artifact_release_identity",
+        lambda: ARTIFACT_IDENTITY,
+    )
 
     def fake_create_remote_production_app(**kwargs):
         captured.update(kwargs)
@@ -45,6 +55,7 @@ def test_infrastructure_probe_uses_provider_closed_dependencies(
 
     app = remote_server.app_factory()
 
+    assert captured["artifact_release_identity"] == ARTIFACT_IDENTITY
     assert captured["decision_source_factory"] is remote_server.NoSelectedProviderDecisionSource
     assert captured["transport_factory"] is remote_server.NoSelectedProviderTransport
     assert captured["authorization_resolver"] is remote_server.deny_production_action_principal
@@ -57,6 +68,11 @@ def test_infrastructure_probe_refuses_provider_enablement_before_selection(
 ) -> None:
     enabled = CONFIG.model_copy(update={"provider_calls_enabled": True})
     monkeypatch.setattr(remote_server, "load_remote_production_config", lambda: enabled)
+    monkeypatch.setattr(
+        remote_server,
+        "load_artifact_release_identity",
+        lambda: ARTIFACT_IDENTITY,
+    )
 
     with pytest.raises(RuntimeError, match="NO_SELECTION"):
         remote_server.app_factory()
