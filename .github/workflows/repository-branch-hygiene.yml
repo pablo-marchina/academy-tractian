@@ -1,0 +1,99 @@
+name: repository-branch-hygiene
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/repository-branch-hygiene.yml"
+      - "docs/archive/legacy-branches-2026-09-05.txt"
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repository-branch-hygiene
+  cancel-in-progress: false
+
+jobs:
+  legacy-allowlist-sweep:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository with branch-delete credential
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Delete only the audited 2026-09-05 legacy branch allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          delete_branch() {
+            local branch="$1"
+            if [[ "$branch" == "main" ]]; then
+              echo "refusing to delete protected default branch main" >&2
+              return 1
+            fi
+
+            if git ls-remote --exit-code --heads origin "refs/heads/${branch}" >/dev/null 2>&1; then
+              echo "deleting audited legacy branch: ${branch}"
+              # A simultaneous merged-PR cleanup may win the race. Re-check the
+              # ref afterwards rather than treating a racing delete as failure.
+              git push origin --delete "${branch}" || true
+            fi
+
+            if git ls-remote --exit-code --heads origin "refs/heads/${branch}" >/dev/null 2>&1; then
+              echo "legacy branch still exists after deletion attempt: ${branch}" >&2
+              return 1
+            fi
+          }
+
+          while IFS= read -r branch || [[ -n "${branch}" ]]; do
+            branch="${branch%$'\r'}"
+            [[ -z "${branch}" || "${branch}" == \#* ]] && continue
+            delete_branch "${branch}"
+          done < docs/archive/legacy-branches-2026-09-05.txt
+
+          echo "audited legacy branch sweep complete"
+
+  delete-merged-head:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref != 'main'
+    runs-on: ubuntu-latest
+    env:
+      HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+    steps:
+      - name: Check out repository with branch-delete credential
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Delete merged same-repository head branch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${HEAD_BRANCH}" || "${HEAD_BRANCH}" == "main" ]]; then
+            echo "invalid merged head branch" >&2
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --heads origin "refs/heads/${HEAD_BRANCH}" >/dev/null 2>&1; then
+            echo "deleting merged branch: ${HEAD_BRANCH}"
+            git push origin --delete "${HEAD_BRANCH}" || true
+          fi
+
+          if git ls-remote --exit-code --heads origin "refs/heads/${HEAD_BRANCH}" >/dev/null 2>&1; then
+            echo "merged head branch still exists: ${HEAD_BRANCH}" >&2
+            exit 1
+          fi
+
+          echo "merged branch hygiene complete"
