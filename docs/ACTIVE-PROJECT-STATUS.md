@@ -19,7 +19,8 @@ project cash-cost constraint                 USD 0 HARD CONSTRAINT
 current main                                 12b4753d3e39c86f7c68f0ea7b4f321549049fc7
 final implementation branch                  release/production-final
 draft integration PR                         #196 / OPEN / DRAFT
-latest required product gate                 PASS / final-ci-required required-gate
+previous complete-head required gate         PASS
+current complete-head required gate          PENDING after release-identity hardening
 GitHub main protection                       BLOCKED_USER_ACTION / connector has no admin write
 
 production agent runtime                     IMPLEMENTED / REGRESSION PASS
@@ -29,10 +30,11 @@ PostgreSQL serving persistence               IMPLEMENTED + REMOTE SCHEMA APPLIED
 PostgreSQL observability/evaluation           IMPLEMENTED + REMOTE SCHEMA APPLIED
 realtime durable truth                       PostgreSQL rows + sequence cursor
 realtime wake-up                             LISTEN/NOTIFY + durable catch-up
-read-only cross-replica handoff              IMPLEMENTED / required gate PASS
-consequential-action safety                  IMPLEMENTED / action-lease gate PASS
+read-only cross-replica handoff              IMPLEMENTED / required gate baseline PASS
+consequential-action safety                  IMPLEMENTED / action-lease baseline PASS
 React operator control room                  IMPLEMENTED
 material decision registry                   IMPLEMENTED / ACTIVE
+backend immutable release identity           IMPLEMENTED / COMPLETE-HEAD CI PENDING
 
 Railway production-web                       ONLINE / HTTPS / US East
 Railway production-api                       CRASHED FAIL-CLOSED / missing only two Postgres DSNs
@@ -44,6 +46,7 @@ remote RLS validation                        PASS on isolated validation branch
 Neon Auth / Better Auth                      PROVISIONED on production main
 browser IAM                                  CODE + HOSTED AUTH / LIVE E2E PENDING
 
+provider tournament v3                       PREREGISTERED / PROVIDER-FREE VALIDATOR PRESENT
 production provider/model                    NO_SELECTION
 production DecisionSource                    FAIL-CLOSED placeholder
 production TRACTIAN transport                NOT COMPOSED
@@ -64,6 +67,7 @@ browser
 → Neon Auth managed session
 → same-origin /api + SSE
 → Railway production-api
+→ immutable artifact SHA verification
 → server-side session revalidation
 → server-owned user / organization / permissions
 → Neon PostgreSQL + RLS
@@ -82,32 +86,37 @@ browser
 
 No component marked OPEN may be described as production-ready before hosted evidence closes it.
 
-## 3. External infrastructure state
+## 3. Release artifact identity
+
+The backend production image now has an independent, immutable source-identity contract:
+
+```text
+Railway Git-backed build input       RAILWAY_GIT_COMMIT_SHA
+baked runtime file                   /app/.academy-release-identity.json
+identity schema                      academy-release-artifact-v1
+OCI revision                         org.opencontainers.image.revision
+public metadata schema               remote-production-release-v3
+```
+
+Image construction fails if the build SHA is missing or malformed. Serving boot fails before product/database builders if configured `ACADEMY_RELEASE_GIT_SHA` disagrees with the baked artifact, or if Railway's runtime SHA is present and disagrees with it.
+
+`production-runtime` now contains positive and negative image identity checks and is consumed by `final-ci-required`. The current complete-head CI is still pending, so this is an implementation claim, not yet a validated hosted/release claim.
+
+Hosted G2 evidence must show:
+
+```text
+release_git_sha == artifact_git_sha == exact deployed commit
+artifact_identity_verified == true
+railway_runtime_identity_verified == true  # when runtime system SHA is exposed
+```
+
+## 4. External infrastructure state
 
 ### Railway
 
-`production-web` is online on `release/production-final` with:
+`production-web` is online on `release/production-final` with React/Vite, Caddy, public HTTPS, same-origin `/auth`, same-origin `/api` + SSE, one `us-east4-eqdc4a` replica, explicit `ON_FAILURE` restart policy and `/` healthcheck.
 
-- React/Vite production build;
-- Caddy static serving;
-- public HTTPS Railway domain;
-- same-origin `/auth/*` proxy to production Neon Auth;
-- same-origin `/api/*` and `/health` proxy to `production-api.railway.internal:8000`;
-- SSE buffering disabled;
-- one replica in `us-east4-eqdc4a`;
-- explicit `ON_FAILURE` restart policy;
-- `/` deployment healthcheck.
-
-`production-api` exists separately from historical `hosted-pilot` and uses:
-
-- `release/production-final`;
-- repository production Dockerfile;
-- one replica in `us-east4-eqdc4a`;
-- explicit `ON_FAILURE` restart policy;
-- `/health` deployment healthcheck with 60 second timeout;
-- provider calls disabled;
-- actions disabled at the current infrastructure/IAM boundary;
-- managed `neon-auth` browser IAM mode.
+`production-api` exists separately from historical `hosted-pilot` and uses the repository production Dockerfile, one `us-east4-eqdc4a` replica, `ON_FAILURE`, `/health` with 60-second timeout, provider calls disabled, actions disabled and managed `neon-auth` browser IAM mode.
 
 Current boot remains intentionally fail-closed because exactly these values are absent:
 
@@ -116,27 +125,17 @@ ACADEMY_POSTGRES_INTERNAL_DSN
 ACADEMY_POSTGRES_SCOPED_DSN
 ```
 
-Those values must be inserted only through an approved Railway native secret channel.
+Those values must be inserted only through an approved Railway native secret channel. The next successful deployment must also use a configured release SHA matching the exact Git-backed build SHA; release identity drift is no longer tolerated.
 
 ### Railway Infrastructure as Code
 
-The production topology is versioned in the current Railway IaC surface:
+`.railway/railway.ts` is a named `production` partial managing only `production-api` and `production-web`. Historical `hosted-pilot` remains outside the partial. Existing Railway-managed values and the two future PostgreSQL DSNs are represented with `preserve()` and no secret value is stored in Git.
 
-```text
-.railway/railway.ts
-```
-
-The file is a named `production` partial so it manages only `production-api` and `production-web`. Historical `hosted-pilot` remains outside the partial and must not be deleted.
-
-All existing Railway-managed values and the two future PostgreSQL DSNs are represented as `preserve()`. No secret value is stored in Git. Repository validation and a dedicated IaC CI workflow guard the expected service scope and reject literal PostgreSQL URLs.
-
-A live `railway config plan`/apply remains pending before IaC ownership itself can be claimed as promoted. Dashboard/service state remains the effective platform state until that plan is reviewed and applied.
+Static validation and TypeScript DSL CI are versioned. A live `railway config plan`/apply remains pending before IaC ownership itself can be claimed as promoted.
 
 ### Neon
 
-The `academy_tractian` database contains the promoted `academy_operational` schema.
-
-Validated evidence remains:
+Validated production evidence remains:
 
 ```text
 required product tables          15 / 15
@@ -152,22 +151,32 @@ cross-tenant validation           org-a visible / org-b denied
 
 Production Neon Auth is provisioned and trusts the production-web origin. Email/password sessions are enabled; email verification is not required, so verified-email identity is not claimed.
 
-## 4. Immediate dependency gates
+## 5. Provider tournament state
+
+Provider decision state remains `NO_SELECTION`.
+
+A fresh v3 campaign is now preregistered over:
+
+```text
+17 scenarios
+× 5 repetitions
+× 2 current candidates
+= 170 future live calls / 85 per candidate
+```
+
+The campaign is partitioned into five UTC daily packets of 34 calls to respect the Cloudflare Workers AI free-neuron envelope under the project's USD0 constraint. Historical D01/D02 results are excluded from the v3 denominator. Cash cost, gold leakage, unsafe unsupported actions, policy bypass, schema validity, quota, completeness, provenance and reliability are hard gates.
+
+No v3 live run has been used to select a provider. Preregistration and provider-free validation do not constitute promotion.
+
+## 6. Immediate dependency gates
 
 ### Gate G1 — repository governance
 
 Status: `BLOCKED_USER_ACTION`.
 
-Required:
+Required: protect `main`; require pull requests; require `final-ci-required / required-gate`; require up-to-date branch; block force push; block branch deletion.
 
-- protect `main`;
-- require pull requests;
-- require `final-ci-required / required-gate`;
-- require up-to-date branch;
-- block force push;
-- block branch deletion.
-
-The connected GitHub integration does not expose an admin write action for branch protection, so this must be completed by the repository owner.
+The connected GitHub integration has no administrative branch-protection write action, so this must be completed by the repository owner.
 
 ### Gate G2 — remote backend serving
 
@@ -177,9 +186,10 @@ Required:
 
 1. insert `ACADEMY_POSTGRES_INTERNAL_DSN` in Railway `production-api`;
 2. insert `ACADEMY_POSTGRES_SCOPED_DSN` in Railway `production-api`;
-3. redeploy exact branch SHA;
-4. verify `/health`, `/api/meta/release`, both DB roles and persistence;
-5. restart and verify durable state.
+3. redeploy the exact current branch SHA;
+4. prove `/health` and `/api/meta/release` v3 exact artifact/config/runtime SHA agreement;
+5. verify both DB roles, schema/stores and persistence;
+6. restart and verify durable state/cursor.
 
 No DSN may be committed or pasted into project documentation/chat.
 
@@ -187,21 +197,13 @@ No DSN may be committed or pasted into project documentation/chat.
 
 Status: `WAITING_G2`.
 
-After backend boot:
-
-- User A / Tenant A and User B / Tenant B;
-- cross-tenant REST reads = 0;
-- cross-tenant SSE leakage = 0;
-- cross-tenant action access/confirmation = 0;
-- browser-supplied org/user/role/permissions ignored or denied;
-- same-organization multi-user behavior tested;
-- invalid/expired/mismatched/impersonated sessions fail closed.
+Hosted acceptance must prove User A/Tenant A and User B/Tenant B, zero cross-tenant REST/SSE/action leakage, correct same-organization multi-user behavior, browser-supplied org/user/role/permission authority ignored or denied, and invalid/expired/mismatched/impersonated sessions fail closed. Offline negative-gap hardening may proceed while G2 is blocked, but cannot promote IAM to READY.
 
 ### Gate G4 — hosted provider
 
-Status: `NO_SELECTION`.
+Status: `PREREGISTERED / NO_SELECTION`.
 
-Run a preregistered USD0 tournament. Promotion requires quantitative evidence for task quality, tools, arguments, evidence, safety, latency, quota and stability.
+Execute the v3 USD0 tournament only after upstream gates permit hosted execution. Promotion requires complete quantitative evidence; no provider may be composed from preregistration alone.
 
 ### Gate G5 — real TRACTIAN path
 
@@ -209,33 +211,12 @@ Status: `WAITING_G4`.
 
 Compose the real typed transport from the supplied contract. Do not guess endpoints or retry consequential writes blindly.
 
-## 5. Current non-claims
+## 7. Current non-claims
 
-Do not claim yet:
+Do not claim yet: full remote production readiness; Railway IaC ownership convergence; current complete-head CI PASS after release-identity changes; deployed release-metadata v3; IAM READY; verified-email identity; selected provider; real production TRACTIAN integration; remote action execution; enterprise availability; measured production SLO/HA/RTO/RPO; human semantic calibration; engineer-time savings; adaptive-runtime superiority; distributed exactly-once external side effects.
 
-- full remote production readiness;
-- Railway IaC ownership/apply convergence before a live plan/apply;
-- IAM READY;
-- verified-email identity;
-- selected production model/provider;
-- real production TRACTIAN integration;
-- remote action execution;
-- enterprise availability;
-- measured production SLO/HA/RTO/RPO;
-- human semantic calibration;
-- engineer-time savings;
-- adaptive-runtime superiority;
-- distributed exactly-once external side effects.
+## 8. State update rule
 
-## 6. State update rule
-
-Every material change must update:
-
-1. implementation/infrastructure;
-2. validation evidence;
-3. this current-state document;
-4. `DELIVERY-PLAN.md`;
-5. `decision-registry.yaml` when a material decision changes;
-6. `docs/progress/` with chronological evidence.
+Every material change must update implementation/infrastructure, validation evidence, this file, `DELIVERY-PLAN.md`, `decision-registry.yaml` when a material decision changes, and a chronological `docs/progress/` entry.
 
 A green CI result is not a substitute for hosted production evidence.
