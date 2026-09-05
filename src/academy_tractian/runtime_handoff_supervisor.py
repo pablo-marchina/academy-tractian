@@ -7,10 +7,11 @@ from time import perf_counter
 from typing import Any, Callable
 
 from .evaluation import ProductionEvaluator
+from .observability import SafeEvidenceRef, SafeEvent, SafeRun
 from .observability_contract import ObservabilityStoreContract
 from .production_telemetry import ProductionTelemetry
 from .product_storage_contracts import RuntimeHandoffClaim, RuntimeHandoffStore
-from .realtime_observability import SafeObservabilityEventSink
+from .realtime_observability import ObservabilityEventSink, SafeObservabilityEventSink
 from .realtime_runtime import RealtimeProductionRuntime
 from .runtime import ProductionRequest
 
@@ -20,6 +21,42 @@ class _ActiveClaim:
     claim: RuntimeHandoffClaim
     future: Future[object]
     last_renew_perf: float
+
+
+class ClaimBoundObservabilityEventSink(ObservabilityEventSink):
+    """Observability/tool guard bound to one non-expired runtime claim generation."""
+
+    def __init__(
+        self,
+        *,
+        delegate: SafeObservabilityEventSink,
+        handoff_store: RuntimeHandoffStore,
+        claim: RuntimeHandoffClaim,
+    ) -> None:
+        store = getattr(delegate, "store", None)
+        if store is None:
+            raise TypeError("horizontal runtime requires a storage-backed observability sink")
+        super().__init__(store, telemetry=getattr(delegate, "telemetry", None))
+        self.handoff_store = handoff_store
+        self.claim = claim
+
+    def assert_active(self) -> None:
+        if not self.handoff_store.is_current_owner(
+            run_id=self.claim.envelope.run_id,
+            owner_instance_id=self.claim.owner_instance_id,
+            claim_generation=self.claim.claim_generation,
+        ):
+            raise RuntimeError("runtime_handoff_claim_not_current")
+
+    def publish(
+        self,
+        *,
+        run: SafeRun,
+        event: SafeEvent,
+        evidence: SafeEvidenceRef | None,
+    ) -> None:
+        self.assert_active()
+        super().publish(run=run, event=event, evidence=evidence)
 
 
 class HorizontalRuntimeSupervisor:
@@ -165,8 +202,14 @@ class HorizontalRuntimeSupervisor:
     def _execute_claim(self, claim: RuntimeHandoffClaim) -> None:
         run_id = claim.envelope.run_id
         self.telemetry.runtime_execution_started(run_id=run_id)
+        guarded_sink = ClaimBoundObservabilityEventSink(
+            delegate=self.observability_sink,
+            handoff_store=self.handoff_store,
+            claim=claim,
+        )
         try:
-            runtime = self.runtime_factory(self.observability_sink)
+            guarded_sink.assert_active()
+            runtime = self.runtime_factory(guarded_sink)
             if runtime.config.actions_enabled is not False:
                 raise RuntimeError("production_action_switch_contract_drift")
             prepared = runtime.prepare(
@@ -178,8 +221,11 @@ class HorizontalRuntimeSupervisor:
                     seed=claim.envelope.seed,
                 )
             )
+            guarded_sink.assert_active()
             trace = prepared.execute()
+            guarded_sink.assert_active()
             report = ProductionEvaluator().evaluate(trace)
+            guarded_sink.assert_active()
             self.observability_store.persist_trace(trace, evaluation=report)
         except Exception:
             with self._lock:
