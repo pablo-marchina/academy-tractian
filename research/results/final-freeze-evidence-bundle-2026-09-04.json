@@ -101,13 +101,19 @@
       "path": "research/final-freeze-decision-2026-09-04.md",
       "git_blob_sha1": "5eda9ddfa9b005c2a5f63d153ae79842f6726562",
       "role": "current_decision",
-      "description": "Final READY_FOR_HARD_FREEZE candidate decision and bounded delivery state."
+      "description": "Historical READY_FOR_HARD_FREEZE candidate decision and bounded delivery state."
+    },
+    {
+      "path": "research/p0-hard-freeze-closure-2026-09-05.md",
+      "git_blob_sha1": "2690e459a1d1f769c3b4370a1fc5aeabb60c2fca",
+      "role": "current_decision",
+      "description": "P0 distributed-product closure addendum with post-merge required-gate evidence and bounded cross-replica claims."
     },
     {
       "path": "docs/CURRENT-PROJECT-STATUS.md",
-      "git_blob_sha1": "0327434d22991f86e55f67bcee9b6ae0aacd9551",
+      "git_blob_sha1": "36fc7db50457a787a9e026fc1518324f63a0d9cb",
       "role": "current_contract",
-      "description": "Canonical mutable human-readable state synchronized to the freeze candidate."
+      "description": "Canonical mutable human-readable state synchronized to the P0 distributed hard-freeze closure."
     }
   ],
   "decisions": [
@@ -116,25 +122,27 @@
       "status": "PASS_EVIDENCED",
       "evidence_paths": [
         ".github/workflows/final-ci-required.yml",
-        "research/final-freeze-decision-2026-09-04.md"
+        "research/p0-hard-freeze-closure-2026-09-05.md"
       ],
-      "claim_boundary": "The stable required-gate passed on the merged main integration SHA; GitHub branch protection enforcement is a separate external control."
+      "claim_boundary": "The stable required-gate passed post-merge on main SHA 9e160e9badcf6ba0d5ebba39b7d64d24380408c6 with clean clone, Chromium, horizontal runtime handoff and action execution lease gates all green; GitHub branch protection enforcement is separate."
     },
     {
       "decision_id": "CLEAN_CLONE_REPRODUCTION",
       "status": "PASS_EVIDENCED",
       "evidence_paths": [
         ".github/workflows/clean-clone-full-product-reproduction.yml",
-        "research/clean-clone-reproduction-decision-2026-09-04.md"
+        "research/clean-clone-reproduction-decision-2026-09-04.md",
+        "research/p0-hard-freeze-closure-2026-09-05.md"
       ],
-      "claim_boundary": "Proves deterministic repository install/test/build/evidence reproduction with PostgreSQL enabled; it is not deployment infrastructure proof."
+      "claim_boundary": "Proves deterministic repository install/test/build/evidence reproduction with PostgreSQL enabled, including current distributed P0 regressions; it is not deployment infrastructure proof."
     },
     {
       "decision_id": "FULL_PRODUCT_BROWSER",
       "status": "PASS_EVIDENCED",
       "evidence_paths": [
         ".github/workflows/full-product-playwright.yml",
-        "docs/PLAYWRIGHT-ACCEPTANCE.md"
+        "docs/PLAYWRIGHT-ACCEPTANCE.md",
+        "research/p0-hard-freeze-closure-2026-09-05.md"
       ],
       "claim_boundary": "Proves the provider-free production product path in Chromium, including realtime, isolation, actions and safe projections; external provider availability is substituted."
     },
@@ -150,17 +158,20 @@
       "decision_id": "OPERATIONAL_STORAGE",
       "status": "PASS_EVIDENCED",
       "evidence_paths": [
-        "docs/OPERATIONAL-STORE-RESULT-2026-09-03.md"
+        "docs/OPERATIONAL-STORE-RESULT-2026-09-03.md",
+        "research/p0-hard-freeze-closure-2026-09-05.md",
+        "docs/CURRENT-PROJECT-STATUS.md"
       ],
-      "claim_boundary": "Promotes PostgreSQL for mutable operational state while retaining DuckDB analytics; does not prove horizontal multi-instance execution."
+      "claim_boundary": "PostgreSQL is the promoted serving substrate for mutable operational state and sanitized observability/evaluation; DuckDB is dev/benchmark compatibility only. Repository-level cross-replica correctness is proven separately, not deployed HA."
     },
     {
       "decision_id": "RESTART_RECOVERY",
       "status": "PASS_BOUNDED",
       "evidence_paths": [
-        "research/postgres-restart-recovery-decision-2026-09-04.md"
+        "research/postgres-restart-recovery-decision-2026-09-04.md",
+        "research/p0-hard-freeze-closure-2026-09-05.md"
       ],
-      "claim_boundary": "Proves conservative repository-level persisted-state recovery with zero blind replay; does not establish RTO/RPO/HA/uptime."
+      "claim_boundary": "Proves conservative persisted-state recovery plus split runtime/action recovery authority, healthy cross-replica non-interference and zero blind consequential replay; it does not establish RTO/RPO/HA/uptime."
     },
     {
       "decision_id": "LOAD_CAPACITY",
@@ -174,9 +185,10 @@
       "decision_id": "PROVIDER_SELECTION",
       "status": "NO_SELECTION",
       "evidence_paths": [
-        "research/cloudflare-d01-d02-controlled-comparison-2026-09-03.md"
+        "research/cloudflare-d01-d02-controlled-comparison-2026-09-03.md",
+        "research/p0-hard-freeze-closure-2026-09-05.md"
       ],
-      "claim_boundary": "D01/D02 are complete USD0 experiments, but no candidate crossed frozen promotion gates and the consumed packet must not be replayed."
+      "claim_boundary": "D01/D02 are complete USD0 experiments, no candidate crossed frozen promotion gates, the consumed packets must not be replayed, and any P1 comparison requires a new preregistered experiment."
     },
     {
       "decision_id": "SEMANTIC_CALIBRATION",
@@ -207,18 +219,19 @@
       "status": "NO_CHANGE",
       "evidence_paths": [
         "research/final-freeze-decision-2026-09-04.md",
+        "research/p0-hard-freeze-closure-2026-09-05.md",
         "docs/CURRENT-PROJECT-STATUS.md"
       ],
-      "claim_boundary": "The current custom controller plus persistent custody/recovery remains the proven P0 baseline; no LangGraph challenger has shown material Pareto improvement."
+      "claim_boundary": "The custom controller plus PostgreSQL durable handoff, custody and fencing is the proven P0 baseline. Read-only takeover and non-transferable action fencing now have repository-level cross-replica evidence; no LangGraph or alternate orchestration challenger has shown material Pareto improvement."
     },
     {
       "decision_id": "BRANCH_PROTECTION",
       "status": "PENDING_EXTERNAL_ENFORCEMENT",
       "evidence_paths": [
         "docs/BRANCH-PROTECTION.md",
-        "research/final-freeze-decision-2026-09-04.md"
+        "research/p0-hard-freeze-closure-2026-09-05.md"
       ],
-      "claim_boundary": "Repository CI exposes a stable required-gate, but GitHub last reported main.protected=false and rulesets empty; enforcement must not be claimed yet."
+      "claim_boundary": "Repository CI exposes a stable required-gate, but the 2026-09-05 GitHub read still reports main.protected=false and rulesets empty; enforcement must not be claimed yet."
     },
     {
       "decision_id": "C4_SCIENTIFIC_ARTIFACT",
@@ -235,15 +248,16 @@
     "branch_protection_enforced",
     "c4_scientific_artifact_reconstructed",
     "ci_load_equals_production_capacity",
+    "deployed_cloud_run_cloud_sql_ha_proven",
+    "distributed_exactly_once_external_actions",
     "engineer_minutes_saved_measured",
     "enterprise_oidc_sso_implemented",
     "hard_freeze_already_effective",
-    "horizontal_multi_instance_proven",
     "human_semantic_calibration_complete",
     "langgraph_superior_or_required",
     "production_provider_selected",
     "restart_ci_proves_rto_rpo_ha",
     "unconditional_production_readiness"
   ],
-  "manifest_sha256": "a12acb1968e1ea71601ffe12cb4f7a5a7cf980d3f508d64c5f445c40898d969c"
+  "manifest_sha256": "e65f97a2da637c043903726362941b44281310852658b4073cc5aa3aa349ede2"
 }
