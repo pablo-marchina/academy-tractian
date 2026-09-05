@@ -65,13 +65,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]" -e "research/e2[dev]"
 
-      - name: Gate OIDC, tenant authority, exact-target actions, and hosted serving boundary
+      - name: Gate OIDC, tenant authority, exact-target actions, Cloud SQL, and hosted serving boundary
         run: >-
           python -m pytest -q
           tests/test_oidc_runtime_identity.py
           tests/test_tractian_authority.py
           tests/test_target_action_authorization.py
           tests/test_hosted_action_last_mile.py
+          tests/test_hosted_cloud_sql_config.py
           tests/test_hosted_production_boundary.py
 
       - name: Prove least-privilege provisioning on PostgreSQL 18
