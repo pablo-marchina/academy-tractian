@@ -11,11 +11,42 @@ from .cloudflare_provider_client import (
 )
 from .decision_source import ProviderCallIdentity, ProviderDecisionSource
 from .production_config import RemoteProductionConfig
-from .provider_clients import ProviderJsonTransport, UrllibProviderJsonTransport
+from .provider_clients import (
+    PROVIDER_DECISION_SYSTEM_INSTRUCTION,
+    ProviderJsonTransport,
+    UrllibProviderJsonTransport,
+)
 
 
 NO_PROVIDER_SELECTION_STATE = "NO_SELECTION"
 PROVISIONAL_RELEASE_PROVIDER_STATE = "PROVISIONAL_RELEASE_PROVIDER"
+RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v2"
+
+RELEASE0_PROVIDER_SYSTEM_INSTRUCTION = (
+    PROVIDER_DECISION_SYSTEM_INSTRUCTION
+    + """
+
+Release 0 decision contract:
+Every response must include all eight top-level fields required by provider-decision-payload-v1.
+
+For kind=TOOL:
+- tool_name must exactly equal one supplied tools[].name.
+- arguments must contain only exact public parameter names from that selected tool's tools[].parameters[].name entries. Never wrap tool arguments inside keys such as tool, params, input, payload, or arguments.
+- Use only values justified by the user request or prior public observations. Never invent hidden identity, seed, authorization, credentials, or evaluator state.
+- For a read proposal, set evidence_id to a short non-secret identifier so the resulting observation can be referenced.
+- Set final=null, message=null, and reason_code=null.
+
+For kind=FINAL:
+- Set tool_name=null, arguments={}, evidence_id=null, message=null, and reason_code=null.
+- final must be an object containing decision="ORIENT", response_mode equal to exactly one of complete, partial, inconclusive, conflict, or unavailable, and a non-empty customer-safe message grounded only in the public observations.
+
+For kind=CLARIFY, ESCALATE, or ABSTAIN:
+- Set tool_name=null, arguments={}, evidence_id=null, and final=null.
+- Put the customer-safe explanation in top-level message and a stable non-secret reason in top-level reason_code.
+
+Use TOOL only when another canonical read is materially necessary. Stop with a terminal decision as soon as the available observations are sufficient to answer safely. Do not repeat a successful tool call with materially equivalent arguments unless a prior observation identifies a specific unresolved gap. Honor explicit read-only and no-action requests; never propose an action when the user has prohibited actions.
+"""
+).strip()
 
 
 def validate_release_provider_config(config: RemoteProductionConfig) -> None:
@@ -76,6 +107,7 @@ def build_release_provider_decision_source(
         model_id=config.provider_model_id,
         transport=transport or UrllibProviderJsonTransport(),
         timeout_seconds=config.provider_timeout_seconds,
+        system_instruction=RELEASE0_PROVIDER_SYSTEM_INSTRUCTION,
     )
     registry = {tool.name: tool for tool in TOOLS}
     return ProviderDecisionSource(
