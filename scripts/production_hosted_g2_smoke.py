@@ -9,6 +9,8 @@ from urllib.request import Request, urlopen
 
 BASE_URL = os.environ["ACADEMY_PRODUCTION_API_BASE_URL"].rstrip("/")
 EXPECTED_SHA = os.environ["ACADEMY_EXPECTED_DEPLOYED_SHA"].strip().lower()
+DEPLOY_WAIT_SECONDS = int(os.environ.get("ACADEMY_HOSTED_SMOKE_DEPLOY_WAIT_SECONDS", "600"))
+DEPLOY_POLL_SECONDS = int(os.environ.get("ACADEMY_HOSTED_SMOKE_DEPLOY_POLL_SECONDS", "10"))
 
 
 def fetch_json(path: str, *, attempts: int = 6) -> dict[str, object]:
@@ -39,10 +41,38 @@ def require(condition: bool, message: str) -> None:
         raise RuntimeError(message)
 
 
+def wait_for_expected_release() -> dict[str, object]:
+    """Wait for Railway to expose the exact commit under test, without weakening SHA checks.
+
+    GitHub Actions can start before Railway finishes building the same pushed commit. Treat an
+    older healthy release as deployment propagation rather than an immediate product failure, but
+    stop after a bounded window and still require every immutable-identity assertion below.
+    """
+
+    deadline = time.monotonic() + DEPLOY_WAIT_SECONDS
+    last_release: dict[str, object] | None = None
+    while True:
+        release = fetch_json("/api/meta/release")
+        last_release = release
+        if (
+            release.get("release_git_sha") == EXPECTED_SHA
+            and release.get("artifact_git_sha") == EXPECTED_SHA
+        ):
+            return release
+        if time.monotonic() >= deadline:
+            observed_release = last_release.get("release_git_sha") if last_release else None
+            observed_artifact = last_release.get("artifact_git_sha") if last_release else None
+            raise RuntimeError(
+                "expected Railway release did not become active before hosted smoke deadline; "
+                f"expected={EXPECTED_SHA} release={observed_release} artifact={observed_artifact}"
+            )
+        time.sleep(max(1, DEPLOY_POLL_SECONDS))
+
+
 def main() -> None:
+    release = wait_for_expected_release()
     health = fetch_json("/health")
     ready = fetch_json("/ready")
-    release = fetch_json("/api/meta/release")
 
     require(health.get("status") == "ok", "hosted /health did not report ok")
     require(ready.get("status") == "ready", "hosted /ready did not report ready")
