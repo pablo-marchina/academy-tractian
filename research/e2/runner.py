@@ -6,7 +6,6 @@ from typing import Any, Literal
 from .action_gate import EvidenceAwareActionGate
 from .models import ExecutionBinding, RunTrace, Scenario, ToolKind, ToolSpec, TraceEvent
 from .policy import ResourcePolicy
-from .read_semantics import ReadSemanticsAssessment, classify_read_response
 from .replay import ReplayStore
 from .trace import append_event, validate_trace
 from .transport import RequestTransport, TransportResponse, build_b0_request
@@ -19,7 +18,6 @@ class ToolExecution:
     executed: bool
     blocked_code: str | None = None
     response: TransportResponse | None = None
-    read_semantics: ReadSemanticsAssessment | None = None
 
 
 def _response_record(response: TransportResponse) -> dict[str, Any]:
@@ -193,27 +191,12 @@ class HarnessRunner:
             response = self.transport.request(request)
             self.replay.record(request_record, _response_record(response))
 
-        read_semantics = (
-            classify_read_response(tool=tool, response=response)
-            if tool.kind is ToolKind.READ
-            else None
-        )
-        semantic_metadata: dict[str, Any] = {"kind": tool.kind.value}
-        if read_semantics is not None:
-            semantic_metadata.update(read_semantics.trace_metadata())
-
         result = _response_record(response)
-        if read_semantics is not None:
-            result["response_mode"] = read_semantics.response_mode.value
-
         self._emit(
             "tool_result",
             tool_name=tool.name,
             result=result,
-            metadata={
-                "status_code": response.status_code,
-                **semantic_metadata,
-            },
+            metadata={"status_code": response.status_code},
         )
         self._emit(
             "observation",
@@ -222,15 +205,9 @@ class HarnessRunner:
             metadata={
                 "evidence_id": evidence_id,
                 "status_code": response.status_code,
-                **semantic_metadata,
             },
         )
-        return ToolExecution(
-            tool_name=tool.name,
-            executed=True,
-            response=response,
-            read_semantics=read_semantics,
-        )
+        return ToolExecution(tool_name=tool.name, executed=True, response=response)
 
     def finish(self, final: dict[str, Any]) -> RunTrace:
         self._emit("final_response", result=final)
