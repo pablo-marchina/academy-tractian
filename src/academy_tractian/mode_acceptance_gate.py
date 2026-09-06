@@ -93,9 +93,10 @@ class ProductionAgentModeGate:
 
     The gate intentionally does not judge whether a domain conclusion is semantically correct.
     It verifies only observable structural/safety invariants: known terminal decision and response
-    mode, explicit control-terminal uncertainty, read-contract integrity, at least one canonical
-    read before INVESTIGATE, and exact escalation handoff binding. Consequential action decisions
-    are reported as EXECUTION_DEFERRED because they are promoted by a later independent gate.
+    mode, no false COMPLETE claim for uncertainty/control terminals, read-contract integrity, at
+    least one canonical read before INVESTIGATE, and exact escalation handoff binding.
+    Consequential action decisions are reported as EXECUTION_DEFERRED because they are promoted by
+    a later independent gate.
     """
 
     def __init__(self, *, registry: Mapping[str, ToolSpec] | None = None) -> None:
@@ -154,8 +155,8 @@ class ProductionAgentModeGate:
                 violations.append("TERMINAL_MESSAGE_MISSING_OR_EMPTY")
 
             if decision in _CONTROL_TERMINALS:
-                if response_mode is not ResponseMode.INCONCLUSIVE:
-                    violations.append("CONTROL_TERMINAL_REQUIRES_INCONCLUSIVE")
+                if response_mode is ResponseMode.COMPLETE:
+                    violations.append("CONTROL_TERMINAL_CANNOT_CLAIM_COMPLETE")
                 if not self._nonempty_text(final_payload.get("reason_code")):
                     violations.append("CONTROL_TERMINAL_REASON_CODE_MISSING_OR_EMPTY")
 
