@@ -8,6 +8,7 @@ from research.e2.transport import RequestTransport, TransportResponse
 
 from .production_actions_v2 import ProductionActionPrincipal
 from .production_config import RemoteProductionConfig
+from .release0_capabilities import install_release0_capabilities
 from .release_identity import load_artifact_release_identity
 from .release_provider import (
     NO_PROVIDER_SELECTION_STATE,
@@ -102,6 +103,7 @@ def app_factory():
     artifact_release_identity = load_artifact_release_identity()
 
     tractian_transport_state = _tractian_transport_state(config)
+    provider_selection_state = _provider_selection_state(config)
     # Validate provider/TRACTIAN composition before PostgreSQL pools or runtime workers open.
     build_tractian_transport(config)
     decision_source_factory = _decision_source_factory(config)
@@ -124,9 +126,16 @@ def app_factory():
         max_workers=int(os.environ.get("ACADEMY_MAX_WORKERS", "4")),
         heartbeat_interval_ms=int(os.environ.get("ACADEMY_HEARTBEAT_INTERVAL_MS", "1000")),
     )
-    app.state.provider_selection_state = _provider_selection_state(config)
+    app.state.provider_selection_state = provider_selection_state
     app.state.infrastructure_probe = not config.provider_calls_enabled
     app.state.release0_read_only = config.provider_calls_enabled
+    install_release0_capabilities(
+        app,
+        config=config,
+        artifact_release_identity=artifact_release_identity,
+        provider_selection_state=provider_selection_state,
+        tractian_transport_state=tractian_transport_state,
+    )
     return app
 
 
