@@ -159,7 +159,7 @@ def test_read_transport_failure_is_normalized_without_retry(monkeypatch: pytest.
 
 
 @pytest.mark.parametrize(
-    "request",
+    "bound_request",
     [
         _get_asset(method="POST"),
         _get_asset(path="/unknown/asset-1"),
@@ -177,13 +177,13 @@ def test_read_transport_failure_is_normalized_without_retry(monkeypatch: pytest.
 )
 def test_forged_bound_request_is_rejected_before_network(
     monkeypatch: pytest.MonkeyPatch,
-    request: BoundRequest,
+    bound_request: BoundRequest,
 ) -> None:
     opener = RecordingOpener(FakeResponse())
     transport = _transport(monkeypatch, opener)
 
     with pytest.raises(ValueError):
-        transport.request(request)
+        transport.request(bound_request)
 
     assert opener.calls == []
 
