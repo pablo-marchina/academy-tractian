@@ -43,6 +43,18 @@ def validate_release_provider_config(config: RemoteProductionConfig) -> None:
         raise RuntimeError("release_provider_requires_real_tractian_transport")
 
 
+def _provider_audit_model_id(model_id: str) -> str:
+    """Project Cloudflare's external `@cf/...` id into the v1 audit-id alphabet.
+
+    `ProviderCallIdentity` v1 predates Cloudflare's leading-@ model ids and intentionally accepts
+    a restricted non-secret identifier alphabet. The exact external model id remains separately
+    available in production configuration/release metadata; only the audit identity removes the
+    leading marker. A future provenance schema revision can carry the external id verbatim.
+    """
+
+    return model_id[1:] if model_id.startswith("@") else model_id
+
+
 def build_release_provider_decision_source(
     *,
     config: RemoteProductionConfig,
@@ -71,7 +83,7 @@ def build_release_provider_decision_source(
         registry=registry,
         call_identity=ProviderCallIdentity(
             provider_id=client.provider_id,
-            model_id=client.model_id,
+            model_id=_provider_audit_model_id(client.model_id),
             route_id=client.route_id,
             live_call=True,
         ),
