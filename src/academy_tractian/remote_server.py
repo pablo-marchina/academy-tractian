@@ -29,7 +29,14 @@ class NoConfiguredTractianTransport(RequestTransport):
     """Fail before I/O while no authoritative TRACTIAN endpoint/auth contract is configured."""
 
     def request(self, _request: BoundRequest) -> TransportResponse:
-        raise RuntimeError("production_tractian_transport_unconfigured")
+        raise RuntimeError(
+            "production_tractian_transport_unconfigured; production_provider_not_selected is a legacy transport label only"
+        )
+
+
+# Compatibility alias for historical tests/imports. The canonical production concept is now
+# NoConfiguredTractianTransport; provider/model selection is governed only by DecisionSource.
+NoSelectedProviderTransport = NoConfiguredTractianTransport
 
 
 def build_tractian_transport(config: RemoteProductionConfig) -> RequestTransport:
@@ -88,13 +95,19 @@ def app_factory():
     # ProductionTractianTransport construction itself performs no remote I/O.
     build_tractian_transport(config)
 
+    if config.tractian_transport_enabled:
+        transport_factory = lambda: build_tractian_transport(config)
+    else:
+        # Keep the fail-closed class itself as factory for deterministic compatibility and zero I/O.
+        transport_factory = NoConfiguredTractianTransport
+
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_operational")
     app = create_remote_production_app(
         config=config,
         artifact_release_identity=artifact_release_identity,
         railway_runtime_git_sha=os.environ.get("RAILWAY_GIT_COMMIT_SHA"),
         decision_source_factory=NoSelectedProviderDecisionSource,
-        transport_factory=lambda: build_tractian_transport(config),
+        transport_factory=transport_factory,
         authorization_resolver=deny_production_action_principal,
         tractian_transport_state=tractian_transport_state,
         schema=schema,
