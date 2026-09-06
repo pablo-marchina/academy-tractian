@@ -15,6 +15,7 @@ from .decision_source import (
     ProviderCallIdentity,
     ProviderDecisionRequest,
     ProviderDecisionSource,
+    ProviderToolDefinition,
     build_provider_decision_request,
 )
 from .production_config import RemoteProductionConfig
@@ -28,7 +29,7 @@ from .provider_clients import (
 
 NO_PROVIDER_SELECTION_STATE = "NO_SELECTION"
 PROVISIONAL_RELEASE_PROVIDER_STATE = "PROVISIONAL_RELEASE_PROVIDER"
-RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v5"
+RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v6"
 RELEASE0_MAX_COMPLETION_TOKENS = 1024
 
 _RELEASE0_REQUIRED_FIELDS = [
@@ -127,9 +128,13 @@ Every response must include all eight top-level fields required by provider-deci
 The Release 0 response schema independently enforces the allowed relational shape for TOOL,
 FINAL, CLARIFY, ESCALATE, and ABSTAIN. Do not rely on post-processing or output repair.
 
+Release 0 is read-only. The supplied tools list contains only canonical read tools; action tools are
+intentionally absent and therefore cannot be selected by a valid provider response. Human escalation
+is expressed with kind=ESCALATE, not by proposing an action tool.
+
 For kind=TOOL:
-- tool_name must exactly equal one supplied tools[].name. The response schema constrains tool_name to the exact tools visible in the current turn.
-- arguments must contain only exact public parameter names from that selected tool's tools[].parameters[].name entries. Never wrap tool arguments inside keys such as tool, params, input, payload, or arguments.
+- tool_name must exactly equal one supplied tools[].name. The response schema creates one TOOL variant per tool visible in the current turn.
+- arguments must exactly satisfy that selected tool's public parameter schema: only tools[].parameters[].name keys are allowed and every required parameter is required. Never wrap tool arguments inside keys such as tool, params, input, payload, or arguments.
 - Use only values justified by the user request or prior public observations. Never invent hidden identity, seed, authorization, credentials, or evaluator state.
 - For a read proposal, set evidence_id to a short non-secret identifier so the resulting observation can be referenced.
 - Set final=null, message=null, and reason_code=null.
@@ -144,37 +149,65 @@ For kind=CLARIFY, ESCALATE, or ABSTAIN:
 
 Knowledge investigation stopping rule:
 - search_knowledge accepts only q and optional type. get_knowledge_doc accepts only doc_id.
-- If search_knowledge is available, use it at most once in a run. After one successful search_knowledge observation it is deliberately removed from the supplied tool list and from the allowed tool_name schema enum.
+- If search_knowledge is available, use it at most once in a run. After one successful search_knowledge observation it is deliberately removed from the supplied tool list and from the allowed response schema.
 - After a successful search_knowledge observation, inspect a returned knowledge document with get_knowledge_doc only when the public observation exposes a concrete document identifier that can be passed as doc_id and the full document is materially needed for the requested answer.
-- If no concrete document identifier is exposed, or the search result already contains enough relevant evidence, return FINAL instead of searching again.
+- If no concrete document identifier is exposed, or the search result already contains enough relevant evidence, return FINAL instead of inventing a doc_id or searching again.
 - Never call a tool that is absent from the current supplied tools list.
 
-Use TOOL only when another canonical read is materially necessary. Stop with a terminal decision as soon as the available observations are sufficient to answer safely. Do not repeat a successful tool call with materially equivalent arguments unless a prior observation identifies a specific unresolved gap. Honor explicit read-only and no-action requests; never propose an action when the user has prohibited actions.
+Use TOOL only when another canonical read is materially necessary. Stop with a terminal decision as soon as the available observations are sufficient to answer safely. Do not repeat a successful tool call with materially equivalent arguments unless a prior observation identifies a specific unresolved gap. Honor explicit read-only and no-action requests.
 """
 ).strip()
 
 
-def _schema_for_visible_tools(request: ProviderDecisionRequest) -> dict[str, object]:
-    """Return the strict Release 0 schema bound to exactly this turn's public tool surface."""
+def _arguments_schema(tool: ProviderToolDefinition) -> dict[str, object]:
+    """Project one public ToolSpec parameter list into a strict JSON object schema."""
 
-    schema = deepcopy(RELEASE0_PROVIDER_DECISION_JSON_SCHEMA)
-    variants = schema.get("oneOf")
-    if not isinstance(variants, list) or not variants:
-        raise RuntimeError("release0_provider_schema_contract_drift")
-    tool_variant = variants[0]
-    if not isinstance(tool_variant, dict):
-        raise RuntimeError("release0_provider_tool_schema_contract_drift")
-    properties = tool_variant.get("properties")
-    if not isinstance(properties, dict):
-        raise RuntimeError("release0_provider_tool_properties_contract_drift")
-    visible_tool_names = [tool.name for tool in request.tools]
-    if not visible_tool_names:
-        raise RuntimeError("release0_provider_visible_tool_surface_empty")
-    properties["tool_name"] = {
-        "type": "string",
-        "enum": visible_tool_names,
+    properties = {
+        parameter.name: deepcopy(parameter.parameter_schema)
+        for parameter in tool.parameters
     }
+    required = [parameter.name for parameter in tool.parameters if parameter.required]
+    schema: dict[str, object] = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": properties,
+    }
+    if required:
+        schema["required"] = required
+    if not properties:
+        schema["maxProperties"] = 0
     return schema
+
+
+def _tool_variant(tool: ProviderToolDefinition) -> dict[str, object]:
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            **_release0_base_properties(kind=["TOOL"]),
+            "tool_name": {"type": "string", "enum": [tool.name]},
+            "arguments": _arguments_schema(tool),
+            "evidence_id": {"type": ["string", "null"]},
+            "final": {"type": "null"},
+            "message": {"type": "null"},
+            "reason_code": {"type": "null"},
+        },
+        "required": _RELEASE0_REQUIRED_FIELDS,
+    }
+
+
+def _schema_for_visible_tools(request: ProviderDecisionRequest) -> dict[str, object]:
+    """Bind provider output to exactly this turn's visible tools and ToolSpec arguments."""
+
+    if not request.tools:
+        raise RuntimeError("release0_provider_visible_tool_surface_empty")
+    template = deepcopy(RELEASE0_PROVIDER_DECISION_JSON_SCHEMA)
+    variants = template.get("oneOf")
+    if not isinstance(variants, list) or len(variants) != 3:
+        raise RuntimeError("release0_provider_schema_contract_drift")
+    terminal_variants = variants[1:]
+    template["oneOf"] = [*(_tool_variant(tool) for tool in request.tools), *terminal_variants]
+    return template
 
 
 class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisionClient):
@@ -214,12 +247,12 @@ class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisio
 
 
 class Release0ProviderDecisionSource(ProviderDecisionSource):
-    """Release-only adaptive public tool surface with deterministic duplicate-search prevention.
+    """Read-only adaptive provider surface with deterministic tool-budget protection.
 
-    The source never fabricates a model decision. After a successful ``search_knowledge`` it
-    removes that tool from both the provider-visible request and the adapter's accepted tool-name
-    set for the rest of the per-run source lifetime. The canonical runtime registry and B1/B2/B3
-    boundaries stay unchanged; this is a stricter model boundary, not an execution shortcut.
+    Release 0 exposes only canonical read tools to the model. After one successful
+    ``search_knowledge`` that tool is removed from both the provider request and the adapter's
+    accepted tool-name set for the rest of the run. The full canonical registry remains owned by
+    the runtime/HarnessRunner, so B1/B2/B3 still independently validate every executed proposal.
     """
 
     @staticmethod
@@ -232,11 +265,14 @@ class Release0ProviderDecisionSource(ProviderDecisionSource):
         )
 
     def _visible_registry(self, context: ControllerContext):
-        if not self._searched_successfully(context):
-            return self.registry
-        return {
-            name: tool for name, tool in self.registry.items() if name != "search_knowledge"
+        visible = {
+            name: tool
+            for name, tool in self.registry.items()
+            if tool.kind.value == "read"
         }
+        if self._searched_successfully(context):
+            visible.pop("search_knowledge", None)
+        return visible
 
     def build_request(self, context: ControllerContext) -> ProviderDecisionRequest:
         return build_provider_decision_request(
@@ -245,13 +281,10 @@ class Release0ProviderDecisionSource(ProviderDecisionSource):
         )
 
     def decide(self, context: ControllerContext):
-        if self._searched_successfully(context):
-            # DecisionSource instances are constructed per run. Once this run has a successful
-            # search, the removed tool must never become adapter-valid again even if a later model
-            # attempts to name it despite the turn-bound JSON schema.
-            self._known_tools = frozenset(
-                name for name in self._known_tools if name != "search_knowledge"
-            )
+        visible_names = frozenset(self._visible_registry(context))
+        self._known_tools = frozenset(
+            name for name in self._known_tools if name in visible_names
+        )
         return super().decide(context)
 
 
