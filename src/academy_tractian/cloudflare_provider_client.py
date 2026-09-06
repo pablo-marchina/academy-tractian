@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import Any, Mapping
 
@@ -31,6 +32,7 @@ CLOUDFLARE_MAX_COMPLETION_TOKENS = 512
 CLOUDFLARE_MAX_ACCOUNTED_PROMPT_TOKENS = 8000
 
 _ACCOUNT_ID_RE = re.compile(r"^[A-Za-z0-9]+$")
+_LOGGER = logging.getLogger(__name__)
 
 
 def _provider_request_text(request: ProviderDecisionRequest) -> str:
@@ -139,28 +141,42 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
         )
 
     def complete(self, request: ProviderDecisionRequest) -> str:
-        response = self._invoke_once(self.build_http_request(request))
-        usage = response.get("usage")
-        usage_map = usage if isinstance(usage, Mapping) else {}
-        completion_details = usage_map.get("completion_tokens_details")
-        completion_details_map = (
-            completion_details if isinstance(completion_details, Mapping) else {}
-        )
-        self._usage_records.append(
-            ProviderUsageRecord(
-                provider_id=self.provider_id,
-                model_id=self.model_id,
-                route_id=self.route_id,
-                request_sha256=request.request_sha256,
-                input_tokens=_nonnegative_int_or_none(usage_map.get("prompt_tokens")),
-                output_tokens=_nonnegative_int_or_none(usage_map.get("completion_tokens")),
-                total_tokens=_nonnegative_int_or_none(usage_map.get("total_tokens")),
-                reasoning_tokens=_nonnegative_int_or_none(
-                    completion_details_map.get("reasoning_tokens")
-                ),
+        try:
+            response = self._invoke_once(self.build_http_request(request))
+            usage = response.get("usage")
+            usage_map = usage if isinstance(usage, Mapping) else {}
+            completion_details = usage_map.get("completion_tokens_details")
+            completion_details_map = (
+                completion_details if isinstance(completion_details, Mapping) else {}
             )
-        )
-        return self._extract_output(response)
+            self._usage_records.append(
+                ProviderUsageRecord(
+                    provider_id=self.provider_id,
+                    model_id=self.model_id,
+                    route_id=self.route_id,
+                    request_sha256=request.request_sha256,
+                    input_tokens=_nonnegative_int_or_none(usage_map.get("prompt_tokens")),
+                    output_tokens=_nonnegative_int_or_none(usage_map.get("completion_tokens")),
+                    total_tokens=_nonnegative_int_or_none(usage_map.get("total_tokens")),
+                    reasoning_tokens=_nonnegative_int_or_none(
+                        completion_details_map.get("reasoning_tokens")
+                    ),
+                )
+            )
+            return self._extract_output(response)
+        except ProviderHttpClientError as exc:
+            _LOGGER.error(
+                "cloudflare_provider_request_failed",
+                extra={
+                    "academy_event": "cloudflare_provider_request_failed",
+                    "provider_id": self.provider_id,
+                    "model_id": self.model_id,
+                    "route_id": self.route_id,
+                    "failure_code": exc.code,
+                    "status_code": exc.status_code,
+                },
+            )
+            raise
 
     def _invoke_once(self, request: ProviderHttpRequest) -> Mapping[str, Any]:
         try:
