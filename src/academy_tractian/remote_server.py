@@ -7,26 +7,62 @@ from research.e2.models import BoundRequest
 from research.e2.transport import RequestTransport, TransportResponse
 
 from .production_actions_v2 import ProductionActionPrincipal
+from .production_config import RemoteProductionConfig
 from .release_identity import load_artifact_release_identity
 from .remote_production import create_remote_production_app, load_remote_production_config
+from .tractian_transport import ProductionTractianTransport
+
+
+PROVIDER_SELECTION_STATE = "NO_SELECTION"
+TRACTIAN_TRANSPORT_STATE_UNCONFIGURED = "UNCONFIGURED"
+TRACTIAN_TRANSPORT_STATE_CONFIGURED_UNVERIFIED = "CONFIGURED_UNVERIFIED"
 
 
 class NoSelectedProviderDecisionSource(DecisionSource):
-    """Fail-closed source used only while provider selection remains NO_SELECTION."""
+    """Fail-closed source used only while model/provider selection remains NO_SELECTION."""
 
     def decide(self, _context: ControllerContext) -> ControllerDecision:
         raise RuntimeError("production_provider_not_selected")
 
 
-class NoSelectedProviderTransport(RequestTransport):
-    """Never permits a TRACTIAN/provider transport call before a production provider is promoted."""
+class NoConfiguredTractianTransport(RequestTransport):
+    """Fail before I/O while no authoritative TRACTIAN endpoint/auth contract is configured."""
 
     def request(self, _request: BoundRequest) -> TransportResponse:
-        raise RuntimeError("production_provider_not_selected")
+        raise RuntimeError("production_tractian_transport_unconfigured")
+
+
+def build_tractian_transport(config: RemoteProductionConfig) -> RequestTransport:
+    """Build the TRACTIAN transport without performing a remote request.
+
+    The production transport remains generic about the server-managed authentication headers;
+    their exact names and values must come from the authoritative partner contract/environment.
+    Construction validates the endpoint/header boundary but performs zero network I/O.
+    """
+
+    if not config.tractian_transport_enabled:
+        return NoConfiguredTractianTransport()
+    if config.tractian_base_url is None:
+        raise RuntimeError("validated TRACTIAN configuration is missing its base URL")
+    headers = config.tractian_server_headers()
+    if not headers:
+        raise RuntimeError("validated TRACTIAN configuration is missing server-managed headers")
+    return ProductionTractianTransport(
+        base_url=config.tractian_base_url,
+        server_headers=headers,
+    )
+
+
+def _tractian_transport_state(config: RemoteProductionConfig) -> str:
+    return (
+        TRACTIAN_TRANSPORT_STATE_CONFIGURED_UNVERIFIED
+        if config.tractian_transport_enabled
+        else TRACTIAN_TRANSPORT_STATE_UNCONFIGURED
+    )
 
 
 def deny_production_action_principal(*, user_id: str) -> ProductionActionPrincipal:
-    """The P0 infrastructure probe does not authorize consequential actions."""
+    """The infrastructure probe does not authorize consequential actions."""
 
     raise PermissionError(f"production_actions_not_enabled:{user_id}")
 
@@ -34,9 +70,10 @@ def deny_production_action_principal(*, user_id: str) -> ProductionActionPrincip
 def app_factory():
     """Uvicorn factory for the remotely deployed infrastructure-validation phase.
 
-    The application is intentionally provider-closed. Remote infrastructure, TLS, PostgreSQL,
-    RLS, SSE, restart/recovery and release identity can be evaluated without pretending that a
-    hosted model has passed the separate provider-selection gates.
+    Model/provider selection and TRACTIAN API composition are separate gates. The model remains
+    NO_SELECTION. TRACTIAN remains UNCONFIGURED unless an explicit, fully validated remote
+    endpoint/header contract is supplied. Even CONFIGURED_UNVERIFIED performs no boot-time probe
+    and therefore is not evidence of live API reachability. Consequential actions remain denied.
     """
 
     config = load_remote_production_config()
@@ -45,19 +82,26 @@ def app_factory():
         raise RuntimeError(
             "provider calls cannot be enabled by the infrastructure-probe entrypoint while provider state is NO_SELECTION"
         )
+
+    tractian_transport_state = _tractian_transport_state(config)
+    # Preflight construction validates endpoint/header composition before PostgreSQL is opened.
+    # ProductionTractianTransport construction itself performs no remote I/O.
+    build_tractian_transport(config)
+
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_operational")
     app = create_remote_production_app(
         config=config,
         artifact_release_identity=artifact_release_identity,
         railway_runtime_git_sha=os.environ.get("RAILWAY_GIT_COMMIT_SHA"),
         decision_source_factory=NoSelectedProviderDecisionSource,
-        transport_factory=NoSelectedProviderTransport,
+        transport_factory=lambda: build_tractian_transport(config),
         authorization_resolver=deny_production_action_principal,
+        tractian_transport_state=tractian_transport_state,
         schema=schema,
         max_workers=int(os.environ.get("ACADEMY_MAX_WORKERS", "4")),
         heartbeat_interval_ms=int(os.environ.get("ACADEMY_HEARTBEAT_INTERVAL_MS", "1000")),
     )
-    app.state.provider_selection_state = "NO_SELECTION"
+    app.state.provider_selection_state = PROVIDER_SELECTION_STATE
     app.state.infrastructure_probe = True
     return app
 
