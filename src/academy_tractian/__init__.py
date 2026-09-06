@@ -53,6 +53,13 @@ from .provider_clients import (
     ProviderUsageRecord,
     UrllibProviderJsonTransport,
 )
+from .read_semantics_gate import (
+    PRODUCTION_READ_SEMANTICS_GATE_VERSION,
+    ProductionReadSemanticsEntry,
+    ProductionReadSemanticsGate,
+    ProductionReadSemanticsGateError,
+    ProductionReadSemanticsReport,
+)
 from .runtime import ProductionRequest, ProductionRuntime, ProductionRuntimeConfig, canonical_tool_registry
 
 __all__ = [
@@ -103,6 +110,11 @@ __all__ = [
     "ProviderJsonTransport",
     "ProviderUsageRecord",
     "UrllibProviderJsonTransport",
+    "PRODUCTION_READ_SEMANTICS_GATE_VERSION",
+    "ProductionReadSemanticsEntry",
+    "ProductionReadSemanticsGate",
+    "ProductionReadSemanticsGateError",
+    "ProductionReadSemanticsReport",
     "ProductionRequest",
     "ProductionRuntime",
     "ProductionRuntimeConfig",
