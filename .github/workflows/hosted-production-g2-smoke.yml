@@ -4,19 +4,17 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main]
-    paths:
-      - ".github/workflows/hosted-production-g2-smoke.yml"
-      - "scripts/production_hosted_g2_smoke.py"
 
 permissions:
   contents: read
 
 concurrency:
-  group: hosted-production-g2-smoke
-  cancel-in-progress: false
+  group: hosted-production-g2-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   remote-g2-smoke:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/production-final'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
