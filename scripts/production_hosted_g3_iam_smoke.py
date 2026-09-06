@@ -199,9 +199,12 @@ def assert_anonymous_and_tampered_fail_closed(cookie_name: str) -> None:
 
 
 def assert_bad_origin_rejected(browser: BrowserSession) -> int:
+    # Send the same JSON media type/body as the valid sign-out below so this probe reaches
+    # Better Auth's Origin/CSRF boundary instead of being rejected earlier as a simple request.
     result = browser.request(
         "/auth/sign-out",
         method="POST",
+        payload={},
         headers={"Origin": "https://attacker.invalid"},
     )
     require(result.status in {400, 401, 403}, f"malicious Origin was accepted with HTTP {result.status}")
@@ -212,6 +215,7 @@ def sign_out_and_require_invalidation(browser: BrowserSession) -> None:
     result = browser.request(
         "/auth/sign-out",
         method="POST",
+        payload={},
         headers={"Origin": BASE_URL},
     )
     require(result.status in {200, 204}, f"valid sign-out failed with HTTP {result.status}")
