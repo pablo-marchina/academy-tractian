@@ -9,9 +9,10 @@ from academy_tractian.release_provider import (
     RELEASE0_MAX_COMPLETION_TOKENS,
     RELEASE0_PROVIDER_SYSTEM_INSTRUCTION,
     Release0CloudflareDecisionClient,
+    Release0ProviderDecisionSource,
 )
 from academy_tractian.runtime import canonical_tool_registry
-from research.e2.controller import ControllerContext
+from research.e2.controller import ControllerContext, ControllerObservation
 
 
 class NeverCalledTransport:
@@ -69,7 +70,9 @@ def test_release0_request_policy_is_isolated_and_encodes_relational_contract() -
         'decision="ORIENT"',
         "complete, partial, inconclusive, conflict, or unavailable",
         "arguments={}",
-        "Do not repeat a successful tool call",
+        "search_knowledge accepts only q and optional type",
+        "use it at most once in a run",
+        "absent from the current supplied tools list",
         "read-only and no-action requests",
     ):
         assert required_fragment in RELEASE0_PROVIDER_SYSTEM_INSTRUCTION
@@ -82,3 +85,40 @@ def test_release0_request_policy_is_isolated_and_encodes_relational_contract() -
     serialized = str(http_request.body["messages"][0]).lower()
     assert "test-token" not in serialized
     assert "abc123" not in serialized
+
+
+def test_release0_provider_surface_removes_search_after_successful_search_observation() -> None:
+    source = Release0ProviderDecisionSource(
+        client=_release_client(),
+        registry=canonical_tool_registry(),
+    )
+    initial = source.build_request(
+        ControllerContext(
+            user_request="Investigate vibration guidance.",
+            turn_index=0,
+            tool_call_count=0,
+        )
+    )
+    assert len(initial.tools) == 18
+    assert "search_knowledge" in {tool.name for tool in initial.tools}
+
+    after_search = source.build_request(
+        ControllerContext(
+            user_request="Investigate vibration guidance.",
+            turn_index=1,
+            tool_call_count=1,
+            observations=(
+                ControllerObservation(
+                    tool_name="search_knowledge",
+                    status="success",
+                    executed=True,
+                    status_code=200,
+                    body={"results": [{"title": "Vibration diagnostic procedure"}]},
+                ),
+            ),
+        )
+    )
+    visible_names = {tool.name for tool in after_search.tools}
+    assert len(after_search.tools) == 17
+    assert "search_knowledge" not in visible_names
+    assert "get_knowledge_doc" in visible_names
