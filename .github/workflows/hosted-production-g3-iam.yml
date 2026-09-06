@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/hosted-production-g3-iam.yml"
       - "scripts/production_hosted_g3_iam_smoke.py"
+      - "scripts/production_hosted_g3_redirect_probe.py"
       - "src/academy_tractian/neon_auth_identity.py"
       - "src/academy_tractian/neon_authenticated_postgres_product_api.py"
       - "frontend/src/auth/**"
@@ -28,5 +29,7 @@ jobs:
       ACADEMY_G3_CROSS_TENANT_RUN_ID: g2-durability-234655d9
     steps:
       - uses: actions/checkout@v4
+      - name: Diagnose hosted auth redirect boundary without exposing credentials
+        run: python scripts/production_hosted_g3_redirect_probe.py
       - name: Run hosted two-user IAM and tenant-boundary campaign
         run: python scripts/production_hosted_g3_iam_smoke.py
