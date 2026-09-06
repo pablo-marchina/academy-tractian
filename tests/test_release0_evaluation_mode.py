@@ -6,8 +6,13 @@ from academy_tractian.remote_server import _configure_runtime_evaluator
 
 
 class FakeApp:
-    def __init__(self, *, with_supervisor: bool = True) -> None:
-        self.state = SimpleNamespace()
+    def __init__(
+        self,
+        *,
+        with_supervisor: bool = True,
+        remote_production: bool = True,
+    ) -> None:
+        self.state = SimpleNamespace(remote_production=remote_production)
         if with_supervisor:
             self.state.runtime_handoff_supervisor = SimpleNamespace(evaluator=None)
 
@@ -37,3 +42,11 @@ def test_remote_runtime_fails_closed_without_horizontal_supervisor() -> None:
     app = FakeApp(with_supervisor=False)
     with pytest.raises(RuntimeError, match="remote_runtime_handoff_supervisor_required"):
         _configure_runtime_evaluator(app, provider_calls_enabled=True)
+
+
+def test_non_remote_composition_double_without_supervisor_is_side_effect_free() -> None:
+    app = FakeApp(with_supervisor=False, remote_production=False)
+
+    _configure_runtime_evaluator(app, provider_calls_enabled=True)
+
+    assert not hasattr(app.state, "production_evaluation_mode")
