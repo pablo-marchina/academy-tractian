@@ -11,7 +11,6 @@ from academy_tractian.decision_source import build_provider_decision_request
 from academy_tractian.provider_clients import PROVIDER_DECISION_SYSTEM_INSTRUCTION
 from academy_tractian.release_provider import (
     RELEASE0_MAX_COMPLETION_TOKENS,
-    RELEASE0_PROVIDER_DECISION_JSON_SCHEMA,
     RELEASE0_PROVIDER_SYSTEM_INSTRUCTION,
     Release0CloudflareDecisionClient,
     Release0ProviderDecisionSource,
@@ -34,13 +33,17 @@ class StaticDecisionClient:
         return json.dumps(self.payload)
 
 
+def _context() -> ControllerContext:
+    return ControllerContext(
+        user_request="Investigate a vibration alert using read-only evidence.",
+        turn_index=0,
+        tool_call_count=0,
+    )
+
+
 def _request():
     return build_provider_decision_request(
-        context=ControllerContext(
-            user_request="Investigate a vibration alert using read-only evidence.",
-            turn_index=0,
-            tool_call_count=0,
-        ),
+        context=_context(),
         registry=canonical_tool_registry(),
     )
 
@@ -63,6 +66,13 @@ def _release_client():
     )
 
 
+def _release_source(client=None):
+    return Release0ProviderDecisionSource(
+        client=client or _release_client(),
+        registry=canonical_tool_registry(),
+    )
+
+
 def _successful_search_context() -> ControllerContext:
     return ControllerContext(
         user_request="Investigate vibration guidance.",
@@ -80,6 +90,16 @@ def _successful_search_context() -> ControllerContext:
     )
 
 
+def _tool_variant(schema: dict[str, object], tool_name: str) -> dict[str, object]:
+    variants = schema["oneOf"]
+    return next(
+        variant
+        for variant in variants
+        if variant["properties"]["kind"]["enum"] == ["TOOL"]
+        and variant["properties"]["tool_name"]["enum"] == [tool_name]
+    )
+
+
 def test_frozen_cloudflare_client_keeps_historical_request_contract() -> None:
     http_request = _base_client().build_http_request(_request())
     assert http_request.body["messages"][0] == {
@@ -91,25 +111,38 @@ def test_frozen_cloudflare_client_keeps_historical_request_contract() -> None:
     assert "chat_template_kwargs" not in http_request.body
 
 
-def test_release0_request_policy_is_isolated_and_encodes_relational_contract() -> None:
+def test_release0_request_policy_is_read_only_and_tool_arguments_are_exact() -> None:
     assert RELEASE0_PROVIDER_SYSTEM_INSTRUCTION != PROVIDER_DECISION_SYSTEM_INSTRUCTION
     for required_fragment in (
         "all eight top-level fields",
-        "response schema independently enforces",
-        "tools[].parameters[].name",
-        "Never wrap tool arguments",
+        "Release 0 is read-only",
+        "one TOOL variant per tool",
+        "only tools[].parameters[].name keys are allowed",
         "kind=FINAL",
         'decision="ORIENT"',
         "complete, partial, inconclusive, conflict, or unavailable",
         "arguments={}",
         "search_knowledge accepts only q and optional type",
         "use it at most once in a run",
-        "allowed tool_name schema enum",
-        "read-only and no-action requests",
+        "return FINAL instead of inventing a doc_id",
     ):
         assert required_fragment in RELEASE0_PROVIDER_SYSTEM_INSTRUCTION
 
-    request = _request()
+    source = _release_source()
+    request = source.build_request(_context())
+    visible_names = {tool.name for tool in request.tools}
+    assert len(request.tools) == 13
+    assert "search_knowledge" in visible_names
+    assert "get_knowledge_doc" in visible_names
+    for action_name in (
+        "update_asset_config",
+        "reprocess_analysis",
+        "request_specialist_analysis",
+        "request_retraining",
+        "escalate_case",
+    ):
+        assert action_name not in visible_names
+
     http_request = _release_client().build_http_request(request)
     assert http_request.body["messages"][0]["content"] == RELEASE0_PROVIDER_SYSTEM_INSTRUCTION
     assert http_request.body["max_completion_tokens"] == RELEASE0_MAX_COMPLETION_TOKENS == 1024
@@ -118,23 +151,25 @@ def test_release0_request_policy_is_isolated_and_encodes_relational_contract() -
 
     response_schema = http_request.body["response_format"]["json_schema"]
     variants = response_schema["oneOf"]
-    assert len(variants) == 3
-    assert {
-        tuple(variant["properties"]["kind"]["enum"])
-        for variant in variants
-    } == {
-        ("TOOL",),
-        ("FINAL",),
-        ("CLARIFY", "ESCALATE", "ABSTAIN"),
+    assert len(variants) == len(request.tools) + 2
+
+    search_variant = _tool_variant(response_schema, "search_knowledge")
+    search_arguments = search_variant["properties"]["arguments"]
+    assert search_arguments["additionalProperties"] is False
+    assert set(search_arguments["properties"]) == {"q", "type"}
+    assert search_arguments["required"] == ["q"]
+    assert search_arguments["properties"]["q"] == {"type": "string"}
+    assert search_arguments["properties"]["type"] == {
+        "type": "string",
+        "enum": ["procedure", "glossary", "guidance"],
     }
-    tool_variant = next(
-        variant
-        for variant in variants
-        if variant["properties"]["kind"]["enum"] == ["TOOL"]
-    )
-    assert tool_variant["properties"]["tool_name"]["enum"] == [
-        tool.name for tool in request.tools
-    ]
+
+    doc_variant = _tool_variant(response_schema, "get_knowledge_doc")
+    doc_arguments = doc_variant["properties"]["arguments"]
+    assert doc_arguments["additionalProperties"] is False
+    assert set(doc_arguments["properties"]) == {"doc_id"}
+    assert doc_arguments["required"] == ["doc_id"]
+
     final_variant = next(
         variant
         for variant in variants
@@ -156,39 +191,33 @@ def test_release0_request_policy_is_isolated_and_encodes_relational_contract() -
 
 
 def test_release0_provider_surface_removes_search_after_successful_search_observation() -> None:
-    source = Release0ProviderDecisionSource(
-        client=_release_client(),
-        registry=canonical_tool_registry(),
-    )
-    initial = source.build_request(
-        ControllerContext(
-            user_request="Investigate vibration guidance.",
-            turn_index=0,
-            tool_call_count=0,
-        )
-    )
-    assert len(initial.tools) == 18
+    source = _release_source()
+    initial = source.build_request(_context())
+    assert len(initial.tools) == 13
     assert "search_knowledge" in {tool.name for tool in initial.tools}
 
     after_search = source.build_request(_successful_search_context())
     visible_names = {tool.name for tool in after_search.tools}
-    assert len(after_search.tools) == 17
+    assert len(after_search.tools) == 12
     assert "search_knowledge" not in visible_names
     assert "get_knowledge_doc" in visible_names
+    assert "escalate_case" not in visible_names
 
     http_request = _release_client().build_http_request(after_search)
-    tool_variant = next(
-        variant
-        for variant in http_request.body["response_format"]["json_schema"]["oneOf"]
+    schema = http_request.body["response_format"]["json_schema"]
+    tool_names = {
+        variant["properties"]["tool_name"]["enum"][0]
+        for variant in schema["oneOf"]
         if variant["properties"]["kind"]["enum"] == ["TOOL"]
-    )
-    assert "search_knowledge" not in tool_variant["properties"]["tool_name"]["enum"]
-    assert "get_knowledge_doc" in tool_variant["properties"]["tool_name"]["enum"]
+    }
+    assert "search_knowledge" not in tool_names
+    assert "get_knowledge_doc" in tool_names
+    assert "escalate_case" not in tool_names
 
 
 def test_release0_adapter_rejects_removed_search_even_if_client_returns_it() -> None:
-    source = Release0ProviderDecisionSource(
-        client=StaticDecisionClient(
+    source = _release_source(
+        StaticDecisionClient(
             {
                 "schema_version": "provider-decision-payload-v1",
                 "kind": "TOOL",
@@ -199,9 +228,28 @@ def test_release0_adapter_rejects_removed_search_even_if_client_returns_it() -> 
                 "message": None,
                 "reason_code": None,
             }
-        ),
-        registry=canonical_tool_registry(),
+        )
     )
 
     with pytest.raises(ValueError, match="unknown tool: search_knowledge"):
         source.decide(_successful_search_context())
+
+
+def test_release0_adapter_rejects_action_tool_even_on_first_turn() -> None:
+    source = _release_source(
+        StaticDecisionClient(
+            {
+                "schema_version": "provider-decision-payload-v1",
+                "kind": "TOOL",
+                "tool_name": "escalate_case",
+                "arguments": {"case_id": "case-1", "body": {}},
+                "evidence_id": "ev-action",
+                "final": None,
+                "message": None,
+                "reason_code": None,
+            }
+        )
+    )
+
+    with pytest.raises(ValueError, match="unknown tool: escalate_case"):
+        source.decide(_context())
