@@ -115,13 +115,20 @@ def _configure_runtime_evaluator(app, *, provider_calls_enabled: bool) -> None:
 
     The generic product defaults to provider-free evaluation for backwards-compatible tests and
     offline paths. Remote Release 0 is different by construction: a successful trace must contain
-    one validated model-call provenance record per live provider decision. The promoted remote
-    topology always has the PostgreSQL runtime-handoff supervisor; absence is a boot blocker.
+    one validated model-call provenance record per live provider decision.
+
+    Composition tests intentionally replace the real production factory with a minimal FastAPI
+    application so they can assert dependency wiring without opening PostgreSQL resources. Those
+    doubles are not remote-serving applications and must remain side-effect free. A genuine remote
+    app sets ``app.state.remote_production = True``; for that topology the PostgreSQL horizontal
+    runtime supervisor is mandatory and absence remains a fail-closed boot blocker.
     """
 
     supervisor = getattr(app.state, "runtime_handoff_supervisor", None)
     if supervisor is None:
-        raise RuntimeError("remote_runtime_handoff_supervisor_required")
+        if getattr(app.state, "remote_production", False):
+            raise RuntimeError("remote_runtime_handoff_supervisor_required")
+        return
 
     if provider_calls_enabled:
         supervisor.evaluator = ProductionEvaluator(
