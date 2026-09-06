@@ -23,6 +23,7 @@ export default defineRailway(() => {
     healthcheckTimeout: 60,
     replicas: { "us-east4-eqdc4a": 1 },
     env: {
+      PORT: preserve(),
       ACADEMY_PORT: preserve(),
       ACADEMY_MAX_WORKERS: preserve(),
       ACADEMY_COST_POLICY: preserve(),
