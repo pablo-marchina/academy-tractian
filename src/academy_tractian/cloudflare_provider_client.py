@@ -125,6 +125,8 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
             "n": 1,
             "stream": False,
             "max_completion_tokens": CLOUDFLARE_MAX_COMPLETION_TOKENS,
+            "reasoning_effort": None,
+            "chat_template_kwargs": {"enable_thinking": False},
             "store": False,
             "tool_choice": "none",
             "parallel_tool_calls": False,
