@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ipaddress import ip_address
+import json
 import re
 from typing import Literal, Mapping
 from urllib.parse import parse_qs, urlsplit
@@ -90,6 +91,22 @@ def _validate_remote_https_origin(value: str, *, label: str) -> str:
     return normalized
 
 
+def _parse_tractian_server_headers(value: SecretStr) -> dict[str, str]:
+    raw = value.get_secret_value()
+    try:
+        decoded = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("TRACTIAN server headers must be a valid JSON object") from exc
+    if not isinstance(decoded, dict) or not decoded:
+        raise ValueError("TRACTIAN server headers must be a non-empty JSON object")
+    headers: dict[str, str] = {}
+    for key, item in decoded.items():
+        if not isinstance(key, str) or not isinstance(item, str) or not key.strip() or not item.strip():
+            raise ValueError("TRACTIAN server headers must map non-empty strings to non-empty strings")
+        headers[key] = item
+    return headers
+
+
 class RemoteProductionConfig(BaseModel):
     """Fail-closed configuration boundary for remotely served production."""
 
@@ -110,6 +127,9 @@ class RemoteProductionConfig(BaseModel):
     paid_fallback_enabled: bool
     local_serving_enabled: bool
     provider_calls_enabled: bool = False
+    tractian_transport_enabled: bool = False
+    tractian_base_url: str | None = Field(default=None, max_length=2048)
+    tractian_server_headers_json: SecretStr | None = None
 
     @field_validator("internal_dsn", "scoped_dsn")
     @classmethod
@@ -151,6 +171,13 @@ class RemoteProductionConfig(BaseModel):
             return None
         return _validate_remote_https_origin(value, label="Neon Auth base URL")
 
+    @field_validator("tractian_base_url")
+    @classmethod
+    def validate_tractian_base_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _validate_remote_https_origin(value, label="TRACTIAN base URL")
+
     @field_validator("release_git_sha")
     @classmethod
     def validate_release_git_sha(cls, value: str) -> str:
@@ -189,6 +216,17 @@ class RemoteProductionConfig(BaseModel):
                 raise ValueError("signed-bearer IAM requires runtime identity secret, issuer and audience")
         elif self.neon_auth_base_url is None:
             raise ValueError("neon-auth IAM requires ACADEMY_NEON_AUTH_BASE_URL")
+
+        if self.tractian_transport_enabled:
+            if self.tractian_base_url is None or self.tractian_server_headers_json is None:
+                raise ValueError(
+                    "enabled TRACTIAN transport requires ACADEMY_TRACTIAN_BASE_URL and ACADEMY_TRACTIAN_SERVER_HEADERS_JSON"
+                )
+            _parse_tractian_server_headers(self.tractian_server_headers_json)
+        elif self.tractian_base_url is not None or self.tractian_server_headers_json is not None:
+            raise ValueError(
+                "TRACTIAN endpoint/headers cannot be configured while ACADEMY_TRACTIAN_TRANSPORT_ENABLED is false"
+            )
         return self
 
     @classmethod
@@ -206,6 +244,7 @@ class RemoteProductionConfig(BaseModel):
             )
 
         runtime_secret = environ.get("ACADEMY_RUNTIME_IDENTITY_SECRET", "").strip()
+        tractian_headers = environ.get("ACADEMY_TRACTIAN_SERVER_HEADERS_JSON", "")
         return cls(
             environment=environ["ACADEMY_ENVIRONMENT"],
             internal_dsn=SecretStr(environ["ACADEMY_POSTGRES_INTERNAL_DSN"]),
@@ -231,7 +270,22 @@ class RemoteProductionConfig(BaseModel):
                 environ.get("ACADEMY_PROVIDER_CALLS_ENABLED", "false"),
                 name="ACADEMY_PROVIDER_CALLS_ENABLED",
             ),
+            tractian_transport_enabled=_parse_bool(
+                environ.get("ACADEMY_TRACTIAN_TRANSPORT_ENABLED", "false"),
+                name="ACADEMY_TRACTIAN_TRANSPORT_ENABLED",
+            ),
+            tractian_base_url=environ.get("ACADEMY_TRACTIAN_BASE_URL") or None,
+            tractian_server_headers_json=(
+                SecretStr(tractian_headers) if tractian_headers.strip() else None
+            ),
         )
+
+    def tractian_server_headers(self) -> dict[str, str]:
+        """Return server-managed TRACTIAN headers only inside the trusted composition boundary."""
+
+        if self.tractian_server_headers_json is None:
+            return {}
+        return _parse_tractian_server_headers(self.tractian_server_headers_json)
 
     def safe_metadata(self) -> dict[str, object]:
         """Return browser-safe release identity without DSNs, roles, hosts or secrets."""
@@ -247,4 +301,5 @@ class RemoteProductionConfig(BaseModel):
             "paid_fallback_enabled": self.paid_fallback_enabled,
             "local_serving_enabled": self.local_serving_enabled,
             "provider_calls_enabled": self.provider_calls_enabled,
+            "tractian_transport_enabled": self.tractian_transport_enabled,
         }
