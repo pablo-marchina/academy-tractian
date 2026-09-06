@@ -3,10 +3,7 @@ from academy_tractian.cloudflare_provider_client import (
     CloudflareWorkersAIChatCompletionsDecisionClient,
 )
 from academy_tractian.decision_source import build_provider_decision_request
-from academy_tractian.provider_clients import (
-    PROVIDER_DECISION_SYSTEM_INSTRUCTION,
-    ProviderHttpResponse,
-)
+from academy_tractian.provider_clients import PROVIDER_DECISION_SYSTEM_INSTRUCTION
 from academy_tractian.release_provider import RELEASE0_PROVIDER_SYSTEM_INSTRUCTION
 from academy_tractian.runtime import canonical_tool_registry
 from research.e2.controller import ControllerContext
