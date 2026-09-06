@@ -86,9 +86,27 @@ def _provider_selection_state(config: RemoteProductionConfig) -> str:
 
 
 def deny_production_action_principal(*, user_id: str) -> ProductionActionPrincipal:
-    """Release 0 never authorizes consequential external action execution."""
+    """Fail closed when no user-serving Release 0 runtime is enabled."""
 
     raise PermissionError(f"production_actions_not_enabled:{user_id}")
+
+
+def release0_read_only_action_principal(*, user_id: str) -> ProductionActionPrincipal:
+    """Bind a real user to a server-owned principal that authorizes reads and no actions.
+
+    ActionProposalRealtimeProductionRuntime resolves a principal before it knows whether the
+    model will select a read or an action tool. Release 0 therefore needs a valid principal for
+    genuine read-only runs, but it must not grant any consequential permission or resource
+    binding. Read tools bypass the action policy; every action proposal is deterministically
+    blocked before custody or transport because this principal has zero permissions.
+    """
+
+    return ProductionActionPrincipal(
+        user_id=user_id,
+        user_company_id="__release0_read_only__",
+        permissions=frozenset(),
+        resource_company_bindings=(),
+    )
 
 
 def app_factory():
@@ -113,6 +131,12 @@ def app_factory():
     else:
         transport_factory = NoConfiguredTractianTransport
 
+    authorization_resolver = (
+        release0_read_only_action_principal
+        if config.provider_calls_enabled
+        else deny_production_action_principal
+    )
+
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_operational")
     app = create_remote_production_app(
         config=config,
@@ -120,7 +144,7 @@ def app_factory():
         railway_runtime_git_sha=os.environ.get("RAILWAY_GIT_COMMIT_SHA"),
         decision_source_factory=decision_source_factory,
         transport_factory=transport_factory,
-        authorization_resolver=deny_production_action_principal,
+        authorization_resolver=authorization_resolver,
         tractian_transport_state=tractian_transport_state,
         schema=schema,
         max_workers=int(os.environ.get("ACADEMY_MAX_WORKERS", "4")),
