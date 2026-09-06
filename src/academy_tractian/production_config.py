@@ -381,7 +381,7 @@ class RemoteProductionConfig(BaseModel):
     def safe_metadata(self) -> dict[str, object]:
         """Return browser-safe release identity without DSNs, hosts, account ids or secrets."""
 
-        return {
+        metadata: dict[str, object] = {
             "schema_version": "remote-production-release-v2",
             "environment": self.environment,
             "browser_iam_mode": self.browser_iam_mode,
@@ -392,7 +392,15 @@ class RemoteProductionConfig(BaseModel):
             "paid_fallback_enabled": self.paid_fallback_enabled,
             "local_serving_enabled": self.local_serving_enabled,
             "provider_calls_enabled": self.provider_calls_enabled,
-            "provider_selection_state": self.provider_selection_state,
-            "provider_id": self.provider_id if self.provider_calls_enabled else None,
-            "provider_model_id": self.provider_model_id if self.provider_calls_enabled else None,
         }
+        # Keep the existing NO_SELECTION metadata contract byte-compatible for infrastructure
+        # probes. Release 0 adds only non-secret provider/model identity when calls are active.
+        if self.provider_calls_enabled:
+            metadata.update(
+                {
+                    "provider_selection_state": self.provider_selection_state,
+                    "provider_id": self.provider_id,
+                    "provider_model_id": self.provider_model_id,
+                }
+            )
+        return metadata
