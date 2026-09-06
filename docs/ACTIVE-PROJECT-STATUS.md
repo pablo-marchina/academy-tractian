@@ -4,6 +4,7 @@
 **Checkpoint:** 2026-09-05 BRT  
 **Current `main`:** `12b4753d3e39c86f7c68f0ea7b4f321549049fc7`  
 **Final implementation branch:** `release/production-final`  
+**Validated implementation head:** `a9356e217fbf7c94549849a7cdb8554a449e947b`  
 **Draft integration PR:** `#196`  
 **Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
 **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)  
@@ -19,27 +20,27 @@ project cash-cost constraint                 USD 0 HARD CONSTRAINT
 current main                                 12b4753d3e39c86f7c68f0ea7b4f321549049fc7
 final implementation branch                  release/production-final
 draft integration PR                         #196 / OPEN / DRAFT
-previous complete-head required gate         PASS
-current complete-head required gate          PENDING after release-identity hardening
+validated implementation head                a9356e217fbf7c94549849a7cdb8554a449e947b
+validated complete-head required gate         PASS / 11 of 11 workflows green
 GitHub main protection                       BLOCKED_USER_ACTION / connector has no admin write
 
 production agent runtime                     IMPLEMENTED / REGRESSION PASS
 production deterministic evaluator           IMPLEMENTED
-TRACTIAN typed tool registry                  18 operations
+TRACTIAN typed tool registry                  18 operations / 17 paths
 PostgreSQL serving persistence               IMPLEMENTED + REMOTE SCHEMA APPLIED
 PostgreSQL observability/evaluation           IMPLEMENTED + REMOTE SCHEMA APPLIED
 realtime durable truth                       PostgreSQL rows + sequence cursor
 realtime wake-up                             LISTEN/NOTIFY + durable catch-up
-read-only cross-replica handoff              IMPLEMENTED / required gate baseline PASS
-consequential-action safety                  IMPLEMENTED / action-lease baseline PASS
+read-only cross-replica handoff              IMPLEMENTED / required gate PASS
+consequential-action safety                  IMPLEMENTED / action-lease PASS
 React operator control room                  IMPLEMENTED
 material decision registry                   IMPLEMENTED / ACTIVE
-backend immutable release identity           IMPLEMENTED / COMPLETE-HEAD CI PENDING
+backend immutable release identity           IMPLEMENTED / REQUIRED GATE PASS
 
 Railway production-web                       ONLINE / HTTPS / US East
 Railway production-api                       CRASHED FAIL-CLOSED / missing only two Postgres DSNs
 Railway API healthcheck desired state         /health / 60s / ON_FAILURE configured
-Railway production topology IaC              VERSIONED / .railway/railway.ts; live IaC apply pending
+Railway production topology IaC              VERSIONED / live plan+apply pending
 Neon production schema                       APPLIED / STRUCTURALLY VALIDATED
 Neon scoped role                             academy_tractian_rls / NOBYPASSRLS / non-superuser
 remote RLS validation                        PASS on isolated validation branch
@@ -49,7 +50,10 @@ browser IAM                                  CODE + HOSTED AUTH / LIVE E2E PENDI
 provider tournament v3                       PREREGISTERED / PROVIDER-FREE VALIDATOR PRESENT
 production provider/model                    NO_SELECTION
 production DecisionSource                    FAIL-CLOSED placeholder
-production TRACTIAN transport                NOT COMPOSED
+production TRACTIAN HTTP adapter              IMPLEMENTED / WHEEL+IMAGE PASS
+production TRACTIAN composition state         UNCONFIGURED by default
+possible configured state                    CONFIGURED_UNVERIFIED only
+real TRACTIAN reachability                    NOT PROVED
 production authorization resolver            DENY-ALL baseline
 remote capacity/SLO                          NOT PROVED
 remote recovery/reconnect                    NOT PROVED
@@ -72,10 +76,12 @@ browser
 → server-owned user / organization / permissions
 → Neon PostgreSQL + RLS
 → durable runtime handoff / leases / fencing
-→ selected hosted DecisionSource                  [OPEN]
+→ selected hosted DecisionSource                  [OPEN / NO_SELECTION]
 → AgentController
 → 18 typed TRACTIAN tools
-→ real remote TRACTIAN transport                  [OPEN]
+→ hardened production TRACTIAN transport          [IMPLEMENTED / UNCONFIGURED]
+→ authoritative remote TRACTIAN endpoint/auth     [OPEN]
+→ live TRACTIAN read evidence                     [OPEN]
 → evidence-grounded final/clarify/abstain/escalate/action proposal
 → governed action confirmation + authorization    [OPEN remotely]
 → ProductionEvaluator
@@ -88,7 +94,7 @@ No component marked OPEN may be described as production-ready before hosted evid
 
 ## 3. Release artifact identity
 
-The backend production image now has an independent, immutable source-identity contract:
+The backend production image has an independent immutable source-identity contract:
 
 ```text
 Railway Git-backed build input       RAILWAY_GIT_COMMIT_SHA
@@ -100,9 +106,9 @@ public metadata schema               remote-production-release-v3
 
 Image construction fails if the build SHA is missing or malformed. Serving boot fails before product/database builders if configured `ACADEMY_RELEASE_GIT_SHA` disagrees with the baked artifact, or if Railway's runtime SHA is present and disagrees with it.
 
-`production-runtime` now contains positive and negative image identity checks and is consumed by `final-ci-required`. The current complete-head CI is still pending, so this is an implementation claim, not yet a validated hosted/release claim.
+At validated head `a9356e217fbf7c94549849a7cdb8554a449e947b`, `production-runtime`, its standalone-wheel smoke, production-image smoke, clean-clone reproduction and `final-ci-required / required-gate` all passed. This proves the source/artifact contract in CI; it does not prove the currently hosted Railway backend is serving that head.
 
-Hosted G2 evidence must show:
+Hosted G2 evidence must still show:
 
 ```text
 release_git_sha == artifact_git_sha == exact deployed commit
@@ -110,7 +116,54 @@ artifact_identity_verified == true
 railway_runtime_identity_verified == true  # when runtime system SHA is exposed
 ```
 
-## 4. External infrastructure state
+## 4. TRACTIAN production boundary
+
+The canonical registry remains hash-pinned to the supplied contract and contains 18 operations over 17 paths. The production HTTP boundary is now implemented separately from the benchmark transport.
+
+`ProductionTractianTransport` enforces:
+
+```text
+remote HTTPS base URL only
+exact canonical operation/method/path matching
+canonical path encoding / traversal rejection
+runner-bound x-user-id only
+server-managed credentials injected only at the network boundary
+redirect following disabled
+no automatic retry for reads or writes
+bounded query/body/response sizes
+finite JSON request bodies
+sanitized response headers
+invalid/oversized upstream payload -> deterministic 502
+transport unavailable -> deterministic 599
+```
+
+Production composition is independent of model/provider selection:
+
+```text
+provider state                         NO_SELECTION
+TRACTIAN default state                 UNCONFIGURED
+explicit complete config state         CONFIGURED_UNVERIFIED
+actions                                DENY-ALL / disabled
+```
+
+`CONFIGURED_UNVERIFIED` means only that a remote HTTPS base URL plus server-managed header map passed deterministic configuration validation. Construction performs zero remote I/O, so this state is intentionally not called READY, CONNECTED or VERIFIED.
+
+No authoritative remote TRACTIAN base URL or authentication-header contract has been recovered from the supplied project material. The runtime therefore does not assume Bearer, API key or another scheme. Exact endpoint/auth configuration must come from the partner-provided contract/environment before live composition.
+
+At validated head `a9356e217fbf7c94549849a7cdb8554a449e947b`:
+
+```text
+full Python + PostgreSQL clean-clone           PASS
+TRACTIAN transport/composition regressions     PASS
+standalone production wheel smoke              PASS
+production Docker image smoke                  PASS
+full-product Playwright                        PASS
+final-ci-required / required-gate              PASS
+```
+
+These are source/artifact claims only. No real TRACTIAN request has been executed or promoted by this evidence.
+
+## 5. External infrastructure state
 
 ### Railway
 
@@ -125,13 +178,13 @@ ACADEMY_POSTGRES_INTERNAL_DSN
 ACADEMY_POSTGRES_SCOPED_DSN
 ```
 
-Those values must be inserted only through an approved Railway native secret channel. The next successful deployment must also use a configured release SHA matching the exact Git-backed build SHA; release identity drift is no longer tolerated.
+Those values must be inserted only through an approved Railway native secret channel. No DSN may be committed or pasted into documentation/chat.
 
 ### Railway Infrastructure as Code
 
-`.railway/railway.ts` is a named `production` partial managing only `production-api` and `production-web`. Historical `hosted-pilot` remains outside the partial. Existing Railway-managed values and the two future PostgreSQL DSNs are represented with `preserve()` and no secret value is stored in Git.
+`.railway/railway.ts` is a named `production` partial managing only `production-api` and `production-web`. Historical `hosted-pilot` remains outside the partial. Existing Railway-managed values and future PostgreSQL DSNs use `preserve()` and no secret value is stored in Git.
 
-Static validation and TypeScript DSL CI are versioned. A live `railway config plan`/apply remains pending before IaC ownership itself can be claimed as promoted.
+Static validation and TypeScript DSL CI pass. A real authenticated `railway config plan` followed by reviewed apply remains pending before IaC ownership convergence can be claimed.
 
 ### Neon
 
@@ -151,11 +204,11 @@ cross-tenant validation           org-a visible / org-b denied
 
 Production Neon Auth is provisioned and trusts the production-web origin. Email/password sessions are enabled; email verification is not required, so verified-email identity is not claimed.
 
-## 5. Provider tournament state
+## 6. Provider tournament state
 
 Provider decision state remains `NO_SELECTION`.
 
-A fresh v3 campaign is now preregistered over:
+The fresh v3 campaign is preregistered over:
 
 ```text
 17 scenarios
@@ -164,11 +217,9 @@ A fresh v3 campaign is now preregistered over:
 = 170 future live calls / 85 per candidate
 ```
 
-The campaign is partitioned into five UTC daily packets of 34 calls to respect the Cloudflare Workers AI free-neuron envelope under the project's USD0 constraint. Historical D01/D02 results are excluded from the v3 denominator. Cash cost, gold leakage, unsafe unsupported actions, policy bypass, schema validity, quota, completeness, provenance and reliability are hard gates.
+Historical D01/D02 results are excluded from the v3 denominator. Cash cost, gold leakage, unsafe unsupported actions, policy bypass, schema validity, quota, completeness, provenance and reliability remain hard gates. No v3 live run has selected a provider.
 
-No v3 live run has been used to select a provider. Preregistration and provider-free validation do not constitute promotion.
-
-## 6. Immediate dependency gates
+## 7. Immediate dependency gates
 
 ### Gate G1 — repository governance
 
@@ -176,46 +227,51 @@ Status: `BLOCKED_USER_ACTION`.
 
 Required: protect `main`; require pull requests; require `final-ci-required / required-gate`; require up-to-date branch; block force push; block branch deletion.
 
-The connected GitHub integration has no administrative branch-protection write action, so this must be completed by the repository owner.
-
 ### Gate G2 — remote backend serving
 
 Status: `BLOCKED_USER_ACTION`.
 
-Required:
+Required after the two Railway DSNs are available:
 
-1. insert `ACADEMY_POSTGRES_INTERNAL_DSN` in Railway `production-api`;
-2. insert `ACADEMY_POSTGRES_SCOPED_DSN` in Railway `production-api`;
-3. redeploy the exact current branch SHA;
-4. prove `/health` and `/api/meta/release` v3 exact artifact/config/runtime SHA agreement;
-5. verify both DB roles, schema/stores and persistence;
-6. restart and verify durable state/cursor.
-
-No DSN may be committed or pasted into project documentation/chat.
+1. inject both DSNs through Railway secrets;
+2. deploy the exact current release branch SHA;
+3. prove `/health` and `/api/meta/release` exact artifact/config/runtime SHA agreement;
+4. verify real PostgreSQL roles/schema/stores;
+5. restart and verify durable state/cursor.
 
 ### Gate G3 — live IAM and tenant isolation
 
 Status: `WAITING_G2`.
 
-Hosted acceptance must prove User A/Tenant A and User B/Tenant B, zero cross-tenant REST/SSE/action leakage, correct same-organization multi-user behavior, browser-supplied org/user/role/permission authority ignored or denied, and invalid/expired/mismatched/impersonated sessions fail closed. Offline negative-gap hardening may proceed while G2 is blocked, but cannot promote IAM to READY.
+Hosted acceptance must prove two users/two tenants, shared-organization behavior, zero cross-tenant REST/SSE/action leakage and fail-closed invalid/expired/mismatched/impersonated sessions.
 
 ### Gate G4 — hosted provider
 
 Status: `PREREGISTERED / NO_SELECTION`.
 
-Execute the v3 USD0 tournament only after upstream gates permit hosted execution. Promotion requires complete quantitative evidence; no provider may be composed from preregistration alone.
+Execute the v3 USD0 tournament only when hosted execution is permitted. Promotion requires complete quantitative evidence; preregistration alone cannot promote a provider.
 
 ### Gate G5 — real TRACTIAN path
 
-Status: `WAITING_G4`.
+Status: `ADAPTER_IMPLEMENTED / LIVE_CONFIG_AND_PROOF_PENDING`.
 
-Compose the real typed transport from the supplied contract. Do not guess endpoints or retry consequential writes blindly.
+Required before promotion:
 
-## 7. Current non-claims
+1. obtain authoritative partner base URL/auth contract;
+2. configure it only through server-side secret/config channels;
+3. enter `CONFIGURED_UNVERIFIED` without boot-time network side effects;
+4. execute bounded live read acceptance against canonical tools;
+5. classify complete/partial/inconclusive/conflicting/unavailable responses correctly;
+6. prove no secret/tenant leakage and no redirect/retry policy violation;
+7. only then promote a live transport state.
 
-Do not claim yet: full remote production readiness; Railway IaC ownership convergence; current complete-head CI PASS after release-identity changes; deployed release-metadata v3; IAM READY; verified-email identity; selected provider; real production TRACTIAN integration; remote action execution; enterprise availability; measured production SLO/HA/RTO/RPO; human semantic calibration; engineer-time savings; adaptive-runtime superiority; distributed exactly-once external side effects.
+Consequential actions remain a later gate after real authorization/confirmation composition.
 
-## 8. State update rule
+## 8. Current non-claims
+
+Do not claim yet: full remote production readiness; Railway IaC ownership convergence; currently deployed release SHA parity; IAM READY; verified-email identity; selected provider; real TRACTIAN reachability; real TRACTIAN reads; remote action execution; enterprise availability; measured production SLO/HA/RTO/RPO; human semantic calibration; engineer-time savings; adaptive-runtime superiority; distributed exactly-once external side effects.
+
+## 9. State update rule
 
 Every material change must update implementation/infrastructure, validation evidence, this file, `DELIVERY-PLAN.md`, `decision-registry.yaml` when a material decision changes, and a chronological `docs/progress/` entry.
 
