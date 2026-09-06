@@ -9,10 +9,11 @@ from .cloudflare_provider_client import (
     CLOUDFLARE_PROVIDER_ID,
     CloudflareWorkersAIChatCompletionsDecisionClient,
 )
-from .decision_source import ProviderCallIdentity, ProviderDecisionSource
+from .decision_source import ProviderCallIdentity, ProviderDecisionRequest, ProviderDecisionSource
 from .production_config import RemoteProductionConfig
 from .provider_clients import (
     PROVIDER_DECISION_SYSTEM_INSTRUCTION,
+    ProviderHttpRequest,
     ProviderJsonTransport,
     UrllibProviderJsonTransport,
 )
@@ -21,6 +22,7 @@ from .provider_clients import (
 NO_PROVIDER_SELECTION_STATE = "NO_SELECTION"
 PROVISIONAL_RELEASE_PROVIDER_STATE = "PROVISIONAL_RELEASE_PROVIDER"
 RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v2"
+RELEASE0_MAX_COMPLETION_TOKENS = 1024
 
 RELEASE0_PROVIDER_SYSTEM_INSTRUCTION = (
     PROVIDER_DECISION_SYSTEM_INSTRUCTION
@@ -47,6 +49,38 @@ For kind=CLARIFY, ESCALATE, or ABSTAIN:
 Use TOOL only when another canonical read is materially necessary. Stop with a terminal decision as soon as the available observations are sufficient to answer safely. Do not repeat a successful tool call with materially equivalent arguments unless a prior observation identifies a specific unresolved gap. Honor explicit read-only and no-action requests; never propose an action when the user has prohibited actions.
 """
 ).strip()
+
+
+class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisionClient):
+    """Release-only request policy layered over the immutable ADR-018 client.
+
+    ADR-018 freezes the historical Cloudflare client byte-for-byte for reproducible comparison.
+    Release 0 needs a larger completion budget, no reasoning token spend, and a stricter semantic
+    instruction. Keeping these overrides here preserves the frozen research artifact while the
+    inherited transport, response parsing, usage accounting, zero-retry and zero-fallback
+    properties remain unchanged.
+    """
+
+    def build_http_request(self, request: ProviderDecisionRequest) -> ProviderHttpRequest:
+        base = super().build_http_request(request)
+        body = dict(base.body)
+        messages = list(body.get("messages") or [])
+        if len(messages) != 2 or not isinstance(messages[0], dict):
+            raise RuntimeError("release0_cloudflare_message_contract_drift")
+        messages[0] = {"role": "system", "content": RELEASE0_PROVIDER_SYSTEM_INSTRUCTION}
+        body.update(
+            messages=messages,
+            max_completion_tokens=RELEASE0_MAX_COMPLETION_TOKENS,
+            reasoning_effort=None,
+            chat_template_kwargs={"enable_thinking": False},
+        )
+        return ProviderHttpRequest(
+            method=base.method,
+            url=base.url,
+            headers=dict(base.headers),
+            body=body,
+            timeout_seconds=base.timeout_seconds,
+        )
 
 
 def validate_release_provider_config(config: RemoteProductionConfig) -> None:
@@ -101,13 +135,12 @@ def build_release_provider_decision_source(
     assert config.provider_account_id is not None
     assert config.provider_api_token is not None
 
-    client = CloudflareWorkersAIChatCompletionsDecisionClient(
+    client = Release0CloudflareDecisionClient(
         api_token=config.provider_api_token.get_secret_value(),
         account_id=config.provider_account_id,
         model_id=config.provider_model_id,
         transport=transport or UrllibProviderJsonTransport(),
         timeout_seconds=config.provider_timeout_seconds,
-        system_instruction=RELEASE0_PROVIDER_SYSTEM_INSTRUCTION,
     )
     registry = {tool.name: tool for tool in TOOLS}
     return ProviderDecisionSource(
