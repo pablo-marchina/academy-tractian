@@ -7,6 +7,7 @@ from academy_tractian.decision_source import build_provider_decision_request
 from academy_tractian.provider_clients import PROVIDER_DECISION_SYSTEM_INSTRUCTION
 from academy_tractian.release_provider import (
     RELEASE0_MAX_COMPLETION_TOKENS,
+    RELEASE0_PROVIDER_DECISION_JSON_SCHEMA,
     RELEASE0_PROVIDER_SYSTEM_INSTRUCTION,
     Release0CloudflareDecisionClient,
     Release0ProviderDecisionSource,
@@ -64,6 +65,7 @@ def test_release0_request_policy_is_isolated_and_encodes_relational_contract() -
     assert RELEASE0_PROVIDER_SYSTEM_INSTRUCTION != PROVIDER_DECISION_SYSTEM_INSTRUCTION
     for required_fragment in (
         "all eight top-level fields",
+        "response schema independently enforces",
         "tools[].parameters[].name",
         "Never wrap tool arguments",
         "kind=FINAL",
@@ -82,6 +84,36 @@ def test_release0_request_policy_is_isolated_and_encodes_relational_contract() -
     assert http_request.body["max_completion_tokens"] == RELEASE0_MAX_COMPLETION_TOKENS == 1024
     assert http_request.body["reasoning_effort"] is None
     assert http_request.body["chat_template_kwargs"] == {"enable_thinking": False}
+    assert http_request.body["response_format"] == {
+        "type": "json_schema",
+        "json_schema": RELEASE0_PROVIDER_DECISION_JSON_SCHEMA,
+    }
+
+    variants = RELEASE0_PROVIDER_DECISION_JSON_SCHEMA["oneOf"]
+    assert len(variants) == 3
+    assert {
+        tuple(variant["properties"]["kind"]["enum"])
+        for variant in variants
+    } == {
+        ("TOOL",),
+        ("FINAL",),
+        ("CLARIFY", "ESCALATE", "ABSTAIN"),
+    }
+    final_variant = next(
+        variant
+        for variant in variants
+        if variant["properties"]["kind"]["enum"] == ["FINAL"]
+    )
+    assert final_variant["properties"]["arguments"]["maxProperties"] == 0
+    assert final_variant["properties"]["final"]["required"] == [
+        "decision",
+        "response_mode",
+        "message",
+    ]
+    assert final_variant["properties"]["final"]["properties"]["decision"]["enum"] == [
+        "ORIENT"
+    ]
+
     serialized = str(http_request.body["messages"][0]).lower()
     assert "test-token" not in serialized
     assert "abc123" not in serialized
