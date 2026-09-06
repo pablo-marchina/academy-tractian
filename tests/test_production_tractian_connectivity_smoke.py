@@ -16,7 +16,7 @@ class FakeTransport:
         return self.response
 
 
-def test_probe_uses_only_canonical_read_only_knowledge_search_and_records_no_payload() -> None:
+def test_probe_uses_canonical_bound_read_only_knowledge_search_and_records_no_payload() -> None:
     transport = FakeTransport(
         TransportResponse(
             status_code=200,
@@ -33,13 +33,15 @@ def test_probe_uses_only_canonical_read_only_knowledge_search_and_records_no_pay
     assert request.method == "GET"
     assert request.path == "/knowledge/search"
     assert request.query == {"q": "bearing"}
-    assert request.headers == {}
+    assert request.headers == {"x-user-id": "academy-production-connectivity-probe"}
     assert request.body is None
     assert result == {
-        "schema_version": "production-tractian-connectivity-smoke-v1",
+        "schema_version": "production-tractian-connectivity-smoke-v2",
         "status": "PASS",
         "operation": "search_knowledge",
         "http_status": 200,
+        "request_bound_by_runtime_contract": True,
+        "synthetic_probe_identity": True,
         "response_body_recorded": False,
         "response_headers_recorded": False,
         "credentials_recorded": False,
@@ -48,6 +50,7 @@ def test_probe_uses_only_canonical_read_only_knowledge_search_and_records_no_pay
     assert "private-upstream" not in rendered
     assert "results" not in rendered
     assert "x-request-id" not in rendered
+    assert "academy-production-connectivity-probe" not in rendered
 
 
 @pytest.mark.parametrize("status", [401, 403, 404, 429, 500, 503, 599])
