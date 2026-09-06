@@ -139,11 +139,20 @@ def test_release_provider_is_composed_without_enabling_actions_or_boot_time_prov
     assert callable(factory)
     source = factory()  # type: ignore[operator]
     assert isinstance(source, ProviderDecisionSource)
-    assert captured["authorization_resolver"] is remote_server.deny_production_action_principal
+    assert captured["authorization_resolver"] is remote_server.release0_read_only_action_principal
     assert captured["tractian_transport_state"] == "CONFIGURED_UNVERIFIED"
     assert app.state.provider_selection_state == "PROVISIONAL_RELEASE_PROVIDER"
     assert app.state.infrastructure_probe is False
     assert app.state.release0_read_only is True
+
+
+def test_release0_read_only_action_principal_binds_user_without_action_authority() -> None:
+    principal = remote_server.release0_read_only_action_principal(user_id="user-a")
+
+    assert principal.user_id == "user-a"
+    assert principal.user_company_id == "__release0_read_only__"
+    assert principal.permissions == frozenset()
+    assert principal.resource_company_bindings == ()
 
 
 def test_no_selected_provider_dependencies_fail_if_called() -> None:
