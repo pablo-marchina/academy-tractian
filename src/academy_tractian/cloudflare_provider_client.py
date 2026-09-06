@@ -165,8 +165,11 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
             )
             return self._extract_output(response)
         except ProviderHttpClientError as exc:
+            safe_status = "none" if exc.status_code is None else str(exc.status_code)
             _LOGGER.error(
-                "cloudflare_provider_request_failed",
+                "cloudflare_provider_request_failed code=%s status=%s",
+                exc.code,
+                safe_status,
                 extra={
                     "academy_event": "cloudflare_provider_request_failed",
                     "provider_id": self.provider_id,
