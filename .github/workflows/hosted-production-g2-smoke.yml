@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 5
     env:
       ACADEMY_PRODUCTION_API_BASE_URL: https://production-api-production-ee9f.up.railway.app
-      ACADEMY_EXPECTED_DEPLOYED_SHA: ff8b42058f9f79762a51d9e0e17e6ad17d2a2950
+      ACADEMY_EXPECTED_DEPLOYED_SHA: 234655d952d62e1c26300fe6fd72f8d44df53001
     steps:
       - uses: actions/checkout@v4
       - name: Verify hosted health, readiness and immutable release identity
