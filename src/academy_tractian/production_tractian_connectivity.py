@@ -4,15 +4,18 @@ import json
 import os
 from typing import Protocol
 
-from research.e2.models import BoundRequest
+from research.e2.models import BoundRequest, ExecutionBinding
+from research.e2.tool_registry import get_tool
+from research.e2.transport import build_b0_request
 
 from .production_config import RemoteProductionConfig
 from .tractian_transport import ProductionTractianTransport
 
 
 PROBE_OPERATION = "search_knowledge"
-PROBE_PATH = "/knowledge/search"
 PROBE_QUERY = {"q": "bearing"}
+_PROBE_IDENTITY_ID = "production-tractian-connectivity"
+_PROBE_USER_ID = "academy-production-connectivity-probe"
 
 
 class _Transport(Protocol):
@@ -20,16 +23,16 @@ class _Transport(Protocol):
 
 
 def build_probe_request() -> BoundRequest:
-    """Build one canonical, non-mutating request with no user identity or seeded resource ID."""
+    """Build the read-only probe through the same deterministic binder as runtime tool calls."""
 
-    return BoundRequest.model_validate(
-        {
-            "method": "GET",
-            "path": PROBE_PATH,
-            "query": PROBE_QUERY,
-            "headers": {},
-            "body": None,
-        }
+    return build_b0_request(
+        get_tool(PROBE_OPERATION),
+        dict(PROBE_QUERY),
+        ExecutionBinding(
+            identity_id=_PROBE_IDENTITY_ID,
+            user_id=_PROBE_USER_ID,
+            seed=None,
+        ),
     )
 
 
@@ -41,10 +44,12 @@ def run_probe(transport: _Transport) -> dict[str, object]:
         raise RuntimeError(f"tractian_connectivity_probe_failed:http_{response.status_code}")
 
     return {
-        "schema_version": "production-tractian-connectivity-smoke-v1",
+        "schema_version": "production-tractian-connectivity-smoke-v2",
         "status": "PASS",
         "operation": PROBE_OPERATION,
         "http_status": 200,
+        "request_bound_by_runtime_contract": True,
+        "synthetic_probe_identity": True,
         "response_body_recorded": False,
         "response_headers_recorded": False,
         "credentials_recorded": False,
