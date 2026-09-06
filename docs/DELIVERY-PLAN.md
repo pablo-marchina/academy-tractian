@@ -67,6 +67,7 @@ Do not add LangGraph, multi-agent, MCP, RAG/vector DB, Redis/Kafka, microservice
 | 09 | Provider tournament | PREREGISTERED / NO_SELECTION | v3: 17 fresh scenarios × 5 reps/candidate; USD0 quota packets + validator/test gate; live runs not executed |
 | 10 | Real DecisionSource composition | WAITING_DEPENDENCY | requires #09 promotion |
 | 11 | TRACTIAN production adapter/composition | ADAPTER_IMPLEMENTED | hardened direct HTTP adapter + fail-closed UNCONFIGURED/CONFIGURED_UNVERIFIED states; live contract/reachability pending |
+| 11A | TRACTIAN read-response semantics | DONE_SOURCE_GATE | trace-only structured `body.mode` classifier + sanitized production acceptance gate; `6ec5dcd…` 11/11 CI PASS; real reads pending |
 | 12 | Real authorization resolver | WAITING_DEPENDENCY | requires live identity/resource mapping |
 | 13 | Consequential action remote E2E | WAITING_DEPENDENCY | requires #08-#12 |
 | 14 | Full remote public E2E | WAITING_DEPENDENCY | requires #08-#13 |
@@ -93,6 +94,7 @@ E. live IAM + two-user/two-tenant + shared-org tests
 F. execute preregistered provider tournament
 G. promote and compose real DecisionSource
 H. compose real TRACTIAN typed transport              ADAPTER READY / LIVE CONFIG PENDING
+H.5 classify TRACTIAN read semantics                  SOURCE GATE PASS / LIVE PROOF PENDING
 I. validate Contextualize / Investigate / Clarify / Abstain / Escalate
 J. compose real authorization resolver
 K. enable and validate governed remote actions
@@ -211,13 +213,15 @@ typed canonical tool
 
 No authentication scheme is assumed until an authoritative partner contract supplies it. Read retry remains disabled until measured proof justifies it; consequential writes never receive blind retry.
 
-Live promotion requires authoritative endpoint/auth configuration plus bounded read acceptance. Complete, partial, inconclusive, conflicting and unavailable API behavior must remain distinguishable in controller evidence before the required agent modes are accepted.
+Read-response quality is now source-gated independently of live composition. `production-read-semantics-gate-v1` consumes existing immutable `tool_result` traces, derives read membership from the canonical registry, accepts only structured `body.mode` values, maps non-2xx reads to `unavailable`, fails closed to `inconclusive` on malformed successful responses, and fails acceptance on structural contract issues. It uses no prose heuristics, copies no raw response body into its sanitized report, and leaves provider-decision-request-v1 plus frozen EV-* traces unchanged.
+
+Live promotion still requires authoritative endpoint/auth configuration plus bounded real read acceptance. The source gate must then preserve `complete`, `partial`, `inconclusive`, `conflict` and `unavailable` behavior on real responses before the required agent modes are accepted.
 
 ## 11. P0-G — Required agent modes
 
 Hosted acceptance covers Contextualize, Investigate, Clarify, Abstain, Escalate and Action Proposal, evaluated on outcome, trajectory, evidence, unnecessary calls, unsupported claims and escalation usefulness.
 
-Offline preparation should first make read-response quality explicit so an HTTP-success response cannot silently erase partial/inconclusive/conflicting state.
+Offline read-response preparation is now complete at the source gate: HTTP success can no longer be treated as evidence that a response is semantically `complete`, and malformed structured state is visible as an acceptance failure. This does not yet prove any hosted agent mode; the next offline work must add only deterministic trace-level invariants that do not rewrite the accepted controller/provider protocol.
 
 ## 12. P0-H — Governed actions
 
