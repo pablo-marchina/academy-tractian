@@ -60,7 +60,8 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
     This class intentionally performs no environment lookup, retry, fallback, provider-side
     tool execution, AI Gateway routing, or automatic output repair. The transport is injected
     so provider-free tests can validate the complete request/response contract without network
-    access.
+    access. A caller may inject a stricter application-owned system instruction while the
+    historical/provider-research default remains unchanged.
     """
 
     provider_id = CLOUDFLARE_PROVIDER_ID
@@ -74,6 +75,7 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
         model_id: str,
         transport: ProviderJsonTransport,
         timeout_seconds: float = 60.0,
+        system_instruction: str = PROVIDER_DECISION_SYSTEM_INSTRUCTION,
     ) -> None:
         if not isinstance(api_token, str) or not api_token.strip():
             raise ValueError("Cloudflare client requires an explicit non-empty api_token")
@@ -86,12 +88,15 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
             raise ValueError("Cloudflare model_id is not frozen by ADR-018")
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
+        if not isinstance(system_instruction, str) or not system_instruction.strip():
+            raise ValueError("Cloudflare client requires a non-empty system_instruction")
 
         self._api_token = api_token
         self._account_id = normalized_account_id
         self.model_id = model_id
         self._transport = transport
         self._timeout_seconds = float(timeout_seconds)
+        self._system_instruction = system_instruction.strip()
         self._usage_records: list[ProviderUsageRecord] = []
 
     def __repr__(self) -> str:
@@ -114,7 +119,7 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
         body: dict[str, Any] = {
             "model": self.model_id,
             "messages": [
-                {"role": "system", "content": PROVIDER_DECISION_SYSTEM_INSTRUCTION},
+                {"role": "system", "content": self._system_instruction},
                 {"role": "user", "content": _provider_request_text(request)},
             ],
             "response_format": {
