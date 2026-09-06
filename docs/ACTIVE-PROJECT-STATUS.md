@@ -4,7 +4,7 @@
 **Checkpoint:** 2026-09-05 BRT  
 **Current `main`:** `12b4753d3e39c86f7c68f0ea7b4f321549049fc7`  
 **Final implementation branch:** `release/production-final`  
-**Validated implementation head:** `a9356e217fbf7c94549849a7cdb8554a449e947b`  
+**Validated implementation head:** `6ec5dcd7f5a4b4db81c3951d3592c955e3c64a4e`  
 **Draft integration PR:** `#196`  
 **Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
 **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)  
@@ -20,7 +20,7 @@ project cash-cost constraint                 USD 0 HARD CONSTRAINT
 current main                                 12b4753d3e39c86f7c68f0ea7b4f321549049fc7
 final implementation branch                  release/production-final
 draft integration PR                         #196 / OPEN / DRAFT
-validated implementation head                a9356e217fbf7c94549849a7cdb8554a449e947b
+validated implementation head                6ec5dcd7f5a4b4db81c3951d3592c955e3c64a4e
 validated complete-head required gate         PASS / 11 of 11 workflows green
 GitHub main protection                       BLOCKED_USER_ACTION / connector has no admin write
 
@@ -36,6 +36,7 @@ consequential-action safety                  IMPLEMENTED / action-lease PASS
 React operator control room                  IMPLEMENTED
 material decision registry                   IMPLEMENTED / ACTIVE
 backend immutable release identity           IMPLEMENTED / REQUIRED GATE PASS
+read-response semantic source gate           IMPLEMENTED / REQUIRED GATE PASS
 
 Railway production-web                       ONLINE / HTTPS / US East
 Railway production-api                       CRASHED FAIL-CLOSED / missing only two Postgres DSNs
@@ -53,6 +54,7 @@ production DecisionSource                    FAIL-CLOSED placeholder
 production TRACTIAN HTTP adapter              IMPLEMENTED / WHEEL+IMAGE PASS
 production TRACTIAN composition state         UNCONFIGURED by default
 possible configured state                    CONFIGURED_UNVERIFIED only
+TRACTIAN read semantic classifier             SOURCE-GATED / TRACE-ONLY
 real TRACTIAN reachability                    NOT PROVED
 production authorization resolver            DENY-ALL baseline
 remote capacity/SLO                          NOT PROVED
@@ -82,6 +84,7 @@ browser
 → hardened production TRACTIAN transport          [IMPLEMENTED / UNCONFIGURED]
 → authoritative remote TRACTIAN endpoint/auth     [OPEN]
 → live TRACTIAN read evidence                     [OPEN]
+→ deterministic read-semantics acceptance gate    [SOURCE-GATED / LIVE EVIDENCE OPEN]
 → evidence-grounded final/clarify/abstain/escalate/action proposal
 → governed action confirmation + authorization    [OPEN remotely]
 → ProductionEvaluator
@@ -106,7 +109,7 @@ public metadata schema               remote-production-release-v3
 
 Image construction fails if the build SHA is missing or malformed. Serving boot fails before product/database builders if configured `ACADEMY_RELEASE_GIT_SHA` disagrees with the baked artifact, or if Railway's runtime SHA is present and disagrees with it.
 
-At validated head `a9356e217fbf7c94549849a7cdb8554a449e947b`, `production-runtime`, its standalone-wheel smoke, production-image smoke, clean-clone reproduction and `final-ci-required / required-gate` all passed. This proves the source/artifact contract in CI; it does not prove the currently hosted Railway backend is serving that head.
+At validated head `6ec5dcd7f5a4b4db81c3951d3592c955e3c64a4e`, `production-runtime`, its standalone-wheel smoke, production-image smoke, clean-clone reproduction and `final-ci-required / required-gate` all passed. This proves the source/artifact contract in CI; it does not prove the currently hosted Railway backend is serving that head.
 
 Hosted G2 evidence must still show:
 
@@ -150,10 +153,32 @@ actions                                DENY-ALL / disabled
 
 No authoritative remote TRACTIAN base URL or authentication-header contract has been recovered from the supplied project material. The runtime therefore does not assume Bearer, API key or another scheme. Exact endpoint/auth configuration must come from the partner-provided contract/environment before live composition.
 
-At validated head `a9356e217fbf7c94549849a7cdb8554a449e947b`:
+### Deterministic read-response semantics
+
+`read-semantics-v1` and `production-read-semantics-gate-v1` now classify existing immutable `tool_result` evidence without modifying `HarnessRunner`, `ProductionRuntime`, `ProductionEvaluator`, provider request v1, or frozen EV-* traces.
+
+The source-gated contract is:
+
+```text
+non-2xx read                         -> unavailable / source=http_status
+2xx + body.mode in canonical enum    -> exact structured mode
+2xx + missing/invalid mode           -> inconclusive / fail_closed + contract issue
+non-object successful body           -> inconclusive / fail_closed + contract issue
+status/result integrity mismatch     -> inconclusive / fail_closed + contract issue
+prose/text heuristic                 -> forbidden
+ACTION result                        -> never classified as a read
+```
+
+Canonical structured modes are `complete`, `partial`, `inconclusive`, `conflict` and `unavailable`. The acceptance report is sanitized: it records mode/provenance/status/issue codes but does not copy raw TRACTIAN response bodies. A safely degraded `inconclusive` result does not hide malformed upstream structure: any semantic contract issue makes the source gate fail.
+
+The initial attempt to instrument the frozen runner was rejected by the historical freeze validators and reverted byte-for-byte instead of repinning evidence. The final implementation consumes raw frozen traces post-hoc and derives read membership from the canonical `ToolSpec` registry, preventing self-reported trace metadata from shrinking the denominator.
+
+At validated head `6ec5dcd7f5a4b4db81c3951d3592c955e3c64a4e`:
 
 ```text
 full Python + PostgreSQL clean-clone           PASS
+read-semantics classifier/gate regressions     PASS
+frozen EV-007 / EV-008 / EV-011 reproduction  PASS
 TRACTIAN transport/composition regressions     PASS
 standalone production wheel smoke              PASS
 production Docker image smoke                  PASS
@@ -253,15 +278,24 @@ Execute the v3 USD0 tournament only when hosted execution is permitted. Promotio
 
 ### Gate G5 — real TRACTIAN path
 
-Status: `ADAPTER_IMPLEMENTED / LIVE_CONFIG_AND_PROOF_PENDING`.
+Status: `ADAPTER_AND_READ_SOURCE_GATE_IMPLEMENTED / LIVE_CONFIG_AND_PROOF_PENDING`.
 
-Required before promotion:
+Already source-gated:
+
+1. direct hardened transport/composition boundary;
+2. fail-closed `UNCONFIGURED` / `CONFIGURED_UNVERIFIED` states;
+3. deterministic post-hoc read semantics from canonical raw trace evidence;
+4. exact preservation of `complete` / `partial` / `inconclusive` / `conflict` / `unavailable`;
+5. contract drift fails acceptance while runtime-safe classification remains fail-closed;
+6. no provider protocol or frozen trace mutation.
+
+Still required before live promotion:
 
 1. obtain authoritative partner base URL/auth contract;
 2. configure it only through server-side secret/config channels;
 3. enter `CONFIGURED_UNVERIFIED` without boot-time network side effects;
 4. execute bounded live read acceptance against canonical tools;
-5. classify complete/partial/inconclusive/conflicting/unavailable responses correctly;
+5. prove the source-gated semantic classifier on real complete/partial/inconclusive/conflict/unavailable responses;
 6. prove no secret/tenant leakage and no redirect/retry policy violation;
 7. only then promote a live transport state.
 
@@ -269,7 +303,7 @@ Consequential actions remain a later gate after real authorization/confirmation 
 
 ## 8. Current non-claims
 
-Do not claim yet: full remote production readiness; Railway IaC ownership convergence; currently deployed release SHA parity; IAM READY; verified-email identity; selected provider; real TRACTIAN reachability; real TRACTIAN reads; remote action execution; enterprise availability; measured production SLO/HA/RTO/RPO; human semantic calibration; engineer-time savings; adaptive-runtime superiority; distributed exactly-once external side effects.
+Do not claim yet: full remote production readiness; Railway IaC ownership convergence; currently deployed release SHA parity; IAM READY; verified-email identity; selected provider; real TRACTIAN reachability; real TRACTIAN reads; hosted proof of the five TRACTIAN response modes; remote action execution; enterprise availability; measured production SLO/HA/RTO/RPO; human semantic calibration; engineer-time savings; adaptive-runtime superiority; distributed exactly-once external side effects.
 
 ## 9. State update rule
 
