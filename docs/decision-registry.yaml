@@ -1,0 +1,276 @@
+schema_version: academy-tractian-decision-registry-v1
+updated_at: 2026-09-05
+rules:
+  material_decision_requires:
+    - requirement_or_risk
+    - baseline
+    - alternatives
+    - hard_constraints
+    - metrics
+    - hard_gates
+    - evidence
+    - decision_state
+    - reversal_trigger
+  allowed_states:
+    - UNASSESSED
+    - RESEARCHED
+    - INELIGIBLE
+    - QUALIFIED
+    - PREFERRED
+    - FROZEN
+    - REJECTED
+    - NO_CHANGE
+    - NO_SELECTION
+    - SUPERSEDED
+
+decisions:
+  - id: DP-001
+    question: Which remote hosting path should run the production backend?
+    requirement_or_risk: Remote production serving with no local dependency and USD0 hard gate.
+    baseline: Existing Railway hosted-pilot is stale and not the current Docker production path.
+    alternatives: [Railway, other USD0 hosted candidates, NO_SELECTION]
+    hard_constraints: [USD0, no_paid_spillover, HTTPS, remote, Docker_or_equivalent_reproducible_release]
+    metrics: [deployment_success, cold_start_ms, http_p95_ms, availability_limits, quota_behavior]
+    hard_gates: [cash_cost_usd_equals_0, no_local_dependency, tls, safe_quota_exhaustion]
+    evidence:
+      - clean Railway production-api service created from release/production-final
+      - repository Dockerfile configured as service build path
+      - HTTPS Railway service domain allocated
+      - backend source branch corrected to release/production-final
+      - service moved to Railway US East Metal
+      - managed IAM mode removes the old browser HMAC signing secret requirement
+      - current fail-closed boot reports only ACADEMY_POSTGRES_INTERNAL_DSN and ACADEMY_POSTGRES_SCOPED_DSN missing
+      - production-api deployment healthcheck is /health with 60 second timeout
+      - production-api restart policy is explicitly ON_FAILURE with five retries
+      - serving boot remains unproved until approved PostgreSQL DSN secret injection
+    decision_state: QUALIFIED
+    reversal_trigger: A currently eligible hosted alternative materially improves production fit under the same hard gates or Railway fails the remote boot/capacity/cost gates.
+
+  - id: DP-002
+    question: Which remote PostgreSQL path should hold production operational truth?
+    requirement_or_risk: Durable multi-user tenant-safe PostgreSQL state at USD0.
+    baseline: Existing Neon hosted-pilot was provisioned but initially had no product schema and included an unsafe BYPASSRLS role that must not be used as scoped evidence.
+    alternatives: [Neon, other USD0 PostgreSQL-compatible candidates, NO_SELECTION]
+    hard_constraints: [USD0, TLS, PostgreSQL, NOBYPASSRLS_scoped_role, durable_state]
+    metrics: [schema_readiness, tenant_isolation, db_rtt_p95_ms, wake_latency_ms, connection_limits, reconnect_correctness]
+    hard_gates: [cash_cost_usd_equals_0, tenant_escape_equals_0, schema_migration_pass, reconnect_catchup_pass]
+    evidence:
+      - academy_operational schema applied to Neon main after isolated-branch validation
+      - 15/15 required product tables present on main
+      - 7/7 required operational metadata entries present
+      - observability schema metadata validated
+      - academy_tractian_rls has rolsuper=false and rolbypassrls=false
+      - run_ownership is owned by academy_tractian_owner, not the scoped role
+      - isolated validation branch RLS test exposed org-a and denied org-b under academy.organization_id=org-a
+      - academy_live_scoped explicitly excluded because it has BYPASSRLS
+    decision_state: PREFERRED
+    reversal_trigger: Neon fails remote reconnect/cursor-catch-up/capacity/cost gates, free-tier limitations prevent the required measured production envelope, or another eligible candidate materially dominates it.
+
+  - id: DP-003
+    question: Which browser IAM architecture should be promoted?
+    requirement_or_risk: Multi-user browser authentication without browser-owned tenant/permission authority and with authenticated same-origin REST/SSE.
+    baseline: Internal signed HMAC runtime bearer is not end-user IAM.
+    alternatives: [OIDC_BFF_Authorization_Code_PKCE, Neon_Auth_Better_Auth_managed_session_BFF, equivalent_USD0_managed_identity, NO_SELECTION]
+    hard_constraints: [USD0, remote, server_owned_scope, secure_HttpOnly_session, authenticated_SSE, fail_closed_validation]
+    metrics: [login_success_rate, session_failure_rate, auth_latency_ms, session_validation_latency_ms]
+    hard_gates: [cross_tenant_access_equals_0, privilege_escalation_equals_0, browser_cannot_assert_tenant, invalid_session_acceptance_equals_0]
+    evidence:
+      - Neon Auth Better Auth first provisioned on isolated validation branch before production promotion
+      - managed auth schema exposes server-side user/session/organization/member state
+      - React AuthBoundary implements same-origin sign-in/sign-up/sign-out/session gate without storing tenant or permission authority in browser state
+      - production Docker build forces browser auth enabled while provider-free dev/CI remains independent of external IAM
+      - Caddy proxies /auth on the same public origin and /api to the Railway private backend
+      - backend NeonAuthRuntimeContextProvider revalidates managed session server-side with cookie-cache bypass
+      - backend ignores browser organization/role headers and derives a personal tenant from authenticated user id when no managed active organization exists
+      - impersonated, mismatched, missing and unavailable sessions fail closed in regression tests
+      - production-runtime regression passed for the managed-session backend composition before the release-identity change
+      - provider-free full Chromium acceptance passed after production-only auth gating
+      - prior final-ci-required checkpoint completed required-gate SUCCESS across clean clone, browser, horizontal runtime and action lease
+      - Neon Auth Better Auth is now provisioned on Neon production main
+      - production-web origin is trusted on production-main Auth
+      - production-web redeployed SUCCESS against production-main Auth host
+      - current email/password configuration does not require email verification, so verified-email identity is not claimed
+      - remote authenticated backend E2E remains blocked on PostgreSQL secret injection
+    decision_state: QUALIFIED
+    reversal_trigger: Managed-session remote multi-tenant acceptance fails, OAuth/OIDC becomes an explicit delivery requirement, email-verification requirements cannot be satisfied under the production envelope, or another eligible design proves materially better under the same security gates.
+
+  - id: DP-004
+    question: Which hosted model/provider should supply production controller decisions?
+    requirement_or_risk: Real hosted decision source with task quality, reliability, safety and USD0 eligibility.
+    baseline: NO_SELECTION after historical D01/D02; historical results are not eligible to promote the fresh v3 decision.
+    alternatives: [current_USD0_hosted_candidates, NO_SELECTION]
+    hard_constraints: [USD0, remote, structured_decisions, no_paid_fallback]
+    metrics: [operational_accuracy, required_tool_recall, argument_accuracy, evidence_correctness, escalation_accuracy, p95_latency_ms, failure_rate, stability]
+    hard_gates: [cash_cost_usd_equals_0, unsafe_unsupported_action_equals_0, gold_leakage_equals_0, known_schema_validity_equals_1]
+    evidence:
+      - provider tournament v3 preregistered over 17 fresh canonical operational scenarios
+      - five repetitions are required per scenario per candidate, yielding 85 runs per candidate and 170 future calls across the two current candidates
+      - historical D01/D02 results are excluded from the v3 decision denominator
+      - campaign is partitioned into five UTC daily packets of 34 calls under the USD0 free-neuron envelope
+      - conservative packet-start quota gate prevents paid spillover and quota-blind execution
+      - validator and provider-free regression tests enforce scenario count, repetitions, provenance, route/model integrity, schema, safety, gold isolation, cash cost and quota policy
+      - v3 live provider execution has not occurred and no candidate is promoted
+    decision_state: NO_SELECTION
+    reversal_trigger: New preregistered v3 live evidence shows a currently eligible candidate passes every promotion gate.
+
+  - id: DP-005
+    question: How should the production runtime communicate with the TRACTIAN API?
+    requirement_or_risk: Real typed integration preserving deterministic safety, evidence quality, credential custody and consequential-write semantics.
+    baseline: The benchmark had a thin generic HTTP transport; production previously used a fail-closed placeholder and had no separately governed real-network adapter.
+    alternatives: [direct_typed_HTTP_transport, MCP_adapter_if_measured_need, equivalent_uniform_adapter]
+    hard_constraints: [typed_contract, canonical_operations_only, server_managed_credentials, remote_HTTPS, bounded_timeouts, bounded_payloads, no_redirect_credentials, no_blind_write_retry]
+    metrics: [tool_success_rate, tool_p95_ms, normalization_error_rate, rejected_noncanonical_request_count, transport_unavailable_rate]
+    hard_gates: [unknown_tool_execution_equals_0, malformed_bound_request_equals_0, credential_trace_leakage_equals_0, redirect_follow_count_equals_0, blind_write_replay_equals_0]
+    evidence:
+      - ProductionTractianTransport is separate from the benchmark HttpxTransport and accepts only the canonical hash-pinned 18-operation registry
+      - method/path matching, canonical percent encoding and path-traversal rejection occur before network I/O
+      - caller-controlled headers are restricted to runner-bound x-user-id while server-managed headers are injected only at the network boundary
+      - remote base URL must be HTTPS and cannot embed credentials, query or fragment
+      - redirects are disabled so server-managed credentials are not replayed to another origin
+      - request query/body and upstream response sizes are bounded and malformed JSON or UTF-8 success payloads are normalized to deterministic gateway failures
+      - no automatic read or write retry is present; consequential writes therefore cannot be blindly replayed by the transport
+      - upstream transport failure is normalized without raw exception disclosure
+      - production configuration is fail-closed and keeps TRACTIAN endpoint/header data outside public release metadata
+      - provider/model selection and TRACTIAN integration now have independent state; default is provider NO_SELECTION plus TRACTIAN UNCONFIGURED plus deny-all actions
+      - a fully specified endpoint/header configuration may advance only to CONFIGURED_UNVERIFIED because transport construction performs zero remote I/O
+      - no Bearer, API-key or other authentication scheme is assumed because an authoritative remote partner endpoint/auth contract has not been recovered
+      - adversarial composition tests prove partial configuration rejection, zero-I/O construction, secret masking, state/config mismatch rejection and no provider/action promotion
+      - validated implementation head a9356e217fbf7c94549849a7cdb8554a449e947b passed clean-clone, production-runtime unit, standalone wheel, production image, Playwright and final-ci-required required-gate
+      - no real TRACTIAN request or reachability claim has been made
+    decision_state: PREFERRED
+    reversal_trigger: A measured interoperability requirement appears that the direct typed adapter cannot satisfy, or live partner-contract evidence proves that the chosen direct HTTP boundary cannot preserve the required security/write semantics.
+
+  - id: DP-006
+    question: How should production infrastructure telemetry complement domain RunTrace?
+    requirement_or_risk: Live health/latency/failure evidence without leaking sensitive material.
+    baseline: Domain RunTrace + sanitized PostgreSQL observability.
+    alternatives: [OpenTelemetry_compatible_instrumentation, custom_minimal_metrics, NO_CHANGE]
+    hard_constraints: [USD0, no_secrets, no_chain_of_thought, sanitized_browser_projection]
+    metrics: [coverage, overhead_ms, dropped_telemetry_rate]
+    hard_gates: [credential_leakage_equals_0, gold_leakage_equals_0]
+    evidence: []
+    decision_state: RESEARCHED
+    reversal_trigger: Telemetry overhead or external dependency violates the production envelope.
+
+  - id: DP-007
+    question: Which hosting path should serve the React production frontend?
+    requirement_or_risk: Public authenticated frontend with no developer-machine dependency.
+    baseline: React/Vite product existed without a proved remote production host.
+    alternatives: [Railway_Caddy_same_origin, other_USD0_static_host, same_origin_backend_static_release, NO_SELECTION]
+    hard_constraints: [USD0, HTTPS, remote, reproducible_build, same_origin_API_SSE_compatible]
+    metrics: [deploy_success, page_load_p95_ms, availability_limits]
+    hard_gates: [cash_cost_usd_equals_0, no_local_dependency, https]
+    evidence:
+      - production-web Railway service sourced from release/production-final
+      - frontend Dockerfile.production builds React/Vite and serves through Caddy
+      - service moved to Railway US East Metal with one replica
+      - public HTTPS domain allocated
+      - source-branch misconfiguration was identified and corrected rather than bypassed
+      - Caddy routes /auth same-origin and /api plus SSE to production-api over Railway private networking
+      - production Docker image forces VITE_BROWSER_AUTH_ENABLED=true
+      - production-main Neon Auth host installed as the /auth upstream
+      - post-production-Auth-host Railway deployment reached SUCCESS
+      - production-web restart policy is explicitly ON_FAILURE with five retries
+      - provider-free Chromium acceptance remains green because external IAM is not required in the test Vite build
+    decision_state: PREFERRED
+    reversal_trigger: Remote page/auth/API acceptance or cost/availability gates fail, or a simpler eligible host materially improves measured production fit.
+
+  - id: DP-008
+    question: Should the accepted custom agent orchestration be replaced by a framework?
+    requirement_or_risk: Avoid unnecessary orchestration complexity while preserving bounded execution and action semantics.
+    baseline: AgentController + HarnessRunner.
+    alternatives: [NO_CHANGE, LangGraph, PydanticAI, other_measured_challenger]
+    hard_constraints: [safety_semantics_preserved, USD0, inspectable_execution]
+    metrics: [task_quality, failure_recovery, latency, implementation_complexity]
+    hard_gates: [action_safety_regression_equals_0, tenant_safety_regression_equals_0]
+    evidence: []
+    decision_state: NO_CHANGE
+    reversal_trigger: A measured controller/runtime gap is identified and a challenger wins a preregistered comparison.
+
+  - id: DP-009
+    question: When may semantic evaluation gate agent/provider changes?
+    requirement_or_risk: Open-ended conclusion quality cannot rely on an uncalibrated LLM judge.
+    baseline: Deterministic checks authoritative; semantic layer non-gating until human calibration.
+    alternatives: [human_calibrated_semantic_judge, human_only_review, deterministic_only_where_possible]
+    hard_constraints: [blinded_labels, no_gold_leakage, explicit_rubric]
+    metrics: [precision, recall, F1, agreement]
+    hard_gates: [human_calibration_required_before_gating]
+    evidence: []
+    decision_state: NO_CHANGE
+    reversal_trigger: Real blinded human labels establish judge reliability above preregistered thresholds.
+
+  - id: DP-010
+    question: Should investigation depth/stopping be adaptive in production?
+    requirement_or_risk: Reduce unnecessary tool/model work or improve difficult-case quality without weakening safety.
+    baseline: Bounded static production policy.
+    alternatives: [NO_CHANGE, adaptive_depth, adaptive_tool_ordering]
+    hard_constraints: [deterministic_safety, USD0, hard_resource_caps]
+    metrics: [task_quality, risk_coverage, tool_calls_per_run, latency_ms, escalation_accuracy]
+    hard_gates: [safety_regression_equals_0, quality_not_worse]
+    evidence: []
+    decision_state: NO_CHANGE
+    reversal_trigger: Controlled production-compatible challenger proves material benefit.
+
+  - id: DP-011
+    question: How should Railway production topology be made reproducible from source?
+    requirement_or_risk: Dashboard-only configuration can drift and cannot by itself prove reproducible deployment.
+    baseline: production-api and production-web were configured through Railway service state with Docker artifacts in Git but no project-level IaC.
+    alternatives: [Railway_IaC_TypeScript, deprecated_railway_toml_json, documentation_only_drift_check, Terraform_or_other_external_IaC]
+    hard_constraints: [no_secret_values_in_git, preserve_historical_hosted_pilot, current_supported_Railway_surface, minimal_added_complexity, USD0]
+    metrics: [plan_drift_count, unexpected_resource_changes, secret_literal_count, configuration_coverage]
+    hard_gates: [secret_literal_count_equals_0, historical_hosted_pilot_deletion_equals_0, production_service_scope_exact, healthcheck_present]
+    evidence:
+      - current Railway documentation identifies project-level TypeScript IaC as the supported replacement for deprecated railway.toml/json
+      - production-api and production-web live service state was inspected before authoring
+      - production-api healthcheck /health with 60 second timeout was added to live service state
+      - both production services use explicit ON_FAILURE restart policy with five retries
+      - .railway/railway.ts uses a named production partial and preserve() for Railway-managed values
+      - historical hosted-pilot is intentionally outside the production partial
+      - repository static validator rejects literal PostgreSQL URLs and accidental hosted-pilot management
+      - dedicated TypeScript DSL CI was added
+      - live railway config plan/apply is still required before claiming IaC ownership convergence
+    decision_state: PREFERRED
+    reversal_trigger: Railway IaC cannot produce a non-destructive converged plan for the two production services, current IaC defects block safe use, or another lower-complexity supported mechanism proves materially safer and more reproducible.
+
+  - id: DP-012
+    question: How should production prove that the public release SHA is the commit actually baked into the serving artifact?
+    requirement_or_risk: A format-valid mutable runtime variable could claim a Git SHA different from the image that is actually serving.
+    baseline: ACADEMY_RELEASE_GIT_SHA was validated as a lowercase 40-character SHA while Docker release metadata accepted an independent build argument; no immutable cross-check bound the public endpoint to the built artifact.
+    alternatives: [runtime_environment_only, OCI_label_only, baked_identity_plus_runtime_crosscheck]
+    hard_constraints: [exact_commit_identity, fail_closed_before_connections, no_runtime_override_of_baked_identity, Railway_compatible, provider_free_testable]
+    metrics: [independent_identity_signal_count, mismatch_acceptance_count, missing_identity_acceptance_count, pre_dependency_rejection]
+    hard_gates: [mismatch_acceptance_equals_0, missing_baked_identity_acceptance_equals_0, release_endpoint_without_verified_artifact_equals_0]
+    evidence:
+      - production Dockerfile now requires Railway Git-backed RAILWAY_GIT_COMMIT_SHA and rejects absent or malformed build identity
+      - exact build SHA is baked into /app/.academy-release-identity.json and org.opencontainers.image.revision
+      - baked identity uses an extra-forbidden frozen Pydantic contract and is read before remote product builders
+      - configured ACADEMY_RELEASE_GIT_SHA must equal the baked identity before PostgreSQL/IAM composition
+      - Railway runtime Git SHA, when exposed, is independently checked against the baked identity
+      - /api/meta/release v3 exposes safe artifact verification fields rather than relying on a single mutable SHA
+      - negative unit tests cover missing, corrupt, malformed, extra-field and mismatch cases before delegate invocation
+      - production-runtime Docker smoke proves positive identity and negative malformed-build/runtime-mismatch behavior
+      - production-runtime is now consumed by final-ci-required so artifact identity is a required source-level release gate
+      - current complete-head CI and hosted Railway v3 observation remain pending
+    decision_state: PREFERRED
+    reversal_trigger: Railway no longer supplies a trustworthy Git-backed build identity, the image build path changes so the baked file is not authoritative, or a stronger signed provenance/attestation mechanism becomes necessary under the same USD0 and complexity constraints.
+
+  - id: DP-013
+    question: How should a dated freeze-evidence bundle be validated after legitimate repository evolution?
+    requirement_or_risk: Comparing every hash recorded by a historical snapshot against a later worktree causes legitimate current CI/contract evolution to invalidate history, while re-pinning the old bundle would falsify its provenance.
+    baseline: The 2026-09-04 bundle hash-pinned all artifact roles and the validator compared every recorded blob to the current worktree; after final-ci-required legitimately evolved, clean-clone failed only with artifact_0_blob_mismatch.
+    alternatives: [repin_historical_manifest, disable_freeze_validation, separate_historical_snapshot_and_current_head_modes]
+    hard_constraints: [historical_manifest_immutable, prospective_freeze_strict, frozen_evidence_byte_pinned, registered_paths_exist, decision_and_nonclaim_integrity]
+    metrics: [historical_false_positive_count, current_head_tamper_acceptance_count, frozen_historical_tamper_acceptance_count, missing_artifact_acceptance_count]
+    hard_gates: [historical_manifest_rewrite_equals_0, current_head_tamper_acceptance_equals_0, frozen_historical_tamper_acceptance_equals_0, missing_artifact_acceptance_equals_0]
+    evidence:
+      - clean-clone failure isolated to the dated bundle artifact_0 blob while 651 Python tests and the PostgreSQL/controller/reproduction campaigns passed on the observed failing job
+      - artifact_0 is final-ci-required.yml recorded by the 2026-09-04 manifest before later required Railway IaC and production-runtime identity gates were added
+      - the historical JSON bundle remains unchanged rather than being re-pinned to future code
+      - validator now exposes explicit current-head and historical-snapshot artifact scopes
+      - current-head remains strict for every registered artifact and is the required behavior for a future final freeze
+      - historical-snapshot still checks manifest hash, schema, paths, decisions, evidence registration, non-claims, branch-protection truth and byte identity of frozen_historical_evidence
+      - regression tests cover current-head drift rejection, historical current-role evolution, frozen evidence tamper rejection and missing artifact rejection
+      - clean-clone script now prints HISTORICAL_SNAPSHOT explicitly instead of silently applying a relaxed rule
+      - complete-head CI after this correction remains pending
+    decision_state: PREFERRED
+    reversal_trigger: A stronger immutable snapshot mechanism records and retrieves historical Git blobs directly without relying on a later worktree, or the historical/current role model proves unable to preserve both provenance and strict future-freeze integrity.

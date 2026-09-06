@@ -16,6 +16,7 @@ import { ActionControl } from "./components/ActionControl";
 import { ArchitectureExplorer } from "./components/ArchitectureExplorer";
 import { OperationalValueCollector } from "./components/OperationalValueCollector";
 import { OperationsWorkspace } from "./components/OperationsWorkspace";
+import { Release0CapabilitySurface } from "./components/Release0CapabilitySurface";
 import { RunExplorer } from "./components/RunExplorer";
 import { SemanticReviewCollector } from "./components/SemanticReviewCollector";
 import { TraceGraph } from "./components/TraceGraph";
@@ -45,6 +46,7 @@ function EventMeta({ event }: { event: SafeEvent }) {
     event.policy_stage && ["policy", event.policy_stage],
     event.policy_violation && ["violation", event.policy_violation],
     event.evidence_id && ["evidence", event.evidence_id],
+    event.response_mode && ["semantics", event.response_mode],
     event.status_code !== null && ["status", String(event.status_code)],
     event.latency_ms !== null && ["latency", `${event.latency_ms} ms`],
     event.reason_code && ["reason", event.reason_code],
@@ -121,6 +123,8 @@ export default function App() {
           </form>
           {live.error && <div className="error-banner">{live.error}</div>}
         </section>
+
+        <Release0CapabilitySurface events={selectedEvents} onUsePrompt={setRequestText} />
 
         <RunExplorer runs={runsQuery.data?.items ?? []} selectedRunId={historicalRunId} liveRunId={live.accepted?.run_id ?? null} loading={runsQuery.isLoading} onSelect={setHistoricalRunId} />
 

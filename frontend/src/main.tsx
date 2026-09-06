@@ -3,10 +3,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import App from "./App";
+import { AuthBoundary } from "./auth/AuthBoundary";
 import "./styles.css";
 import "./explorer.css";
 import "./operations.css";
+import "./release0.css";
 import "./operationalValue.css";
+import "./auth.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,10 +27,13 @@ const queryClient = new QueryClient({
 const root = document.getElementById("root");
 if (!root) throw new Error("root element missing");
 
+const product = <App />;
+const browserAuthEnabled = import.meta.env.VITE_BROWSER_AUTH_ENABLED === "true";
+
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      {browserAuthEnabled ? <AuthBoundary>{product}</AuthBoundary> : product}
     </QueryClientProvider>
   </StrictMode>,
 );

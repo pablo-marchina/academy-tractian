@@ -19,6 +19,7 @@ FreezeRole = Literal[
     "current_reproduction",
     "current_ci",
 ]
+ArtifactValidationMode = Literal["current-head", "historical-snapshot"]
 
 DecisionStatus = Literal[
     "PASS_EVIDENCED",
@@ -124,7 +125,27 @@ def load_final_freeze_manifest(root: Path) -> FinalFreezeManifest:
     return FinalFreezeManifest.model_validate(payload)
 
 
-def validate_final_freeze_manifest(manifest: FinalFreezeManifest, root: Path) -> list[str]:
+def _should_compare_worktree_blob(
+    artifact: FreezeArtifact,
+    *,
+    artifact_mode: ArtifactValidationMode,
+) -> bool:
+    if artifact_mode == "current-head":
+        return True
+    # A dated historical snapshot records hashes for provenance, but roles explicitly named
+    # current_* were mutable at the time of capture and are expected to evolve afterward.
+    # Only artifacts declared frozen_historical_evidence remain byte-for-byte pinned to the
+    # current worktree in historical-snapshot validation. The manifest's own SHA protects the
+    # recorded historical hashes from silent rewriting.
+    return artifact.role == "frozen_historical_evidence"
+
+
+def validate_final_freeze_manifest(
+    manifest: FinalFreezeManifest,
+    root: Path,
+    *,
+    artifact_mode: ArtifactValidationMode = "current-head",
+) -> list[str]:
     failures: list[str] = []
 
     artifact_paths = [artifact.path for artifact in manifest.artifacts]
@@ -141,9 +162,10 @@ def validate_final_freeze_manifest(manifest: FinalFreezeManifest, root: Path) ->
         if not target.is_file():
             failures.append(f"artifact_{index}_missing")
             continue
-        observed = git_blob_sha1(target.read_bytes())
-        if observed != artifact.git_blob_sha1:
-            failures.append(f"artifact_{index}_blob_mismatch")
+        if _should_compare_worktree_blob(artifact, artifact_mode=artifact_mode):
+            observed = git_blob_sha1(target.read_bytes())
+            if observed != artifact.git_blob_sha1:
+                failures.append(f"artifact_{index}_blob_mismatch")
 
     decision_ids = [decision.decision_id for decision in manifest.decisions]
     if len(decision_ids) != len(set(decision_ids)):

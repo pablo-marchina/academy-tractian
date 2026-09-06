@@ -1,0 +1,38 @@
+name: hosted-production-release0-agent
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [release/production-final]
+    paths:
+      - ".github/workflows/hosted-production-release0-agent.yml"
+      - "scripts/production_hosted_release0_agent_smoke.py"
+      - "src/academy_tractian/release0_capabilities.py"
+      - "src/academy_tractian/release_provider.py"
+      - "src/academy_tractian/cloudflare_provider_client.py"
+      - "src/academy_tractian/runtime.py"
+      - "src/academy_tractian/tractian_transport.py"
+      - "src/academy_tractian/remote_server.py"
+      - "frontend/src/components/Release0CapabilitySurface.tsx"
+      - "frontend/src/api/release0Client.ts"
+      - "frontend/src/api/release0Types.ts"
+      - "frontend/src/App.tsx"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-production-release0-agent
+  cancel-in-progress: false
+
+jobs:
+  hosted-release0-agent-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    env:
+      ACADEMY_PRODUCTION_WEB_BASE_URL: https://production-web-production-c9d1.up.railway.app
+      ACADEMY_EXPECTED_RELEASE_GIT_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for exact hosted release and prove the real read-only agent path
+        run: python scripts/production_hosted_release0_agent_smoke.py

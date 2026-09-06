@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from threading import Lock
 from time import perf_counter
 from typing import Any, Protocol
@@ -11,6 +12,9 @@ from research.e2.runner import HarnessRunner
 from .observability import SafeEvidenceRef, SafeEvent, SafeRun, project_trace
 from .observability_contract import ObservabilityStoreContract
 from .production_telemetry import ProductionTelemetry
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class SafeObservabilityEventSink(Protocol):
@@ -99,17 +103,42 @@ class FailIsolatedObservabilityPublisher:
         """
 
         started = perf_counter()
+        safe_run_id: str | None = None
+        event_type: str | None = None
+        sequence: int | None = None
         try:
             run, events, evidence = project_trace(trace)
+            safe_run_id = run.run_id
             if not events:
                 return
             event = events[-1]
+            event_type = event.event_type
+            sequence = event.sequence
             evidence_item = next(
                 (item for item in evidence if item.sequence == event.sequence),
                 None,
             )
             self.sink.publish(run=run, event=event, evidence=evidence_item)
-        except Exception:
+        except Exception as exc:
+            sqlstate = getattr(exc, "sqlstate", None)
+            safe_sqlstate = (
+                sqlstate.upper()
+                if isinstance(sqlstate, str)
+                and len(sqlstate) == 5
+                and sqlstate.isalnum()
+                else None
+            )
+            _LOGGER.error(
+                "observability_publish_failed",
+                extra={
+                    "academy_event": "observability_publish_failed",
+                    "failure_type": type(exc).__name__,
+                    "sqlstate": safe_sqlstate,
+                    "safe_run_id": safe_run_id,
+                    "event_type": event_type,
+                    "sequence": sequence,
+                },
+            )
             with self._lock:
                 self._failure_count += 1
             if self.telemetry is not None:
