@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import re
 from typing import Any, Mapping
 
@@ -28,11 +27,10 @@ CLOUDFLARE_NEMOTRON_MODEL_ID = "@cf/nvidia/nemotron-3-120b-a12b"
 CLOUDFLARE_ALLOWED_MODEL_IDS = frozenset(
     {CLOUDFLARE_GLM_MODEL_ID, CLOUDFLARE_NEMOTRON_MODEL_ID}
 )
-CLOUDFLARE_MAX_COMPLETION_TOKENS = 1024
+CLOUDFLARE_MAX_COMPLETION_TOKENS = 512
 CLOUDFLARE_MAX_ACCOUNTED_PROMPT_TOKENS = 8000
 
 _ACCOUNT_ID_RE = re.compile(r"^[A-Za-z0-9]+$")
-_LOGGER = logging.getLogger(__name__)
 
 
 def _provider_request_text(request: ProviderDecisionRequest) -> str:
@@ -125,8 +123,6 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
             "n": 1,
             "stream": False,
             "max_completion_tokens": CLOUDFLARE_MAX_COMPLETION_TOKENS,
-            "reasoning_effort": None,
-            "chat_template_kwargs": {"enable_thinking": False},
             "store": False,
             "tool_choice": "none",
             "parallel_tool_calls": False,
@@ -143,45 +139,28 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
         )
 
     def complete(self, request: ProviderDecisionRequest) -> str:
-        try:
-            response = self._invoke_once(self.build_http_request(request))
-            usage = response.get("usage")
-            usage_map = usage if isinstance(usage, Mapping) else {}
-            completion_details = usage_map.get("completion_tokens_details")
-            completion_details_map = (
-                completion_details if isinstance(completion_details, Mapping) else {}
+        response = self._invoke_once(self.build_http_request(request))
+        usage = response.get("usage")
+        usage_map = usage if isinstance(usage, Mapping) else {}
+        completion_details = usage_map.get("completion_tokens_details")
+        completion_details_map = (
+            completion_details if isinstance(completion_details, Mapping) else {}
+        )
+        self._usage_records.append(
+            ProviderUsageRecord(
+                provider_id=self.provider_id,
+                model_id=self.model_id,
+                route_id=self.route_id,
+                request_sha256=request.request_sha256,
+                input_tokens=_nonnegative_int_or_none(usage_map.get("prompt_tokens")),
+                output_tokens=_nonnegative_int_or_none(usage_map.get("completion_tokens")),
+                total_tokens=_nonnegative_int_or_none(usage_map.get("total_tokens")),
+                reasoning_tokens=_nonnegative_int_or_none(
+                    completion_details_map.get("reasoning_tokens")
+                ),
             )
-            self._usage_records.append(
-                ProviderUsageRecord(
-                    provider_id=self.provider_id,
-                    model_id=self.model_id,
-                    route_id=self.route_id,
-                    request_sha256=request.request_sha256,
-                    input_tokens=_nonnegative_int_or_none(usage_map.get("prompt_tokens")),
-                    output_tokens=_nonnegative_int_or_none(usage_map.get("completion_tokens")),
-                    total_tokens=_nonnegative_int_or_none(usage_map.get("total_tokens")),
-                    reasoning_tokens=_nonnegative_int_or_none(
-                        completion_details_map.get("reasoning_tokens")
-                    ),
-                )
-            )
-            return self._extract_output(response)
-        except ProviderHttpClientError as exc:
-            safe_status = "none" if exc.status_code is None else str(exc.status_code)
-            _LOGGER.error(
-                "cloudflare_provider_request_failed code=%s status=%s",
-                exc.code,
-                safe_status,
-                extra={
-                    "academy_event": "cloudflare_provider_request_failed",
-                    "provider_id": self.provider_id,
-                    "model_id": self.model_id,
-                    "route_id": self.route_id,
-                    "failure_code": exc.code,
-                    "status_code": exc.status_code,
-                },
-            )
-            raise
+        )
+        return self._extract_output(response)
 
     def _invoke_once(self, request: ProviderHttpRequest) -> Mapping[str, Any]:
         try:
@@ -213,14 +192,7 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
             raise ProviderHttpClientError("CLOUDFLARE_CHOICE_INVALID")
         if choice.get("index") not in (None, 0):
             raise ProviderHttpClientError("CLOUDFLARE_CHOICE_INDEX_INVALID")
-        finish_reason = choice.get("finish_reason")
-        if finish_reason != "stop":
-            if finish_reason == "length":
-                raise ProviderHttpClientError("CLOUDFLARE_FINISH_REASON_LENGTH")
-            if finish_reason == "tool_calls":
-                raise ProviderHttpClientError("CLOUDFLARE_FINISH_REASON_TOOL_CALLS")
-            if finish_reason == "content_filter":
-                raise ProviderHttpClientError("CLOUDFLARE_FINISH_REASON_CONTENT_FILTER")
+        if choice.get("finish_reason") != "stop":
             raise ProviderHttpClientError("CLOUDFLARE_FINISH_REASON_INVALID")
 
         message = choice.get("message")
