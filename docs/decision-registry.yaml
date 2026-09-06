@@ -115,15 +115,30 @@ decisions:
 
   - id: DP-005
     question: How should the production runtime communicate with the TRACTIAN API?
-    requirement_or_risk: Real typed integration preserving deterministic safety and write semantics.
-    baseline: Typed transport contract exists; remote production composition currently fails closed.
+    requirement_or_risk: Real typed integration preserving deterministic safety, evidence quality, credential custody and consequential-write semantics.
+    baseline: The benchmark had a thin generic HTTP transport; production previously used a fail-closed placeholder and had no separately governed real-network adapter.
     alternatives: [direct_typed_HTTP_transport, MCP_adapter_if_measured_need, equivalent_uniform_adapter]
-    hard_constraints: [typed_contract, server_managed_credentials, bounded_timeouts, no_blind_write_retry]
-    metrics: [tool_success_rate, tool_p95_ms, normalization_error_rate]
-    hard_gates: [unknown_tool_execution_equals_0, malformed_bound_request_equals_0, blind_write_replay_equals_0]
-    evidence: []
+    hard_constraints: [typed_contract, canonical_operations_only, server_managed_credentials, remote_HTTPS, bounded_timeouts, bounded_payloads, no_redirect_credentials, no_blind_write_retry]
+    metrics: [tool_success_rate, tool_p95_ms, normalization_error_rate, rejected_noncanonical_request_count, transport_unavailable_rate]
+    hard_gates: [unknown_tool_execution_equals_0, malformed_bound_request_equals_0, credential_trace_leakage_equals_0, redirect_follow_count_equals_0, blind_write_replay_equals_0]
+    evidence:
+      - ProductionTractianTransport is separate from the benchmark HttpxTransport and accepts only the canonical hash-pinned 18-operation registry
+      - method/path matching, canonical percent encoding and path-traversal rejection occur before network I/O
+      - caller-controlled headers are restricted to runner-bound x-user-id while server-managed headers are injected only at the network boundary
+      - remote base URL must be HTTPS and cannot embed credentials, query or fragment
+      - redirects are disabled so server-managed credentials are not replayed to another origin
+      - request query/body and upstream response sizes are bounded and malformed JSON or UTF-8 success payloads are normalized to deterministic gateway failures
+      - no automatic read or write retry is present; consequential writes therefore cannot be blindly replayed by the transport
+      - upstream transport failure is normalized without raw exception disclosure
+      - production configuration is fail-closed and keeps TRACTIAN endpoint/header data outside public release metadata
+      - provider/model selection and TRACTIAN integration now have independent state; default is provider NO_SELECTION plus TRACTIAN UNCONFIGURED plus deny-all actions
+      - a fully specified endpoint/header configuration may advance only to CONFIGURED_UNVERIFIED because transport construction performs zero remote I/O
+      - no Bearer, API-key or other authentication scheme is assumed because an authoritative remote partner endpoint/auth contract has not been recovered
+      - adversarial composition tests prove partial configuration rejection, zero-I/O construction, secret masking, state/config mismatch rejection and no provider/action promotion
+      - validated implementation head a9356e217fbf7c94549849a7cdb8554a449e947b passed clean-clone, production-runtime unit, standalone wheel, production image, Playwright and final-ci-required required-gate
+      - no real TRACTIAN request or reachability claim has been made
     decision_state: PREFERRED
-    reversal_trigger: A measured interoperability requirement appears that the direct typed adapter cannot satisfy.
+    reversal_trigger: A measured interoperability requirement appears that the direct typed adapter cannot satisfy, or live partner-contract evidence proves that the chosen direct HTTP boundary cannot preserve the required security/write semantics.
 
   - id: DP-006
     question: How should production infrastructure telemetry complement domain RunTrace?
