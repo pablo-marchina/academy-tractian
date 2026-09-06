@@ -8,8 +8,8 @@ from urllib.request import Request, urlopen
 
 
 BASE_URL = os.environ["ACADEMY_PRODUCTION_API_BASE_URL"].rstrip("/")
-EXPECTED_SHA = os.environ["ACADEMY_EXPECTED_DEPLOYED_SHA"].strip().lower()
-DEPLOY_WAIT_SECONDS = int(os.environ.get("ACADEMY_HOSTED_SMOKE_DEPLOY_WAIT_SECONDS", "600"))
+EXPECTED_SHA = os.environ.get("ACADEMY_EXPECTED_DEPLOYED_SHA", "").strip().lower()
+DEPLOY_WAIT_SECONDS = int(os.environ.get("ACADEMY_HOSTED_SMOKE_DEPLOY_WAIT_SECONDS", "240"))
 DEPLOY_POLL_SECONDS = int(os.environ.get("ACADEMY_HOSTED_SMOKE_DEPLOY_POLL_SECONDS", "10"))
 
 
@@ -41,13 +41,17 @@ def require(condition: bool, message: str) -> None:
         raise RuntimeError(message)
 
 
-def wait_for_expected_release() -> dict[str, object]:
-    """Wait for Railway to expose the exact commit under test, without weakening SHA checks.
+def load_release() -> dict[str, object]:
+    """Load the active release, optionally waiting for an explicitly promoted exact SHA.
 
-    GitHub Actions can start before Railway finishes building the same pushed commit. Treat an
-    older healthy release as deployment propagation rather than an immediate product failure, but
-    stop after a bounded window and still require every immutable-identity assertion below.
+    Ordinary PR smoke verifies the integrity of whatever artifact is actually serving. Release
+    promotion uses an explicit expected SHA and waits a bounded interval for Railway propagation.
+    This avoids treating documentation/CI-only commits as deployment failures while retaining an
+    exact source==artifact==runtime identity gate when a release is intentionally promoted.
     """
+
+    if not EXPECTED_SHA:
+        return fetch_json("/api/meta/release")
 
     deadline = time.monotonic() + DEPLOY_WAIT_SECONDS
     last_release: dict[str, object] | None = None
@@ -70,37 +74,42 @@ def wait_for_expected_release() -> dict[str, object]:
 
 
 def main() -> None:
-    release = wait_for_expected_release()
+    release = load_release()
     health = fetch_json("/health")
     ready = fetch_json("/ready")
 
     require(health.get("status") == "ok", "hosted /health did not report ok")
     require(ready.get("status") == "ready", "hosted /ready did not report ready")
 
+    release_sha = release.get("release_git_sha")
+    artifact_sha = release.get("artifact_git_sha")
     require(release.get("schema_version") == "remote-production-release-v3", "release schema drift")
     require(release.get("environment") == "production", "release environment is not production")
     require(release.get("cost_policy") == "usd0-hard-gate", "USD0 hard gate metadata drift")
     require(release.get("browser_iam_mode") == "neon-auth", "hosted browser IAM mode drift")
-    require(release.get("release_git_sha") == EXPECTED_SHA, "configured release SHA mismatch")
-    require(release.get("artifact_git_sha") == EXPECTED_SHA, "baked artifact SHA mismatch")
+    require(isinstance(release_sha, str) and len(release_sha) == 40, "configured release SHA missing")
+    require(release_sha == artifact_sha, "configured release SHA and baked artifact SHA diverged")
+    if EXPECTED_SHA:
+        require(release_sha == EXPECTED_SHA, "configured release SHA mismatch")
+        require(artifact_sha == EXPECTED_SHA, "baked artifact SHA mismatch")
     require(release.get("artifact_identity_verified") is True, "artifact identity is not verified")
     require(
         release.get("railway_runtime_identity_verified") is True,
         "Railway runtime SHA was not independently verified",
     )
 
-    # Intentionally print only fields defined by the browser-safe release contract.
     sanitized = {
         "health_status": health.get("status"),
         "ready_status": ready.get("status"),
         "release_schema": release.get("schema_version"),
-        "release_git_sha": release.get("release_git_sha"),
-        "artifact_git_sha": release.get("artifact_git_sha"),
+        "release_git_sha": release_sha,
+        "artifact_git_sha": artifact_sha,
         "artifact_identity_verified": release.get("artifact_identity_verified"),
         "railway_runtime_identity_verified": release.get("railway_runtime_identity_verified"),
         "environment": release.get("environment"),
         "browser_iam_mode": release.get("browser_iam_mode"),
         "cost_policy": release.get("cost_policy"),
+        "exact_expected_sha_gate": bool(EXPECTED_SHA),
     }
     print(json.dumps(sanitized, sort_keys=True, indent=2))
 
