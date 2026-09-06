@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import http.cookiejar
 import json
 import os
+import re
 import time
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -19,6 +20,7 @@ EXPECTED_SHA = os.environ.get("ACADEMY_EXPECTED_RELEASE_GIT_SHA", os.environ.get
 TIMEOUT_SECONDS = 25
 DEPLOY_WAIT_SECONDS = 300
 RUN_WAIT_SECONDS = 150
+_SAFE_DETAIL_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,160}$")
 
 
 @dataclass
@@ -71,6 +73,18 @@ class BrowserSession:
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise RuntimeError(message)
+
+
+def safe_error_detail(result: HttpResult) -> str:
+    """Expose only stable allow-listed API reason codes in CI output."""
+
+    try:
+        detail = result.json_object().get("detail")
+    except (json.JSONDecodeError, UnicodeDecodeError, RuntimeError):
+        return "redacted"
+    if isinstance(detail, str) and _SAFE_DETAIL_RE.fullmatch(detail):
+        return detail
+    return "redacted"
 
 
 def wait_for_exact_release() -> dict[str, Any]:
@@ -184,7 +198,11 @@ def main() -> None:
         "conflicting, or unavailable evidence semantics instead of guessing."
     )
     accepted_result = browser.request("/api/runs", method="POST", payload={"user_request": prompt})
-    require(accepted_result.status == 202, f"live Release 0 run was not accepted: HTTP {accepted_result.status}")
+    require(
+        accepted_result.status == 202,
+        "live Release 0 run was not accepted: "
+        f"HTTP {accepted_result.status} detail={safe_error_detail(accepted_result)}",
+    )
     accepted = accepted_result.json_object()
     run_id = accepted.get("run_id")
     execution_path = accepted.get("execution_path")
