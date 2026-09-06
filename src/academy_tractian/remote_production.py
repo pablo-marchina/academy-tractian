@@ -67,10 +67,6 @@ def create_remote_production_app(
         artifact_identity=artifact_release_identity,
         railway_runtime_git_sha=railway_runtime_git_sha,
     )
-    release_metadata = {
-        **release_metadata,
-        "tractian_transport_state": tractian_transport_state,
-    }
 
     common = dict(
         internal_dsn=config.internal_dsn.get_secret_value(),
