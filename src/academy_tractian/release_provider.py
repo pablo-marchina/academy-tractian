@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from copy import deepcopy
 
 from research.e2.controller import ControllerContext
 from research.e2.tool_registry import TOOLS
@@ -27,7 +28,7 @@ from .provider_clients import (
 
 NO_PROVIDER_SELECTION_STATE = "NO_SELECTION"
 PROVISIONAL_RELEASE_PROVIDER_STATE = "PROVISIONAL_RELEASE_PROVIDER"
-RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v4"
+RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v5"
 RELEASE0_MAX_COMPLETION_TOKENS = 1024
 
 _RELEASE0_REQUIRED_FIELDS = [
@@ -127,7 +128,7 @@ The Release 0 response schema independently enforces the allowed relational shap
 FINAL, CLARIFY, ESCALATE, and ABSTAIN. Do not rely on post-processing or output repair.
 
 For kind=TOOL:
-- tool_name must exactly equal one supplied tools[].name.
+- tool_name must exactly equal one supplied tools[].name. The response schema constrains tool_name to the exact tools visible in the current turn.
 - arguments must contain only exact public parameter names from that selected tool's tools[].parameters[].name entries. Never wrap tool arguments inside keys such as tool, params, input, payload, or arguments.
 - Use only values justified by the user request or prior public observations. Never invent hidden identity, seed, authorization, credentials, or evaluator state.
 - For a read proposal, set evidence_id to a short non-secret identifier so the resulting observation can be referenced.
@@ -143,7 +144,7 @@ For kind=CLARIFY, ESCALATE, or ABSTAIN:
 
 Knowledge investigation stopping rule:
 - search_knowledge accepts only q and optional type. get_knowledge_doc accepts only doc_id.
-- If search_knowledge is available, use it at most once in a run. After one successful search_knowledge observation it is deliberately removed from the supplied tool list.
+- If search_knowledge is available, use it at most once in a run. After one successful search_knowledge observation it is deliberately removed from the supplied tool list and from the allowed tool_name schema enum.
 - After a successful search_knowledge observation, inspect a returned knowledge document with get_knowledge_doc only when the public observation exposes a concrete document identifier that can be passed as doc_id and the full document is materially needed for the requested answer.
 - If no concrete document identifier is exposed, or the search result already contains enough relevant evidence, return FINAL instead of searching again.
 - Never call a tool that is absent from the current supplied tools list.
@@ -151,6 +152,29 @@ Knowledge investigation stopping rule:
 Use TOOL only when another canonical read is materially necessary. Stop with a terminal decision as soon as the available observations are sufficient to answer safely. Do not repeat a successful tool call with materially equivalent arguments unless a prior observation identifies a specific unresolved gap. Honor explicit read-only and no-action requests; never propose an action when the user has prohibited actions.
 """
 ).strip()
+
+
+def _schema_for_visible_tools(request: ProviderDecisionRequest) -> dict[str, object]:
+    """Return the strict Release 0 schema bound to exactly this turn's public tool surface."""
+
+    schema = deepcopy(RELEASE0_PROVIDER_DECISION_JSON_SCHEMA)
+    variants = schema.get("oneOf")
+    if not isinstance(variants, list) or not variants:
+        raise RuntimeError("release0_provider_schema_contract_drift")
+    tool_variant = variants[0]
+    if not isinstance(tool_variant, dict):
+        raise RuntimeError("release0_provider_tool_schema_contract_drift")
+    properties = tool_variant.get("properties")
+    if not isinstance(properties, dict):
+        raise RuntimeError("release0_provider_tool_properties_contract_drift")
+    visible_tool_names = [tool.name for tool in request.tools]
+    if not visible_tool_names:
+        raise RuntimeError("release0_provider_visible_tool_surface_empty")
+    properties["tool_name"] = {
+        "type": "string",
+        "enum": visible_tool_names,
+    }
+    return schema
 
 
 class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisionClient):
@@ -174,7 +198,7 @@ class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisio
             messages=messages,
             response_format={
                 "type": "json_schema",
-                "json_schema": RELEASE0_PROVIDER_DECISION_JSON_SCHEMA,
+                "json_schema": _schema_for_visible_tools(request),
             },
             max_completion_tokens=RELEASE0_MAX_COMPLETION_TOKENS,
             reasoning_effort=None,
@@ -192,29 +216,43 @@ class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisio
 class Release0ProviderDecisionSource(ProviderDecisionSource):
     """Release-only adaptive public tool surface with deterministic duplicate-search prevention.
 
-    The source never fabricates a model decision. It only removes ``search_knowledge`` from the
-    provider-visible registry after that exact read has executed successfully. This preserves the
-    canonical runtime registry and B1/B2/B3 boundaries while making the post-search choice explicit:
-    inspect a concrete document with ``get_knowledge_doc`` when justified, or terminate normally.
+    The source never fabricates a model decision. After a successful ``search_knowledge`` it
+    removes that tool from both the provider-visible request and the adapter's accepted tool-name
+    set for the rest of the per-run source lifetime. The canonical runtime registry and B1/B2/B3
+    boundaries stay unchanged; this is a stricter model boundary, not an execution shortcut.
     """
 
-    def build_request(self, context: ControllerContext) -> ProviderDecisionRequest:
-        searched_successfully = any(
+    @staticmethod
+    def _searched_successfully(context: ControllerContext) -> bool:
+        return any(
             observation.tool_name == "search_knowledge"
             and observation.status == "success"
             and observation.executed
             for observation in context.observations
         )
-        if not searched_successfully:
-            return super().build_request(context)
 
-        visible_registry = {
+    def _visible_registry(self, context: ControllerContext):
+        if not self._searched_successfully(context):
+            return self.registry
+        return {
             name: tool for name, tool in self.registry.items() if name != "search_knowledge"
         }
+
+    def build_request(self, context: ControllerContext) -> ProviderDecisionRequest:
         return build_provider_decision_request(
             context=context,
-            registry=visible_registry,
+            registry=self._visible_registry(context),
         )
+
+    def decide(self, context: ControllerContext):
+        if self._searched_successfully(context):
+            # DecisionSource instances are constructed per run. Once this run has a successful
+            # search, the removed tool must never become adapter-valid again even if a later model
+            # attempts to name it despite the turn-bound JSON schema.
+            self._known_tools = frozenset(
+                name for name in self._known_tools if name != "search_knowledge"
+            )
+        return super().decide(context)
 
 
 def validate_release_provider_config(config: RemoteProductionConfig) -> None:
