@@ -66,6 +66,18 @@ def _get_asset(**overrides) -> BoundRequest:
     return BoundRequest.model_validate(values)
 
 
+def _search_knowledge(**overrides) -> BoundRequest:
+    values = {
+        "method": "GET",
+        "path": "/knowledge/search",
+        "query": {"q": "bearing"},
+        "headers": {"x-user-id": "probe-user"},
+        "body": None,
+    }
+    values.update(overrides)
+    return BoundRequest.model_validate(values)
+
+
 def _reprocess(**overrides) -> BoundRequest:
     values = {
         "method": "POST",
@@ -116,6 +128,21 @@ def test_canonical_read_injects_server_header_only_at_network_boundary_and_sanit
     assert request.headers == {"x-user-id": "user-a"}
     assert "Authorization" not in request.headers
     assert "server-only-secret" not in repr(response)
+
+
+def test_static_route_is_preferred_over_parameter_route(monkeypatch: pytest.MonkeyPatch) -> None:
+    opener = RecordingOpener(FakeResponse(body=b'{"results":[]}'))
+    transport = _transport(monkeypatch, opener)
+
+    response = transport.request(_search_knowledge())
+
+    assert response.status_code == 200
+    assert response.body == {"results": []}
+    assert len(opener.calls) == 1
+    network_request, _timeout = opener.calls[0]
+    assert network_request.full_url == "https://partner.example.com/api/knowledge/search?q=bearing"
+    assert network_request.get_method() == "GET"
+    assert network_request.get_header("X-user-id") == "probe-user"
 
 
 def test_canonical_action_sends_json_once_and_never_retries(monkeypatch: pytest.MonkeyPatch) -> None:
