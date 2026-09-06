@@ -1,3 +1,7 @@
+import json
+
+import pytest
+
 from academy_tractian.cloudflare_provider_client import (
     CLOUDFLARE_GLM_MODEL_ID,
     CLOUDFLARE_MAX_COMPLETION_TOKENS,
@@ -19,6 +23,15 @@ from research.e2.controller import ControllerContext, ControllerObservation
 class NeverCalledTransport:
     def post_json(self, request):  # pragma: no cover - construction-only regression
         raise AssertionError("provider transport must not be called")
+
+
+class StaticDecisionClient:
+    def __init__(self, payload: dict[str, object]) -> None:
+        self.payload = payload
+
+    def complete(self, request):
+        del request
+        return json.dumps(self.payload)
 
 
 def _request():
@@ -50,6 +63,23 @@ def _release_client():
     )
 
 
+def _successful_search_context() -> ControllerContext:
+    return ControllerContext(
+        user_request="Investigate vibration guidance.",
+        turn_index=1,
+        tool_call_count=1,
+        observations=(
+            ControllerObservation(
+                tool_name="search_knowledge",
+                status="success",
+                executed=True,
+                status_code=200,
+                body={"results": [{"title": "Vibration diagnostic procedure"}]},
+            ),
+        ),
+    )
+
+
 def test_frozen_cloudflare_client_keeps_historical_request_contract() -> None:
     http_request = _base_client().build_http_request(_request())
     assert http_request.body["messages"][0] == {
@@ -74,22 +104,20 @@ def test_release0_request_policy_is_isolated_and_encodes_relational_contract() -
         "arguments={}",
         "search_knowledge accepts only q and optional type",
         "use it at most once in a run",
-        "absent from the current supplied tools list",
+        "allowed tool_name schema enum",
         "read-only and no-action requests",
     ):
         assert required_fragment in RELEASE0_PROVIDER_SYSTEM_INSTRUCTION
 
-    http_request = _release_client().build_http_request(_request())
+    request = _request()
+    http_request = _release_client().build_http_request(request)
     assert http_request.body["messages"][0]["content"] == RELEASE0_PROVIDER_SYSTEM_INSTRUCTION
     assert http_request.body["max_completion_tokens"] == RELEASE0_MAX_COMPLETION_TOKENS == 1024
     assert http_request.body["reasoning_effort"] is None
     assert http_request.body["chat_template_kwargs"] == {"enable_thinking": False}
-    assert http_request.body["response_format"] == {
-        "type": "json_schema",
-        "json_schema": RELEASE0_PROVIDER_DECISION_JSON_SCHEMA,
-    }
 
-    variants = RELEASE0_PROVIDER_DECISION_JSON_SCHEMA["oneOf"]
+    response_schema = http_request.body["response_format"]["json_schema"]
+    variants = response_schema["oneOf"]
     assert len(variants) == 3
     assert {
         tuple(variant["properties"]["kind"]["enum"])
@@ -99,6 +127,14 @@ def test_release0_request_policy_is_isolated_and_encodes_relational_contract() -
         ("FINAL",),
         ("CLARIFY", "ESCALATE", "ABSTAIN"),
     }
+    tool_variant = next(
+        variant
+        for variant in variants
+        if variant["properties"]["kind"]["enum"] == ["TOOL"]
+    )
+    assert tool_variant["properties"]["tool_name"]["enum"] == [
+        tool.name for tool in request.tools
+    ]
     final_variant = next(
         variant
         for variant in variants
@@ -134,23 +170,38 @@ def test_release0_provider_surface_removes_search_after_successful_search_observ
     assert len(initial.tools) == 18
     assert "search_knowledge" in {tool.name for tool in initial.tools}
 
-    after_search = source.build_request(
-        ControllerContext(
-            user_request="Investigate vibration guidance.",
-            turn_index=1,
-            tool_call_count=1,
-            observations=(
-                ControllerObservation(
-                    tool_name="search_knowledge",
-                    status="success",
-                    executed=True,
-                    status_code=200,
-                    body={"results": [{"title": "Vibration diagnostic procedure"}]},
-                ),
-            ),
-        )
-    )
+    after_search = source.build_request(_successful_search_context())
     visible_names = {tool.name for tool in after_search.tools}
     assert len(after_search.tools) == 17
     assert "search_knowledge" not in visible_names
     assert "get_knowledge_doc" in visible_names
+
+    http_request = _release_client().build_http_request(after_search)
+    tool_variant = next(
+        variant
+        for variant in http_request.body["response_format"]["json_schema"]["oneOf"]
+        if variant["properties"]["kind"]["enum"] == ["TOOL"]
+    )
+    assert "search_knowledge" not in tool_variant["properties"]["tool_name"]["enum"]
+    assert "get_knowledge_doc" in tool_variant["properties"]["tool_name"]["enum"]
+
+
+def test_release0_adapter_rejects_removed_search_even_if_client_returns_it() -> None:
+    source = Release0ProviderDecisionSource(
+        client=StaticDecisionClient(
+            {
+                "schema_version": "provider-decision-payload-v1",
+                "kind": "TOOL",
+                "tool_name": "search_knowledge",
+                "arguments": {"q": "vibration"},
+                "evidence_id": "ev-search",
+                "final": None,
+                "message": None,
+                "reason_code": None,
+            }
+        ),
+        registry=canonical_tool_registry(),
+    )
+
+    with pytest.raises(ValueError, match="unknown tool: search_knowledge"):
+        source.decide(_successful_search_context())
