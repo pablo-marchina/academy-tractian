@@ -16,6 +16,8 @@ DIRECT_AUTH_BASE_URL = os.environ.get(
     "ACADEMY_NEON_AUTH_DIAGNOSTIC_BASE_URL",
     "https://ep-falling-leaf-acbmndwc.neonauth.sa-east-1.aws.neon.tech/academy_tractian/auth",
 ).rstrip("/")
+PUBLIC_HOST = urlsplit(PUBLIC_BASE_URL).netloc
+DIRECT_AUTH_HOST = urlsplit(DIRECT_AUTH_BASE_URL).netloc
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -37,10 +39,18 @@ def safe_location(value: str | None) -> dict[str, object] | None:
     }
 
 
-def probe(url: str, *, method: str = "GET", payload: bytes | None = None, origin: str | None = None) -> dict[str, object]:
+def probe(
+    url: str,
+    *,
+    method: str = "GET",
+    payload: bytes | None = None,
+    origin: str | None = None,
+    extra_headers: dict[str, str] | None = None,
+) -> dict[str, object]:
     headers = {
         "Accept": "application/json",
-        "User-Agent": "academy-tractian-hosted-g3-redirect-probe/2",
+        "User-Agent": "academy-tractian-hosted-g3-redirect-probe/3",
+        **(extra_headers or {}),
     }
     if payload is not None:
         headers["Content-Type"] = "application/json"
@@ -61,8 +71,23 @@ def probe(url: str, *, method: str = "GET", payload: bytes | None = None, origin
 
 def main() -> None:
     session_suffix = "/get-session?disableCookieCache=true"
+    direct_url = f"{DIRECT_AUTH_BASE_URL}{session_suffix}"
     public_session = probe(f"{PUBLIC_BASE_URL}/auth{session_suffix}")
-    direct_session = probe(f"{DIRECT_AUTH_BASE_URL}{session_suffix}")
+    direct_session = probe(direct_url)
+    direct_with_public_forwarded_host = probe(
+        direct_url,
+        extra_headers={
+            "X-Forwarded-Host": PUBLIC_HOST,
+            "X-Forwarded-Proto": "https",
+        },
+    )
+    direct_with_upstream_forwarded_host = probe(
+        direct_url,
+        extra_headers={
+            "X-Forwarded-Host": DIRECT_AUTH_HOST,
+            "X-Forwarded-Proto": "https",
+        },
+    )
 
     payload = json.dumps(
         {
@@ -81,9 +106,11 @@ def main() -> None:
     print(
         json.dumps(
             {
-                "schema_version": "hosted-g3-auth-canonicalization-probe-v2",
+                "schema_version": "hosted-g3-auth-canonicalization-probe-v3",
                 "public_session_get": public_session,
                 "direct_neon_session_get": direct_session,
+                "direct_neon_with_public_forwarded_host": direct_with_public_forwarded_host,
+                "direct_neon_with_upstream_forwarded_host": direct_with_upstream_forwarded_host,
                 "public_signup_post": public_signup,
                 "credentials_printed": False,
                 "cookies_printed": False,
