@@ -301,5 +301,4 @@ class RemoteProductionConfig(BaseModel):
             "paid_fallback_enabled": self.paid_fallback_enabled,
             "local_serving_enabled": self.local_serving_enabled,
             "provider_calls_enabled": self.provider_calls_enabled,
-            "tractian_transport_enabled": self.tractian_transport_enabled,
         }
