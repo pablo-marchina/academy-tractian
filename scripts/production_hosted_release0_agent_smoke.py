@@ -55,7 +55,7 @@ class BrowserSession:
             data=body,
             headers={
                 "Accept": "application/json",
-                "User-Agent": "academy-tractian-release0-agent-smoke/1",
+                "User-Agent": "academy-tractian-release0-agent-smoke/2",
                 **({"Content-Type": "application/json"} if body is not None else {}),
                 **(headers or {}),
             },
@@ -126,23 +126,44 @@ def require_release0_capabilities() -> dict[str, Any]:
     return manifest
 
 
-def sign_up() -> BrowserSession:
+def session_context(browser: BrowserSession) -> dict[str, Any]:
+    result = browser.request("/api/session/context")
+    require(result.status == 200, "server-owned session context unavailable")
+    context = result.json_object()
+    require(context.get("server_owned") is True, "session context is not server-owned")
+    require(isinstance(context.get("user_fingerprint"), str), "user fingerprint missing")
+    require(isinstance(context.get("organization_fingerprint"), str), "organization fingerprint missing")
+    return context
+
+
+def sign_up(label: str) -> tuple[BrowserSession, dict[str, Any]]:
     browser = BrowserSession()
     result = browser.request(
         "/auth/sign-up/email",
         method="POST",
         payload={
-            "email": f"academy-release0-{uuid4().hex}@example.com",
+            "email": f"academy-release0-{label}-{uuid4().hex}@example.com",
             "password": f"Release0-{uuid4().hex}-Secure!",
-            "name": "Release 0 acceptance",
+            "name": f"Release 0 acceptance {label}",
         },
         headers={"Origin": BASE_URL},
     )
-    require(result.status in {200, 201}, f"Release 0 sign-up failed with HTTP {result.status}")
-    context = browser.request("/api/session/context")
-    require(context.status == 200, "server-owned session context unavailable")
-    require(context.json_object().get("server_owned") is True, "session context is not server-owned")
-    return browser
+    require(result.status in {200, 201}, f"Release 0 {label} sign-up failed with HTTP {result.status}")
+    return browser, session_context(browser)
+
+
+def assert_browser_authority_ignored(browser: BrowserSession, expected: dict[str, Any]) -> None:
+    result = browser.request(
+        "/api/session/context",
+        headers={
+            "X-Organization-Id": "attacker-org",
+            "X-User-Id": "attacker-user",
+            "X-Role": "admin",
+            "X-Permissions": "runs:read:any,actions:confirm:any",
+        },
+    )
+    require(result.status == 200, "forged browser authority changed authentication status")
+    require(result.json_object() == expected, "forged browser authority altered trusted context")
 
 
 def wait_for_execution(browser: BrowserSession, execution_path: str) -> str:
@@ -167,6 +188,27 @@ def safe_items(browser: BrowserSession, path: str) -> list[dict[str, Any]]:
     return items
 
 
+def assert_cross_tenant_hidden(browser: BrowserSession, run_id: str) -> None:
+    paths = (
+        f"/api/runs/{run_id}",
+        f"/api/runs/{run_id}/execution",
+        f"/api/runs/{run_id}/events",
+        f"/api/runs/{run_id}/evidence",
+        f"/api/runs/{run_id}/evaluation",
+        f"/api/runs/{run_id}/lineage",
+        f"/api/runs/{run_id}/actions",
+        f"/api/stream?run_id={run_id}&follow=false",
+    )
+    for path in paths:
+        result = browser.request(path)
+        require(result.status == 404, f"cross-tenant path {path} returned HTTP {result.status}")
+        require(safe_error_detail(result) in {"run_not_found", "redacted"}, "cross-tenant detail leaked")
+
+    listing = browser.request("/api/runs?limit=100")
+    require(listing.status == 200, "tenant-scoped run listing failed")
+    require(run_id not in listing.body.decode("utf-8", errors="replace"), "cross-tenant run leaked in list")
+
+
 def assert_no_secret_projection(payloads: list[object]) -> None:
     serialized = json.dumps(payloads, sort_keys=True).lower()
     for marker in (
@@ -183,12 +225,14 @@ def assert_no_secret_projection(payloads: list[object]) -> None:
 def sign_out(browser: BrowserSession) -> None:
     result = browser.request("/auth/sign-out", method="POST", payload={}, headers={"Origin": BASE_URL})
     require(result.status in {200, 204}, f"sign-out failed with HTTP {result.status}")
+    require(browser.request("/api/session/context").status == 401, "signed-out session remained valid")
 
 
 def main() -> None:
     release = wait_for_exact_release()
     manifest = require_release0_capabilities()
-    browser = sign_up()
+    browser_a, context_a = sign_up("A")
+    assert_browser_authority_ignored(browser_a, context_a)
 
     prompt = (
         "Investigate the recommended diagnostic procedure for an industrial vibration alert using live TRACTIAN evidence. "
@@ -197,7 +241,7 @@ def main() -> None:
         "Do not propose or execute any action. Return a customer-safe conclusion and preserve partial, inconclusive, "
         "conflicting, or unavailable evidence semantics instead of guessing."
     )
-    accepted_result = browser.request("/api/runs", method="POST", payload={"user_request": prompt})
+    accepted_result = browser_a.request("/api/runs", method="POST", payload={"user_request": prompt})
     require(
         accepted_result.status == 202,
         "live Release 0 run was not accepted: "
@@ -209,17 +253,17 @@ def main() -> None:
     require(isinstance(run_id, str) and run_id, "accepted run_id missing")
     require(isinstance(execution_path, str) and execution_path, "execution_path missing")
 
-    execution_status = wait_for_execution(browser, execution_path)
+    execution_status = wait_for_execution(browser_a, execution_path)
     require(execution_status == "completed", "live Release 0 agent execution failed")
 
-    run_result = browser.request(f"/api/runs/{run_id}")
+    run_result = browser_a.request(f"/api/runs/{run_id}")
     require(run_result.status == 200, "completed run is not retrievable")
     run = run_result.json_object()
-    events = safe_items(browser, f"/api/runs/{run_id}/events")
-    evidence = safe_items(browser, f"/api/runs/{run_id}/evidence")
-    evaluation = safe_items(browser, f"/api/runs/{run_id}/evaluation")
-    actions = safe_items(browser, f"/api/runs/{run_id}/actions")
-    lineage_result = browser.request(f"/api/runs/{run_id}/lineage")
+    events = safe_items(browser_a, f"/api/runs/{run_id}/events")
+    evidence = safe_items(browser_a, f"/api/runs/{run_id}/evidence")
+    evaluation = safe_items(browser_a, f"/api/runs/{run_id}/evaluation")
+    actions = safe_items(browser_a, f"/api/runs/{run_id}/actions")
+    lineage_result = browser_a.request(f"/api/runs/{run_id}/lineage")
     require(lineage_result.status == 200, "output lineage unavailable")
     lineage = lineage_result.json_object()
 
@@ -233,15 +277,18 @@ def main() -> None:
     read_results = [event for event in events if event.get("event_type") == "tool_result" and event.get("tool_name") in read_tool_names]
     require(read_calls, "agent completed without a canonical live read tool call")
     require(any(isinstance(event.get("status_code"), int) and 200 <= event["status_code"] < 300 for event in read_results), "no successful live TRACTIAN read result persisted")
-    require(any(event.get("tool_name") == "search_knowledge" for event in read_calls), "required search_knowledge acceptance read was not used")
+    search_calls = [event for event in read_calls if event.get("tool_name") == "search_knowledge"]
+    require(len(search_calls) == 1, f"search_knowledge must execute exactly once, observed={len(search_calls)}")
 
     action_calls = [event for event in events if event.get("event_type") == "tool_call" and event.get("tool_name") in action_tool_names]
     require(not action_calls, "read-only acceptance run reached an action transport call")
     require(actions == [], "read-only acceptance run unexpectedly persisted an actionable confirmation")
 
     require(run.get("completed") is True, "run projection not marked completed")
+    require(run.get("terminal_decision") == "ORIENT", "main vertical slice did not reach a FINAL/ORIENT conclusion")
     require(isinstance(run.get("terminal_message"), str) and bool(run["terminal_message"].strip()), "customer-safe terminal message missing")
     require(run.get("terminal_response_mode") in {"complete", "partial", "inconclusive", "conflict", "unavailable"}, "terminal response semantics missing or invalid")
+    require(run.get("terminal_reason_code") not in {"TOOL_CALL_BUDGET_EXHAUSTED", "TURN_BUDGET_EXHAUSTED", "DECISION_SOURCE_FAILURE"}, "vertical slice terminated through a safe-failure fallback")
     require(evidence, "no evidence reference persisted for the real read path")
     require(evaluation, "post-runtime evaluation rows missing")
     blocking = [item for item in evaluation if item.get("blocking") is True]
@@ -249,11 +296,18 @@ def main() -> None:
     require(all(item.get("passed") is True for item in blocking), "a blocking post-runtime evaluation check failed")
     require(lineage.get("runtime_card_count", 0) > 0, "output lineage has no runtime cards")
 
-    assert_no_secret_projection([release, manifest, run, events, evidence, evaluation, actions, lineage])
-    sign_out(browser)
+    browser_b, context_b = sign_up("B")
+    require(context_a["user_fingerprint"] != context_b["user_fingerprint"], "two users collapsed to one identity")
+    require(context_a["organization_fingerprint"] != context_b["organization_fingerprint"], "two independent users collapsed to one tenant")
+    assert_browser_authority_ignored(browser_b, context_b)
+    assert_cross_tenant_hidden(browser_b, run_id)
+
+    assert_no_secret_projection([release, manifest, run, events, evidence, evaluation, actions, lineage, context_a, context_b])
+    sign_out(browser_a)
+    sign_out(browser_b)
 
     report = {
-        "schema_version": "hosted-release0-agent-acceptance-v1",
+        "schema_version": "hosted-release0-agent-acceptance-v2",
         "status": "PASS",
         "release_git_sha": EXPECTED_SHA,
         "provider": "cloudflare",
@@ -262,12 +316,16 @@ def main() -> None:
         "canonical_tool_count": 18,
         "read_tool_count": 13,
         "proposal_only_action_count": 5,
-        "search_knowledge_observed": True,
+        "search_knowledge_calls": 1,
+        "final_orient_conclusion": True,
         "evidence_persisted": True,
         "terminal_output_persisted": True,
         "post_runtime_evaluation_persisted": True,
         "output_lineage_persisted": True,
         "blocking_checks_passed": True,
+        "two_user_isolation": True,
+        "cross_tenant_rest_sse_hidden": True,
+        "browser_authority_ignored": True,
         "external_action_calls": 0,
         "raw_secrets_printed": False,
     }
