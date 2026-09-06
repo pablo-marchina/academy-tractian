@@ -216,7 +216,7 @@ def test_builds_exact_direct_workers_ai_stateless_shape(model_id: str) -> None:
     assert call.body["temperature"] == 0
     assert call.body["n"] == 1
     assert call.body["stream"] is False
-    assert call.body["max_completion_tokens"] == CLOUDFLARE_MAX_COMPLETION_TOKENS == 512
+    assert call.body["max_completion_tokens"] == CLOUDFLARE_MAX_COMPLETION_TOKENS == 1024
     assert call.body["store"] is False
     assert call.body["tool_choice"] == "none"
     assert call.body["parallel_tool_calls"] is False
