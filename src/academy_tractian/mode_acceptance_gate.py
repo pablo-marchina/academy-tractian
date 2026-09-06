@@ -5,6 +5,7 @@ from typing import Literal, Mapping
 from pydantic import BaseModel, ConfigDict, Field
 
 from research.e2.models import Decision, ResponseMode, RunTrace, ToolSpec
+from research.e2.trace import validate_trace
 
 from .escalation_handoff import build_escalation_handoff, evaluate_escalation_handoff
 from .read_semantics_gate import ProductionReadSemanticsGate
@@ -66,6 +67,8 @@ class ProductionAgentModeReport(_FrozenModel):
     agent_mode: AgentMode
     terminal_decision: str | None = None
     terminal_response_mode: str | None = None
+    trace_lifecycle_issue_count: int = Field(ge=0)
+    unknown_tool_result_count: int = Field(ge=0)
     read_result_count: int = Field(ge=0)
     read_contract_issue_count: int = Field(ge=0)
     read_mode_counts: dict[str, int]
@@ -92,11 +95,11 @@ class ProductionAgentModeGate:
     """Evaluate deterministic mode invariants from an immutable production RunTrace.
 
     The gate intentionally does not judge whether a domain conclusion is semantically correct.
-    It verifies only observable structural/safety invariants: known terminal decision and response
-    mode, no false COMPLETE claim for uncertainty/control terminals, read-contract integrity, at
-    least one canonical read before INVESTIGATE, and exact escalation handoff binding.
-    Consequential action decisions are reported as EXECUTION_DEFERRED because they are promoted by
-    a later independent gate.
+    It verifies only observable structural/safety invariants: valid trace lifecycle, canonical
+    tool-result identity, known terminal decision and response mode, no false COMPLETE claim for
+    uncertainty/control terminals, read-contract integrity, at least one canonical read before
+    INVESTIGATE, and exact escalation handoff binding. Consequential action decisions are reported
+    as EXECUTION_DEFERRED because they are promoted by a later independent gate.
     """
 
     def __init__(self, *, registry: Mapping[str, ToolSpec] | None = None) -> None:
@@ -114,6 +117,20 @@ class ProductionAgentModeGate:
         trace: RunTrace,
     ) -> ProductionAgentModeReport:
         violations: list[str] = []
+
+        lifecycle_issues = validate_trace(trace)
+        if lifecycle_issues:
+            violations.append("TRACE_LIFECYCLE_INVALID")
+
+        unknown_tool_results = [
+            event
+            for event in trace.events
+            if event.event_type == "tool_result"
+            and (not event.tool_name or event.tool_name not in self.registry)
+        ]
+        if unknown_tool_results:
+            violations.append("UNKNOWN_TOOL_RESULT")
+
         finals = [event for event in trace.events if event.event_type == "final_response"]
         final_payload: dict[str, object] | None = None
         if len(finals) != 1:
@@ -195,6 +212,8 @@ class ProductionAgentModeGate:
             agent_mode=agent_mode,
             terminal_decision=terminal_decision,
             terminal_response_mode=terminal_response_mode,
+            trace_lifecycle_issue_count=len(lifecycle_issues),
+            unknown_tool_result_count=len(unknown_tool_results),
             read_result_count=read_report.read_result_count,
             read_contract_issue_count=read_report.contract_issue_count,
             read_mode_counts=dict(read_report.mode_counts),
