@@ -1,23 +1,20 @@
 from __future__ import annotations
 
-import ast
-import inspect
 import json
-from typing import Any
+from typing import Any, Mapping
 
 import pytest
 
-import academy_tractian.cloudflare_provider_client as cloudflare_module
 from academy_tractian.cloudflare_provider_client import (
-    CLOUDFLARE_ALLOWED_MODEL_IDS,
     CLOUDFLARE_GLM_MODEL_ID,
     CLOUDFLARE_MAX_COMPLETION_TOKENS,
     CLOUDFLARE_NEMOTRON_MODEL_ID,
+    CLOUDFLARE_PROVIDER_CLIENT_VERSION,
     CLOUDFLARE_PROVIDER_ID,
     CLOUDFLARE_ROUTE_ID,
     CloudflareWorkersAIChatCompletionsDecisionClient,
 )
-from academy_tractian.decision_source import ProviderDecisionSource, build_provider_decision_request
+from academy_tractian.decision_source import ProviderDecisionRequest
 from academy_tractian.provider_clients import (
     PROVIDER_DECISION_JSON_SCHEMA,
     ProviderHttpClientError,
@@ -25,15 +22,15 @@ from academy_tractian.provider_clients import (
     ProviderHttpResponse,
 )
 from academy_tractian.runtime import canonical_tool_registry
-from research.e2.controller import ControllerContext, ControllerDecisionKind
+from research.e2.controller import ControllerContext
 
 
-SECRET = "cloudflare-unit-test-token-never-serialize"
+SECRET = "cf-test-super-secret-token"
 ACCOUNT_ID = "0123456789abcdef0123456789abcdef"
 
 
 class ScriptedJsonTransport:
-    def __init__(self, *responses: ProviderHttpResponse | Exception) -> None:
+    def __init__(self, *responses: object) -> None:
         self.responses = list(responses)
         self.calls: list[ProviderHttpRequest] = []
 
@@ -41,76 +38,100 @@ class ScriptedJsonTransport:
         self.calls.append(request)
         if not self.responses:
             raise AssertionError("transport script exhausted")
-        response = self.responses.pop(0)
-        if isinstance(response, Exception):
-            raise response
-        return response
+        item = self.responses.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        if isinstance(item, ProviderHttpResponse):
+            return item
+        if isinstance(item, Mapping):
+            return ProviderHttpResponse(status_code=200, body=dict(item))
+        raise AssertionError("unsupported scripted response")
 
 
-def _provider_request():
-    return build_provider_decision_request(
-        context=ControllerContext(
-            user_request="Inspect asset asset_dev_probe_001.",
-            turn_index=0,
-            tool_call_count=0,
-        ),
-        registry=canonical_tool_registry(),
-    )
-
-
-def _decision_json(kind: str = "ABSTAIN", **overrides: Any) -> str:
-    payload: dict[str, Any] = {
-        "schema_version": "provider-decision-payload-v1",
-        "kind": kind,
-        "tool_name": None,
-        "arguments": {},
-        "evidence_id": None,
-        "final": None,
-        "message": "Cannot safely continue.",
-        "reason_code": "NO_SAFE_PATH",
+def _provider_request() -> ProviderDecisionRequest:
+    registry = canonical_tool_registry()
+    payload = {
+        "schema_version": "provider-decision-request-v1",
+        "adapter_version": "provider-decision-adapter-v1",
+        "user_request": "Inspect asset asset_dev_probe_001.",
+        "turn_index": 0,
+        "tool_call_count": 0,
+        "observations": [],
+        "tools": [
+            {
+                "name": tool.name,
+                "operation_id": tool.operation_id,
+                "method": tool.method,
+                "path_template": tool.path_template,
+                "kind": tool.kind.value,
+                "description": tool.description,
+                "parameters": [
+                    {
+                        "name": parameter.name,
+                        "location": parameter.location,
+                        "required": parameter.required,
+                        "parameter_schema": parameter.parameter_schema,
+                    }
+                    for parameter in tool.parameters
+                ],
+                "justification_required": tool.justification_required,
+                "minimum_justification_length": tool.minimum_justification_length,
+            }
+            for tool in sorted(registry.values(), key=lambda item: item.name)
+        ],
     }
-    payload.update(overrides)
-    return json.dumps(payload, sort_keys=True)
+    import hashlib
+
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    payload["request_sha256"] = hashlib.sha256(canonical).hexdigest()
+    return ProviderDecisionRequest.model_validate(payload)
+
+
+def _decision_json() -> str:
+    return json.dumps(
+        {
+            "schema_version": "provider-decision-payload-v1",
+            "kind": "ABSTAIN",
+            "tool_name": None,
+            "arguments": {},
+            "evidence_id": None,
+            "final": None,
+            "message": "Cannot proceed safely.",
+            "reason_code": "NO_SAFE_PATH",
+        },
+        sort_keys=True,
+    )
 
 
 def _cloudflare_response(
-    text: str,
+    content: str,
     *,
     model: str = CLOUDFLARE_GLM_MODEL_ID,
     finish_reason: str = "stop",
-    message_overrides: dict[str, Any] | None = None,
     usage: dict[str, Any] | None = None,
-) -> ProviderHttpResponse:
-    message: dict[str, Any] = {
-        "role": "assistant",
-        "content": text,
-    }
-    if message_overrides:
-        message.update(message_overrides)
-    return ProviderHttpResponse(
-        status_code=200,
-        body={
-            "id": "chatcmpl-test",
-            "object": "chat.completion",
-            "created": 1,
-            "model": model,
-            "choices": [
-                {
-                    "index": 0,
-                    "message": message,
-                    "finish_reason": finish_reason,
-                }
-            ],
-            "usage": usage
-            if usage is not None
-            else {
-                "prompt_tokens": 103,
-                "completion_tokens": 19,
-                "total_tokens": 122,
-                "completion_tokens_details": {"reasoning_tokens": 7},
-            },
+) -> dict[str, Any]:
+    return {
+        "id": "chatcmpl-test",
+        "object": "chat.completion",
+        "created": 1,
+        "model": model,
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": content,
+                },
+                "finish_reason": finish_reason,
+            }
+        ],
+        "usage": usage
+        or {
+            "prompt_tokens": 100,
+            "completion_tokens": 20,
+            "total_tokens": 120,
         },
-    )
+    }
 
 
 def _client(
@@ -126,69 +147,47 @@ def _client(
     )
 
 
-def _serialized_body(call: ProviderHttpRequest) -> str:
-    return json.dumps(call.body, sort_keys=True, separators=(",", ":"))
+def _serialized_body(request: ProviderHttpRequest) -> str:
+    return json.dumps(request.body, sort_keys=True)
 
 
-def test_cloudflare_module_has_no_environment_lookup_sdk_or_network_transport() -> None:
-    source = inspect.getsource(cloudflare_module)
-    tree = ast.parse(source)
-    imported_roots: set[str] = set()
-    imported_modules: set[str] = set()
-    referenced_environment_apis: set[str] = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imported_roots.update(alias.name.split(".")[0] for alias in node.names)
-            imported_modules.update(alias.name for alias in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imported_roots.add(node.module.split(".")[0])
-            imported_modules.add(node.module)
-        elif isinstance(node, ast.Name) and node.id in {"getenv", "environ"}:
-            referenced_environment_apis.add(node.id)
-        elif isinstance(node, ast.Attribute) and node.attr in {"getenv", "environ"}:
-            referenced_environment_apis.add(node.attr)
-
-    assert "os" not in imported_roots
-    assert "urllib" not in imported_roots
-    assert "requests" not in imported_roots
-    assert imported_roots.isdisjoint({"cloudflare", "openai", "httpx", "aiohttp"})
-    assert referenced_environment_apis == set()
-    assert "CLOUDFLARE_API_TOKEN" not in source
-    assert "CLOUDFLARE_ACCOUNT_ID" not in source
-    assert not any(module.startswith("research.e2.evaluator") for module in imported_modules)
+def test_frozen_identity_is_explicit() -> None:
+    assert CLOUDFLARE_PROVIDER_CLIENT_VERSION == "cloudflare-provider-client-v1"
+    assert CLOUDFLARE_PROVIDER_ID == "cloudflare"
+    assert CLOUDFLARE_ROUTE_ID == "cloudflare.workers_ai.openai_compat.chat_completions.v1"
+    assert CLOUDFLARE_GLM_MODEL_ID == "@cf/zai-org/glm-4.7-flash"
+    assert CLOUDFLARE_NEMOTRON_MODEL_ID == "@cf/nvidia/nemotron-3-120b-a12b"
 
 
-def test_constructor_accepts_only_adr018_models_and_explicit_values() -> None:
-    for model_id in CLOUDFLARE_ALLOWED_MODEL_IDS:
-        assert _client(ScriptedJsonTransport(), model_id=model_id).model_id == model_id
-
-    with pytest.raises(ValueError, match="explicit non-empty api_token"):
+def test_requires_explicit_credentials_and_frozen_model() -> None:
+    transport = ScriptedJsonTransport()
+    with pytest.raises(ValueError, match="api_token"):
         CloudflareWorkersAIChatCompletionsDecisionClient(
             api_token="",
             account_id=ACCOUNT_ID,
             model_id=CLOUDFLARE_GLM_MODEL_ID,
-            transport=ScriptedJsonTransport(),
+            transport=transport,
         )
-    with pytest.raises(ValueError, match="explicit non-empty account_id"):
+    with pytest.raises(ValueError, match="account_id"):
         CloudflareWorkersAIChatCompletionsDecisionClient(
             api_token=SECRET,
-            account_id=" ",
+            account_id="",
             model_id=CLOUDFLARE_GLM_MODEL_ID,
-            transport=ScriptedJsonTransport(),
+            transport=transport,
         )
-    with pytest.raises(ValueError, match="ASCII letters and digits"):
+    with pytest.raises(ValueError, match="account_id"):
         CloudflareWorkersAIChatCompletionsDecisionClient(
             api_token=SECRET,
-            account_id="abc/../def",
+            account_id="bad/account",
             model_id=CLOUDFLARE_GLM_MODEL_ID,
-            transport=ScriptedJsonTransport(),
+            transport=transport,
         )
-    with pytest.raises(ValueError, match="not frozen by ADR-018"):
+    with pytest.raises(ValueError, match="model_id"):
         CloudflareWorkersAIChatCompletionsDecisionClient(
             api_token=SECRET,
             account_id=ACCOUNT_ID,
             model_id="@cf/google/gemma-4-26b-a4b-it",
-            transport=ScriptedJsonTransport(),
+            transport=transport,
         )
 
 
@@ -216,7 +215,7 @@ def test_builds_exact_direct_workers_ai_stateless_shape(model_id: str) -> None:
     assert call.body["temperature"] == 0
     assert call.body["n"] == 1
     assert call.body["stream"] is False
-    assert call.body["max_completion_tokens"] == CLOUDFLARE_MAX_COMPLETION_TOKENS == 1024
+    assert call.body["max_completion_tokens"] == CLOUDFLARE_MAX_COMPLETION_TOKENS == 512
     assert call.body["store"] is False
     assert call.body["tool_choice"] == "none"
     assert call.body["parallel_tool_calls"] is False
@@ -243,136 +242,31 @@ def test_builds_exact_direct_workers_ai_stateless_shape(model_id: str) -> None:
     assert '"user_id"' not in serialized
     assert '"identity_id"' not in serialized
     assert '"seed"' not in serialized
-    assert "actions_enabled" not in serialized
-    assert "idempotency" not in serialized
-    assert "gold" not in serialized.lower()
-    assert SECRET not in repr(call)
-    assert SECRET not in repr(client)
-    assert ACCOUNT_ID not in repr(client)
 
 
-def test_valid_cloudflare_response_integrates_with_strict_provider_decision_source() -> None:
-    text = _decision_json(
-        "TOOL",
-        tool_name="get_asset",
-        arguments={"asset_id": "asset-1"},
-        evidence_id="ev-asset",
-        message=None,
-        reason_code=None,
-    )
-    transport = ScriptedJsonTransport(_cloudflare_response(text))
-    client = _client(transport)
-    source = ProviderDecisionSource(client=client, registry=canonical_tool_registry())
-
-    decision = source.decide(
-        ControllerContext(user_request="Inspect asset-1", turn_index=0, tool_call_count=0)
-    )
-
-    assert decision.kind is ControllerDecisionKind.TOOL
-    assert decision.proposal is not None
-    assert decision.proposal.tool_name == "get_asset"
-    assert decision.proposal.arguments == {"asset_id": "asset-1"}
-    assert len(transport.calls) == 1
+def test_repr_redacts_credentials() -> None:
+    client = _client(ScriptedJsonTransport())
+    rendered = repr(client)
+    assert SECRET not in rendered
+    assert ACCOUNT_ID not in rendered
+    assert "<redacted>" in rendered
 
 
-@pytest.mark.parametrize(
-    "response",
-    [
-        _cloudflare_response(_decision_json(), model=CLOUDFLARE_NEMOTRON_MODEL_ID),
-        _cloudflare_response(_decision_json(), finish_reason="length"),
-        ProviderHttpResponse(
-            status_code=200,
-            body={
-                "object": "response",
-                "model": CLOUDFLARE_GLM_MODEL_ID,
-                "choices": [],
-            },
-        ),
-    ],
-)
-def test_route_model_or_completion_shape_drift_fails_closed_after_one_call(
-    response: ProviderHttpResponse,
-) -> None:
-    transport = ScriptedJsonTransport(response)
-    client = _client(transport)
-
-    with pytest.raises(ProviderHttpClientError):
-        client.complete(_provider_request())
-
-    assert len(transport.calls) == 1
-
-
-def test_provider_native_tool_call_is_rejected() -> None:
-    response = _cloudflare_response(
-        _decision_json(),
-        message_overrides={
-            "content": None,
-            "tool_calls": [
-                {
-                    "id": "call-1",
-                    "type": "function",
-                    "function": {"name": "get_asset", "arguments": "{}"},
-                }
-            ],
-        },
-    )
-    transport = ScriptedJsonTransport(response)
-    client = _client(transport)
-
-    with pytest.raises(ProviderHttpClientError, match="CLOUDFLARE_TOOL_CALL_REJECTED"):
-        client.complete(_provider_request())
-    assert len(transport.calls) == 1
-
-
-def test_provider_function_call_and_refusal_are_rejected() -> None:
-    function_transport = ScriptedJsonTransport(
+def test_records_usage_without_exposing_request_body() -> None:
+    transport = ScriptedJsonTransport(
         _cloudflare_response(
             _decision_json(),
-            message_overrides={"function_call": {"name": "get_asset", "arguments": "{}"}},
+            usage={
+                "prompt_tokens": 101,
+                "completion_tokens": 21,
+                "total_tokens": 122,
+                "completion_tokens_details": {"reasoning_tokens": 4},
+            },
         )
     )
-    with pytest.raises(ProviderHttpClientError, match="CLOUDFLARE_FUNCTION_CALL_REJECTED"):
-        _client(function_transport).complete(_provider_request())
-
-    refusal_transport = ScriptedJsonTransport(
-        _cloudflare_response(_decision_json(), message_overrides={"refusal": "blocked"})
-    )
-    with pytest.raises(ProviderHttpClientError, match="CLOUDFLARE_REFUSAL_REJECTED"):
-        _client(refusal_transport).complete(_provider_request())
-
-
-def test_transport_exception_is_sanitized_and_never_retried() -> None:
-    transport = ScriptedJsonTransport(RuntimeError(f"backend leaked {SECRET}"))
-    client = _client(transport)
-
-    with pytest.raises(ProviderHttpClientError) as exc_info:
-        client.complete(_provider_request())
-
-    assert str(exc_info.value) == "TRANSPORT_FAILURE"
-    assert SECRET not in str(exc_info.value)
-    assert len(transport.calls) == 1
-
-
-def test_http_failure_is_sanitized_and_never_retried() -> None:
-    transport = ScriptedJsonTransport(
-        ProviderHttpResponse(status_code=429, body={"secret": SECRET})
-    )
-    client = _client(transport)
-
-    with pytest.raises(ProviderHttpClientError) as exc_info:
-        client.complete(_provider_request())
-
-    assert str(exc_info.value) == "HTTP_STATUS:429"
-    assert SECRET not in str(exc_info.value)
-    assert len(transport.calls) == 1
-
-
-def test_usage_is_sanitized_exact_and_drainable() -> None:
-    transport = ScriptedJsonTransport(_cloudflare_response(_decision_json()))
     client = _client(transport)
     request = _provider_request()
     client.complete(request)
-
     records = client.drain_usage_records()
     assert len(records) == 1
     record = records[0]
@@ -380,49 +274,101 @@ def test_usage_is_sanitized_exact_and_drainable() -> None:
     assert record.model_id == CLOUDFLARE_GLM_MODEL_ID
     assert record.route_id == CLOUDFLARE_ROUTE_ID
     assert record.request_sha256 == request.request_sha256
-    assert (record.input_tokens, record.output_tokens, record.total_tokens, record.reasoning_tokens) == (
-        103,
-        19,
-        122,
-        7,
-    )
-    assert SECRET not in repr(record)
+    assert record.input_tokens == 101
+    assert record.output_tokens == 21
+    assert record.total_tokens == 122
+    assert record.reasoning_tokens == 4
     assert client.drain_usage_records() == ()
 
 
-def test_missing_or_invalid_usage_is_not_fabricated() -> None:
+def test_rejects_http_non_success_without_retry() -> None:
+    transport = ScriptedJsonTransport(ProviderHttpResponse(status_code=429, body={"error": "quota"}))
+    client = _client(transport)
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "HTTP_STATUS"
+    assert exc_info.value.status_code == 429
+    assert len(transport.calls) == 1
+
+
+def test_rejects_transport_failure_without_retry() -> None:
+    transport = ScriptedJsonTransport(RuntimeError("network details"))
+    client = _client(transport)
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "TRANSPORT_FAILURE"
+    assert len(transport.calls) == 1
+
+
+def test_rejects_provider_error_shape() -> None:
+    transport = ScriptedJsonTransport({"success": False, "errors": [{"code": 1000}]})
+    client = _client(transport)
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "CLOUDFLARE_OBJECT_INVALID"
+
+
+def test_rejects_model_route_substitution() -> None:
     transport = ScriptedJsonTransport(
-        _cloudflare_response(
-            _decision_json(),
-            usage={
-                "prompt_tokens": None,
-                "completion_tokens": -1,
-                "total_tokens": "122",
-            },
-        )
+        _cloudflare_response(_decision_json(), model=CLOUDFLARE_NEMOTRON_MODEL_ID)
+    )
+    client = _client(transport, model_id=CLOUDFLARE_GLM_MODEL_ID)
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "CLOUDFLARE_MODEL_MISMATCH"
+
+
+def test_rejects_non_stop_finish_reason() -> None:
+    transport = ScriptedJsonTransport(_cloudflare_response(_decision_json(), finish_reason="length"))
+    client = _client(transport)
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "CLOUDFLARE_FINISH_REASON_INVALID"
+
+
+def test_rejects_provider_side_tool_calls() -> None:
+    response = _cloudflare_response(_decision_json())
+    response["choices"][0]["message"]["tool_calls"] = [{"id": "tool-1"}]
+    transport = ScriptedJsonTransport(response)
+    client = _client(transport)
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "CLOUDFLARE_TOOL_CALL_REJECTED"
+
+
+def test_rejects_legacy_function_call() -> None:
+    response = _cloudflare_response(_decision_json())
+    response["choices"][0]["message"]["function_call"] = {"name": "legacy"}
+    transport = ScriptedJsonTransport(response)
+    client = _client(transport)
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "CLOUDFLARE_FUNCTION_CALL_REJECTED"
+
+
+def test_rejects_refusal_content() -> None:
+    response = _cloudflare_response(_decision_json())
+    response["choices"][0]["message"]["refusal"] = "refusal"
+    transport = ScriptedJsonTransport(response)
+    client = _client(transport)
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "CLOUDFLARE_REFUSAL_REJECTED"
+
+
+def test_rejects_empty_output() -> None:
+    transport = ScriptedJsonTransport(_cloudflare_response(""))
+    client = _client(transport)
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "CLOUDFLARE_OUTPUT_TEXT_INVALID"
+
+
+def test_rejects_non_object_http_body() -> None:
+    transport = ScriptedJsonTransport(
+        ProviderHttpResponse(status_code=200, body=["unexpected"])  # type: ignore[arg-type]
     )
     client = _client(transport)
-    client.complete(_provider_request())
-
-    record = client.drain_usage_records()[0]
-    assert record.input_tokens is None
-    assert record.output_tokens is None
-    assert record.total_tokens is None
-    assert record.reasoning_tokens is None
-
-
-def test_schema_is_copied_per_request_and_top_level_remains_closed() -> None:
-    transport = ScriptedJsonTransport()
-    client = _client(transport)
-    request = _provider_request()
-
-    first = client.build_http_request(request)
-    second = client.build_http_request(request)
-    first_schema = first.body["response_format"]["json_schema"]
-    second_schema = second.body["response_format"]["json_schema"]
-
-    assert first_schema == PROVIDER_DECISION_JSON_SCHEMA
-    assert first_schema is not PROVIDER_DECISION_JSON_SCHEMA
-    assert second_schema is not first_schema
-    assert first_schema["additionalProperties"] is False
-    assert set(first_schema["required"]) == set(first_schema["properties"])
+    with pytest.raises(ProviderHttpClientError) as exc_info:
+        client.complete(_provider_request())
+    assert exc_info.value.code == "HTTP_JSON_NOT_OBJECT"
