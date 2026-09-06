@@ -59,14 +59,14 @@ Do not add LangGraph, multi-agent, MCP, RAG/vector DB, Redis/Kafka, microservice
 | 02 | Decision registry / active docs | DONE | current mutable truth separated from frozen evidence |
 | 03 | Main branch protection | BLOCKED_USER_ACTION | admin write unavailable through current GitHub connector |
 | 04 | Railway topology reproducibility | IN_PROGRESS | `.railway/railway.ts`, static validator and CI versioned; live plan/apply pending |
-| 04A | Backend release artifact identity | IN_PROGRESS | baked Railway Git SHA + OCI label + boot cross-check + required CI implemented; complete-head CI pending |
+| 04A | Backend release artifact identity | DONE_SOURCE_GATE | baked Railway Git SHA + OCI label + boot cross-check; `a9356e…` required CI PASS; hosted parity pending |
 | 05 | Neon schema/RLS promotion | DONE | 15/15 tables, 7/7 metadata, NOBYPASSRLS scoped role, RLS negative PASS |
 | 06 | Railway frontend production | DONE | HTTPS `production-web`, Caddy same-origin auth/API/SSE, deploy SUCCESS |
 | 07 | Railway backend boot | BLOCKED_USER_ACTION | exactly two PostgreSQL DSNs absent; next deploy must pass release identity v3 |
-| 08 | Live IAM / multi-user acceptance | WAITING_DEPENDENCY | offline negative-gap audit may continue; hosted acceptance requires #07 |
+| 08 | Live IAM / multi-user acceptance | WAITING_DEPENDENCY | offline negative-gap hardening done; hosted acceptance requires #07 |
 | 09 | Provider tournament | PREREGISTERED / NO_SELECTION | v3: 17 fresh scenarios × 5 reps/candidate; USD0 quota packets + validator/test gate; live runs not executed |
 | 10 | Real DecisionSource composition | WAITING_DEPENDENCY | requires #09 promotion |
-| 11 | Real TRACTIAN transport | WAITING_DEPENDENCY | exact partner contract authoritative |
+| 11 | TRACTIAN production adapter/composition | ADAPTER_IMPLEMENTED | hardened direct HTTP adapter + fail-closed UNCONFIGURED/CONFIGURED_UNVERIFIED states; live contract/reachability pending |
 | 12 | Real authorization resolver | WAITING_DEPENDENCY | requires live identity/resource mapping |
 | 13 | Consequential action remote E2E | WAITING_DEPENDENCY | requires #08-#12 |
 | 14 | Full remote public E2E | WAITING_DEPENDENCY | requires #08-#13 |
@@ -86,13 +86,13 @@ Do not add LangGraph, multi-agent, MCP, RAG/vector DB, Redis/Kafka, microservice
 ```text
 A. protect main                                      BLOCKED_USER_ACTION
 B. version/validate Railway topology                 IN_PROGRESS
-B.5 prove immutable backend release identity         IMPLEMENTED / CI PENDING
+B.5 prove immutable backend release identity         SOURCE GATE PASS / HOSTED PROOF PENDING
 C. inject two Railway PostgreSQL secrets             BLOCKED_USER_ACTION
 D. boot exact-SHA backend + health/release/DB/restart
 E. live IAM + two-user/two-tenant + shared-org tests
 F. execute preregistered provider tournament
 G. promote and compose real DecisionSource
-H. compose real TRACTIAN typed transport
+H. compose real TRACTIAN typed transport              ADAPTER READY / LIVE CONFIG PENDING
 I. validate Contextualize / Investigate / Clarify / Abstain / Escalate
 J. compose real authorization resolver
 K. enable and validate governed remote actions
@@ -143,7 +143,7 @@ Railway Git-backed build SHA
 = /api/meta/release artifact_git_sha
 ```
 
-Missing/malformed identity or any mismatch must abort before PostgreSQL/IAM product builders open connections. `production-runtime` is part of `final-ci-required`, with positive image proof and negative mismatch/build-failure tests.
+Missing/malformed identity or any mismatch aborts before PostgreSQL/IAM product builders open connections. At validated implementation head `a9356e217fbf7c94549849a7cdb8554a449e947b`, `production-runtime`, wheel/image smoke, clean-clone, Playwright and `final-ci-required / required-gate` all pass. Hosted exact-SHA observation remains a separate G2 gate.
 
 ## 7. P0-C — Remote backend boot
 
@@ -182,23 +182,42 @@ The only valid campaign decisions are `PROMOTE`, `REJECT`, `INCONCLUSIVE`, or `N
 
 ## 10. P0-F — Real provider + TRACTIAN
 
-Only a promoted provider replaces `NoSelectedProviderDecisionSource`. TRACTIAN follows the supplied contract exactly:
+Only a promoted provider replaces `NoSelectedProviderDecisionSource`.
+
+The TRACTIAN production adapter is already implemented and source-gated independently of provider selection. Its default composition is fail-closed:
 
 ```text
-typed tool
+NO_SELECTION provider
++ UNCONFIGURED TRACTIAN transport
++ DENY-ALL actions
+```
+
+An explicit complete endpoint/header configuration may advance TRACTIAN only to `CONFIGURED_UNVERIFIED`. Construction performs zero network I/O and therefore does not establish reachability.
+
+The direct adapter enforces:
+
+```text
+typed canonical tool
 → exact method/path
-→ validated args
-→ server-managed credentials
-→ bounded timeout
-→ normalized response/error
+→ canonical path encoding
+→ validated query/body/header boundary
+→ server-managed credentials at network edge only
+→ no redirect following
+→ bounded timeout and payload sizes
+→ zero automatic retry
+→ sanitized normalized response/error
 → evidence
 ```
 
-Read retry only when proven safe; consequential writes never receive blind retry.
+No authentication scheme is assumed until an authoritative partner contract supplies it. Read retry remains disabled until measured proof justifies it; consequential writes never receive blind retry.
+
+Live promotion requires authoritative endpoint/auth configuration plus bounded read acceptance. Complete, partial, inconclusive, conflicting and unavailable API behavior must remain distinguishable in controller evidence before the required agent modes are accepted.
 
 ## 11. P0-G — Required agent modes
 
 Hosted acceptance covers Contextualize, Investigate, Clarify, Abstain, Escalate and Action Proposal, evaluated on outcome, trajectory, evidence, unnecessary calls, unsupported claims and escalation usefulness.
+
+Offline preparation should first make read-response quality explicit so an HTTP-success response cannot silently erase partial/inconclusive/conflicting state.
 
 ## 12. P0-H — Governed actions
 
@@ -237,7 +256,3 @@ Adaptive Evidence Stopping only after the static baseline and only if quality/sa
 ## 17. Hard release gate
 
 Any red hard gate = `NOT READY`. Required: remote frontend/backend/PostgreSQL/provider/TRACTIAN; real IAM and multi-user isolation; all required modes; governed remote action; full remote E2E; security/load/recovery/backup evidence; protected main + required CI; reproducible deployment + rollback; immutable exact-SHA release identity; no local dependency/mocks/secrets/gold/cross-tenant leakage; synchronized docs and evidence.
-
-## 18. Documentation rule
-
-Every material implementation step updates current state, this plan, applicable decision records and a chronological progress entry in the same development flow.
