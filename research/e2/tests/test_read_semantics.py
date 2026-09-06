@@ -105,96 +105,104 @@ def make_runner(*, transport, replay: ReplayStore | None = None, mode: str = "li
     )
 
 
-def test_runner_preserves_semantic_state_in_execution_result_and_trace() -> None:
+def test_trace_evaluator_classifies_existing_raw_runner_trace_without_mutation() -> None:
     transport = StaticTransport(
         TransportResponse(200, {}, {"mode": "conflict", "data": {"sources": 2}})
     )
     runner = make_runner(transport=transport)
+    runner.execute_tool("get_data_quality", {"asset_id": "asset_a"}, evidence_id="dq")
+    before = runner.trace.model_dump(mode="json")
 
-    execution = runner.execute_tool("get_data_quality", {"asset_id": "asset_a"}, evidence_id="dq")
+    report = ReadSemanticsTraceEvaluator(REGISTRY).evaluate(list(runner.trace.events))
 
-    assert execution.read_semantics is not None
-    assert execution.read_semantics.response_mode is ResponseMode.CONFLICT
+    assert runner.trace.model_dump(mode="json") == before
+    assert report.schema_version == READ_SEMANTICS_VERSION
+    assert report.passed
+    assert report.read_result_count == 1
+    assert report.assessed_result_count == 1
+    assert report.contract_issue_count == 0
+    assert report.mode_counts["conflict"] == 1
+    entry = report.entries[0]
+    assert entry.tool_name == "get_data_quality"
+    assert entry.response_mode is ResponseMode.CONFLICT
+    assert entry.source == "structured_mode"
+    assert entry.status_code == 200
+    assert entry.issue_code is None
 
-    tool_result = next(event for event in runner.trace.events if event.event_type == "tool_result")
-    observation = next(event for event in runner.trace.events if event.event_type == "observation")
-    for event in (tool_result, observation):
-        assert event.metadata["kind"] == "read"
-        assert event.metadata["read_semantics_version"] == READ_SEMANTICS_VERSION
-        assert event.metadata["response_mode"] == "conflict"
-        assert event.metadata["response_mode_source"] == "structured_mode"
-        assert "response_mode_issue_code" not in event.metadata
 
-    assert tool_result.result["response_mode"] == "conflict"
-    assert observation.result == {"mode": "conflict", "data": {"sources": 2}}
-
-
-def test_runner_records_fail_closed_issue_without_rewriting_raw_body() -> None:
+def test_trace_evaluator_fails_acceptance_on_missing_mode_but_preserves_safe_classification() -> None:
     raw_body = {"message": "complete according to prose only"}
     runner = make_runner(transport=StaticTransport(TransportResponse(200, {}, raw_body)))
+    runner.execute_tool("get_asset", {"asset_id": "asset_a"}, evidence_id="asset")
 
-    execution = runner.execute_tool("get_asset", {"asset_id": "asset_a"}, evidence_id="asset")
-
-    assert execution.read_semantics is not None
-    assert execution.read_semantics.response_mode is ResponseMode.INCONCLUSIVE
+    report = ReadSemanticsTraceEvaluator(REGISTRY).evaluate(list(runner.trace.events))
     observation = next(event for event in runner.trace.events if event.event_type == "observation")
+
+    assert not report.passed
+    assert report.contract_issue_count == 1
+    assert report.entries[0].response_mode is ResponseMode.INCONCLUSIVE
+    assert report.entries[0].source == "fail_closed"
+    assert report.entries[0].issue_code == "MISSING_MODE"
     assert observation.result == raw_body
-    assert observation.metadata["response_mode"] == "inconclusive"
-    assert observation.metadata["response_mode_source"] == "fail_closed"
-    assert observation.metadata["response_mode_issue_code"] == "MISSING_MODE"
 
 
-def test_live_and_replay_recompute_identical_read_semantics() -> None:
+def test_live_and_replay_yield_identical_semantic_reports() -> None:
     replay = ReplayStore()
     live = make_runner(
         transport=StaticTransport(TransportResponse(200, {}, {"mode": "partial", "data": [1]})),
         replay=replay,
         mode="live",
     )
-    live_execution = live.execute_tool("get_rms", {"asset_id": "asset_a"})
+    live.execute_tool("get_rms", {"asset_id": "asset_a"})
 
     replay_runner = make_runner(
         transport=ExplodingTransport(),
         replay=replay,
         mode="replay",
     )
-    replay_execution = replay_runner.execute_tool("get_rms", {"asset_id": "asset_a"})
+    replay_runner.execute_tool("get_rms", {"asset_id": "asset_a"})
 
-    assert live_execution.read_semantics == replay_execution.read_semantics
-    assert replay_execution.read_semantics is not None
-    assert replay_execution.read_semantics.response_mode is ResponseMode.PARTIAL
+    evaluator = ReadSemanticsTraceEvaluator(REGISTRY)
+    live_report = evaluator.evaluate(list(live.trace.events))
+    replay_report = evaluator.evaluate(list(replay_runner.trace.events))
 
-
-def test_trace_evaluator_measures_coverage_and_contract_issues() -> None:
-    runner = make_runner(
-        transport=StaticTransport(TransportResponse(200, {}, {"mode": "inconclusive"}))
-    )
-    runner.execute_tool("get_model", {"model_id": "model_a"})
-
-    report = ReadSemanticsTraceEvaluator(REGISTRY).evaluate(list(runner.trace.events))
-
-    assert report.passed
-    assert report.read_result_count == 1
-    assert report.covered_result_count == 1
-    assert report.contract_issue_count == 0
-    assert report.mode_counts["inconclusive"] == 1
+    assert live_report.entries == replay_report.entries
+    assert replay_report.passed
+    assert replay_report.mode_counts["partial"] == 1
 
 
-def test_trace_evaluator_rejects_uninstrumented_read_result() -> None:
+def test_existing_uninstrumented_tool_result_is_still_in_evaluator_denominator() -> None:
     legacy_read = TraceEvent(
         sequence=0,
         event_type="tool_result",
         tool_name="get_asset",
-        result={"status_code": 200, "body": {"mode": "complete"}},
+        result={"status_code": 200, "headers": {}, "body": {"mode": "complete"}},
         metadata={"status_code": 200},
     )
 
     report = ReadSemanticsTraceEvaluator(REGISTRY).evaluate([legacy_read])
 
-    assert not report.passed
+    assert report.passed
     assert report.read_result_count == 1
-    assert report.covered_result_count == 0
-    assert report.contract_issue_count == 0
+    assert report.assessed_result_count == 1
+    assert report.mode_counts["complete"] == 1
+
+
+def test_trace_evaluator_rejects_status_code_mismatch_fail_closed() -> None:
+    tampered = TraceEvent(
+        sequence=0,
+        event_type="tool_result",
+        tool_name="get_asset",
+        result={"status_code": 200, "headers": {}, "body": {"mode": "complete"}},
+        metadata={"status_code": 503},
+    )
+
+    report = ReadSemanticsTraceEvaluator(REGISTRY).evaluate([tampered])
+
+    assert not report.passed
+    assert report.contract_issue_count == 1
+    assert report.entries[0].response_mode is ResponseMode.INCONCLUSIVE
+    assert report.entries[0].issue_code == "STATUS_CODE_MISMATCH"
 
 
 def test_trace_evaluator_does_not_trust_forged_read_kind_for_action() -> None:
@@ -202,24 +210,19 @@ def test_trace_evaluator_does_not_trust_forged_read_kind_for_action() -> None:
         sequence=0,
         event_type="tool_result",
         tool_name="reprocess_analysis",
-        result={"status_code": 200, "body": {"accepted": True}},
-        metadata={
-            "kind": "read",
-            "read_semantics_version": READ_SEMANTICS_VERSION,
-            "response_mode": "complete",
-            "response_mode_source": "structured_mode",
-        },
+        result={"status_code": 200, "headers": {}, "body": {"mode": "complete"}},
+        metadata={"status_code": 200, "kind": "read"},
     )
 
     report = ReadSemanticsTraceEvaluator(REGISTRY).evaluate([forged_action])
 
     assert report.passed
     assert report.read_result_count == 0
-    assert report.covered_result_count == 0
+    assert report.assessed_result_count == 0
 
 
 def test_controller_provider_facing_observation_schema_is_unchanged_in_v1() -> None:
-    # Semantic read state is trace/evaluator-owned in this gate. Exposing it to the model would
+    # The provider already receives the raw structured body. Adding a new observation field would
     # change provider-decision-request-v1 hashes and requires an explicit versioned protocol step.
     assert "response_mode" not in ControllerObservation.model_fields
     assert set(ControllerObservation.model_fields) == {
