@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Mapping
+from typing import Any, Literal, Mapping
 
 from .models import ResponseMode, ToolKind, ToolSpec, TraceEvent
 from .transport import TransportResponse
@@ -14,6 +14,9 @@ ReadSemanticsIssueCode = Literal[
     "NON_OBJECT_BODY",
     "MISSING_MODE",
     "INVALID_MODE",
+    "INVALID_TRACE_RESULT",
+    "INVALID_STATUS_CODE",
+    "STATUS_CODE_MISMATCH",
 ]
 
 
@@ -31,16 +34,6 @@ class ReadSemanticsAssessment:
     source: ReadSemanticsSource
     issue_code: ReadSemanticsIssueCode | None = None
 
-    def trace_metadata(self) -> dict[str, str]:
-        metadata = {
-            "read_semantics_version": READ_SEMANTICS_VERSION,
-            "response_mode": self.response_mode.value,
-            "response_mode_source": self.source,
-        }
-        if self.issue_code is not None:
-            metadata["response_mode_issue_code"] = self.issue_code
-        return metadata
-
 
 def classify_read_response(
     *,
@@ -53,7 +46,7 @@ def classify_read_response(
     epistemic read states. Non-2xx HTTP responses deterministically mean ``unavailable`` even if
     a body happens to claim otherwise. For 2xx reads, only an exact structured ``mode`` value
     from :class:`ResponseMode` is accepted. Missing or malformed structured state fails closed to
-    ``inconclusive`` while retaining an issue code in the trace.
+    ``inconclusive`` while retaining an issue code for acceptance evaluation.
     """
 
     if tool.kind is not ToolKind.READ:
@@ -103,29 +96,108 @@ def classify_read_response(
 
 
 @dataclass(frozen=True)
-class ReadSemanticsTraceReport:
-    """Trace-only evaluator output for deterministic read-semantics instrumentation."""
+class ReadSemanticsTraceEntry:
+    sequence: int
+    tool_name: str
+    response_mode: ResponseMode
+    source: ReadSemanticsSource
+    status_code: int | None
+    issue_code: ReadSemanticsIssueCode | None = None
 
+
+@dataclass(frozen=True)
+class ReadSemanticsTraceReport:
+    """Trace-only acceptance report over existing immutable tool-result evidence."""
+
+    schema_version: str
     read_result_count: int
-    covered_result_count: int
+    assessed_result_count: int
     contract_issue_count: int
     mode_counts: dict[str, int]
+    entries: tuple[ReadSemanticsTraceEntry, ...]
 
     @property
     def passed(self) -> bool:
-        return self.read_result_count == self.covered_result_count
+        return (
+            self.read_result_count == self.assessed_result_count
+            and self.contract_issue_count == 0
+        )
+
+
+def _fail_closed_trace_entry(
+    *,
+    event: TraceEvent,
+    issue_code: ReadSemanticsIssueCode,
+    status_code: int | None = None,
+) -> ReadSemanticsTraceEntry:
+    return ReadSemanticsTraceEntry(
+        sequence=event.sequence,
+        tool_name=event.tool_name or "<unknown>",
+        response_mode=ResponseMode.INCONCLUSIVE,
+        source="fail_closed",
+        status_code=status_code,
+        issue_code=issue_code,
+    )
 
 
 class ReadSemanticsTraceEvaluator:
-    """Evaluate semantic-state trace coverage from the canonical tool registry.
+    """Classify read outcomes from raw canonical trace evidence without mutating the trace.
 
-    Read membership is derived from trusted registry metadata instead of self-reported trace
-    metadata. This makes pre-instrumentation or tampered read results visible as missing semantic
-    coverage instead of allowing them to disappear from the evaluator denominator.
+    Read membership comes from the trusted ToolSpec registry. The evaluator reconstructs only
+    the minimal transport response needed for semantic classification from ``tool_result.result``.
+    Historical/frozen HarnessRunner traces therefore remain byte-for-byte reproducible.
     """
 
     def __init__(self, registry: Mapping[str, ToolSpec]) -> None:
         self.registry = dict(registry)
+
+    def _assess_event(self, event: TraceEvent) -> ReadSemanticsTraceEntry:
+        result = event.result
+        if not isinstance(result, dict):
+            return _fail_closed_trace_entry(
+                event=event,
+                issue_code="INVALID_TRACE_RESULT",
+            )
+
+        raw_status = result.get("status_code")
+        if isinstance(raw_status, bool) or not isinstance(raw_status, int):
+            return _fail_closed_trace_entry(
+                event=event,
+                issue_code="INVALID_STATUS_CODE",
+            )
+
+        metadata_status = event.metadata.get("status_code")
+        if (
+            metadata_status is not None
+            and (
+                isinstance(metadata_status, bool)
+                or not isinstance(metadata_status, int)
+                or metadata_status != raw_status
+            )
+        ):
+            return _fail_closed_trace_entry(
+                event=event,
+                issue_code="STATUS_CODE_MISMATCH",
+                status_code=raw_status,
+            )
+
+        tool = self.registry[event.tool_name or ""]
+        assessment = classify_read_response(
+            tool=tool,
+            response=TransportResponse(
+                status_code=raw_status,
+                headers={},
+                body=result.get("body"),
+            ),
+        )
+        return ReadSemanticsTraceEntry(
+            sequence=event.sequence,
+            tool_name=event.tool_name or "<unknown>",
+            response_mode=assessment.response_mode,
+            source=assessment.source,
+            status_code=raw_status,
+            issue_code=assessment.issue_code,
+        )
 
     def evaluate(self, trace: list[TraceEvent]) -> ReadSemanticsTraceReport:
         read_results = [
@@ -135,26 +207,15 @@ class ReadSemanticsTraceEvaluator:
             and event.tool_name in self.registry
             and self.registry[event.tool_name].kind is ToolKind.READ
         ]
-        covered = [
-            event
-            for event in read_results
-            if event.metadata.get("kind") == "read"
-            and event.metadata.get("read_semantics_version") == READ_SEMANTICS_VERSION
-            and event.metadata.get("response_mode") in {mode.value for mode in ResponseMode}
-            and event.metadata.get("response_mode_source")
-            in {"structured_mode", "http_status", "fail_closed"}
-        ]
+        entries = tuple(self._assess_event(event) for event in read_results)
         mode_counts = {mode.value: 0 for mode in ResponseMode}
-        for event in covered:
-            mode_counts[str(event.metadata["response_mode"])] += 1
-        issues = [
-            event
-            for event in covered
-            if event.metadata.get("response_mode_issue_code") is not None
-        ]
+        for entry in entries:
+            mode_counts[entry.response_mode.value] += 1
         return ReadSemanticsTraceReport(
+            schema_version=READ_SEMANTICS_VERSION,
             read_result_count=len(read_results),
-            covered_result_count=len(covered),
-            contract_issue_count=len(issues),
+            assessed_result_count=len(entries),
+            contract_issue_count=sum(entry.issue_code is not None for entry in entries),
             mode_counts=mode_counts,
+            entries=entries,
         )
