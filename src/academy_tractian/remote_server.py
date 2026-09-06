@@ -6,6 +6,7 @@ from research.e2.controller import ControllerContext, ControllerDecision, Decisi
 from research.e2.models import BoundRequest
 from research.e2.transport import RequestTransport, TransportResponse
 
+from .evaluation import ProductionEvaluationPolicy, ProductionEvaluator
 from .production_actions_v2 import ProductionActionPrincipal
 from .production_config import RemoteProductionConfig
 from .release0_capabilities import install_release0_capabilities
@@ -109,6 +110,32 @@ def release0_read_only_action_principal(*, user_id: str) -> ProductionActionPrin
     )
 
 
+def _configure_runtime_evaluator(app, *, provider_calls_enabled: bool) -> None:
+    """Bind the remote runtime evaluator to the serving provider mode before startup.
+
+    The generic product defaults to provider-free evaluation for backwards-compatible tests and
+    offline paths. Remote Release 0 is different by construction: a successful trace must contain
+    one validated model-call provenance record per live provider decision. The promoted remote
+    topology always has the PostgreSQL runtime-handoff supervisor; absence is a boot blocker.
+    """
+
+    supervisor = getattr(app.state, "runtime_handoff_supervisor", None)
+    if supervisor is None:
+        raise RuntimeError("remote_runtime_handoff_supervisor_required")
+
+    if provider_calls_enabled:
+        supervisor.evaluator = ProductionEvaluator(
+            policy=ProductionEvaluationPolicy(
+                provider_free=False,
+                require_model_call_provenance=True,
+            )
+        )
+        app.state.production_evaluation_mode = "traced_provider"
+    else:
+        supervisor.evaluator = ProductionEvaluator()
+        app.state.production_evaluation_mode = "provider_free"
+
+
 def app_factory():
     """Compose the remote product in infrastructure-probe or read-only Release 0 mode.
 
@@ -149,6 +176,10 @@ def app_factory():
         schema=schema,
         max_workers=int(os.environ.get("ACADEMY_MAX_WORKERS", "4")),
         heartbeat_interval_ms=int(os.environ.get("ACADEMY_HEARTBEAT_INTERVAL_MS", "1000")),
+    )
+    _configure_runtime_evaluator(
+        app,
+        provider_calls_enabled=config.provider_calls_enabled,
     )
     app.state.provider_selection_state = provider_selection_state
     app.state.infrastructure_probe = not config.provider_calls_enabled
