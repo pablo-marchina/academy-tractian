@@ -133,6 +133,15 @@ def _matches_tool_path(tool: ToolSpec, concrete_path: str) -> bool:
     return True
 
 
+def _tool_path_specificity(tool: ToolSpec) -> tuple[int, ...]:
+    """Rank static path segments above parameters without hiding true ambiguity."""
+
+    return tuple(
+        0 if part.startswith("{") and part.endswith("}") else 1
+        for part in tool.path_template.strip("/").split("/")
+    )
+
+
 def _match_canonical_tool(request: BoundRequest) -> ToolSpec:
     validate_registry()
     if request.method not in {"GET", "POST", "PATCH", "PUT", "DELETE"}:
@@ -147,9 +156,14 @@ def _match_canonical_tool(request: BoundRequest) -> ToolSpec:
         for tool in TOOLS
         if tool.method == request.method and _matches_tool_path(tool, request.path)
     ]
-    if len(matches) != 1:
+    if not matches:
         raise ValueError("TRACTIAN request does not match exactly one canonical operation")
-    return matches[0]
+
+    best_specificity = max(_tool_path_specificity(tool) for tool in matches)
+    best_matches = [tool for tool in matches if _tool_path_specificity(tool) == best_specificity]
+    if len(best_matches) != 1:
+        raise ValueError("TRACTIAN request does not match exactly one canonical operation")
+    return best_matches[0]
 
 
 def _validate_bound_headers(headers: Mapping[str, str]) -> dict[str, str]:
