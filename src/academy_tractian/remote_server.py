@@ -9,17 +9,23 @@ from research.e2.transport import RequestTransport, TransportResponse
 from .production_actions_v2 import ProductionActionPrincipal
 from .production_config import RemoteProductionConfig
 from .release_identity import load_artifact_release_identity
+from .release_provider import (
+    NO_PROVIDER_SELECTION_STATE,
+    PROVISIONAL_RELEASE_PROVIDER_STATE,
+    build_release_provider_decision_source_factory,
+    validate_release_provider_config,
+)
 from .remote_production import create_remote_production_app, load_remote_production_config
 from .tractian_transport import ProductionTractianTransport
 
 
-PROVIDER_SELECTION_STATE = "NO_SELECTION"
+PROVIDER_SELECTION_STATE = NO_PROVIDER_SELECTION_STATE
 TRACTIAN_TRANSPORT_STATE_UNCONFIGURED = "UNCONFIGURED"
 TRACTIAN_TRANSPORT_STATE_CONFIGURED_UNVERIFIED = "CONFIGURED_UNVERIFIED"
 
 
 class NoSelectedProviderDecisionSource(DecisionSource):
-    """Fail-closed source used only while model/provider selection remains NO_SELECTION."""
+    """Fail-closed source used while production provider state remains NO_SELECTION."""
 
     def decide(self, _context: ControllerContext) -> ControllerDecision:
         raise RuntimeError("production_provider_not_selected")
@@ -40,12 +46,7 @@ NoSelectedProviderTransport = NoConfiguredTractianTransport
 
 
 def build_tractian_transport(config: RemoteProductionConfig) -> RequestTransport:
-    """Build the TRACTIAN transport without performing a remote request.
-
-    The production transport remains generic about the server-managed authentication headers;
-    their exact names and values must come from the authoritative partner contract/environment.
-    Construction validates the endpoint/header boundary but performs zero network I/O.
-    """
+    """Build the TRACTIAN transport without performing a remote request."""
 
     if not config.tractian_transport_enabled:
         return NoConfiguredTractianTransport()
@@ -68,37 +69,46 @@ def _tractian_transport_state(config: RemoteProductionConfig) -> str:
     )
 
 
+def _decision_source_factory(config: RemoteProductionConfig):
+    if not config.provider_calls_enabled:
+        return NoSelectedProviderDecisionSource
+    validate_release_provider_config(config)
+    return build_release_provider_decision_source_factory(config)
+
+
+def _provider_selection_state(config: RemoteProductionConfig) -> str:
+    return (
+        PROVISIONAL_RELEASE_PROVIDER_STATE
+        if config.provider_calls_enabled
+        else NO_PROVIDER_SELECTION_STATE
+    )
+
+
 def deny_production_action_principal(*, user_id: str) -> ProductionActionPrincipal:
-    """The infrastructure probe does not authorize consequential actions."""
+    """Release 0 never authorizes consequential external action execution."""
 
     raise PermissionError(f"production_actions_not_enabled:{user_id}")
 
 
 def app_factory():
-    """Uvicorn factory for the remotely deployed infrastructure-validation phase.
+    """Compose the remote product in infrastructure-probe or read-only Release 0 mode.
 
-    Model/provider selection and TRACTIAN API composition are separate gates. The model remains
-    NO_SELECTION. TRACTIAN remains UNCONFIGURED unless an explicit, fully validated remote
-    endpoint/header contract is supplied. Even CONFIGURED_UNVERIFIED performs no boot-time probe
-    and therefore is not evidence of live API reachability. Consequential actions remain denied.
+    Provider calls are opt-in and fail closed. Enabling them requires an explicitly configured
+    provisional Release 0 provider and a real configured TRACTIAN transport. Consequential
+    actions remain disabled by the production app composition regardless of provider state.
     """
 
     config = load_remote_production_config()
     artifact_release_identity = load_artifact_release_identity()
-    if config.provider_calls_enabled:
-        raise RuntimeError(
-            "provider calls cannot be enabled by the infrastructure-probe entrypoint while provider state is NO_SELECTION"
-        )
 
     tractian_transport_state = _tractian_transport_state(config)
-    # Preflight construction validates endpoint/header composition before PostgreSQL is opened.
-    # ProductionTractianTransport construction itself performs no remote I/O.
+    # Validate provider/TRACTIAN composition before PostgreSQL pools or runtime workers open.
     build_tractian_transport(config)
+    decision_source_factory = _decision_source_factory(config)
 
     if config.tractian_transport_enabled:
         transport_factory = lambda: build_tractian_transport(config)
     else:
-        # Keep the fail-closed class itself as factory for deterministic compatibility and zero I/O.
         transport_factory = NoConfiguredTractianTransport
 
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_operational")
@@ -106,7 +116,7 @@ def app_factory():
         config=config,
         artifact_release_identity=artifact_release_identity,
         railway_runtime_git_sha=os.environ.get("RAILWAY_GIT_COMMIT_SHA"),
-        decision_source_factory=NoSelectedProviderDecisionSource,
+        decision_source_factory=decision_source_factory,
         transport_factory=transport_factory,
         authorization_resolver=deny_production_action_principal,
         tractian_transport_state=tractian_transport_state,
@@ -114,8 +124,9 @@ def app_factory():
         max_workers=int(os.environ.get("ACADEMY_MAX_WORKERS", "4")),
         heartbeat_interval_ms=int(os.environ.get("ACADEMY_HEARTBEAT_INTERVAL_MS", "1000")),
     )
-    app.state.provider_selection_state = PROVIDER_SELECTION_STATE
-    app.state.infrastructure_probe = True
+    app.state.provider_selection_state = _provider_selection_state(config)
+    app.state.infrastructure_probe = not config.provider_calls_enabled
+    app.state.release0_read_only = config.provider_calls_enabled
     return app
 
 
