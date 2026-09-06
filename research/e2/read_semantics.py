@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Mapping
 
 from .models import ResponseMode, ToolKind, ToolSpec, TraceEvent
 from .transport import TransportResponse
@@ -117,18 +117,29 @@ class ReadSemanticsTraceReport:
 
 
 class ReadSemanticsTraceEvaluator:
-    """Evaluate semantic-state trace coverage without benchmark/private-oracle access."""
+    """Evaluate semantic-state trace coverage from the canonical tool registry.
+
+    Read membership is derived from trusted registry metadata instead of self-reported trace
+    metadata. This makes pre-instrumentation or tampered read results visible as missing semantic
+    coverage instead of allowing them to disappear from the evaluator denominator.
+    """
+
+    def __init__(self, registry: Mapping[str, ToolSpec]) -> None:
+        self.registry = dict(registry)
 
     def evaluate(self, trace: list[TraceEvent]) -> ReadSemanticsTraceReport:
         read_results = [
             event
             for event in trace
-            if event.event_type == "tool_result" and event.metadata.get("kind") == "read"
+            if event.event_type == "tool_result"
+            and event.tool_name in self.registry
+            and self.registry[event.tool_name].kind is ToolKind.READ
         ]
         covered = [
             event
             for event in read_results
-            if event.metadata.get("read_semantics_version") == READ_SEMANTICS_VERSION
+            if event.metadata.get("kind") == "read"
+            and event.metadata.get("read_semantics_version") == READ_SEMANTICS_VERSION
             and event.metadata.get("response_mode") in {mode.value for mode in ResponseMode}
             and event.metadata.get("response_mode_source")
             in {"structured_mode", "http_status", "fail_closed"}
