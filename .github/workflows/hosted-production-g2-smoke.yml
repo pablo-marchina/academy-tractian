@@ -1,0 +1,28 @@
+name: hosted-production-g2-smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/hosted-production-g2-smoke.yml"
+      - "scripts/production_hosted_g2_smoke.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-production-g2-smoke
+  cancel-in-progress: false
+
+jobs:
+  remote-g2-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ACADEMY_PRODUCTION_API_BASE_URL: https://production-api-production-ee9f.up.railway.app
+      ACADEMY_EXPECTED_DEPLOYED_SHA: ff8b42058f9f79762a51d9e0e17e6ad17d2a2950
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify hosted health, readiness and immutable release identity
+        run: python scripts/production_hosted_g2_smoke.py
