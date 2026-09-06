@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from research.e2.controller import ControllerObservation
-from research.e2.models import ExecutionBinding, ResponseMode
+from research.e2.models import ExecutionBinding, ResponseMode, TraceEvent
 from research.e2.read_semantics import (
     READ_SEMANTICS_VERSION,
     ReadSemanticsTraceEvaluator,
@@ -13,6 +13,9 @@ from research.e2.replay import ReplayStore
 from research.e2.runner import HarnessRunner
 from research.e2.tool_registry import TOOLS, get_tool
 from research.e2.transport import TransportResponse
+
+
+REGISTRY = {tool.name: tool for tool in TOOLS}
 
 
 @pytest.mark.parametrize("mode", list(ResponseMode))
@@ -89,7 +92,7 @@ def make_runner(*, transport, replay: ReplayStore | None = None, mode: str = "li
         run_id=f"read-semantics-{mode}",
         scenario_id="CEN-01",
         config_hash="d" * 64,
-        registry={tool.name: tool for tool in TOOLS},
+        registry=REGISTRY,
         binding=ExecutionBinding(
             identity_id="read-semantics-binding",
             user_id="usr-read-semantics",
@@ -168,13 +171,51 @@ def test_trace_evaluator_measures_coverage_and_contract_issues() -> None:
     )
     runner.execute_tool("get_model", {"model_id": "model_a"})
 
-    report = ReadSemanticsTraceEvaluator().evaluate(list(runner.trace.events))
+    report = ReadSemanticsTraceEvaluator(REGISTRY).evaluate(list(runner.trace.events))
 
     assert report.passed
     assert report.read_result_count == 1
     assert report.covered_result_count == 1
     assert report.contract_issue_count == 0
     assert report.mode_counts["inconclusive"] == 1
+
+
+def test_trace_evaluator_rejects_uninstrumented_read_result() -> None:
+    legacy_read = TraceEvent(
+        sequence=0,
+        event_type="tool_result",
+        tool_name="get_asset",
+        result={"status_code": 200, "body": {"mode": "complete"}},
+        metadata={"status_code": 200},
+    )
+
+    report = ReadSemanticsTraceEvaluator(REGISTRY).evaluate([legacy_read])
+
+    assert not report.passed
+    assert report.read_result_count == 1
+    assert report.covered_result_count == 0
+    assert report.contract_issue_count == 0
+
+
+def test_trace_evaluator_does_not_trust_forged_read_kind_for_action() -> None:
+    forged_action = TraceEvent(
+        sequence=0,
+        event_type="tool_result",
+        tool_name="reprocess_analysis",
+        result={"status_code": 200, "body": {"accepted": True}},
+        metadata={
+            "kind": "read",
+            "read_semantics_version": READ_SEMANTICS_VERSION,
+            "response_mode": "complete",
+            "response_mode_source": "structured_mode",
+        },
+    )
+
+    report = ReadSemanticsTraceEvaluator(REGISTRY).evaluate([forged_action])
+
+    assert report.passed
+    assert report.read_result_count == 0
+    assert report.covered_result_count == 0
 
 
 def test_controller_provider_facing_observation_schema_is_unchanged_in_v1() -> None:
