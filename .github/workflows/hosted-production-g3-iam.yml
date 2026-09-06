@@ -31,5 +31,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Diagnose hosted auth redirect boundary without exposing credentials
         run: python scripts/production_hosted_g3_redirect_probe.py
-      - name: Run hosted two-user IAM and tenant-boundary campaign
+      - name: Run Release 0 hosted two-user IAM and tenant-boundary gate
         run: python scripts/production_hosted_g3_iam_smoke.py
