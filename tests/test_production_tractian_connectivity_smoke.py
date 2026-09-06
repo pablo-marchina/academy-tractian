@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+from academy_tractian.production_tractian_connectivity import build_probe_request, run_probe
 from research.e2.transport import TransportResponse
-from scripts.production_tractian_connectivity_smoke import build_probe_request, run_probe
 
 
 class FakeTransport:
