@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from research.e2.controller import ControllerContext
 from research.e2.tool_registry import TOOLS
 
 from .cloudflare_provider_client import (
@@ -9,7 +10,12 @@ from .cloudflare_provider_client import (
     CLOUDFLARE_PROVIDER_ID,
     CloudflareWorkersAIChatCompletionsDecisionClient,
 )
-from .decision_source import ProviderCallIdentity, ProviderDecisionRequest, ProviderDecisionSource
+from .decision_source import (
+    ProviderCallIdentity,
+    ProviderDecisionRequest,
+    ProviderDecisionSource,
+    build_provider_decision_request,
+)
 from .production_config import RemoteProductionConfig
 from .provider_clients import (
     PROVIDER_DECISION_SYSTEM_INSTRUCTION,
@@ -21,7 +27,7 @@ from .provider_clients import (
 
 NO_PROVIDER_SELECTION_STATE = "NO_SELECTION"
 PROVISIONAL_RELEASE_PROVIDER_STATE = "PROVISIONAL_RELEASE_PROVIDER"
-RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v2"
+RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v3"
 RELEASE0_MAX_COMPLETION_TOKENS = 1024
 
 RELEASE0_PROVIDER_SYSTEM_INSTRUCTION = (
@@ -45,6 +51,13 @@ For kind=FINAL:
 For kind=CLARIFY, ESCALATE, or ABSTAIN:
 - Set tool_name=null, arguments={}, evidence_id=null, and final=null.
 - Put the customer-safe explanation in top-level message and a stable non-secret reason in top-level reason_code.
+
+Knowledge investigation stopping rule:
+- search_knowledge accepts only q and optional type. get_knowledge_doc accepts only doc_id.
+- If search_knowledge is available, use it at most once in a run. After one successful search_knowledge observation it is deliberately removed from the supplied tool list.
+- After a successful search_knowledge observation, inspect a returned knowledge document with get_knowledge_doc only when the public observation exposes a concrete document identifier that can be passed as doc_id and the full document is materially needed for the requested answer.
+- If no concrete document identifier is exposed, or the search result already contains enough relevant evidence, return FINAL instead of searching again.
+- Never call a tool that is absent from the current supplied tools list.
 
 Use TOOL only when another canonical read is materially necessary. Stop with a terminal decision as soon as the available observations are sufficient to answer safely. Do not repeat a successful tool call with materially equivalent arguments unless a prior observation identifies a specific unresolved gap. Honor explicit read-only and no-action requests; never propose an action when the user has prohibited actions.
 """
@@ -80,6 +93,34 @@ class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisio
             headers=dict(base.headers),
             body=body,
             timeout_seconds=base.timeout_seconds,
+        )
+
+
+class Release0ProviderDecisionSource(ProviderDecisionSource):
+    """Release-only adaptive public tool surface with deterministic duplicate-search prevention.
+
+    The source never fabricates a model decision. It only removes ``search_knowledge`` from the
+    provider-visible registry after that exact read has executed successfully. This preserves the
+    canonical runtime registry and B1/B2/B3 boundaries while making the post-search choice explicit:
+    inspect a concrete document with ``get_knowledge_doc`` when justified, or terminate normally.
+    """
+
+    def build_request(self, context: ControllerContext) -> ProviderDecisionRequest:
+        searched_successfully = any(
+            observation.tool_name == "search_knowledge"
+            and observation.status == "success"
+            and observation.executed
+            for observation in context.observations
+        )
+        if not searched_successfully:
+            return super().build_request(context)
+
+        visible_registry = {
+            name: tool for name, tool in self.registry.items() if name != "search_knowledge"
+        }
+        return build_provider_decision_request(
+            context=context,
+            registry=visible_registry,
         )
 
 
@@ -143,7 +184,7 @@ def build_release_provider_decision_source(
         timeout_seconds=config.provider_timeout_seconds,
     )
     registry = {tool.name: tool for tool in TOOLS}
-    return ProviderDecisionSource(
+    return Release0ProviderDecisionSource(
         client=client,
         registry=registry,
         call_identity=ProviderCallIdentity(
