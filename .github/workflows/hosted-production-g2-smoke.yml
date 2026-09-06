@@ -2,6 +2,11 @@ name: hosted-production-g2-smoke
 
 on:
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact Railway artifact SHA required for an intentional release promotion
+        required: false
+        type: string
   pull_request:
     branches: [main]
 
@@ -19,7 +24,8 @@ jobs:
     timeout-minutes: 5
     env:
       ACADEMY_PRODUCTION_API_BASE_URL: https://production-api-production-ee9f.up.railway.app
-      ACADEMY_EXPECTED_DEPLOYED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      ACADEMY_EXPECTED_DEPLOYED_SHA: ${{ inputs.expected_sha || '' }}
+      ACADEMY_HOSTED_SMOKE_DEPLOY_WAIT_SECONDS: '240'
     steps:
       - uses: actions/checkout@v4
       - name: Verify hosted health, readiness and immutable release identity
