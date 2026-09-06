@@ -27,8 +27,95 @@ from .provider_clients import (
 
 NO_PROVIDER_SELECTION_STATE = "NO_SELECTION"
 PROVISIONAL_RELEASE_PROVIDER_STATE = "PROVISIONAL_RELEASE_PROVIDER"
-RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v3"
+RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v4"
 RELEASE0_MAX_COMPLETION_TOKENS = 1024
+
+_RELEASE0_REQUIRED_FIELDS = [
+    "schema_version",
+    "kind",
+    "tool_name",
+    "arguments",
+    "evidence_id",
+    "final",
+    "message",
+    "reason_code",
+]
+
+
+def _release0_base_properties(*, kind: list[str]) -> dict[str, object]:
+    return {
+        "schema_version": {
+            "type": "string",
+            "enum": ["provider-decision-payload-v1"],
+        },
+        "kind": {"type": "string", "enum": kind},
+    }
+
+
+RELEASE0_PROVIDER_DECISION_JSON_SCHEMA: dict[str, object] = {
+    "oneOf": [
+        {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                **_release0_base_properties(kind=["TOOL"]),
+                "tool_name": {"type": "string", "minLength": 1},
+                "arguments": {"type": "object"},
+                "evidence_id": {"type": ["string", "null"]},
+                "final": {"type": "null"},
+                "message": {"type": "null"},
+                "reason_code": {"type": "null"},
+            },
+            "required": _RELEASE0_REQUIRED_FIELDS,
+        },
+        {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                **_release0_base_properties(kind=["FINAL"]),
+                "tool_name": {"type": "null"},
+                "arguments": {"type": "object", "maxProperties": 0},
+                "evidence_id": {"type": "null"},
+                "final": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "decision": {"type": "string", "enum": ["ORIENT"]},
+                        "response_mode": {
+                            "type": "string",
+                            "enum": [
+                                "complete",
+                                "partial",
+                                "inconclusive",
+                                "conflict",
+                                "unavailable",
+                            ],
+                        },
+                        "message": {"type": "string", "minLength": 1},
+                    },
+                    "required": ["decision", "response_mode", "message"],
+                },
+                "message": {"type": "null"},
+                "reason_code": {"type": "null"},
+            },
+            "required": _RELEASE0_REQUIRED_FIELDS,
+        },
+        {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                **_release0_base_properties(kind=["CLARIFY", "ESCALATE", "ABSTAIN"]),
+                "tool_name": {"type": "null"},
+                "arguments": {"type": "object", "maxProperties": 0},
+                "evidence_id": {"type": "null"},
+                "final": {"type": "null"},
+                "message": {"type": "string", "minLength": 1},
+                "reason_code": {"type": "string", "minLength": 1},
+            },
+            "required": _RELEASE0_REQUIRED_FIELDS,
+        },
+    ]
+}
 
 RELEASE0_PROVIDER_SYSTEM_INSTRUCTION = (
     PROVIDER_DECISION_SYSTEM_INSTRUCTION
@@ -36,6 +123,8 @@ RELEASE0_PROVIDER_SYSTEM_INSTRUCTION = (
 
 Release 0 decision contract:
 Every response must include all eight top-level fields required by provider-decision-payload-v1.
+The Release 0 response schema independently enforces the allowed relational shape for TOOL,
+FINAL, CLARIFY, ESCALATE, and ABSTAIN. Do not rely on post-processing or output repair.
 
 For kind=TOOL:
 - tool_name must exactly equal one supplied tools[].name.
@@ -69,8 +158,8 @@ class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisio
 
     ADR-018 freezes the historical Cloudflare client byte-for-byte for reproducible comparison.
     Release 0 needs a larger completion budget, no reasoning token spend, and a stricter semantic
-    instruction. Keeping these overrides here preserves the frozen research artifact while the
-    inherited transport, response parsing, usage accounting, zero-retry and zero-fallback
+    instruction/schema. Keeping these overrides here preserves the frozen research artifact while
+    the inherited transport, response parsing, usage accounting, zero-retry and zero-fallback
     properties remain unchanged.
     """
 
@@ -83,6 +172,10 @@ class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisio
         messages[0] = {"role": "system", "content": RELEASE0_PROVIDER_SYSTEM_INSTRUCTION}
         body.update(
             messages=messages,
+            response_format={
+                "type": "json_schema",
+                "json_schema": RELEASE0_PROVIDER_DECISION_JSON_SCHEMA,
+            },
             max_completion_tokens=RELEASE0_MAX_COMPLETION_TOKENS,
             reasoning_effort=None,
             chat_template_kwargs={"enable_thinking": False},
