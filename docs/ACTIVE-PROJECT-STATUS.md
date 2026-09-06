@@ -1,273 +1,201 @@
 # Academy × TRACTIAN — Current Project Status
 
-**Status:** production implementation / hosted promotion in progress  
+**Status:** Release 0 / immediate user release in progress  
 **Checkpoint:** 2026-09-06 BRT  
-**Current `main`:** `12b4753d3e39c86f7c68f0ea7b4f321549049fc7`  
 **Implementation branch:** `release/production-final`  
 **Draft integration PR:** `#196`  
-**Currently served backend artifact:** `234655d952d62e1c26300fe6fd72f8d44df53001`  
-**Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
-**Acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
+**Release 0 plan:** [`RELEASE-0-PLAN.md`](RELEASE-0-PLAN.md)  
+**Release 0 acceptance:** [`RELEASE-0-ACCEPTANCE.md`](RELEASE-0-ACCEPTANCE.md)  
+**Final delivery plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
+**Final acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
 **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)  
 **Decision registry:** [`decision-registry.yaml`](decision-registry.yaml)
 
-This file is the mutable source of truth for current state. Historical/frozen evidence remains immutable. A source/CI pass is not promoted to a hosted claim unless independently observed on the public production path.
+This file is the mutable source of truth for active execution state. Historical/frozen evidence remains immutable. The first-user release is intentionally narrower than final project completion: Release 0 ships the smallest safe **real read-only production slice**, then real-user telemetry drives quality and UX improvement while the final evidence program continues.
 
-## 1. North Star
+## 1. Immediate objective
 
 ```text
 authenticated remote user
-→ trusted server-owned tenant context
-→ public HTTPS frontend
+→ public HTTPS product
+→ managed server-owned tenant context
 → remote FastAPI
-→ selected hosted USD0 DecisionSource
+→ real hosted USD0 DecisionSource
 → AgentController
-→ 18 typed TRACTIAN operations
+→ typed TRACTIAN read tool
 → real TRACTIAN evidence
-→ FINAL | CLARIFY | ABSTAIN | ESCALATE | ACTION_PROPOSAL
-→ governed action when applicable
-→ deterministic + calibrated evaluation
+→ FINAL | CLARIFY | ABSTAIN | ESCALATE
+→ deterministic post-runtime evaluation
 → durable Neon PostgreSQL
-→ REST/SSE observability
-→ live React Control Room
-→ quantitative security/reliability/value evidence
+→ genuine REST/SSE + React UX
 ```
 
-Hard constraints remain: actual project cash cost USD 0, no paid spillover, no local serving dependency, multi-user/tenant safety, deterministic security boundaries, evaluator-gold isolation and evidence-honest claims.
+Consequential external action execution remains disabled in Release 0.
 
-## 2. Executive status
+Hard constraints retained: actual project cash cost USD 0, no paid spillover, no local production dependency, no browser-owned tenant/permission authority, zero accepted cross-tenant disclosure in the release campaign, evaluator/gold isolation and evidence-honest claims.
 
-| Workstream | Current state | Evidence / next gate |
+## 2. Current state
+
+The Release 0 pivot started from source checkpoint `6026e6aea7e6a6574640ba383fb742c62e01826e`. Documentation commits after that checkpoint do not imply a new hosted production claim until the public path is independently observed.
+
+| Workstream | Current state | Release 0 role / next proof |
 |---|---|---|
-| Core agent runtime | **IMPLEMENTED / REGRESSION PASS** | AgentController + HarnessRunner + bounded execution |
-| Deterministic evaluator | **IMPLEMENTED** | runtime/evaluator isolation retained |
-| TRACTIAN registry | **IMPLEMENTED** | 18 operations / 17 paths |
-| PostgreSQL operational truth | **HOSTED / G2 PASS** | Neon `academy_tractian`, restart persistence proved |
-| Tenant RLS substrate | **HOSTED STRUCTURE PASS** | promoted `academy_tractian_rls` is non-superuser/NOBYPASSRLS |
-| Realtime | **IMPLEMENTED / SOURCE PASS** | durable rows/cursors + LISTEN/NOTIFY + catch-up; hosted multi-user proof is G3 |
-| Action safety | **IMPLEMENTED / SOURCE PASS** | custody, idempotency, lease/fencing, UNCERTAIN semantics |
-| React Control Room | **HOSTED** | `production-web` HTTPS online; final real-data surfaces remain later gate |
-| Railway backend | **HOSTED / G2 PASS** | public API online, `/health` and `/ready` pass |
-| Immutable release identity | **HOSTED / G2 PASS** | current smoke proves configured == baked == Railway runtime SHA |
-| Railway IaC | **SOURCE PASS / LIVE CONVERGENCE PENDING** | `PORT` healthcheck contract now preserved; live plan/apply still required |
-| Neon Auth / Better Auth | **PROVISIONED / G3 IN PROGRESS** | browser + backend code exists; hosted two-user/two-tenant campaign next |
-| Provider tournament v3 | **PREREGISTERED / NO_SELECTION** | live calls require separately authorized campaign |
-| Production DecisionSource | **FAIL-CLOSED / NO_SELECTION** | no provider promoted yet |
-| TRACTIAN HTTP adapter | **IMPLEMENTED / SOURCE PASS** | live partner endpoint/auth still not proved |
-| Read semantics | **SOURCE-GATED** | hosted real-response proof pending |
-| Required non-action modes | **SOURCE-GATED** | hosted provider + TRACTIAN proof pending |
-| Trusted action authorization resolver | **SOURCE IMPLEMENTED** | organization-bound, server-owned, fail-closed; real hosted source composition pending |
-| Consequential actions | **REMOTE DENY-ALL** | enable only after G3/G4/G5/authorization pass |
-| SECURITY-V1 | **PREREGISTERED** | 14 source + 7 hosted cases; hosted execution downstream of functional path |
-| Remote capacity/SLO | **NOT PROVED** | run after full hosted provider/TRACTIAN path |
-| Recovery/reconnect | **PARTIAL** | backend restart persistence proved; full failure campaign pending |
-| Backup/restore | **NOT PROVED** | real restore drill pending |
-| Human semantic calibration | **NOT READY** | blinded labels required |
-| Operational value | **NOT READY** | MANUAL vs AGENT-ASSISTED observations required |
-| Adaptive runtime policy | **NO_CHANGE** | static baseline first; challenger only after P0 |
-| GitHub `main` protection | **BLOCKED_USER_ACTION** | repository admin action required |
+| Core AgentController + HarnessRunner | **IMPLEMENTED / REGRESSION PASS** | keep baseline |
+| 18-operation typed TRACTIAN registry | **IMPLEMENTED** | representative real read first |
+| Deterministic evaluator | **IMPLEMENTED** | run after genuine user path |
+| Neon PostgreSQL durable truth | **HOSTED / G2 PASS** | preserve |
+| Tenant RLS substrate | **HOSTED STRUCTURE PASS** | minimum two-user negatives |
+| Railway production API | **HOSTED / G2 PASS** | preserve hosted smoke |
+| Railway/Caddy frontend | **HOSTED** | user path/UX acceptance |
+| Immutable release identity | **HOSTED / G2 PASS** | exact-SHA smoke stays mandatory |
+| Neon Auth / Better Auth | **IMPLEMENTED / HOSTED ACCEPTANCE OPEN** | **RELEASE BLOCKER R0-01** |
+| TRACTIAN production adapter | **IMPLEMENTED / SOURCE PASS** | **RELEASE BLOCKER R0-02: real bounded read** |
+| TRACTIAN recent identity/header fixes | **LANDED** | prove against live configured endpoint |
+| Provider Tournament v3 | **PREREGISTERED / FINAL NO_SELECTION** | full 170-attempt campaign moved post-release |
+| Provisional release provider | **NOT YET QUALIFIED** | **RELEASE BLOCKER R0-03** |
+| Production DecisionSource | **FAIL-CLOSED / NO_SELECTION** | **RELEASE BLOCKER R0-04** |
+| FINAL/CLARIFY/ABSTAIN/ESCALATE structural paths | **SOURCE PASS** | genuine hosted provider + TRACTIAN proof |
+| Grounding/evidence lineage | **PARTIAL** | minimum safe user evidence required |
+| Realtime/persistence | **IMPLEMENTED** | public reconnect/reload smoke |
+| Consequential actions | **REMOTE DENY-ALL** | correct Release 0 state |
+| SECURITY-V1 full campaign | **PREREGISTERED** | post-release, except critical auth/tenant/secret negatives |
+| Load/SLO/recovery/restore | **FINAL-DELIVERY WORK** | post-release except small concurrency/restart smoke |
+| Human semantic calibration | **NOT READY** | post-release using real usage where permitted |
+| Operational value | **NOT READY** | post-release |
+| Adaptive runtime policy | **NO_CHANGE** | post-release challenger only after measured gap |
+| GitHub main protection | **BLOCKED_USER_ACTION** | important governance; does not replace Release 0 runtime blockers |
 
-## 3. G2 — Remote backend serving: PASS
+## 3. What is already closed
 
-G2 is now closed for the currently served backend artifact `234655d952d62e1c26300fe6fd72f8d44df53001`.
+### G2 remote foundation
 
-### 3.1 Secrets and fail-closed boot
+The hosted production foundation has already proved, on prior exact-SHA hosted evidence:
 
-The two PostgreSQL DSNs are attached to `production-api` through Railway's native secret/variable boundary. Values are not stored in Git or documentation.
+- public Railway backend health/readiness;
+- Railway/Caddy frontend hosting;
+- remote Neon PostgreSQL serving substrate;
+- non-superuser/NOBYPASSRLS scoped role structure;
+- immutable artifact/runtime SHA verification;
+- durable state surviving backend replacement/restart;
+- USD0 hard-cost-policy metadata.
 
-The first post-secret deployment correctly rejected a stale `ACADEMY_RELEASE_GIT_SHA`, proving the baked artifact identity cannot be overridden by mutable runtime metadata.
+Do not re-open hosting/database/controller architecture unless a Release 0 blocker demonstrates a measured gap.
 
-### 3.2 Healthcheck contract
+## 4. Release blockers in exact order
 
-Railway healthchecks require the service `PORT`. The API already listened on `ACADEMY_PORT=8000`; `PORT=8000` was added and `.railway/railway.ts` now preserves it so future IaC convergence cannot silently break the healthcheck boundary.
+### R0-01 — Minimum hosted IAM acceptance
 
-Hosted Railway evidence then showed:
+Must prove through the public product path:
 
-```text
-Application startup complete
-Uvicorn: 0.0.0.0:8000
-GET /health: 200 OK
-Railway healthcheck: PASS
-```
+- authentication/session lifecycle works;
+- two users are independently scoped;
+- cross-user/cross-tenant run/evidence/evaluation/SSE disclosure = 0;
+- browser-forged organization/role/permission authority acceptance = 0;
+- invalid/expired/impersonated sessions fail closed;
+- RLS remains an independent boundary.
 
-### 3.3 Reproducible hosted smoke
+Consequential actions stay disabled.
 
-`.github/workflows/hosted-production-g2-smoke.yml` + `scripts/production_hosted_g2_smoke.py` independently query the public API. The current passing smoke proves:
+### R0-02 — Real TRACTIAN bounded read
 
-```text
-/health.status                         ok
-/ready.status                          ready
-release schema                         remote-production-release-v3
-release_git_sha                        234655d952d62e1c26300fe6fd72f8d44df53001
-artifact_git_sha                       234655d952d62e1c26300fe6fd72f8d44df53001
-artifact_identity_verified             true
-railway_runtime_identity_verified      true
-environment                            production
-browser_iam_mode                       neon-auth
-cost_policy                            usd0-hard-gate
-```
+The direct HTTP adapter and source gates exist. Remaining release proof:
 
-### 3.4 Durable restart proof
+- authoritative server-side endpoint/auth configuration;
+- one or more representative real reads through `ProductionTractianTransport`;
+- canonical method/path/args/context;
+- sanitized timeout/error behavior;
+- redirect/credential leak/blind retry = 0;
+- evidence persisted and visible through the real product path.
 
-Before a production backend redeploy, a synthetic isolated G2 marker was persisted in the real operational tables. The backend was replaced by a new successful Railway deployment and the marker remained present afterward with the same organization/user/execution state. This proves the tested operational state is remote/durable and not tied to the API process/container.
+Configuration-only evidence is insufficient.
 
-### 3.5 Neon serving substrate
+### R0-03 — Provisional USD0 provider qualification
 
-Observed production state:
+The frozen full Provider Tournament v3 remains final-selection evidence and is not rewritten. Release 0 may separately qualify one existing USD0 Cloudflare candidate using a smaller governed campaign with honest state `PROVISIONAL_RELEASE_PROVIDER`.
 
-```text
-database                              academy_tractian
-academy_operational base tables       16
-required operational metadata         7 / 7
-promoted scoped role                  academy_tractian_rls
-scoped role superuser                 false
-scoped role BYPASSRLS                 false
-legacy academy_live_scoped            BYPASSRLS=true / INELIGIBLE
-```
+Hard release constraints remain: USD0, no paid spillover, no hidden fallback, no private gold, no external action execution, explicit provider/model/route, strict DecisionSource contract and safe failure.
 
-Five tenant-scoped operational/review tables retain `tenant_select` RLS policies. Historical compatibility roles are not promoted as tenant-serving evidence.
+### R0-04 — Real production DecisionSource
 
-Detailed chronology: [`progress/2026-09-06-production-resume-g2-verification.md`](progress/2026-09-06-production-resume-g2-verification.md).
+Only after R0-03 may `NoSelectedProviderDecisionSource` be replaced for the user-serving composition. Production configuration must fail closed if provider calls are enabled without complete explicit provider credentials/model configuration.
 
-## 4. G3 — Live IAM / multi-user: IN PROGRESS
+### R0-05 — Genuine read-only agent vertical slice
 
-G2 no longer blocks IAM. Hosted G3 must prove, through the public production path:
-
-1. sign-up/sign-in/sign-out/session lifecycle;
-2. two independent users in separate tenant contexts;
-3. intended same-organization multi-user behavior where configured;
-4. browser-supplied organization/role/permission authority is ignored or rejected;
-5. zero cross-tenant run/evidence/REST/SSE/action access;
-6. invalid/expired/mismatched/impersonated sessions fail closed;
-7. cookie/origin/CSRF behavior for state-changing operations;
-8. RLS remains an independent boundary beneath API authorization.
-
-No action permission is enabled during this campaign.
-
-## 5. G4 — Provider tournament: PREREGISTERED / NO_SELECTION
-
-The v3 protocol remains frozen at:
+Prove:
 
 ```text
-17 scenarios × 5 repetitions × 2 candidates = 170 attempts
-5 UTC-day packets × 34 attempts
-USD0 / no paid fallback
+real auth
+→ real hosted model decision
+→ real typed TRACTIAN read
+→ real evidence
+→ hosted model next decision
+→ safe terminal mode
+→ automatic evaluation
+→ durable PostgreSQL
+→ SSE/frontend
 ```
 
-The manifest currently authorizes zero live provider calls. Live execution requires a separate explicit authorization and an approved credential channel. No candidate may be promoted before the complete repeated campaign and hard-gate analysis.
+No provider-free/mock dependency participates.
 
-## 6. G5 — Real TRACTIAN path: SOURCE READY / LIVE BLOCKED
+### R0-06 — Minimum user UX/mode acceptance
 
-Already implemented/source-gated:
+Before users:
 
-- canonical 18-operation direct HTTP adapter;
-- HTTPS-only remote base URL;
-- exact method/path binding and canonical path encoding;
-- server-owned credentials at the network boundary;
-- redirects disabled;
-- bounded request/response payloads and timeout;
-- no automatic read/write retry;
-- deterministic sanitized transport errors;
-- structured read semantics `complete|partial|inconclusive|conflict|unavailable`;
-- structural gates for Contextualize/Investigate/Clarify/Abstain/Escalate.
+- one genuine investigation/final path;
+- safe CLARIFY path;
+- safe ABSTAIN path;
+- safe ESCALATE path;
+- evidence/lineage visible at a user-safe level;
+- run history/reload and understandable failures;
+- release/provider/TRACTIAN health visible to engineering view;
+- hidden chain-of-thought remains private.
 
-Still required:
+### R0-07 — External two-user smoke
 
-- authoritative partner base URL/auth contract;
-- server-side production configuration;
-- bounded real read acceptance;
-- real response-mode evidence;
-- hosted agent-mode correctness with promoted DecisionSource.
+From a fresh external browser/network: authenticate, submit a real question, observe genuine SSE/provider/TRACTIAN evidence, receive terminal result/evaluation, reload persisted state, prove second-user isolation, prove actions disabled, no local/mock dependency and observed cash cost USD0.
 
-Do not infer an authentication scheme.
+**When R0-01 through R0-07 pass, release immediately to users.**
 
-## 7. Trusted consequential-action authorization
+## 5. Work moved behind first-user release
 
-The source state is ahead of the older ledger. `trusted_action_authorization.py` already implements:
+These remain part of the strongest final delivery but do not block Release 0:
+
+- full 170-attempt Provider Tournament v3 and final provider promotion;
+- governed consequential-action E2E;
+- full hosted SECURITY-V1 population;
+- full load staircase and evidence-based SLO;
+- complete recovery/restore/RTO/RPO campaign;
+- human semantic calibration;
+- operational-value MANUAL vs AGENT-ASSISTED study;
+- adaptive stopping/tool/provider challengers;
+- final evidence freeze and presentation bundle.
+
+Critical vulnerabilities found at any time can still stop or restrict the pilot.
+
+## 6. Post-release priority
+
+Real-user telemetry becomes the primary prioritization input:
 
 ```text
-trusted AuthenticatedRuntimeContext
-→ organization/user-bound resolver
-→ server-owned grant lookup
-→ one unambiguous active grant
-→ canonical tool permissions
-→ company/resource bindings
-→ ProductionActionPrincipal
+P0 auth / isolation / provider / TRACTIAN / broken-run defects
+→ P1 wrong conclusions / bad tool choice / weak evidence / clarify-escalate UX
+→ P1 latency, reliability and user friction
+→ final tournament/security/load/recovery/action evidence
+→ adaptive challengers only after measured gap
 ```
 
-Missing, ambiguous, inactive, wrong-user, wrong-organization, cross-company and source-failure cases deny deterministically. Browser/API capabilities are not converted into `action_low`, `action_high` or `escalate` permissions.
+Do not add LangGraph, multi-agent, RAG/vector DB, MCP, Redis/Kafka, microservices, Kubernetes or persistent memory before Release 0 unless the current architecture cannot clear a concrete release blocker.
 
-Remaining work is the authoritative hosted grant/resource source plus real acceptance. Until then remote actions remain **DENY-ALL**.
-
-## 8. SECURITY-V1
-
-`research/experiments/adversarial-security-v1-manifest.json` is preregistered and regression-locked.
-
-```text
-source cases     14
-hosted cases      7
-hard gates       12
-provider calls authorized now       0
-real TRACTIAN calls authorized now  0
-production actions authorized now   0
-```
-
-`PASS_SOURCE_ONLY` never implies hosted production security readiness.
-
-## 9. Exact dependency order from here
-
-```text
-A. main branch protection                         BLOCKED_USER_ACTION
-B. G2 remote backend + durable restart             PASS
-C. Railway IaC live plan/apply                     NEXT / independent
-D. G3 IAM + two-user/two-tenant hosted campaign    IN_PROGRESS
-E. G4 provider tournament                          WAITING explicit live authorization
-F. compose promoted DecisionSource                 WAITING G4
-G. configure/prove real TRACTIAN reads             WAITING authoritative config
-H. hosted required agent modes + grounding         WAITING F/G
-I. compose real authorization source               SOURCE READY / HOSTED PENDING
-J. governed consequential action E2E                WAITING D-H/I
-K. full public remote E2E                           WAITING J
-L. SECURITY-V1 hosted                               WAITING K
-M. load/capacity → evidence-based SLO               WAITING K
-N. recovery/reconnect                               PARTIAL / full campaign after K
-O. backup/restore                                   WAITING stable hosted path
-P. human semantic calibration                      WAITING functional system
-Q. operational-value experiment                    WAITING functional system
-R. final Control Room/live evidence                 WAITING real data
-S. protected CI/CD + tested rollback                WAITING P0 closure
-T. final evidence freeze + release                  WAITING all hard gates
-```
-
-Independent work may proceed in parallel, but no downstream capability is promoted before its prerequisites pass.
-
-## 10. Non-claims
-
-Do **not** claim yet:
-
-- overall production readiness;
-- Railway IaC live convergence;
-- IAM/multi-tenant hosted acceptance;
-- selected hosted provider;
-- real TRACTIAN reachability/reads;
-- hosted correctness of all required modes;
-- real consequential-action authorization/execution;
-- hosted adversarial-security pass;
-- measured capacity/SLO/HA/RTO/RPO;
-- human-calibrated semantic judge;
-- engineer-time savings;
-- adaptive-runtime superiority;
-- distributed exactly-once external side effects.
-
-## 11. Update rule
+## 7. Documentation/evidence update rule
 
 Every material change must synchronize, as applicable:
 
-1. implementation/infrastructure;
-2. regression/hosted validation evidence;
-3. this status file;
-4. `DELIVERY-PLAN.md`;
-5. `decision-registry.yaml` when a material decision changes;
-6. chronological `docs/progress/` evidence.
+1. implementation/tests;
+2. hosted/source evidence;
+3. this active status;
+4. `RELEASE-0-PLAN.md` / `RELEASE-0-ACCEPTANCE.md` when release semantics change;
+5. PR #196 summary;
+6. `decision-registry.yaml` when a material provisional/promoted decision changes;
+7. chronological `docs/progress/` evidence.
 
 Frozen historical artifacts are never rewritten to make current code appear historically valid.
