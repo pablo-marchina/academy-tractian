@@ -59,7 +59,7 @@ Do not add LangGraph, multi-agent, MCP, RAG/vector DB, Redis/Kafka, microservice
 | 02 | Decision registry / active docs | DONE | current mutable truth separated from frozen evidence |
 | 03 | Main branch protection | BLOCKED_USER_ACTION | admin write unavailable through current GitHub connector |
 | 04 | Railway topology reproducibility | IN_PROGRESS | `.railway/railway.ts`, static validator and CI versioned; live plan/apply pending |
-| 04A | Backend release artifact identity | DONE_SOURCE_GATE | baked Railway Git SHA + OCI label + boot cross-check; `a9356e…` required CI PASS; hosted parity pending |
+| 04A | Backend release artifact identity | DONE_SOURCE_GATE | baked Railway Git SHA + OCI label + boot cross-check; hosted parity pending |
 | 05 | Neon schema/RLS promotion | DONE | 15/15 tables, 7/7 metadata, NOBYPASSRLS scoped role, RLS negative PASS |
 | 06 | Railway frontend production | DONE | HTTPS `production-web`, Caddy same-origin auth/API/SSE, deploy SUCCESS |
 | 07 | Railway backend boot | BLOCKED_USER_ACTION | exactly two PostgreSQL DSNs absent; next deploy must pass release identity v3 |
@@ -67,8 +67,9 @@ Do not add LangGraph, multi-agent, MCP, RAG/vector DB, Redis/Kafka, microservice
 | 09 | Provider tournament | PREREGISTERED / NO_SELECTION | v3: 17 fresh scenarios × 5 reps/candidate; USD0 quota packets + validator/test gate; live runs not executed |
 | 10 | Real DecisionSource composition | WAITING_DEPENDENCY | requires #09 promotion |
 | 11 | TRACTIAN production adapter/composition | ADAPTER_IMPLEMENTED | hardened direct HTTP adapter + fail-closed UNCONFIGURED/CONFIGURED_UNVERIFIED states; live contract/reachability pending |
-| 11A | TRACTIAN read-response semantics | DONE_SOURCE_GATE | trace-only structured `body.mode` classifier + sanitized production acceptance gate; `6ec5dcd…` 11/11 CI PASS; real reads pending |
-| 12 | Real authorization resolver | WAITING_DEPENDENCY | requires live identity/resource mapping |
+| 11A | TRACTIAN read-response semantics | DONE_SOURCE_GATE | trace-only structured `body.mode` classifier + sanitized production acceptance gate; real reads pending |
+| 11B | Required agent modes deterministic acceptance | DONE_SOURCE_GATE | Contextualize/Investigate/Clarify/Abstain/Escalate structural trace gate; `d72b338…` 11/11 CI PASS; hosted proof pending |
+| 12 | Real authorization resolver | SOURCE_PREPARATION_NEXT | current remote baseline is deny-all; must remain server-owned and organization/resource aware before action promotion |
 | 13 | Consequential action remote E2E | WAITING_DEPENDENCY | requires #08-#12 |
 | 14 | Full remote public E2E | WAITING_DEPENDENCY | requires #08-#13 |
 | 15 | Adversarial security campaign | PLANNED | hosted functional system required |
@@ -96,7 +97,8 @@ G. promote and compose real DecisionSource
 H. compose real TRACTIAN typed transport              ADAPTER READY / LIVE CONFIG PENDING
 H.5 classify TRACTIAN read semantics                  SOURCE GATE PASS / LIVE PROOF PENDING
 I. validate Contextualize / Investigate / Clarify / Abstain / Escalate
-J. compose real authorization resolver
+                                                     SOURCE GATE PASS / HOSTED PROOF PENDING
+J. compose real authorization resolver               SOURCE PREPARATION NEXT / LIVE MAPPING PENDING
 K. enable and validate governed remote actions
 L. full public remote E2E
 M. adversarial security
@@ -145,7 +147,7 @@ Railway Git-backed build SHA
 = /api/meta/release artifact_git_sha
 ```
 
-Missing/malformed identity or any mismatch aborts before PostgreSQL/IAM product builders open connections. At validated implementation head `a9356e217fbf7c94549849a7cdb8554a449e947b`, `production-runtime`, wheel/image smoke, clean-clone, Playwright and `final-ci-required / required-gate` all pass. Hosted exact-SHA observation remains a separate G2 gate.
+Missing/malformed identity or any mismatch aborts before PostgreSQL/IAM product builders open connections. Source/artifact CI is green; hosted exact-SHA observation remains a separate G2 gate.
 
 ## 7. P0-C — Remote backend boot
 
@@ -213,17 +215,42 @@ typed canonical tool
 
 No authentication scheme is assumed until an authoritative partner contract supplies it. Read retry remains disabled until measured proof justifies it; consequential writes never receive blind retry.
 
-Read-response quality is now source-gated independently of live composition. `production-read-semantics-gate-v1` consumes existing immutable `tool_result` traces, derives read membership from the canonical registry, accepts only structured `body.mode` values, maps non-2xx reads to `unavailable`, fails closed to `inconclusive` on malformed successful responses, and fails acceptance on structural contract issues. It uses no prose heuristics, copies no raw response body into its sanitized report, and leaves provider-decision-request-v1 plus frozen EV-* traces unchanged.
+Read-response quality is source-gated independently of live composition. `production-read-semantics-gate-v1` consumes existing immutable `tool_result` traces, derives read membership from the canonical registry, accepts only structured `body.mode` values, maps non-2xx reads to `unavailable`, fails closed to `inconclusive` on malformed successful responses, and fails acceptance on structural contract issues. It uses no prose heuristics, copies no raw response body into its sanitized report, and leaves provider-decision-request-v1 plus frozen EV-* traces unchanged.
 
-Live promotion still requires authoritative endpoint/auth configuration plus bounded real read acceptance. The source gate must then preserve `complete`, `partial`, `inconclusive`, `conflict` and `unavailable` behavior on real responses before the required agent modes are accepted.
+Live promotion still requires authoritative endpoint/auth configuration plus bounded real read acceptance. The source gate must then preserve `complete`, `partial`, `inconclusive`, `conflict` and `unavailable` behavior on real responses before the required agent modes are accepted remotely.
 
 ## 11. P0-G — Required agent modes
 
-Hosted acceptance covers Contextualize, Investigate, Clarify, Abstain, Escalate and Action Proposal, evaluated on outcome, trajectory, evidence, unnecessary calls, unsupported claims and escalation usefulness.
+`production-required-agent-modes-gate-v1` now provides the deterministic source gate for Contextualize, Investigate, Clarify, Abstain and Escalate without rewriting the accepted controller/provider protocol.
 
-Offline read-response preparation is now complete at the source gate: HTTP success can no longer be treated as evidence that a response is semantically `complete`, and malformed structured state is visible as an acceptance failure. This does not yet prove any hosted agent mode; the next offline work must add only deterministic trace-level invariants that do not rewrite the accepted controller/provider protocol.
+Source invariants are:
 
-## 12. P0-H — Governed actions
+```text
+known terminal Decision + ResponseMode only
+valid RunTrace lifecycle
+unknown tool_result identity -> fail closed
+read semantics contract must pass
+ORIENT -> CONTEXTUALIZE
+INVESTIGATE -> >=1 canonical read result
+ASK_CLARIFICATION / ABSTAIN / ESCALATE_HUMAN -> no false complete claim
+control terminal -> non-empty message + reason_code
+ESCALATE_HUMAN -> exact sanitized HumanEscalationHandoff evaluation
+action decisions -> EXECUTION_DEFERRED / outside this gate
+```
+
+Contextualize is not forced to perform a tool call because trusted context may already be sufficient. Investigation cannot count a blocked action as read evidence. The gate reports only sanitized structural fields and stable violation codes; raw upstream bodies, terminal messages, request text, user/identity and seed are excluded.
+
+At implementation head `d72b33830a98152530f9d98f4547131dca22de42`, all 11 pull-request workflows passed, including production runtime, wheel/image smoke, clean-clone reproduction, frozen EV-007/008/011, full-product Playwright and `final-ci-required / required-gate`.
+
+This is not hosted semantic proof. Final acceptance still requires a promoted hosted DecisionSource, real TRACTIAN evidence and scenario/oracle evaluation of operational correctness, unnecessary calls, unsupported claims, escalation usefulness and later human calibration where semantic judgment is required.
+
+## 12. P0-H — Governed actions and real authorization
+
+Current remote production remains intentionally deny-all for consequential actions. The existing action runtime already separates proposal, private custody, confirmation, idempotency, execution lease and uncertainty handling, but its injected `ActionAuthorizationResolver` must not be promoted from user-only or browser-controlled facts.
+
+Source preparation for the real resolver must establish a server-owned, organization-aware and resource-aware authorization context before any action permission can exist. In particular, API-level capabilities such as `actions:confirm:self` are not equivalent to canonical tool permissions such as `action_low`, `action_high` or `escalate`.
+
+The final path remains:
 
 ```text
 ACTION_PROPOSAL
@@ -231,6 +258,7 @@ ACTION_PROPOSAL
 → private custody
 → PENDING_CONFIRMATION
 → authenticated confirmation
+→ server-owned organization/resource/permission resolution
 → authorization + kill-switch revalidation
 → idempotency
 → non-transferable execution lease
@@ -239,7 +267,7 @@ ACTION_PROPOSAL
 → evaluation
 ```
 
-Hard gate: platform-caused duplicate consequential side effects = 0.
+Hard gate: platform-caused duplicate consequential side effects = 0. Until authoritative IAM/resource mappings are available and hosted-tested, the valid production state is DENY-ALL.
 
 ## 13. P0-I — Full remote E2E
 
