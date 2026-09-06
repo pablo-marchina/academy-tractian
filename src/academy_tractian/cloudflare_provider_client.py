@@ -28,7 +28,7 @@ CLOUDFLARE_NEMOTRON_MODEL_ID = "@cf/nvidia/nemotron-3-120b-a12b"
 CLOUDFLARE_ALLOWED_MODEL_IDS = frozenset(
     {CLOUDFLARE_GLM_MODEL_ID, CLOUDFLARE_NEMOTRON_MODEL_ID}
 )
-CLOUDFLARE_MAX_COMPLETION_TOKENS = 512
+CLOUDFLARE_MAX_COMPLETION_TOKENS = 1024
 CLOUDFLARE_MAX_ACCOUNTED_PROMPT_TOKENS = 8000
 
 _ACCOUNT_ID_RE = re.compile(r"^[A-Za-z0-9]+$")
@@ -211,7 +211,14 @@ class CloudflareWorkersAIChatCompletionsDecisionClient:
             raise ProviderHttpClientError("CLOUDFLARE_CHOICE_INVALID")
         if choice.get("index") not in (None, 0):
             raise ProviderHttpClientError("CLOUDFLARE_CHOICE_INDEX_INVALID")
-        if choice.get("finish_reason") != "stop":
+        finish_reason = choice.get("finish_reason")
+        if finish_reason != "stop":
+            if finish_reason == "length":
+                raise ProviderHttpClientError("CLOUDFLARE_FINISH_REASON_LENGTH")
+            if finish_reason == "tool_calls":
+                raise ProviderHttpClientError("CLOUDFLARE_FINISH_REASON_TOOL_CALLS")
+            if finish_reason == "content_filter":
+                raise ProviderHttpClientError("CLOUDFLARE_FINISH_REASON_CONTENT_FILTER")
             raise ProviderHttpClientError("CLOUDFLARE_FINISH_REASON_INVALID")
 
         message = choice.get("message")
