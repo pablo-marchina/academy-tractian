@@ -206,7 +206,7 @@ export function DynamicDataExplorer({
             </label>
           </div>
 
-          <details key={filterField ? "filter-active" : "filter-empty"} className="technical-disclosure analytics-filter-disclosure" defaultOpen={Boolean(filterField)}>
+          <details className="technical-disclosure analytics-filter-disclosure" open={filterField ? true : undefined}>
             <summary>2. Optional filter</summary>
             <div className="filter-row">
               <label>Filter field<select value={filterField} onChange={(event) => setFilterField(event.target.value)}><option value="">No local filter</option>{datasetSchema.dimensions.map((item) => <option key={item} value={item}>{humanize(item)}</option>)}</select></label>
