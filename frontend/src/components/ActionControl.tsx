@@ -92,7 +92,7 @@ export function ActionControl({
     return (
       <article className="panel operations-panel action-control-panel">
         {heading}
-        <div className="empty-state small"><strong>No analysis selected</strong><p>Select an analysis to see whether it proposed an external action.</p></div>
+        <div className="empty-state small"><strong>No action record selected</strong><p>Select an analysis to see whether it proposed an external action.</p></div>
       </article>
     );
   }
@@ -135,6 +135,10 @@ export function ActionControl({
             const pendingThis = confirmMutation.isPending && confirmMutation.variables === action.action_id;
             return (
               <section className="action-card" key={action.action_id} aria-label={`${action.tool_name} action`}>
+                <dl className="visually-hidden" aria-label="Action provenance">
+                  <div><dt>Action ID</dt><dd>{action.action_id}</dd></div>
+                </dl>
+
                 <div className="action-card-heading">
                   <div>
                     <span className="origin-badge">{impactLabel(action.impact)}</span>
