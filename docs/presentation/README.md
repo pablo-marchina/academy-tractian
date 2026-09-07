@@ -7,10 +7,11 @@ This pack is intentionally optimized for a **5-minute, architecture-first, deepl
 
 ## Use these files in order
 
-1. [`05-MIN-TECHNICAL-SCREENPLAY.md`](05-MIN-TECHNICAL-SCREENPLAY.md) — exact timeline, screen state and narration intent.
-2. [`SCREEN-SHOT-LIST.md`](SCREEN-SHOT-LIST.md) — exact UI/visuals that must be captured.
-3. [`ARCHITECTURE-OVERLAYS.md`](ARCHITECTURE-OVERLAYS.md) — simplified diagrams/overlays to animate while the live run progresses.
-4. [`RECORDING-CHECKLIST.md`](RECORDING-CHECKLIST.md) — preflight, run selection, safety and fallback checklist.
+1. [`EXACT-5-MIN-RECORDING-SCRIPT.md`](EXACT-5-MIN-RECORDING-SCRIPT.md) — **literal recording script: exact words, exact screens, exact clicks and timestamps.**
+2. [`05-MIN-TECHNICAL-SCREENPLAY.md`](05-MIN-TECHNICAL-SCREENPLAY.md) — technical intent and timing rationale behind the recording.
+3. [`SCREEN-SHOT-LIST.md`](SCREEN-SHOT-LIST.md) — exact UI/visuals that must be captured.
+4. [`ARCHITECTURE-OVERLAYS.md`](ARCHITECTURE-OVERLAYS.md) — simplified diagrams/overlays to animate while the run progresses.
+5. [`RECORDING-CHECKLIST.md`](RECORDING-CHECKLIST.md) — preflight, run selection, safety and fallback checklist.
 
 ## Presentation thesis
 
