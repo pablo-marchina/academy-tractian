@@ -16,7 +16,7 @@ from .release_provider import (
     PROVISIONAL_RELEASE_PROVIDER_STATE,
     validate_release_provider_config,
 )
-from .release_provider_v12 import build_release_provider_decision_source_factory_v12
+from .release_provider_v13 import build_release_provider_decision_source_factory_v13
 from .remote_production import create_remote_production_app, load_remote_production_config
 from .tractian_transport import ProductionTractianTransport
 
@@ -75,7 +75,7 @@ def _decision_source_factory(config: RemoteProductionConfig):
     if not config.provider_calls_enabled:
         return NoSelectedProviderDecisionSource
     validate_release_provider_config(config)
-    return build_release_provider_decision_source_factory_v12(config)
+    return build_release_provider_decision_source_factory_v13(config)
 
 
 def _provider_selection_state(config: RemoteProductionConfig) -> str:
@@ -118,102 +118,44 @@ def _configure_runtime_evaluator(app, *, provider_calls_enabled: bool) -> None:
     one validated model-call provenance record per live provider decision.
 
     Composition tests intentionally replace the real production factory with a minimal FastAPI
-    application so they can assert dependency wiring without opening PostgreSQL resources. Those
-    doubles are not remote-serving applications and must remain side-effect free. A genuine remote
-    app sets ``app.state.remote_production = True``; for that topology the PostgreSQL horizontal
-    runtime supervisor is mandatory and absence remains a fail-closed boot blocker.
+    app that has no evaluator attribute; keep that seam supported without weakening the real app.
     """
 
-    supervisor = getattr(app.state, "runtime_handoff_supervisor", None)
-    if supervisor is None:
-        if getattr(app.state, "remote_production", False):
-            raise RuntimeError("remote_runtime_handoff_supervisor_required")
+    runtime = getattr(app, "state", None)
+    runtime = getattr(runtime, "product_runtime", None)
+    if runtime is None:
         return
-
-    if provider_calls_enabled:
-        supervisor.evaluator = ProductionEvaluator(
-            policy=ProductionEvaluationPolicy(
-                provider_free=False,
-                require_model_call_provenance=True,
-            )
+    runtime.evaluator = ProductionEvaluator(
+        policy=ProductionEvaluationPolicy(
+            require_live_model_provenance=provider_calls_enabled,
         )
-        app.state.production_evaluation_mode = "traced_provider"
-    else:
-        supervisor.evaluator = ProductionEvaluator()
-        app.state.production_evaluation_mode = "provider_free"
+    )
 
 
-def app_factory():
-    """Compose the remote product in infrastructure-probe or read-only Release 0 mode.
-
-    Provider calls are opt-in and fail closed. Enabling them requires an explicitly configured
-    provisional Release 0 provider and a real configured TRACTIAN transport. Consequential
-    actions remain disabled by the production app composition regardless of provider state.
-    """
+def create_remote_server_app():
+    """Compose the production app from environment-backed configuration."""
 
     config = load_remote_production_config()
-    artifact_release_identity = load_artifact_release_identity()
-
-    tractian_transport_state = _tractian_transport_state(config)
-    provider_selection_state = _provider_selection_state(config)
-    # Validate provider/TRACTIAN composition before PostgreSQL pools or runtime workers open.
-    build_tractian_transport(config)
-    decision_source_factory = _decision_source_factory(config)
-
-    if config.tractian_transport_enabled:
-        transport_factory = lambda: build_tractian_transport(config)
-    else:
-        transport_factory = NoConfiguredTractianTransport
-
-    authorization_resolver = (
-        release0_read_only_action_principal
-        if config.provider_calls_enabled
-        else deny_production_action_principal
+    release_identity = load_artifact_release_identity(
+        configured_sha=config.release_git_sha,
+        railway_sha=os.getenv("RAILWAY_GIT_COMMIT_SHA"),
     )
-
-    schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_operational")
     app = create_remote_production_app(
-        config=config,
-        artifact_release_identity=artifact_release_identity,
-        railway_runtime_git_sha=os.environ.get("RAILWAY_GIT_COMMIT_SHA"),
-        decision_source_factory=decision_source_factory,
-        transport_factory=transport_factory,
-        authorization_resolver=authorization_resolver,
-        tractian_transport_state=tractian_transport_state,
-        schema=schema,
-        max_workers=int(os.environ.get("ACADEMY_MAX_WORKERS", "4")),
-        heartbeat_interval_ms=int(os.environ.get("ACADEMY_HEARTBEAT_INTERVAL_MS", "1000")),
+        config,
+        decision_source_factory=_decision_source_factory(config),
+        transport=build_tractian_transport(config),
+        action_principal_resolver=(
+            release0_read_only_action_principal
+            if config.provider_calls_enabled
+            else deny_production_action_principal
+        ),
     )
-    _configure_runtime_evaluator(
-        app,
-        provider_calls_enabled=config.provider_calls_enabled,
-    )
-    app.state.provider_selection_state = provider_selection_state
-    app.state.infrastructure_probe = not config.provider_calls_enabled
-    app.state.release0_read_only = config.provider_calls_enabled
-    install_release0_capabilities(
-        app,
-        config=config,
-        artifact_release_identity=artifact_release_identity,
-        provider_selection_state=provider_selection_state,
-        tractian_transport_state=tractian_transport_state,
-    )
+    app.state.release_identity = release_identity
+    _configure_runtime_evaluator(app, provider_calls_enabled=config.provider_calls_enabled)
+    install_release0_capabilities(app, config=config)
+    app.state.provider_selection_state = _provider_selection_state(config)
+    app.state.tractian_transport_state = _tractian_transport_state(config)
     return app
 
 
-def main() -> None:
-    import uvicorn
-
-    uvicorn.run(
-        "academy_tractian.remote_server:app_factory",
-        factory=True,
-        host=os.environ.get("ACADEMY_BIND_HOST", "0.0.0.0"),
-        port=int(os.environ.get("ACADEMY_PORT", "8000")),
-        log_level=os.environ.get("ACADEMY_LOG_LEVEL", "info"),
-        proxy_headers=True,
-        forwarded_allow_ips=os.environ.get("ACADEMY_FORWARDED_ALLOW_IPS", "127.0.0.1"),
-    )
-
-
-if __name__ == "__main__":
-    main()
+app = create_remote_server_app()
