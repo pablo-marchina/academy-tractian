@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from academy_tractian.cloudflare_provider_client import CLOUDFLARE_GLM_MODEL_ID
-from academy_tractian.release_provider import Release0CloudflareDecisionClient
-from academy_tractian.release_provider_v10 import Release0ProviderDecisionSourceV10
+from academy_tractian.release_provider_v10 import (
+    Release0CloudflareDecisionClientV10,
+    Release0ProviderDecisionSourceV10,
+)
 from academy_tractian.runtime import canonical_tool_registry
 from research.e2.controller import ControllerContext, ControllerObservation
 
@@ -12,8 +14,8 @@ class NeverCalledTransport:
         raise AssertionError("provider transport must not be called")
 
 
-def _client() -> Release0CloudflareDecisionClient:
-    return Release0CloudflareDecisionClient(
+def _client() -> Release0CloudflareDecisionClientV10:
+    return Release0CloudflareDecisionClientV10(
         api_token="test-token",
         account_id="abc123",
         model_id=CLOUDFLARE_GLM_MODEL_ID,
