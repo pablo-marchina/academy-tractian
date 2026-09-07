@@ -24,8 +24,8 @@ const DECISIONS: OperationalPilotDecision[] = [
   "ABSTAIN",
 ];
 
-function decisionLabel(value: OperationalPilotDecision): string {
-  const labels: Record<OperationalPilotDecision, string> = {
+function decisionLabel(value: string): string {
+  const labels: Partial<Record<OperationalPilotDecision, string>> = {
     ORIENT: "Provide guidance",
     INVESTIGATE: "Investigate further",
     ACT_REPROCESS: "Reprocess the data",
@@ -36,7 +36,10 @@ function decisionLabel(value: OperationalPilotDecision): string {
     ASK_CLARIFICATION: "Ask for more information",
     ABSTAIN: "Do not conclude from the available evidence",
   };
-  return labels[value];
+  const known = labels[value as OperationalPilotDecision];
+  if (known) return known;
+  const words = value.replaceAll("_", " ").toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 function publicError(error: unknown): string {
