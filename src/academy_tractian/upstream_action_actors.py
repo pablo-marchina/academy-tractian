@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 import json
-from typing import Any
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
@@ -23,12 +23,14 @@ class _FrozenModel(BaseModel):
 
 
 class UpstreamActionActorGrant(_FrozenModel):
-    schema_version: str = Field(pattern=r"^tractian-upstream-action-actor-v1$")
+    schema_version: Literal["tractian-upstream-action-actor-v1"] = (
+        "tractian-upstream-action-actor-v1"
+    )
     company_id: str = Field(min_length=1, max_length=256)
     permission: Permission
     upstream_user_id: str = Field(min_length=1, max_length=256)
     active: bool = True
-    source_owned: bool = True
+    source_owned: Literal[True] = True
 
     @field_validator("permission")
     @classmethod
@@ -53,8 +55,6 @@ class ConfiguredServerOwnedUpstreamActionActorSource:
         for grant in grants:
             if not grant.active:
                 continue
-            if not grant.source_owned:
-                raise ValueError("upstream action actor grants must be server-owned")
             key = (grant.company_id, grant.permission)
             if key in bindings:
                 raise ValueError("duplicate upstream action actor binding")
