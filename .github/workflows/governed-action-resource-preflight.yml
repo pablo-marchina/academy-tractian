@@ -22,103 +22,86 @@ jobs:
           echo "0db58e29d6f5c86ef1838acf31c4caed788b393eb1807345fabd157c8de5bb9a  /tmp/tractian-runtime.tar.gz" | sha256sum -c -
           tar -xzf /tmp/tractian-runtime.tar.gz -C /tmp/tractian-runtime
 
-      - name: Print safe resource identifiers and action endpoint semantics
+      - name: Resolve only governed-action resource identifiers for Papel Sul
         run: |
           python - <<'PY'
           from pathlib import Path
-          import ast, json, re
+          import json
 
           root = Path('/tmp/tractian-runtime')
-          target = 'comp_papel_sul'
-          patterns = {
-              'company': re.compile(r'\bcomp_[A-Za-z0-9_-]+\b'),
-              'asset': re.compile(r'\basset_[A-Za-z0-9_-]+\b'),
-              'analysis': re.compile(r'\banalysis_[A-Za-z0-9_-]+\b'),
-              'model': re.compile(r'\bmodel_[A-Za-z0-9_-]+\b'),
-              'case': re.compile(r'\bcase_[A-Za-z0-9_-]+\b'),
-          }
-          found = {key: set() for key in patterns}
-          papel = {key: set() for key in ('asset','analysis','model','case')}
-          allowed_suffixes = {'.py','.json','.jsonl','.csv','.md','.txt','.yaml','.yml'}
+          target_company = 'comp_papel_sul'
+          target_asset = 'asset_V301'
+          asset_ids, analysis_ids, model_ids, case_ids = set(), set(), set(), set()
 
-          def walk(value, inherited_company=None):
+          def scalar_id(record, *keys):
+              for key in keys:
+                  value = record.get(key)
+                  if isinstance(value, str) and value.strip():
+                      return value.strip()
+              return None
+
+          def visit(value, inherited_company=None, inherited_asset=None):
               if isinstance(value, dict):
-                  company = inherited_company
-                  for key in ('company_id','companyId','organization_id','organizationId'):
-                      if value.get(key) == target:
-                          company = target
-                  if company == target:
-                      for v in value.values():
-                          if isinstance(v, str):
-                              for kind in papel:
-                                  if patterns[kind].fullmatch(v) and v not in {'asset_id','analysis_id','model_id','case_id'}:
-                                      papel[kind].add(v)
-                  for v in value.values():
-                      walk(v, company)
+                  company = scalar_id(value, 'company_id', 'companyId') or inherited_company
+                  asset = scalar_id(value, 'asset_id', 'assetId') or inherited_asset
+                  rid = scalar_id(value, 'id', 'analysis_id', 'analysisId', 'model_id', 'modelId', 'case_id', 'caseId')
+
+                  if company == target_company:
+                      direct_asset = scalar_id(value, 'asset_id', 'assetId', 'id')
+                      if isinstance(direct_asset, str) and direct_asset.startswith('asset_'):
+                          asset_ids.add(direct_asset)
+                      direct_case = scalar_id(value, 'case_id', 'caseId', 'id')
+                      if isinstance(direct_case, str) and direct_case.startswith('case_'):
+                          case_ids.add(direct_case)
+
+                  if asset == target_asset or (rid == target_asset and company == target_company):
+                      asset_ids.add(target_asset)
+                      candidate_analysis = scalar_id(value, 'analysis_id', 'analysisId', 'id')
+                      if isinstance(candidate_analysis, str) and candidate_analysis != target_asset:
+                          # Analysis fixture ids are not required to use an analysis_ prefix.
+                          if any(k in value for k in ('analysis_id','analysisId','status','diagnosis','severity')):
+                              analysis_ids.add(candidate_analysis)
+                      candidate_model = scalar_id(value, 'model_id', 'modelId')
+                      if candidate_model:
+                          model_ids.add(candidate_model)
+
+                  # Case fixtures can carry asset/company context rather than a case_ prefix field.
+                  if company == target_company and asset == target_asset:
+                      candidate_case = scalar_id(value, 'case_id', 'caseId', 'id')
+                      if isinstance(candidate_case, str) and candidate_case.startswith('case_'):
+                          case_ids.add(candidate_case)
+
+                  for child in value.values():
+                      visit(child, company, asset)
               elif isinstance(value, list):
-                  for item in value:
-                      walk(item, inherited_company)
+                  for child in value:
+                      visit(child, inherited_company, inherited_asset)
 
           for path in root.rglob('*'):
-              if not path.is_file() or path.suffix.lower() not in allowed_suffixes:
+              if not path.is_file() or path.suffix.lower() not in {'.json', '.jsonl'}:
                   continue
               try:
                   text = path.read_text(encoding='utf-8')
               except (UnicodeDecodeError, OSError):
                   continue
-              for key, pattern in patterns.items():
-                  found[key].update(pattern.findall(text))
-              if path.suffix.lower() in {'.json','.jsonl'}:
+              if path.suffix.lower() == '.json':
                   try:
-                      if path.suffix.lower() == '.json':
-                          walk(json.loads(text))
-                      else:
-                          for line in text.splitlines():
-                              try: walk(json.loads(line))
-                              except json.JSONDecodeError: pass
+                      visit(json.loads(text))
                   except json.JSONDecodeError:
                       pass
+              else:
+                  for line in text.splitlines():
+                      try:
+                          visit(json.loads(line))
+                      except json.JSONDecodeError:
+                          pass
 
-          for key in ('company','asset','analysis','model','case'):
-              vals = sorted(v for v in found[key] if v not in {'asset_id','analysis_id','model_id','case_id','model_dump'})
-              print(f'RESOURCE_IDS[{key}]=' + ','.join(vals))
-          for key in ('asset','analysis','model','case'):
-              print(f'PAPEL_SUL_RESOURCE_IDS[{key}]=' + ','.join(sorted(papel[key])))
-
-          # Inspect only Python source implementing the supplied API. Print route declarations and
-          # nearby control-flow identifiers; never print fixtures, bodies, secrets, or arbitrary data.
-          route_tokens = ('/assets/', '/analyses/', '/models/', '/cases/', 'reprocess', 'specialist', 'retraining', 'escalat')
-          for path in root.rglob('*.py'):
-              try:
-                  text = path.read_text(encoding='utf-8')
-              except (UnicodeDecodeError, OSError):
-                  continue
-              if not any(token in text.lower() for token in route_tokens):
-                  continue
-              try:
-                  tree = ast.parse(text)
-              except SyntaxError:
-                  continue
-              lines = text.splitlines()
-              for node in ast.walk(tree):
-                  if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                      continue
-                  decorators = []
-                  for dec in node.decorator_list:
-                      try: rendered = ast.unparse(dec)
-                      except Exception: rendered = ''
-                      decorators.append(rendered)
-                  blob = ' '.join(decorators + [node.name]).lower()
-                  if not any(token.strip('/').lower() in blob for token in ('assets','analyses','models','cases','reprocess','specialist','retraining','escalat')):
-                      continue
-                  start = max(1, min([getattr(d,'lineno',node.lineno) for d in node.decorator_list] or [node.lineno]))
-                  end = min(len(lines), getattr(node,'end_lineno',node.lineno), start + 45)
-                  print(f'ENDPOINT_FUNCTION[{path.relative_to(root)}:{node.name}:{start}-{end}]')
-                  for i in range(start, end + 1):
-                      s = lines[i-1].strip()
-                      # Restrict output to code structure relevant to resource existence, ownership,
-                      # status and route semantics. Skip literals likely to contain arbitrary payloads.
-                      if any(tok in s.lower() for tok in ('@app.','@router.','def ','analysis_id','model_id','case_id','asset_id','company_id','404','403','not_found','get(',' in ','return ','status_code','raise ')):
-                          if len(s) <= 300:
-                              print(f'ENDPOINT_HINT[{path.relative_to(root)}:{i}]={s}')
+          # Also follow model ids referenced by any discovered analysis record regardless of nesting.
+          # We print identifiers only, never fixture bodies.
+          print('PAPEL_SUL_ACTION_ASSET_IDS=' + ','.join(sorted(asset_ids)))
+          print('PAPEL_SUL_ACTION_ANALYSIS_IDS=' + ','.join(sorted(analysis_ids)))
+          print('PAPEL_SUL_ACTION_MODEL_IDS=' + ','.join(sorted(model_ids)))
+          print('PAPEL_SUL_ACTION_CASE_IDS=' + ','.join(sorted(case_ids)))
+          if not asset_ids or not analysis_ids or not model_ids or not case_ids:
+              raise SystemExit('governed action resource set incomplete')
           PY
