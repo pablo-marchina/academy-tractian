@@ -35,7 +35,13 @@ def test_configured_source_resolves_all_canonical_action_permissions_without_exp
     source = ConfiguredServerOwnedActionAuthorizationSource.from_json(json.dumps([_grant()]))
 
     principal = source.resolve_user(user_id="user-1")
+    tenant_principal = source.authorize_context(
+        organization_id="org-1",
+        user_id="user-1",
+    )
 
+    assert principal == tenant_principal
+    assert source(user_id="user-1") == principal
     assert principal.permissions == frozenset(
         {Permission.ACTION_LOW, Permission.ACTION_HIGH, Permission.ESCALATE}
     )
@@ -51,6 +57,13 @@ def test_configured_source_resolves_all_canonical_action_permissions_without_exp
     assert source.safe_summary() == {"configured_grants": 1, "active_grants": 1}
     assert "user-1" not in repr(source.safe_summary())
     assert "asset-1" not in repr(source.safe_summary())
+
+
+def test_context_authorization_denies_same_user_under_wrong_organization() -> None:
+    source = ConfiguredServerOwnedActionAuthorizationSource.from_json(json.dumps([_grant()]))
+
+    with pytest.raises(ActionAuthorizationResolutionError, match="GRANT_NOT_FOUND"):
+        source.authorize_context(organization_id="org-2", user_id="user-1")
 
 
 def test_configured_source_rejects_ambiguous_user_identity_across_organizations() -> None:
@@ -80,6 +93,8 @@ def test_inactive_or_unknown_configured_grant_fails_closed() -> None:
     )
     with pytest.raises(ActionAuthorizationResolutionError, match="GRANT_INACTIVE"):
         source.resolve_user(user_id="user-1")
+    with pytest.raises(ActionAuthorizationResolutionError, match="GRANT_INACTIVE"):
+        source.authorize_context(organization_id="org-1", user_id="user-1")
     with pytest.raises(ActionAuthorizationResolutionError, match="GRANT_NOT_FOUND"):
         source.resolve_user(user_id="unknown-user")
 
