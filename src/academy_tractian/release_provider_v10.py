@@ -168,8 +168,10 @@ class Release0ProviderDecisionSourceV10(Release0ProviderDecisionSource):
 
         restricted: dict[str, Any] = {}
         analyses = _successful_observation(context, "list_analyses")
+        # list_assets_by_company already grounds asset identity and fleet metadata. get_asset is a
+        # metadata read rather than diagnostic evidence, so re-offering it here can consume the
+        # entire bounded tool budget without making progress toward "what is happening".
         for name in (
-            "get_asset",
             "get_data_quality",
             "get_baseline",
             "get_rms",

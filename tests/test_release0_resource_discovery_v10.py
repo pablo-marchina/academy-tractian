@@ -86,7 +86,6 @@ def test_nested_asset_collection_advances_to_asset_scoped_reads() -> None:
     )
 
     expected = {
-        "get_asset",
         "list_analyses",
         "get_baseline",
         "get_rms",
@@ -96,6 +95,7 @@ def test_nested_asset_collection_advances_to_asset_scoped_reads() -> None:
     assert _tool_names(request) == expected
     assert "get_current_user" not in _tool_names(request)
     assert "list_assets_by_company" not in _tool_names(request)
+    assert "get_asset" not in _tool_names(request)
     for tool_name in expected:
         assert _parameter(request, tool_name, "asset_id").parameter_schema["enum"] == [
             "asset_R310",
