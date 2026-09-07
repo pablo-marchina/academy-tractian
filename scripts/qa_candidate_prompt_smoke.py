@@ -55,7 +55,7 @@ def request(base, path, method="GET", payload=None, timeout=45, cookie=None):
     data = None if payload is None else json.dumps(payload, ensure_ascii=False).encode("utf-8")
     headers = {
         "Accept": "application/json",
-        "User-Agent": "academy-tractian-candidate-smoke/1",
+        "User-Agent": "academy-tractian-candidate-smoke/2",
         "Origin": AUTH_BASE,
     }
     if data is not None:
@@ -221,26 +221,33 @@ for case in CASES:
         print(json.dumps({"phase": "case", **item}, ensure_ascii=False), flush=True)
         continue
 
-    run = None
-    run_status = 0
+    execution_state = None
+    execution_http_status = 0
     auth_503_count = 0
-    for _ in range(150):
+    for _ in range(120):
         time.sleep(1)
-        run_status, body = request(API_BASE, f"/api/runs/{run_id}", cookie=cookie, timeout=25)
-        if run_status == 503:
+        execution_http_status, execution_body = request(
+            API_BASE,
+            f"/api/runs/{run_id}/execution",
+            cookie=cookie,
+            timeout=25,
+        )
+        if execution_http_status == 503:
             auth_503_count += 1
             continue
-        if run_status == 200 and isinstance(body, dict):
-            run = body
-            if body.get("completed"):
+        if execution_http_status == 200 and isinstance(execution_body, dict):
+            execution_state = execution_body.get("status")
+            if execution_state in {"completed", "failed"}:
                 break
-        elif run_status in (401, 403, 404, 0):
-            run = body if isinstance(body, dict) else None
+        elif execution_http_status in (401, 403, 404, 0):
             break
 
+    run_status, run_body = request(API_BASE, f"/api/runs/{run_id}", cookie=cookie, timeout=30)
+    run = run_body if run_status == 200 and isinstance(run_body, dict) else None
     events_status, events = event_items(run_id)
     calls = tool_calls(events)
     tool_names = [call["tool"] for call in calls if isinstance(call.get("tool"), str)]
+
     terminal = ""
     terminal_mode = None
     if isinstance(run, dict):
@@ -257,8 +264,10 @@ for case in CASES:
                 terminal_mode = terminal_mode or event["result"].get("response_mode")
 
     errors = []
-    if not isinstance(run, dict) or not run.get("completed"):
-        errors.append("run_not_completed")
+    if execution_state != "completed":
+        errors.append(f"execution_state:{execution_state or execution_http_status}")
+    if run_status != 200:
+        errors.append(f"run_status_{run_status}")
     if events_status != 200:
         errors.append(f"events_status_{events_status}")
     missing = [tool for tool in case.get("required_tools", []) if tool not in tool_names]
@@ -297,7 +306,7 @@ for case in CASES:
         if not errors and auth_503_count == 0
         else (
             "FAIL_AVAILABILITY"
-            if auth_503_count or "run_not_completed" in errors
+            if auth_503_count or execution_state != "completed"
             else "FAIL_FUNCTIONAL"
         )
     )
@@ -306,6 +315,8 @@ for case in CASES:
         "status": status,
         "run_id": run_id,
         "submit_status": submit_status,
+        "execution_http_status": execution_http_status,
+        "execution_state": execution_state,
         "run_status": run_status,
         "auth_503_count": auth_503_count,
         "events_status": events_status,
