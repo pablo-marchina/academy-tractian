@@ -22,6 +22,30 @@ const STAGES = [
   ["COMPLETE", "Complete"],
 ] as const;
 
+const STARTER_EXAMPLES = [
+  {
+    intent_id: "STARTER_CONTEXT",
+    label: "Understand the context",
+    release0_behavior: "EDIT_BEFORE_RUNNING",
+    prompt_template:
+      "Help me understand this industrial situation using only evidence you can actually inspect. State what is known, what is uncertain, and what additional identifier or evidence would help if the context is incomplete.",
+  },
+  {
+    intent_id: "STARTER_INVESTIGATE",
+    label: "Investigate evidence",
+    release0_behavior: "EDIT_BEFORE_RUNNING",
+    prompt_template:
+      "Investigate this industrial issue using the relevant read-only evidence available to you. Follow the evidence, do not guess unsupported facts, and return a concise customer-safe conclusion or stop safely if the evidence is insufficient.",
+  },
+  {
+    intent_id: "STARTER_REVIEW",
+    label: "Review a possible action",
+    release0_behavior: "NO_EXTERNAL_ACTIONS",
+    prompt_template:
+      "Review whether the operational action I am considering is supported by the available evidence. Do not execute anything. Explain what evidence supports or contradicts the action and what a human operator should verify next.",
+  },
+] as const;
+
 function currentStage(
   run: SafeRun | undefined,
   events: SafeEvent[],
@@ -89,6 +113,9 @@ export function ProductExperience({
   });
   const stage = currentStage(selectedRun, events, executionStatus, hasLiveRun);
   const evidence = evidenceSummary(events);
+  const serverIntents = capabilityQuery.data?.guided_intents ?? [];
+  const usingStarterExamples = !capabilityQuery.isLoading && serverIntents.length === 0;
+  const quickStartOptions = serverIntents.length > 0 ? serverIntents : usingStarterExamples ? STARTER_EXAMPLES : [];
 
   const usePrompt = (prompt: string) => {
     onUsePrompt(prompt);
@@ -117,14 +144,25 @@ export function ProductExperience({
           <p className="eyebrow">QUICK START</p>
           <strong>Choose a starting posture</strong>
           <p className="muted">The preset fills the request. You can edit it before running.</p>
+          {usingStarterExamples && (
+            <p className="experience-source-note" role="status">
+              Server-owned guided intents are unavailable in this environment, so these are starter examples only. Runtime capabilities remain authoritative.
+            </p>
+          )}
           <div className="experience-intents">
-            {capabilityQuery.data?.guided_intents.map((intent) => (
-              <button type="button" key={intent.intent_id} onClick={() => usePrompt(intent.prompt_template)}>
+            {quickStartOptions.map((intent) => (
+              <button
+                type="button"
+                data-testid="quick-start-option"
+                key={intent.intent_id}
+                onClick={() => usePrompt(intent.prompt_template)}
+              >
                 <span>{intent.intent_id}</span>
                 <strong>{intent.label}</strong>
                 <small>{intent.release0_behavior.replaceAll("_", " ").toLowerCase()}</small>
               </button>
-            )) ?? <span className="muted">Loading guided investigations…</span>}
+            ))}
+            {capabilityQuery.isLoading && <span className="muted">Loading guided investigations…</span>}
           </div>
         </div>
       </article>
