@@ -22,6 +22,7 @@ test.describe("Release 0 progressive-depth UX", () => {
     await expect(page.getByRole("heading", { name: "Answer first" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Investigate industrial evidence without guessing." })).toBeVisible();
     await expect(page.getByText("No external actions")).toBeVisible();
+    await expect(page.getByText("starter examples only")).toBeVisible();
     await expect(page.getByRole("heading", { name: "What do you need to understand?" })).toBeVisible();
 
     await expect(page.getByRole("heading", { name: "Canonical event timeline" })).toBeHidden();
@@ -38,6 +39,7 @@ test.describe("Release 0 progressive-depth UX", () => {
     await expect(page.getByRole("heading", { name: "See why the answer is supported" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Canonical event timeline" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeHidden();
+    await expect(page.getByText("starter examples only")).toBeHidden();
 
     await investigationTab.click();
     await expect(page.getByRole("heading", { name: "Inspect how the investigation ran" })).toBeVisible();
@@ -47,7 +49,6 @@ test.describe("Release 0 progressive-depth UX", () => {
     await expect(page.getByRole("heading", { name: "Open the full observability surface" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeVisible();
     await expect(page.getByText("Capability contract unavailable")).toBeVisible();
-    await expect(page.getByText("starter examples only")).toBeVisible();
 
     await engineeringTab.press("Home");
     await expect(resultsTab).toHaveAttribute("aria-selected", "true");
