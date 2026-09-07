@@ -1,218 +1,143 @@
 # Academy × TRACTIAN — Release 0 Immediate User Plan
 
-**Status:** ACTIVE / immediate execution authority  
-**Release objective:** put the real remote read-only product in users' hands as soon as the safety-critical release gates pass.  
-**Supersedes for Release 0 blocking order:** the final-delivery gate order in `DELIVERY-PLAN.md`. Final-delivery work remains valid but moves behind first-user release unless explicitly listed here as a blocker.
+**Status:** **COMPLETED / PROMOTED**  
+**Promoted runtime SHA:** `082d6f115c070fdc898df749b4b3018efd9ceeab`  
+**Public product:** https://production-web-production-c9d1.up.railway.app  
+**Current phase:** post-release UX pilot and real-user feedback
 
-## 1. Release 0 objective
+## 1. Outcome
 
-Release a real remotely hosted product where an authenticated user can submit an industrial question, a real hosted DecisionSource can investigate through the real TRACTIAN read API, evidence is persisted and streamed live, and the user receives a safe terminal result.
+Release 0 achieved its objective: a real remotely hosted, authenticated, read-only industrial agent can use a live hosted DecisionSource, investigate through the supplied TRACTIAN API, persist evidence, stream progress, and return safe terminal outcomes.
 
-Release 0 is deliberately **read-only for consequential external effects**. Action proposals may be observed for evaluation, but external consequential action execution remains disabled until the later governed-action gate.
+Consequential external action execution remains disabled.
 
-## 2. Non-negotiable release blockers
-
-Release 0 MUST NOT ship unless all are true:
-
-- actual project cash cost remains USD 0;
-- automatic paid spillover is impossible;
-- production serving has no localhost/developer-machine/local-model/local-file dependency;
-- browser identity is authenticated through the managed production boundary;
-- browser-supplied tenant/role/permission authority is ignored/rejected;
-- tested cross-tenant disclosure is zero for the Release 0 campaign;
-- production uses a real hosted provider, not the provider-free/mock DecisionSource;
-- production uses real TRACTIAN reads, not the provider-free/mock transport;
-- provider/model route is explicit, observable and fail-closed;
-- real evidence, terminal output, persistence and SSE/reconnect work on the public path;
-- consequential action execution is disabled.
-
-## 3. Critical path
+## 2. Promoted architecture
 
 ```text
-R0-00 rebaseline current branch/deploy state
-→ R0-01 minimum hosted IAM acceptance
-→ R0-02 real TRACTIAN bounded-read acceptance
-→ R0-03 provisional USD0 provider qualification
-→ R0-04 production DecisionSource composition
-→ R0-05 genuine read-only agent vertical slice
-→ R0-06 minimum mode/evidence/user UX acceptance
-→ R0-07 external two-user smoke
-→ RELEASE TO USERS
-```
-
-R0-01, R0-02 and provider qualification preparation may proceed in parallel.
-
-## 4. R0-00 — Rebaseline
-
-Record current source/deployed SHA, G2 state, IAM state, TRACTIAN state, provider state, action state and exact external blockers. Keep `ACTIVE-PROJECT-STATUS.md`, PR #196, this file and chronological progress evidence synchronized.
-
-## 5. R0-01 — Minimum IAM acceptance
-
-Required positive path:
-
-- sign-up/sign-in/session/sign-out;
-- authenticated REST;
-- authenticated SSE;
-- two independent users;
-- intended same-organization behavior where configured.
-
-Required release negatives:
-
-- user A cannot access user B runs/evidence/evaluations/SSE;
-- browser cannot assert organization, role or permissions;
-- missing/invalid/expired/impersonated session fails closed;
-- RLS remains an independent scoped-data boundary.
-
-Hard gates:
-
-```text
-cross_tenant_disclosure = 0
-browser_tenant_authority_acceptance = 0
-browser_privilege_authority_acceptance = 0
-invalid_session_acceptance = 0
-unauthorized_sse_access = 0
-```
-
-## 6. R0-02 — Real TRACTIAN bounded reads
-
-Use the existing `ProductionTractianTransport` and authoritative server-managed endpoint/header configuration. First prove a representative vertical slice; expand coverage after users are unblocked.
-
-Release hard gates:
-
-```text
-real_remote_request_observed = true
-canonical_method_path_binding = pass
-typed_arguments = pass
-server_owned_auth_context = pass
-redirect_follow = 0
-credential_leakage = 0
-blind_retry = 0
-sanitized_failure = pass
-```
-
-Capture latency/error evidence and normalized `complete|partial|inconclusive|conflict|unavailable` behavior where observed.
-
-## 7. R0-03 — Provisional provider qualification
-
-The full Provider Tournament v3 remains required for final promotion, but no longer blocks first users. Release 0 may use a **provisionally qualified** USD0 provider/model if it passes a small representative governed campaign and the configuration labels the state honestly.
-
-Use existing USD0-eligible Cloudflare candidates first because the client, request contract, quota model and tournament population already exist in-repo. Do not silently use a paid provider.
-
-Minimum qualification should cover representative investigate/final, clarify, unavailable/conflict and action-safety cases with repeated attempts as quota permits.
-
-Hard gates:
-
-```text
-cash_cost_usd = 0
-paid_spillover = 0
-private_gold_leakage = 0
-unsafe_external_action = 0
-policy_bypass = 0
-route_model_substitution = 0
-```
-
-Measure structured-contract success, operational correctness, tool/argument quality, provider failures, latency and quota use. Decision state is `PROVISIONAL_RELEASE_PROVIDER`, not final tournament winner.
-
-## 8. R0-04 — Production DecisionSource
-
-Replace `NoSelectedProviderDecisionSource` only when a provisionally qualified release provider is configured.
-
-Required boundary:
-
-- explicit server-managed credential;
-- explicit provider/model/route;
-- strict existing `ProviderDecisionPayload` validation;
-- bounded timeout/input/output;
-- one-shot/no automatic retry;
-- no hidden fallback;
-- no paid fallback;
-- sanitized provider failures;
-- provider/model provenance in telemetry;
-- controller remains owner of tools and safety.
-
-Boot MUST fail closed when provider calls are enabled but provider configuration is incomplete or unsupported.
-
-## 9. R0-05 — Genuine read-only vertical slice
-
-From the public product origin:
-
-```text
-authenticated user
-→ submit real question
-→ hosted provider decision
-→ typed read tool
-→ real TRACTIAN response
-→ normalized evidence
-→ hosted provider next decision
+authenticated remote user
+→ public HTTPS React product
+→ managed server-owned tenant context
+→ FastAPI
+→ provisional Cloudflare Release 0 provider
+→ AgentController
+→ HarnessRunner
+→ canonical TRACTIAN read tool
+→ real remote TRACTIAN evidence
 → FINAL | CLARIFY | ABSTAIN | ESCALATE
-→ post-runtime evaluation
-→ durable PostgreSQL
-→ live SSE/frontend
+→ deterministic post-runtime evaluation
+→ Neon PostgreSQL
+→ authenticated REST/SSE + persisted history
 ```
 
-No provider-free/test transport/decision source may participate.
+## 3. Completed critical path
 
-## 10. R0-06 — Minimum user-facing acceptance
+| Gate | State |
+|---|---|
+| R0-00 rebaseline | **PASS** |
+| R0-01 minimum hosted IAM acceptance | **PASS** |
+| R0-02 real TRACTIAN bounded-read acceptance | **PASS** |
+| R0-03 provisional USD0 provider qualification | **PASS — provisional only** |
+| R0-04 production DecisionSource composition | **PASS** |
+| R0-05 genuine read-only agent vertical slice | **PASS** |
+| R0-06 minimum mode/evidence/user UX acceptance | **PASS** |
+| R0-07 external two-user smoke | **PASS** |
+| Release to users | **PROMOTED** |
 
-Before first users, verify at least one safe path for FINAL, CLARIFY, ABSTAIN and ESCALATE and one real investigation/tool path. The UI must make the current state understandable without exposing hidden chain-of-thought.
+Hosted Release 0 acceptance run: `34069562818`.
 
-Minimum user surface:
+## 4. Release constraints preserved
 
-- authentication;
-- new investigation;
-- live status;
-- terminal answer/clarification/escalation;
-- evidence summary/lineage;
-- run history/reload;
-- clear failure states.
+The promoted release maintains:
 
-Engineering/eval surface should expose provider/model, tool calls, evidence, evaluation, latency, release SHA and production dependency health.
+- actual project cash-cost policy USD0;
+- no automatic paid fallback;
+- no localhost/developer-machine/local-model dependency;
+- managed browser authentication;
+- server-owned tenant/role/permission authority;
+- tested zero cross-tenant disclosure in the release campaign;
+- explicit provider/model route;
+- typed canonical TRACTIAN transport;
+- safe evidence/terminal/evaluation persistence;
+- no hidden chain-of-thought exposure;
+- consequential action execution disabled.
 
-## 11. R0-07 — External release smoke
+## 5. Provider state
 
-From a fresh external browser/network:
+The Release 0 provider is **provisional**. It is not the final provider-selection decision.
 
-1. authenticate;
-2. submit a real question;
-3. observe genuine live SSE;
-4. observe hosted provider use;
-5. observe real TRACTIAN read evidence;
-6. receive terminal result;
-7. observe post-runtime evaluation;
-8. reload and recover persisted run;
-9. second user cannot access first user's state;
-10. confirm no local/mock dependency participates;
-11. confirm action execution remains disabled;
-12. confirm cash cost remains USD 0.
+The frozen Provider Tournament v3 remains unchanged and retains `NO_SELECTION` until its preregistered 170-attempt campaign is executed. Release 0 promotion must not be used as evidence of final provider superiority.
 
-When these pass, Release 0 is released to users immediately.
+## 6. Current execution plan — UX pilot
 
-## 12. Post-release priority
+The immediate goal is no longer to prove that the product can run. It is to make the product easy to understand and useful without developer guidance.
 
-After first users are active, prioritize in this order:
+### UX-01 — First-run orientation
 
-1. user-blocking reliability/auth/provider/TRACTIAN defects;
-2. correctness/tool/evidence/clarification/escalation defects observed in real runs;
-3. UX friction and speed;
-4. full provider tournament and final provider promotion;
-5. full SECURITY-V1, capacity/SLO and recovery/restore evidence;
-6. governed actions;
-7. human semantic calibration and operational-value study;
-8. adaptive challengers only after measured gaps.
+A new user should understand within the first screen:
 
-## 13. Scope control
+- what the product does;
+- that Release 0 is read-only;
+- what type of question to ask;
+- what evidence the agent can inspect;
+- what FINAL / CLARIFY / ABSTAIN / ESCALATE mean.
 
-Before Release 0, do not add LangGraph, multi-agent, RAG/vector DB, MCP, Redis/Kafka, microservices, Kubernetes, persistent memory or other optional topology unless a blocker cannot be solved by the current promoted architecture.
+### UX-02 — Guided investigation entry point
 
-## 14. Documentation rule
+Guided intents should be promoted above the full technical capability registry. Presets remain backend-owned and should prepare, not bypass, the runtime.
 
-Every material Release 0 change must update, as applicable:
+### UX-03 — Human-readable progress
 
-1. implementation/tests;
-2. hosted/source evidence;
-3. `ACTIVE-PROJECT-STATUS.md` or the latest progress checkpoint;
-4. this plan when sequencing/state changes;
-5. PR #196 summary;
-6. decision registry when a material promoted/provisional decision changes.
+Translate safe runtime evidence into user-facing stages without exposing hidden reasoning:
 
-Historical/frozen evidence is never rewritten.
+```text
+Preparing
+→ AI deciding
+→ Reading TRACTIAN
+→ Reviewing evidence
+→ Evaluating
+→ Complete
+```
+
+### UX-04 — Customer-first result
+
+The primary result surface should answer:
+
+1. What is the conclusion?
+2. How certain/complete is it?
+3. What evidence supports it?
+4. What should the user do next?
+
+Engineering metadata remains accessible through progressive disclosure.
+
+### UX-05 — Mode-specific recovery
+
+- **CLARIFY:** show the missing information as a direct question and make continuation obvious.
+- **ABSTAIN:** explain why the evidence is insufficient and what would unblock a conclusion.
+- **ESCALATE:** explain why human review is needed and what context should be handed over.
+- **FINAL:** foreground the conclusion and compact supporting evidence.
+
+### UX-06 — Feedback and telemetry
+
+Reuse the existing semantic-review / operational-value surfaces where possible before adding another persistence subsystem. Measure user friction and usefulness without collecting hidden chain-of-thought or sensitive raw payloads.
+
+## 7. Post-UX work
+
+After user-blocking UX/correctness issues:
+
+1. full Provider Tournament v3;
+2. full SECURITY-V1 campaign;
+3. load/capacity/SLO evidence;
+4. recovery/restore/RTO/RPO evidence;
+5. governed consequential actions;
+6. human semantic calibration;
+7. operational-value study;
+8. adaptive challengers only after measured gaps;
+9. final evidence freeze and delivery bundle.
+
+## 8. Scope control
+
+Do not add optional orchestration or infrastructure layers merely because Release 0 is promoted. New architecture must answer a measured user/product gap under the same cost and safety constraints.
+
+## 9. Documentation rule
+
+The promoted runtime SHA remains the release evidence anchor even as documentation and UX development advance the branch. A later runtime is not promoted merely because it is newer; it must clear the applicable gates again.

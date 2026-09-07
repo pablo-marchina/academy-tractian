@@ -1,87 +1,87 @@
 # Academy × TRACTIAN — Release 0 Acceptance
 
-**Status:** ACTIVE / immediate user-release Definition of Ready  
-**Purpose:** define the minimum evidence required to safely expose the real read-only product to users before the final project evidence program is complete.
+**Status:** **PASS / RELEASE 0 PROMOTED**  
+**Promoted runtime SHA:** `082d6f115c070fdc898df749b4b3018efd9ceeab`  
+**Hosted acceptance workflow:** `hosted-production-release0-agent`  
+**Workflow run:** `34069562818`
 
 ## Release decision
 
-Release 0 is approved when every blocker below is PASS on the remotely hosted product path. Final-delivery gates not listed here remain post-release work and do not block first-user access.
+Release 0 satisfied the minimum Definition of Ready for first-user access on the remotely hosted product path.
 
-| Gate | Required state |
-|---|---|
-| Remote frontend/API | PASS |
-| Remote durable PostgreSQL | PASS |
-| Immutable release identity | PASS |
-| Managed browser authentication | PASS |
-| Cross-tenant release negatives | PASS / zero disclosure |
-| Real hosted provider | PASS / provisional qualification allowed |
-| Real TRACTIAN read path | PASS |
-| Real read-only agent vertical slice | PASS |
-| FINAL / CLARIFY / ABSTAIN / ESCALATE basic behavior | PASS |
-| Evidence + terminal output + persistence + SSE | PASS |
-| Consequential action execution | DISABLED |
-| USD0 actual cash cost | PASS |
-| Paid spillover | IMPOSSIBLE |
-| Local/mock production dependency | ZERO |
-| External two-user smoke | PASS |
+| Gate | Required state | Observed state |
+|---|---|---|
+| Remote frontend/API | PASS | **PASS** |
+| Remote durable PostgreSQL | PASS | **PASS** |
+| Immutable release identity | PASS | **PASS — exact promoted SHA** |
+| Managed browser authentication | PASS | **PASS** |
+| Cross-tenant release negatives | zero disclosure | **PASS** |
+| Real hosted provider | provisional allowed | **PASS — provisional Cloudflare** |
+| Real TRACTIAN read path | PASS | **PASS — remote typed read observed** |
+| Real read-only agent vertical slice | PASS | **PASS** |
+| FINAL basic behavior | PASS | **PASS** |
+| CLARIFY basic behavior | PASS | **PASS** |
+| ABSTAIN basic behavior | PASS | **PASS** |
+| ESCALATE basic behavior | PASS | **PASS** |
+| Evidence + terminal + persistence | PASS | **PASS** |
+| Authenticated SSE/live path | PASS | **PASS** |
+| Consequential action execution | DISABLED | **DISABLED / 0 external calls** |
+| USD0 cash-cost policy | PASS | **PASS** |
+| Paid spillover | IMPOSSIBLE | **disabled** |
+| Local/mock production dependency | ZERO | **ZERO** |
+| External two-user smoke | PASS | **PASS** |
 
-## Mandatory security boundaries
+## Hosted vertical-slice evidence
 
-Any one of these blocks release:
+The promoted path proved:
 
-- cross-tenant run/evidence/evaluation/SSE disclosure;
+```text
+real browser auth
+→ server-owned tenant context
+→ real Cloudflare model call
+→ canonical typed TRACTIAN read
+→ remote HTTP 2xx evidence
+→ hosted model terminal decision
+→ persisted terminal output
+→ deterministic post-runtime evaluation
+→ output lineage
+→ Neon PostgreSQL
+→ authenticated public REST/SSE
+```
+
+The same acceptance also proved second-user isolation, browser-forged authority rejection, and zero external action calls.
+
+## Provider qualification boundary
+
+Cloudflare `@cf/zai-org/glm-4.7-flash` is authorized only as the **provisional Release 0 provider** under the release constraints.
+
+This acceptance does **not** change the frozen full Provider Tournament v3 decision. `DP-004` remains `NO_SELECTION` until the preregistered final campaign is executed.
+
+## Security boundaries retained
+
+Release 0 remains blocked from consequential external actions. The promotion does not authorize:
+
 - browser-controlled tenant or privilege authority;
-- exposed provider/TRACTIAN/database/session secrets;
-- production action execution enabled before governed-action acceptance;
-- local or mock serving dependency;
-- paid route or automatic paid spillover;
-- production provider/model route ambiguity or hidden fallback.
+- hidden or paid provider fallback;
+- raw provider/TRACTIAN/database/session secret projection;
+- local/mock production serving;
+- chain-of-thought exposure;
+- action execution without the later governed-action gate.
 
-## Provider release qualification
+## User-experience acceptance achieved
 
-A provider may be used provisionally for Release 0 before the full tournament only when:
+A tester can now:
 
-- the route/model is explicitly configured and observed;
-- actual cash cost remains USD 0;
-- no paid fallback exists;
-- no private benchmark/gold enters the model context;
-- representative governed attempts show the strict DecisionSource contract can complete useful read-only cases;
-- no unsafe external action execution or policy bypass occurs;
-- provider failures degrade safely;
-- the UI/telemetry labels the provider state as provisional until the full tournament is complete.
+1. create/sign into a managed account;
+2. submit an industrial request;
+3. observe live run progress;
+4. receive FINAL, CLARIFY, ABSTAIN or ESCALATE safely;
+5. inspect safe evidence and lineage;
+6. inspect deterministic evaluation;
+7. reload persisted runs;
+8. use a second account without cross-tenant state disclosure.
 
-## TRACTIAN release qualification
-
-At least one genuine remotely observed read path must prove the existing typed transport contract against the authoritative configured endpoint. The release smoke must exercise that real path. Configuration-only or source-only evidence is insufficient.
-
-## User experience minimum
-
-A first-time tester must be able to:
-
-1. authenticate without developer assistance;
-2. understand where to start an investigation;
-3. submit a question;
-4. see that work is progressing;
-5. receive a useful terminal result or safe clarification/abstention/escalation;
-6. inspect safe evidence supporting the result;
-7. reload and recover the run;
-8. understand failures without seeing secrets/internal chain-of-thought.
-
-## External smoke evidence
-
-The release evidence record must capture:
-
-- exact source/deploy SHA;
-- public product origin;
-- provider/model/route identity;
-- TRACTIAN transport state and one real read result summary;
-- auth/tenant identities in sanitized form;
-- run id + terminal mode;
-- persistence/reload result;
-- two-user isolation result;
-- action execution state = disabled;
-- observed cash cost = USD 0;
-- confirmation that no localhost/mock/developer process participated.
+This is the **minimum** product UX acceptance, not the endpoint for product quality. Post-release UX work now focuses on reducing cognitive load, improving onboarding, summarizing evidence, clarifying next actions and collecting lightweight usefulness feedback.
 
 ## Post-release non-claims
 
@@ -96,4 +96,4 @@ Release 0 does not by itself authorize claims of:
 - operational time savings;
 - adaptive-policy superiority.
 
-These remain in the final delivery plan and are improved after real-user release.
+These remain post-release/final-delivery work.
