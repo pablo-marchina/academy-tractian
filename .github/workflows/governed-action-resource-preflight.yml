@@ -15,6 +15,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install parquet reader
+        run: python -m pip install --disable-pip-version-check pandas pyarrow
+
       - name: Reconstruct immutable supplied runtime
         run: |
           mkdir -p /tmp/tractian-runtime
@@ -22,21 +30,65 @@ jobs:
           echo "0db58e29d6f5c86ef1838acf31c4caed788b393eb1807345fabd157c8de5bb9a  /tmp/tractian-runtime.tar.gz" | sha256sum -c -
           tar -xzf /tmp/tractian-runtime.tar.gz -C /tmp/tractian-runtime
 
-      - name: Inspect only supplied table loader structure and resource table filenames
+      - name: Print only final governed-action resource identities
         run: |
           python - <<'PY'
           from pathlib import Path
+          import json
+          import pandas as pd
 
           root = Path('/tmp/tractian-runtime')
           data = root / 'data'
-          for path in sorted(data.rglob('*')):
-              if path.is_file():
-                  print(f'DATA_FILE={path.relative_to(root)}')
+          target_company = 'comp_papel_sul'
+          target_asset = 'asset_V301'
 
-          store = root / 'api' / 'app' / 'store.py'
-          lines = store.read_text(encoding='utf-8').splitlines()
-          for i in range(1, min(108, len(lines)) + 1):
-              s = lines[i-1].strip()
-              if s and len(s) <= 400:
-                  print(f'STORE_LOADER[{i}]={s}')
+          analyses = pd.read_parquet(data / 'analyses.parquet')
+          models = pd.read_parquet(data / 'models.parquet')
+          assets = pd.read_parquet(data / 'assets.parquet')
+
+          scoped_assets = assets[assets['company_id'] == target_company]
+          analysis_rows = analyses[analyses['asset_id'] == target_asset]
+
+          print('PAPEL_SUL_ASSET_IDS=' + ','.join(sorted(map(str, scoped_assets['id'].tolist()))))
+          print('PAPEL_SUL_ANALYSIS_IDS=' + ','.join(sorted(map(str, analysis_rows['id'].tolist()))))
+          print('ANALYSES_COLUMNS=' + ','.join(map(str, analyses.columns.tolist())))
+
+          referenced_models = set()
+          for col in ('model_id', 'modelId', 'model'):
+              if col in analysis_rows.columns:
+                  referenced_models.update(str(v) for v in analysis_rows[col].dropna().tolist() if str(v).strip())
+          print('PAPEL_SUL_REFERENCED_MODEL_IDS=' + ','.join(sorted(referenced_models)))
+          print('MODELS_COLUMNS=' + ','.join(map(str, models.columns.tolist())))
+          print('SUPPLIED_MODEL_IDS=' + ','.join(sorted(map(str, models['id'].tolist()))))
+
+          # Print model applicability only in compact identity form. Coverage is part of the
+          # supplied public test fixture and is not authorization material.
+          if 'coverage' in models.columns:
+              for _, row in models.iterrows():
+                  coverage = row['coverage']
+                  try:
+                      parsed = json.loads(coverage) if isinstance(coverage, str) else coverage
+                  except json.JSONDecodeError:
+                      parsed = coverage
+                  print(f"MODEL_COVERAGE[{row['id']}]={parsed}")
+
+          cases = json.loads((data / 'cases.json').read_text(encoding='utf-8'))
+          case_ids = set()
+          def walk(value, inherited_company=None):
+              if isinstance(value, dict):
+                  company = value.get('company_id') or value.get('companyId') or inherited_company
+                  asset = value.get('asset_id') or value.get('assetId')
+                  cid = value.get('id') or value.get('case_id') or value.get('caseId')
+                  if company == target_company and (asset in (None, target_asset)) and isinstance(cid, str) and cid.startswith('case_'):
+                      case_ids.add(cid)
+                  for child in value.values():
+                      walk(child, company)
+              elif isinstance(value, list):
+                  for child in value:
+                      walk(child, inherited_company)
+          walk(cases)
+          print('PAPEL_SUL_CASE_IDS=' + ','.join(sorted(case_ids)))
+
+          if analysis_rows.empty or models.empty or not case_ids:
+              raise SystemExit('governed action resource set incomplete')
           PY
