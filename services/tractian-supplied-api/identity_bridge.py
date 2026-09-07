@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 
-_DEFAULT_CASE_SOURCE = Path("/srv/tractian/agent-input/cases.json")
+_RUNTIME_ROOT = Path("/srv/tractian")
 _MAX_USER_ID_BYTES = 256
 
 
@@ -23,10 +23,27 @@ def _validate_user_id(value: str, *, label: str) -> str:
     return normalized
 
 
+def _case_source(path: Path | None = None) -> Path:
+    if path is not None:
+        return path
+    configured = os.environ.get("ACADEMY_TRACTIAN_CASE_SOURCE")
+    if configured:
+        return Path(configured)
+
+    candidates = sorted(
+        candidate
+        for candidate in _RUNTIME_ROOT.rglob("cases.json")
+        if "agent-input" in candidate.parts and candidate.is_file()
+    )
+    if len(candidates) != 1:
+        raise RuntimeError("tractian_domain_identity_case_source_ambiguous")
+    return candidates[0]
+
+
 def load_domain_user_ids(path: Path | None = None) -> tuple[str, ...]:
     """Load only agent-visible synthetic user ids from the supplied cases surface."""
 
-    source = path or Path(os.environ.get("ACADEMY_TRACTIAN_CASE_SOURCE", str(_DEFAULT_CASE_SOURCE)))
+    source = _case_source(path)
     payload = json.loads(source.read_text(encoding="utf-8"))
     if isinstance(payload, list):
         rows = payload
