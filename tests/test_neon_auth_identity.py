@@ -33,14 +33,17 @@ def _payload(
     ).encode("utf-8")
 
 
-def _client(fetch_session=None):
-    provider = NeonAuthRuntimeContextProvider(
-        base_url="https://example.neonauth.example/academy/auth",
-        fetch_session=fetch_session,
-    )
+def _client(fetch_session=None, *, clock=None):
+    kwargs = {
+        "base_url": "https://example.neonauth.example/academy/auth",
+        "fetch_session": fetch_session,
+    }
+    if clock is not None:
+        kwargs["clock"] = clock
+    provider = NeonAuthRuntimeContextProvider(**kwargs)
     app = FastAPI()
 
-    @app.get("/context")
+    @app.api_route("/context", methods=["GET", "POST"])
     def context(request: Request):
         value = provider(request)
         return {
@@ -192,23 +195,128 @@ def test_expired_or_rejected_managed_session_is_unauthorized(auth_status: int) -
     assert response.json()["detail"] == "managed_session_invalid"
 
 
-def test_managed_auth_service_failure_fails_closed() -> None:
+def test_managed_auth_service_failure_is_service_unavailable_not_logout() -> None:
     with _client(lambda _cookie: (503, b"{}")) as client:
         response = client.get("/context", cookies={"better-auth.session_token": "opaque"})
 
-    assert response.status_code == 401
+    assert response.status_code == 503
     assert response.json()["detail"] == "managed_session_unavailable"
+    assert response.headers["retry-after"] == "1"
+
+
+def test_read_burst_reuses_validated_context_for_two_seconds() -> None:
+    now = [100.0]
+    calls = 0
+
+    def fetch(_cookie: str):
+        nonlocal calls
+        calls += 1
+        return 200, _payload()
+
+    with _client(fetch, clock=lambda: now[0]) as client:
+        first = client.get("/context", cookies={"better-auth.session_token": "opaque"})
+        second = client.get("/context", cookies={"better-auth.session_token": "opaque"})
+        assert first.status_code == second.status_code == 200
+        assert calls == 1
+
+        now[0] += 2.01
+        third = client.get("/context", cookies={"better-auth.session_token": "opaque"})
+
+    assert third.status_code == 200
+    assert calls == 2
+
+
+def test_post_always_bypasses_read_cache_and_revalidates_session() -> None:
+    calls = 0
+
+    def fetch(_cookie: str):
+        nonlocal calls
+        calls += 1
+        return 200, _payload()
+
+    with _client(fetch) as client:
+        assert client.get("/context", cookies={"better-auth.session_token": "opaque"}).status_code == 200
+        assert client.post("/context", cookies={"better-auth.session_token": "opaque"}).status_code == 200
+        assert client.post("/context", cookies={"better-auth.session_token": "opaque"}).status_code == 200
+
+    assert calls == 3
+
+
+def test_rejected_fresh_post_invalidates_prior_read_cache() -> None:
+    responses = iter(
+        [
+            (200, _payload()),
+            (401, b"{}"),
+            (200, _payload()),
+        ]
+    )
+    calls = 0
+
+    def fetch(_cookie: str):
+        nonlocal calls
+        calls += 1
+        return next(responses)
+
+    with _client(fetch) as client:
+        assert client.get("/context", cookies={"better-auth.session_token": "opaque"}).status_code == 200
+        rejected = client.post("/context", cookies={"better-auth.session_token": "opaque"})
+        assert rejected.status_code == 401
+        assert rejected.json()["detail"] == "managed_session_invalid"
+        refreshed = client.get("/context", cookies={"better-auth.session_token": "opaque"})
+
+    assert refreshed.status_code == 200
+    assert calls == 3
+
+
+def test_expired_read_cache_is_never_used_when_auth_service_is_unavailable() -> None:
+    now = [100.0]
+    calls = 0
+
+    def fetch(_cookie: str):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return 200, _payload()
+        return 503, b"{}"
+
+    with _client(fetch, clock=lambda: now[0]) as client:
+        assert client.get("/context", cookies={"better-auth.session_token": "opaque"}).status_code == 200
+        now[0] += 2.01
+        response = client.get("/context", cookies={"better-auth.session_token": "opaque"})
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "managed_session_unavailable"
+    assert calls == 2
+
+
+def test_different_cookies_never_share_cached_identity() -> None:
+    calls = 0
+
+    def fetch(cookie: str):
+        nonlocal calls
+        calls += 1
+        user_id = "user-a" if "first" in cookie else "user-b"
+        return 200, _payload(user_id=user_id)
+
+    with _client(fetch) as client:
+        first = client.get("/context", cookies={"better-auth.session_token": "first"})
+        second = client.get("/context", cookies={"better-auth.session_token": "second"})
+
+    assert first.json()["user_id"] == "user-a"
+    assert second.json()["user_id"] == "user-b"
+    assert calls == 2
 
 
 def test_network_session_fetch_disables_redirects_before_forwarding_cookie(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, object] = {"urls": []}
 
     class FakeOpener:
         def open(self, request, timeout):  # noqa: ANN001, ANN201
             seen["request"] = request
             seen["timeout"] = timeout
+            seen["urls"].append(request.full_url)
             raise HTTPError(
                 request.full_url,
                 302,
@@ -226,14 +334,24 @@ def test_network_session_fetch_disables_redirects_before_forwarding_cookie(
         base_url="https://auth.example.com/academy/auth",
     )
 
-    status_code, body = provider._network_fetch("better-auth.session_token=opaque")
+    status_code, body = provider._network_fetch(
+        "better-auth.session_token=opaque",
+        force_fresh=True,
+    )
+    cached_status, cached_body = provider._network_fetch(
+        "better-auth.session_token=opaque",
+        force_fresh=False,
+    )
 
-    assert status_code == 302
-    assert body == b"redirect forbidden"
+    assert status_code == cached_status == 302
+    assert body == cached_body == b"redirect forbidden"
     assert isinstance(seen["handler"], neon_auth_identity._NoAuthRedirectHandler)
     request = seen["request"]
     assert request.get_header("Cookie") == "better-auth.session_token=opaque"
-    assert request.full_url == "https://auth.example.com/academy/auth/get-session?disableCookieCache=true"
+    assert seen["urls"] == [
+        "https://auth.example.com/academy/auth/get-session?disableCookieCache=true",
+        "https://auth.example.com/academy/auth/get-session",
+    ]
     assert seen["handler"].redirect_request(None, None, 302, "", {}, "https://attacker.example") is None
 
 
@@ -243,13 +361,13 @@ def test_redirect_response_is_never_treated_as_a_valid_session(
     monkeypatch.setattr(
         NeonAuthRuntimeContextProvider,
         "_network_fetch",
-        lambda self, _cookie: (302, b"redirect"),
+        lambda self, _cookie, *, force_fresh: (302, b"redirect"),
     )
 
     with _client() as client:
         response = client.get("/context", cookies={"better-auth.session_token": "opaque"})
 
-    assert response.status_code == 401
+    assert response.status_code == 503
     assert response.json()["detail"] == "managed_session_unavailable"
 
 
