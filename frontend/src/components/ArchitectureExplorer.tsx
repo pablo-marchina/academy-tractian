@@ -24,6 +24,19 @@ const layerOrder: ArchitectureComponent["layer"][] = [
   "observability",
 ];
 
+function friendlyLayer(layer: ArchitectureComponent["layer"]): string {
+  const labels: Record<ArchitectureComponent["layer"], string> = {
+    browser: "Browser",
+    api: "Application API",
+    runtime: "Agent runtime",
+    safety: "Safety controls",
+    external: "External services",
+    evaluator: "Evaluation",
+    observability: "Observability",
+  };
+  return labels[layer];
+}
+
 function isActive(
   component: ArchitectureComponent,
   events: readonly SafeEvent[],
@@ -52,20 +65,25 @@ export function ArchitectureExplorer({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = manifest.components.find((component) => component.component_id === selectedId) ?? null;
 
+  const activeIds = useMemo(
+    () => new Set(manifest.components.filter((component) => isActive(component, events, hasRun, hasEvaluation)).map((component) => component.component_id)),
+    [events, hasEvaluation, hasRun, manifest.components],
+  );
+
   const { nodes, edges } = useMemo(() => {
     const layerCounts = new Map<string, number>();
     const graphNodes: Node[] = manifest.components.map((component) => {
       const x = layerOrder.indexOf(component.layer) * 235;
       const row = layerCounts.get(component.layer) ?? 0;
       layerCounts.set(component.layer, row + 1);
-      const active = isActive(component, events, hasRun, hasEvaluation);
+      const active = activeIds.has(component.component_id);
       return {
         id: component.component_id,
         position: { x, y: row * 150 },
         data: {
           label: (
             <div className="architecture-node-label">
-              <span>{component.layer}</span>
+              <span>{friendlyLayer(component.layer)}</span>
               <strong>{component.label}</strong>
               <small>{component.execution_role.replaceAll("_", " ")}</small>
             </div>
@@ -80,51 +98,69 @@ export function ArchitectureExplorer({
       source: edge.source,
       target: edge.target,
       label: edge.label,
-      animated:
-        isActive(
-          manifest.components.find((component) => component.component_id === edge.source)!,
-          events,
-          hasRun,
-          hasEvaluation,
-        ) &&
-        isActive(
-          manifest.components.find((component) => component.component_id === edge.target)!,
-          events,
-          hasRun,
-          hasEvaluation,
-        ),
+      animated: activeIds.has(edge.source) && activeIds.has(edge.target),
     }));
     return { nodes: graphNodes, edges: graphEdges };
-  }, [events, hasEvaluation, hasRun, manifest]);
+  }, [activeIds, manifest]);
 
   return (
-    <div className="architecture-layout">
-      <div className="architecture-graph graph-canvas">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          fitView
-          minZoom={0.2}
-          maxZoom={1.6}
-          nodesConnectable={false}
-          nodesDraggable={false}
-          onNodeClick={(_, node) => setSelectedId(node.id)}
-        >
-          <Background gap={22} size={1} />
-          <MiniMap pannable zoomable />
-          <Controls showInteractive={false} />
-        </ReactFlow>
+    <div className="architecture-layout refined-architecture-layout">
+      <div className="architecture-main-column">
+        <div className="architecture-guide" role="note">
+          <strong>How to read this view</strong>
+          <p>The diagram shows how product components connect. A highlighted component participated in the selected analysis. Choose a component below or in the diagram to inspect its responsibility and trust boundary.</p>
+        </div>
+
+        <div className="architecture-component-list" aria-label="Architecture components">
+          {manifest.components.map((component) => {
+            const active = activeIds.has(component.component_id);
+            const selectedComponent = component.component_id === selectedId;
+            return (
+              <button
+                type="button"
+                key={component.component_id}
+                className={`architecture-component-button ${active ? "is-active" : ""} ${selectedComponent ? "is-selected" : ""}`}
+                aria-pressed={selectedComponent}
+                onClick={() => setSelectedId(component.component_id)}
+              >
+                <span>{friendlyLayer(component.layer)}</span>
+                <strong>{component.label}</strong>
+                <small>{active ? "Used in this analysis" : "Not observed in this analysis"}</small>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="architecture-graph graph-canvas" aria-label="Interactive architecture diagram">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            fitView
+            minZoom={0.2}
+            maxZoom={1.6}
+            nodesConnectable={false}
+            nodesDraggable={false}
+            onNodeClick={(_, node) => setSelectedId(node.id)}
+          >
+            <Background gap={22} size={1} />
+            <MiniMap pannable zoomable ariaLabel="Architecture overview map" />
+            <Controls showInteractive={false} />
+          </ReactFlow>
+        </div>
       </div>
 
-      <aside className="architecture-detail">
+      <aside className="architecture-detail" aria-live="polite">
         <div className="architecture-manifest-meta">
-          <span>Manifest</span>
+          <span>Architecture version</span>
           <strong>{manifest.architecture_version}</strong>
-          <code>{manifest.manifest_sha256.slice(0, 14)}</code>
+          <details className="technical-disclosure compact-disclosure">
+            <summary>Manifest fingerprint</summary>
+            <code>{manifest.manifest_sha256}</code>
+          </details>
         </div>
         <div className="architecture-manifest-meta">
           <span>Provider selection</span>
-          <strong>{manifest.provider_selection_state}</strong>
+          <strong>{manifest.provider_selection_state.replaceAll("_", " ").toLowerCase()}</strong>
         </div>
 
         {selected ? (
@@ -135,15 +171,15 @@ export function ArchitectureExplorer({
             <dl>
               <div><dt>Trust boundary</dt><dd>{selected.trust_boundary}</dd></div>
               <div><dt>Role</dt><dd>{selected.execution_role.replaceAll("_", " ")}</dd></div>
-              <div><dt>Inputs</dt><dd>{selected.input_contracts.join(", ") || "—"}</dd></div>
-              <div><dt>Outputs</dt><dd>{selected.output_contracts.join(", ") || "—"}</dd></div>
-              <div><dt>Run evidence</dt><dd>{selected.activates_on_event_types.join(", ") || "post-runtime / UI state"}</dd></div>
+              <div><dt>Inputs</dt><dd>{selected.input_contracts.join(", ") || "None listed"}</dd></div>
+              <div><dt>Outputs</dt><dd>{selected.output_contracts.join(", ") || "None listed"}</dd></div>
+              <div><dt>Observed when</dt><dd>{selected.activates_on_event_types.join(", ") || "Post-run or interface state"}</dd></div>
             </dl>
           </div>
         ) : (
           <div className="empty-state small">
-            <strong>Select an architecture node</strong>
-            <p>Responsibilities and boundaries come from the backend manifest, not frontend copy.</p>
+            <strong>Choose a component</strong>
+            <p>You can use the accessible component list above or select a node in the diagram.</p>
           </div>
         )}
       </aside>

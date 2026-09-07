@@ -31,7 +31,7 @@ function assertReviewerPayloadBlinded(payload: unknown): void {
 }
 
 async function openEngineering(page: Page): Promise<void> {
-  const tab = page.getByRole("tab", { name: /Engineering/ });
+  const tab = page.getByRole("tab", { name: /Technical details/ });
   await tab.click();
   await expect(tab).toHaveAttribute("aria-selected", "true");
 }
@@ -39,7 +39,7 @@ async function openEngineering(page: Page): Promise<void> {
 async function openReviewer(page: Page, user: string) {
   await page.context().setExtraHTTPHeaders(actorHeaders(user));
   await page.goto("/");
-  await expect(page.getByText("API healthy")).toBeVisible();
+  await expect(page.getByText("System online")).toBeVisible();
   await openEngineering(page);
   await expect(page.getByRole("heading", { name: "Blind semantic review" })).toBeVisible();
 }
