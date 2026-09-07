@@ -61,9 +61,21 @@ function currentStage(
   return -1;
 }
 
-function decisionTitle(decision: string | null | undefined): string {
+function decisionTitle(
+  decision: string | null | undefined,
+  responseMode: string | null | undefined,
+): string {
+  if (decision === "ORIENT") {
+    switch (responseMode) {
+      case "complete": return "Conclusion ready";
+      case "partial": return "Partial conclusion";
+      case "inconclusive": return "Evidence inconclusive";
+      case "conflict": return "Conflicting evidence";
+      case "unavailable": return "Evidence unavailable";
+      default: return "Investigation result";
+    }
+  }
   switch (decision) {
-    case "ORIENT": return "Conclusion ready";
     case "ASK_CLARIFICATION": return "More context needed";
     case "ABSTAIN": return "Not enough evidence";
     case "ESCALATE_HUMAN": return "Human review recommended";
@@ -71,10 +83,27 @@ function decisionTitle(decision: string | null | undefined): string {
   }
 }
 
-function decisionNextStep(decision: string | null | undefined): string {
+function decisionNextStep(
+  decision: string | null | undefined,
+  responseMode: string | null | undefined,
+): string {
+  if (decision === "ORIENT") {
+    switch (responseMode) {
+      case "complete":
+        return "Review the conclusion and supporting evidence. Release 0 will not execute a consequential change for you.";
+      case "partial":
+        return "Use only the supported portion of the result and review the stated gaps before making an operational decision.";
+      case "inconclusive":
+        return "The available evidence did not support a reliable conclusion. Review the missing or insufficient evidence before starting a follow-up investigation.";
+      case "conflict":
+        return "The evidence conflicts. Review the competing observations and resolve the contradiction before acting.";
+      case "unavailable":
+        return "Required evidence was unavailable. Restore or provide the missing source before relying on this investigation.";
+      default:
+        return "Review the customer-safe result and its supporting evidence before using it operationally.";
+    }
+  }
   switch (decision) {
-    case "ORIENT":
-      return "Review the conclusion and supporting evidence. Release 0 will not execute a consequential change for you.";
     case "ASK_CLARIFICATION":
       return "Provide the missing context requested in the message and start a new investigation with that information.";
     case "ABSTAIN":
@@ -196,13 +225,13 @@ export function ProductExperience({
           <div className="experience-outcome-main">
             <p className="eyebrow">WHAT YOU NEED TO KNOW</p>
             <div className="experience-outcome-title">
-              <h2>{decisionTitle(selectedRun?.terminal_decision)}</h2>
+              <h2>{decisionTitle(selectedRun?.terminal_decision, selectedRun?.terminal_response_mode)}</h2>
               {selectedRun?.terminal_response_mode && <span>{selectedRun.terminal_response_mode}</span>}
             </div>
             <p className="experience-message">{selectedRun?.terminal_message || "No customer-safe message was persisted."}</p>
             <div className="experience-next-step">
               <strong>What to do next</strong>
-              <p>{decisionNextStep(selectedRun?.terminal_decision)}</p>
+              <p>{decisionNextStep(selectedRun?.terminal_decision, selectedRun?.terminal_response_mode)}</p>
             </div>
           </div>
           <aside className="experience-evidence">
