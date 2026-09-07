@@ -19,6 +19,14 @@ Do not treat an old file as current truth merely because it remains in Git.
 - [`GETTING-STARTED.md`](GETTING-STARTED.md) — first successful investigation and how to navigate Results/Evidence/Investigation/Engineering.
 - [`RELEASE-0-ACCEPTANCE.md`](RELEASE-0-ACCEPTANCE.md) — what the live Release 0 actually proved.
 
+### I need to record the 5-minute technical presentation
+
+- [`presentation/README.md`](presentation/README.md) — entrypoint for the technical presentation pack.
+- [`presentation/05-MIN-TECHNICAL-SCREENPLAY.md`](presentation/05-MIN-TECHNICAL-SCREENPLAY.md) — exact five-minute timeline and technical narration intent.
+- [`presentation/SCREEN-SHOT-LIST.md`](presentation/SCREEN-SHOT-LIST.md) — exact product screens and evidence that must appear.
+- [`presentation/ARCHITECTURE-OVERLAYS.md`](presentation/ARCHITECTURE-OVERLAYS.md) — simplified runtime/deployment overlays for the recording.
+- [`presentation/RECORDING-CHECKLIST.md`](presentation/RECORDING-CHECKLIST.md) — run selection, preflight, claim discipline and fallback plan.
+
 ### I want to perform an operation — how-to / runbook
 
 - [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md) — production smoke, promotion, diagnosis, rollback and recovery.
