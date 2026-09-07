@@ -131,7 +131,7 @@ async function submitScenario(page: Page, scenario: string): Promise<{ run_id: s
     const url = new URL(response.url());
     return url.pathname === "/api/runs" && response.request().method() === "POST";
   });
-  await page.getByRole("button", { name: "Analyse" }).click();
+  await page.getByRole("button", { name: "Analyse", exact: true }).click();
   const response = await acceptedPromise;
   expect(response.status()).toBe(202);
   const accepted = (await response.json()) as { run_id: string; [key: string]: unknown };
@@ -203,7 +203,7 @@ test.describe("provider-free full product acceptance", () => {
     await assertNoHorizontalOverflow(page);
 
     await openHistory(page);
-    await expect(page.locator(".task-run-explorer")).toBeVisible();
+    await expect(page.getByText("No analyses yet. Start from Home and completed analyses will appear here.")).toBeVisible();
 
     await openTechnicalSection(page, "Current analysis");
     await expect(page.getByRole("heading", { name: "How did this analysis run?" })).toBeVisible();
