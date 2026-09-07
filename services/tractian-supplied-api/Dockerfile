@@ -13,5 +13,10 @@ RUN cat /tmp/tractian-bundle/runtime.bundle.b64.part* \
     && python -m pip install --no-cache-dir -r /srv/tractian/requirements.lock \
     && rm -rf /tmp/tractian-bundle /tmp/tractian-runtime.tar.gz
 
+# Keep the supplied API/runtime immutable and add the product→synthetic-user translation only
+# at the hosting boundary. The bridge validates its agent-visible user pool during image build.
+COPY identity_bridge.py /srv/tractian/api/app/identity_bridge.py
+RUN python /srv/tractian/api/app/identity_bridge.py
+
 EXPOSE 8080
-CMD ["sh", "-c", "exec uvicorn app.hosting:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers --forwarded-allow-ips='*'"]
+CMD ["sh", "-c", "exec uvicorn app.identity_bridge:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers --forwarded-allow-ips='*'"]
