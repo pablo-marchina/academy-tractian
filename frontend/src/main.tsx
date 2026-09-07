@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { AuthBoundary } from "./auth/AuthBoundary";
 import "./styles.css";
+import "./depthTabs.css";
 import "./experience.css";
 import "./explorer.css";
 import "./operations.css";
