@@ -33,9 +33,9 @@ class StaticDecisionClient:
         return json.dumps(self.payload)
 
 
-def _context() -> ControllerContext:
+def _context(user_request: str = "Investigate a vibration alert using read-only evidence.") -> ControllerContext:
     return ControllerContext(
-        user_request="Investigate a vibration alert using read-only evidence.",
+        user_request=user_request,
         turn_index=0,
         tool_call_count=0,
     )
@@ -169,6 +169,7 @@ def test_release0_request_policy_is_read_only_and_tool_arguments_are_exact() -> 
         "use it at most once in a run",
         "exact doc_id values",
         "no further read tool is supplied",
+        "explicit user prohibition",
     ):
         assert required_fragment in RELEASE0_PROVIDER_SYSTEM_INSTRUCTION
 
@@ -234,6 +235,46 @@ def test_release0_request_policy_is_read_only_and_tool_arguments_are_exact() -> 
     assert "abc123" not in serialized
 
 
+@pytest.mark.parametrize(
+    ("prompt", "expected_kind"),
+    (
+        (
+            "Do not use any tool. Ask me one question for the missing context required to continue.",
+            "CLARIFY",
+        ),
+        (
+            "I prohibit tool use. This diagnosis cannot be made from the available evidence; stop safely.",
+            "ABSTAIN",
+        ),
+        (
+            "I prohibit tool use. The claims are contradictory and unresolved; hand this to a human specialist.",
+            "ESCALATE",
+        ),
+    ),
+)
+def test_release0_explicit_safe_terminal_request_hides_tools_and_narrows_schema(
+    prompt: str,
+    expected_kind: str,
+) -> None:
+    source = _release_source()
+    request = source.build_request(_context(prompt))
+    assert request.tools == ()
+
+    schema = _release_client().build_http_request(request).body["response_format"]["json_schema"]
+    assert len(schema["oneOf"]) == 1
+    assert _tool_names(schema) == set()
+    assert schema["oneOf"][0]["properties"]["kind"]["enum"] == [expected_kind]
+
+
+def test_release0_no_tool_request_without_unambiguous_terminal_keeps_terminal_choices() -> None:
+    source = _release_source()
+    request = source.build_request(_context("Do not use any tool; answer as safely as possible."))
+    assert request.tools == ()
+    schema = _release_client().build_http_request(request).body["response_format"]["json_schema"]
+    assert len(schema["oneOf"]) == 2
+    assert _tool_names(schema) == set()
+
+
 def test_release0_search_without_structured_doc_id_becomes_terminal_only() -> None:
     source = _release_source()
     after_search = source.build_request(_successful_search_context())
@@ -263,7 +304,6 @@ def test_release0_grounded_doc_ids_are_the_only_allowed_continuation() -> None:
     doc_parameter = after_search.tools[0].parameters[0]
     assert doc_parameter.name == "doc_id"
     assert doc_parameter.parameter_schema == {
-        "type": "string",
         "enum": ["doc-vibration-1", "doc-vibration-2"],
     }
 
@@ -273,7 +313,6 @@ def test_release0_grounded_doc_ids_are_the_only_allowed_continuation() -> None:
     assert _tool_names(schema) == {"get_knowledge_doc"}
     doc_variant = _tool_variant(schema, "get_knowledge_doc")
     assert doc_variant["properties"]["arguments"]["properties"]["doc_id"] == {
-        "type": "string",
         "enum": ["doc-vibration-1", "doc-vibration-2"],
     }
 

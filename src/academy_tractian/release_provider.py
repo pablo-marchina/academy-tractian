@@ -30,7 +30,7 @@ from .provider_clients import (
 
 NO_PROVIDER_SELECTION_STATE = "NO_SELECTION"
 PROVISIONAL_RELEASE_PROVIDER_STATE = "PROVISIONAL_RELEASE_PROVIDER"
-RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v7"
+RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v8"
 RELEASE0_MAX_COMPLETION_TOKENS = 1024
 _RELEASE0_MAX_GROUNDED_DOC_IDS = 32
 _RELEASE0_MAX_GROUNDING_DEPTH = 8
@@ -134,7 +134,11 @@ FINAL, CLARIFY, ESCALATE, and ABSTAIN. Do not rely on post-processing or output 
 
 Release 0 is read-only. The supplied tools list contains only canonical read tools; action tools are
 intentionally absent and therefore cannot be selected by a valid provider response. Human escalation
-is expressed with kind=ESCALATE, not by proposing an action tool.
+is expressed with kind=ESCALATE, not by proposing an action tool. An explicit user prohibition on
+tool use is authoritative: in that case the runtime supplies no tools. When the user also explicitly
+requests clarification, abstention because evidence is unavailable, or human escalation of an
+unresolved contradiction, the runtime may narrow the response schema to that requested safe terminal
+kind. Follow the supplied schema exactly.
 
 For kind=TOOL:
 - tool_name must exactly equal one supplied tools[].name. The response schema creates one TOOL variant per tool visible in the current turn.
@@ -201,14 +205,92 @@ def _tool_variant(tool: ProviderToolDefinition) -> dict[str, object]:
     }
 
 
+def _normalized_request(value: str) -> str:
+    return " ".join(value.casefold().split())
+
+
+def _explicit_no_tool_request(user_request: str) -> bool:
+    normalized = _normalized_request(user_request)
+    return any(
+        marker in normalized
+        for marker in (
+            "do not use any tool",
+            "do not use tools",
+            "do not use a tool",
+            "prohibit tool use",
+            "prohibit any tool",
+            "without using tools",
+            "without using any tool",
+        )
+    )
+
+
+def _explicit_terminal_kind(user_request: str) -> str | None:
+    """Recognize only explicit safe terminal instructions; never infer hidden intent.
+
+    This is deliberately narrow. It does not classify ordinary requests. It only binds the provider
+    when the user simultaneously prohibits tools and unambiguously asks for one safe terminal
+    behavior. Ambiguous combinations return ``None`` and retain the normal provider schema.
+    """
+
+    if not _explicit_no_tool_request(user_request):
+        return None
+    normalized = _normalized_request(user_request)
+    candidates: list[str] = []
+
+    if (
+        ("ask me" in normalized or "ask a" in normalized)
+        and ("missing" in normalized or "clarif" in normalized)
+        and ("question" in normalized or "context" in normalized)
+    ):
+        candidates.append("CLARIFY")
+
+    if (
+        ("cannot be made" in normalized or "cannot make" in normalized or "cannot be determined" in normalized)
+        and ("diagnos" in normalized or "conclusion" in normalized or "determin" in normalized)
+    ):
+        candidates.append("ABSTAIN")
+
+    if (
+        ("human specialist" in normalized or "human expert" in normalized or "escalat" in normalized or "hand" in normalized)
+        and ("contradict" in normalized or "conflict" in normalized)
+        and ("unresolved" in normalized or "no authoritative evidence" in normalized)
+    ):
+        candidates.append("ESCALATE")
+
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def _terminal_variants_for_request(
+    terminal_variants: list[dict[str, object]],
+    *,
+    user_request: str,
+) -> list[dict[str, object]]:
+    explicit_kind = _explicit_terminal_kind(user_request)
+    if explicit_kind is None:
+        return terminal_variants
+    control_variant = deepcopy(terminal_variants[-1])
+    properties = control_variant.get("properties")
+    if not isinstance(properties, dict):
+        raise RuntimeError("release0_provider_terminal_schema_contract_drift")
+    kind_schema = properties.get("kind")
+    if not isinstance(kind_schema, dict):
+        raise RuntimeError("release0_provider_terminal_kind_contract_drift")
+    kind_schema["enum"] = [explicit_kind]
+    return [control_variant]
+
+
 def _schema_for_visible_tools(request: ProviderDecisionRequest) -> dict[str, object]:
-    """Bind provider output to exactly this turn's visible tools and ToolSpec arguments."""
+    """Bind provider output to exactly this turn's visible tools and explicit safe terminal intent."""
 
     template = deepcopy(RELEASE0_PROVIDER_DECISION_JSON_SCHEMA)
     variants = template.get("oneOf")
     if not isinstance(variants, list) or len(variants) != 3:
         raise RuntimeError("release0_provider_schema_contract_drift")
-    terminal_variants = variants[1:]
+    terminal_variants = _terminal_variants_for_request(
+        variants[1:],
+        user_request=request.user_request,
+    )
     template["oneOf"] = [*(_tool_variant(tool) for tool in request.tools), *terminal_variants]
     return template
 
@@ -294,12 +376,12 @@ class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisio
 class Release0ProviderDecisionSource(ProviderDecisionSource):
     """Read-only adaptive provider surface with deterministic grounded stopping.
 
-    Before knowledge search, Release 0 exposes all canonical read tools. Once a search observation
-    exists, the surface can only narrow: a successful search with exact structured ``doc_id``
-    evidence may expose one constrained ``get_knowledge_doc`` continuation; every other search
-    outcome and every document observation produces a terminal-only provider request. The full
-    canonical registry remains owned by the runtime/HarnessRunner, so B1/B2/B3 still independently
-    validate every executed proposal.
+    Before knowledge search, Release 0 exposes all canonical read tools unless the user explicitly
+    prohibits tool use. Once a search observation exists, the surface can only narrow: a successful
+    search with exact structured ``doc_id`` evidence may expose one constrained
+    ``get_knowledge_doc`` continuation; every other search outcome and every document observation
+    produces a terminal-only provider request. The full canonical registry remains owned by the
+    runtime/HarnessRunner, so B1/B2/B3 still independently validate every executed proposal.
     """
 
     @staticmethod
@@ -351,6 +433,8 @@ class Release0ProviderDecisionSource(ProviderDecisionSource):
         return tool.model_copy(update={"parameters": parameters})
 
     def _visible_registry(self, context: ControllerContext):
+        if _explicit_no_tool_request(context.user_request):
+            return {}
         visible = {
             name: tool
             for name, tool in self.registry.items()
