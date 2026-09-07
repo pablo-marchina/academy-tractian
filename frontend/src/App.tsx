@@ -40,6 +40,35 @@ function eventTone(event: SafeEvent): string {
   return "neutral";
 }
 
+function friendlyEventLabel(event: SafeEvent): string {
+  switch (event.event_type) {
+    case "model_call": return "Understanding the next step";
+    case "tool_call": return "Checking information";
+    case "tool_result": return "Information received";
+    case "observation": return "Evidence saved";
+    case "policy_check": return event.policy_allowed === false ? "Safety check stopped a step" : "Safety check passed";
+    case "final_response": return "Answer prepared";
+    case "run_finished": return "Analysis finished";
+    case "error": return "A problem was detected";
+    default: return eventDisplayLabel(event);
+  }
+}
+
+function friendlyDecisionLabel(decision: string | null | undefined, responseMode: string | null | undefined): string {
+  if (decision === "ASK_CLARIFICATION") return "More information needed";
+  if (decision === "ABSTAIN") return "Not enough evidence";
+  if (decision === "ESCALATE_HUMAN") return "Specialist review recommended";
+  if (decision === "ORIENT") {
+    if (responseMode === "complete") return "Answer ready";
+    if (responseMode === "partial") return "Partial answer";
+    if (responseMode === "conflict") return "Conflicting evidence";
+    if (responseMode === "inconclusive") return "No reliable conclusion";
+    if (responseMode === "unavailable") return "Required data unavailable";
+    return "Analysis result";
+  }
+  return decision ? "Analysis result" : "No result yet";
+}
+
 function EventMeta({ event }: { event: SafeEvent }) {
   const items = [
     event.tool_name && ["tool", event.tool_name],
@@ -57,15 +86,14 @@ function EventMeta({ event }: { event: SafeEvent }) {
   return <div className="event-meta">{items.map(([label, value]) => <span key={`${label}:${value}`}><b>{label}</b> {value}</span>)}</div>;
 }
 
-function LayerIntro({ eyebrow, title, description, depth }: { eyebrow: string; title: string; description: string; depth: string }) {
+function LayerIntro({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
   return (
-    <div className="layer-intro">
+    <div className="layer-intro friendly-layer-intro">
       <div>
         <p className="eyebrow">{eyebrow}</p>
         <h2>{title}</h2>
         <p>{description}</p>
       </div>
-      <span className="layer-depth-badge">{depth}</span>
     </div>
   );
 }
@@ -125,18 +153,28 @@ export default function App() {
   const blockingChecks = selectedEvaluation?.items.filter((check) => check.blocking) ?? [];
   const passedChecks = blockingChecks.filter((check) => check.passed).length;
   const viewingHistorical = historicalRunId !== null;
+  const serviceOnline = healthQuery.data?.status === "ok";
+  const hasAnyRun = Boolean(selectedRun || live.accepted);
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <div><p className="eyebrow">ACADEMY × TRACTIAN</p><h1>Industrial Agent Operations</h1></div>
-        <div className="service-state" aria-live="polite">
-          <span className={`status-dot ${healthQuery.data?.status === "ok" ? "online" : "offline"}`} />
-          <div><b>{healthQuery.data?.status === "ok" ? "API healthy" : "API unavailable"}</b><small>{healthQuery.data?.version ?? "checking service"}</small></div>
+      <a className="skip-link" href="#main-content">Skip to main content</a>
+      <header className="topbar friendly-topbar">
+        <div className="product-brand">
+          <p className="eyebrow">ACADEMY × TRACTIAN</p>
+          <h1>Equipment analysis assistant</h1>
+          <p>Understand what the data is telling you and what to check next.</p>
+        </div>
+        <div className={`service-state friendly-service-state ${serviceOnline ? "is-online" : "is-offline"}`} aria-live="polite">
+          <span className={`status-dot ${serviceOnline ? "online" : "offline"}`} aria-hidden="true" />
+          <div>
+            <b>{serviceOnline ? "System online" : "System temporarily unavailable"}</b>
+            <small>{serviceOnline ? "Ready for a new analysis" : "Please try again shortly"}</small>
+          </div>
         </div>
       </header>
 
-      <main>
+      <main id="main-content">
         <DepthTabs
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -147,102 +185,218 @@ export default function App() {
 
         <section className="workspace-layer" id="workspace-panel-results" role="tabpanel" aria-labelledby="workspace-tab-results" tabIndex={0} hidden={activeTab !== "results"}>
           <LayerIntro
-            eyebrow="LAYER 1 · USER OUTCOME"
-            title="Answer first"
-            description="Start here for the customer-safe result, current progress and the next action you should take. No runtime expertise is required."
-            depth="lowest complexity"
+            eyebrow={hasAnyRun ? "CURRENT ANALYSIS" : "GET STARTED"}
+            title={hasAnyRun ? "Your answer, first" : "What would you like to understand?"}
+            description={hasAnyRun
+              ? "Start with the result and the recommended next step. Open the other sections only if you want more detail."
+              : "Describe the equipment issue in your own words. You do not need technical commands or internal identifiers."}
           />
 
           <ProductExperience
             selectedRun={selectedRun}
             events={selectedEvents}
-            executionStatus={executionQuery.data?.status}
+            executionStatus={viewingHistorical ? undefined : executionQuery.data?.status}
             connection={live.connection}
             hasLiveRun={Boolean(live.accepted)}
             viewingHistorical={viewingHistorical}
             onUsePrompt={setRequestText}
+            onOpenEvidence={() => setActiveTab("evidence")}
+            onOpenTechnical={() => setActiveTab("engineering")}
           />
 
-          <section className="control-panel">
-            <div className="section-heading"><div><p className="eyebrow">START AN INVESTIGATION</p><h2>What do you need to understand?</h2></div>{live.accepted && <button className="ghost-button" type="button" onClick={live.clear}>Clear live run</button>}</div>
+          <section className="control-panel primary-request-panel">
+            <div className="section-heading request-heading">
+              <div>
+                <p className="eyebrow">{hasAnyRun ? "ASK ANOTHER QUESTION" : "YOUR QUESTION"}</p>
+                <h2>{hasAnyRun ? "Start a new analysis" : "Tell us what you want to know"}</h2>
+                <p className="section-supporting-copy">Write naturally, as if you were asking a colleague. The assistant will find identifiers it can safely discover.</p>
+              </div>
+              {live.accepted && <button className="ghost-button" type="button" onClick={live.clear}>Clear current analysis</button>}
+            </div>
             <form className="request-form" onSubmit={submit}>
-              <label htmlFor="agent-request">Industrial request</label>
-              <textarea id="agent-request" value={requestText} onChange={(event) => setRequestText(event.target.value)} placeholder="Describe the alert, asset, analysis or evidence you want the agent to investigate. Include identifiers when you have them." maxLength={20_000} rows={4} />
-              <div className="request-actions"><span>{requestText.length.toLocaleString()} / 20,000</span><button type="submit" disabled={!requestText.trim() || live.submitting}>{live.submitting ? "Submitting…" : "Start production run"}</button></div>
+              <label htmlFor="agent-request">What would you like to understand?</label>
+              <textarea
+                id="agent-request"
+                value={requestText}
+                onChange={(event) => setRequestText(event.target.value)}
+                placeholder="For example: Which equipment needs attention today, and why?"
+                maxLength={20_000}
+                rows={5}
+              />
+              <div className="request-actions">
+                <span className="request-help">No special format is required.</span>
+                <button type="submit" disabled={!requestText.trim() || live.submitting || !serviceOnline}>
+                  {live.submitting ? "Starting analysis…" : "Start analysis"}
+                </button>
+              </div>
             </form>
-            {live.error && <div className="error-banner">{live.error}</div>}
+            {live.error && (
+              <div className="error-banner friendly-error" role="alert">
+                <strong>We could not start the analysis.</strong>
+                <span>Please try again. If the problem continues, open the technical detail below.</span>
+                <details><summary>Technical detail</summary><code>{live.error}</code></details>
+              </div>
+            )}
           </section>
         </section>
 
         <section className="workspace-layer" id="workspace-panel-evidence" role="tabpanel" aria-labelledby="workspace-tab-evidence" tabIndex={0} hidden={activeTab !== "evidence"}>
           <LayerIntro
-            eyebrow="LAYER 2 · EXPLAINABILITY"
-            title="See why the answer is supported"
-            description="Inspect the persisted customer-safe output and the canonical evidence trail without opening architecture, evaluator or experiment internals."
-            depth="evidence detail"
+            eyebrow="WHY THIS ANSWER"
+            title="See what the assistant checked"
+            description="Review the information that supports the answer. Technical IDs and system metadata stay folded away unless you choose to open them."
           />
 
-          <section className="workspace-grid">
-            <article className="panel timeline-panel">
-              <div className="section-heading compact"><div><p className="eyebrow">EVIDENCE TRAIL</p><h2>Canonical event timeline</h2></div><span className="count-pill">{selectedEvents.length} events</span></div>
-              {selectedEvents.length === 0 ? <div className="empty-state"><strong>No runtime events selected</strong><p>Submit a live request or open a persisted run from Investigation. This panel never fabricates trace history.</p></div> : <ol className="timeline-list">{selectedEvents.map((event) => <li key={event.event_id} className={`timeline-item tone-${eventTone(event)}`}><div className="sequence">{String(event.sequence).padStart(2, "0")}</div><div className="timeline-content"><div className="event-title-row"><div><span className="origin-badge">{event.origin}</span><strong>{eventDisplayLabel(event)}</strong></div><small>{event.latency_ms !== null ? `${event.latency_ms} ms` : event.timestamp ?? ""}</small></div><EventMeta event={event} />{event.message && <p className="event-message">{event.message}</p>}</div></li>)}</ol>}
+          <section className="workspace-grid friendly-evidence-grid">
+            <article className="panel timeline-panel friendly-timeline-panel">
+              <div className="section-heading compact">
+                <div>
+                  <p className="eyebrow">CHECKED INFORMATION</p>
+                  <h2>What happened during the analysis</h2>
+                  <p className="section-supporting-copy">The most important steps are shown in plain language.</p>
+                </div>
+                <span className="count-pill">{selectedEvents.length} step{selectedEvents.length === 1 ? "" : "s"}</span>
+              </div>
+              {selectedEvents.length === 0 ? (
+                <div className="empty-state">
+                  <strong>No analysis selected</strong>
+                  <p>Start an analysis or choose one from History to see what information was checked.</p>
+                </div>
+              ) : (
+                <ol className="timeline-list">
+                  {selectedEvents.map((event) => (
+                    <li key={event.event_id} className={`timeline-item tone-${eventTone(event)}`}>
+                      <div className="sequence" aria-hidden="true">{String(event.sequence).padStart(2, "0")}</div>
+                      <div className="timeline-content">
+                        <div className="event-title-row">
+                          <strong>{friendlyEventLabel(event)}</strong>
+                          <small>{event.latency_ms !== null ? `${event.latency_ms} ms` : event.timestamp ?? ""}</small>
+                        </div>
+                        {event.message && <p className="event-message">{event.message}</p>}
+                        <details className="event-technical-details">
+                          <summary>Technical details</summary>
+                          <EventMeta event={event} />
+                        </details>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </article>
 
             <aside className="side-stack">
-              <article className="panel terminal-panel"><p className="eyebrow">PERSISTED OUTPUT</p><h2>Terminal outcome</h2>{!selectedRun?.completed ? <div className="empty-state small"><strong>Runtime not complete</strong><p>No terminal result is shown until the persisted run is actually complete.</p></div> : <dl className="detail-list"><div><dt>Decision</dt><dd>{valueOrDash(selectedRun.terminal_decision)}</dd></div><div><dt>Response mode</dt><dd>{valueOrDash(selectedRun.terminal_response_mode)}</dd></div><div><dt>Reason</dt><dd>{valueOrDash(selectedRun.terminal_reason_code)}</dd></div><div className="message-detail"><dt>Message</dt><dd>{valueOrDash(selectedRun.terminal_message)}</dd></div></dl>}</article>
-              <article className="panel"><p className="eyebrow">EVIDENCE COVERAGE</p><h2>Safe references</h2><div className="evaluation-score"><strong>{metrics.evidenceRefs}</strong><span>persisted evidence references in this run</span></div><p className="muted">Tool names, safe status metadata and evidence IDs remain visible in the timeline. Raw secret-bearing API payloads are never exposed.</p></article>
+              <article className="panel terminal-panel friendly-answer-panel">
+                <p className="eyebrow">FINAL ANSWER</p>
+                <h2>{friendlyDecisionLabel(selectedRun?.terminal_decision, selectedRun?.terminal_response_mode)}</h2>
+                {!selectedRun?.completed ? (
+                  <div className="empty-state small">
+                    <strong>The analysis is not finished yet</strong>
+                    <p>The final answer will appear here only after the analysis is complete.</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="friendly-terminal-message">{valueOrDash(selectedRun.terminal_message)}</p>
+                    <details className="technical-disclosure compact-disclosure">
+                      <summary>Show internal result codes</summary>
+                      <dl className="detail-list">
+                        <div><dt>Decision</dt><dd>{valueOrDash(selectedRun.terminal_decision)}</dd></div>
+                        <div><dt>Response mode</dt><dd>{valueOrDash(selectedRun.terminal_response_mode)}</dd></div>
+                        <div><dt>Reason</dt><dd>{valueOrDash(selectedRun.terminal_reason_code)}</dd></div>
+                      </dl>
+                    </details>
+                  </>
+                )}
+              </article>
+
+              <article className="panel friendly-source-count">
+                <p className="eyebrow">EVIDENCE</p>
+                <h2>Sources saved for this answer</h2>
+                <div className="evaluation-score"><strong>{metrics.evidenceRefs}</strong><span>source reference{metrics.evidenceRefs === 1 ? "" : "s"}</span></div>
+                <p className="muted">Sensitive credentials and private system data are never shown here.</p>
+              </article>
             </aside>
           </section>
         </section>
 
         <section className="workspace-layer" id="workspace-panel-investigation" role="tabpanel" aria-labelledby="workspace-tab-investigation" tabIndex={0} hidden={activeTab !== "investigation"}>
           <LayerIntro
-            eyebrow="LAYER 3 · OPERATIONAL INVESTIGATION"
-            title="Inspect how the investigation ran"
-            description="Work with persisted history, runtime metrics, execution topology and governed action proposals without entering system-wide engineering analytics."
-            depth="runtime detail"
+            eyebrow="HISTORY"
+            title="Review previous analyses"
+            description="Choose an earlier analysis to see its answer and evidence. Detailed runtime activity is available below for people who need it."
           />
 
           <RunExplorer runs={runsQuery.data?.items ?? []} selectedRunId={historicalRunId} liveRunId={live.accepted?.run_id ?? null} loading={runsQuery.isLoading} onSelect={selectHistoricalRun} />
 
-          <section className="run-strip" aria-live="polite">
-            <div><span className="metric-label">View</span><strong>{viewingHistorical ? "HISTORICAL" : live.accepted ? "LIVE" : "IDLE"}</strong></div>
-            <div><span className="metric-label">Stream / execution</span><strong>{viewingHistorical ? "HISTORICAL" : `${live.connection.toUpperCase()} / ${executionQuery.data?.status ?? (live.accepted ? "accepted" : "—")}`}</strong></div>
-            <div className="run-id-cell"><span className="metric-label">Selected safe run ID</span><strong title={selectedRunId ?? undefined}>{selectedRunId ?? "No selected run"}</strong></div>
-            <div><span className="metric-label">Config</span><strong title={selectedRun?.config_hash}>{selectedRun?.config_hash?.slice(0, 12) ?? "—"}</strong></div>
-          </section>
+          <details className="technical-disclosure history-technical-disclosure">
+            <summary>
+              <span><strong>Show how this analysis ran</strong><small>Runtime status, activity counts and process graph</small></span>
+            </summary>
+            <div className="technical-disclosure-body">
+              <section className="run-strip" aria-live="polite">
+                <div><span className="metric-label">View</span><strong>{viewingHistorical ? "SAVED" : live.accepted ? "CURRENT" : "NONE"}</strong></div>
+                <div><span className="metric-label">Connection / execution</span><strong>{viewingHistorical ? "SAVED" : `${live.connection.toUpperCase()} / ${executionQuery.data?.status ?? (live.accepted ? "accepted" : "—")}`}</strong></div>
+                <div className="run-id-cell"><span className="metric-label">Run ID</span><strong title={selectedRunId ?? undefined}>{selectedRunId ?? "No selected run"}</strong></div>
+                <div><span className="metric-label">Config</span><strong title={selectedRun?.config_hash}>{selectedRun?.config_hash?.slice(0, 12) ?? "—"}</strong></div>
+              </section>
 
-          <section className="metric-grid">
-            {[["Events", metrics.events], ["Model calls", metrics.modelCalls], ["Tool calls", metrics.toolCalls], ["Policy blocks", metrics.policyBlocks], ["Evidence refs", metrics.evidenceRefs], ["Errors", metrics.errors]].map(([label, value]) => <article className="metric-card" key={label}><span>{label}</span><strong>{value}</strong></article>)}
-          </section>
+              <section className="metric-grid">
+                {[["Events", metrics.events], ["Model calls", metrics.modelCalls], ["Tool calls", metrics.toolCalls], ["Policy blocks", metrics.policyBlocks], ["Evidence refs", metrics.evidenceRefs], ["Errors", metrics.errors]].map(([label, value]) => <article className="metric-card" key={label}><span>{label}</span><strong>{value}</strong></article>)}
+              </section>
 
-          <div className="layer-stack">
-            <article className="panel visual-panel"><div className="section-heading compact"><div><p className="eyebrow">EXECUTION TOPOLOGY</p><h2>Trace Graph</h2></div><span className="count-pill">derived from {selectedEvents.length} safe events</span></div><TraceGraph events={selectedEvents} /></article>
-            <ActionControl selectedRunId={selectedRunId} onFollowExecution={followActionRun} />
-          </div>
+              <article className="panel visual-panel">
+                <div className="section-heading compact">
+                  <div><p className="eyebrow">PROCESS MAP</p><h2>Trace graph</h2></div>
+                  <span className="count-pill">{selectedEvents.length} safe events</span>
+                </div>
+                <TraceGraph events={selectedEvents} />
+              </article>
+            </div>
+          </details>
         </section>
 
         <section className="workspace-layer" id="workspace-panel-engineering" role="tabpanel" aria-labelledby="workspace-tab-engineering" tabIndex={0} hidden={activeTab !== "engineering"}>
           <LayerIntro
-            eyebrow="LAYER 4 · ENGINEERING & EVALUATION"
-            title="Open the full observability surface"
-            description="Deep inspection of system-wide observability, evaluator isolation, implementation-backed architecture, capability contracts and controlled research collectors. Hidden reasoning and secrets remain excluded."
-            depth="maximum detail"
+            eyebrow="TECHNICAL DETAILS"
+            title="Engineering and evaluation"
+            description="This area is intentionally detailed. It exposes the safe runtime, architecture, evaluation and research surfaces without exposing secrets or hidden reasoning."
           />
 
-          <div className="layer-stack">
-            <OperationsWorkspace selectedRunId={selectedRunId} />
+          <div className="technical-zone">
+            <div className="layer-stack">
+              <OperationsWorkspace selectedRunId={selectedRunId} />
 
-            <article className="panel evaluation-panel"><div className="evaluator-boundary"><p className="eyebrow">POST-RUNTIME ONLY</p><span>Evaluator isolated from agent-time state</span></div><h2>Evaluation</h2>{!selectedRun?.completed ? <div className="empty-state small"><strong>Not evaluated yet</strong><p>Evaluation appears only after the runtime has emitted its terminal trace.</p></div> : !selectedEvaluationReady ? <p className="muted">Runtime finished. Waiting for post-runtime evaluation persistence…</p> : selectedEvaluation?.count ? <><div className="evaluation-score"><strong>{passedChecks}/{blockingChecks.length}</strong><span>blocking checks passed</span></div><ul className="check-list">{selectedEvaluation.items.map((check) => <li key={check.check_name}><span className={check.passed ? "check-pass" : "check-fail"}>{check.passed ? "PASS" : "FAIL"}</span><span>{check.check_name}</span></li>)}</ul></> : <p className="muted">No safe evaluation rows are available.</p>}</article>
+              <article className="panel evaluation-panel">
+                <div className="evaluator-boundary"><p className="eyebrow">POST-RUNTIME ONLY</p><span>Evaluator isolated from agent-time state</span></div>
+                <h2>Evaluation</h2>
+                {!selectedRun?.completed ? (
+                  <div className="empty-state small"><strong>Not evaluated yet</strong><p>Evaluation appears after the runtime has emitted its terminal trace.</p></div>
+                ) : !selectedEvaluationReady ? (
+                  <p className="muted">Runtime finished. Waiting for post-runtime evaluation persistence…</p>
+                ) : selectedEvaluation?.count ? (
+                  <>
+                    <div className="evaluation-score"><strong>{passedChecks}/{blockingChecks.length}</strong><span>blocking checks passed</span></div>
+                    <ul className="check-list">{selectedEvaluation.items.map((check) => <li key={check.check_name}><span className={check.passed ? "check-pass" : "check-fail"}>{check.passed ? "PASS" : "FAIL"}</span><span>{check.check_name}</span></li>)}</ul>
+                  </>
+                ) : <p className="muted">No safe evaluation rows are available.</p>}
+              </article>
 
-            <article className="panel visual-panel">
-              <div className="section-heading compact"><div><p className="eyebrow">IMPLEMENTATION-BACKED SYSTEM MAP</p><h2>Architecture Explorer</h2></div>{architectureQuery.data && <span className="count-pill">provider: {architectureQuery.data.provider_selection_state}</span>}</div>
-              {architectureQuery.data ? <ArchitectureExplorer manifest={architectureQuery.data} events={selectedEvents} hasRun={Boolean(selectedRunId)} hasEvaluation={Boolean(selectedEvaluation?.count)} /> : <div className="empty-state graph-empty"><strong>Architecture manifest unavailable</strong><p>The UI will not substitute hard-coded architecture when the backend manifest is missing.</p></div>}
-            </article>
+              <article className="panel visual-panel">
+                <div className="section-heading compact">
+                  <div><p className="eyebrow">IMPLEMENTATION-BACKED SYSTEM MAP</p><h2>Architecture Explorer</h2></div>
+                  {architectureQuery.data && <span className="count-pill">provider: {architectureQuery.data.provider_selection_state}</span>}
+                </div>
+                {architectureQuery.data ? (
+                  <ArchitectureExplorer manifest={architectureQuery.data} events={selectedEvents} hasRun={Boolean(selectedRunId)} hasEvaluation={Boolean(selectedEvaluation?.count)} />
+                ) : (
+                  <div className="empty-state graph-empty"><strong>Architecture manifest unavailable</strong><p>The UI will not substitute hard-coded architecture when the backend manifest is missing.</p></div>
+                )}
+              </article>
 
-            <Release0CapabilitySurface events={selectedEvents} onUsePrompt={setRequestText} />
-            <OperationalValueCollector />
-            <SemanticReviewCollector />
+              <ActionControl selectedRunId={selectedRunId} onFollowExecution={followActionRun} />
+              <Release0CapabilitySurface events={selectedEvents} onUsePrompt={setRequestText} />
+              <OperationalValueCollector />
+              <SemanticReviewCollector />
+            </div>
           </div>
         </section>
       </main>
