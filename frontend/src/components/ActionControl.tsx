@@ -19,7 +19,6 @@ function actionStateLabel(state: PendingActionSafe["state"]): string {
     case "BLOCKED": return "Blocked for safety";
     case "NOT_ACCEPTED": return "Not accepted";
     case "UNCERTAIN": return "Outcome needs verification";
-    default: return state.replaceAll("_", " ").toLowerCase();
   }
 }
 
