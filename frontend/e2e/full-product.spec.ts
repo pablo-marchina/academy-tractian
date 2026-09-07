@@ -72,14 +72,31 @@ async function configureActor(page: Page, user = "e2e-user-a", organization = "e
 
 async function openProduct(page: Page): Promise<void> {
   await page.goto("/");
-  await expect(page.getByText("API healthy")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Industrial Agent Operations" })).toBeVisible();
+  await expect(page.getByText("System online")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Equipment analysis assistant" })).toBeVisible();
 }
 
-async function openLayer(page: Page, name: "Results" | "Evidence" | "Investigation" | "Engineering"): Promise<void> {
-  const tab = page.getByRole("tab", { name: new RegExp(name) });
+async function openLayer(page: Page, name: "Overview" | "Why this answer?" | "History" | "Technical details"): Promise<void> {
+  const tab = page.getByRole("tab", { name: new RegExp(name.replace("?", "\\?")) });
   await tab.click();
   await expect(tab).toHaveAttribute("aria-selected", "true");
+}
+
+async function openHistoryTechnical(page: Page): Promise<void> {
+  await openLayer(page, "History");
+  const disclosure = page.locator(".history-technical-disclosure");
+  if ((await disclosure.getAttribute("open")) === null) {
+    await disclosure.getByText("Show how this analysis ran").click();
+  }
+}
+
+async function expandEvidenceTechnical(page: Page): Promise<void> {
+  const summaries = page.locator(".event-technical-details summary");
+  const count = await summaries.count();
+  for (let index = 0; index < count; index += 1) {
+    const details = summaries.nth(index).locator("..");
+    if ((await details.getAttribute("open")) === null) await summaries.nth(index).click();
+  }
 }
 
 async function newActorPage(
@@ -97,13 +114,13 @@ async function newActorPage(
 }
 
 async function submitScenario(page: Page, scenario: string): Promise<{ run_id: string; [key: string]: unknown }> {
-  await openLayer(page, "Results");
-  await page.getByLabel("Industrial request").fill(scenario);
+  await openLayer(page, "Overview");
+  await page.getByLabel("What would you like to understand?").fill(scenario);
   const acceptedPromise = page.waitForResponse((response) => {
     const url = new URL(response.url());
     return url.pathname === "/api/runs" && response.request().method() === "POST";
   });
-  await page.getByRole("button", { name: "Start production run" }).click();
+  await page.getByRole("button", { name: "Start analysis" }).click();
   const response = await acceptedPromise;
   expect(response.status()).toBe(202);
   const accepted = (await response.json()) as { run_id: string; [key: string]: unknown };
@@ -112,7 +129,7 @@ async function submitScenario(page: Page, scenario: string): Promise<{ run_id: s
 }
 
 async function waitForCompleted(page: Page): Promise<void> {
-  await openLayer(page, "Results");
+  await openLayer(page, "Overview");
   await expect(page.getByTestId("customer-outcome-summary")).toBeVisible({ timeout: 20_000 });
 }
 
@@ -168,12 +185,12 @@ test.describe("provider-free full product acceptance", () => {
     const leakAudit = installJsonLeakAudit(page);
     await openProduct(page);
 
-    await expect(page.getByRole("tab", { name: /Results/ })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tab", { name: /Overview/ })).toHaveAttribute("aria-selected", "true");
     await assertNoHorizontalOverflow(page);
 
-    await openLayer(page, "Evidence");
-    await expect(page.getByText("No runtime events selected")).toBeVisible();
-    await openLayer(page, "Engineering");
+    await openLayer(page, "Why this answer?");
+    await expect(page.getByText("No analysis selected")).toBeVisible();
+    await openLayer(page, "Technical details");
     await expect(
       page.locator("#workspace-panel-engineering .empty-state:visible").filter({ hasText: "No run selected" }).first(),
     ).toBeVisible();
@@ -181,11 +198,13 @@ test.describe("provider-free full product acceptance", () => {
     const longRequest = `scenario:clarify ${"industrial-context ".repeat(450)}`;
     const accepted = await submitScenario(page, longRequest);
     await waitForCompleted(page);
-    await openLayer(page, "Evidence");
+    await openLayer(page, "Why this answer?");
+    await expect(page.locator(".terminal-panel")).toContainText("More information needed");
+    await page.getByText("Show internal result codes").click();
     await expect(page.locator(".terminal-panel")).toContainText("ASK_CLARIFICATION");
     await assertNoHorizontalOverflow(page);
 
-    await openLayer(page, "Engineering");
+    await openLayer(page, "Technical details");
     const dynamic = page.locator("#dynamic-data-explorer");
     await expect(dynamic.getByRole("heading", { name: "Dynamic Data Explorer" })).toBeVisible();
     const chartOptions = await dynamic.getByLabel("Chart").locator("option").allTextContents();
@@ -206,7 +225,7 @@ test.describe("provider-free full product acceptance", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await assertNoHorizontalOverflow(page);
-    await expect(page.getByRole("heading", { name: "Industrial Agent Operations" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Equipment analysis assistant" })).toBeVisible();
 
     await assertSseReplayClean(page, accepted.run_id);
     await leakAudit.assertClean();
@@ -219,16 +238,18 @@ test.describe("provider-free full product acceptance", () => {
 
     const accepted = await submitScenario(page, "scenario:slow investigate asset evidence");
 
-    await openLayer(page, "Engineering");
+    await openLayer(page, "Technical details");
     await expect(page.locator(".evaluation-panel")).toContainText("Not evaluated yet");
 
-    await openLayer(page, "Investigation");
+    await openHistoryTechnical(page);
     await expect(page.locator(".run-strip")).toContainText("LIVE /");
 
-    await openLayer(page, "Evidence");
-    await expect(page.locator(".timeline-panel")).toContainText("Execute · get_asset", { timeout: 8_000 });
+    await openLayer(page, "Why this answer?");
+    await expect(page.locator(".timeline-panel")).toContainText("Checking information", { timeout: 8_000 });
+    await expandEvidenceTechnical(page);
+    await expect(page.locator(".timeline-panel")).toContainText("get_asset", { timeout: 8_000 });
 
-    await openLayer(page, "Investigation");
+    await openHistoryTechnical(page);
     await page.context().setOffline(true);
     await expect(page.locator(".run-strip")).toContainText("RECONNECTING", { timeout: 5_000 });
     await page.waitForTimeout(300);
@@ -237,19 +258,20 @@ test.describe("provider-free full product acceptance", () => {
 
     await waitForCompleted(page);
 
-    await openLayer(page, "Evidence");
+    await openLayer(page, "Why this answer?");
     await expect(page.locator(".terminal-panel")).toContainText("E2E_EVIDENCE_CONFIRMED");
-    await expect(page.locator(".timeline-panel")).toContainText("Evidence · EV-e2e-asset");
+    await expandEvidenceTechnical(page);
+    await expect(page.locator(".timeline-panel")).toContainText("EV-e2e-asset");
     const sequences = (await page.locator(".timeline-item .sequence").allTextContents()).map((value) => Number(value));
     expect(sequences.length).toBeGreaterThan(4);
     expect(sequences).toEqual([...sequences].sort((left, right) => left - right));
     expect(new Set(sequences).size).toBe(sequences.length);
 
-    await openLayer(page, "Investigation");
-    await expect(page.getByRole("heading", { name: "Trace Graph" })).toBeVisible();
+    await openHistoryTechnical(page);
+    await expect(page.getByRole("heading", { name: "Trace graph" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Mission Control" })).toBeHidden();
 
-    await openLayer(page, "Engineering");
+    await openLayer(page, "Technical details");
     await expect(page.getByRole("heading", { name: "Mission Control" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Evidence Explorer" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Output Lineage" })).toBeVisible();
@@ -289,28 +311,30 @@ test.describe("provider-free full product acceptance", () => {
       historicalRunId ??= accepted.run_id;
       await waitForCompleted(page);
 
-      await openLayer(page, "Evidence");
-      await expect(page.locator(".terminal-panel")).toContainText(decision);
+      await openLayer(page, "Why this answer?");
       await expect(page.locator(".terminal-panel")).toContainText(detail);
+      await page.getByText("Show internal result codes").click();
+      await expect(page.locator(".terminal-panel")).toContainText(decision);
 
       if (scenario === "scenario:blocked-action") {
-        await openLayer(page, "Investigation");
+        await openHistoryTechnical(page);
         await expect(page.locator(".metric-grid")).toContainText(/Policy blocks\s*[1-9]/);
+        await openLayer(page, "Technical details");
         await expect(page.locator(".action-control-panel")).toContainText("No consequential action for this run");
       }
       await assertSseReplayClean(page, accepted.run_id);
     }
 
     if (!historicalRunId) throw new Error("historical run was not captured");
-    await openLayer(page, "Investigation");
+    await openLayer(page, "History");
     const historicalRow = page.locator(".run-table tbody tr").filter({
-      hasText: historicalRunId.slice(0, 18),
+      hasText: historicalRunId.slice(0, 10),
     });
-    await historicalRow.click();
-    await expect(page.getByRole("tab", { name: /Results/ })).toHaveAttribute("aria-selected", "true");
+    await historicalRow.getByRole("button").click();
+    await expect(page.getByRole("tab", { name: /Overview/ })).toHaveAttribute("aria-selected", "true");
 
-    await openLayer(page, "Investigation");
-    await expect(page.locator(".run-strip")).toContainText("HISTORICAL");
+    await openHistoryTechnical(page);
+    await expect(page.locator(".run-strip")).toContainText("SAVED");
     await expect(page.locator(".run-id-cell strong")).toHaveText(historicalRunId);
     await leakAudit.assertClean();
   });
@@ -322,7 +346,7 @@ test.describe("provider-free full product acceptance", () => {
 
     const accepted = await submitScenario(page, "scenario:pending-action");
     await waitForCompleted(page);
-    await openLayer(page, "Investigation");
+    await openLayer(page, "Technical details");
 
     const actionCard = page.locator(".action-card").first();
     await expect(actionCard).toContainText("PENDING_CONFIRMATION");
@@ -365,7 +389,7 @@ test.describe("provider-free full product acceptance", () => {
     expect(confirmation.execution_run_id).not.toBe(accepted.run_id);
 
     await waitForCompleted(page);
-    await openLayer(page, "Investigation");
+    await openHistoryTechnical(page);
     await expect(page.locator(".run-id-cell strong")).toHaveText(confirmation.execution_run_id);
     await expect.poll(async () => {
       const detail = await fetchJson(page, `/api/actions/${actionId}`);

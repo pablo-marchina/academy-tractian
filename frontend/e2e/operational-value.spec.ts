@@ -33,7 +33,7 @@ function assertPilotPayloadBlinded(payload: unknown): void {
 }
 
 async function openEngineering(page: Page): Promise<void> {
-  const tab = page.getByRole("tab", { name: /Engineering/ });
+  const tab = page.getByRole("tab", { name: /Technical details/ });
   await tab.click();
   await expect(tab).toHaveAttribute("aria-selected", "true");
 }
@@ -41,7 +41,7 @@ async function openEngineering(page: Page): Promise<void> {
 async function openParticipant(page: Page, user: string, organization = "e2e-org-a") {
   await page.context().setExtraHTTPHeaders(actorHeaders(user, organization));
   await page.goto("/");
-  await expect(page.getByText("API healthy")).toBeVisible();
+  await expect(page.getByText("System online")).toBeVisible();
   await openEngineering(page);
   await expect(page.getByRole("heading", { name: "Engineer effort study" })).toBeVisible();
 }
@@ -53,7 +53,7 @@ async function newActorPage(browser: Browser, user: string, organization = "e2e-
   });
   const page = await context.newPage();
   await page.goto("/");
-  await expect(page.getByText("API healthy")).toBeVisible();
+  await expect(page.getByText("System online")).toBeVisible();
   await openEngineering(page);
   return { context, page };
 }
