@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from copy import deepcopy
+from typing import Any
 
 from research.e2.controller import ControllerContext
 from research.e2.tool_registry import TOOLS
@@ -29,8 +30,11 @@ from .provider_clients import (
 
 NO_PROVIDER_SELECTION_STATE = "NO_SELECTION"
 PROVISIONAL_RELEASE_PROVIDER_STATE = "PROVISIONAL_RELEASE_PROVIDER"
-RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v6"
+RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v7"
 RELEASE0_MAX_COMPLETION_TOKENS = 1024
+_RELEASE0_MAX_GROUNDED_DOC_IDS = 32
+_RELEASE0_MAX_GROUNDING_DEPTH = 8
+_RELEASE0_MAX_DOC_ID_LENGTH = 256
 
 _RELEASE0_REQUIRED_FIELDS = [
     "schema_version",
@@ -149,9 +153,10 @@ For kind=CLARIFY, ESCALATE, or ABSTAIN:
 
 Knowledge investigation stopping rule:
 - search_knowledge accepts only q and optional type. get_knowledge_doc accepts only doc_id.
-- If search_knowledge is available, use it at most once in a run. After one successful search_knowledge observation it is deliberately removed from the supplied tool list and from the allowed response schema.
-- After a successful search_knowledge observation, inspect a returned knowledge document with get_knowledge_doc only when the public observation exposes a concrete document identifier that can be passed as doc_id and the full document is materially needed for the requested answer.
-- If no concrete document identifier is exposed, or the search result already contains enough relevant evidence, return FINAL instead of inventing a doc_id or searching again.
+- If search_knowledge is available, use it at most once in a run. After any search_knowledge observation, the runtime deliberately narrows the supplied tool surface.
+- After a successful search_knowledge observation, get_knowledge_doc is supplied only when the public structured observation exposes one or more exact doc_id values. In that case, its doc_id parameter is restricted to exactly those observed values.
+- Text that merely mentions an identifier, generic id fields, hidden state, or inferred identifiers never authorize get_knowledge_doc.
+- If no structured doc_id is exposed, if the search failed, or after one get_knowledge_doc observation, no further read tool is supplied: return a terminal decision instead of inventing another tool continuation.
 - Never call a tool that is absent from the current supplied tools list.
 
 Use TOOL only when another canonical read is materially necessary. Stop with a terminal decision as soon as the available observations are sufficient to answer safely. Do not repeat a successful tool call with materially equivalent arguments unless a prior observation identifies a specific unresolved gap. Honor explicit read-only and no-action requests.
@@ -199,8 +204,6 @@ def _tool_variant(tool: ProviderToolDefinition) -> dict[str, object]:
 def _schema_for_visible_tools(request: ProviderDecisionRequest) -> dict[str, object]:
     """Bind provider output to exactly this turn's visible tools and ToolSpec arguments."""
 
-    if not request.tools:
-        raise RuntimeError("release0_provider_visible_tool_surface_empty")
     template = deepcopy(RELEASE0_PROVIDER_DECISION_JSON_SCHEMA)
     variants = template.get("oneOf")
     if not isinstance(variants, list) or len(variants) != 3:
@@ -208,6 +211,48 @@ def _schema_for_visible_tools(request: ProviderDecisionRequest) -> dict[str, obj
     terminal_variants = variants[1:]
     template["oneOf"] = [*(_tool_variant(tool) for tool in request.tools), *terminal_variants]
     return template
+
+
+def _extract_structured_doc_ids(value: Any) -> tuple[str, ...]:
+    """Extract bounded, exact ``doc_id`` fields from one public structured observation.
+
+    Strings are opaque: identifiers mentioned in free text are intentionally ignored. Generic
+    ``id`` keys are also ignored because only the canonical public ``doc_id`` contract authorizes
+    the knowledge-document continuation.
+    """
+
+    found: list[str] = []
+    seen: set[str] = set()
+
+    def visit(node: Any, *, depth: int) -> None:
+        if depth > _RELEASE0_MAX_GROUNDING_DEPTH or len(found) >= _RELEASE0_MAX_GROUNDED_DOC_IDS:
+            return
+        if isinstance(node, Mapping):
+            raw_doc_id = node.get("doc_id")
+            if isinstance(raw_doc_id, str):
+                doc_id = raw_doc_id.strip()
+                if (
+                    doc_id
+                    and len(doc_id) <= _RELEASE0_MAX_DOC_ID_LENGTH
+                    and doc_id not in seen
+                ):
+                    seen.add(doc_id)
+                    found.append(doc_id)
+            for key, child in node.items():
+                if key == "doc_id":
+                    continue
+                visit(child, depth=depth + 1)
+                if len(found) >= _RELEASE0_MAX_GROUNDED_DOC_IDS:
+                    break
+            return
+        if isinstance(node, (list, tuple)):
+            for child in node:
+                visit(child, depth=depth + 1)
+                if len(found) >= _RELEASE0_MAX_GROUNDED_DOC_IDS:
+                    break
+
+    visit(value, depth=0)
+    return tuple(found)
 
 
 class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisionClient):
@@ -247,22 +292,63 @@ class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisio
 
 
 class Release0ProviderDecisionSource(ProviderDecisionSource):
-    """Read-only adaptive provider surface with deterministic tool-budget protection.
+    """Read-only adaptive provider surface with deterministic grounded stopping.
 
-    Release 0 exposes only canonical read tools to the model. After one successful
-    ``search_knowledge`` that tool is removed from both the provider request and the adapter's
-    accepted tool-name set for the rest of the run. The full canonical registry remains owned by
-    the runtime/HarnessRunner, so B1/B2/B3 still independently validate every executed proposal.
+    Before knowledge search, Release 0 exposes all canonical read tools. Once a search observation
+    exists, the surface can only narrow: a successful search with exact structured ``doc_id``
+    evidence may expose one constrained ``get_knowledge_doc`` continuation; every other search
+    outcome and every document observation produces a terminal-only provider request. The full
+    canonical registry remains owned by the runtime/HarnessRunner, so B1/B2/B3 still independently
+    validate every executed proposal.
     """
 
     @staticmethod
-    def _searched_successfully(context: ControllerContext) -> bool:
+    def _latest_search_observation(context: ControllerContext):
+        return next(
+            (
+                observation
+                for observation in reversed(context.observations)
+                if observation.tool_name == "search_knowledge"
+            ),
+            None,
+        )
+
+    @staticmethod
+    def _knowledge_doc_observed(context: ControllerContext) -> bool:
         return any(
-            observation.tool_name == "search_knowledge"
-            and observation.status == "success"
-            and observation.executed
+            observation.tool_name == "get_knowledge_doc"
             for observation in context.observations
         )
+
+    @classmethod
+    def _grounded_doc_ids(cls, context: ControllerContext) -> tuple[str, ...]:
+        observation = cls._latest_search_observation(context)
+        if (
+            observation is None
+            or not observation.executed
+            or observation.status != "success"
+        ):
+            return ()
+        return _extract_structured_doc_ids(observation.body)
+
+    @staticmethod
+    def _constrain_doc_tool(tool, doc_ids: tuple[str, ...]):
+        parameters = tuple(
+            parameter.model_copy(
+                update={
+                    "parameter_schema": {
+                        **deepcopy(parameter.parameter_schema),
+                        "enum": list(doc_ids),
+                    }
+                }
+            )
+            if parameter.name == "doc_id"
+            else parameter
+            for parameter in tool.parameters
+        )
+        if not any(parameter.name == "doc_id" for parameter in parameters):
+            raise RuntimeError("release0_get_knowledge_doc_contract_drift")
+        return tool.model_copy(update={"parameters": parameters})
 
     def _visible_registry(self, context: ControllerContext):
         visible = {
@@ -270,9 +356,23 @@ class Release0ProviderDecisionSource(ProviderDecisionSource):
             for name, tool in self.registry.items()
             if tool.kind.value == "read"
         }
-        if self._searched_successfully(context):
-            visible.pop("search_knowledge", None)
-        return visible
+        if self._knowledge_doc_observed(context):
+            return {}
+
+        search_observation = self._latest_search_observation(context)
+        if search_observation is None:
+            return visible
+
+        doc_ids = self._grounded_doc_ids(context)
+        if not doc_ids:
+            return {}
+
+        doc_tool = visible.get("get_knowledge_doc")
+        if doc_tool is None:
+            raise RuntimeError("release0_get_knowledge_doc_missing")
+        return {
+            "get_knowledge_doc": self._constrain_doc_tool(doc_tool, doc_ids)
+        }
 
     def build_request(self, context: ControllerContext) -> ProviderDecisionRequest:
         return build_provider_decision_request(
@@ -282,9 +382,7 @@ class Release0ProviderDecisionSource(ProviderDecisionSource):
 
     def decide(self, context: ControllerContext):
         visible_names = frozenset(self._visible_registry(context))
-        self._known_tools = frozenset(
-            name for name in self._known_tools if name in visible_names
-        )
+        self._known_tools = visible_names
         return super().decide(context)
 
 
