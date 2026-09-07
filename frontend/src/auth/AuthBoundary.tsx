@@ -145,7 +145,7 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
   };
 
   if (state === "checking") {
-    return <div className="auth-shell"><div className="auth-card"><p className="eyebrow">ACADEMY × TRACTIAN</p><h1>Checking secure session…</h1></div></div>;
+    return <div className="auth-shell"><div className="auth-card"><p className="eyebrow">ACADEMY × TRACTIAN</p><h1>Opening your workspace…</h1><p className="auth-copy">We are checking your secure session.</p></div></div>;
   }
 
   if (state === "anonymous" || state === "unavailable") {
@@ -153,20 +153,26 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
       <div className="auth-shell">
         <section className="auth-card">
           <p className="eyebrow">ACADEMY × TRACTIAN</p>
-          <h1>Industrial Agent Operations</h1>
-          <p className="auth-copy">Authenticate before accessing tenant-bound runs, traces, evaluations and governed actions.</p>
-          <div className="auth-mode" role="group" aria-label="Authentication mode">
+          <h1>Equipment analysis assistant</h1>
+          <p className="auth-copy">Sign in to see your organization’s analyses and start a new equipment investigation.</p>
+          <div className="auth-mode" role="group" aria-label="Choose sign in or account creation">
             <button type="button" className={mode === "sign-in" ? "active" : ""} onClick={() => setMode("sign-in")}>Sign in</button>
             <button type="button" className={mode === "sign-up" ? "active" : ""} onClick={() => setMode("sign-up")}>Create account</button>
           </div>
           <form className="auth-form" onSubmit={submit}>
-            {mode === "sign-up" && <label>Name<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={120} required /></label>}
+            {mode === "sign-up" && <label>Your name<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={120} required /></label>}
             <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={320} required /></label>
-            <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === "sign-in" ? "current-password" : "new-password"} minLength={8} maxLength={128} required /></label>
-            <button type="submit" disabled={submitting}>{submitting ? "Working…" : mode === "sign-in" ? "Sign in" : "Create account"}</button>
+            <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === "sign-in" ? "current-password" : "new-password"} minLength={8} maxLength={128} required /><small>Use at least 8 characters.</small></label>
+            <button type="submit" disabled={submitting}>{submitting ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}</button>
           </form>
-          {error && <div className="error-banner" role="alert">{error}</div>}
-          {state === "unavailable" && <p className="auth-note">The application fails closed when the managed authentication service is unavailable.</p>}
+          {error && (
+            <div className="error-banner friendly-error" role="alert">
+              <strong>We could not sign you in.</strong>
+              <span>Please check your information and try again.</span>
+              <details><summary>Technical detail</summary><code>{error}</code></details>
+            </div>
+          )}
+          {state === "unavailable" && <p className="auth-note">Sign-in is temporarily unavailable. Your organization’s data remains protected while the service is offline.</p>}
         </section>
       </div>
     );
