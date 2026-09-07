@@ -1,0 +1,416 @@
+/* Second-pass UX refinements: shared across every product, expert and research surface. */
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+:where(button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+:where(button, input, select, textarea) {
+  min-height: 44px;
+}
+
+select,
+input {
+  font: inherit;
+}
+
+.section-supporting-copy,
+.panel-copy,
+.pilot-intro,
+.auth-copy {
+  max-width: 72ch;
+  line-height: 1.65;
+}
+
+.technical-disclosure,
+.event-technical-details {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.technical-disclosure > summary,
+.event-technical-details > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.technical-disclosure[open] > summary,
+.event-technical-details[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.technical-disclosure > :not(summary),
+.event-technical-details > :not(summary) {
+  margin-inline: 12px;
+}
+
+/* Charts keep the visual view while exposing an accessible description. */
+.accessible-chart {
+  margin: 0;
+  min-width: 0;
+}
+
+.accessible-chart figcaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Architecture: graph plus a keyboard-first text/component navigator. */
+.refined-architecture-layout {
+  align-items: start;
+}
+
+.architecture-main-column {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.architecture-guide,
+.action-safety-summary,
+.action-confirmation-note {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+}
+
+.architecture-guide strong,
+.action-safety-summary strong,
+.action-confirmation-note strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.architecture-guide p,
+.action-safety-summary p,
+.action-confirmation-note p {
+  margin: 0;
+  color: #b7c2d0;
+  line-height: 1.55;
+  font-size: 12px;
+}
+
+.architecture-component-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.architecture-component-button {
+  min-width: 0;
+  min-height: 74px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.architecture-component-button > span,
+.architecture-component-button > small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.architecture-component-button > strong {
+  display: block;
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+
+.architecture-component-button.is-active {
+  border-color: rgba(80, 216, 144, .55);
+}
+
+.architecture-component-button.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(97, 168, 255, .12);
+}
+
+/* Trace: never make the graph the only way to understand the sequence. */
+.trace-graph-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.trace-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.trace-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.trace-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #7c8ba0;
+}
+
+.trace-legend-model { background: var(--model); }
+.trace-legend-tool { background: var(--tool); }
+.trace-legend-warning { background: var(--warning); }
+.trace-legend-success { background: var(--success); }
+
+.trace-text-alternative ol {
+  margin: 0;
+  padding: 12px 12px 12px 32px;
+}
+
+.trace-text-alternative li {
+  padding: 8px 0;
+  color: #d7dee8;
+}
+
+.trace-text-alternative li > span,
+.trace-text-alternative li > small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Action confirmation: consequence before control, identifiers after disclosure. */
+.action-safety-summary {
+  margin: 10px 0 14px;
+}
+
+.action-confirmation-note {
+  margin: 12px 0;
+  border-color: rgba(243, 186, 75, .38);
+  background: rgba(243, 186, 75, .055);
+}
+
+.action-summary-list {
+  margin: 10px 0;
+}
+
+.action-summary-list > div {
+  display: grid;
+  grid-template-columns: minmax(120px, .55fr) 1fr;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+
+.action-summary-list dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.action-summary-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.action-confirm-help {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* Technical analytics: make forms scannable before they become dense. */
+#dynamic-data-explorer .query-grid,
+#dynamic-data-explorer .filter-row {
+  gap: 12px;
+}
+
+#dynamic-data-explorer label,
+.pilot-form label,
+.auth-form label {
+  line-height: 1.45;
+}
+
+#dynamic-data-explorer label > select,
+#dynamic-data-explorer label > input,
+.pilot-form select,
+.pilot-form textarea,
+.auth-form input {
+  margin-top: 6px;
+}
+
+.analytics-table caption,
+.run-table caption {
+  text-align: left;
+}
+
+.analytics-table th,
+.run-table th {
+  text-align: left;
+}
+
+.analytics-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Operations workspace: consistent hierarchy across every expert card. */
+.operations-workspace > .workspace-title {
+  margin-bottom: 14px;
+}
+
+.operations-panel .section-heading h2 {
+  line-height: 1.25;
+}
+
+.health-card,
+.evidence-card,
+.capability-card,
+.action-card {
+  border-radius: 10px;
+}
+
+.health-card p,
+.evidence-card p,
+.capability-card p,
+.lineage-list p {
+  line-height: 1.5;
+}
+
+.compact-data-list button,
+.drilldown-button {
+  min-height: 36px;
+  padding-inline: 10px;
+}
+
+/* Research surfaces remain scientifically blind, but the interaction itself stays simple. */
+.pilot-panel fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.pilot-panel legend {
+  padding: 0 6px;
+  font-weight: 800;
+}
+
+.semantic-score-option,
+.semantic-reason-option {
+  min-height: 44px;
+  align-items: flex-start;
+}
+
+.pilot-invalid-actions {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.danger-button {
+  min-height: 44px;
+}
+
+/* History is task-first; IDs remain in the DOM for technical/e2e provenance but not visual noise. */
+.run-status-detail {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.run-select-button small {
+  color: var(--muted);
+}
+
+/* Auth recovery must remain usable even when the remote identity service is unavailable. */
+.auth-card {
+  max-width: 520px;
+}
+
+.auth-mode button {
+  min-height: 44px;
+}
+
+.auth-session-bar button {
+  min-height: 40px;
+}
+
+/* Loading and disabled controls must still look intentional, not broken. */
+[aria-busy="true"] {
+  cursor: progress;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: .58;
+}
+
+@media (max-width: 900px) {
+  .refined-architecture-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .architecture-detail {
+    position: static;
+  }
+
+  .action-summary-list > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+}
+
+@media (max-width: 650px) {
+  .architecture-component-list {
+    grid-template-columns: 1fr;
+  }
+
+  .trace-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .run-table th:nth-child(2),
+  .run-table td:nth-child(2) {
+    display: none;
+  }
+
+  .action-card-heading,
+  .section-heading {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__edge-path,
+  .react-flow__edge {
+    animation: none !important;
+    transition: none !important;
+  }
+}
