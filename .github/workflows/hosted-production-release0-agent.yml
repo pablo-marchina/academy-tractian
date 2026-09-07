@@ -5,19 +5,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - ".github/workflows/hosted-production-release0-agent.yml"
       - "scripts/production_hosted_release0_agent_smoke.py"
       - "scripts/production_hosted_release0_modes_smoke.py"
-      - "src/academy_tractian/release0_capabilities.py"
-      - "src/academy_tractian/release_provider.py"
-      - "src/academy_tractian/cloudflare_provider_client.py"
-      - "src/academy_tractian/runtime.py"
-      - "src/academy_tractian/tractian_transport.py"
-      - "src/academy_tractian/remote_server.py"
-      - "frontend/src/components/Release0CapabilitySurface.tsx"
-      - "frontend/src/api/release0Client.ts"
-      - "frontend/src/api/release0Types.ts"
-      - "frontend/src/App.tsx"
+      - "src/academy_tractian/**"
+      - "research/e2/**"
+      - "Dockerfile"
+      - "requirements-production.lock"
 
 permissions:
   contents: read
