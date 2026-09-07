@@ -1,5 +1,10 @@
 import { FormEvent, ReactNode, useCallback, useEffect, useState } from "react";
 
+import {
+  MANAGED_AUTH_EVENT,
+  type ManagedAuthSignal,
+} from "./managedAuthEvents";
+
 type AuthMode = "sign-in" | "sign-up";
 type AuthState = "checking" | "anonymous" | "authenticated" | "unavailable";
 
@@ -74,13 +79,15 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshSession = useCallback(async () => {
+  const refreshSession = useCallback(async (forceFresh = false) => {
     try {
-      const response = await authRequest("/get-session?disableCookieCache=true");
+      const suffix = forceFresh ? "?disableCookieCache=true" : "";
+      const response = await authRequest(`/get-session${suffix}`);
       if (!response.ok) {
         if (response.status === 401) {
           setUser(null);
           setState("anonymous");
+          setError(null);
           return;
         }
         throw new Error(await publicError(response));
@@ -99,6 +106,31 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refreshSession();
+
+    const handleManagedAuthState = (event: Event) => {
+      const signal = (event as CustomEvent<ManagedAuthSignal>).detail;
+      setUser(null);
+      if (signal === "invalid") {
+        setState("anonymous");
+        setError(null);
+      } else if (signal === "unavailable") {
+        setState("unavailable");
+        setError("managed_session_unavailable");
+      }
+    };
+    const refreshOnFocus = () => void refreshSession();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void refreshSession();
+    };
+
+    window.addEventListener(MANAGED_AUTH_EVENT, handleManagedAuthState);
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.removeEventListener(MANAGED_AUTH_EVENT, handleManagedAuthState);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, [refreshSession]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -121,7 +153,7 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
       });
       if (!response.ok) throw new Error(await publicError(response));
       setPassword("");
-      await refreshSession();
+      await refreshSession(true);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "authentication_failed");
     } finally {
@@ -166,7 +198,12 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
             <button type="submit" disabled={submitting}>{submitting ? "Working…" : mode === "sign-in" ? "Sign in" : "Create account"}</button>
           </form>
           {error && <div className="error-banner" role="alert">{error}</div>}
-          {state === "unavailable" && <p className="auth-note">The application fails closed when the managed authentication service is unavailable.</p>}
+          {state === "unavailable" && (
+            <>
+              <p className="auth-note">The application fails closed when the managed authentication service is unavailable.</p>
+              <button type="button" onClick={() => void refreshSession()} disabled={submitting}>Retry secure session</button>
+            </>
+          )}
         </section>
       </div>
     );
