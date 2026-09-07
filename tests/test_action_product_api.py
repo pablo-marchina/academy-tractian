@@ -241,7 +241,7 @@ def test_remote_production_requires_tenant_aware_authorization_at_confirmation(t
         )
 
         assert response.status_code == 503
-        assert response.json()["detail"] == "tenant_aware_action_authorization_required"
+        assert response.json()["detail"] == "action_authorization_context_unavailable"
         assert calls == []
         assert client.get(f"/api/actions/{pending['action_id']}").json()["state"] == "PENDING_CONFIRMATION"
 
