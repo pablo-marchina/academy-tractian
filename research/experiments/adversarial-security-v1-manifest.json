@@ -15,7 +15,7 @@
   "source_artifacts": [
     {
       "path": "src/academy_tractian/trusted_action_authorization.py",
-      "git_blob_sha1": "bdcdcea03f32133d4123543d5ea236337076a6fa"
+      "git_blob_sha1": "5f2a49b6b1ff9cb4c04995ff1db76b1ee1a10c53"
     },
     {
       "path": "src/academy_tractian/mode_acceptance_gate.py",
