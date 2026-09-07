@@ -9,18 +9,22 @@ from research.e2.tool_registry import TOOLS
 from .cloudflare_provider_client import (
     CLOUDFLARE_PROVIDER_ID,
 )
-from .decision_source import ProviderCallIdentity, ProviderDecisionSource
+from .decision_source import ProviderCallIdentity, ProviderDecisionRequest, ProviderDecisionSource
 from .production_config import RemoteProductionConfig
-from .provider_clients import UrllibProviderJsonTransport
+from .provider_clients import ProviderHttpRequest, UrllibProviderJsonTransport
 from .release_provider import (
+    RELEASE0_PROVIDER_DECISION_JSON_SCHEMA,
     Release0CloudflareDecisionClient,
     Release0ProviderDecisionSource,
+    _ASSET_DISCOVERY_TOOL_NAMES,
     _append_bounded_identifier,
     _asset_investigation_request,
     _constrain_tool_parameter,
     _extract_company_ids,
     _provider_audit_model_id,
     _successful_observation,
+    _terminal_variants_for_request,
+    _tool_variant,
     validate_release_provider_config,
 )
 
@@ -127,6 +131,65 @@ def _extract_collection_ids_v10(
 
     scan(value, depth=0)
     return tuple(found)
+
+
+def _mandatory_asset_continuation_v10(request: ProviderDecisionRequest) -> bool:
+    """Keep asset investigations TOOL-only until real condition evidence exists."""
+
+    if not _asset_investigation_request(request.user_request) or not request.tools:
+        return False
+    names = {tool.name for tool in request.tools}
+    successful = {
+        observation.tool_name
+        for observation in request.observations
+        if observation.executed and observation.status == "success"
+    }
+    if "get_current_user" in successful and "list_assets_by_company" not in successful:
+        return names == {"list_assets_by_company"}
+    if (
+        "list_assets_by_company" in successful
+        and not (successful & _RELEASE0_V10_CONDITION_EVIDENCE_READS)
+    ):
+        return bool(names) and names <= _ASSET_DISCOVERY_TOOL_NAMES
+    return False
+
+
+def _schema_for_visible_tools_v10(request: ProviderDecisionRequest) -> dict[str, object]:
+    """Bind terminal eligibility to V10 condition-evidence sufficiency."""
+
+    template = deepcopy(RELEASE0_PROVIDER_DECISION_JSON_SCHEMA)
+    variants = template.get("oneOf")
+    if not isinstance(variants, list) or len(variants) != 3:
+        raise RuntimeError("release0_v10_provider_schema_contract_drift")
+    terminal_variants = (
+        []
+        if _mandatory_asset_continuation_v10(request)
+        else _terminal_variants_for_request(
+            variants[1:],
+            user_request=request.user_request,
+        )
+    )
+    template["oneOf"] = [*(_tool_variant(tool) for tool in request.tools), *terminal_variants]
+    return template
+
+
+class Release0CloudflareDecisionClientV10(Release0CloudflareDecisionClient):
+    """Release 0 V10 client that tightens only the response-schema stopping rule."""
+
+    def build_http_request(self, request: ProviderDecisionRequest) -> ProviderHttpRequest:
+        base = super().build_http_request(request)
+        body = dict(base.body)
+        body["response_format"] = {
+            "type": "json_schema",
+            "json_schema": _schema_for_visible_tools_v10(request),
+        }
+        return ProviderHttpRequest(
+            method=base.method,
+            url=base.url,
+            headers=dict(base.headers),
+            body=body,
+            timeout_seconds=base.timeout_seconds,
+        )
 
 
 class Release0ProviderDecisionSourceV10(Release0ProviderDecisionSource):
@@ -238,7 +301,7 @@ def build_release_provider_decision_source_v10(
     if config.provider_id != CLOUDFLARE_PROVIDER_ID:
         raise RuntimeError("release_provider_not_supported")
 
-    client = Release0CloudflareDecisionClient(
+    client = Release0CloudflareDecisionClientV10(
         api_token=config.provider_api_token.get_secret_value(),
         account_id=config.provider_account_id,
         model_id=config.provider_model_id,
