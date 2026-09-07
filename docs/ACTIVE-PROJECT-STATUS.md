@@ -1,19 +1,19 @@
 # Academy × TRACTIAN — Active Project Status
 
-**Status:** Release 0 **PROMOTED** / UX pilot live / `main` integrated  
-**Last verified:** 2026-09-06 BRT  
+**Status:** Release 0 **PROMOTED** / task-driven UX live / `release/production-final` integrated  
+**Last verified:** 2026-09-07 BRT  
 **Promoted backend/runtime SHA:** `082d6f115c070fdc898df749b4b3018efd9ceeab`  
-**Current hosted frontend UX SHA:** `2ca6215ccc07664a9551e8363e438f0930a4d995`  
+**Current hosted frontend UX SHA:** `1bc124a8d4dbd029178ff8129b25452129445de7`  
 **Current hosted supplied-API SHA:** `47561c1175181b508139e23e6e39b555c1347d57`  
-**Validated PR #196 head:** `d7e941b1e0ee380f3cca43816521c88eddc20e9c`  
-**Main integration merge:** `9fbfbe0c5b5b80dc23941ac2850125834641e32b`  
+**Validated PR #209 head:** `a707222f94fb92f9402409e84ba3de673637dfc9`  
+**Production integration merge:** `1bc124a8d4dbd029178ff8129b25452129445de7`  
 **Public product:** https://production-web-production-c9d1.up.railway.app  
-**Branch:** `main`  
-**PR:** `#196 (MERGED)`
+**Branch:** `release/production-final`  
+**PR:** `#209 (MERGED)`
 
 This file is the mutable source of truth for **current execution state**. Frozen/history files remain immutable.
 
-Repository integration identity and hosted component identities are intentionally tracked separately. Merging PR #196 into `main` does not by itself imply that every hosted service was redeployed from the merge commit.
+Repository integration identity and hosted component identities are intentionally tracked separately. PR #209 was merged into `release/production-final` and its exact merge commit was promoted to the Railway `production-web` service. This frontend promotion does not imply a new backend/runtime promotion.
 
 ## 1. Current objective
 
@@ -25,16 +25,17 @@ Current user path:
 
 ```text
 authenticated remote user
-→ Results
-→ guided/custom industrial investigation
+→ Home
+→ ask an equipment question in natural language
 → live provider + typed TRACTIAN reads
 → persisted evidence
 → FINAL | CLARIFY | ABSTAIN | ESCALATE
-→ deterministic post-runtime evaluation
-→ optional depth: Evidence → Investigation → Engineering
+→ customer-first result + next step
+→ evidence when needed
+→ Analyses for prior runs or Technical for specialist depth
 ```
 
-Consequential external action execution remains disabled.
+Consequential external action execution remains disabled in the promoted backend/runtime boundary.
 
 ## 2. Release 0 promotion — PASS
 
@@ -60,33 +61,36 @@ Release 0 was promoted on backend/runtime SHA `082d6f115c070fdc898df749b4b3018ef
 
 Hosted Release 0 acceptance: `hosted-production-release0-agent`, run `34069562818`.
 
-## 3. UX pilot — implemented and hosted
+## 3. Task-driven UX — implemented and hosted
 
-The hosted frontend UX baseline remains `2ca6215ccc07664a9551e8363e438f0930a4d995`. The supplied TRACTIAN API identity bridge is hosted at `47561c1175181b508139e23e6e39b555c1347d57`.
+The hosted frontend UX is `1bc124a8d4dbd029178ff8129b25452129445de7`. The supplied TRACTIAN API identity bridge remains hosted at `47561c1175181b508139e23e6e39b555c1347d57`.
 
-The complete PR #196 source head `d7e941b1e0ee380f3cca43816521c88eddc20e9c` passed the required regression surface and was merged into `main` as `9fbfbe0c5b5b80dc23941ac2850125834641e32b`. These identities are deliberately separate: repository integration is not represented as an application redeploy.
+PR #209 head `a707222f94fb92f9402409e84ba3de673637dfc9` passed the required regression surface and was merged into `release/production-final` as `1bc124a8d4dbd029178ff8129b25452129445de7`. Railway deployment `f78e88cd-82c2-4fcf-8f59-a51168f10fad` built that exact merge commit and passed the `/` healthcheck.
 
-The validated PR #196 regression surface included:
+The validated PR #209 regression surface included:
 
 - `frontend-provider-free`;
 - `full-product-playwright`;
 - `clean-clone-full-product-reproduction`;
-- `final-ci-required`;
-- production-runtime, Postgres, observability, EDD, IaC and handoff regressions.
+- `eval-driven-development-provider-free`;
+- `observability-api-provider-free`;
+- `final-handoff-acceptance-audit`;
+- `final-ci-required`.
 
 ### Completed UX work
 
 | UX workstream | State | Current implementation |
 |---|---|---|
-| first-run orientation | **DONE** | product purpose, read-only boundary and guarantees before engineering detail |
-| guided investigation entry | **DONE** | server-owned guided intents; explicitly labelled local starter examples only when unavailable |
-| human-readable live progress | **DONE** | Preparing → Deciding → Reading → Reviewing → Evaluating → Complete |
-| customer-first terminal outcome | **DONE** | outcome/message/next step/evidence before trace internals |
-| mode-specific recovery | **DONE** | distinct FINAL/CLARIFY/ABSTAIN/ESCALATE guidance |
-| evidence summary | **DONE** | compact evidence first; canonical trail in Evidence layer |
-| progressive disclosure | **DONE** | Results → Evidence → Investigation → Engineering |
-| keyboard-accessible depth navigation | **DONE** | tab semantics + Arrow/Home/End focus behavior |
-| preserve full engineering observability | **DONE** | runtime/evals/architecture/capabilities remain available in deeper layers |
+| task-first global navigation | **DONE** | Home / Analyses / Technical only |
+| focused first-run entry | **DONE** | one natural-language question + one primary `Analyse` action; examples optional |
+| human-readable live progress | **DONE** | three understandable progress stages rather than internal runtime phases |
+| customer-first terminal outcome | **DONE** | status → conclusion → next step → evidence |
+| mode-specific recovery | **DONE** | distinct FINAL/CLARIFY/ABSTAIN/ESCALATE guidance without exposing internal reason codes in the primary UX |
+| contextual evidence | **DONE** | evidence is entered from the result when needed rather than occupying a permanent global destination |
+| recognition-first history | **DONE** | prior analyses use an accessible list instead of a dense table |
+| task-grouped technical depth | **DONE** | Current analysis / Quality / Data / System / Actions / Studies; one family rendered at a time |
+| keyboard and responsive access | **DONE** | focusable navigation/history, visible focus, large targets and 390px no-overflow browser acceptance |
+| preserve full engineering observability | **DONE** | runtime/evals/architecture/capabilities/actions/studies remain available under Technical |
 | lightweight casual run feedback | **NEXT** | must be separate from controlled semantic/value collectors |
 | first-time-user pilot iteration | **NEXT** | collect friction/correctness evidence and prioritize quantitatively |
 
@@ -118,8 +122,9 @@ final provider decision = NO_SELECTION
 - deterministic post-runtime evaluator;
 - persisted history/reload;
 - authenticated REST/SSE;
-- four-level progressive UX;
-- architecture/trace/capability/evaluation observability.
+- task-driven Home / Analyses / Technical UX;
+- contextual result/evidence flow;
+- architecture/trace/capability/evaluation observability under specialist depth.
 
 ## 6. Deliberate non-claims / open final gates
 
