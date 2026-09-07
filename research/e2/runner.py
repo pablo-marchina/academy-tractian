@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import json
 from typing import Any, Literal
 
 from .action_gate import EvidenceAwareActionGate
@@ -37,16 +36,6 @@ def _response_from_record(record: dict[str, Any]) -> TransportResponse:
     )
 
 
-def _canonical_tool_signature(tool_name: str, arguments: dict[str, Any]) -> str:
-    return json.dumps(
-        {"tool_name": tool_name, "arguments": arguments},
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    )
-
-
 class HarnessRunner:
     """Framework-neutral execution harness.
 
@@ -70,7 +59,6 @@ class HarnessRunner:
         resource_policy: ResourcePolicy | None = None,
         action_gate: EvidenceAwareActionGate | None = None,
         scenario: Scenario | None = None,
-        reject_duplicate_successful_reads: bool = False,
     ) -> None:
         if execution_mode == "live" and transport is None:
             raise ValueError("live execution requires a transport")
@@ -88,8 +76,6 @@ class HarnessRunner:
         self.resource_policy = resource_policy
         self.action_gate = action_gate
         self.scenario = scenario
-        self.reject_duplicate_successful_reads = reject_duplicate_successful_reads
-        self._successful_read_signatures: set[str] = set()
         self.trace = RunTrace(
             run_id=run_id,
             scenario_id=scenario_id,
@@ -143,17 +129,6 @@ class HarnessRunner:
                     tool=tool,
                     code="ARGUMENT_INVALID",
                     reason="; ".join(f"{issue.code}:{issue.field or ''}" for issue in issues),
-                    stage="B1",
-                )
-
-        read_signature: str | None = None
-        if self.reject_duplicate_successful_reads and tool.kind is ToolKind.READ:
-            read_signature = _canonical_tool_signature(tool.name, arguments)
-            if read_signature in self._successful_read_signatures:
-                return self._block(
-                    tool=tool,
-                    code="DUPLICATE_SUCCESSFUL_READ",
-                    reason="an identical read already completed successfully in this run",
                     stage="B1",
                 )
 
@@ -215,9 +190,6 @@ class HarnessRunner:
             assert self.transport is not None
             response = self.transport.request(request)
             self.replay.record(request_record, _response_record(response))
-
-        if read_signature is not None and 200 <= response.status_code < 300:
-            self._successful_read_signatures.add(read_signature)
 
         result = _response_record(response)
         self._emit(
