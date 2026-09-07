@@ -164,7 +164,7 @@ class FailIsolatedObservabilityPublisher:
 
 
 class ObservableHarnessRunner(HarnessRunner):
-    """Production opt-in wrapper preserving HarnessRunner's execution ownership."""
+    """Production wrapper with safe observability and deterministic successful-read deduplication."""
 
     def __init__(
         self,
@@ -173,6 +173,7 @@ class ObservableHarnessRunner(HarnessRunner):
         **kwargs: Any,
     ) -> None:
         self.observability_publisher = observability_publisher
+        kwargs.setdefault("reject_duplicate_successful_reads", True)
         super().__init__(**kwargs)
         canonical_append_perf = perf_counter()
         self.observability_publisher.publish_trace_state(
