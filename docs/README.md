@@ -1,155 +1,142 @@
 # Documentation Hub
 
-**Status:** canonical documentation index  
-**Active state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
-**Delivery target:** 2026-09-08
+**Status:** ACTIVE documentation index  
+**Last verified:** 2026-09-06 BRT  
+**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
+**Public product:** https://production-web-production-c9d1.up.railway.app
 
-This repository contains both active product documentation and a large scientific evidence trail. The active surface is intentionally small; historical/frozen files remain available for provenance and reproduction but are not competing sources of current truth.
+The repository contains two different things on purpose:
 
-## 1. Canonical active documents
+1. a **small active documentation surface** that answers current user/operator/developer/reviewer questions;
+2. a **large immutable evidence history** that preserves experiments, ADRs, audits and prior states.
 
-Use one document per question:
+Do not treat an old file as current truth merely because it remains in Git.
 
-| Question | Canonical document |
+## Start by task
+
+### I want to use or learn the product — tutorial / quickstart
+
+- [`GETTING-STARTED.md`](GETTING-STARTED.md) — first successful investigation and how to navigate Results/Evidence/Investigation/Engineering.
+- [`RELEASE-0-ACCEPTANCE.md`](RELEASE-0-ACCEPTANCE.md) — what the live Release 0 actually proved.
+
+### I want to perform an operation — how-to / runbook
+
+- [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md) — production smoke, promotion, diagnosis, rollback and recovery.
+- [`PLAYWRIGHT-ACCEPTANCE.md`](PLAYWRIGHT-ACCEPTANCE.md) — browser/product acceptance contract.
+- [`../CONTRIBUTING.md`](../CONTRIBUTING.md) — development workflow.
+
+### I need exact current facts — reference
+
+- [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md) — mutable current state and evidence anchors.
+- [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md) — final-project Definition of Done and open gates.
+- [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md) — assignment-to-product crosswalk.
+- [`CODEBASE-MAP.md`](CODEBASE-MAP.md) — code ownership/navigation.
+- [`decision-registry.yaml`](decision-registry.yaml) — material decision states; release qualification does not silently rewrite frozen experiments.
+- [`../CHANGELOG.md`](../CHANGELOG.md) — notable product evolution.
+
+### I want to understand why — explanation
+
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — current system context, containers, dynamic flow and trust boundaries.
+- [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md) — governance and engineering constitution.
+- [`SECURITY-MODEL.md`](SECURITY-MODEL.md) — active threat/trust-boundary model.
+- [`adr/README.md`](adr/README.md) + `adr/*` — accepted material decision history.
+- [`DOCUMENTATION-GUIDE.md`](DOCUMENTATION-GUIDE.md) — documentation architecture, lifecycle and writing rules.
+
+### I want chronological/research evidence
+
+- [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md) — historical project chronology.
+- [`progress/`](progress/) — append-only dated progress/evidence notes.
+- [`research/`](research/) — documentation/research-specific evidence notes.
+- [`../research/README.md`](../research/README.md) — broader experiment/evidence tree.
+
+## Canonical ownership: one question, one mutable owner
+
+| Question | Mutable owner |
 |---|---|
-| Where are we now? | [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md) |
-| What are we building next and by when? | [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md) |
-| What is the architecture/stack/technique set? | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
-| Where does code live / where should a change go? | [`CODEBASE-MAP.md`](CODEBASE-MAP.md) |
-| How does this satisfy the TAPI? | [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md) |
-| What must be true for final acceptance? | [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md) |
-| How do I install, reproduce and recover? | [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md) |
-| What historical frozen rubric evidence exists? | [`RUBRIC-TO-EVIDENCE.md`](RUBRIC-TO-EVIDENCE.md) |
-| What governance rules constrain changes? | [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md) |
-| Why was a material decision made? | [`adr/README.md`](adr/README.md) + `adr/*` |
-| How did the project evolve? | [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md) + `progress/` |
+| Where are we now? | `ACTIVE-PROJECT-STATUS.md` |
+| What are we doing next? | `DELIVERY-PLAN.md` |
+| What architecture is promoted? | `ARCHITECTURE.md` |
+| What must be true at final delivery? | `DELIVERY-ACCEPTANCE.md` |
+| What does the TAPI map to? | `TAPI-DELIVERY-COVERAGE-2026-09-02.md` |
+| Where does code live? | `CODEBASE-MAP.md` |
+| How do I operate/recover it? | `FINAL-HANDOFF-RUNBOOK.md` |
+| What changed for humans? | root `CHANGELOG.md` |
+| Why was a durable decision made? | ADR / decision registry |
 
-`README.md` at repository root is a concise entrypoint only.
+The root `README.md` is an entrypoint, not another status database.
 
-Two legacy filenames look mutable but are now provenance-bound and must not be used for new state:
+## Documentation lifecycle
 
-- `CURRENT-PROJECT-STATUS.md` is hash-pinned by the final-freeze evidence bundle;
-- `RUBRIC-TO-EVIDENCE.md` is hash-pinned by ADR-017 / hard-freeze integrity checks.
+### ACTIVE — edit prospectively
 
-New state is written to `ACTIVE-PROJECT-STATUS.md`; new rubric/reviewer analysis must use a new, explicitly non-frozen document rather than rewriting historical bytes.
+- this index;
+- `GETTING-STARTED.md`;
+- `ACTIVE-PROJECT-STATUS.md`;
+- `DELIVERY-PLAN.md`;
+- `ARCHITECTURE.md`;
+- `CODEBASE-MAP.md`;
+- `DELIVERY-ACCEPTANCE.md`;
+- `TAPI-DELIVERY-COVERAGE-2026-09-02.md`;
+- `FINAL-HANDOFF-RUNBOOK.md`;
+- `PLAYWRIGHT-ACCEPTANCE.md`;
+- `SECURITY-MODEL.md`;
+- `DOCUMENTATION-GUIDE.md`;
+- `PROJECT-PRINCIPLES.md` when governance itself changes;
+- root `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `SECURITY.md`.
 
-## 2. Documentation lifecycle
+### FROZEN / HISTORICAL — do not rewrite later history into them
 
-### ACTIVE
+- `CURRENT-PROJECT-STATUS.md` — legacy mutable-looking filename, hash-pinned by freeze evidence;
+- `RUBRIC-TO-EVIDENCE.md` — hash-pinned hard-freeze evidence;
+- accepted/frozen ADRs;
+- `research/frozen/*` and consumed experiment manifests/results;
+- `docs/progress/*` once committed;
+- date-stamped audits, preregistrations and preflights;
+- custody/blind/locked evidence.
 
-May be updated as evidence/state changes:
+When a frozen statement becomes outdated, add a new prospective record and link from active docs. **Never rewrite the old evidence to make history look cleaner.**
 
-- `ACTIVE-PROJECT-STATUS.md`
-- `DELIVERY-PLAN.md`
-- `ARCHITECTURE.md`
-- `CODEBASE-MAP.md`
-- `TAPI-DELIVERY-COVERAGE-2026-09-02.md`
-- `DELIVERY-ACCEPTANCE.md`
-- `FINAL-HANDOFF-RUNBOOK.md`
-- `PROJECT-PRINCIPLES.md`
+### SUPERSEDED compatibility paths
 
-### FROZEN / HISTORICAL
+These retain old links but must not contain independent mutable truth:
 
-Do not rewrite to make later decisions look cleaner:
+- `PROJECT-PLAN.md` → `DELIVERY-PLAN.md`;
+- `NEXT-STEPS.md` → `DELIVERY-PLAN.md`;
+- `ARCHITECTURE-ROADMAP.md` → `ARCHITECTURE.md`;
+- `REPOSITORY-GUIDE.md` → this hub + `CONTRIBUTING.md`.
 
-- `CURRENT-PROJECT-STATUS.md` — legacy mutable name, now blob-pinned by the final-freeze bundle;
-- `RUBRIC-TO-EVIDENCE.md` — ADR-017/hard-freeze pinned;
-- `adr/*` after acceptance/freeze;
-- `research/frozen/*`;
-- frozen experiment manifests/results/closures;
-- consumed/uncertain live custody evidence;
-- `docs/progress/*`;
-- date-stamped audits and preregistration/preflight documents.
+## Evidence hierarchy
 
-### SUPERSEDED COMPATIBILITY PATHS
+For current repository claims:
 
-These paths are retained so old links do not become ambiguous, but they no longer carry independent mutable truth:
-
-- `PROJECT-PLAN.md` → `DELIVERY-PLAN.md`
-- `NEXT-STEPS.md` → `DELIVERY-PLAN.md`
-- `ARCHITECTURE-ROADMAP.md` → `ARCHITECTURE.md`
-- `REPOSITORY-GUIDE.md` → this index + `CONTRIBUTING.md`
-- `FINAL-DELIVERY-OUTPUT-INVENTORY-2026-09-02.md` → TAPI coverage + acceptance
-
-Git history preserves their prior full contents.
-
-## 3. Evidence hierarchy
-
-For **current repository state/authorization**:
-
-1. exact frozen experiment evidence for its own scope;
+1. exact hosted/frozen evidence for the claim's scope;
 2. `PROJECT-PRINCIPLES.md`;
 3. `ACTIVE-PROJECT-STATUS.md`;
-4. current machine-readable checkpoint/result linked from active status;
-5. `DELIVERY-PLAN.md`;
-6. `DELIVERY-ACCEPTANCE.md`;
-7. `ARCHITECTURE.md`;
-8. accepted ADRs for material decisions;
-9. history/audits for context only.
+4. current machine-readable result/checkpoint;
+5. `DELIVERY-PLAN.md` / `DELIVERY-ACCEPTANCE.md`;
+6. `ARCHITECTURE.md`;
+7. accepted ADRs;
+8. historical audits/progress for context.
 
-For **assignment requirements**:
+For assignment interpretation:
 
 1. current TAPI;
-2. delivered TRACTIAN project/API package;
-3. executable supplied API behavior/contracts;
-4. partner/kickoff guidance compatible with those sources;
-5. project hypotheses/extensions.
+2. delivered TRACTIAN package/API contract;
+3. executable supplied API behavior;
+4. compatible partner/kickoff guidance;
+5. project-added constraints/hypotheses.
 
-A historical document does not become current truth merely because it remains in the repository.
+## Anti-drift update rule
 
-## 4. Directory roles
+When a material state changes, update only the documents that own the changed question, then add a dated evidence/progress note if the event is historically material.
 
-| Path | Role |
-|---|---|
-| `src/academy_tractian/` | production runtime/evaluator/provider/control surfaces |
-| `frontend/` | React/TypeScript product UI and browser tests |
-| `research/e2/` | accepted controller/tool/trace/evaluation harness |
-| `research/experiments/` | preregistration/design/eligibility artifacts |
-| `research/frozen/` | immutable experiment contracts/inputs |
-| `research/results/` | machine-readable results/closures/checkpoints |
-| `research/live/` | intentionally committed live evidence |
-| `scripts/` | thin deterministic validators/utilities/reporting CLIs |
-| `tests/` | backend product/regression/integration tests |
-| `docs/adr/` | material decision history |
-| `docs/progress/` | chronological freeze/governance records |
-| `docs/archive/` | superseded narrative/planning material already safe to archive |
-| `.github/workflows/` | required CI plus preserved experimental/historical workflows |
+Examples:
 
-Navigation rules for the large code/research/test/script surfaces live in:
+- new promotion → active status + acceptance/runbook/changelog as applicable;
+- durable architecture change → architecture + ADR + code map if needed;
+- UX behavior change → getting started + Playwright contract + changelog;
+- new final requirement → TAPI/acceptance + delivery plan;
+- research decision → decision record/ADR + progress evidence;
+- vulnerability boundary change → security model + architecture/runbook.
 
-- [`CODEBASE-MAP.md`](CODEBASE-MAP.md)
-- [`../research/README.md`](../research/README.md)
-- [`../scripts/README.md`](../scripts/README.md)
-- [`../tests/README.md`](../tests/README.md)
-- [`../.github/workflows/README.md`](../.github/workflows/README.md)
-
-## 5. Cleanup policy
-
-Physical relocation/deletion is allowed only when the file is proven:
-
-```text
-not frozen
-AND not referenced by frozen evidence
-AND not source-pinned by path/blob
-AND not required for reproduction
-AND not referenced by active workflows/ADRs
-AND replacement/navigation is updated
-```
-
-When uncertain, prefer logical cleanup: mark lifecycle and point to the canonical document. This preserves scientific provenance while keeping the active documentation surface unambiguous.
-
-## 6. Change synchronization
-
-When a material state changes, update only the documents that own that question:
-
-- state/authorization → `ACTIVE-PROJECT-STATUS.md`;
-- priorities/deadline → `DELIVERY-PLAN.md`;
-- durable architecture/stack → `ARCHITECTURE.md` + ADR when material;
-- code ownership/navigation → `CODEBASE-MAP.md`;
-- requirement/DoD → TAPI coverage + `DELIVERY-ACCEPTANCE.md`;
-- operator commands/recovery → `FINAL-HANDOFF-RUNBOOK.md`;
-- historical event → append to progress/evidence, never copy into every active document.
-
-Frozen paths are never changed merely because their wording has become stale. New evidence supersedes their role prospectively through new files.
-
-This is the anti-drift rule for the remainder of the project.
+See [`DOCUMENTATION-GUIDE.md`](DOCUMENTATION-GUIDE.md) for the full docs-as-code contract.

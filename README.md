@@ -1,174 +1,121 @@
 # Academy × TRACTIAN
 
-Production-oriented industrial agent and evaluation platform built around the TRACTIAN teaching API.
+Production-oriented **Industrial Agent + Evaluation** product built around the supplied TRACTIAN API.
 
-The repository contains two integrated product capabilities:
+**Release 0 is live.** The public product is remotely hosted, authenticated, multi-user/tenant-isolated, backed by Neon PostgreSQL, uses a live hosted provider and real typed TRACTIAN reads, persists evidence/evaluation, and streams safe progress through REST/SSE. Consequential external actions remain disabled in Release 0.
 
-- **Industrial agent runtime** — typed TRACTIAN tools, evidence-aware decisions, clarification/abstention/escalation and governed consequential actions.
-- **Evaluation system** — deterministic and semantic evaluation, failure/stability campaigns, operational-value measurement and reproducible evidence.
+> Current state changes quickly. Use [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md) as the mutable source of truth; historical/frozen evidence is intentionally not rewritten.
 
-> This README is intentionally a concise entrypoint. Current state, authorization and evidence live in the canonical documents below.
+## Try the product
 
-## Non-negotiable project envelope
+**Public URL:** https://production-web-production-c9d1.up.railway.app
 
-The final product must satisfy the project rules **simultaneously**:
+The current first-user flow is:
 
 ```text
-actual project cash cost = USD 0
-+
-remote production serving; no local dependency
-+
-multi-user / tenant-safe product
-+
-quantitative + evaluation-driven engineering
-+
-adaptive only when it measurably beats a simpler baseline
-+
-live safe frontend observability
-+
-systematic research before material technology/architecture decisions
+sign in
+→ Results: ask or choose a guided investigation
+→ follow human-readable progress
+→ receive FINAL | CLARIFY | ABSTAIN | ESCALATE
+→ inspect Evidence when needed
+→ inspect Investigation/runtime detail when needed
+→ open Engineering for architecture, capabilities and evaluation
 ```
 
-USD0 is an eligibility hard gate, not a weighted preference. Paid candidates may be researched as external references but cannot be selected. If no free candidate passes all technical/production gates, the correct result is `NO_SELECTION` or an explicit blocker — not a paid fallback.
+Start with [`docs/GETTING-STARTED.md`](docs/GETTING-STARTED.md).
 
-## Start here
+## What is live now
 
-| Need | Canonical source |
+- managed browser authentication and server-owned tenant context;
+- Railway-hosted HTTPS frontend/API;
+- Neon PostgreSQL durable state + tenant RLS boundary;
+- provisional Release 0 provider: Cloudflare `@cf/zai-org/glm-4.7-flash`;
+- 18-operation TRACTIAN capability contract: **13 live reads + 5 proposal-only actions**;
+- genuine provider → controller → typed TRACTIAN read → evidence → terminal → evaluation path;
+- `FINAL`, `CLARIFY`, `ABSTAIN`, `ESCALATE`;
+- durable history, authenticated SSE/reconnect and safe provenance;
+- four UX depth layers: **Results / Evidence / Investigation / Engineering**;
+- no external consequential action execution;
+- project cash-cost policy: **USD0 hard gate; no automatic paid fallback**.
+
+The full frozen Provider Tournament v3 still has final state `NO_SELECTION`. The Release 0 provider is intentionally **provisional**, not a final superiority claim.
+
+## Documentation map
+
+| I want to… | Start here |
 |---|---|
-| Non-negotiable principles | [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) |
-| Active project state | [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md) |
-| Documentation index | [`docs/README.md`](docs/README.md) |
-| Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
-| Codebase map | [`docs/CODEBASE-MAP.md`](docs/CODEBASE-MAP.md) |
-| Delivery plan | [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md) |
-| Acceptance / Definition of Done | [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) |
-| TAPI coverage | [`docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md`](docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md) |
-| Development process | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| Research/evidence history | [`research/README.md`](research/README.md) |
+| use the product | [`docs/GETTING-STARTED.md`](docs/GETTING-STARTED.md) |
+| know the exact current state | [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md) |
+| understand the architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| see what is next | [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md) |
+| understand Release 0 evidence | [`docs/RELEASE-0-ACCEPTANCE.md`](docs/RELEASE-0-ACCEPTANCE.md) |
+| see final-project Definition of Done | [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) |
+| map the implementation | [`docs/CODEBASE-MAP.md`](docs/CODEBASE-MAP.md) |
+| operate/recover the product | [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md) |
+| map work to the TAPI | [`docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md`](docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md) |
+| contribute safely | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| report a vulnerability | [`SECURITY.md`](SECURITY.md) |
+| understand documentation rules | [`docs/DOCUMENTATION-GUIDE.md`](docs/DOCUMENTATION-GUIDE.md) |
+| browse all documentation | [`docs/README.md`](docs/README.md) |
 
-`docs/CURRENT-PROJECT-STATUS.md` is retained byte-for-byte because the 2026-09-04 final-freeze bundle hash-pins that historical path. New mutable state belongs in `docs/ACTIVE-PROJECT-STATUS.md`.
-
-## Promoted product path
+## Promoted runtime path
 
 ```text
-React Operator Control Room
-        ↑ REST + SSE
-FastAPI Product / Observability API
-        ↑ trusted runtime identity
-PostgreSQL operational state + tenant RLS
-        ↑
-RealtimeProductionRuntime
-        ↓
-provider-neutral DecisionSource
-        ↓
-AgentController → HarnessRunner
-        ↓
-18 typed TRACTIAN tools
-        ↓
-deterministic safety boundaries
-        ↓
-normalized evidence
-        ↓
-FINAL | CLARIFY | ABSTAIN | ESCALATE | ACTION_PROPOSAL
-        ↓
-RunTrace → ProductionEvaluator
-        ↓
-sanitized PostgreSQL observability/evaluation projection
-        ↓
-REST / SSE / frontend
+authenticated remote user
+→ React/Caddy public origin
+→ managed auth + FastAPI
+→ server-owned tenant context
+→ Neon PostgreSQL
+→ Cloudflare provisional DecisionSource
+→ AgentController
+→ HarnessRunner
+→ typed TRACTIAN read
+→ normalized evidence
+→ FINAL | CLARIFY | ABSTAIN | ESCALATE
+→ deterministic post-runtime evaluator
+→ durable safe projection
+→ REST/SSE
+→ Results / Evidence / Investigation / Engineering
 ```
 
-Consequential actions follow a separate governed path with persistent custody, explicit confirmation, authorization revalidation, idempotency and execution leases. Ambiguous lost ownership converges to `UNCERTAIN`; the product does not blindly replay an external side effect.
-
-The current repository product path is implemented, but the final **remote USD0 deployment/IAM/provider topology is not yet selected/proved**.
-
-## Provider state
-
-Historical Cloudflare D01/D02 experiments were completed at USD0. D02 completed 32/32 governed attempts, but the tested candidates did not pass frozen M1/M4/M7 promotion gates. Current provider state therefore remains **`NO_SELECTION`**.
-
-Cloudflare is not excluded because of cost; it passed the cost-eligibility gate. Zero cost alone is insufficient for promotion. A materially new free Cloudflare model/configuration can compete only through a new preregistered experiment; consumed packets are not replayed merely to obtain a winner.
+External actions are a separate governed architecture and are **not enabled in Release 0**.
 
 ## Repository layout
 
 | Path | Purpose |
 |---|---|
-| `src/academy_tractian/` | production runtime, APIs, storage, observability, evaluation and product controls |
-| `frontend/` | React/TypeScript operator control room |
+| `src/academy_tractian/` | production runtime, APIs, storage, safety, observability and evaluation |
+| `frontend/` | React/TypeScript product and Playwright acceptance |
 | `tests/` | backend product/regression/integration tests |
-| `frontend/e2e/` | browser acceptance tests |
 | `research/e2/` | accepted controller/tool/trace/evaluation harness |
-| `research/experiments/` | experiment designs/preregistrations |
-| `research/frozen/` | immutable evidence contracts and inputs |
-| `research/results/` | machine-readable results and closures |
-| `scripts/` | thin deterministic CLI/validation/reporting wrappers |
-| `docs/` | canonical product documentation + preserved historical evidence |
-| `.github/workflows/` | required CI plus preserved experimental/historical workflows |
+| `research/experiments/` | preregistered experiments |
+| `research/frozen/` | immutable evidence contracts/inputs |
+| `research/results/` | machine-readable results/closures |
+| `scripts/` | deterministic validation/reporting/operations wrappers |
+| `docs/` | active docs plus preserved historical evidence |
+| `.github/workflows/` | required CI, promotion gates and preserved research workflows |
 
-## Runtime storage
-
-The promoted logical serving path uses **PostgreSQL** for mutable operational state, tenant isolation and sanitized production observability/evaluation data. DuckDB is retained only as an optional development/benchmark compatibility dependency; it is not part of the promoted production serving path.
-
-The final remote PostgreSQL-compatible hosting option must itself satisfy USD0 and the production gates.
-
-## Core stack
-
-### Backend
-
-- Python 3.11+
-- FastAPI / Uvicorn
-- Pydantic 2.x
-- PostgreSQL + psycopg
-- custom `AgentController` + `HarnessRunner`
-- typed `ToolSpec` registry
-- pytest
-
-### Frontend
-
-- React 19
-- TypeScript
-- Vite
-- TanStack Query
-- Apache ECharts
-- React Flow (`@xyflow/react`)
-- Vitest
-- Playwright
-
-## Evaluation-driven development
-
-Material changes follow:
+## Core engineering rules
 
 ```text
-requirement / measured gap
-→ hard-constraint eligibility (USD0 included)
-→ metric + evaluator
-→ baseline
-→ hypothesis
-→ candidate
-→ preregistered comparison
-→ repeated/sliced evaluation
-→ hard gates + uncertainty
-→ PROMOTE / REJECT / INCONCLUSIVE / NO_CHANGE / NO_SELECTION
-→ regression protection
+actual project cash cost = USD 0
++ no paid spillover
++ no local production dependency
++ multi-user tenant safety
++ quantitative / eval-driven decisions
++ adaptive only after measured advantage
++ deterministic safety boundaries
++ live safe observability
++ claims no stronger than evidence
 ```
 
-Complexity is not promoted by convention. Framework swaps, RAG, memory, multi-agent orchestration, new infrastructure components or adaptive policies must first demonstrate a measurable gap, remain inside all hard project constraints and win a controlled comparison.
+Do not add orchestration/framework/infrastructure complexity because it is fashionable. LangGraph, multi-agent, RAG/vector DB, MCP, persistent memory, Redis/Kafka and Kubernetes remain challengers only after a measured gap and controlled comparison.
 
-## Evidence and provenance
+## Current evidence anchors
 
-This repository intentionally preserves a large research trail. Historical files are not automatically current truth, and their presence does not authorize rerunning a consumed experiment.
+- promoted backend/runtime SHA: `082d6f115c070fdc898df749b4b3018efd9ceeab`;
+- Release 0 hosted acceptance: `hosted-production-release0-agent`, run `34069562818`;
+- current hosted UX implementation baseline before this documentation rebaseline: `2ca6215ccc07664a9551e8363e438f0930a4d995`;
+- that UX baseline passed `full-product-playwright`, `clean-clone-full-product-reproduction`, `final-ci-required` and the other current regression workflows, and its Railway frontend deployment reached `SUCCESS`.
 
-Before moving or deleting research, workflow, ADR or frozen evidence paths, follow the cleanup policy in [`docs/README.md`](docs/README.md). Prefer logical classification over breaking source-pinned provenance.
-
-## Required CI
-
-The stable top-level gate is `.github/workflows/final-ci-required.yml`. It composes the current product reproduction/browser/distributed-correctness contracts and exposes `required-gate` as the stable status context.
-
-See [`.github/workflows/README.md`](.github/workflows/README.md) before touching historical one-shot workflows.
-
-## Claim discipline
-
-Do not claim more than the evidence proves. In particular, repository-level correctness tests are not automatically evidence of deployed HA, production capacity, RTO/RPO, enterprise IAM, human semantic calibration or operational-value gains.
-
-Do not claim a paid candidate is project-eligible, and do not claim Cloudflare is selected merely because it is free.
-
-The active status of those claims is maintained in [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md); the legacy `CURRENT-PROJECT-STATUS.md` remains frozen for provenance.
+See [`CHANGELOG.md`](CHANGELOG.md) for notable product evolution.

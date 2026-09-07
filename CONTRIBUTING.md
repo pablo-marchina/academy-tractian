@@ -1,194 +1,113 @@
-# Development Operating Contract
+# Contributing to Academy × TRACTIAN
 
-This repository has one fixed objective:
+This repository is operated as an evidence-driven production project. Contributions must improve the requested product while preserving safety, provenance and the USD0 hard constraint.
 
-> **Deliver the strongest defensible TRACTIAN × Inteli project against the actual assignment, delivered package, partner-quality guidance and official evaluation criteria, while preserving evidence integrity.**
+## Start here
 
-This file defines the normal development procedure. It does not override frozen experiments, ADRs, `PROJECT-PRINCIPLES.md` or current authorization.
+Read the minimum set for your task:
 
-## 1. Read before material work
+1. [`docs/README.md`](docs/README.md) — documentation map and lifecycle;
+2. [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md) — current truth;
+3. [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) — non-negotiable rules;
+4. [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md) — current execution order;
+5. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — promoted architecture and trust boundaries;
+6. [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) — final DoD;
+7. applicable ADR/frozen experiment evidence.
 
-Read in this order:
+For documentation changes, also read [`docs/DOCUMENTATION-GUIDE.md`](docs/DOCUMENTATION-GUIDE.md).
 
-1. [`docs/README.md`](docs/README.md) — documentation/source-of-truth map;
-2. [`docs/PROJECT-PRINCIPLES.md`](docs/PROJECT-PRINCIPLES.md) — non-negotiable governance;
-3. [`docs/CURRENT-PROJECT-STATUS.md`](docs/CURRENT-PROJECT-STATUS.md) — current state and authorization;
-4. [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md) — active path/deadline;
-5. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architecture/stack/techniques;
-6. [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) — Definition of Done;
-7. applicable frozen experiment/ADR artifacts.
+`docs/CURRENT-PROJECT-STATUS.md` is frozen historical evidence despite its legacy name. **Do not update it.** Current mutable state lives in `ACTIVE-PROJECT-STATUS.md`.
 
-For assignment interpretation, also use [`docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md`](docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md).
+## Change classes
 
-If a new TAPI/package/API/kickoff/instructor source appears, reconcile requirements before continuing implementation momentum.
+- **A — documentation/navigation:** no runtime/authorization/experiment semantics change.
+- **B — behavior-preserving engineering:** plumbing/refactor with the same observable contract.
+- **C — material product/architecture/experimental:** provider/model, prompt, tools, safety, evaluator, persistence, IAM, deployment, action semantics, requirements or claims.
 
-## 2. Start from canonical `main`
+When uncertain, treat the change as Class C.
 
-- start from current `main`;
-- use a focused branch for material work;
-- do not continue new work on stale historical branches;
-- preserve frozen/source-pinned paths and consumed/failed evidence;
-- do not rewrite history merely to make the repository look cleaner.
+## Before coding
 
-Change classes:
+A material change must answer:
 
-- **A — documentation/navigation only:** no behavior, authorization, requirement or architecture semantics change;
-- **B — non-semantic engineering:** plumbing/refactor intended to preserve agent/evaluator behavior;
-- **C — material semantic/experimental/product:** model/provider, prompt, tools/schemas, safety, evaluator, retrieval, memory, orchestration, deployment semantics, final scope or claims.
+1. What requirement, user friction, measured risk or evaluation gap does this close?
+2. What is the simplest current baseline?
+3. What hard constraints apply, including USD0/no-paid-spillover?
+4. What evidence will prove success and failure?
+5. What current gate authorizes any live/provider/private/consequential execution?
+6. Which canonical documents will change if the result is accepted?
 
-Class C requires a focused branch + tracked planning record + full evidence loop. When uncertain, treat the change as C.
+Optional complexity does not get a free pass. RAG, vector DB, multi-agent, memory, MCP, framework migration, Redis/Kafka or similar additions require a measured gap and a controlled challenger win.
 
-## 3. Map work to delivery before coding
+## Implementation rules
 
-Every material task must map to at least one of:
+- preserve frozen/consumed/failed evidence;
+- never expose benchmark gold/evaluator-private state to runtime;
+- keep identity, tenant and authorization outside model control;
+- keep real TRACTIAN execution behind `HarnessRunner` + typed `ToolSpec` boundaries;
+- deterministic safety checks own auth/RLS/schema/action/cost limits;
+- no silent provider/model/route fallback;
+- no local production serving dependency;
+- no raw secrets/private custody/hidden reasoning in browser telemetry;
+- claims must remain narrower than the evidence that proves them.
 
-- a P0/P1 row in `docs/DELIVERY-ACCEPTANCE.md`;
-- a TAPI/academic criterion;
-- a material security/reliability/production risk;
-- an experiment required to choose among credible alternatives.
+## Definition of Ready
 
-Priority:
+- [ ] requirement/risk/user mapping is explicit;
+- [ ] scope and non-goals are clear;
+- [ ] baseline is known;
+- [ ] success + fail-closed evidence is defined;
+- [ ] authorization/frozen boundaries are known;
+- [ ] affected docs/tests/evals are identified;
+- [ ] deadline impact is acceptable.
 
-```text
-P0 — requested capability + trustworthy evaluation
-P1 — production/security/reliability/quality required to operate P0 well
-P2 — optional complexity that must earn its place with evidence
-```
+## Definition of Done
 
-If it maps to none, defer it.
+- [ ] intended capability/risk/friction improved;
+- [ ] applicable tests/evals pass;
+- [ ] failure/negative behavior tested where material;
+- [ ] no unauthorized external/private execution occurred;
+- [ ] evidence and limitations recorded;
+- [ ] ADR added for a durable material decision when needed;
+- [ ] `ACTIVE-PROJECT-STATUS.md` updated when current state changes;
+- [ ] `DELIVERY-PLAN.md` updated when sequencing changes;
+- [ ] `ARCHITECTURE.md` updated when promoted architecture changes;
+- [ ] acceptance/TAPI docs updated when requirement coverage changes;
+- [ ] runbook updated when operational procedure changes;
+- [ ] `CHANGELOG.md` updated for notable user/operator/reviewer-visible change;
+- [ ] historical progress/evidence added without rewriting frozen history;
+- [ ] claims remain evidence-bounded.
 
-## 4. Authorization gate
+## Pull requests
 
-Before experimental/private/external-provider/consequential execution, answer:
-
-- What current gate permits this exact action?
-- Which frozen artifact/ADR defines it?
-- Which inputs are immutable?
-- What outputs/custody are allowed?
-- What downstream work remains forbidden?
-- Which credentials/private data are permitted in the environment?
-- What is the fail-closed condition?
-
-**Code existing is not authorization to run it.**
-
-## 5. Material decision workflow
-
-For Class C:
-
-```text
-requirement/risk
-→ decision question + hard constraints
-→ primary-source research
-→ credible alternatives + simple baseline
-→ preregistered comparison
-→ quantitative/repeated evaluation
-→ robustness/failure analysis
-→ production-fit trade-offs
-→ Pareto interpretation
-→ ADR/reversal trigger
-→ state decision
-→ regression protection
-```
-
-Do not add a technology because it is popular or appears as a TAPI example. Optional RAG, vector DB, multi-agent, memory, MCP, adaptive routing or orchestration migration carries the burden of proof.
-
-## 6. Implementation rules
-
-- never mutate frozen evidence in place;
-- never expose evaluator-private/gold/blind material to runtime;
-- keep identity/seed/authorization outside model control where required;
-- preserve source/config/artifact provenance;
-- keep runtime and evaluator supervision separated;
-- use deterministic checks when deterministic truth exists;
-- preserve failed/consumed attempts;
-- do not silently repair incomplete scientific packets;
-- keep the agent-facing tool contract explicit;
-- provider/model/tool failure must not silently become an unsafe action or unsupported conclusion;
-- traces must diagnose model/tool/evidence/policy/action/escalation/output failures;
-- observability/browser plumbing must not change agent/evaluator decisions;
-- raw sensitive trace/provider/evaluator material must not cross the browser boundary.
-
-## 7. Definition of Ready
-
-A material task is ready only when:
-
-- [ ] requirement/rubric/risk mapping is explicit;
-- [ ] P0/P1/P2 is justified;
-- [ ] current status/gate is checked;
-- [ ] scope/non-goals are explicit;
-- [ ] success/fail-closed evidence is defined;
-- [ ] simple baseline exists when comparison matters;
-- [ ] frozen/private boundaries are understood;
-- [ ] affected canonical docs are identified;
-- [ ] deadline impact is acceptable under `docs/DELIVERY-PLAN.md`.
-
-## 8. Definition of Done for a change
-
-Before merge:
-
-- [ ] capability/risk/criterion is actually improved or closed;
-- [ ] applicable tests/evals/regressions pass;
-- [ ] quantitative evidence supports measurable claims;
-- [ ] robustness/failure behavior was checked where material;
-- [ ] no unauthorized gate/provider/private partition was accessed;
-- [ ] frozen/source-pinned evidence was not silently changed;
-- [ ] limitations/trade-offs are recorded;
-- [ ] ADR exists for a material architecture/semantic decision;
-- [ ] `CURRENT-PROJECT-STATUS.md` updated if state/authorization changed;
-- [ ] `DELIVERY-PLAN.md` updated if priority/path/deadline changed;
-- [ ] `ARCHITECTURE.md` updated if durable architecture/stack changed;
-- [ ] `DELIVERY-ACCEPTANCE.md` / TAPI crosswalk updated if requirements/DoD changed;
-- [ ] runbook updated if executable commands/recovery changed;
-- [ ] progress/evidence record added when historically material;
-- [ ] claims remain no stronger than evidence.
-
-## 9. Pull-request rule
-
-Use `.github/pull_request_template.md`. A material PR must state:
+Use `.github/pull_request_template.md` when present. A material PR should state:
 
 - why the work exists;
-- requirement/risk/rubric mapping;
+- requirement/risk/user mapping;
 - change class and priority;
-- current gate/authorization;
+- authorization boundary;
 - baseline/alternatives for material choices;
-- evidence/tests;
-- regressions/limitations;
-- canonical docs affected.
+- tests/evidence;
+- failure cases and limitations;
+- documentation affected.
 
-Do not merge with unresolved authorization, hidden-data, experiment-semantic or claim ambiguity.
+Do not merge unresolved authorization, hidden-data, cross-tenant, action-safety or scientific-integrity ambiguity.
 
-## 10. After merge
+## CI and promotion
 
-1. verify `main` contains the intended result;
-2. record immutable evidence/ADR/result where applicable;
-3. update only the canonical document that owns the changed question;
-4. add history to progress/evidence rather than duplicating status everywhere;
-5. start the next task from current `main`.
+`final-ci-required / required-gate` is the stable repository-level regression gate. See [`.github/workflows/README.md`](.github/workflows/README.md) for workflow lifecycle.
 
-## 11. Deadline discipline
+A green PR does **not** automatically promote the backend runtime. Hosted Release 0 acceptance is an intentional promotion workflow and requires an explicit backend `expected_sha`.
 
-Final delivery is 2026-09-08. Near the deadline:
+Current Release 0 user-facing UX can evolve independently of the immutable promoted backend runtime when its own frontend/regression gates pass.
 
-```text
-P0/P1 closure
-→ integration
-→ regression/security
-→ reproduction
-→ documentation
-→ real-path demonstration
-→ optional polish
-```
+## Documentation discipline
 
-A late change that cannot be properly retested should not silently enter the final release.
+Write for the reader's task, not for the repository author's chronology:
 
-## 12. Five-question check
+- tutorial/quickstart → help someone learn the product;
+- how-to/runbook → help someone perform an operation;
+- reference → provide exact facts/contracts;
+- explanation → explain architecture/decisions/trade-offs.
 
-Before every material change, answer:
-
-1. What requested outcome does this improve?
-2. What evidence will prove it?
-3. What simpler alternative is the baseline?
-4. What gate allows it now?
-5. Which canonical document changes afterward?
-
-If any answer is unclear, the next action is planning/research rather than implementation.
+Do not copy the same mutable fact into many documents. Link to the document that owns it. Historical evidence is append-only/frozen; active truth is edited prospectively.

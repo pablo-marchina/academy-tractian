@@ -1,150 +1,154 @@
-# Academy × TRACTIAN — Current Project Status
+# Academy × TRACTIAN — Active Project Status
 
-**Status:** Release 0 **PROMOTED** / UX pilot active  
-**Checkpoint:** 2026-09-06 BRT  
-**Promoted runtime SHA:** `082d6f115c070fdc898df749b4b3018efd9ceeab`  
+**Status:** Release 0 **PROMOTED** / UX pilot live  
+**Last verified:** 2026-09-06 BRT  
+**Promoted backend/runtime SHA:** `082d6f115c070fdc898df749b4b3018efd9ceeab`  
+**Current hosted UX baseline before this docs rebaseline:** `2ca6215ccc07664a9551e8363e438f0930a4d995`  
 **Public product:** https://production-web-production-c9d1.up.railway.app  
-**Implementation branch:** `release/production-final`  
-**Integration PR:** `#196`  
-**Release 0 plan:** [`RELEASE-0-PLAN.md`](RELEASE-0-PLAN.md)  
-**Release 0 acceptance:** [`RELEASE-0-ACCEPTANCE.md`](RELEASE-0-ACCEPTANCE.md)  
-**Final delivery plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
-**Decision registry:** [`decision-registry.yaml`](decision-registry.yaml)
+**Branch:** `release/production-final`  
+**PR:** `#196`
 
-This file is the mutable source of truth for active execution state. Historical and frozen evidence remains immutable.
+This file is the mutable source of truth for **current execution state**. Frozen/history files remain immutable.
 
 ## 1. Current objective
 
-Release 0 is no longer blocked on infrastructure or the initial real-agent vertical slice. The active objective is to improve first-user product quality using real-user friction and correctness evidence while preserving the promoted safety boundaries.
+The infrastructure/read-only vertical slice is no longer the blocker. Release 0 is live and technically usable. The active objective is now:
+
+> **make first-use quality excellent, collect uncontaminated real-user evidence, and close the remaining final-delivery hardening/research gates without weakening the promoted safety boundary.**
+
+Current user path:
 
 ```text
 authenticated remote user
-→ public HTTPS product
-→ server-owned tenant context
-→ live Cloudflare Release 0 provider
-→ AgentController + HarnessRunner
-→ typed TRACTIAN read
+→ Results
+→ guided/custom industrial investigation
+→ live provider + typed TRACTIAN reads
 → persisted evidence
 → FINAL | CLARIFY | ABSTAIN | ESCALATE
 → deterministic post-runtime evaluation
-→ Neon PostgreSQL
-→ REST/SSE + React UX
+→ optional depth: Evidence → Investigation → Engineering
 ```
 
 Consequential external action execution remains disabled.
 
-## 2. Release 0 promotion record
+## 2. Release 0 promotion — PASS
 
-Release 0 was promoted on runtime SHA `082d6f115c070fdc898df749b4b3018efd9ceeab` after the same candidate passed the remotely hosted Release 0 acceptance and the reproducible required gates.
+Release 0 was promoted on backend/runtime SHA `082d6f115c070fdc898df749b4b3018efd9ceeab`.
 
-| Gate | State | Evidence / boundary |
+| Gate | State | Evidence/boundary |
 |---|---|---|
-| Remote frontend/API | **PASS** | Railway public HTTPS product |
-| Durable PostgreSQL | **PASS** | Neon production substrate |
-| Immutable release identity | **PASS** | exact promoted SHA |
-| Managed browser auth | **PASS** | real signup/session/logout path |
-| Cross-tenant negatives | **PASS** | two-user REST/SSE isolation; forged browser authority rejected |
-| Real hosted provider | **PASS — PROVISIONAL** | Cloudflare live provider; final tournament still `NO_SELECTION` |
-| Real TRACTIAN read path | **PASS** | typed remote read observed with HTTP 2xx |
-| Genuine read-only agent slice | **PASS** | provider → tool → TRACTIAN → evidence → terminal → evaluation |
-| FINAL | **PASS** | hosted Release 0 acceptance |
-| CLARIFY | **PASS** | hosted Release 0 modes acceptance |
-| ABSTAIN | **PASS** | hosted Release 0 modes acceptance |
-| ESCALATE | **PASS** | hosted Release 0 modes acceptance |
-| Evidence / lineage / persistence | **PASS** | durable run artifacts and reload path |
-| SSE / live progress | **PASS** | authenticated public path |
-| 18-operation capability contract | **PASS** | 13 reads + 5 actions represented |
-| Consequential action execution | **DISABLED** | zero external action calls in release campaign |
-| Cash-cost policy | **USD0** | no automatic paid fallback |
-| Local/mock serving dependency | **ZERO** | remote serving path only |
-| Required reproducible CI | **PASS** | `final-ci-required`, clean clone, Playwright, runtime and handoff gates |
+| public HTTPS frontend/API | **PASS** | Railway |
+| durable PostgreSQL | **PASS** | Neon |
+| immutable backend release identity | **PASS** | exact promoted SHA |
+| managed browser auth | **PASS** | hosted signup/session/logout |
+| two-user/tenant isolation | **PASS** | REST/SSE negatives; forged browser authority rejected |
+| hosted provider | **PASS — PROVISIONAL** | Cloudflare Release 0 route |
+| typed real TRACTIAN read | **PASS** | remote HTTP 2xx through canonical transport |
+| provider → agent → evidence E2E | **PASS** | hosted acceptance |
+| FINAL / CLARIFY / ABSTAIN / ESCALATE | **PASS** | hosted modes acceptance |
+| persistence / lineage / evaluation | **PASS** | Neon-backed run artifacts |
+| authenticated SSE / reconnect | **PASS** | public path |
+| 18-operation capability contract | **PASS** | 13 live reads + 5 proposal-only actions |
+| external consequential action execution | **DISABLED** | 0 release-campaign calls |
+| cash-cost policy | **USD0** | no automatic paid fallback |
+| local/mock serving dependency | **ZERO** | remote serving only |
 
-Hosted Release 0 workflow: `hosted-production-release0-agent`, run `34069562818`.
+Hosted Release 0 acceptance: `hosted-production-release0-agent`, run `34069562818`.
 
-## 3. Provider decision state
+## 3. UX pilot — implemented and hosted
 
-Release 0 uses Cloudflare `@cf/zai-org/glm-4.7-flash` as a **provisional Release 0 provider**. This is not a claim that it is the best or final provider.
+The UX implementation baseline `2ca6215ccc07664a9551e8363e438f0930a4d995` reached Railway frontend deployment `SUCCESS` and passed the current branch regression surface including:
 
-The frozen Provider Tournament v3 remains unchanged:
+- `frontend-provider-free`;
+- `full-product-playwright`;
+- `clean-clone-full-product-reproduction`;
+- `final-ci-required`;
+- production-runtime, Postgres, observability, EDD, IaC and handoff regressions.
+
+### Completed UX work
+
+| UX workstream | State | Current implementation |
+|---|---|---|
+| first-run orientation | **DONE** | product purpose, read-only boundary and guarantees before engineering detail |
+| guided investigation entry | **DONE** | server-owned guided intents; explicitly labelled local starter examples only when unavailable |
+| human-readable live progress | **DONE** | Preparing → Deciding → Reading → Reviewing → Evaluating → Complete |
+| customer-first terminal outcome | **DONE** | outcome/message/next step/evidence before trace internals |
+| mode-specific recovery | **DONE** | distinct FINAL/CLARIFY/ABSTAIN/ESCALATE guidance |
+| evidence summary | **DONE** | compact evidence first; canonical trail in Evidence layer |
+| progressive disclosure | **DONE** | Results → Evidence → Investigation → Engineering |
+| keyboard-accessible depth navigation | **DONE** | tab semantics + Arrow/Home/End focus behavior |
+| preserve full engineering observability | **DONE** | runtime/evals/architecture/capabilities remain available in deeper layers |
+| lightweight casual run feedback | **NEXT** | must be separate from controlled semantic/value collectors |
+| first-time-user pilot iteration | **NEXT** | collect friction/correctness evidence and prioritize quantitatively |
+
+### Important feedback-design decision
+
+`SemanticReviewCollector` and `OperationalValueCollector` are controlled research instruments. They will **not** be repurposed as casual thumbs-up/down feedback because that would contaminate experimental data. A separate minimal run-feedback channel is the next feedback task.
+
+## 4. Provider state
+
+Release 0 currently uses Cloudflare `@cf/zai-org/glm-4.7-flash` as a **provisional Release 0 provider**.
+
+This does not change the frozen final provider decision:
 
 ```text
+Provider Tournament v3 = 17 scenarios × 5 repetitions × 2 candidates = 170 attempts
 final provider decision = NO_SELECTION
-full campaign = 17 scenarios × 5 repetitions × 2 candidates = 170 attempts
 ```
 
-`DP-004` therefore intentionally remains `NO_SELECTION`; the Release 0 provisional serving decision does not rewrite the preregistered final provider decision.
+`DP-004` stays `NO_SELECTION` until the preregistered final campaign produces eligible evidence.
 
-## 4. Promoted product boundary
+## 5. Product boundary available now
 
-### Available now
+- managed authentication and server-owned tenant identity;
+- 13 live TRACTIAN reads;
+- 5 action operations represented as proposal-only capabilities;
+- live provider decisions;
+- evidence-aware terminal modes;
+- safe tool/model/policy provenance;
+- deterministic post-runtime evaluator;
+- persisted history/reload;
+- authenticated REST/SSE;
+- four-level progressive UX;
+- architecture/trace/capability/evaluation observability.
 
-- managed user authentication;
-- server-owned tenant identity;
-- live Cloudflare model calls;
-- 13 canonical TRACTIAN read operations at the production boundary;
-- real remote TRACTIAN reads;
-- customer-safe FINAL / CLARIFY / ABSTAIN / ESCALATE outcomes;
-- evidence, lineage, timeline and trace graph;
-- deterministic post-runtime evaluation;
-- persisted run history and reload;
-- authenticated SSE/live progress;
-- architecture and engineering observability surfaces.
+## 6. Deliberate non-claims / open final gates
 
-### Deliberately not promoted
+Release 0 does **not** close:
 
-- consequential action execution;
-- final Provider Tournament winner;
-- exhaustive semantic-accuracy claims;
-- full SECURITY-V1 completion;
-- final production SLO/capacity/HA/RTO/RPO claims;
-- human-calibrated semantic judge;
-- measured operational time savings;
-- adaptive policy superiority.
+- final Provider Tournament v3;
+- full SECURITY-V1 hosted campaign;
+- final remote load/capacity + evidence-derived SLO;
+- real backup/restore drill + measured RTO/RPO;
+- governed consequential external action execution;
+- human semantic calibration;
+- real MANUAL vs AGENT-ASSISTED operational-value study;
+- adaptive-policy superiority;
+- final evidence freeze/delivery bundle.
 
-## 5. Active phase — UX pilot
-
-The product is technically usable; the priority is now to make the first-user experience understandable without developer guidance.
-
-```text
-login
-→ understand what the product can do
-→ choose or write an investigation
-→ understand live progress
-→ understand the terminal result
-→ understand supporting evidence
-→ know what to do next
-→ provide lightweight feedback
-```
-
-### UX work order
-
-1. **First-run onboarding** — explain the product, read-only boundary and best first action.
-2. **Guided investigations first** — surface useful intents before the engineering capability catalog.
-3. **Readable progress** — translate runtime events into user-facing stages such as Preparing, AI deciding, Reading TRACTIAN, Evaluating and Complete.
-4. **Customer-first outcome** — emphasize conclusion/message and evidence before engineering metadata.
-5. **Mode-specific next steps** — CLARIFY asks a clear question; ABSTAIN states what is missing; ESCALATE explains the handoff; FINAL summarizes evidence.
-6. **Evidence summary** — expose safe, comprehensible evidence before the raw timeline/trace.
-7. **Feedback loop** — reuse or extend existing review/value collectors for lightweight usefulness feedback and product telemetry.
-8. **Progressive disclosure** — keep trace, architecture, raw capability catalog and evaluator detail available but secondary for ordinary users.
-
-## 6. Post-release engineering priority
+## 7. Current priority order
 
 ```text
-P0 auth / isolation / broken run / provider / TRACTIAN defect
-→ P1 wrong conclusion / wrong tool / weak evidence / bad clarify-escalate UX
-→ P1 user friction / latency / reliability
-→ full Provider Tournament v3
-→ SECURITY-V1 / load / recovery
+P0 auth/tenant/provider/TRACTIAN/run regression
+→ P1 wrong conclusion/tool/evidence/mode behavior
+→ P1 first-user friction + casual run feedback
+→ real-user UX iteration
+→ Provider Tournament v3
+→ SECURITY-V1
+→ load/SLO + restore/recovery
 → governed actions
-→ human calibration / operational-value study
+→ human calibration + operational value
 → adaptive challengers only after measured gaps
+→ final evidence freeze
 ```
 
-Do not add LangGraph, multi-agent, RAG/vector DB, MCP, Redis/Kafka, microservices, Kubernetes or persistent memory unless measured post-release evidence demonstrates a blocker the current architecture cannot solve.
+Do not add new architectural layers unless a measured blocker justifies them.
 
-## 7. Evidence discipline
+## 8. Evidence discipline
 
-- The promoted runtime remains `082d6f115c070fdc898df749b4b3018efd9ceeab` until a later candidate independently clears the applicable promotion gates.
-- Documentation-only commits do not imply a new production artifact.
-- Frozen evidence is never rewritten to make current code appear historically valid.
-- Release 0 telemetry and user feedback may prioritize changes, but production claims remain evidence-backed.
+- promoted backend/runtime identity remains `082d6f...` until a later backend candidate independently clears promotion gates;
+- frontend/UX deployment identity may advance independently and must be stated separately;
+- a docs-only commit is not a new backend release;
+- CI evidence is not automatically production SLO/HA/security evidence;
+- frozen history is never rewritten;
+- user feedback may prioritize work but cannot bypass deterministic safety/authorization gates.

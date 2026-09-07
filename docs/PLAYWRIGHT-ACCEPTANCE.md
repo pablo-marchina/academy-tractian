@@ -1,33 +1,74 @@
-# Full-product Playwright acceptance
+# Full-product Playwright Acceptance
 
-This gate implements the browser/product acceptance owned by issues #114 and #131. It intentionally runs against the provider-free **production path**, not a fixture-only frontend or a mocked API.
+**Status:** ACTIVE browser/product regression contract  
+**Current UX baseline:** `2ca6215ccc07664a9551e8363e438f0930a4d995` — PASS
 
-## Executed topology
+This gate validates **user tasks and safety invariants**, not a brittle screenshot/layout implementation. It runs the real product controller/tool/persistence/evaluation/SSE/frontend path with a deterministic provider-free dependency substitution so CI consumes no live provider quota.
 
-`Chromium -> React/Vite -> REST/SSE -> FastAPI -> PostgreSQL operational state -> ActionProposalRealtimeProductionRuntime -> AgentController -> HarnessRunner -> typed ToolSpec + deterministic policy -> bounded provider-free dependency substitute -> RunTrace -> evaluator -> DuckDB safe read model -> React`
+## Executed test topology
 
-The provider-free substitute replaces only external model/API availability. Runtime, typed tool binding, B1/B2/B3 policy behavior, action custody/idempotency, PostgreSQL ownership/RLS, SSE persistence/replay, evaluation and frontend rendering remain the production implementation.
+```text
+Chromium
+→ React/Vite
+→ REST/SSE
+→ FastAPI
+→ PostgreSQL operational/RLS state
+→ production runtime/controller/HarnessRunner
+→ typed ToolSpec + deterministic policy
+→ bounded provider-free dependency substitute
+→ RunTrace/evaluator
+→ durable safe projection
+→ React
+```
 
-## Browser hard gates
+Provider-free substitution is a CI dependency replacement, not a production claim. Production hosted acceptance separately proves real provider/IAM/TRACTIAN behavior.
 
-- real run submission returns a safe `run_*` id;
+## User-experience contract
+
+A first-time browser session must be able to:
+
+- start in **Results**;
+- understand the Release 0 read-only product boundary;
+- see Quick Start options even when server-owned Release 0 capability metadata is absent, with fallbacks explicitly labelled as examples;
+- populate/edit a request;
+- submit a run;
+- see safe human-readable progress;
+- receive a mode-specific terminal next step;
+- move through **Results / Evidence / Investigation / Engineering**;
+- navigate depth tabs by keyboard;
+- select persisted history and return to Results-first interpretation;
+- remain usable at constrained/mobile viewports without horizontal page overflow.
+
+## Evidence / runtime contract
+
 - genuine persisted SSE events render in sequence without logical duplicates;
-- disconnect/reconnect uses `Last-Event-ID`, exposes `RECONNECTING` and `CAUGHT_UP`, and reaches terminal state without reload;
-- evaluation is absent while the slow runtime is still active and appears only after completion;
-- Trace Graph, Architecture Explorer, Evidence Explorer, Output Lineage, Mission Control and Dynamic Data Explorer render from backend state;
-- selected-run analytics and drill-down use the same global run scope;
-- clarify, abstain, escalate, tool-error and blocked-action outcomes are visible;
-- pending consequential action requires explicit operator confirmation;
-- a confirmed action follows a separate realtime execution run;
-- duplicate confirmation is rejected;
-- another user in the same organization cannot read/stream/confirm the run/action;
-- the same user in another organization cannot read/stream/confirm the run/action;
-- browser/API/SSE projections contain none of the forbidden private keys asserted by the test;
-- unsupported chart types are absent from the UI allow-list and rejected by the backend contract;
-- long input and desktop/mobile acceptance viewports do not create horizontal page overflow.
+- reconnect/catch-up uses durable cursor semantics;
+- evaluation does not appear before runtime completion;
+- Evidence shows canonical safe event/evidence context;
+- Investigation exposes runtime metrics/history/Trace Graph/action state;
+- Engineering exposes capability/architecture/evaluator/analytics surfaces;
+- terminal UI is derived from persisted terminal evidence, not fabricated progress;
+- long requests and empty states behave predictably.
+
+## Safety / isolation contract
+
+- CLARIFY, ABSTAIN, ESCALATE and failure/blocked-action outcomes are visible;
+- proposal/confirmation action semantics remain separate;
+- duplicate confirmation is rejected in the acceptance profile;
+- other user/organization contexts cannot read/stream/confirm protected state;
+- forbidden private keys are absent from browser/API/SSE projections;
+- unsupported chart/data types remain constrained by server/browser contracts.
+
+The provider-free action acceptance profile can exercise governed action machinery for regression purposes; that **does not mean external consequential actions are enabled in the hosted Release 0 product**.
 
 ## CI environment
 
-The GitHub Actions gate uses PostgreSQL 18, a separate non-owner/non-superuser/non-BYPASSRLS scoped role, Python 3.11, Node 24, the committed npm lockfile, Chromium from the pinned Playwright version, one Playwright worker in CI and the same Vite proxy used by the product frontend.
+The workflow uses PostgreSQL, a scoped non-owner/non-superuser/non-BYPASSRLS role, Python 3.11, Node 24, committed npm lockfile and pinned Playwright Chromium.
 
-Artifacts retain the Playwright HTML report, traces/screenshots/videos on failure, and backend/frontend logs. A merge claim is valid only after the final PR SHA is green.
+On failure, retain Playwright report/trace/screenshots/video and backend/frontend logs. A browser acceptance claim is valid only for the exact green SHA.
+
+## Current evidence
+
+At `2ca6215...`, `full-product-playwright` completed successfully alongside clean-clone and `final-ci-required`. The same frontend SHA later deployed successfully to Railway.
+
+Do not use this provider-free gate as evidence of production provider latency/quality, hosted IAM reliability or TRACTIAN availability; those require hosted acceptance.
