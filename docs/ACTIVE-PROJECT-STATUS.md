@@ -1,14 +1,19 @@
 # Academy × TRACTIAN — Active Project Status
 
-**Status:** Release 0 **PROMOTED** / UX pilot live  
+**Status:** Release 0 **PROMOTED** / UX pilot live / `main` integrated  
 **Last verified:** 2026-09-06 BRT  
 **Promoted backend/runtime SHA:** `082d6f115c070fdc898df749b4b3018efd9ceeab`  
-**Current hosted UX baseline before this docs rebaseline:** `2ca6215ccc07664a9551e8363e438f0930a4d995`  
+**Current hosted frontend UX SHA:** `2ca6215ccc07664a9551e8363e438f0930a4d995`  
+**Current hosted supplied-API SHA:** `47561c1175181b508139e23e6e39b555c1347d57`  
+**Validated PR #196 head:** `d7e941b1e0ee380f3cca43816521c88eddc20e9c`  
+**Main integration merge:** `9fbfbe0c5b5b80dc23941ac2850125834641e32b`  
 **Public product:** https://production-web-production-c9d1.up.railway.app  
-**Branch:** `release/production-final`  
-**PR:** `#196`
+**Branch:** `main`  
+**PR:** `#196 (MERGED)`
 
 This file is the mutable source of truth for **current execution state**. Frozen/history files remain immutable.
+
+Repository integration identity and hosted component identities are intentionally tracked separately. Merging PR #196 into `main` does not by itself imply that every hosted service was redeployed from the merge commit.
 
 ## 1. Current objective
 
@@ -57,7 +62,11 @@ Hosted Release 0 acceptance: `hosted-production-release0-agent`, run `3406956281
 
 ## 3. UX pilot — implemented and hosted
 
-The UX implementation baseline `2ca6215ccc07664a9551e8363e438f0930a4d995` reached Railway frontend deployment `SUCCESS` and passed the current branch regression surface including:
+The hosted frontend UX baseline remains `2ca6215ccc07664a9551e8363e438f0930a4d995`. The supplied TRACTIAN API identity bridge is hosted at `47561c1175181b508139e23e6e39b555c1347d57`.
+
+The complete PR #196 source head `d7e941b1e0ee380f3cca43816521c88eddc20e9c` passed the required regression surface and was merged into `main` as `9fbfbe0c5b5b80dc23941ac2850125834641e32b`. These identities are deliberately separate: repository integration is not represented as an application redeploy.
+
+The validated PR #196 regression surface included:
 
 - `frontend-provider-free`;
 - `full-product-playwright`;
@@ -147,8 +156,8 @@ Do not add new architectural layers unless a measured blocker justifies them.
 ## 8. Evidence discipline
 
 - promoted backend/runtime identity remains `082d6f...` until a later backend candidate independently clears promotion gates;
-- frontend/UX deployment identity may advance independently and must be stated separately;
-- a docs-only commit is not a new backend release;
+- hosted frontend/UX identity, hosted supplied-API identity, validated source identity and repository merge identity are tracked separately;
+- a repository merge or docs-only commit is not a new backend release or automatic redeploy;
 - CI evidence is not automatically production SLO/HA/security evidence;
 - frozen history is never rewritten;
 - user feedback may prioritize work but cannot bypass deterministic safety/authorization gates.
