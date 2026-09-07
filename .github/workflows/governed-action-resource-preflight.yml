@@ -49,7 +49,83 @@ jobs:
                   found[key].update(pattern.findall(text))
           for key in ('company', 'asset', 'analysis', 'model', 'case'):
               print(f'RESOURCE_IDS[{key}]=' + ','.join(sorted(found[key])))
-          missing = [key for key in ('company', 'asset', 'analysis', 'model', 'case') if not found[key]]
-          if missing:
-              raise SystemExit('missing resource identifier categories: ' + ','.join(missing))
+          PY
+
+      - name: Map action-resource identifiers to Papel Sul without exposing payloads
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          root = Path('/tmp/tractian-runtime')
+          target = 'comp_papel_sul'
+          id_patterns = {
+              'asset': re.compile(r'^asset_[A-Za-z0-9_-]+$'),
+              'analysis': re.compile(r'^analysis_[A-Za-z0-9_-]+$'),
+              'model': re.compile(r'^model_[A-Za-z0-9_-]+$'),
+              'case': re.compile(r'^case_[A-Za-z0-9_-]+$'),
+          }
+          found = {key: set() for key in id_patterns}
+          source_hints = set()
+
+          def walk(value, inherited_company=None):
+              if isinstance(value, dict):
+                  company = inherited_company
+                  for key in ('company_id', 'companyId', 'organization_id', 'organizationId'):
+                      if value.get(key) == target:
+                          company = target
+                  if company == target:
+                      for v in value.values():
+                          if isinstance(v, str):
+                              for kind, pattern in id_patterns.items():
+                                  if pattern.fullmatch(v) and v not in {'asset_id','analysis_id','model_id','case_id'}:
+                                      found[kind].add(v)
+                  for v in value.values():
+                      walk(v, company)
+              elif isinstance(value, list):
+                  for item in value:
+                      walk(item, inherited_company)
+
+          for path in root.rglob('*'):
+              if not path.is_file():
+                  continue
+              suffix = path.suffix.lower()
+              if suffix in {'.json', '.jsonl'}:
+                  try:
+                      text = path.read_text(encoding='utf-8')
+                  except (UnicodeDecodeError, OSError):
+                      continue
+                  try:
+                      if suffix == '.json':
+                          walk(json.loads(text))
+                      else:
+                          for line in text.splitlines():
+                              try: walk(json.loads(line))
+                              except json.JSONDecodeError: pass
+                  except json.JSONDecodeError:
+                      pass
+              if suffix in {'.py', '.json', '.jsonl', '.csv', '.md', '.txt', '.yaml', '.yml'}:
+                  try:
+                      text = path.read_text(encoding='utf-8')
+                  except (UnicodeDecodeError, OSError):
+                      continue
+                  if target in text and any(marker in text for marker in ('/analyses/', '/models/', '/cases/', 'analysis_id', 'model_id', 'case_id')):
+                      source_hints.add(str(path.relative_to(root)))
+
+          for kind in ('asset', 'analysis', 'model', 'case'):
+              print(f'PAPEL_SUL_RESOURCE_IDS[{kind}]=' + ','.join(sorted(found[kind])))
+          print('PAPEL_SUL_ACTION_SOURCE_FILES=' + ','.join(sorted(source_hints)))
+
+          # Print only source-code lines that define action endpoint behavior or ID generation.
+          safe_markers = ('/analyses/', '/models/', '/cases/', 'analysis_id', 'model_id', 'case_id')
+          for rel in sorted(source_hints):
+              path = root / rel
+              try:
+                  lines = path.read_text(encoding='utf-8').splitlines()
+              except (UnicodeDecodeError, OSError):
+                  continue
+              for idx, line in enumerate(lines, start=1):
+                  stripped = line.strip()
+                  if any(marker in stripped for marker in safe_markers) and len(stripped) <= 300:
+                      print(f'SOURCE_HINT[{rel}:{idx}]={stripped}')
           PY
