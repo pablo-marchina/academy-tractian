@@ -173,7 +173,7 @@ test.describe("provider-free full product acceptance", () => {
 
     await openLayer(page, "Evidence");
     await expect(page.getByText("No runtime events selected")).toBeVisible();
-    await openLayer(page, "Investigation");
+    await openLayer(page, "Engineering");
     await expect(page.getByText("No run selected").first()).toBeVisible();
 
     const longRequest = `scenario:clarify ${"industrial-context ".repeat(450)}`;
@@ -183,7 +183,7 @@ test.describe("provider-free full product acceptance", () => {
     await expect(page.locator(".terminal-panel")).toContainText("ASK_CLARIFICATION");
     await assertNoHorizontalOverflow(page);
 
-    await openLayer(page, "Investigation");
+    await openLayer(page, "Engineering");
     const dynamic = page.locator("#dynamic-data-explorer");
     await expect(dynamic.getByRole("heading", { name: "Dynamic Data Explorer" })).toBeVisible();
     const chartOptions = await dynamic.getByLabel("Chart").locator("option").allTextContents();
@@ -245,9 +245,12 @@ test.describe("provider-free full product acceptance", () => {
 
     await openLayer(page, "Investigation");
     await expect(page.getByRole("heading", { name: "Trace Graph" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Mission Control" })).toBeHidden();
+
+    await openLayer(page, "Engineering");
+    await expect(page.getByRole("heading", { name: "Mission Control" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Evidence Explorer" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Output Lineage" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Mission Control" })).toBeVisible();
     await expect(page.locator(".evidence-list")).toContainText("EV-e2e-asset");
 
     const toolsPanel = page.locator("article.panel").filter({
@@ -258,8 +261,6 @@ test.describe("provider-free full product acceptance", () => {
     const dynamic = page.locator("#dynamic-data-explorer");
     await expect(dynamic.locator(".query-result-meta")).toContainText(`scope ${accepted.run_id}`);
     await expect(page.getByText(/reconnects/).first()).toBeVisible();
-
-    await openLayer(page, "Engineering");
     await expect(page.locator(".evaluation-panel")).toContainText("blocking checks passed");
     await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeVisible();
 
@@ -373,7 +374,7 @@ test.describe("provider-free full product acceptance", () => {
       method: "POST",
       body: { confirm: true },
     });
-    expect(duplicate.status).toBe(409);
+    expect(duplicate.status()).toBe(409);
 
     await assertSseReplayClean(page, accepted.run_id);
     await assertSseReplayClean(page, confirmation.execution_run_id);
