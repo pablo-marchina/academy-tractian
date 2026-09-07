@@ -79,7 +79,12 @@ async function openProduct(page: Page): Promise<void> {
 
 async function openHome(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Home", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "What do you want to understand?" })).toBeVisible();
+  const questionHeading = page.getByRole("heading", { name: "What do you want to understand?" });
+  if (!(await questionHeading.isVisible().catch(() => false))) {
+    const newAnalysis = page.getByRole("button", { name: "New analysis", exact: true });
+    if (await newAnalysis.isVisible().catch(() => false)) await newAnalysis.click();
+  }
+  await expect(questionHeading).toBeVisible();
 }
 
 async function openHistory(page: Page): Promise<void> {
@@ -99,7 +104,7 @@ async function openTechnicalSection(
 }
 
 async function openCurrentResult(page: Page): Promise<void> {
-  await openHome(page);
+  await page.getByRole("button", { name: "Home", exact: true }).click();
   const returnButton = page.getByRole("button", { name: "Return to current analysis" });
   if (await returnButton.isVisible().catch(() => false)) await returnButton.click();
 }
@@ -266,7 +271,12 @@ test.describe("provider-free full product acceptance", () => {
     await expect(page.getByText(/Connection status: caught_up/i)).toBeAttached({ timeout: 8_000 });
 
     await waitForCompleted(page);
-    await expect(page.getByTestId("customer-outcome-summary")).toContainText("E2E_EVIDENCE_CONFIRMED");
+    const completedRun = await fetchJson(page, `/api/runs/${accepted.run_id}`);
+    expect(completedRun.status).toBe(200);
+    expect((completedRun.body as { terminal_reason_code?: string }).terminal_reason_code).toBe("E2E_EVIDENCE_CONFIRMED");
+    const completedOutcome = page.getByTestId("customer-outcome-summary");
+    await expect(completedOutcome).toContainText("Asset evidence was inspected through the production tool boundary");
+    await expect(completedOutcome).not.toContainText("E2E_EVIDENCE_CONFIRMED");
 
     await openEvidence(page);
     await expect(page.locator(".task-evidence-list")).toBeVisible();
@@ -308,25 +318,57 @@ test.describe("provider-free full product acceptance", () => {
     await openProduct(page);
 
     const cases = [
-      ["scenario:clarify", "ASK_CLARIFICATION", "E2E_INFORMATION_REQUIRED"],
-      ["scenario:abstain", "ABSTAIN", "E2E_EVIDENCE_UNAVAILABLE"],
-      ["scenario:escalate", "ESCALATE_HUMAN", "E2E_AMBIGUOUS_EVIDENCE"],
-      ["scenario:tool-error", "ABSTAIN", "The evidence tool failed"],
-      ["scenario:blocked-action", "ABSTAIN", "high-impact action was blocked"],
+      {
+        scenario: "scenario:clarify",
+        decision: "ASK_CLARIFICATION",
+        reasonCode: "E2E_INFORMATION_REQUIRED",
+        detail: "Please provide the missing asset identifier",
+      },
+      {
+        scenario: "scenario:abstain",
+        decision: "ABSTAIN",
+        reasonCode: "E2E_EVIDENCE_UNAVAILABLE",
+        detail: "Required evidence is unavailable",
+      },
+      {
+        scenario: "scenario:escalate",
+        decision: "ESCALATE_HUMAN",
+        reasonCode: "E2E_AMBIGUOUS_EVIDENCE",
+        detail: "Collected evidence remains contradictory",
+      },
+      {
+        scenario: "scenario:tool-error",
+        decision: "ABSTAIN",
+        reasonCode: null,
+        detail: "The evidence tool failed",
+      },
+      {
+        scenario: "scenario:blocked-action",
+        decision: "ABSTAIN",
+        reasonCode: null,
+        detail: "high-impact action was blocked",
+      },
     ] as const;
 
     let historicalRunId: string | null = null;
-    for (const [scenario, decision, detail] of cases) {
+    for (const { scenario, decision, reasonCode, detail } of cases) {
       const accepted = await submitScenario(page, scenario);
       historicalRunId ??= accepted.run_id;
       await waitForCompleted(page);
 
       const runResponse = await fetchJson(page, `/api/runs/${accepted.run_id}`);
       expect(runResponse.status).toBe(200);
-      const safeRun = runResponse.body as { terminal_decision?: string; terminal_message?: string };
+      const safeRun = runResponse.body as {
+        terminal_decision?: string;
+        terminal_reason_code?: string;
+        terminal_message?: string;
+      };
       expect(safeRun.terminal_decision).toBe(decision);
+      if (reasonCode) expect(safeRun.terminal_reason_code).toBe(reasonCode);
       expect(safeRun.terminal_message).toContain(detail);
-      await expect(page.getByTestId("customer-outcome-summary")).not.toContainText(decision);
+      const outcome = page.getByTestId("customer-outcome-summary");
+      await expect(outcome).not.toContainText(decision);
+      if (reasonCode) await expect(outcome).not.toContainText(reasonCode);
 
       if (scenario === "scenario:blocked-action") {
         await openTechnicalSection(page, "Current analysis");
