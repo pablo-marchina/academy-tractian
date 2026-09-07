@@ -22,88 +22,21 @@ jobs:
           echo "0db58e29d6f5c86ef1838acf31c4caed788b393eb1807345fabd157c8de5bb9a  /tmp/tractian-runtime.tar.gz" | sha256sum -c -
           tar -xzf /tmp/tractian-runtime.tar.gz -C /tmp/tractian-runtime
 
-      - name: Resolve keyed seed resource identities for Papel Sul
+      - name: Inspect only supplied table loader structure and resource table filenames
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json
 
           root = Path('/tmp/tractian-runtime')
-          seed_path = root / 'data' / 'seed.json'
-          seed = json.loads(seed_path.read_text(encoding='utf-8'))
-          target_company = 'comp_papel_sul'
-          target_asset = 'asset_V301'
+          data = root / 'data'
+          for path in sorted(data.rglob('*')):
+              if path.is_file():
+                  print(f'DATA_FILE={path.relative_to(root)}')
 
-          print('SEED_TOP_LEVEL_KEYS=' + ','.join(sorted(map(str, seed.keys()))))
-
-          analysis_ids = set()
-          model_ids = set()
-          asset_ids = {target_asset}
-          case_ids = set()
-
-          def rows(section_name):
-              section = seed.get(section_name)
-              if isinstance(section, dict):
-                  return list(section.items())
-              if isinstance(section, list):
-                  return [(str(item.get('id') or idx), item) for idx, item in enumerate(section) if isinstance(item, dict)]
-              return []
-
-          for key, record in rows('analyses'):
-              if not isinstance(record, dict):
-                  continue
-              if record.get('asset_id') == target_asset or record.get('assetId') == target_asset:
-                  rid = record.get('id') or record.get('analysis_id') or record.get('analysisId') or key
-                  analysis_ids.add(str(rid))
-                  mid = record.get('model_id') or record.get('modelId') or record.get('model')
-                  if isinstance(mid, str) and mid.strip():
-                      model_ids.add(mid.strip())
-
-          # Models may be a dict keyed by canonical model id. Keep only explicit ids referenced by
-          # Papel Sul analysis rows; if none are referenced, report all model keys so ownership can
-          # be verified from store semantics rather than guessed.
-          model_section = seed.get('models')
-          all_model_ids = set()
-          if isinstance(model_section, dict):
-              all_model_ids.update(map(str, model_section.keys()))
-          elif isinstance(model_section, list):
-              for record in model_section:
-                  if isinstance(record, dict):
-                      rid = record.get('id') or record.get('model_id') or record.get('modelId')
-                      if rid: all_model_ids.add(str(rid))
-
-          # Cases live in a separate file in the supplied runtime.
-          cases_path = root / 'data' / 'cases.json'
-          if cases_path.is_file():
-              cases = json.loads(cases_path.read_text(encoding='utf-8'))
-              def walk_cases(value, inherited_company=None):
-                  if isinstance(value, dict):
-                      company = value.get('company_id') or value.get('companyId') or inherited_company
-                      asset = value.get('asset_id') or value.get('assetId')
-                      cid = value.get('id') or value.get('case_id') or value.get('caseId')
-                      if company == target_company and (asset in (None, target_asset)) and isinstance(cid, str) and cid.startswith('case_'):
-                          case_ids.add(cid)
-                      for child in value.values(): walk_cases(child, company)
-                  elif isinstance(value, list):
-                      for child in value: walk_cases(child, inherited_company)
-              walk_cases(cases)
-
-          print('PAPEL_SUL_ACTION_ASSET_IDS=' + ','.join(sorted(asset_ids)))
-          print('PAPEL_SUL_ACTION_ANALYSIS_IDS=' + ','.join(sorted(analysis_ids)))
-          print('PAPEL_SUL_REFERENCED_MODEL_IDS=' + ','.join(sorted(model_ids)))
-          print('SUPPLIED_MODEL_IDS=' + ','.join(sorted(all_model_ids)))
-          print('PAPEL_SUL_ACTION_CASE_IDS=' + ','.join(sorted(case_ids)))
-
-          # Show only the store method bodies needed to understand ownership/existence semantics.
-          store_path = root / 'api' / 'app' / 'store.py'
-          lines = store_path.read_text(encoding='utf-8').splitlines()
-          for start, end, label in ((108, 135, 'ANALYSES'), (150, 170, 'MODELS')):
-              print(f'STORE_SECTION[{label}]')
-              for i in range(start, min(end, len(lines)) + 1):
-                  s = lines[i-1].strip()
-                  if s and len(s) <= 300:
-                      print(f'STORE_HINT[{i}]={s}')
-
-          if not analysis_ids or not case_ids or not all_model_ids:
-              raise SystemExit('governed action resource set incomplete')
+          store = root / 'api' / 'app' / 'store.py'
+          lines = store.read_text(encoding='utf-8').splitlines()
+          for i in range(1, min(108, len(lines)) + 1):
+              s = lines[i-1].strip()
+              if s and len(s) <= 400:
+                  print(f'STORE_LOADER[{i}]={s}')
           PY
