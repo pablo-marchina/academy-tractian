@@ -231,6 +231,7 @@ export function DynamicDataExplorer({
                 <span>{result.run_id ? "selected analysis" : "all analyses"}</span>
                 <span>{result.source_row_count} source rows checked</span>
                 <span>{result.rows.length} result rows</span>
+                <span className="visually-hidden">scope {result.run_id ?? "global"}</span>
                 {result.truncated && <span>showing first 200 rows</span>}
               </div>
               {result.chart_type === "table" && <TableResult rows={result.rows} />}
