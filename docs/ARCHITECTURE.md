@@ -3,9 +3,12 @@
 **Status:** ACTIVE canonical architecture  
 **Last verified:** 2026-09-06 BRT  
 **Promoted backend/runtime:** `082d6f115c070fdc898df749b4b3018efd9ceeab`  
-**Current hosted UX baseline before docs rebaseline:** `2ca6215ccc07664a9551e8363e438f0930a4d995`
+**Current hosted frontend UX:** `2ca6215ccc07664a9551e8363e438f0930a4d995`  
+**Current hosted supplied API:** `47561c1175181b508139e23e6e39b555c1347d57`  
+**Validated PR #196 head:** `d7e941b1e0ee380f3cca43816521c88eddc20e9c`  
+**Main integration merge:** `9fbfbe0c5b5b80dc23941ac2850125834641e32b`
 
-This document describes the architecture that is **actually promoted/hosted now**, then separates future hardening from current claims.
+This document describes the architecture that is **actually promoted/hosted now**, then separates future hardening from current claims. Repository integration and hosted component identities are deliberately distinct; the merge into `main` is not treated as an automatic redeploy.
 
 The diagrams use a C4-inspired zoom: system context first, then containers, then the dynamic investigation path. Detail is added only where it changes responsibilities or trust boundaries.
 
@@ -203,9 +206,15 @@ No hidden fallback may silently replace provider/model/route or cross into paid 
 
 ## 10. Release/deployment identity
 
-The backend production artifact binds configured release SHA to baked artifact identity and Railway runtime identity before serving a production claim. Release 0 acceptance is anchored to `082d6f...`.
+Repository and hosted identities are tracked independently:
 
-Frontend UX may deploy a newer source SHA independently. The current hosted UX baseline `2ca6215...` successfully deployed without implying a new backend runtime promotion.
+- promoted backend/runtime: `082d6f115c070fdc898df749b4b3018efd9ceeab`;
+- current hosted frontend UX: `2ca6215ccc07664a9551e8363e438f0930a4d995`;
+- current hosted supplied API: `47561c1175181b508139e23e6e39b555c1347d57`;
+- validated source head merged from PR #196: `d7e941b1e0ee380f3cca43816521c88eddc20e9c`;
+- repository integration commit on `main`: `9fbfbe0c5b5b80dc23941ac2850125834641e32b`.
+
+The backend production artifact binds configured release SHA to baked artifact identity and Railway runtime identity before serving a production claim. A frontend or supplied-API deployment may advance independently; neither a source merge nor a docs-only commit implies a new backend runtime promotion.
 
 ## 11. Evaluation architecture
 
