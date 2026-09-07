@@ -13,7 +13,7 @@ async function openProduct(page: Page) {
 async function submitScenario(page: Page, scenario: string) {
   await page.getByRole("button", { name: "Home", exact: true }).click();
   await page.getByLabel("Question about your equipment").fill(scenario);
-  await page.getByRole("button", { name: "Analyse" }).click();
+  await page.getByRole("button", { name: "Analyse", exact: true }).click();
   await expect(page.getByTestId("customer-outcome-summary")).toBeVisible({ timeout: 20_000 });
 }
 
@@ -43,7 +43,7 @@ test.describe("task-driven low-literacy UX", () => {
     await expect(page.getByRole("button", { name: "Analyses", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Technical", exact: true })).toBeVisible();
     await expect(page.getByLabel("Question about your equipment")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Analyse" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Analyse", exact: true })).toBeVisible();
 
     await expect(page.getByText("Checks live data")).toHaveCount(0);
     await expect(page.getByText("Shows its evidence")).toHaveCount(0);
