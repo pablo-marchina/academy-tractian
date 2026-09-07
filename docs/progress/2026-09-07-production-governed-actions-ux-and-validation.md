@@ -3,9 +3,9 @@
 **Record type:** append-only progress/evidence note  
 **Date:** 2026-09-07 BRT  
 **Canonical release branch at record time:** `release/production-final`  
-**Current merged backend/runtime source:** `3545d75c00ca30419e0f47e8b1950aa50cbbf462`
+**Current merged backend/runtime source:** `d43644d22df8e3ee5bb5a1532bbea3512c3a7ac0`
 
-This note records the material progress completed during the 2026-09-07 production hardening conversation. It intentionally separates implementation, CI evidence, hosted deployment evidence and unresolved live-production validation.
+This note records the material progress completed during the 2026-09-07 production hardening conversation. It intentionally separates implementation, CI evidence, hosted deployment evidence, failed live evidence, corrective work and the final prospective five-action acceptance evidence.
 
 ## 1. Frontend and authentication progress
 
@@ -25,7 +25,7 @@ A user review also identified continuing UX debt: the frontend can still feel vi
 
 This UX simplification direction is a design/development target, not a claim of completed human usability validation. Automated browser tests and accessibility-oriented implementation checks are not substitutes for representative-user testing.
 
-## 2. Governed consequential actions promoted in code
+## 2. Governed consequential actions promoted in code — PR #211
 
 PR #211 promoted governed execution support for all five canonical TRACTIAN action operations.
 
@@ -72,13 +72,7 @@ UNCERTAIN
 
 ## 3. Production configuration and initial deployment
 
-The `production-api` Railway service was configured for the governed write path with:
-
-- live provider execution;
-- live TRACTIAN transport;
-- `ACADEMY_ACTIONS_ENABLED=true`;
-- a minimum-scope server-owned authorization grant document;
-- no canonical permission or resource authority supplied by the browser/model.
+The `production-api` Railway service was configured for the governed write path with live provider execution, live TRACTIAN transport, `ACADEMY_ACTIONS_ENABLED=true`, a minimum-scope server-owned authorization grant document and no canonical permission/resource authority supplied by the browser/model.
 
 Real secret/grant/user/resource values are intentionally excluded from this record.
 
@@ -90,9 +84,9 @@ source SHA:        1a1e7139bfa0361416120b3f21937c4048b5bb1f
 status:            SUCCESS
 ```
 
-This proved that the governed-action composition can boot and serve under the production configuration. It did **not** by itself prove that all five upstream writes are accepted by the supplied TRACTIAN runtime.
+This proved that the governed-action composition could boot and serve under the production configuration. It did **not** by itself prove that all five upstream writes were accepted.
 
-## 4. Auditable five-action production smoke
+## 4. Auditable five-action production smoke — PR #213
 
 PR #213 added the manual-only production smoke module:
 
@@ -108,15 +102,9 @@ PR #213 merge commit:
 
 The smoke contains no production credentials, tenant IDs, resource IDs or authorization grants in source. Runtime targets and credentials are supplied only through server-owned environment variables.
 
-Before attempting writes it requires the hosted capability endpoint to report:
+Before attempting writes it requires the hosted capability endpoint to report exactly five canonical actions, exactly five executable actions, `action_execution.enabled=true`, `action_execution.mode=GOVERNED_CONFIRMATION` and the governed action path enabled.
 
-- exactly five canonical action operations;
-- exactly five executable actions;
-- `action_execution.enabled=true`;
-- `action_execution.mode=GOVERNED_CONFIRMATION`;
-- the governed action path enabled.
-
-It then binds and sends all five canonical action requests through the same canonical binder and `ProductionTractianTransport` used by production. An action passes only when:
+It then binds and sends all five canonical action requests through the same canonical binder and production TRACTIAN transport used by the application. An action passes only when:
 
 ```text
 HTTP status ∈ {200, 201, 202}
@@ -127,29 +115,15 @@ Safe output contains only action name, HTTP status, acceptance boolean and aggre
 
 ## 5. CI evidence for PR #213
 
-The final required gate for the smoke head passed.
-
 Required-gate workflow run:
 
 ```text
 34164123263
 ```
 
-Green jobs included:
+Green jobs included standalone production wheel, PostgreSQL action execution lease/stale-result fencing, production runtime regression, Railway IaC, remote production image/source-drift checks, horizontal PostgreSQL runtime/handoff/recovery, clean-clone full product reproduction, Chromium full-product Playwright and the final `required-gate`.
 
-- standalone production wheel smoke;
-- PostgreSQL action execution lease and stale-result fencing;
-- production runtime unit regression;
-- Railway IaC TypeScript/static contracts;
-- remote production image smoke and release-SHA drift rejection;
-- horizontal PostgreSQL runtime/handoff/recovery;
-- clean-clone full product reproduction;
-- Chromium full-product Playwright acceptance;
-- final `required-gate`.
-
-The clean-clone job reproduced the full Python product suite with PostgreSQL enabled, promoted P0 campaigns, accepted ADR-004 controller boundary, EV-007/008/011 evidence, provider-free final-delivery/handoff/freeze checks, and frontend typecheck/tests/production build without mutating the checkout.
-
-This is strong source/artifact regression evidence. It is not equivalent to upstream live write acceptance.
+This was strong source/artifact regression evidence. It was not equivalent to upstream live write acceptance.
 
 ## 6. Hosted deployment of the smoke-capable release
 
@@ -161,13 +135,11 @@ source SHA:        3545d75c00ca30419e0f47e8b1950aa50cbbf462
 status:            SUCCESS
 ```
 
-The built image baked the exact Railway Git commit SHA and the normal TRACTIAN connectivity pre-deploy probe returned HTTP 200.
-
-A later Railway `redeploy` reused an older captured snapshot. Because a redeploy is not proof that newly edited service configuration was materialized, that run was **not** accepted as evidence that the five-action smoke had executed.
+A later Railway `redeploy` reused an older captured snapshot. Because a redeploy is not proof that newly edited service configuration was materialized, that run was **not** accepted as evidence that the intended five-action pre-deploy smoke had executed.
 
 To force a fresh configuration snapshot, an operational validation marker was changed and a new deployment was created.
 
-## 7. Decisive live write result: fail-closed 403
+## 7. Decisive first live write result: fail-closed HTTP 403
 
 Fresh validation deployment:
 
@@ -182,104 +154,228 @@ The failure was:
 RuntimeError: governed write transport smoke failed for update_asset_config: http_403:accepted_false
 ```
 
-This is a successful safety outcome and a failed capability proof:
+This was simultaneously a successful safety outcome and a failed capability proof:
 
-- the validation gate actually ran;
+- the real validation gate ran;
 - it refused to promote a deployment when one canonical write was not accepted;
 - the prior healthy production deployment remained serving;
-- therefore the project must **not** claim that all five production actions have been live-proven.
+- the local grant was not widened to hide the vendor denial.
 
-Current truth:
+At that point the correct claim was: governed actions were implemented/configured, but 5/5 upstream acceptance had **not** yet been proven.
 
-> governed action execution is implemented, configured and advertised, but complete five-action upstream acceptance is not yet proven. `update_asset_config` was live-tested and rejected by the supplied TRACTIAN API with HTTP 403 under the then-current upstream identity binding.
+## 8. Root cause: local product identity and TRACTIAN actor identity are different principals
 
-## 8. Root cause: product identity and TRACTIAN actor identity are different concepts
+An investigation reconstructed the immutable supplied TRACTIAN runtime and inspected its authorization contract.
 
-An investigation reconstructed the immutable supplied TRACTIAN runtime and inspected its action authorization contract.
+The supplied API resolves the acting user from `x-user-id` and applies endpoint-specific permission checks. For the production company scope under test, the supplied runtime has distinct upstream actors:
 
-The supplied API resolves the acting user from the `x-user-id` header and applies endpoint-specific permission checks. For the production company scope under test, the supplied runtime has distinct upstream actors:
-
-- an actor with `read + action_low`;
+- one actor with `read + action_low`;
 - a different actor with `read + action_high + escalate`.
 
-Therefore one product-authenticated user identifier cannot simply be forwarded as the upstream TRACTIAN actor for all five action families.
+Therefore one product-authenticated user identifier cannot simply be forwarded as the TRACTIAN actor for all five action families.
 
-The current `ProductionTractianTransport` correctly prevents caller/server headers from arbitrarily overriding the runner-bound `x-user-id`; however the existing execution binding couples the local requester user ID to that upstream header. That coupling is the discovered integration gap.
-
-## 9. Corrective architecture in progress
-
-The corrective design separates two trust concepts:
+The discovered trust requirement was:
 
 ```text
 local authenticated product user
-  → owns tenant authorization, resource scope, confirmation, custody, idempotency and audit
+  → tenant authorization, resource scope, confirmation, custody, idempotency and audit
 
 server-owned TRACTIAN action actor
-  → selected only at the final vendor network boundary
+  → vendor-side execution identity only
+  → selected after local authorization
   → selected by company + canonical required permission
 ```
 
 Required invariant:
 
 ```text
-(company_id, required_permission) -> server-owned upstream actor
+(company_id, required_permission) -> exactly one server-owned upstream actor
 ```
 
 The browser, model and confirmation payload must never choose or submit that actor. Missing/ambiguous actor bindings must fail closed.
 
-Implementation work has started on branch:
+## 9. Corrective implementation — PR #214
+
+PR #214 implemented the identity separation without weakening local authorization.
+
+PR head:
 
 ```text
-fix/server-owned-upstream-action-actors
+1b63898eda14c04fa5c245c75a9d719ea138816f
 ```
 
-The intended components are a server-owned actor source and an action transport adapter that replaces only the final vendor-bound identity while preserving the original local user identity everywhere else in authorization and audit.
+Merge commit:
 
-This corrective branch is **not merged or production-proven at the time of this record**.
+```text
+d43644d22df8e3ee5bb5a1532bbea3512c3a7ac0
+```
 
-## 10. Truth table
+Main implementation properties:
+
+- `ConfiguredServerOwnedUpstreamActionActorSource` parses immutable server-owned company+permission actor bindings;
+- `ServerOwnedUpstreamActionActorTransport` rewrites only canonical ACTION calls at the final vendor boundary;
+- READ calls preserve the original local requester identity and are never mapped to privileged action actors;
+- the local action principal is re-resolved before actor selection;
+- a canonical action must have exactly one expected action permission;
+- the local principal must hold that permission before actor mapping;
+- missing actor binding fails before upstream I/O;
+- actor documents may bind only `action_low`, `action_high` or `escalate` and must be source-owned;
+- incomplete actor coverage for any active production action grant blocks production boot;
+- browser/model/pending action/confirmation payload cannot select the actor;
+- the production smoke now uses the exact same actor-routing boundary as normal action execution.
+
+The new server-owned environment contract is:
+
+```text
+ACADEMY_TRACTIAN_ACTION_ACTORS_JSON
+```
+
+Real actor values remain secret operational configuration and are intentionally not recorded here.
+
+## 10. PR #214 validation
+
+PR #214 required head workflows all completed successfully, including:
+
+```text
+final-ci-required                       SUCCESS
+clean-clone-full-product-reproduction  SUCCESS
+production-runtime                     SUCCESS
+frontend-provider-free                 SUCCESS
+observability-api-provider-free        SUCCESS
+eval-driven-development-provider-free  SUCCESS
+final-handoff-acceptance-audit         SUCCESS
+final-delivery-provider-free-reproduction SUCCESS
+repository-branch-hygiene              SUCCESS
+```
+
+The final required-gate workflow for the head was green before merge.
+
+This proves the corrective source/regression contract, including parameterized coverage for all five canonical actions, read identity preservation, missing local permission, missing upstream binding and rejection of forged/non-server-owned actor grants.
+
+## 11. Production promotion of PR #214
+
+The production branch advanced to:
+
+```text
+d43644d22df8e3ee5bb5a1532bbea3512c3a7ac0
+```
+
+Current successful Railway deployment:
+
+```text
+b1259276-0c1b-425b-bf81-ab9a748a5089
+status: SUCCESS
+source: d43644d22df8e3ee5bb5a1532bbea3512c3a7ac0
+```
+
+The service passed its healthcheck and continued serving after the pre-deploy write validation.
+
+## 12. Final live five-action smoke — PASS 5/5
+
+The decisive hosted pre-deploy output used:
+
+```text
+governed-write-production-smoke-v2
+```
+
+Capability state:
+
+```text
+actions:                       5
+executable_actions:            5
+governed_action_path_enabled:  true
+mode:                          GOVERNED_CONFIRMATION
+HTTP capability status:        200
+```
+
+Action results:
+
+| Tool | HTTP | `accepted` |
+|---|---:|---|
+| `reprocess_analysis` | 200 | `true` |
+| `request_specialist_analysis` | 200 | `true` |
+| `update_asset_config` | 200 | `true` |
+| `request_retraining` | 200 | `true` |
+| `escalate_case` | 200 | `true` |
+
+Safe-output assertions from the same smoke:
+
+```text
+credentials_recorded:    false
+local_user_ids_recorded: false
+upstream_user_ids_recorded: false
+resource_ids_recorded:   false
+response_bodies_recorded:false
+status:                  PASS
+```
+
+This prospectively supersedes the earlier 403 for the **current source/configuration** while preserving that failure as historical evidence that motivated the fix.
+
+Current action claim is therefore:
+
+> all five canonical governed TRACTIAN action endpoints were exercised in the production pre-deploy smoke for source `d43644d...` and each returned HTTP 200 with `accepted=true` through the same server-owned actor-routing boundary used by production action execution.
+
+This is a strong live acceptance claim for the tested release/configuration, not a mathematical guarantee that an external service can never fail in the future.
+
+## 13. Truth table after PR #214
 
 | Claim | State on 2026-09-07 |
 |---|---|
-| Release 0 remote product is hosted | PROVEN |
-| managed auth + tenant isolation are active | IMPLEMENTED / tested in current scope |
-| provider + TRACTIAN read path is live | PROVEN for exercised reads |
-| five canonical action operations exist in contract | PROVEN |
-| governed confirmation/custody/idempotency/lease architecture exists | PROVEN by tests and CI |
-| actions can be configured/enabled in production | PROVEN by hosted boot |
-| capability surface advertises five executable governed actions | PROVEN in hosted configuration |
-| all five upstream action endpoints accept the current identity mapping | **NOT PROVEN** |
-| `update_asset_config` accepted under current mapping | **FALSE in live smoke: HTTP 403** |
-| failed validation can leave healthy production serving | PROVEN |
-| server-owned upstream actor routing fixes the 403 | DESIGNED / implementation in progress, not yet proven |
+| remote hosted product | PROVEN |
+| managed auth + tenant isolation | IMPLEMENTED / tested in current scope |
+| provider + TRACTIAN read path | PROVEN for exercised reads |
+| five canonical action operations exist | PROVEN |
+| custody/confirmation/idempotency/lease architecture | PROVEN by tests/CI |
+| governed actions enabled in production composition | PROVEN |
+| server-owned company+permission vendor actor routing implemented | PROVEN in merged source |
+| incomplete actor coverage blocks boot | PROVEN by implementation/tests |
+| current #214 source deployed successfully | PROVEN |
+| all five canonical writes accepted in hosted pre-deploy smoke | **PROVEN 5/5 for current tested release/config** |
+| previous `update_asset_config` 403 occurred | PROVEN historical evidence |
+| failed validation can preserve healthy production | PROVEN |
+| browser/model can select vendor actor | FALSE by current contract/tests |
 | actions can be guaranteed to succeed forever | impossible claim; external dependencies can fail |
 
-## 11. Reliability guarantee target
+## 14. Reliability guarantee boundary
 
 The correct production guarantee is not “every external action succeeds forever.” The controllable contract is:
 
 - deterministic local authorization and tenant/resource scope;
 - exact operator confirmation;
+- server-owned company+permission actor routing;
+- boot failure on incomplete active actor coverage;
 - one-shot/idempotent write custody;
-- server-owned upstream identity mapping;
+- active lease/generation ownership;
 - explicit upstream acceptance required for `ACCEPTED`;
 - fail closed on missing permission, actor mapping, release drift or unhealthy dependency;
 - no invented success;
 - no blind retry after an ambiguous write;
-- deployment validation prevents a failing release from replacing a healthy one.
+- deployment validation can prevent a failing candidate from replacing healthy production.
 
-## 12. Next gate
+The 5/5 smoke establishes current endpoint/configuration acceptance. It does not eliminate future network, authorization, dependency, quota or vendor failures.
 
-Before claiming complete governed-action readiness:
+## 15. Remaining action evidence beyond 5/5 transport acceptance
 
-1. finish the server-owned upstream actor routing implementation;
-2. test company/permission actor selection and fail-closed missing/ambiguous mappings;
-3. pass the full required CI matrix again;
-4. merge by expected green head SHA;
-5. deploy the exact merged SHA;
-6. execute the auditable five-action smoke against approved supplied-runtime resources;
-7. require all five actions to return an accepted HTTP status and `accepted=true`;
-8. repeat idempotency/duplicate/uncertain-outcome checks without weakening safety policy;
-9. record the final live evidence prospectively.
+The transport-level five-action gate is now closed for the current release. Broader final-production evidence can still include:
 
-Until those gates close, active documentation must describe the action path as **enabled but live-validation incomplete**, never as universally successful.
+1. normal user-facing proposal → confirmation → persisted action-state execution for representative actions;
+2. repeated duplicate-confirmation/idempotency rejection under hosted conditions;
+3. explicit `UNCERTAIN` recovery/drill evidence without blind retry;
+4. tenant/cross-user confirmation negatives under the final topology;
+5. full SECURITY-V1 action-actor confused-deputy/adversarial campaign;
+6. provider/TRACTIAN/DB failure campaigns and restore/recovery evidence.
+
+These are broader hardening gates, not reasons to deny the now-observed 5/5 transport acceptance.
+
+## 16. Documentation rule after this sequence
+
+Active documentation should now say:
+
+- the original Release 0 acceptance was historically read-only;
+- governed execution was promoted later through #211;
+- #213 added the auditable five-write gate;
+- the first real smoke exposed a 403 and safely aborted promotion;
+- #214 separated local requester identity from server-owned vendor actor identity;
+- the current `d43644d...` production deployment passed the five-action smoke 5/5;
+- no document should turn that tested acceptance into a promise of perpetual external availability/reliability;
+- frozen historical records should continue to preserve the earlier read-only and 403 states exactly as they occurred.
