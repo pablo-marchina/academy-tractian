@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
 from typing import Literal, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from research.e2.models import Permission
 
@@ -76,6 +77,111 @@ class ActionAuthorizationResolutionError(RuntimeError):
         super().__init__(f"trusted action authorization denied: {code}")
 
 
+def _principal_from_grant(
+    grant: ServerOwnedActionAuthorizationGrant,
+) -> ProductionActionPrincipal:
+    return ProductionActionPrincipal(
+        user_id=grant.user_id,
+        user_company_id=grant.user_company_id,
+        permissions=grant.permissions,
+        resource_company_bindings=grant.resource_company_bindings,
+    )
+
+
+class ConfiguredServerOwnedActionAuthorizationSource:
+    """Immutable server-configured grants for governed production execution.
+
+    The serialized grant document is accepted only by the trusted production composition layer
+    (for example a secret environment variable). It is never an HTTP request field. User ids are
+    required to be globally unique in this configured source because the proposal runtime resolves
+    principals before tenant context reaches the action boundary. Final confirmation independently
+    re-resolves the grant against the authenticated organization so a valid user grant cannot be
+    replayed across organizations.
+    """
+
+    def __init__(self, grants: tuple[ServerOwnedActionAuthorizationGrant, ...]) -> None:
+        if not grants:
+            raise ValueError("configured action authorization requires at least one grant")
+        user_ids = [grant.user_id for grant in grants]
+        if len(user_ids) != len(set(user_ids)):
+            raise ValueError(
+                "configured action authorization requires globally unique user ids"
+            )
+        self._grants = grants
+        self._by_user = {grant.user_id: grant for grant in grants}
+
+    @classmethod
+    def from_json(cls, raw: str) -> "ConfiguredServerOwnedActionAuthorizationSource":
+        try:
+            decoded = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise ValueError("action authorization grants must be valid JSON") from exc
+        if not isinstance(decoded, list) or not decoded:
+            raise ValueError("action authorization grants must be a non-empty JSON array")
+        try:
+            grants = tuple(
+                ServerOwnedActionAuthorizationGrant.model_validate(item)
+                for item in decoded
+            )
+        except ValidationError as exc:
+            raise ValueError("action authorization grants violate the trusted grant schema") from exc
+        return cls(grants)
+
+    def lookup(
+        self,
+        *,
+        organization_id: str,
+        user_id: str,
+    ) -> tuple[ServerOwnedActionAuthorizationGrant, ...]:
+        grant = self._by_user.get(user_id)
+        if grant is None or grant.organization_id != organization_id:
+            return ()
+        return (grant,)
+
+    def __call__(self, *, user_id: str) -> ProductionActionPrincipal:
+        """Remain compatible with the proposal/executor user-id resolver protocol."""
+
+        return self.resolve_user(user_id=user_id)
+
+    def resolve_user(self, *, user_id: str) -> ProductionActionPrincipal:
+        grant = self._by_user.get(user_id)
+        if grant is None:
+            raise ActionAuthorizationResolutionError("GRANT_NOT_FOUND")
+        if not grant.active:
+            raise ActionAuthorizationResolutionError("GRANT_INACTIVE")
+        return _principal_from_grant(grant)
+
+    def authorize_context(
+        self,
+        *,
+        organization_id: str,
+        user_id: str,
+    ) -> ProductionActionPrincipal:
+        """Resolve final execution authority against the trusted authenticated tenant context."""
+
+        grants = self.lookup(organization_id=organization_id, user_id=user_id)
+        if len(grants) == 0:
+            raise ActionAuthorizationResolutionError("GRANT_NOT_FOUND")
+        if len(grants) != 1:
+            raise ActionAuthorizationResolutionError("GRANT_AMBIGUOUS")
+        grant = grants[0]
+        if grant.user_id != user_id:
+            raise ActionAuthorizationResolutionError("GRANT_USER_MISMATCH")
+        if grant.organization_id != organization_id:
+            raise ActionAuthorizationResolutionError("GRANT_ORGANIZATION_MISMATCH")
+        if not grant.active:
+            raise ActionAuthorizationResolutionError("GRANT_INACTIVE")
+        return _principal_from_grant(grant)
+
+    def safe_summary(self) -> dict[str, int]:
+        """Expose counts only; never emit users, organizations, resources or permissions."""
+
+        return {
+            "configured_grants": len(self._grants),
+            "active_grants": sum(grant.active for grant in self._grants),
+        }
+
+
 class OrganizationBoundActionAuthorizationResolver:
     """Adapter compatible with the existing user-id resolver protocol, but tenant-bound.
 
@@ -137,12 +243,7 @@ class OrganizationBoundActionAuthorizationResolver:
         if not grant.active:
             raise ActionAuthorizationResolutionError("GRANT_INACTIVE")
 
-        return ProductionActionPrincipal(
-            user_id=grant.user_id,
-            user_company_id=grant.user_company_id,
-            permissions=grant.permissions,
-            resource_company_bindings=grant.resource_company_bindings,
-        )
+        return _principal_from_grant(grant)
 
 
 class TrustedActionAuthorizationResolverFactory:

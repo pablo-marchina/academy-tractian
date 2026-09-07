@@ -410,7 +410,24 @@ def create_action_capable_product_app(
         if not controls.actions_enabled():
             raise HTTPException(status_code=503, detail="action_kill_switch_engaged")
 
-        principal = authorization_resolver(user_id=context.user_id)
+        context_authorizer = getattr(authorization_resolver, "authorize_context", None)
+        if getattr(app.state, "remote_production", False):
+            if not callable(context_authorizer):
+                raise HTTPException(
+                    status_code=503,
+                    detail="action_authorization_context_unavailable",
+                )
+            try:
+                principal = context_authorizer(
+                    organization_id=context.organization_id,
+                    user_id=context.user_id,
+                )
+            except (KeyError, PermissionError, RuntimeError) as exc:
+                # Do not disclose whether a different organization owns a matching grant/resource.
+                raise HTTPException(status_code=404, detail="action_not_found") from exc
+        else:
+            principal = authorization_resolver(user_id=context.user_id)
+
         if principal.user_id != context.user_id:
             raise HTTPException(status_code=403, detail="action_authorization_context_mismatch")
 

@@ -19,6 +19,7 @@ from .release_provider import (
 from .release_provider_v13 import build_release_provider_decision_source_factory_v13
 from .remote_production import create_remote_production_app, load_remote_production_config
 from .tractian_transport import ProductionTractianTransport
+from .trusted_action_authorization import ConfiguredServerOwnedActionAuthorizationSource
 
 
 PROVIDER_SELECTION_STATE = NO_PROVIDER_SELECTION_STATE
@@ -144,11 +145,12 @@ def _configure_runtime_evaluator(app, *, provider_calls_enabled: bool) -> None:
 
 
 def app_factory():
-    """Compose the remote product in infrastructure-probe or read-only Release 0 mode.
+    """Compose the remote product with fail-closed reads and governed action execution.
 
-    Provider calls are opt-in and fail closed. Enabling them requires an explicitly configured
-    provisional Release 0 provider and a real configured TRACTIAN transport. Consequential
-    actions remain disabled by the production app composition regardless of provider state.
+    Provider calls, the TRACTIAN transport, and consequential actions are independent opt-ins.
+    Action execution additionally requires a valid server-owned grant document; the browser and
+    model never supply canonical permissions, resource ownership, confirmation fingerprints or
+    idempotency material.
     """
 
     config = load_remote_production_config()
@@ -165,11 +167,21 @@ def app_factory():
     else:
         transport_factory = NoConfiguredTractianTransport
 
-    authorization_resolver = (
-        release0_read_only_action_principal
-        if config.provider_calls_enabled
-        else deny_production_action_principal
-    )
+    action_authorization_source = None
+    if config.actions_enabled:
+        if config.action_authorization_grants_json is None:
+            raise RuntimeError("validated action configuration is missing authorization grants")
+        action_authorization_source = ConfiguredServerOwnedActionAuthorizationSource.from_json(
+            config.action_authorization_grants_json.get_secret_value()
+        )
+        # Pass the source object itself: it remains compatible with the user-id resolver protocol,
+        # while the remote confirmation endpoint can additionally require its tenant-aware
+        # authorize_context() method before any external execution is prepared.
+        authorization_resolver = action_authorization_source
+    elif config.provider_calls_enabled:
+        authorization_resolver = release0_read_only_action_principal
+    else:
+        authorization_resolver = deny_production_action_principal
 
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_operational")
     app = create_remote_production_app(
@@ -190,7 +202,12 @@ def app_factory():
     )
     app.state.provider_selection_state = provider_selection_state
     app.state.infrastructure_probe = not config.provider_calls_enabled
-    app.state.release0_read_only = config.provider_calls_enabled
+    app.state.release0_read_only = config.provider_calls_enabled and not config.actions_enabled
+    app.state.action_authorization_summary = (
+        action_authorization_source.safe_summary()
+        if action_authorization_source is not None
+        else {"configured_grants": 0, "active_grants": 0}
+    )
     install_release0_capabilities(
         app,
         config=config,

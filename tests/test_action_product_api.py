@@ -228,6 +228,24 @@ def test_other_requester_cannot_discover_or_confirm_action(tmp_path) -> None:
         assert calls == []
 
 
+def test_remote_production_requires_tenant_aware_authorization_at_confirmation(tmp_path) -> None:
+    calls: list[BoundRequest] = []
+    app = _make_app(tmp_path, actions_enabled=True, calls=calls)
+    app.state.remote_production = True
+
+    with TestClient(app) as client:
+        _, pending = _submit_and_wait(app, client)
+        response = client.post(
+            f"/api/actions/{pending['action_id']}/confirm",
+            json={"confirm": True},
+        )
+
+        assert response.status_code == 503
+        assert response.json()["detail"] == "action_authorization_context_unavailable"
+        assert calls == []
+        assert client.get(f"/api/actions/{pending['action_id']}").json()["state"] == "PENDING_CONFIRMATION"
+
+
 def test_safe_pending_action_list_never_serializes_private_custody_payload(tmp_path) -> None:
     calls: list[BoundRequest] = []
     app = _make_app(tmp_path, actions_enabled=False, calls=calls)

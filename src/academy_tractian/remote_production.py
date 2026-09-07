@@ -51,8 +51,8 @@ def create_remote_production_app(
     Configuration and baked-artifact identity validation happen before PostgreSQL pools,
     realtime listeners or runtime workers are created. Schema migration is intentionally
     disabled at serving boot. Model/provider execution remains under its explicit selection
-    gate, TRACTIAN API composition has an independent state, and consequential actions stay
-    disabled at this infrastructure/IAM boundary.
+    gate, TRACTIAN API composition has an independent state, and consequential actions require
+    the independent fail-closed action switch plus server-owned authorization grants.
     """
 
     config = RemoteProductionConfig.model_validate(config.model_dump())
@@ -78,7 +78,7 @@ def create_remote_production_app(
         initialize_schema=False,
         max_workers=max_workers,
         provider_calls_enabled=config.provider_calls_enabled,
-        actions_enabled=False,
+        actions_enabled=config.actions_enabled,
         heartbeat_interval_ms=heartbeat_interval_ms,
     )
 
@@ -117,7 +117,7 @@ def create_remote_production_app(
             "academy_event": "remote_production_composed",
             "tractian_transport_state": tractian_transport_state,
             "provider_calls_enabled": config.provider_calls_enabled,
-            "actions_enabled": False,
+            "actions_enabled": config.actions_enabled,
             "browser_iam_mode": config.browser_iam_mode,
         },
     )
