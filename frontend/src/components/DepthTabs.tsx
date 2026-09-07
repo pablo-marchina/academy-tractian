@@ -10,10 +10,10 @@ interface TabDefinition {
 }
 
 const TABS: readonly TabDefinition[] = [
-  { id: "results", number: "01", label: "Results", description: "Answer & next step" },
-  { id: "evidence", number: "02", label: "Evidence", description: "Why this answer" },
-  { id: "investigation", number: "03", label: "Investigation", description: "Runtime & operations" },
-  { id: "engineering", number: "04", label: "Engineering", description: "Architecture & evals" },
+  { id: "results", number: "1", label: "Overview", description: "Answer and next step" },
+  { id: "evidence", number: "2", label: "Why this answer?", description: "Sources and evidence" },
+  { id: "investigation", number: "3", label: "History", description: "Past analyses and process" },
+  { id: "engineering", number: "4", label: "Technical details", description: "For specialists" },
 ];
 
 interface Props {
@@ -25,9 +25,9 @@ interface Props {
 }
 
 function tabStatus(tab: WorkspaceTabId, evidenceCount: number, eventCount: number, hasEvaluation: boolean): string | null {
-  if (tab === "evidence" && evidenceCount > 0) return `${evidenceCount} refs`;
-  if (tab === "investigation" && eventCount > 0) return `${eventCount} events`;
-  if (tab === "engineering" && hasEvaluation) return "evaluated";
+  if (tab === "evidence" && evidenceCount > 0) return `${evidenceCount} source${evidenceCount === 1 ? "" : "s"}`;
+  if (tab === "investigation" && eventCount > 0) return `${eventCount} step${eventCount === 1 ? "" : "s"}`;
+  if (tab === "engineering" && hasEvaluation) return "checks ready";
   return null;
 }
 
@@ -50,13 +50,12 @@ export function DepthTabs({ activeTab, onChange, evidenceCount, eventCount, hasE
   };
 
   return (
-    <nav className="depth-navigation" aria-label="Product depth">
+    <nav className="depth-navigation" aria-label="Analysis sections">
       <div className="depth-navigation-copy">
-        <p className="eyebrow">PROGRESSIVE DEPTH</p>
-        <strong>Start with the answer. Go deeper only when you need to.</strong>
-        <span>Every layer keeps the same persisted run and observability context.</span>
+        <strong>Start with the answer.</strong>
+        <span>You can open more detail only when you need it.</span>
       </div>
-      <div className="depth-tablist" role="tablist" aria-label="Product depth layers">
+      <div className="depth-tablist" role="tablist" aria-label="Analysis sections">
         {TABS.map((tab, index) => {
           const selected = activeTab === tab.id;
           const status = tabStatus(tab.id, evidenceCount, eventCount, hasEvaluation);
@@ -73,7 +72,7 @@ export function DepthTabs({ activeTab, onChange, evidenceCount, eventCount, hasE
               onClick={() => onChange(tab.id)}
               onKeyDown={(event) => handleKeyDown(event, index)}
             >
-              <span className="depth-tab-number">{tab.number}</span>
+              <span className="depth-tab-number" aria-hidden="true">{tab.number}</span>
               <span className="depth-tab-copy">
                 <strong>{tab.label}</strong>
                 <small>{tab.description}</small>
