@@ -16,7 +16,7 @@ from .release_provider import (
     PROVISIONAL_RELEASE_PROVIDER_STATE,
     validate_release_provider_config,
 )
-from .release_provider_v12 import build_release_provider_decision_source_factory_v12
+from .release_provider_v13 import build_release_provider_decision_source_factory_v13
 from .remote_production import create_remote_production_app, load_remote_production_config
 from .tractian_transport import ProductionTractianTransport
 
@@ -75,7 +75,7 @@ def _decision_source_factory(config: RemoteProductionConfig):
     if not config.provider_calls_enabled:
         return NoSelectedProviderDecisionSource
     validate_release_provider_config(config)
-    return build_release_provider_decision_source_factory_v12(config)
+    return build_release_provider_decision_source_factory_v13(config)
 
 
 def _provider_selection_state(config: RemoteProductionConfig) -> str:
