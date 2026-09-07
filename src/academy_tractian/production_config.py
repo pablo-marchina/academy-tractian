@@ -426,10 +426,11 @@ class RemoteProductionConfig(BaseModel):
             "paid_fallback_enabled": self.paid_fallback_enabled,
             "local_serving_enabled": self.local_serving_enabled,
             "provider_calls_enabled": self.provider_calls_enabled,
-            "actions_enabled": self.actions_enabled,
         }
-        # Keep secret-bearing authorization/provider material server-side. Release metadata exposes
-        # only non-secret provider/model identity when live model calls are active.
+        # Preserve the established provider-free release metadata exactly while the new action
+        # capability is disabled. When enabled, expose only the non-secret boolean readiness flag.
+        if self.actions_enabled:
+            metadata["actions_enabled"] = True
         if self.provider_calls_enabled:
             metadata.update(
                 {
