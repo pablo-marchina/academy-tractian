@@ -12,7 +12,7 @@ export type { AnalyticsDrilldown } from "../state/analyticsScope";
 function parseFilterValue(operator: AnalyticsFilter["operator"], raw: string): AnalyticsFilter["value"] {
   const trimmed = raw.trim();
   if (operator === "in") {
-    const values = raw.split(",").map((item) => item.trim());
+    const values = raw.split(",").map((item) => item.trim()).filter(Boolean);
     if (values.every((value) => value === "true" || value === "false")) return values.map((value) => value === "true");
     if (values.every((value) => value !== "" && Number.isFinite(Number(value)))) return values.map(Number);
     return values;
@@ -27,13 +27,30 @@ function scalarToInput(value: string | number | boolean): string {
   return typeof value === "string" ? value : String(value);
 }
 
-function TableResult({ rows }: { rows: Record<string, string | number | boolean | null>[] }) {
+function humanize(value: string): string {
+  const words = value.replaceAll("_", " ").replaceAll("ms", "milliseconds");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function chartLabel(value: ChartType): string {
+  const labels: Record<ChartType, string> = {
+    table: "Table",
+    bar: "Bar chart",
+    line: "Line chart",
+    heatmap: "Heat map",
+    histogram: "Distribution",
+  };
+  return labels[value];
+}
+
+function TableResult({ rows, caption = "Analytics result table" }: { rows: Record<string, string | number | boolean | null>[]; caption?: string }) {
   const columns = rows[0] ? Object.keys(rows[0]) : [];
-  if (!rows.length) return <div className="empty-state small"><strong>No matching rows</strong><p>The backend returned an empty safe result for this query.</p></div>;
+  if (!rows.length) return <div className="empty-state small"><strong>No matching data</strong><p>Try a broader scope or remove the optional filter.</p></div>;
   return (
     <div className="analytics-table-wrap">
       <table className="analytics-table">
-        <thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr></thead>
+        <caption className="visually-hidden">{caption}</caption>
+        <thead><tr>{columns.map((column) => <th scope="col" key={column}>{humanize(column)}</th>)}</tr></thead>
         <tbody>{rows.map((row, index) => <tr key={index}>{columns.map((column) => <td key={column}>{String(row[column] ?? "—")}</td>)}</tr>)}</tbody>
       </table>
     </div>
@@ -76,6 +93,7 @@ export function DynamicDataExplorer({
     setMeasure("count");
     setChartType("table");
     setFilterField("");
+    setFilterOperator("eq");
     setFilterValue("");
   };
 
@@ -102,6 +120,12 @@ export function DynamicDataExplorer({
     setChartType(chosenChart);
   };
 
+  const clearFilter = () => {
+    setFilterField("");
+    setFilterOperator("eq");
+    setFilterValue("");
+  };
+
   const result = queryMutation.data?.run_id === globalRunId ? queryMutation.data : undefined;
   const option = result ? dynamicOption(result) : null;
 
@@ -126,40 +150,109 @@ export function DynamicDataExplorer({
   };
 
   return (
-    <article className="panel operations-panel" id="dynamic-data-explorer">
+    <article className="panel operations-panel" id="dynamic-data-explorer" aria-busy={queryMutation.isPending}>
       <div className="section-heading compact">
-        <div><p className="eyebrow">ALLOW-LISTED ANALYTICS</p><h2>Dynamic Data Explorer</h2></div>
+        <div>
+          <p className="eyebrow">SAFE ANALYTICS</p>
+          <h2>Dynamic Data Explorer</h2>
+          <p className="section-supporting-copy">Build a bounded view of persisted product data without writing SQL. Start with what you want to compare, then add a filter only if it helps answer the question.</p>
+        </div>
         {schemaQuery.data && <span className="count-pill">schema {schemaQuery.data.schema_version}</span>}
       </div>
+
       <div className="analytics-scope-banner">
-        <strong>Global analytics scope</strong>
-        <span title={globalRunId ?? undefined}>{globalRunId ?? "all persisted runs"}</span>
+        <strong>{globalRunId ? "Selected analysis only" : "All saved analyses"}</strong>
+        <span className={globalRunId ? "technical-id" : undefined} title={globalRunId ?? undefined}>{globalRunId ?? "global scope"}</span>
       </div>
-      <p className="panel-copy">The browser sends a constrained query specification, never SQL. A selected run is applied as a separate global scope; chart clicks create allow-listed drill-down filters.</p>
 
-      {!datasetSchema ? <div className="empty-state small"><strong>Analytics schema unavailable</strong><p>No query is generated until the backend publishes its allow-list.</p></div> : (
-        <>
-          <div className="query-grid">
-            <label>Dataset<select value={dataset} onChange={(event) => resetForDataset(event.target.value as AnalyticsQuerySpec["dataset"])}>{Object.keys(schemaQuery.data!.datasets).map((item) => <option key={item}>{item}</option>)}</select></label>
-            <label>Dimension 1<select value={dimensionA} onChange={(event) => setDimensionA(event.target.value)}><option value="">none</option>{datasetSchema.dimensions.map((item) => <option key={item}>{item}</option>)}</select></label>
-            <label>Dimension 2<select value={dimensionB} disabled={!dimensionA} onChange={(event) => setDimensionB(event.target.value)}><option value="">none</option>{datasetSchema.dimensions.filter((item) => item !== dimensionA).map((item) => <option key={item}>{item}</option>)}</select></label>
-            <label>Measure<select value={measure} onChange={(event) => { setMeasure(event.target.value); setChartType(event.target.value === "latency_ms_distribution" ? "histogram" : "table"); }}>{datasetSchema.measures.map((item) => <option key={item}>{item}</option>)}</select></label>
-            <label>Chart<select value={validCharts.includes(chartType) ? chartType : validCharts[0]} onChange={(event) => setChartType(event.target.value as ChartType)}>{validCharts.map((item) => <option key={item}>{item}</option>)}</select></label>
-          </div>
-
-          <div className="filter-row">
-            <label>Filter field<select value={filterField} onChange={(event) => setFilterField(event.target.value)}><option value="">no local filter</option>{datasetSchema.dimensions.map((item) => <option key={item}>{item}</option>)}</select></label>
-            <label>Operator<select value={filterOperator} disabled={!filterField} onChange={(event) => setFilterOperator(event.target.value as AnalyticsFilter["operator"])}><option value="eq">equals</option><option value="ne">not equal</option><option value="in">in (comma separated)</option></select></label>
-            <label>Value<input value={filterValue} disabled={!filterField} onChange={(event) => setFilterValue(event.target.value)} placeholder="safe scalar value" /></label>
-            <button type="button" onClick={runQuery} disabled={queryMutation.isPending}>Run bounded query</button>
-          </div>
-
-          {queryMutation.error && <div className="error-banner">{queryMutation.error.message}</div>}
-          {result && <div className="query-result-meta"><span>scope {result.run_id ?? "all runs"}</span><span>{result.source_row_count} source rows</span><span>{result.rows.length} result rows</span>{result.truncated && <span>truncated</span>}</div>}
-          {result && result.chart_type === "table" && <TableResult rows={result.rows} />}
-          {result && option && <EChart option={option} height={330} onDataPointClick={drillIntoResult} />}
-        </>
+      {schemaQuery.isLoading && (
+        <div className="empty-state small" role="status"><strong>Loading available analytics…</strong><p>The query form appears only after the backend publishes the allowed fields.</p></div>
       )}
+
+      {schemaQuery.error && (
+        <div className="error-banner friendly-error" role="alert"><strong>Analytics options could not be loaded.</strong><span>No query will be sent until the safe schema is available.</span></div>
+      )}
+
+      {!schemaQuery.isLoading && !datasetSchema ? (
+        <div className="empty-state small"><strong>Analytics schema unavailable</strong><p>No query is generated until the backend publishes its allow-list.</p></div>
+      ) : datasetSchema ? (
+        <>
+          <div className="analytics-builder-intro">
+            <strong>1. Choose what to summarize</strong>
+            <span>Each option is constrained by the server-owned analytics schema.</span>
+          </div>
+          <div className="query-grid">
+            <label>Dataset
+              <small>Which saved data should be summarized?</small>
+              <select value={dataset} onChange={(event) => resetForDataset(event.target.value as AnalyticsQuerySpec["dataset"])}>
+                {Object.keys(schemaQuery.data!.datasets).map((item) => <option key={item} value={item}>{humanize(item)}</option>)}
+              </select>
+            </label>
+            <label>Dimension 1
+              <small>Main grouping for the result.</small>
+              <select value={dimensionA} onChange={(event) => setDimensionA(event.target.value)}><option value="">No grouping</option>{datasetSchema.dimensions.map((item) => <option key={item} value={item}>{humanize(item)}</option>)}</select>
+            </label>
+            <label>Dimension 2
+              <small>Optional second grouping for comparisons.</small>
+              <select value={dimensionB} disabled={!dimensionA} onChange={(event) => setDimensionB(event.target.value)}><option value="">No second grouping</option>{datasetSchema.dimensions.filter((item) => item !== dimensionA).map((item) => <option key={item} value={item}>{humanize(item)}</option>)}</select>
+            </label>
+            <label>Measure
+              <small>What value should be counted or measured?</small>
+              <select value={measure} onChange={(event) => { setMeasure(event.target.value); setChartType(event.target.value === "latency_ms_distribution" ? "histogram" : "table"); }}>{datasetSchema.measures.map((item) => <option key={item} value={item}>{humanize(item)}</option>)}</select>
+            </label>
+            <label>Chart
+              <small>How should the result be displayed?</small>
+              <select value={validCharts.includes(chartType) ? chartType : validCharts[0]} onChange={(event) => setChartType(event.target.value as ChartType)}>{validCharts.map((item) => <option key={item} value={item}>{chartLabel(item)}</option>)}</select>
+            </label>
+          </div>
+
+          <details className="technical-disclosure analytics-filter-disclosure" open={Boolean(filterField)}>
+            <summary>2. Optional filter</summary>
+            <div className="filter-row">
+              <label>Filter field<select value={filterField} onChange={(event) => setFilterField(event.target.value)}><option value="">No local filter</option>{datasetSchema.dimensions.map((item) => <option key={item} value={item}>{humanize(item)}</option>)}</select></label>
+              <label>Operator<select value={filterOperator} disabled={!filterField} onChange={(event) => setFilterOperator(event.target.value as AnalyticsFilter["operator"])}><option value="eq">Equals</option><option value="ne">Does not equal</option><option value="in">Matches one of</option></select></label>
+              <label>Value<input value={filterValue} disabled={!filterField} onChange={(event) => setFilterValue(event.target.value)} placeholder={filterOperator === "in" ? "value 1, value 2" : "filter value"} /></label>
+              {filterField && <button type="button" className="ghost-button" onClick={clearFilter}>Clear filter</button>}
+            </div>
+          </details>
+
+          <div className="analytics-run-row">
+            <div><strong>3. Generate the view</strong><span>The backend enforces allowed fields, operators and a 200-row result limit.</span></div>
+            <button type="button" onClick={runQuery} disabled={queryMutation.isPending}>{queryMutation.isPending ? "Generating view…" : "Generate analytics view"}</button>
+          </div>
+
+          {queryMutation.error && (
+            <div className="error-banner friendly-error" role="alert"><strong>The analytics view could not be generated.</strong><span>Check the selected fields or remove the optional filter and try again.</span><details><summary>Technical detail</summary><code>{queryMutation.error.message}</code></details></div>
+          )}
+
+          {result && (
+            <section className="analytics-result-section" aria-live="polite">
+              <div className="query-result-meta">
+                <span>{result.run_id ? "selected analysis" : "all analyses"}</span>
+                <span>{result.source_row_count} source rows checked</span>
+                <span>{result.rows.length} result rows</span>
+                {result.truncated && <span>showing first 200 rows</span>}
+              </div>
+              {result.chart_type === "table" && <TableResult rows={result.rows} />}
+              {option && result.chart_type !== "table" && (
+                <>
+                  <EChart
+                    option={option}
+                    height={330}
+                    onDataPointClick={drillIntoResult}
+                    ariaLabel={`${chartLabel(result.chart_type as ChartType)} of ${humanize(result.measure)} grouped by ${result.dimensions.map(humanize).join(" and ") || "the selected scope"}`}
+                    description="The same result rows are available as a table below. Selecting a chart point applies a safe drill-down filter when one grouping dimension is present."
+                  />
+                  <details className="technical-disclosure analytics-table-alternative">
+                    <summary>View the chart data as a table</summary>
+                    <TableResult rows={result.rows} caption="Table alternative for the analytics chart" />
+                  </details>
+                </>
+              )}
+            </section>
+          )}
+        </>
+      ) : null}
     </article>
   );
 }
