@@ -74,7 +74,7 @@ function decisionTitle(decision: string | null | undefined): string {
 function decisionNextStep(decision: string | null | undefined): string {
   switch (decision) {
     case "ORIENT":
-      return "Review the conclusion and supporting evidence below. Release 0 will not execute a consequential change for you.";
+      return "Review the conclusion and supporting evidence. Release 0 will not execute a consequential change for you.";
     case "ASK_CLARIFICATION":
       return "Provide the missing context requested in the message and start a new investigation with that information.";
     case "ABSTAIN":
@@ -82,7 +82,7 @@ function decisionNextStep(decision: string | null | undefined): string {
     case "ESCALATE_HUMAN":
       return "Hand the conclusion, reason and evidence context to a qualified human reviewer. The system intentionally did not resolve the uncertainty itself.";
     default:
-      return "Use the customer-safe message and evidence as the primary output; engineering traces are available further down the page.";
+      return "Use the customer-safe message as the primary output and open deeper tabs only when you need supporting detail.";
   }
 }
 
@@ -116,6 +116,8 @@ export function ProductExperience({
   const serverIntents = capabilityQuery.data?.guided_intents ?? [];
   const usingStarterExamples = !capabilityQuery.isLoading && serverIntents.length === 0;
   const quickStartOptions = serverIntents.length > 0 ? serverIntents : usingStarterExamples ? STARTER_EXAMPLES : [];
+  const hasRunContext = hasLiveRun || Boolean(selectedRun);
+  const completed = Boolean(selectedRun?.completed);
 
   const usePrompt = (prompt: string) => {
     onUsePrompt(prompt);
@@ -127,52 +129,54 @@ export function ProductExperience({
 
   return (
     <section className="experience-shell" aria-label="Release 0 user experience">
-      <article className="experience-hero">
-        <div className="experience-copy">
-          <p className="eyebrow">RELEASE 0 · READ-ONLY PILOT</p>
-          <h2>Investigate industrial evidence without guessing.</h2>
-          <p>
-            Describe what you need to understand. The agent can inspect the supplied TRACTIAN read
-            APIs, ground its answer in evidence, and stop safely when the information is incomplete
-            or conflicting. External consequential actions stay disabled in this release.
-          </p>
-          <div className="experience-guardrails" aria-label="Release 0 guarantees">
-            <span>Live provider</span><span>Real TRACTIAN reads</span><span>Evidence-backed</span><span>No external actions</span>
-          </div>
-        </div>
-        <div className="experience-start">
-          <p className="eyebrow">QUICK START</p>
-          <strong>Choose a starting posture</strong>
-          <p className="muted">The preset fills the request. You can edit it before running.</p>
-          {usingStarterExamples && (
-            <p className="experience-source-note" role="status">
-              Server-owned guided intents are unavailable in this environment, so these are starter examples only. Runtime capabilities remain authoritative.
+      {!hasRunContext && (
+        <article className="experience-hero">
+          <div className="experience-copy">
+            <p className="eyebrow">RELEASE 0 · READ-ONLY PILOT</p>
+            <h2>Investigate industrial evidence without guessing.</h2>
+            <p>
+              Describe what you need to understand. The agent can inspect the supplied TRACTIAN read
+              APIs, ground its answer in evidence, and stop safely when the information is incomplete
+              or conflicting. External consequential actions stay disabled in this release.
             </p>
-          )}
-          <div className="experience-intents">
-            {quickStartOptions.map((intent) => (
-              <button
-                type="button"
-                data-testid="quick-start-option"
-                key={intent.intent_id}
-                onClick={() => usePrompt(intent.prompt_template)}
-              >
-                <span>{intent.intent_id}</span>
-                <strong>{intent.label}</strong>
-                <small>{intent.release0_behavior.replaceAll("_", " ").toLowerCase()}</small>
-              </button>
-            ))}
-            {capabilityQuery.isLoading && <span className="muted">Loading guided investigations…</span>}
+            <div className="experience-guardrails" aria-label="Release 0 guarantees">
+              <span>Live provider</span><span>Real TRACTIAN reads</span><span>Evidence-backed</span><span>No external actions</span>
+            </div>
           </div>
-        </div>
-      </article>
+          <div className="experience-start">
+            <p className="eyebrow">QUICK START</p>
+            <strong>Choose a starting posture</strong>
+            <p className="muted">The preset fills the request. You can edit it before running.</p>
+            {usingStarterExamples && (
+              <p className="experience-source-note" role="status">
+                Server-owned guided intents are unavailable in this environment, so these are starter examples only. Runtime capabilities remain authoritative.
+              </p>
+            )}
+            <div className="experience-intents">
+              {quickStartOptions.map((intent) => (
+                <button
+                  type="button"
+                  data-testid="quick-start-option"
+                  key={intent.intent_id}
+                  onClick={() => usePrompt(intent.prompt_template)}
+                >
+                  <span>{intent.intent_id}</span>
+                  <strong>{intent.label}</strong>
+                  <small>{intent.release0_behavior.replaceAll("_", " ").toLowerCase()}</small>
+                </button>
+              ))}
+              {capabilityQuery.isLoading && <span className="muted">Loading guided investigations…</span>}
+            </div>
+          </div>
+        </article>
+      )}
 
-      {(hasLiveRun || selectedRun) && (
+      {hasRunContext && !completed && (
         <article className="experience-progress" aria-live="polite">
           <div className="experience-progress-heading">
             <div>
               <p className="eyebrow">{viewingHistorical ? "PERSISTED INVESTIGATION" : "LIVE INVESTIGATION"}</p>
-              <h2>{selectedRun?.completed ? decisionTitle(selectedRun.terminal_decision) : "Investigation in progress"}</h2>
+              <h2>Investigation in progress</h2>
             </div>
             <span className="experience-connection">{viewingHistorical ? "history" : connection.toLowerCase()}</span>
           </div>
@@ -187,18 +191,18 @@ export function ProductExperience({
         </article>
       )}
 
-      {selectedRun?.completed && (
+      {completed && (
         <article className="experience-outcome" data-testid="customer-outcome-summary">
           <div className="experience-outcome-main">
             <p className="eyebrow">WHAT YOU NEED TO KNOW</p>
             <div className="experience-outcome-title">
-              <h2>{decisionTitle(selectedRun.terminal_decision)}</h2>
-              {selectedRun.terminal_response_mode && <span>{selectedRun.terminal_response_mode}</span>}
+              <h2>{decisionTitle(selectedRun?.terminal_decision)}</h2>
+              {selectedRun?.terminal_response_mode && <span>{selectedRun.terminal_response_mode}</span>}
             </div>
-            <p className="experience-message">{selectedRun.terminal_message || "No customer-safe message was persisted."}</p>
+            <p className="experience-message">{selectedRun?.terminal_message || "No customer-safe message was persisted."}</p>
             <div className="experience-next-step">
               <strong>What to do next</strong>
-              <p>{decisionNextStep(selectedRun.terminal_decision)}</p>
+              <p>{decisionNextStep(selectedRun?.terminal_decision)}</p>
             </div>
           </div>
           <aside className="experience-evidence">
@@ -217,7 +221,7 @@ export function ProductExperience({
               <p className="muted">No safe evidence reference was persisted for this terminal path.</p>
             )}
             <small className="experience-evidence-note">
-              Detailed trace, lineage and evaluator checks remain available in Engineering details below.
+              Open Evidence for the canonical trail, Investigation for runtime behavior, or Engineering for evaluator and architecture details.
             </small>
           </aside>
         </article>
