@@ -12,12 +12,14 @@ interface Props {
 
 function availabilityLabel(tool: Release0ToolCapability): string {
   if (tool.availability === "LIVE_READ") return "Can read live data";
+  if (tool.availability === "EXECUTABLE_WITH_CONFIRMATION") return "Can execute after confirmation";
   if (tool.availability === "PROPOSAL_ONLY") return "Can propose only";
   return "Not available";
 }
 
 function availabilityTone(tool: Release0ToolCapability): string {
   if (tool.availability === "LIVE_READ") return "live";
+  if (tool.availability === "EXECUTABLE_WITH_CONFIRMATION") return "live";
   if (tool.availability === "PROPOSAL_ONLY") return "proposal";
   return "unavailable";
 }
@@ -60,7 +62,7 @@ export function Release0CapabilitySurface({ events, onUsePrompt }: Props) {
           <p className="section-supporting-copy">This view comes from the server-owned contract. It distinguishes what is available in production from what happened in the selected analysis.</p>
         </div>
         <div className="release0-heading-meta">
-          <span className={`release0-badge ${manifest.release.read_only_user_path_enabled ? "live" : "unavailable"}`}>{manifest.release.read_only_user_path_enabled ? "READ-ONLY ANALYSIS READY" : "READ-ONLY ANALYSIS BLOCKED"}</span>
+          <span className={`release0-badge ${manifest.release.read_only_user_path_enabled ? "live" : "unavailable"}`}>{manifest.release.read_only_user_path_enabled ? "LIVE ANALYSIS READY" : "LIVE ANALYSIS BLOCKED"}</span>
           <span className="count-pill">{observedCount}/{manifest.tool_summary.total} operations used in this analysis</span>
         </div>
       </div>
@@ -68,7 +70,7 @@ export function Release0CapabilitySurface({ events, onUsePrompt }: Props) {
       <div className="release0-readiness-grid">
         <article><span>AI provider</span><strong>{manifest.provider.calls_enabled ? "Live calls enabled" : "Calls disabled"}</strong><small>{manifest.provider.model_id ?? humanize(manifest.provider.selection_state)}</small></article>
         <article><span>TRACTIAN data</span><strong>{manifest.tractian.read_path_enabled ? "Live read path available" : "Read path blocked"}</strong><small>{humanize(manifest.tractian.transport_state)}</small></article>
-        <article><span>External actions</span><strong>Proposal only</strong><small>No external side effect from the ordinary user path</small></article>
+        <article><span>External actions</span><strong>{manifest.action_execution.enabled ? "Governed execution enabled" : "Proposal only"}</strong><small>{manifest.action_execution.enabled ? `${manifest.tool_summary.executable_actions} actions require explicit confirmation and server authorization` : "No external side effect from the ordinary user path"}</small></article>
         <article><span>Cost boundary</span><strong>{humanize(manifest.release.cost_policy)}</strong><small>Paid fallback: {manifest.release.paid_fallback_enabled ? "enabled" : "disabled"}</small></article>
         <article><span>Release identity</span><strong>{manifest.release.git_sha.slice(0, 12)}</strong><small>Exact source revision reported by the server</small></article>
       </div>
@@ -94,7 +96,7 @@ export function Release0CapabilitySurface({ events, onUsePrompt }: Props) {
           <span><strong>Inspect all TRACTIAN operations</strong><small>{manifest.tool_summary.reads} reads · {manifest.tool_summary.actions} actions · {manifest.tool_summary.total} total</small></span>
         </summary>
         <div className="release0-disclosure-body">
-          <p className="release0-disclosure">“Available” means the operation exists at the production tool boundary. “Used in this analysis” means the selected analysis actually invoked it. Action operations remain inspectable for proposals and policy evaluation even when external execution is disabled.</p>
+          <p className="release0-disclosure">“Available” means the operation exists at the production tool boundary. “Used in this analysis” means the selected analysis actually invoked it. Executable actions still require deterministic permission and resource-scope checks, an exact server-custodied proposal, explicit requester confirmation and durable idempotency claiming.</p>
           <div className="capability-grid">
             {manifest.tools.map((tool) => {
               const used = usedTools.has(tool.name);
