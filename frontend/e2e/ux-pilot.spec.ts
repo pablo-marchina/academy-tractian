@@ -43,7 +43,7 @@ test.describe("user-first progressive disclosure UX", () => {
 
     await historyTab.click();
     await expect(page.getByRole("heading", { name: "Review previous analyses" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Previous analyses" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Previous analyses", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Trace graph" })).toBeHidden();
     await page.getByText("Show how this analysis ran").click();
     await expect(page.getByRole("heading", { name: "Trace graph" })).toBeVisible();
@@ -78,10 +78,10 @@ test.describe("user-first progressive disclosure UX", () => {
     await page.getByRole("button", { name: "See why this answer" }).click();
     await expect(page.locator(".terminal-panel")).toBeVisible();
     await expect(page.locator(".terminal-panel")).toContainText("More information needed");
-    await expect(page.locator(".terminal-panel")).not.toContainText("ASK_CLARIFICATION");
+    await expect(page.getByText("ASK_CLARIFICATION", { exact: true })).toBeHidden();
 
     await page.getByText("Show internal result codes").click();
-    await expect(page.locator(".terminal-panel")).toContainText("ASK_CLARIFICATION");
+    await expect(page.getByText("ASK_CLARIFICATION", { exact: true })).toBeVisible();
 
     await page.getByRole("tab", { name: /Technical details/ }).click();
     await expect(page.locator(".evaluation-panel")).toBeVisible();
