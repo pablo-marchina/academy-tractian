@@ -23,43 +23,46 @@ def _validate_user_id(value: str, *, label: str) -> str:
     return normalized
 
 
-def _case_source(path: Path | None = None) -> Path:
+def _case_sources(path: Path | None = None) -> tuple[Path, ...]:
     if path is not None:
-        return path
+        return (path,)
     configured = os.environ.get("ACADEMY_TRACTIAN_CASE_SOURCE")
     if configured:
-        return Path(configured)
+        return (Path(configured),)
 
-    candidates = sorted(
-        candidate
-        for candidate in _RUNTIME_ROOT.rglob("cases.json")
-        if "agent-input" in candidate.parts and candidate.is_file()
+    candidates = tuple(
+        sorted(
+            candidate
+            for candidate in _RUNTIME_ROOT.rglob("cases.json")
+            if "agent-input" in candidate.parts and candidate.is_file()
+        )
     )
-    if len(candidates) != 1:
-        raise RuntimeError("tractian_domain_identity_case_source_ambiguous")
-    return candidates[0]
+    if not candidates:
+        raise RuntimeError("tractian_domain_identity_case_source_unavailable")
+    return candidates
+
+
+def _case_rows(source: Path) -> list[object]:
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict) and isinstance(payload.get("cases"), list):
+        return payload["cases"]
+    raise RuntimeError("tractian_domain_identity_case_source_invalid")
 
 
 def load_domain_user_ids(path: Path | None = None) -> tuple[str, ...]:
-    """Load only agent-visible synthetic user ids from the supplied cases surface."""
-
-    source = _case_source(path)
-    payload = json.loads(source.read_text(encoding="utf-8"))
-    if isinstance(payload, list):
-        rows = payload
-    elif isinstance(payload, dict) and isinstance(payload.get("cases"), list):
-        rows = payload["cases"]
-    else:
-        raise RuntimeError("tractian_domain_identity_case_source_invalid")
+    """Load only agent-visible synthetic user ids from the supplied cases surfaces."""
 
     user_ids: set[str] = set()
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        raw = row.get("user_id")
-        if not isinstance(raw, str):
-            continue
-        user_ids.add(_validate_user_id(raw, label="TRACTIAN domain user id"))
+    for source in _case_sources(path):
+        for row in _case_rows(source):
+            if not isinstance(row, dict):
+                continue
+            raw = row.get("user_id")
+            if not isinstance(raw, str):
+                continue
+            user_ids.add(_validate_user_id(raw, label="TRACTIAN domain user id"))
 
     if not user_ids:
         raise RuntimeError("tractian_domain_identity_pool_unavailable")
