@@ -14,6 +14,7 @@ This plan is dependency-ordered. It separates the already promoted/hardened Rele
 real remote multi-user product
 + real TRACTIAN evidence
 + safe grounded agent behavior
++ governed consequential actions with explicit confirmation
 + trustworthy evaluation
 + usable task-driven frontend
 + quantitative production/security/value evidence
@@ -24,72 +25,186 @@ real remote multi-user product
 
 Original minimum promotion passed on backend `082d6f115c070fdc898df749b4b3018efd9ceeab`, workflow `hosted-production-release0-agent`, run `34069562818`.
 
-That immutable acceptance proved:
+That immutable acceptance proved the original read-only Release 0 scope: Railway public product, Neon PostgreSQL, managed IAM + tenant negatives, provisional hosted provider, real typed TRACTIAN reads, controller/evidence/evaluator path, safe terminal states, persistence/SSE, 18-operation capability contract and USD0/no-paid-spillover/no-local dependency.
 
-- Railway public product;
-- Neon PostgreSQL;
-- managed IAM + tenant negatives;
-- provisional hosted Cloudflare provider;
-- real typed TRACTIAN read path;
-- provider → controller → evidence → terminal → evaluator;
-- safe terminal states;
-- persistence + SSE;
-- 18-operation capability surface;
-- external actions disabled;
-- USD0/no-paid-spillover/no-local-dependency.
+It is historical evidence and is not rewritten by later governed-action promotion.
 
-## Phase 1 — Production live hardening — DONE FOR DISCOVERED BLOCKERS
+## Phase 1 — Production live hardening — DONE FOR DISCOVERED READ/AUTH BLOCKERS
 
-Current backend/runtime: `08866da60245f58f217981b7ae668b10be45cc67` (V13).
+The read orchestration remains V13. Live prompting on 2026-09-07 prospectively fixed discoverable-ID requests, nested ID parsing gaps, redundant reads, premature diagnostic terminal, response-mode ambiguity, managed-session fan-out, explicit asset-label/comparison gaps and repeated completed data-quality reads.
 
-Live prompting on 2026-09-07 found and prospectively fixed:
+Current merged backend/runtime source after later action work is:
 
-- discoverable-ID requests;
-- nested asset/analysis ID parsing gaps;
-- redundant post-fleet `get_asset` loops;
-- premature terminal before condition evidence;
-- ambiguous `response_mode` semantics;
-- managed-session fan-out causing `managed_session_unavailable`;
-- explicit asset-label grounding/comparison gaps;
-- repeated completed single-asset data-quality reads.
+```text
+3545d75c00ca30419e0f47e8b1950aa50cbbf462
+```
 
-Final V13 retests passed the targeted behaviors. See [`progress/2026-09-07-release0-live-hardening-v13.md`](progress/2026-09-07-release0-live-hardening-v13.md).
+The V13 read behavior remains part of that descendant source.
+
+See [`progress/2026-09-07-release0-live-hardening-v13.md`](progress/2026-09-07-release0-live-hardening-v13.md).
 
 ### Guardrail from the retests
 
 Do not optimize tool count by tool name alone. Asset-level → `point_id` RMS/spectrum calls can be legitimate drill-down. Exact-duplicate metrics must include normalized arguments/resource target and evidence contribution.
 
-## Phase 2 — Task-driven first-user UX — DONE / PILOT EVIDENCE NEXT
+## Phase 2 — Task-driven first-user UX — PROMOTED / STRUCTURAL SIMPLIFICATION STILL OPEN
 
-Current hosted frontend: `1bc124a8d4dbd029178ff8129b25452129445de7`.
+Current hosted frontend:
+
+```text
+1bc124a8d4dbd029178ff8129b25452129445de7
+```
 
 Completed:
 
 - [x] task-first global navigation: Home / Analyses / Technical;
-- [x] single primary natural-language entry on Home;
+- [x] primary natural-language entry on Home;
 - [x] human-readable progress;
 - [x] customer-first result + next step;
-- [x] contextual evidence instead of permanent evidence-first navigation;
+- [x] contextual evidence instead of evidence as a permanent global destination;
 - [x] persisted analysis history;
 - [x] Technical sections for analysis/quality/data/system/actions/studies;
 - [x] managed-auth unavailable/invalid recovery states;
 - [x] full engineering observability retained;
 - [x] frontend/Playwright/required regression green before promotion.
 
-Next UX evidence:
+The latest user review still finds the frontend visually polluted/difficult to navigate. The stronger design target is now:
 
-- lightweight ordinary run feedback isolated from controlled research datasets;
-- first-time-user task completion/friction measurement;
-- accessibility/responsive regression on the current task-driven navigation.
+> **each screen should have one main question for the user to answer.**
 
-## Phase 3 — Broad live prompt/API coverage — ACTIVE P1
+Remaining UX work/evidence:
 
-The current live evidence is strong for several asset/condition/data-quality paths, but it does **not** yet prove all 13 read operations or all semantic failure modes.
+- reduce cards/panels/borders/eyebrows/statuses/supporting copy visible simultaneously;
+- make Evidence contextual from Result, not a competing global navigation concept;
+- keep Technical outside the normal flow;
+- make History recognition/list based before adding filters/table density;
+- aggressively linearize mobile layouts;
+- preserve ≥44px targets, keyboard/focus/reduced-motion and semantic accessibility;
+- measure first-time-user task completion/friction with real users;
+- do not call automated tests human usability validation.
+
+## Phase 3 — Governed consequential actions — ACTIVE P0
+
+This phase advanced materially during this conversation.
+
+### Completed implementation/promotion work
+
+PR #211 merged governed execution support for all five canonical action operations:
+
+```text
+merge SHA 1a1e7139bfa0361416120b3f21937c4048b5bb1f
+```
+
+The production composition now supports:
+
+```text
+action proposal
+→ deterministic validation
+→ private durable custody
+→ explicit confirmation of exact existing action
+→ server-owned tenant/resource authorization
+→ persistent idempotency
+→ non-transferable lease/fencing
+→ one exact external attempt
+→ ACCEPTED | NOT_ACCEPTED | BLOCKED | UNCERTAIN
+```
+
+Canonical permissions:
+
+```text
+reprocess_analysis             action_low
+request_specialist_analysis    action_low
+update_asset_config            action_high
+request_retraining             action_high
+escalate_case                  escalate
+```
+
+Production has booted successfully with the action path enabled and a minimum-scope server-owned grant.
+
+### Auditable live gate
+
+PR #213 added the manual-only five-action production smoke and merged at:
+
+```text
+3545d75c00ca30419e0f47e8b1950aa50cbbf462
+```
+
+Required-gate run `34164123263` passed the production runtime, action lease/fencing, horizontal runtime, Railway IaC, production image, clean-clone and Chromium product surfaces.
+
+The smoke requires:
+
+```text
+5 canonical actions advertised
++ 5 executable actions
++ GOVERNED_CONFIRMATION
++ one real canonical request per action
++ accepted HTTP status
++ accepted=true
+```
+
+### Live blocker discovered
+
+A fresh Railway configuration snapshot executed the smoke and correctly failed before promotion:
+
+```text
+deployment 5ba36471-776c-4e15-919b-56e2da216b74
+update_asset_config -> HTTP 403 / accepted=false
+```
+
+The healthy prior deployment remained serving.
+
+Root cause evidence from the immutable supplied TRACTIAN runtime:
+
+- vendor action context is selected by `x-user-id`;
+- endpoint permissions are explicit;
+- the tested company has different upstream actors for `action_low` and `action_high + escalate`;
+- forwarding the local requester ID as the vendor actor cannot satisfy all action families.
+
+### P0 corrective work
+
+Target architecture:
+
+```text
+local authenticated product user
+→ tenant/resource authorization + custody + confirmation + idempotency + audit
+
+(company_id, required_permission)
+→ exactly one server-owned TRACTIAN actor
+→ injected only at the final vendor boundary
+```
+
+Implementation started on:
+
+```text
+fix/server-owned-upstream-action-actors
+```
+
+It is not merged or production-proven yet.
+
+### Phase 3 exit criteria
+
+- [ ] finish server-owned upstream actor resolver/transport boundary;
+- [ ] reject missing/ambiguous actor mappings;
+- [ ] prove browser/model/confirmation payload cannot select/upgrade actor;
+- [ ] run focused unit/integration/adversarial tests;
+- [ ] pass full required CI;
+- [ ] merge exact green head SHA;
+- [ ] deploy exact merged SHA with a **fresh Railway snapshot**;
+- [ ] pass five-action smoke 5/5 with explicit acceptance;
+- [ ] prove failed/uncertain write is never blindly retried;
+- [ ] exercise normal product confirmation path and persist/evaluate result;
+- [ ] record prospective live evidence.
+
+Do not weaken local authorization to satisfy vendor identity requirements.
+
+## Phase 4 — Broad live prompt/API coverage — ACTIVE P1 AFTER ACTION P0
+
+Current live read evidence is strong for several asset/condition/data-quality paths, but it does **not** prove all 13 read operations or all semantic failure modes.
 
 Priority live matrix:
 
 1. identity/company/fleet context;
-2. valid two-asset comparison using **two assets actually present in the same authorized fleet**;
+2. valid two-asset comparison using two assets actually present in the same authorized fleet;
 3. `list_analyses` + `get_analysis`;
 4. RMS asset→point drill-down;
 5. spectrum asset→point drill-down;
@@ -98,9 +213,9 @@ Priority live matrix:
 8. `get_model` when a structured model ID is exposed;
 9. `search_knowledge` → `get_knowledge_doc` with exact observed doc ID;
 10. unavailable/missing-resource behavior;
-11. conflict/inconclusive/partial/complete response-mode semantics;
+11. conflict/inconclusive/partial/complete semantics;
 12. anti-hallucination and false-precision prompts;
-13. action/prompt-injection challenges with zero action execution.
+13. prompt-injection/action challenges that remain inside the governed confirmation boundary.
 
 Measure at minimum:
 
@@ -115,14 +230,10 @@ unnecessary ID request rate
 terminal semantic correctness
 response_mode semantic correctness
 unsupported material claim rate
-safe action refusal rate
+safe action proposal/refusal rate
 ```
 
-### Automation boundary
-
-`POST /api/runs` requires the real managed browser session. Do not bypass auth merely to automate a prompt battery. The existing `hosted-pilot` Railway service is a preflight process, not a second live agent runtime. If fully automated hosted prompt execution is needed, create a separately authorized test-harness identity/session path that preserves the same production trust boundary and is explicitly scoped as test infrastructure.
-
-## Phase 4 — Final provider decision — PENDING
+## Phase 5 — Final provider decision — PENDING
 
 Execute frozen Provider Tournament v3 exactly as preregistered:
 
@@ -132,51 +243,26 @@ Execute frozen Provider Tournament v3 exactly as preregistered:
 
 Release 0 Cloudflare qualification is not proof of final superiority. Output remains evidence-backed selection or `NO_SELECTION`.
 
-## Phase 5 — Security, capacity and recovery — PENDING
+## Phase 6 — Security, capacity and recovery — PENDING
 
 Order:
 
-1. full hosted SECURITY-V1 campaign;
-2. remote auth/session burst and concurrent-user coverage;
-3. load staircase to measured saturation/quota boundary;
-4. derive SLO from observed distributions/product need;
-5. provider/TRACTIAN/DB/backend/SSE failure campaign;
-6. real backup/export/restore drill;
-7. measured RTO/RPO only if supported.
+1. action-actor confused-deputy/adversarial coverage and 5/5 live acceptance;
+2. full hosted SECURITY-V1 campaign;
+3. remote auth/session burst and concurrent-user coverage;
+4. load staircase to measured saturation/quota boundary;
+5. derive SLO from observed distributions/product need;
+6. provider/TRACTIAN/DB/backend/SSE/action failure campaign;
+7. real backup/export/restore drill;
+8. measured RTO/RPO only if supported.
 
 No paid feature may be enabled to manufacture a stronger claim.
 
-## Phase 6 — Governed consequential actions — DISABLED / FUTURE GATE
-
-Only after IAM/provider/TRACTIAN/security evidence is adequate:
-
-```text
-action proposal
-→ deterministic validation
-→ private custody
-→ explicit opaque-ID confirmation
-→ fresh authorization + kill switch
-→ persistent idempotency
-→ non-transferable lease/fencing
-→ one exact remote attempt
-→ SUCCEEDED | FAILED | UNCERTAIN
-```
-
-Hard failure: platform-caused duplicate external side effect.
-
-Release 0 remains deny-all for external action execution.
-
 ## Phase 7 — Human semantic calibration and operational value — PENDING
-
-### Semantic calibration
 
 Use blinded real human labels/adjudication before any semantic LLM judge becomes gating. Include agreement/error analysis and a calibrated confidence vocabulary.
 
-The live R310 causal run is a useful future calibration example: the response mode was correctly `partial`, but wording such as “grau de certeza alto” should be judged against a defined evidence-based rubric before being treated as calibrated.
-
-### Operational value
-
-Compare equivalent cases:
+For operational value, compare equivalent cases:
 
 ```text
 MANUAL vs AGENT-ASSISTED
@@ -186,7 +272,7 @@ Primary candidate KPI: time to correct operational decision. Do not claim time s
 
 ## Phase 8 — Adaptive challengers — DEFERRED
 
-Only after a measured bottleneck may adaptive depth/tool ordering/stopping/provider routing compete. Auth, tenant scope, RLS, schemas, action custody/confirmation/idempotency/leases, evaluator isolation and cost caps remain deterministic.
+Only after a measured bottleneck may adaptive depth/tool ordering/stopping/provider routing compete. Auth, tenant scope, RLS, schemas, action custody/confirmation/idempotency/leases, vendor actor mapping and cost caps remain deterministic.
 
 ## Phase 9 — Final evidence freeze — LAST
 
@@ -197,18 +283,19 @@ Freeze/link:
 - TAPI coverage;
 - IAM/RLS/security;
 - provider decision;
-- TRACTIAN behavior/read coverage;
+- TRACTIAN read coverage;
 - mode/grounding/evaluation results;
+- governed action safety + final 5/5 live state or explicit limitation;
 - load/SLO and recovery/restore evidence;
-- action state/limitations;
-- human/value evidence or explicit non-claim;
-- current task-driven UX evidence;
+- human semantic/usability/value evidence or explicit non-claim;
+- current UX evidence;
 - runbooks, changelog and reversal triggers.
 
 ## Priority rule until delivery
 
 ```text
 P0 safety/broken production/correctness
+→ P0 upstream actor routing + 5/5 action validation
 → P1 live read/grounding/semantic coverage
 → final hard-gate evidence
 → documentation/presentation integration
@@ -216,3 +303,5 @@ P0 safety/broken production/correctness
 ```
 
 A late change that cannot be retested does not silently enter the release.
+
+See [`progress/2026-09-07-production-governed-actions-ux-and-validation.md`](progress/2026-09-07-production-governed-actions-ux-and-validation.md) for the current dated action/deployment evidence.
