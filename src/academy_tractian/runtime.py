@@ -25,9 +25,6 @@ from .action_safety import (
 )
 
 
-PRODUCTION_READ_REPEAT_POLICY_VERSION = "reject-duplicate-successful-reads-v1"
-
-
 class _FrozenModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -72,7 +69,6 @@ def _config_hash(
     payload = {
         "runtime": config.model_dump(mode="json"),
         "action_safety_policy_version": ACTION_SAFETY_POLICY_VERSION,
-        "read_repeat_policy_version": PRODUCTION_READ_REPEAT_POLICY_VERSION,
         "tool_contract_sources": {
             "openapi_sha256": SOURCE_OPENAPI_SHA256,
             "implementation_sha256": SOURCE_IMPLEMENTATION_SHA256,
@@ -148,7 +144,6 @@ class ProductionRuntime:
             execution_mode="live",
             strict_arguments=True,
             resource_policy=resource_policy,
-            reject_duplicate_successful_reads=True,
         )
         controller = AgentController(
             runner=runner,
