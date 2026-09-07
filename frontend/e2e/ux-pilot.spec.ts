@@ -1,134 +1,136 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-async function openProduct(page: import("@playwright/test").Page) {
+async function openProduct(page: Page) {
   await page.context().setExtraHTTPHeaders({
     "x-e2e-user": "ux-pilot-user",
     "x-e2e-organization": "ux-pilot-org",
   });
   await page.goto("/");
-  await expect(page.getByText("System online")).toBeVisible();
+  await expect(page.locator(".task-service-state")).toContainText("Online");
+  await expect(page.getByRole("heading", { name: "What do you want to understand?" })).toBeVisible();
 }
 
-async function submitScenario(page: import("@playwright/test").Page, scenario: string) {
-  await page.getByRole("tab", { name: /Overview/ }).click();
-  await page.getByLabel("What would you like to understand?").fill(scenario);
-  await page.getByRole("button", { name: "Start analysis" }).click();
+async function submitScenario(page: Page, scenario: string) {
+  await page.getByRole("button", { name: "Home", exact: true }).click();
+  await page.getByLabel("Question about your equipment").fill(scenario);
+  await page.getByRole("button", { name: "Analyse", exact: true }).click();
   await expect(page.getByTestId("customer-outcome-summary")).toBeVisible({ timeout: 20_000 });
 }
 
-test.describe("user-first progressive disclosure UX", () => {
-  test("keeps the primary path understandable without runtime vocabulary", async ({ page }) => {
+async function openTechnicalSection(
+  page: Page,
+  section: "Current analysis" | "Quality" | "Data" | "System" | "Actions" | "Studies",
+) {
+  await page.getByRole("button", { name: "Technical", exact: true }).click();
+  const task = page.locator(".technical-task-menu").getByRole("button", { name: new RegExp(`^${section}`) });
+  await task.click();
+  await expect(task).toHaveAttribute("aria-current", "page");
+}
+
+async function assertNoHorizontalOverflow(page: Page): Promise<void> {
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
+}
+
+test.describe("task-driven low-literacy UX", () => {
+  test("keeps entry focused on one question and one primary action", async ({ page }) => {
     await openProduct(page);
 
-    const overviewTab = page.getByRole("tab", { name: /Overview/ });
-    const evidenceTab = page.getByRole("tab", { name: /Why this answer/ });
-    const historyTab = page.getByRole("tab", { name: /History/ });
-    const technicalTab = page.getByRole("tab", { name: /Technical details/ });
+    await expect(page.getByRole("button", { name: "Home", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("button", { name: "Analyses", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Technical", exact: true })).toBeVisible();
+    await expect(page.getByLabel("Question about your equipment")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Analyse", exact: true })).toBeVisible();
 
-    await expect(overviewTab).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "What would you like to understand?" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Ask about your equipment in your own words." })).toBeVisible();
-    await expect(page.getByText("You do not need to know technical commands or internal IDs.")).toBeVisible();
-    await expect(page.getByText("Does not guess")).toBeVisible();
-    await expect(page.getByText("Does not change equipment")).toBeVisible();
-    await expect(page.getByLabel("What would you like to understand?")).toBeVisible();
+    await expect(page.getByText("Checks live data")).toHaveCount(0);
+    await expect(page.getByText("Shows its evidence")).toHaveCount(0);
+    await expect(page.getByText("Does not guess")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Trace" })).toHaveCount(0);
 
-    await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeHidden();
-    await expect(page.getByRole("heading", { name: "Trace graph" })).toBeHidden();
-    await expect(page.locator(".metric-grid")).toBeHidden();
+    const examples = page.getByText("See example questions");
+    await expect(examples).toBeVisible();
+    await expect(page.getByText("Which equipment needs attention today, and why?")).toBeHidden();
+    await examples.click();
+    const example = page.getByRole("button", { name: "Which equipment needs attention today, and why?" });
+    await expect(example).toBeVisible();
+    await example.click();
+    await expect(page.getByLabel("Question about your equipment")).toHaveValue("Which equipment needs attention today, and why?");
 
-    const quickStart = page.getByTestId("quick-start-option").first();
-    await expect(quickStart).toBeVisible();
-    await quickStart.click();
-    await expect(page.getByLabel("What would you like to understand?")).not.toHaveValue("");
+    await page.getByRole("button", { name: "Analyses", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Analyses", exact: true })).toBeVisible();
+    await expect(page.locator("table")).toHaveCount(0);
 
-    await evidenceTab.click();
-    await expect(evidenceTab).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "See what the assistant checked" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "What happened during the analysis" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeHidden();
-
-    await historyTab.click();
-    await expect(page.getByRole("heading", { name: "Review previous analyses" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Previous analyses", exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Trace graph" })).toBeHidden();
-    await page.getByText("Show how this analysis ran").click();
-    await expect(page.getByRole("heading", { name: "Trace graph" })).toBeVisible();
-
-    await technicalTab.click();
-    await expect(page.getByRole("heading", { name: "Engineering and evaluation" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeVisible();
-    await expect(page.getByText("Capability contract unavailable")).toBeVisible();
-
-    await technicalTab.press("Home");
-    await expect(overviewTab).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "What would you like to understand?" })).toBeVisible();
-
-    await overviewTab.press("End");
-    await expect(technicalTab).toHaveAttribute("aria-selected", "true");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await assertNoHorizontalOverflow(page);
   });
 
-  test("shows a plain-language outcome while raw codes stay opt-in", async ({ page }) => {
+  test("shows result, next step and evidence as a contextual sequence", async ({ page }) => {
     await openProduct(page);
     await submitScenario(page, "scenario:clarify");
 
     const outcome = page.getByTestId("customer-outcome-summary");
-    await expect(outcome.getByRole("heading", { name: "More information needed" })).toBeVisible();
+    await expect(outcome.getByRole("heading", { name: "More information is needed" })).toBeVisible();
     await expect(outcome).toContainText("What to do next");
     await expect(outcome).toContainText("Add the information requested");
-    await expect(outcome).toContainText("INFORMATION CHECKED");
     await expect(outcome).not.toContainText("ASK_CLARIFICATION");
+    await expect(outcome.getByRole("button", { name: "View evidence" })).toBeVisible();
 
-    await page.getByRole("button", { name: "See why this answer" }).click();
-    await expect(page.locator(".terminal-panel")).toBeVisible();
-    await expect(page.locator(".terminal-panel")).toContainText("More information needed");
-    await expect(page.getByText("ASK_CLARIFICATION", { exact: true })).toBeHidden();
+    await outcome.getByRole("button", { name: "View evidence" }).click();
+    await expect(page.getByRole("heading", { name: "Why did we reach this conclusion?" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "← Result" })).toBeVisible();
+    await expect(page.locator("main")).not.toContainText("ASK_CLARIFICATION");
 
-    await page.getByText("Show internal result codes").click();
-    await expect(page.getByText("ASK_CLARIFICATION", { exact: true })).toBeVisible();
-
-    await page.getByRole("tab", { name: /Technical details/ }).click();
-    await expect(page.locator(".evaluation-panel")).toBeVisible();
+    await openTechnicalSection(page, "Quality");
     await expect(page.locator(".evaluation-panel")).toContainText("blocking checks passed");
   });
 
-  test("history uses explicit keyboard-focusable controls instead of clickable rows", async ({ page }) => {
+  test("history is a keyboard-focusable recognition list", async ({ page }) => {
     await openProduct(page);
     await submitScenario(page, "scenario:clarify");
 
-    await page.getByRole("tab", { name: /History/ }).click();
-    const firstAnalysis = page.getByRole("button", { name: /Analysis 1/ }).first();
+    await page.getByRole("button", { name: "Analyses", exact: true }).click();
+    const firstAnalysis = page.locator(".task-run-button").first();
     await expect(firstAnalysis).toBeVisible();
     await firstAnalysis.focus();
     await expect(firstAnalysis).toBeFocused();
     await firstAnalysis.press("Enter");
-    await expect(page.getByRole("tab", { name: /Overview/ })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId("customer-outcome-summary")).toBeVisible();
   });
 
-  test("technical visualizations retain readable keyboard-accessible alternatives", async ({ page }) => {
+  test("technical depth is grouped by task instead of shown all at once", async ({ page }) => {
     await openProduct(page);
     await submitScenario(page, "scenario:slow investigate asset evidence");
+    await expect(page.getByTestId("customer-outcome-summary")).toBeVisible({ timeout: 20_000 });
 
-    await page.getByRole("tab", { name: /History/ }).click();
-    await page.getByText("Show how this analysis ran").click();
+    await openTechnicalSection(page, "Current analysis");
+    await expect(page.getByRole("heading", { name: "Trace" })).toBeVisible();
     await expect(page.getByText("Read the process as a list")).toBeVisible();
     await page.getByText("Read the process as a list").click();
     await expect(page.locator(".trace-text-alternative li").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Production health" })).toHaveCount(0);
 
-    await page.getByRole("tab", { name: /Technical details/ }).click();
+    await openTechnicalSection(page, "System");
+    await expect(page.getByRole("heading", { name: "Production health" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Architecture" })).toBeVisible();
     await expect(page.locator(".architecture-component-button").first()).toBeVisible();
     await page.locator(".architecture-component-button").first().focus();
     await expect(page.locator(".architecture-component-button").first()).toBeFocused();
+    await expect(page.getByRole("heading", { name: "Output lineage" })).toHaveCount(0);
 
+    await openTechnicalSection(page, "Data");
     const dynamic = page.locator("#dynamic-data-explorer");
     await expect(dynamic.getByRole("heading", { name: "Dynamic Data Explorer" })).toBeVisible();
     await expect(dynamic.getByText("2. Optional filter")).toBeVisible();
   });
 
-  test("consequential actions explain the consequence before confirmation", async ({ page }) => {
+  test("consequential actions keep consequence before confirmation", async ({ page }) => {
     await openProduct(page);
     await submitScenario(page, "scenario:pending-action");
-    await page.getByRole("tab", { name: /Technical details/ }).click();
+    await openTechnicalSection(page, "Actions");
 
     const actionCard = page.locator(".action-card").first();
     await expect(actionCard).toContainText("Before you confirm");
