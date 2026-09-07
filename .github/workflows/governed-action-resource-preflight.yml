@@ -1,0 +1,55 @@
+name: governed-action-resource-preflight
+
+on:
+  push:
+    branches:
+      - feat/governed-execute-v1
+    paths:
+      - ".github/workflows/governed-action-resource-preflight.yml"
+  workflow_dispatch:
+
+jobs:
+  inspect-supplied-runtime-resources:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Reconstruct immutable supplied runtime
+        run: |
+          mkdir -p /tmp/tractian-runtime
+          cat services/tractian-supplied-api/runtime.bundle.b64.part* | base64 -d > /tmp/tractian-runtime.tar.gz
+          echo "0db58e29d6f5c86ef1838acf31c4caed788b393eb1807345fabd157c8de5bb9a  /tmp/tractian-runtime.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/tractian-runtime.tar.gz -C /tmp/tractian-runtime
+
+      - name: Print only safe resource identifiers for governed-action grants
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('/tmp/tractian-runtime')
+          patterns = {
+              'company': re.compile(r'\bcomp_[A-Za-z0-9_-]+\b'),
+              'asset': re.compile(r'\basset_[A-Za-z0-9_-]+\b'),
+              'analysis': re.compile(r'\banalysis_[A-Za-z0-9_-]+\b'),
+              'model': re.compile(r'\bmodel_[A-Za-z0-9_-]+\b'),
+              'case': re.compile(r'\bcase_[A-Za-z0-9_-]+\b'),
+          }
+          found = {key: set() for key in patterns}
+          allowed_suffixes = {'.py', '.json', '.jsonl', '.csv', '.md', '.txt', '.yaml', '.yml'}
+          for path in root.rglob('*'):
+              if not path.is_file() or path.suffix.lower() not in allowed_suffixes:
+                  continue
+              try:
+                  text = path.read_text(encoding='utf-8')
+              except (UnicodeDecodeError, OSError):
+                  continue
+              for key, pattern in patterns.items():
+                  found[key].update(pattern.findall(text))
+          for key in ('company', 'asset', 'analysis', 'model', 'case'):
+              print(f'RESOURCE_IDS[{key}]=' + ','.join(sorted(found[key])))
+          missing = [key for key in ('company', 'asset', 'analysis', 'model', 'case') if not found[key]]
+          if missing:
+              raise SystemExit('missing resource identifier categories: ' + ','.join(missing))
+          PY
