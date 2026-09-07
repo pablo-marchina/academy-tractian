@@ -14,6 +14,7 @@ import "./operationalValue.css";
 import "./auth.css";
 import "./friendlyUx.css";
 import "./secondPassUx.css";
+import "./componentPolish.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
