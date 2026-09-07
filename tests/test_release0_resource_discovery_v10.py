@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from academy_tractian.cloudflare_provider_client import CLOUDFLARE_GLM_MODEL_ID
-from academy_tractian.release_provider import Release0CloudflareDecisionClient
-from academy_tractian.release_provider_v10 import Release0ProviderDecisionSourceV10
+from academy_tractian.release_provider_v10 import (
+    Release0CloudflareDecisionClientV10,
+    Release0ProviderDecisionSourceV10,
+)
 from academy_tractian.runtime import canonical_tool_registry
 from research.e2.controller import ControllerContext, ControllerObservation
 
@@ -12,8 +14,8 @@ class NeverCalledTransport:
         raise AssertionError("provider transport must not be called")
 
 
-def _client() -> Release0CloudflareDecisionClient:
-    return Release0CloudflareDecisionClient(
+def _client() -> Release0CloudflareDecisionClientV10:
+    return Release0CloudflareDecisionClientV10(
         api_token="test-token",
         account_id="abc123",
         model_id=CLOUDFLARE_GLM_MODEL_ID,
@@ -65,7 +67,7 @@ def _schema_kinds(request) -> set[str]:
     }
 
 
-def test_nested_asset_collection_advances_to_asset_scoped_reads() -> None:
+def test_nested_asset_collection_advances_to_condition_evidence_reads() -> None:
     request = _source().build_request(
         _context(
             _observation("get_current_user", {"data": {"company": {"id": "comp_papel_sul"}}}),
@@ -87,15 +89,15 @@ def test_nested_asset_collection_advances_to_asset_scoped_reads() -> None:
 
     expected = {
         "list_analyses",
-        "get_baseline",
         "get_rms",
         "get_spectrum",
-        "get_data_quality",
     }
     assert _tool_names(request) == expected
     assert "get_current_user" not in _tool_names(request)
     assert "list_assets_by_company" not in _tool_names(request)
     assert "get_asset" not in _tool_names(request)
+    assert "get_baseline" not in _tool_names(request)
+    assert "get_data_quality" not in _tool_names(request)
     for tool_name in expected:
         assert _parameter(request, tool_name, "asset_id").parameter_schema["enum"] == [
             "asset_R310",
@@ -143,13 +145,48 @@ def test_nested_analysis_collection_advances_to_grounded_analysis_read() -> None
         )
     )
 
+    assert _tool_names(request) == {"get_analysis", "get_rms", "get_spectrum"}
     assert "list_analyses" not in _tool_names(request)
-    assert "get_analysis" in _tool_names(request)
     assert _parameter(request, "get_analysis", "analysis_id").parameter_schema == {
         "enum": ["analysis_123"]
     }
     assert "get_current_user" not in _tool_names(request)
     assert _schema_kinds(request) == {"TOOL"}
+
+
+def test_baseline_observation_does_not_unlock_terminal_or_repeat_reference_read() -> None:
+    request = _source().build_request(
+        _context(
+            _observation("get_current_user", {"company_id": "comp_papel_sul"}),
+            _observation(
+                "list_assets_by_company",
+                {"data": {"assets": [{"id": "asset_R310"}]}},
+            ),
+            _observation("get_baseline", {"asset_id": "asset_R310", "baseline": 1.0}),
+        )
+    )
+
+    assert _tool_names(request) == {"list_analyses", "get_rms", "get_spectrum"}
+    assert "get_baseline" not in _tool_names(request)
+    assert "FINAL" not in _schema_kinds(request)
+    assert _schema_kinds(request) == {"TOOL"}
+
+
+def test_condition_evidence_unlocks_terminal_surface() -> None:
+    request = _source().build_request(
+        _context(
+            _observation("get_current_user", {"company_id": "comp_papel_sul"}),
+            _observation(
+                "list_assets_by_company",
+                {"data": {"assets": [{"id": "asset_R310"}]}},
+            ),
+            _observation("get_rms", {"asset_id": "asset_R310", "rms": 7.2}),
+        )
+    )
+
+    assert "FINAL" in _schema_kinds(request)
+    assert "get_current_user" not in _tool_names(request)
+    assert "list_assets_by_company" not in _tool_names(request)
 
 
 def test_unparseable_asset_collection_fails_closed_instead_of_reoffering_identity() -> None:
