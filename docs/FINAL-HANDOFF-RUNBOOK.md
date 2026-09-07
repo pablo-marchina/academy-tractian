@@ -3,10 +3,10 @@
 **Status:** ACTIVE operational how-to  
 **Last verified:** 2026-09-07 BRT  
 **Public product:** https://production-web-production-c9d1.up.railway.app  
-**Current backend/runtime:** `08866da60245f58f217981b7ae668b10be45cc67`  
+**Current merged backend/runtime source:** `3545d75c00ca30419e0f47e8b1950aa50cbbf462`  
 **Current frontend:** `1bc124a8d4dbd029178ff8129b25452129445de7`
 
-This runbook covers current Release 0 V13 operation and safe future promotion. Local commands are development/reproduction only.
+This runbook covers current Release 0 V13 operation, governed-action rollout and safe promotion. Local commands are development/reproduction only.
 
 ## 1. Production topology
 
@@ -17,10 +17,13 @@ Browser
    └── /api/* + SSE → Railway production-api
                          ├→ Neon PostgreSQL/RLS
                          ├→ Cloudflare provisional provider
-                         └→ supplied TRACTIAN API
+                         ├→ typed supplied TRACTIAN reads
+                         └→ governed action custody/confirmation/executor
+                                → server-owned TRACTIAN actor
+                                → supplied TRACTIAN action endpoint
 ```
 
-Release 0 is read-only with respect to consequential external TRACTIAN actions.
+Consequential actions are enabled only through the governed path. Complete five-action vendor acceptance is still an open gate because the live smoke surfaced an upstream identity/permission mismatch.
 
 ## 2. Hard operational envelope
 
@@ -37,7 +40,13 @@ Production must preserve:
 - grounded structured resource IDs;
 - safe evidence/response-mode semantics;
 - no hidden reasoning/secrets in browser projections;
-- external consequential action execution disabled until separately promoted.
+- action proposals are not execution;
+- exact confirmation only for an already custodied action;
+- canonical permissions/resource authority remain server-owned;
+- persistent idempotency + lease/fencing before a write;
+- vendor actor identity is server-owned and selected only after local authorization;
+- no blind retry after an ambiguous write;
+- explicit upstream acceptance required for `ACCEPTED`.
 
 ## 3. Health and diagnosis order
 
@@ -49,14 +58,17 @@ DNS/TLS/public frontend
 → provider configuration/quota
 → DecisionSource/controller
 → typed tool/policy
-→ TRACTIAN transport
+→ TRACTIAN read transport
 → evidence/terminal/response_mode
 → evaluator/persistence
+→ action grants/custody/idempotency/lease when actions are involved
+→ upstream actor mapping
+→ TRACTIAN action transport
 → SSE/cursor catch-up
 → React projection
 ```
 
-Do not mask upstream problems with hidden retries/fallbacks.
+Do not mask upstream problems with hidden retries, hidden fallback identities or more privileged grants.
 
 ## 4. Managed-session incident diagnosis
 
@@ -86,7 +98,8 @@ After frontend-only promotion verify:
 7. **Technical** exposes Current analysis / Quality / Data / System / Actions / Studies;
 8. focus/visibility return does not cause a ghost-auth state;
 9. backend `/health` and release identity did not unexpectedly change;
-10. no external action execution is enabled.
+10. action UI never reports success unless the backend action state is explicitly `ACCEPTED`;
+11. confirmation UI submits only the exact confirmation for an existing action and does not expose raw custody/grants/vendor-actor configuration.
 
 Frontend SHA may advance independently from backend SHA. Record both.
 
@@ -103,26 +116,62 @@ select exact tested backend SHA
 → trigger a fresh exact-commit Railway deployment
 → verify build used exact RAILWAY_GIT_COMMIT_SHA
 → wheel install + pip check
-→ TRACTIAN predeploy connectivity smoke
+→ normal TRACTIAN connectivity predeploy smoke
 → application startup
 → /health 200
 → targeted live acceptance on the promoted behavior
 → record deployment/run evidence
 ```
 
-Do not use a generic redeploy when exact source provenance matters. A redeploy may reuse an old deployment snapshot.
+### Railway snapshot rule
 
-Current successful V13 deployment:
+A Railway **Redeploy** can reuse a previously captured deployment snapshot. It is not proof that a newly edited service configuration, `preDeployCommand` or current source head was materialized.
+
+When configuration provenance matters:
 
 ```text
-SHA         08866da60245f58f217981b7ae668b10be45cc67
-deployment  062c3cc4-4ac9-48ac-be06-2b4c490cea2a
+change an explicit operational/release marker
+→ create a fresh deployment snapshot
+→ inspect deployment source SHA + configuration behavior
+→ only then treat the run as current-config evidence
+```
+
+This distinction mattered during the governed-action validation: a generic redeploy continued to show the old read connectivity probe even though the service configuration had been edited. A fresh snapshot then executed the intended write smoke and surfaced the real HTTP 403.
+
+## 7. Current backend/action deployment ledger
+
+### Governed action enablement — PR #211
+
+```text
+SHA         1a1e7139bfa0361416120b3f21937c4048b5bb1f
+deployment  9732a2cb-c321-4fcf-83f8-c6f87eeab06a
 status      SUCCESS
 ```
 
-Original manual Release 0 acceptance workflow/run remains historical evidence and does not need to be falsified into a V13 acceptance run.
+This proved the production composition could boot with governed writes enabled and server-owned grants.
 
-## 7. Live agent smoke after backend promotion
+### Auditable action smoke — PR #213
+
+```text
+SHA         3545d75c00ca30419e0f47e8b1950aa50cbbf462
+CI gate     34164123263 — SUCCESS
+deployment  2cbc4215-f59a-4947-8691-0d4776458445 — SUCCESS
+```
+
+This source contains `academy_tractian.governed_write_transport_smoke`.
+
+### Fresh live five-action validation
+
+```text
+deployment  5ba36471-776c-4e15-919b-56e2da216b74
+status      FAILED SAFE
+failure     update_asset_config -> HTTP 403 / accepted=false
+containment previous healthy deployment remained serving
+```
+
+Never rewrite this failure as success. It remains the current live action-readiness evidence until prospectively superseded by a later 5/5 pass.
+
+## 8. Live read agent smoke after backend promotion
 
 At minimum choose prompts that verify:
 
@@ -131,7 +180,7 @@ At minimum choose prompts that verify:
 - data-quality path if changed;
 - response-mode semantics;
 - missing-resource fail closed;
-- read-only action challenge.
+- safe action proposal/confirmation boundary when relevant.
 
 Inspect Neon/Railway rather than only the displayed prose:
 
@@ -152,10 +201,83 @@ blocking evaluation checks
 
 Do not count `get_rms`/`get_spectrum` repetitions by name only. Compare arguments and resource. Asset-level then `point_id`-specific read is valid drill-down; exact same target/args without new evidence is the redundancy candidate.
 
-## 8. Production smoke checklist
+## 9. Governed five-action production validation
+
+Canonical validator:
+
+```bash
+python -m academy_tractian.governed_write_transport_smoke
+```
+
+It must run only with explicit operator approval and server-owned environment configuration.
+
+Before writes it requires the hosted capability endpoint to report:
+
+```text
+actions = 5
+executable_actions = 5
+action_execution.enabled = true
+action_execution.mode = GOVERNED_CONFIRMATION
+governed_action_path_enabled = true
+```
+
+It then calls exactly:
+
+```text
+reprocess_analysis
+request_specialist_analysis
+update_asset_config
+request_retraining
+escalate_case
+```
+
+through the canonical binder and `ProductionTractianTransport`.
+
+Each action passes only when:
+
+```text
+HTTP ∈ {200, 201, 202}
+AND accepted == true
+```
+
+Safe smoke output must not contain credentials, grant material, resource IDs, vendor actor IDs or response bodies.
+
+One failure aborts the validation deployment. The previous healthy release must remain serving.
+
+## 10. Upstream action actor diagnosis
+
+If low-impact writes work but high-impact/escalation writes return 403, do **not** automatically widen the local grant.
+
+Inspect the vendor authorization contract first.
+
+Current supplied-runtime evidence shows:
+
+```text
+x-user-id -> vendor actor
+endpoint -> required permission
+```
+
+and the tested company scope has distinct vendor actors for `action_low` versus `action_high + escalate`.
+
+Correct target:
+
+```text
+local authenticated requester
+→ local grant/resource/confirmation/idempotency/lease authorization
+→ (company_id, required_permission)
+→ exactly one server-owned TRACTIAN actor
+→ final vendor-bound identity only
+```
+
+The browser/model/confirmation payload must never select the actor. Missing/ambiguous actor mapping is a hard block.
+
+The corrective actor-routing implementation is still in progress and is not yet merged/proven at this record's timestamp.
+
+## 11. Production smoke checklist
 
 - [ ] expected frontend deployment identity;
 - [ ] expected backend artifact/release SHA;
+- [ ] fresh Railway snapshot when source/configuration changed;
 - [ ] health truthful;
 - [ ] managed auth works;
 - [ ] invalid session 401 / temporary auth outage 503 behavior intact;
@@ -170,10 +292,13 @@ Do not count `get_rms`/`get_spectrum` repetitions by name only. Compare argument
 - [ ] evaluator appears post-runtime;
 - [ ] authenticated SSE + reconnect/catch-up;
 - [ ] no forbidden/private fields in browser output;
-- [ ] no external consequential action execution;
+- [ ] action kill-switch/grants state matches intended rollout;
+- [ ] no action success claimed without explicit upstream `accepted=true`;
+- [ ] vendor actor mapping server-owned and complete for intended action permission;
+- [ ] five-action smoke 5/5 before claiming complete action readiness;
 - [ ] USD0/no-paid-spillover boundary intact.
 
-## 9. Local / CI reproduction
+## 12. Local / CI reproduction
 
 ```bash
 python -m pip install --upgrade pip
@@ -192,61 +317,65 @@ npm test
 npm run build
 ```
 
-Canonical full-product gates include `final-ci-required`, clean clone, full-product Playwright, production runtime and targeted Postgres/observability/EDD/IaC regressions.
+Canonical full-product gates include `final-ci-required`, clean clone, full-product Playwright, production runtime and targeted Postgres/observability/EDD/IaC/action-lease regressions.
 
 Provider-free CI is not a substitute for hosted provider/IAM/TRACTIAN acceptance.
 
-## 10. Failure semantics
+## 13. Failure semantics
 
 - invalid tool args → deterministic B1 block;
 - policy/authorization denial → no consequential transport;
 - missing authorized asset label → bounded unavailable, no cross-tenant guessing;
 - insufficient/conflicting evidence → calibrated response/terminal, never fabricate;
 - provider failure → safe failure mode;
-- TRACTIAN failure → normalized unavailable/error evidence;
+- TRACTIAN read failure → normalized unavailable/error evidence;
 - managed-auth transient failure → 503 retryable, no stale auth;
-- read-only runtime lease loss → generation fencing;
-- future action ownership ambiguity → `UNCERTAIN`, no blind replacement attempt;
+- action vendor permission/actor mismatch → `NOT_ACCEPTED`/validation failure, never privilege widening by inference;
+- action ownership/transport ambiguity → `UNCERTAIN`, no blind retry;
+- duplicate idempotency claim → block duplicate action;
+- runtime/action lease loss → generation fencing;
 - quota exhaustion → fail/degrade safely, never paid fallback;
 - SSE gap → durable cursor/catch-up.
 
-## 11. Rollback
+## 14. Rollback
 
 ```text
 stop further promotion
 → preserve failing evidence/logs
+→ if action risk exists, set ACADEMY_ACTIONS_ENABLED=false
 → identify last known-good eligible artifact
 → verify DB compatibility
-→ deploy known-good exact source/artifact
+→ deploy known-good exact source/artifact with fresh snapshot
 → production smoke
 → verify tenant/action/cost boundaries
 → document incident + regression
 ```
 
-Do not change frozen evidence to erase a failed candidate.
+Do not change frozen evidence to erase a failed candidate. Never replay an `UNCERTAIN` action automatically.
 
-## 12. Backup / restore
+## 15. Backup / restore
 
-Final RTO/RPO claims are still pending. A real drill must create known state, export/backup, restore to isolated safe environment, verify counts/integrity/tenant isolation and measure recovery/data-loss windows before any RTO/RPO claim.
+Final RTO/RPO claims are still pending. A real drill must create known state, export/backup, restore to isolated safe environment, verify counts/integrity/tenant isolation/action-state consistency and measure recovery/data-loss windows before any RTO/RPO claim.
 
-## 13. Security/privacy
+## 16. Security/privacy
 
-Never log/project provider/API/database/auth secrets, raw sensitive upstream payloads without a sanitized contract, benchmark gold/evaluator-private material, private action custody/idempotency keys or hidden chain-of-thought.
+Never log/project provider/API/database/auth secrets, raw sensitive upstream payloads without a sanitized contract, benchmark gold/evaluator-private material, private action custody/idempotency keys, authorization grants, vendor actor mappings or hidden chain-of-thought.
 
-See [`SECURITY-MODEL.md`](SECURITY-MODEL.md) and root [`SECURITY.md`](../SECURITY.md).
+See [`SECURITY-MODEL.md`](SECURITY-MODEL.md), [`GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md`](GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md) and root [`SECURITY.md`](../SECURITY.md).
 
-## 14. Incident priority
+## 17. Incident priority
 
 ```text
-P0 auth/tenant escape, secret leak, unauthorized action, paid spillover, release-identity bypass
-P0 product cannot safely complete/stop a real read-only run
+P0 auth/tenant escape, secret leak, unauthorized/duplicate action, vendor-actor privilege escalation, paid spillover, release-identity bypass
+P0 product cannot safely complete/stop a real run or contains an ambiguous write incorrectly
 P1 wrong grounding/conclusion/tool/evidence/response-mode behavior
+P1 expected governed action rejected by vendor mapping/configuration
 P1 persistence/SSE/history/session-resilience breakage
 P1 severe first-user friction
 P2 non-blocking visual/polish issue
 ```
 
-## 15. Final presentation path
+## 18. Final presentation path
 
 Use the normal hosted product, not a demo stack:
 
@@ -257,6 +386,10 @@ Use the normal hosted product, not a demo stack:
 5. Analyses/history for a safe alternate outcome;
 6. Technical → Current analysis for trace/tools;
 7. Technical → Quality for evaluator;
-8. Technical → Actions for deny-all external execution boundary;
+8. Technical → Actions for custody/confirmation/idempotency/lease architecture **and the current explicit 5/5 live-validation limitation**;
 9. deployment/auth/realtime overlay;
 10. limitations/non-claims.
+
+Do not present the known HTTP 403 as a successful action and do not describe the current action path as deny-all/read-only.
+
+See [`progress/2026-09-07-production-governed-actions-ux-and-validation.md`](progress/2026-09-07-production-governed-actions-ux-and-validation.md) for the dated evidence.
