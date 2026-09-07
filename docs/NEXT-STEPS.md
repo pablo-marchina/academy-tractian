@@ -1,8 +1,9 @@
-# Superseded: Next Steps
+# Superseded Compatibility Path — Next Steps
 
-**Status:** SUPERSEDED compatibility path  
-**Canonical replacement:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)
+**Status:** SUPERSEDED  
+**Canonical current plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
+**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)
 
-Short-horizon next steps, sprint dates and freeze rules are now owned by `DELIVERY-PLAN.md` to avoid drift between multiple planning documents.
+This filename is retained so historical links do not break. It no longer carries an independent task list because duplicating mutable priorities caused documentation drift.
 
-For current authorization/state, read [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md). The prior full contents remain recoverable in Git history.
+Current short horizon: separate lightweight run feedback → first-time-user UX pilot/measurement → final provider/security/capacity/recovery/action/human-value gates as ordered in `DELIVERY-PLAN.md`.

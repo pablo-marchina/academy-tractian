@@ -1,0 +1,28 @@
+name: hosted-tractian-identity-bridge
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [release/production-final]
+    paths:
+      - services/tractian-supplied-api/**
+      - scripts/production_hosted_identity_bridge_smoke.py
+      - .github/workflows/hosted-tractian-identity-bridge.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-tractian-identity-bridge-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hosted-identity-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ACADEMY_PRODUCTION_WEB_BASE_URL: https://production-web-production-c9d1.up.railway.app
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify browser session to TRACTIAN synthetic identity translation
+        run: python scripts/production_hosted_identity_bridge_smoke.py

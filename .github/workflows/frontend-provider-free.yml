@@ -14,7 +14,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24.20.0'
+      - name: Verify immutable production frontend base images
+        run: |
+          grep -F 'FROM node:24.20.0-alpine3.24@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS build' frontend/Dockerfile.production
+          grep -F 'FROM caddy:2.11.4-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648 AS runtime' frontend/Dockerfile.production
       - name: Install locked frontend dependencies
         working-directory: frontend
         run: npm ci --no-audit --no-fund

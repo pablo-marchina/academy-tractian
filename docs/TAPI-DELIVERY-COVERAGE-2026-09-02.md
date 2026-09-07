@@ -1,190 +1,155 @@
-# TAPI Delivery Coverage — Current Crosswalk
+# TAPI Delivery Coverage — Active Crosswalk
 
-**Status:** ACTIVE TAPI/output crosswalk  
+**Status:** ACTIVE assignment/output reference  
 **Original filename checkpoint:** 2026-09-02  
-**Current rebaseline:** 2026-09-05 corrected  
-**Project:** Academy × TRACTIAN — Engenharia e Avaliação de Agentes Industriais  
-**Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
-**Acceptance:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)
+**Current rebaseline:** 2026-09-06 BRT  
+**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)
 
-This document maps audited TAPI/delivered-package expectations to the current product. It deliberately separates **assignment requirements** from **project-added hard constraints/quality gates** so the repository does not misrepresent an internal rule as a literal TRACTIAN mandate.
+This crosswalk separates **TAPI/delivered-package expectations** from **project-added production/quality constraints**.
 
-## 1. Audited TAPI scope
+## 1. Integrated deliverable
 
-The project delivers one integrated solution containing:
+The project delivers:
 
-- **Industrial Agent** — typed TRACTIAN API/tool use, evidence-aware investigation, bounded decisions, clarification/abstention/escalation and governed actions.
-- **Agent Evaluation Framework** — scenario execution, trace/trajectory evaluation, tool/argument/evidence/safety/failure/stability analysis and controlled experiments.
+1. **Industrial Agent** — contextualizes/investigates industrial requests through typed TRACTIAN operations and produces safe operational outcomes/proposals.
+2. **Agent Evaluation Framework** — evaluates observable tool/argument/trajectory/evidence/terminal/safety/failure/stability behavior and supports controlled experiments.
 
-Operational modes: `CONTEXTUALIZE`, `INVESTIGATE`, `EXECUTE`.
+Operational intent: `CONTEXTUALIZE`, `INVESTIGATE`, `EXECUTE` (Release 0 Execute is proposal-only).  
+Terminal behavior: `FINAL/ORIENT`, `CLARIFY`, `ABSTAIN`, `ESCALATE`, plus governed action proposal state.
 
-Product outcomes: `FINAL/ORIENT`, `CLARIFY`, `ABSTAIN`, `ESCALATE`, `ACTION_PROPOSAL/CONFIRMED_ACTION`.
+## 2. TAPI/delivery expectations mapped to product evidence
 
-## 2. TAPI/delivered-package driven expectations
-
-The crosswalk treats the following as assignment/delivery obligations or direct quality dimensions:
-
-- functional industrial agent;
-- supplied TRACTIAN API integration;
-- function/tool selection;
-- argument quality/validity;
-- execution trajectory/process;
-- evidence use;
-- response/operational-conclusion quality;
-- safety and high-impact-action behavior;
-- degraded/failure behavior;
-- repeated-execution stability;
-- technical experiment/hypothesis;
-- result analysis and limitations;
-- reproducibility/documentation;
-- inspectable demonstration/evaluation output.
-
-Suggested frameworks/libraries are not interpreted as mandatory when an equivalent architecture satisfies the requirement more directly.
-
-## 3. Project-added hard constraints and quality gates
-
-These are **our project rules**, not claims about exact TAPI wording:
-
-### Hard constraints
-
-- **actual project cash cost = USD 0**;
-- no automatic paid spillover or paid fallback;
-- final serving path is remote and has no developer-machine/local production dependency;
-- final product is multi-user and tenant-safe;
-- material decisions use systematic research + quantitative evidence;
-- EDD controls promotion of material changes;
-- adaptive behavior is promoted only after beating a simpler baseline without weakening hard gates;
-- live frontend exposes safe architecture/runtime/evaluation/health evidence.
-
-A paid component may be researched as an external reference but is `INELIGIBLE` for project selection. If no USD0 candidate passes the technical gates, the correct result is an explicit blocker/`NO_SELECTION`, not relaxation of the constraint.
-
-### Additional production-quality gates
-
-- standards-based end-user IAM;
-- PostgreSQL RLS tenant isolation;
-- protected CI/CD and tested rollback;
-- remote load/soak and evidence-based SLOs;
-- backup/restore and measured recovery evidence where claimed;
-- human calibration before semantic-judge promotion;
-- paired operational-value measurement;
-- live architecture/trace/evidence/health visualization.
-
-## 4. Current technical stack
-
-### Agent/runtime
-
-| Layer | Current choice | State |
-|---|---|---|
-| Language | Python >=3.11 | implemented |
-| Typed schemas | Pydantic 2.x | implemented |
-| API/product service | FastAPI + Uvicorn | implemented |
-| Agent orchestration | custom `AgentController` | promoted baseline |
-| Tool execution | `HarnessRunner` | hard execution boundary |
-| Tool contract | typed `ToolSpec` registry | 18 operations |
-| TRACTIAN integration | typed HTTP transport/normalization | implemented |
-| Action safety | validation/policy + custody/idempotency/leases/fencing | implemented |
-| Logical durable serving state | PostgreSQL + psycopg | promoted |
-| Packaging | hatchling/wheel | clean-clone proved |
-
-The final remote hosting/database/IAM/provider topology is still unselected and must satisfy USD0 plus the production gates.
-
-### Model/provider
-
-Historical Cloudflare D01/D02 are complete USD0 experiments.
-
-Current result: **`NO_SELECTION`**.
-
-D02 proved cost eligibility and completed 32/32 governed attempts, but the tested candidates failed frozen M1/M4/M7 promotion gates. Therefore Cloudflare was not rejected for cost; it simply did not satisfy the full technical promotion contract.
-
-A new production model experiment must consider only hosted USD0-eligible candidates for final selection. A materially new Cloudflare model/configuration can re-enter only through a new preregistered experiment; consumed D01/D02 packets are not replayed.
-
-### Evaluation
-
-Implemented: deterministic structural/safety/trajectory evaluation, failure/stability campaigns, EDD machinery, semantic-review collection/protocol, operational-value collection/paired analysis and evaluator-only adaptive-stopping diagnostics.
-
-Not yet evidence-ready: real human semantic calibration and real human operational-value claims.
-
-### Realtime observability
-
-PostgreSQL rows/cursors are durable truth; LISTEN/NOTIFY is wake-up only; FastAPI SSE delivers safe live state to the React frontend. DuckDB is dev/benchmark compatibility only, not production serving truth.
-
-### Frontend
-
-React + TypeScript + Vite + TanStack Query + ECharts + React Flow + Vitest + Playwright are implemented. The final remote hosting path must itself remain USD0.
-
-## 5. Techniques used
-
-- typed tool-augmented iterative agent loop;
-- typed function/tool calling;
-- evidence-aware final/clarify/abstain/escalate/action outcomes;
-- bounded execution/stopping;
-- deterministic fail-closed action safety;
-- structured evidence/provenance tracing;
-- explicit degraded-evidence handling;
-- repeated-execution stability measurement;
-- controlled provider/model experiments;
-- deterministic-first evaluation with human-calibrated semantic layer when ready;
-- durable realtime observability;
-- schema-driven quantitative visualization;
-- evaluation-driven engineering.
-
-## 6. Components not currently promoted
-
-LangGraph, LangChain orchestration, Pydantic-AI orchestration, MCP, RAG/vector retrieval, persistent memory, multi-agent topology, Redis/Kafka and Kubernetes/microservices are not promoted without a measured gap, controlled challenger evidence **and USD0 eligibility for any selected hosted dependency**.
-
-Absence is a decision/scope outcome, not an omission.
-
-## 7. Product outputs
-
-- **O1:** functional industrial agent.
-- **O2:** 18-operation typed TRACTIAN integration package.
-- **O3:** agent evaluation framework.
-- **O4:** governed technical experiment evidence.
-- **O5:** realtime Production Control Room.
-- **O6:** Architecture Explorer.
-- **O7:** Output Lineage / Explain This Run.
-- **O8:** Dynamic Data Explorer.
-- **O9:** realtime production telemetry.
-- **O10:** technical documentation and reproduction/operations package.
-
-## 8. Requirement-to-evidence map
-
-| TAPI/delivery expectation | Current/final evidence |
+| Expectation | Current evidence / boundary |
 |---|---|
-| API integration quality | typed 18-tool registry + HTTP adapter + contract/integration tests |
-| Functional agent | production runtime/controller/tool path + browser acceptance |
-| Function selection | scenario/evaluator metrics + run traces |
-| Argument accuracy | schema validation + evaluator/tests |
-| Execution trajectory | RunTrace + Timeline/Trace Graph |
-| Evidence use | evidence lineage + partial/conflict/unavailable cases |
-| Response/conclusion quality | deterministic metrics + human-calibrated semantic layer when ready |
-| Safety | action policy/custody/idempotency/lease/fencing + negative tests |
-| Failure behavior | provider/tool/evidence degradation campaigns |
-| Stability | repeated-run metrics/campaigns |
-| High-impact actions | proposal/confirmation/execution/uncertainty evidence |
-| Experiment/hypothesis | frozen experiment packets/results + future decision records |
-| Result analysis | quantitative reports + Eval/Provider UI |
-| Limitations/risks | canonical non-claims + preserved negative outcomes/blockers |
-| Reproducibility | clean-clone CI + lockfile + frozen evidence |
-| Documentation | canonical docs + ADR/evidence index + operations runbook |
-| Demonstration quality | normal Control Room + live architecture/trace/evidence/evaluation |
+| functional agent | hosted Release 0 provider→controller→tool→evidence→terminal path |
+| supplied TRACTIAN API use | canonical 18-operation typed contract; 13 reads live in Release 0 |
+| function/tool selection | ToolSpec proposals + trace/evaluator |
+| argument validity | typed schema/B1 validation + evaluator/tests |
+| execution process/trajectory | RunTrace, Evidence timeline, Trace Graph |
+| evidence use | persisted evidence IDs, normalized read semantics, lineage |
+| response/conclusion | customer-safe terminal outcome + mode-specific next step |
+| clarification | hosted CLARIFY acceptance |
+| abstention | hosted ABSTAIN acceptance |
+| human escalation | hosted ESCALATE acceptance |
+| safety/high-impact behavior | deterministic policy + action proposal-only Release 0 boundary |
+| failure/degraded behavior | provider/tool/evidence failure campaigns + safe modes |
+| stability | repeated/campaign evaluation surfaces |
+| technical experiment | frozen provider/architecture/evaluator experiment evidence |
+| result analysis | machine-readable results + Engineering evaluation/analytics surfaces |
+| reproducibility | clean clone, lockfiles, required CI, exact release identity |
+| documentation | active docs hub + ADRs + runbook + changelog + preserved evidence |
+| demonstration | normal hosted product with Results/Evidence/Investigation/Engineering |
 
-## 9. Project-quality extension evidence
+## 3. Project-added hard constraints
 
-| Project rule/goal | Evidence required before claim |
+These are deliberate project rules, not presented as literal TRACTIAN wording:
+
+- actual project cash cost = USD0;
+- no automatic paid spillover;
+- remote production serving with no developer-machine dependency;
+- multi-user tenant safety;
+- systematic research before material decisions;
+- quantitative/Eval-Driven Development;
+- adaptive behavior only after measured advantage over a simpler baseline;
+- safe live frontend observability.
+
+Additional final-quality gates include hosted security, capacity/SLO, restore/recovery, human semantic calibration and operational-value evidence.
+
+## 4. Current stack and state
+
+| Layer | Current choice/state |
 |---|---|
-| USD0 | selected external path has USD0 actual/expected cash cost and no paid spillover |
-| remote production | independent deployed frontend/API/store, no local serving dependency |
-| multi-user IAM | USD0 standards-based auth + server-owned scope + tenant tests |
-| protected delivery | branch protection + required CI + staging/prod smoke + rollback |
-| production capacity | remote load/soak + latency/error/resource/quota distributions + SLO |
-| durability/recovery | free selected backup/restore/failure campaigns + measured recovery window |
-| semantic evaluator reliability | real human labels + agreement/error analysis |
-| operational value | paired real MANUAL vs AGENT-ASSISTED measurements |
-| model/provider selection | hosted USD0 controlled tournament or explicit `NO_SELECTION` |
+| language | Python 3.11+ |
+| API | FastAPI + Uvicorn |
+| typed schemas | Pydantic 2.x |
+| orchestration | custom `AgentController` promoted baseline |
+| real tool boundary | `HarnessRunner` + canonical `ToolSpec` registry |
+| TRACTIAN transport | direct typed HTTPS adapter; live reads proved |
+| durable state | Neon PostgreSQL + psycopg |
+| browser IAM | managed Neon Auth/session, server-owned scope |
+| backend/frontend hosting | Railway production services |
+| model/provider | Cloudflare GLM-4.7-Flash provisional Release 0; final decision `NO_SELECTION` |
+| evaluation | deterministic-first production evaluator + controlled research layers |
+| realtime | durable Postgres cursor + LISTEN/NOTIFY wake-up + authenticated SSE |
+| frontend | React/TypeScript/Vite/Caddy, progressive Results/Evidence/Investigation/Engineering |
 
-## 10. Final presentation contract
+## 5. 18-operation contract
 
-Use the normal remote USD0 product path and show authenticated user/build health, real request, live architecture/trace, typed tool/policy/evidence transitions, safe terminal/action behavior, post-runtime evaluation, output lineage, quantitative explorer, production health, provider/operational-value evidence and exact limitations.
+Release 0 browser-safe capability reference exposes:
 
-No separate demo-only or paid serving stack is compatible with the final project claim.
+```text
+18 total canonical operations
+13 READ  → live read path when release provider + TRACTIAN transport are enabled
+5 ACTION → proposal-only; external execution disabled
+```
+
+This allows the complete assignment capability surface to remain inspectable without pretending Release 0 executes consequential changes.
+
+## 6. User/reviewer outputs
+
+Current product outputs include:
+
+- customer-safe terminal outcome and next step;
+- read/evidence semantics;
+- canonical timeline;
+- evidence references;
+- tool/model/policy provenance;
+- Trace Graph;
+- output/evaluation lineage;
+- deterministic post-runtime evaluation;
+- persisted history and SSE/reconnect;
+- architecture/capability views;
+- proposal-only action/policy state;
+- operations/analytics research surfaces in Engineering.
+
+The current UX exposes these through four depths rather than placing all technical information on the first screen.
+
+## 7. Evaluation coverage
+
+The evaluation system is designed to inspect:
+
+- correct function/tool;
+- argument validity;
+- trajectory/process;
+- evidence/provenance;
+- final operational conclusion;
+- clarification/abstention/escalation;
+- action safety;
+- provider/tool/runtime failures;
+- repeated-run stability;
+- reproducible config/result identities;
+- baseline-vs-candidate deltas.
+
+Deterministic checks remain authoritative where exact truth exists. Semantic judges remain non-gating until real human calibration.
+
+## 8. What is deliberately not promoted
+
+LangGraph migration, multi-agent topology, RAG/vector DB, persistent memory, MCP, Redis/Kafka, Kubernetes/microservices and adaptive runtime stopping/routing are not required merely because they are modern or appear in examples. They need a measured gap, USD0 eligibility and a controlled challenger win.
+
+## 9. Remaining final-delivery evidence
+
+Release 0 closes the real user/read-only product path. Final work still includes as applicable:
+
+- full Provider Tournament v3;
+- SECURITY-V1 hosted campaign;
+- load/capacity and evidence-derived SLO;
+- restore/recovery evidence;
+- governed consequential action execution if promoted;
+- human semantic calibration;
+- real operational-value comparison;
+- final evidence freeze.
+
+## 10. Demonstration contract
+
+Demonstrate the **normal hosted product**:
+
+```text
+sign in
+→ Results: real request + live progress + conclusion
+→ Evidence: supporting trail
+→ Investigation: runtime/history/trace/action boundary
+→ Engineering: evaluator/architecture/capabilities
+→ exact limitations/non-claims
+```
+
+No separate demo-only, local or paid serving stack is compatible with the project claim.

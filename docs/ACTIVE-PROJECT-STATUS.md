@@ -1,299 +1,154 @@
-# Academy × TRACTIAN — Current Project Status
+# Academy × TRACTIAN — Active Project Status
 
-**Status:** production rebaseline / pre-development cleanup  
-**Checkpoint:** 2026-09-05 BRT  
-**Current `main`:** `c5cc56acc74f5cc64b0f617ec718f95d01f8fca6`  
-**Cleanup PR:** #192 (`chore/repository-cleanup`)  
-**Plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
-**Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)  
-**Principles:** [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md)
+**Status:** Release 0 **PROMOTED** / UX pilot live  
+**Last verified:** 2026-09-06 BRT  
+**Promoted backend/runtime SHA:** `082d6f115c070fdc898df749b4b3018efd9ceeab`  
+**Current hosted UX baseline before this docs rebaseline:** `2ca6215ccc07664a9551e8363e438f0930a4d995`  
+**Public product:** https://production-web-production-c9d1.up.railway.app  
+**Branch:** `release/production-final`  
+**PR:** `#196`
 
-This file is the sole mutable human-readable summary of current project state. Historical ADRs/results remain immutable evidence for their original scopes.
+This file is the mutable source of truth for **current execution state**. Frozen/history files remain immutable.
 
-## 1. Executive status
+## 1. Current objective
 
-```text
-formal product scope                         Agent + Evaluation in one solution
-project cash-cost constraint                 USD 0 HARD CONSTRAINT
-production agent runtime                    IMPLEMENTED in repository
-production deterministic evaluator          IMPLEMENTED
-TRACTIAN typed tool registry                18 operations
-React operator control room                 IMPLEMENTED
-PostgreSQL serving persistence              IMPLEMENTED
-PostgreSQL observability/evaluation          IMPLEMENTED
-PostgreSQL tenant RLS                       IMPLEMENTED / tested
-realtime durable truth                      PostgreSQL rows + sequence cursor
-realtime wake-up                            PostgreSQL LISTEN/NOTIFY + durable fallback
-read-only cross-replica handoff              IMPLEMENTED / PostgreSQL-real tested
-runtime generation fencing                  IMPLEMENTED
-consequential actions                       IMPLEMENTED
-confirmation + custody + idempotency         IMPLEMENTED
-non-transferable action execution lease      IMPLEMENTED
-lost action ownership                       UNCERTAIN / no replacement replay
-full-product Playwright E2E                  PASS on current product gates
-frontend lockfile + npm ci                   IMPLEMENTED / gated
-clean-clone reproduction                    IMPLEMENTED / gated
-stable final required CI                    final-ci-required / required-gate
+The infrastructure/read-only vertical slice is no longer the blocker. Release 0 is live and technically usable. The active objective is now:
 
-current browser identity                     signed bearer HMAC-SHA256 V1
-OAuth/OIDC/enterprise SSO                    NOT IMPLEMENTED
-remote production deployment                NOT PROVED / P0 blocker
-production serving local dependency          must become NONE before production claim
-production capacity/SLO                      NOT PROVED
-backup/restore + RTO/RPO                     NOT PROVED
-remote HA/autoscaling                        NOT PROVED
-GitHub branch protection                     NOT ENFORCED (main.protected=false)
+> **make first-use quality excellent, collect uncontaminated real-user evidence, and close the remaining final-delivery hardening/research gates without weakening the promoted safety boundary.**
 
-human semantic collector/protocol            IMPLEMENTED
-real human semantic calibration              NOT READY — labels required
-operational-value collector/analysis         IMPLEMENTED
-real engineer-time/business-value claim      NOT READY — human observations required
-adaptive stopping                            evaluator/replay only
-adaptive runtime stopping                    NOT PROMOTED
-provider comparison D01/D02                  COMPLETE / historical / USD0
-production provider/model                    NO_SELECTION
-
-repository cleanup                           IN PROGRESS / PR #192
-historical research workflows on product PRs being removed by PR #192
-old hard-freeze sequencing                   SUPERSEDED by production rebaseline
-```
-
-## 2. Product path currently implemented
+Current user path:
 
 ```text
-browser request
-→ signed RuntimeContextProvider
-→ organization/user/identity/permissions
-→ FastAPI product API
-→ PostgreSQL tenant RLS + ownership/execution state
-→ PostgreSQL runtime handoff/generation-fenced lease
-→ RealtimeProductionRuntime
-→ provider-neutral DecisionSource
-→ AgentController
-→ HarnessRunner
-→ 18 typed TRACTIAN tools
-→ deterministic B1/B2/B3 boundaries
-→ normalized evidence
-→ FINAL / CLARIFY / ABSTAIN / ESCALATE / action proposal
-→ RunTrace
-→ ProductionEvaluator
-→ sanitized PostgreSQL observability/evaluation projection
-→ durable cursor + LISTEN/NOTIFY wake-up
-→ REST/SSE
-→ React operator control room
+authenticated remote user
+→ Results
+→ guided/custom industrial investigation
+→ live provider + typed TRACTIAN reads
+→ persisted evidence
+→ FINAL | CLARIFY | ABSTAIN | ESCALATE
+→ deterministic post-runtime evaluation
+→ optional depth: Evidence → Investigation → Engineering
 ```
 
-Provider-free browser/CI acceptance replaces only the model decision source; it still exercises the product runtime, tool/policy boundary, PostgreSQL, evaluation, SSE and frontend.
+Consequential external action execution remains disabled.
 
-## 3. Consequential actions
+## 2. Release 0 promotion — PASS
+
+Release 0 was promoted on backend/runtime SHA `082d6f115c070fdc898df749b4b3018efd9ceeab`.
+
+| Gate | State | Evidence/boundary |
+|---|---|---|
+| public HTTPS frontend/API | **PASS** | Railway |
+| durable PostgreSQL | **PASS** | Neon |
+| immutable backend release identity | **PASS** | exact promoted SHA |
+| managed browser auth | **PASS** | hosted signup/session/logout |
+| two-user/tenant isolation | **PASS** | REST/SSE negatives; forged browser authority rejected |
+| hosted provider | **PASS — PROVISIONAL** | Cloudflare Release 0 route |
+| typed real TRACTIAN read | **PASS** | remote HTTP 2xx through canonical transport |
+| provider → agent → evidence E2E | **PASS** | hosted acceptance |
+| FINAL / CLARIFY / ABSTAIN / ESCALATE | **PASS** | hosted modes acceptance |
+| persistence / lineage / evaluation | **PASS** | Neon-backed run artifacts |
+| authenticated SSE / reconnect | **PASS** | public path |
+| 18-operation capability contract | **PASS** | 13 live reads + 5 proposal-only actions |
+| external consequential action execution | **DISABLED** | 0 release-campaign calls |
+| cash-cost policy | **USD0** | no automatic paid fallback |
+| local/mock serving dependency | **ZERO** | remote serving only |
+
+Hosted Release 0 acceptance: `hosted-production-release0-agent`, run `34069562818`.
+
+## 3. UX pilot — implemented and hosted
+
+The UX implementation baseline `2ca6215ccc07664a9551e8363e438f0930a4d995` reached Railway frontend deployment `SUCCESS` and passed the current branch regression surface including:
+
+- `frontend-provider-free`;
+- `full-product-playwright`;
+- `clean-clone-full-product-reproduction`;
+- `final-ci-required`;
+- production-runtime, Postgres, observability, EDD, IaC and handoff regressions.
+
+### Completed UX work
+
+| UX workstream | State | Current implementation |
+|---|---|---|
+| first-run orientation | **DONE** | product purpose, read-only boundary and guarantees before engineering detail |
+| guided investigation entry | **DONE** | server-owned guided intents; explicitly labelled local starter examples only when unavailable |
+| human-readable live progress | **DONE** | Preparing → Deciding → Reading → Reviewing → Evaluating → Complete |
+| customer-first terminal outcome | **DONE** | outcome/message/next step/evidence before trace internals |
+| mode-specific recovery | **DONE** | distinct FINAL/CLARIFY/ABSTAIN/ESCALATE guidance |
+| evidence summary | **DONE** | compact evidence first; canonical trail in Evidence layer |
+| progressive disclosure | **DONE** | Results → Evidence → Investigation → Engineering |
+| keyboard-accessible depth navigation | **DONE** | tab semantics + Arrow/Home/End focus behavior |
+| preserve full engineering observability | **DONE** | runtime/evals/architecture/capabilities remain available in deeper layers |
+| lightweight casual run feedback | **NEXT** | must be separate from controlled semantic/value collectors |
+| first-time-user pilot iteration | **NEXT** | collect friction/correctness evidence and prioritize quantitatively |
+
+### Important feedback-design decision
+
+`SemanticReviewCollector` and `OperationalValueCollector` are controlled research instruments. They will **not** be repurposed as casual thumbs-up/down feedback because that would contaminate experimental data. A separate minimal run-feedback channel is the next feedback task.
+
+## 4. Provider state
+
+Release 0 currently uses Cloudflare `@cf/zai-org/glm-4.7-flash` as a **provisional Release 0 provider**.
+
+This does not change the frozen final provider decision:
 
 ```text
-agent proposes exact action
-→ deterministic scope/schema/permission validation
-→ private PostgreSQL custody
-→ PENDING_CONFIRMATION
-→ authenticated operator confirms opaque action_id
-→ authorization + kill switch revalidated
-→ atomic persistent idempotency claim
-→ non-transferable PostgreSQL action execution lease
-→ exact custodied action transport attempt
-→ lease-fenced persistence/evaluation
-→ safe REST/SSE/frontend projection
+Provider Tournament v3 = 17 scenarios × 5 repetitions × 2 candidates = 170 attempts
+final provider decision = NO_SELECTION
 ```
 
-Current safety contract:
+`DP-004` stays `NO_SELECTION` until the preregistered final campaign produces eligible evidence.
 
-- duplicate confirmation does not start a second product transport attempt;
-- healthy action ownership is not stolen by another replica;
-- action leases are not transferred after expiry;
-- stale/lost ownership converges to `UNCERTAIN`;
-- stale late responses cannot publish false success;
-- automatic blind replay is forbidden.
+## 5. Product boundary available now
 
-This is **not** a distributed exactly-once external-side-effect claim.
+- managed authentication and server-owned tenant identity;
+- 13 live TRACTIAN reads;
+- 5 action operations represented as proposal-only capabilities;
+- live provider decisions;
+- evidence-aware terminal modes;
+- safe tool/model/policy provenance;
+- deterministic post-runtime evaluator;
+- persisted history/reload;
+- authenticated REST/SSE;
+- four-level progressive UX;
+- architecture/trace/capability/evaluation observability.
 
-## 4. Identity and tenant isolation
+## 6. Deliberate non-claims / open final gates
 
-Current repository identity is the project-owned `academy-runtime-v1` signed bearer envelope with HMAC-SHA256, issuer/audience/lifetime validation and explicit organization/user/identity/permission claims.
+Release 0 does **not** close:
 
-It is a real server-trusted boundary but not a complete end-user IAM product. Do not call it OAuth/OIDC/JWT/SSO.
-
-PostgreSQL RLS independently restricts tenant data using a non-superuser, non-`BYPASSRLS`, non-owner application role and transaction-local organization scope. Tested cross-tenant rows are denied.
-
-**P0 next state:** select and deploy a **USD-zero eligible** standards-based remote user-authentication path while preserving server-owned scope + RLS.
-
-## 5. Persistence and distributed correctness
-
-Promoted serving persistence:
-
-```text
-PostgreSQL  run ownership/execution + tenant isolation
-PostgreSQL  runtime handoff payload/lease/generation
-PostgreSQL  action custody/idempotency/action leases
-PostgreSQL  sanitized observability/evaluation
-PostgreSQL  semantic-review collection
-PostgreSQL  operational-value collection
-DuckDB      optional dev/benchmark compatibility only
-```
-
-The production package does not require DuckDB.
-
-PostgreSQL-real tests prove the repository algorithms for:
-
-- healthy read-only lease non-interference;
-- expired read-only lease takeover;
-- stale-generation fencing;
-- recovered terminal persistence;
-- healthy action non-interference;
-- non-transferable action lease behavior;
-- stale/lost action ownership → `UNCERTAIN`;
-- no duplicate replacement action transport attempt.
-
-These tests do not prove deployed HA/RTO/RPO/autoscaling.
-
-## 6. Realtime
-
-Durable `(run_id, sequence)` PostgreSQL rows are authoritative. `LISTEN/NOTIFY` is wake-up only, with bounded durable catch-up reads after missed notifications/reconnects.
-
-The RT-WAKEUP experiment promoted LISTEN/NOTIFY after passing hard correctness gates and showing a successful measured sample with lower event p95 and lower idle durable-read volume. Historical runner variance remains preserved rather than hidden.
-
-## 7. Evaluation state
-
-Delivered:
-
-- deterministic structural/safety/trajectory evaluation;
-- EDD baseline/candidate comparison machinery;
-- failure/stability/communication campaigns;
-- semantic-review collection/protocol/source generation;
-- operational-value collection + paired analysis;
-- evaluator-only adaptive stopping replay.
-
-Not yet evidence-ready:
-
-- real human semantic labels/adjudication;
-- judge-vs-human reliability metrics;
-- real manual vs assisted engineer-time measurements;
-- business-value / engineer-minutes-saved claim.
-
-Those values must not be fabricated.
-
-## 8. Provider/model state
-
-D01/D02 are completed historical **USD-zero** provider experiments. D02 completed 32/32 attempts at USD 0.00, but neither tested Cloudflare model candidate crossed the frozen M1, M4 and M7 promotion gates.
-
-Current state:
-
-**`NO_SELECTION` / no production provider-model claim.**
-
-This does **not** mean Cloudflare is rejected because of cost. Cloudflare was cost-eligible for D01/D02, but cost eligibility was not sufficient for technical promotion.
-
-The next production-provider experiment must satisfy both conditions:
-
-```text
-hosted + remote + actual cash cost USD 0
-AND
-all preregistered quality/safety/reliability/production gates
-```
-
-Only USD-zero eligible hosted candidates may be selected. If none pass all gates, the result remains `NO_SELECTION`; the cost-zero hard constraint is not relaxed.
-
-Historical D01/D02 packets are consumed and must not be replayed merely to search for a winner. Cloudflare can be reconsidered only through a new preregistered experiment if a materially new eligible model/configuration/hypothesis exists.
-
-## 9. Load/recovery evidence boundaries
-
-Existing provider-free load/concurrency measurements are descriptive and do not establish production capacity, SLO or worker sizing.
-
-Existing restart/cross-replica campaigns prove conservative repository-level safety and fencing semantics, but do not establish deployed:
-
-- availability;
-- RTO/RPO;
-- autoscaling behavior;
-- database failover quality;
-- multi-region behavior.
-
-Those claims move to remote production campaigns in the current action plan, using only USD-zero eligible infrastructure for the selectable project path.
-
-## 10. Repository/CI state
-
-`main` remains unprotected as of the latest GitHub read on 2026-09-05:
-
-```text
-main.protected = false
-required status-check enforcement = off
-```
-
-The repository nevertheless has a stable product CI contract:
-
-```text
-final-ci-required
-  ├── clean-clone-full-product-reproduction
-  ├── full-product-playwright
-  ├── horizontal-runtime-handoff
-  └── action-execution-lease
-       ↓
-  required-gate
-```
-
-PR #192 is cleaning navigation, canonical documentation and workflow activation. Historical E2/E9/E14/BIG-B research suites are being removed from ordinary product-PR triggers while their manual/research provenance is preserved.
-
-## 11. Production rebaseline
-
-The previous “hard freeze at end of 2026-09-05” sequence is superseded prospectively by the current requirement to make the system remotely deployable and production-usable rather than freezing known production blockers.
-
-The production target requires **all** of the following simultaneously:
-
-- actual project cash cost = USD 0;
-- remote serving with no local dependency;
-- real user IAM through a USD-zero eligible path;
-- protected CI/CD;
-- production observability;
-- remote load/SLO evidence;
-- backup/recovery/HA evidence where claimed;
+- final Provider Tournament v3;
+- full SECURITY-V1 hosted campaign;
+- final remote load/capacity + evidence-derived SLO;
+- real backup/restore drill + measured RTO/RPO;
+- governed consequential external action execution;
 - human semantic calibration;
-- measured operational value;
-- hosted provider/model selection by controlled comparison among USD-zero eligible candidates;
-- complete live frontend visibility.
+- real MANUAL vs AGENT-ASSISTED operational-value study;
+- adaptive-policy superiority;
+- final evidence freeze/delivery bundle.
 
-There is no paid fallback in the project-selection policy. Paid products may be researched as external references, but they are ineligible for final selection while the user-specified USD0 rule remains active.
-
-## 12. Immediate critical path
+## 7. Current priority order
 
 ```text
-1. merge repository cleanup / corrected canonical rebaseline
-2. systematic USD0-eligible remote hosting + PostgreSQL decision
-3. remote USD0 production deployment with local-dependency + paid-spillover guards
-4. USD0 standards-based IAM + multi-user/tenant acceptance
-5. main protection + deploy pipeline + rollback
-6. production telemetry/health correlation using USD0-eligible components
-7. remote load/soak → evidence-based SLO
-8. backup/failover/recovery → measured RTO/RPO where claimed
-9. human semantic calibration
-10. manual-vs-assisted operational-value study
-11. hosted USD0 provider/model tournament
-12. adaptive challengers only after P0 closure
-13. final production freeze/evidence bundle
+P0 auth/tenant/provider/TRACTIAN/run regression
+→ P1 wrong conclusion/tool/evidence/mode behavior
+→ P1 first-user friction + casual run feedback
+→ real-user UX iteration
+→ Provider Tournament v3
+→ SECURITY-V1
+→ load/SLO + restore/recovery
+→ governed actions
+→ human calibration + operational value
+→ adaptive challengers only after measured gaps
+→ final evidence freeze
 ```
 
-See `DELIVERY-PLAN.md` for acceptance details.
+Do not add new architectural layers unless a measured blocker justifies them.
 
-## 13. Current non-claims
+## 8. Evidence discipline
 
-Do not claim:
-
-- the product is already remotely deployed production infrastructure;
-- a production provider/model is selected;
-- Cloudflare is selected merely because it satisfies USD0;
-- a paid service is eligible for final selection under the current hard constraint;
-- OAuth/OIDC/enterprise SSO is implemented;
-- human semantic calibration is complete;
-- engineer minutes saved without real human observations;
-- adaptive stopping improves production runtime behavior;
-- current CI load measurements establish production capacity/SLOs;
-- repository correctness tests establish deployed RTO/RPO/HA/autoscaling/uptime;
-- distributed exactly-once external side effects;
-- GitHub branch protection is enforced;
-- LangGraph, multi-agent, RAG, memory, MCP, Kafka, Redis or another technology is justified without a measured gap and challenger win.
-
-## 14. State update rule
-
-Update this file when **current state** changes. Do not rewrite frozen ADRs/results to match newer decisions. New evidence may prospectively supersede old decision roles while preserving historical bytes/provenance. User-specified hard constraints, including USD 0, remain binding until the user explicitly changes them.
+- promoted backend/runtime identity remains `082d6f...` until a later backend candidate independently clears promotion gates;
+- frontend/UX deployment identity may advance independently and must be stated separately;
+- a docs-only commit is not a new backend release;
+- CI evidence is not automatically production SLO/HA/security evidence;
+- frozen history is never rewritten;
+- user feedback may prioritize work but cannot bypass deterministic safety/authorization gates.

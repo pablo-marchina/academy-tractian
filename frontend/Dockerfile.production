@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1.7
+
+# Exact patch versions and multi-platform index digests are intentional. The frontend is built
+# once and served as static assets; Node is not present in the runtime image. Digest changes must
+# be evidence-backed and revalidated through the frontend production build before promotion.
+FROM node:24.20.0-alpine3.24@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS build
+
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false \
+    NPM_CONFIG_FUND=false \
+    NPM_CONFIG_AUDIT=false \
+    VITE_BROWSER_AUTH_ENABLED=true
+
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY tsconfig*.json vite.config.ts index.html ./
+COPY src ./src
+RUN npm run build
+
+FROM caddy:2.11.4-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648 AS runtime
+
+WORKDIR /srv
+COPY Caddyfile.production /etc/caddy/Caddyfile
+COPY --from=build /build/dist /srv
+
+EXPOSE 8080
+
+# Railway supplies PORT. The Caddyfile defaults to 8080 for container-level reproduction.
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

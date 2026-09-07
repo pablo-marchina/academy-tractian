@@ -1,0 +1,30 @@
+name: hosted-production-release0-agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact backend/runtime Git SHA intentionally promoted to production
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-production-release0-agent-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hosted-release0-agent-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      ACADEMY_PRODUCTION_WEB_BASE_URL: https://production-web-production-c9d1.up.railway.app
+      ACADEMY_EXPECTED_RELEASE_GIT_SHA: ${{ inputs.expected_sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for exact hosted release and prove the real read-only agent path
+        run: python scripts/production_hosted_release0_agent_smoke.py
+      - name: Prove hosted CLARIFY, ABSTAIN and ESCALATE terminal modes
+        run: python scripts/production_hosted_release0_modes_smoke.py

@@ -9,7 +9,7 @@
   "artifacts": [
     {
       "path": ".github/workflows/final-ci-required.yml",
-      "git_blob_sha1": "9dc76792febcd88b4f3d13343ddc12e51a09f9f4",
+      "git_blob_sha1": "8141092fbfb5fb272dd93cd8e9a23c6fc336b8aa",
       "role": "current_ci",
       "description": "Always-on final CI aggregator exposing required-gate."
     },
@@ -179,7 +179,7 @@
       "evidence_paths": [
         "research/load-concurrency-ci-result-2026-09-03.md"
       ],
-      "claim_boundary": "Proves measurable queue/latency/throughput/resource behavior and tenant isolation in CI; does not establish production capacity, SLO or optimal sizing."
+      "claim_boundary": "Proves measurable queue/latency/throughput/resource behavior and tenant isolation in CI; does not establish production capacity, SLO or optimal worker sizing."
     },
     {
       "decision_id": "PROVIDER_SELECTION",
@@ -259,5 +259,5 @@
     "restart_ci_proves_rto_rpo_ha",
     "unconditional_production_readiness"
   ],
-  "manifest_sha256": "e65f97a2da637c043903726362941b44281310852658b4073cc5aa3aa349ede2"
+  "manifest_sha256": "c8bed491483a30d1fc7678b1857b2bbc5b9630f43ab504ed6b62ae4c320c46d3"
 }

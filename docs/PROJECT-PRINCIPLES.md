@@ -1,278 +1,243 @@
 # Academy × TRACTIAN — Non-Negotiable Project Principles
 
-**Status:** mandatory repository-wide governance  
-**Checkpoint:** 2026-09-05 corrected production rebaseline  
-**Applies to:** research, architecture, models, prompts, evaluators, tools, runtimes, data, security, observability, deployment, UI and every material technical decision.  
-**Formal source baseline:** [`../research/tractian-source-baseline-2026-08-27.md`](../research/tractian-source-baseline-2026-08-27.md)  
-**Current state:** [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md)  
-**Execution plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)
+**Status:** ACTIVE mandatory governance  
+**Last rebaseline:** 2026-09-06 BRT  
+**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
+**Execution plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
+**Documentation contract:** [`DOCUMENTATION-GUIDE.md`](DOCUMENTATION-GUIDE.md)
 
-These principles override convenience, novelty, implementation momentum and prior provisional choices. A component is not final because it works, is popular, is already implemented or passed one minimum gate.
+These principles override convenience, novelty, implementation momentum and prior provisional choices.
 
 ## North Star
 
-> **Deliver the strongest defensible TRACTIAN × Inteli product: a remote, multi-user, production-oriented Agent + Evaluation platform whose behavior, architecture, safety, quality and operational value are measurable and observable, while keeping project cash cost at USD 0.**
+> Deliver the strongest defensible TRACTIAN × Inteli product: a remote, multi-user, production-oriented **Agent + Evaluation** platform whose behavior, architecture, safety, quality and operational value are measurable and observable, while keeping **actual project cash cost = USD 0**.
 
-The project optimizes the requested outcome, not research volume, framework count or architectural sophistication.
+A workstream must map to at least one of:
 
-Every material workstream must map to at least one of:
-
-1. a formal TAPI/delivered-package requirement;
-2. an academic evaluation criterion;
-3. a material production/security/reliability risk;
-4. a measurable user/operational-value requirement; or
-5. an experiment required to choose among credible alternatives for the above.
+1. TAPI/delivered-package requirement;
+2. academic evaluation criterion;
+3. material production/security/reliability risk;
+4. measurable user/operational-value requirement;
+5. experiment required to choose among credible alternatives for the above.
 
 If it maps to none, defer it.
 
-## P0 — Production-first, remote-first, zero-cost, never demo-first
+## P0 — Real production, remote-first, never demo-first
 
-The final serving path is a real remotely deployed product, not a local demo, and must operate within the project's **USD 0 actual cash-cost hard constraint**.
+The production serving path must not depend on:
 
-### Production eligibility
+- localhost/loopback services;
+- a developer laptop/manual process;
+- local model serving;
+- SQLite/DuckDB/filesystem as production truth;
+- test doubles/scripted scenario sources/mock provider responses;
+- browser-provided tenant/role/permission authority.
 
-Production mode must not depend on:
+Local execution is valid for tests/reproduction/benchmarks, not as evidence of the hosted production claim.
 
-- `localhost` / `127.0.0.1` services;
-- a developer laptop or manually running process;
-- local/open-weight model serving;
-- SQLite/DuckDB/filesystem state as production source of truth;
-- test doubles, scripted scenario sources or mock provider responses;
-- browser-provided tenant/identity/permission authority.
-
-Local execution remains valid for development, deterministic tests, reproduction and controlled benchmarks. It is not evidence that the deployed product is production-ready.
-
-Production configuration should fail closed when a forbidden local dependency is detected.
-
-### Zero-cost hard constraint
-
-**USD 0 actual cash cost is a non-negotiable project eligibility gate.** It applies prospectively to the complete project path, including models/APIs, hosting, databases, IAM, telemetry, CI/CD add-ons and other hosted/runtime dependencies selected for the final solution.
+## P0 — USD0 is a hard eligibility gate
 
 ```text
-actual project cash cost > USD 0              INELIGIBLE
-silent paid spillover / automatic billing     FORBIDDEN
-required paid upgrade to keep normal path     INELIGIBLE
-USD 0 candidate                               ELIGIBLE FOR TECHNICAL EVALUATION
-USD 0 + all technical hard gates              ELIGIBLE FOR PROMOTION
-no USD 0 candidate passes all gates           NO_SELECTION / explicit blocker
+actual project cash cost > USD 0            → INELIGIBLE
+silent paid spillover / automatic billing   → FORBIDDEN
+USD0 candidate                              → eligible for technical evaluation
+USD0 + all applicable hard gates            → eligible for promotion
+no eligible candidate passes                → NO_SELECTION / explicit blocker
 ```
 
 Rules:
 
-1. Zero cost is **necessary, not sufficient** for selection.
-2. A free candidate still must pass quality, safety, reliability, production-fit and evaluation hard gates.
-3. A technically superior paid candidate may be researched as an external benchmark/reference, but it is **not selectable** for this project while the USD 0 rule applies.
-4. Free tiers/credits must be evaluated for durability, quotas, sleep/scale-to-zero behavior, account/billing requirements and risk of unexpected charge.
-5. The selected production design must have a fail-closed spending boundary: no automatic paid spillover.
-6. If production-grade quality cannot be achieved inside USD 0, the correct result is an explicit limitation/blocker or `NO_SELECTION`; the project constraint is not silently relaxed.
-7. Historical USD-zero experiments remain immutable evidence for their original scopes.
-
-### Production evidence
-
-A production claim requires evidence from the deployed path itself. Repository tests may qualify algorithms and contracts, but do not automatically prove:
-
-- deployed availability/HA;
-- capacity/SLO;
-- autoscaling;
-- backup/restore;
-- RTO/RPO;
-- remote IAM;
-- live provider reliability.
-
-Those claims require remote tests and observable production evidence, still under the USD 0 constraint.
+1. zero cost is necessary, not sufficient;
+2. paid alternatives may be researched only as external references while this constraint applies;
+3. quotas/free tiers must be understood and observed;
+4. exhaustion must fail/degrade safely rather than spend;
+5. no automatic paid fallback is allowed;
+6. an explicit limitation is better than silently relaxing the constraint.
 
 ## Source hierarchy
 
-When upstream sources differ:
+When sources conflict:
 
-1. current/updated TAPI;
-2. delivered TRACTIAN package and contract;
+1. current TAPI;
+2. delivered TRACTIAN package/contract;
 3. executable supplied API behavior/tests;
-4. kickoff/partner guidance compatible with formal sources;
-5. project research and assumptions.
+4. compatible kickoff/partner guidance;
+5. project research/assumptions.
 
-Record discrepancies instead of silently reconciling them.
-
-## Priority rule
-
-```text
-P0 — hard constraints + requested capability + production/security blockers
-        ↓
-P1 — measurable quality, evaluation and operational value
-        ↓
-P2 — optional complexity only after a measured gap
-```
-
-P0/P1 work must not be displaced by RAG, vector DB, multi-agent decomposition, persistent memory, MCP, framework migration, Kafka/Redis or other optional components merely because they are modern.
+Record discrepancies instead of silently harmonizing them.
 
 ## P1 — Systematic research before material choices
 
-Every material choice follows:
+Every material decision follows:
 
 ```text
-decision question
-→ requirement/risk mapping
-→ hard constraints (including USD 0)
-→ systematic primary-source research
-→ eligibility filter
-→ simple/null baseline + credible eligible alternatives
-→ preregistered metrics and hard gates
+decision question / measured gap
+→ requirement/risk
+→ hard constraints
+→ primary-source research
+→ simple baseline + credible eligible alternatives
+→ preregistered metrics/hard gates
 → controlled quantitative comparison
-→ robustness/failure analysis
-→ production-fit analysis
-→ Pareto decision among eligible candidates
-→ ADR + reversal trigger
+→ failure/robustness/production-fit analysis
+→ Pareto interpretation
+→ decision + reversal trigger
+→ ADR/registry
 → regression protection
 ```
 
-Rules:
+Do not add a technology because it is popular or appears in an example.
 
-1. Define the decision question and success/failure criteria before selecting a solution.
-2. Search broadly enough to include materially different alternatives and `NO_CHANGE`.
-3. Prefer primary sources and reproducible project evidence.
-4. Apply hard constraints before promotion; ineligible paid candidates cannot win a project selection.
-5. Compare eligible candidates under the same workload and constraints where possible.
-6. Use repeated runs, paired comparisons, distributions and uncertainty estimates when relevant.
-7. Use ablations when attribution matters.
-8. Test failure/adversarial conditions and operational variability.
-9. Evaluate correctness, safety, reliability, latency, throughput, resource use, scalability, portability, maintainability and observability.
-10. Use Pareto/frontier reasoning rather than hiding trade-offs in arbitrary weighted scores.
-11. Record rejected/ineligible options and reversal triggers.
-12. A changed user-specified hard constraint may reopen a choice only when the user explicitly changes that constraint; historical evidence itself stays immutable.
+Current examples of **NO_CHANGE unless evidence demands otherwise** include LangGraph migration, multi-agent, RAG/vector DB, persistent memory, MCP, Redis/Kafka and Kubernetes/microservices.
 
-### Decision states
+## Decision states
 
-- `INELIGIBLE` — violates a hard project constraint, including USD 0.
-- `UNASSESSED` — not adequately evaluated.
-- `RESEARCHED` — alternatives/evidence mapped.
-- `QUALIFIED` — passes minimum gates; not necessarily best.
-- `PREFERRED` — best-supported eligible candidate currently after comparison.
-- `FROZEN` — best-supported eligible solution for the stated scope after robustness/production validation.
-- `SUPERSEDED` — prospectively replaced by stronger eligible evidence.
-- `NO_SELECTION` / `NO_CHANGE` — valid result when no eligible candidate deserves promotion.
+- `UNASSESSED` — insufficient evidence;
+- `RESEARCHED` — credible evidence/options mapped;
+- `INELIGIBLE` — violates a hard constraint;
+- `QUALIFIED` — passes minimum gates;
+- `PREFERRED` — best-supported eligible current candidate;
+- `FROZEN` — accepted for the stated evidence scope;
+- `REJECTED` — evidence rejects candidate;
+- `NO_CHANGE` — current simpler path remains preferred;
+- `NO_SELECTION` — no candidate deserves final promotion;
+- `SUPERSEDED` — prospectively replaced by stronger evidence.
 
-Passing the zero-cost gate or one technical gate proves eligibility/qualification only, not optimality.
+Release qualification and final selection are not the same thing. Release 0 may use a **provisional** provider while final Provider Tournament state remains `NO_SELECTION`.
 
 ## P2 — Quantitative before qualitative
 
-Where a property can be validly measured, measure it.
+When measurement is valid, prefer:
 
-Prefer:
-
-- rates and distributions;
+- rates/distributions;
 - p50/p95/p99;
 - paired deltas;
-- confidence intervals/effect sizes;
-- error/failure rates;
-- resource use and explicit USD cash cost (= 0 for selected project paths);
-- repeated-run stability;
+- uncertainty/effect sizes;
+- failure/error rates;
+- resource/quota/cash cost;
+- repeat stability;
 - calibration/agreement metrics;
-- operational-value deltas.
+- task completion/friction/value deltas.
 
-Thresholds must be justified by a hard requirement or empirical evidence.
+Qualitative evidence complements measurements where semantics/user experience cannot be reduced safely to exact checks.
 
-Qualitative judgment is reserved for dimensions that cannot be reduced reliably to deterministic metrics. Semantic/LLM judges must be calibrated before they can gate candidates.
+## P3 — Adaptive where valuable; deterministic where safety-critical
 
-## P3 — Adaptive where valuable, deterministic where safety-critical
-
-Adaptive behavior is encouraged when context-sensitive decisions can outperform a simpler static baseline.
-
-Potentially adaptive:
+Potentially adaptive only after challenger evidence:
 
 - investigation depth;
-- evidence gathering/tool ordering;
+- evidence/tool ordering;
 - stopping;
-- clarification/abstention/escalation thresholds;
-- provider/model routing among USD-zero eligible providers;
-- retry/backoff within safe semantics and free-tier quotas;
-- contextual time/resource budget;
+- clarify/abstain/escalate thresholds;
+- provider routing among USD0-eligible candidates;
+- bounded retry/backoff where semantics permit it;
+- contextual resource budgets;
 - visualization prioritization.
 
 Always deterministic/hard-gated:
 
-- authentication and tenant binding;
-- RLS/authorization;
-- permission/resource scope;
+- authentication/tenant binding;
+- RLS/authorization/permissions;
 - schema validation;
-- consequential-action confirmation;
-- custody/idempotency/leases/fencing;
+- action confirmation/custody/idempotency/leases/fencing;
 - privacy/field deny-lists;
-- evaluator partition/gold isolation;
-- hard execution/resource caps;
-- zero-cost/no-paid-spillover boundary.
+- evaluator/gold isolation;
+- hard turn/time/resource caps;
+- USD0/no-paid-spillover boundary.
 
-Adaptivity must be observable, reproducible enough to debug and promoted only after measured benefit.
-
-## P4 — Eval-driven engineering
-
-Evaluation controls the engineering loop:
+## P4 — Eval-Driven Development
 
 ```text
 requirement
-→ evaluator/measurement design
+→ evaluator/metric
 → baseline
 → candidate hypothesis
-→ preregistration
+→ preregistration where material
 → implementation
-→ controlled evaluation
+→ repeated/sliced evaluation
 → diagnosis
-→ comparison
 → promote/reject/no-change
-→ regression coverage
+→ regression guard
 ```
 
-Mandatory implications:
+- deterministic truth beats an LLM judge where exact checks exist;
+- semantic judges are non-gating until human calibrated;
+- preserve failed/consumed attempts;
+- separate infrastructure failure from task-quality failure;
+- evaluate the operational conclusion **and** observable process: tool, arguments, evidence, stopping, escalation/action and safety.
 
-1. Define measurable success before material implementation whenever feasible.
-2. Establish a baseline before claiming improvement.
-3. Keep DEV / VALIDATION / LOCKED_TEST boundaries explicit.
-4. Prefer deterministic ground truth over LLM judges when exact checks exist.
-5. Validate judges/evaluators before allowing them to gate candidates.
-6. Preserve failed experiments and consumed attempts.
-7. Separate operational failure from scientific/task-quality failure.
-8. Evaluate conclusion **and** observable execution process: tool choice, arguments, evidence, stopping, escalation/action behavior and safety.
-9. Exact wording is not the primary correctness signal when operational conclusion can be evaluated directly.
-10. Production telemetry should feed later controlled re-evaluation, never bypass hard safety or zero-cost constraints.
+## P5 — Evidence-backed claims only
 
-## Documentation and provenance gate
+A source/CI result does not automatically prove deployed production properties.
 
-Before material implementation, the issue/plan must state:
+Claim-specific remote evidence is required for claims such as:
 
-- requirement/risk mapping;
-- current baseline;
-- credible alternatives;
-- hard constraints, explicitly including USD 0;
-- candidate eligibility status;
-- metrics and hard gates;
-- robustness/failure plan;
-- production-fit evidence required;
-- stopping/decision semantics;
-- regression/reversal triggers.
+- production IAM/tenant safety;
+- provider/TRACTIAN integration;
+- capacity/SLO;
+- backup/restore;
+- RTO/RPO/HA;
+- end-to-end security;
+- operational time savings.
 
-Frozen/source-pinned evidence is never silently rewritten or cosmetically moved. Repository cleanup follows `docs/REPOSITORY-CLEANUP-AUDIT.md` and the lifecycle rules in `docs/README.md`.
+The current Release 0 hosted evidence proves its exact read-only scope; broader final claims remain open until separately measured.
 
-## Completion gate
+## P6 — User experience without sacrificing observability
 
-A material workstream is not done unless all applicable conditions hold:
+The frontend should make the normal user task simple **and** preserve deep technical evidence for reviewers.
 
-- [ ] maps to an explicit requirement/risk/value objective;
-- [ ] baseline and decision question are explicit;
-- [ ] credible alternatives were researched;
-- [ ] USD 0 eligibility was verified for any selected external/hosted dependency;
-- [ ] no selected path can silently spill into paid usage;
-- [ ] metrics/hard gates were defined before final selection;
-- [ ] controlled quantitative evaluation exists where applicable;
-- [ ] uncertainty/repeated-run behavior was measured where stochasticity matters;
-- [ ] robustness/failure behavior was tested;
-- [ ] production fitness was measured on the relevant path rather than inferred from a demo;
-- [ ] production mode has no forbidden local serving dependency;
-- [ ] actual project cash cost remains USD 0;
-- [ ] adaptive behavior was compared with a simpler static baseline where relevant;
-- [ ] evaluator/judge validity is established for gating metrics;
-- [ ] trade-offs/Pareto position among eligible candidates are understood;
-- [ ] decision/reversal triggers are documented;
+Current pattern:
+
+```text
+Results → Evidence → Investigation → Engineering
+```
+
+Principles:
+
+- answer/next step before internals;
+- progressive disclosure instead of information deletion;
+- all visible status derived from safe server-owned evidence;
+- no fabricated progress;
+- no secrets/private evaluator truth/hidden chain-of-thought;
+- accessibility and first-time-user comprehension are product requirements;
+- lightweight product feedback must remain separate from controlled research datasets.
+
+## P7 — Documentation/provenance is part of the product
+
+Active docs and historical evidence have different jobs:
+
+```text
+active docs = current prospectively editable truth
+frozen/history = immutable evidence for original scope
+```
+
+Rules:
+
+- one mutable owner per question;
+- document by user task (tutorial/how-to/reference/explanation);
+- update architecture/runbook/acceptance/security/changelog with material changes;
+- preserve accepted ADRs/frozen progress/results;
+- supersede prospectively rather than rewriting historical rationale;
+- claims and diagrams must match the system that actually exists.
+
+## Completion gate for material work
+
+A material workstream is done only when applicable conditions hold:
+
+- [ ] explicit requirement/risk/user objective;
+- [ ] baseline + decision question;
+- [ ] credible alternatives researched;
+- [ ] USD0/no-paid-spillover eligibility verified;
+- [ ] metrics/hard gates defined;
+- [ ] controlled evaluation exists where selection matters;
+- [ ] stochastic uncertainty/repetition measured where relevant;
+- [ ] failure/adversarial behavior checked;
+- [ ] production fitness measured on the relevant path;
+- [ ] no forbidden local production dependency;
+- [ ] evaluator/judge validity established for gating metrics;
+- [ ] decision/reversal trigger documented;
 - [ ] regression protection exists;
-- [ ] claims remain bounded by evidence;
-- [ ] applicable TAPI/acceptance rows remain covered.
+- [ ] active documentation synchronized;
+- [ ] frozen history unchanged;
+- [ ] claims remain bounded by evidence.
 
-If an applicable item is missing, the correct state is still research/experimental/incomplete — not production-ready. If no USD-zero candidate clears all required gates, the correct outcome is `NO_SELECTION` or an explicit blocker, never a paid fallback.
+If an applicable item is missing, the correct status is research/experimental/pending/non-claim — not a stronger label.

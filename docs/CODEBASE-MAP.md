@@ -1,184 +1,140 @@
 # Codebase Map
 
-This document maps the current code surface without changing import paths or frozen evidence.
+**Status:** ACTIVE implementation navigation  
+**Last verified:** 2026-09-06 BRT
 
-Its purpose is to answer a simple question before new development: **where should a change live?**
+Use this before adding a file: **which existing domain owns the change?**
 
-## Promoted runtime flow
+## End-to-end ownership
 
 ```text
-FastAPI product API
-→ authenticated runtime context
-→ PostgreSQL tenant-scoped state
-→ RealtimeProductionRuntime
-→ DecisionSource
-→ AgentController / HarnessRunner
-→ typed TRACTIAN tools
-→ normalized evidence
-→ decision / action proposal
-→ ProductionEvaluator
-→ PostgreSQL observability projection
-→ REST / SSE / React control room
+frontend/
+→ authenticated REST/SSE
+→ product/auth API
+→ Postgres runtime ownership
+→ DecisionSource / AgentController
+→ HarnessRunner / typed tools / TRACTIAN transport
+→ evidence + terminal
+→ evaluator
+→ Postgres safe projection
+→ frontend depth layers
 ```
 
-## Backend domains
+## Backend domains — `src/academy_tractian/`
 
-### Runtime and orchestration
+### Runtime / orchestration
 
-Primary modules include:
+Key modules include `runtime.py`, `realtime_runtime.py`, `decision_source.py`, `runtime_identity.py`, `runtime_handoff_supervisor.py`, `run_access.py` and `run_execution_store.py`.
 
-- `runtime.py`
-- `realtime_runtime.py`
-- `decision_source.py`
-- `runtime_identity.py`
-- `runtime_handoff_supervisor.py`
-- `run_access.py`
-- `run_execution_store.py`
+Changes to decision-loop lifecycle, ownership or execution state belong here.
 
-Changes that alter the agent execution lifecycle belong here.
+### Release 0 provider / production composition
+
+Key modules include:
+
+- `release_provider.py` — fail-closed provisional Release 0 provider composition;
+- `production_config.py` — production environment contract;
+- `remote_server.py` — production application composition;
+- Cloudflare/provider client modules — provider boundary and historical/provider-free research support.
+
+Do not infer final provider selection from Release 0 composition. `DP-004` remains separate.
+
+### TRACTIAN capability / transport
+
+Key ownership includes canonical runtime registry/ToolSpecs, `ProductionTractianTransport`, response normalization and Release 0 capability manifest (`release0_capabilities.py`).
+
+All real tool execution stays behind `HarnessRunner`; do not create a second network bypass.
 
 ### Product APIs
 
-Primary modules include:
+Primary modules include `product_api.py`, `postgres_product_api.py`, authenticated product composition, observability APIs and `action_product_api.py`.
 
-- `product_api.py`
-- `postgres_product_api.py`
-- `authenticated_postgres_product_api.py`
-- `observability_api.py`
-- `action_product_api.py`
+HTTP routes should remain thin over product/runtime/store contracts.
 
-HTTP contracts should remain thin over product services/storage contracts rather than owning core decision logic.
+### Identity / tenant scope
 
-### Consequential actions and safety
+Managed session validation and runtime-context composition own browser identity. PostgreSQL-scoped product stores own the independent RLS boundary.
 
-Primary modules include:
+Browser code must never become the canonical tenant/permission source.
 
-- `controlled_actions.py`
-- `action_safety.py`
-- `production_actions_v2.py`
-- `action_execution_lease.py`
-- `postgres_action_execution_lease.py`
-- `action_recovery.py`
-- `action_evaluation.py`
-- `controlled_action_evaluation.py`
+### Consequential actions / safety
 
-Hard safety boundaries, confirmation, custody, idempotency and execution ownership remain deterministic.
+Primary modules include `controlled_actions.py`, `action_safety.py`, `production_actions_v2.py`, action custody/idempotency/lease/recovery/evaluation modules.
+
+Release 0 external execution remains disabled even though these mechanisms exist and are testable.
 
 ### PostgreSQL persistence
 
-Primary modules include:
+Primary modules include operational state, observability store, runtime handoff, action operational state, semantic review and operational value stores.
 
-- `postgres_operational.py`
-- `postgres_observability_store.py`
-- `postgres_runtime_handoff.py`
-- `postgres_action_operational.py`
-- `postgres_semantic_review.py`
-- `postgres_operational_value.py`
+Production truth is PostgreSQL. New production state must not silently move to local files/DuckDB.
 
-The promoted serving path uses PostgreSQL as durable truth. New serving persistence should not introduce local-file state.
+### Observability / realtime
 
-### Observability and realtime delivery
+Primary modules include `observability*`, `realtime_observability.py`, `realtime_wakeup.py`, `production_telemetry.py` and the operational read model.
 
-Primary modules include:
+Durable cursor/state is authoritative; wake-up is not authorization/correctness truth.
 
-- `observability.py`
-- `observability_contract.py`
-- `observability_store.py`
-- `realtime_observability.py`
-- `realtime_wakeup.py`
-- `production_telemetry.py`
-- `operational_read_model.py`
+### Evaluation / EDD
 
-Durable rows/cursors are authoritative; wake-up/delivery mechanisms are not authorization boundaries.
+Primary modules include deterministic evaluation, EDD, semantic evaluation/calibration, failure/stability/communication campaigns, adaptive-stopping diagnostics and operational-value analysis/collection.
 
-### Evaluation and EDD
+New adaptive/model/framework behavior should enter as a challenger/evaluation surface before it can replace a promoted path.
 
-Primary modules include:
+## Frontend — `frontend/src/`
 
-- `evaluation.py`
-- `eval_driven.py`
-- `semantic_evaluation.py`
-- `semantic_human_calibration.py`
-- `adaptive_stopping.py`
-- `failure_campaign.py`
-- `stability_campaign.py`
-- `communication_campaign.py`
-- `operational_value.py`
-- `operational_value_analysis.py`
-- `operational_value_collection.py`
+### Top-level composition
 
-New adaptive/model/framework behavior should enter first as a challenger/evaluation surface, not by silently replacing the promoted runtime.
+- `App.tsx` — current four-layer workspace composition.
+- `components/DepthTabs.tsx` — Results/Evidence/Investigation/Engineering navigation and keyboard semantics.
+- `components/ProductExperience.tsx` — first-run onboarding, quick start, live stages, terminal next steps/evidence summary.
 
-### Provider/research compatibility surface
+### Four depth layers
 
-The package currently contains several `provider_*` and `cloudflare_*` modules created by earlier provider experiments and live/provider-free campaigns.
+**Results** owns user-first outcome/input.  
+**Evidence** owns canonical safe explanation trail.  
+**Investigation** owns history/runtime/trace/action-control inspection.  
+**Engineering** owns deep architecture/capability/evaluator/analytics/research surfaces.
 
-Do not assume these modules are production-core merely because they live under `src/academy_tractian/`. Before deleting or moving them, run a reachability audit against:
+### Supporting structure
 
-- imports from promoted runtime/API modules;
-- tests;
-- active workflows;
-- research execution bundles;
-- frozen evidence/source pins.
+- `api/` — browser-safe backend contracts/clients;
+- `hooks/` — reusable live/product hooks;
+- `state/` — deterministic client projections/metrics;
+- CSS files — visual/layout/accessibility styling;
+- components such as `RunExplorer`, `TraceGraph`, `ArchitectureExplorer`, `OperationsWorkspace`, `Release0CapabilitySurface`, `ActionControl` and controlled collectors.
 
-This is the primary target for the **second cleanup pass**.
-
-## Frontend
-
-`frontend/src/` is organized around:
-
-- `api/` — backend contracts/client access;
-- `components/` — product UI surfaces;
-- `hooks/` — reusable product hooks;
-- `state/` — client state;
-- `App.tsx` — top-level composition;
-- domain CSS files — current styling surface.
-
-The frontend should visualize server-owned state; it must not become an authorization or decision source.
+Frontend state visualizes server-owned truth; it does not decide tenant authority or agent policy.
 
 ## Tests
 
-- `tests/` — backend/product/regression/integration tests;
-- `frontend/src/**` + Vitest — frontend unit/component tests;
-- `frontend/e2e/` + Playwright — full-browser acceptance.
+- `tests/` — backend/product/regression/integration;
+- `frontend/src/**` + Vitest — frontend logic tests;
+- `frontend/e2e/` + Playwright — browser task/invariant acceptance;
+- `research/e2/tests/` — accepted controller/tool/evaluator harness.
 
-See [`../tests/README.md`](../tests/README.md) for organization rules.
+The UX baseline `2ca6215...` passed full Playwright and the required gate.
 
-## Scripts
+## Workflows
 
-`scripts/` is a CLI/validation/reporting surface only. Reusable logic belongs in the package. See [`../scripts/README.md`](../scripts/README.md).
+See [`../.github/workflows/README.md`](../.github/workflows/README.md). Distinguish normal regression, manual production promotion and historical one-shot research workflows.
 
-## Research/evidence
+## Research / scripts
 
-`research/` preserves experiment history and accepted E2 contracts. It should not be treated as a miscellaneous code directory.
+- `research/` preserves experiment protocol/evidence; it is not miscellaneous code.
+- `scripts/` should be thin CLI/validation/operations wrappers; reusable logic belongs in the package.
 
-See [`../research/README.md`](../research/README.md) before moving or deleting anything there.
+See `research/README.md`, `scripts/README.md` and `tests/README.md` before large cleanup/refactor work.
 
-## Target package shape after reachability audit
+## New-code checklist
 
-A future non-functional refactor may split the flat package into domains such as:
+Before adding a top-level module:
 
-```text
-academy_tractian/
-  api/
-  runtime/
-  actions/
-  storage/
-  observability/
-  evaluation/
-  providers/
-```
+1. Which domain owns the responsibility?
+2. Does an existing module already expose the needed contract?
+3. Is it production logic or experiment/CLI-only logic?
+4. Does a measured gap justify a new abstraction?
+5. Does the behavior need an evaluator/baseline before promotion?
+6. Could the path become frozen evidence or external contract?
 
-That split is **not yet authorized by this cleanup**. It should happen only after import/path provenance is mapped and CI proves compatibility, ideally with temporary compatibility shims where frozen or external paths require them.
-
-## Rule for new code
-
-Before creating a new module, ask:
-
-1. Is this product runtime, evaluation, storage, observability, API, action safety or research-only?
-2. Does an existing module already own the responsibility?
-3. Is the logic reusable/importable, or is it only a CLI wrapper?
-4. Does the change need an evaluator/baseline before promotion?
-5. Will the new path become part of a frozen evidence contract?
-
-Avoid adding another top-level module when an existing domain already owns the behavior.
+Prefer extending a clear owner over creating another parallel path.

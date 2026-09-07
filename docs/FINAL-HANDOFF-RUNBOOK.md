@@ -1,347 +1,223 @@
-# Academy × TRACTIAN — Handoff and Operations Runbook
+# Academy × TRACTIAN — Production Handoff and Operations Runbook
 
-**Status:** ACTIVE operational runbook  
-**Checkpoint:** 2026-09-05 corrected production rebaseline  
-**Authority:** subordinate to [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md), [`CURRENT-PROJECT-STATUS.md`](CURRENT-PROJECT-STATUS.md), [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md), accepted ADRs and frozen experiment evidence.
+**Status:** ACTIVE operational how-to  
+**Last verified:** 2026-09-06 BRT  
+**Public product:** https://production-web-production-c9d1.up.railway.app  
+**Promoted backend/runtime:** `082d6f115c070fdc898df749b4b3018efd9ceeab`
 
-This runbook separates three paths:
+This runbook covers current Release 0 operation and safe future promotion. Local commands are for development/reproduction only.
 
-1. **local/CI reproduction** — deterministic evidence and developer verification;
-2. **remote USD0 staging/production operation** — the required final serving path;
-3. **historical experiment reproduction** — frozen evidence only.
-
-Local reproducibility is important, but local execution must never be presented as the final production topology. Likewise, a paid hosted path must never be presented as project-compliant while the USD0 hard constraint applies.
-
-## 1. Hard operational envelope
-
-The selectable production path must satisfy all of the following simultaneously:
+## 1. Production topology
 
 ```text
-actual project cash cost = USD 0
-no automatic paid spillover
-remote serving; no developer-machine dependency
-standards-based user identity
-multi-user tenant isolation
-safe consequential actions
-remote durable PostgreSQL-compatible state
-observable/reproducible release
+Browser
+→ Railway production-web (Caddy / React)
+   ├── /auth/* → Neon Auth
+   └── /api/* + SSE → Railway production-api
+                         ↓
+                 Neon PostgreSQL
+                 Cloudflare Workers AI
+                 supplied TRACTIAN API
 ```
 
-If no available topology satisfies this envelope plus the technical gates, the correct state is an explicit blocker/`NO_SELECTION`, not a paid fallback.
+Release 0 is read-only with respect to consequential external TRACTIAN actions.
 
-## 2. Promoted logical product architecture
+## 2. Hard operational envelope
+
+Production must preserve:
+
+- actual project cash cost = USD0;
+- no automatic paid spillover;
+- no localhost/developer-machine serving dependency;
+- managed user session + server-owned tenant authority;
+- PostgreSQL/RLS durable state;
+- exact backend release identity;
+- explicit provider/model route;
+- canonical typed TRACTIAN transport;
+- safe failure/abstain/escalate behavior;
+- no hidden reasoning/secrets in browser projections;
+- external consequential action execution disabled until separately promoted.
+
+## 3. Health and first diagnosis
+
+Start with the public origin and server health/readiness/release metadata. Diagnose in dependency order:
 
 ```text
-remote browser
-→ standards-based USD0 user identity (target production IAM)
-→ FastAPI product API
-→ trusted server-owned runtime context
-→ PostgreSQL tenant RLS + mutable/durable product state
-→ runtime handoff / leases / generation fencing
-→ RealtimeProductionRuntime
-→ USD0 hosted provider DecisionSource
-→ AgentController
-→ HarnessRunner
-→ 18 typed TRACTIAN tools
-→ deterministic B1/B2/B3 boundaries
-→ normalized evidence
-→ terminal/action proposal
-→ RunTrace + ProductionEvaluator
-→ sanitized PostgreSQL observability/evaluation
-→ durable cursor + LISTEN/NOTIFY wake-up
-→ REST/SSE
-→ React operator control room
+DNS/TLS/public frontend
+→ managed auth/session
+→ production API health/readiness/release identity
+→ Neon connectivity/RLS
+→ provider configuration/quota
+→ DecisionSource/controller
+→ typed tool/policy
+→ TRACTIAN transport
+→ evidence/terminal
+→ evaluator/persistence
+→ SSE/cursor catch-up
+→ React projection
 ```
 
-The currently implemented signed bearer runtime identity and provider-free decision source remain useful repository/test boundaries. They are not, by themselves, the final production IAM/provider claim.
+Do not mask an upstream problem with hidden retries/fallbacks.
 
-Consequential actions remain governed by private PostgreSQL custody, explicit confirmation, current authorization, host kill switch, persistent idempotency and non-transferable execution leases. Ambiguous ownership loss becomes `UNCERTAIN` and is never blindly replayed.
+## 4. Safe production smoke after a frontend-only UX deployment
 
-## 3. Local/CI reproduction prerequisites
+Verify:
 
-Canonical CI toolchain currently uses Python 3.11+, Node compatible with `frontend/package.json`, PostgreSQL in the current Actions contracts, dependencies from `pyproject.toml` and committed `frontend/package-lock.json`.
+1. public page loads and sign-in boundary is present;
+2. Results is default layer;
+3. Quick Start/custom request input works;
+4. Evidence/Investigation/Engineering tabs are keyboard/click accessible;
+5. backend `/health`/release identity did not unexpectedly change;
+6. one bounded read-only investigation reaches a safe terminal state if quota permits;
+7. history and SSE/reconnect behavior remain correct;
+8. no external action execution is enabled.
 
-Backend/dev installation:
+A frontend SHA can advance without changing the immutable backend Release 0 SHA. Record them separately.
+
+## 5. Backend promotion procedure
+
+Backend promotion is intentional, not implied by a green PR or frontend deploy.
+
+```text
+select exact tested backend SHA
+→ ensure required CI green
+→ set/verify exact release identity contract
+→ deploy the exact source/artifact
+→ predeploy TRACTIAN connectivity gate must pass
+→ run hosted G2 exact-SHA smoke
+→ manually dispatch hosted-production-release0-agent with expected_sha=<exact SHA>
+→ verify FINAL + CLARIFY + ABSTAIN + ESCALATE + tenant boundaries
+→ record immutable evidence
+```
+
+`.github/workflows/hosted-production-release0-agent.yml` is `workflow_dispatch` only and requires `expected_sha`.
+
+Do not trigger a live provider acceptance simply because an unrelated frontend/docs PR changed.
+
+## 6. Production smoke checklist
+
+- [ ] expected frontend deployment identity;
+- [ ] expected backend artifact/release SHA;
+- [ ] health/readiness truthful;
+- [ ] managed auth works;
+- [ ] invalid/unauthorized session fails closed;
+- [ ] tenant scope/RLS behavior intact;
+- [ ] provider route/model explicit and no hidden fallback;
+- [ ] bounded TRACTIAN read succeeds when expected;
+- [ ] safe tool/provider failure behavior;
+- [ ] terminal mode and evidence persist;
+- [ ] evaluator appears only post-runtime;
+- [ ] authenticated SSE + reconnect/catch-up;
+- [ ] no forbidden/private fields in browser output;
+- [ ] external consequential actions remain disabled unless a later action gate is explicitly promoted;
+- [ ] USD0/no-paid-spillover boundary intact.
+
+## 7. Local / CI reproduction
+
+Developer setup:
 
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]" -e "research/e2[dev]"
-```
-
-Frontend deterministic install:
-
-```bash
 cd frontend
 npm ci --ignore-scripts --no-audit --no-fund
-cd ..
 ```
 
-Provider-free reproduction requires no live model/provider secret.
-
-## 4. Canonical clean-clone reproduction
-
-The authoritative current-product repository reproduction workflow is:
-
-`.github/workflows/clean-clone-full-product-reproduction.yml`
-
-The older `.github/workflows/final-delivery-provider-free-reproduction.yml` is historical evidence and intentionally distinct.
-
-Current clean-clone coverage includes:
-
-```text
-clean tracked checkout
-→ install backend/E2 dependencies
-→ PostgreSQL-backed Python product suite
-→ identity/RLS/load/recovery checks
-→ distributed/action correctness regressions through required workflows
-→ accepted controller/safety evidence
-→ frozen historical evidence validation
-→ npm ci
-→ frontend typecheck + unit tests + production build
-→ no tracked repository mutation
-```
-
-Do not modify frozen expected identities or historical evidence merely to make a later gate pass.
-
-## 5. Manual local reproduction
-
-This is developer/reviewer reproduction only, not production serving.
-
-A local PostgreSQL DSN such as:
-
-```text
-POSTGRES_OPERATIONAL_TEST_DSN=postgresql://postgres:postgres@127.0.0.1:5432/academy_tractian
-```
-
-is allowed for local tests. The production environment must reject loopback/local serving dependencies.
-
-Representative local commands:
+Representative validation:
 
 ```bash
 python -m pytest -q tests
-python -m pytest -q research/e2/tests/test_controller.py
-python scripts/validate_ev007_failure_campaign.py
-python scripts/validate_ev008_stability_campaign.py
-python scripts/validate_ev011_communication_campaign.py
-python scripts/validate_delivery_reproduction.py
-python scripts/validate_final_handoff_audit.py
 cd frontend
-npm ci --ignore-scripts --no-audit --no-fund
 npm run typecheck
 npm test
 npm run build
 ```
 
-## 6. Full browser acceptance in CI/staging
+Canonical full-product contracts are implemented through GitHub Actions, especially:
 
-Current Chromium acceptance is `.github/workflows/full-product-playwright.yml`.
+- `final-ci-required.yml`;
+- `clean-clone-full-product-reproduction.yml`;
+- `full-product-playwright.yml`;
+- `production-runtime.yml`;
+- targeted Postgres/observability/EDD/IaC regressions.
 
-It exercises the real product controller/tool/persistence/evaluation/SSE/frontend path with a deterministic provider-free decision source. This proves product integration/browser semantics, not remote provider/IAM production quality.
+Provider-free CI proves product integration without consuming live provider quota; it is not a substitute for hosted production acceptance.
 
-After remote deployment exists, staging-compatible browser acceptance must cover the selected USD0 IAM/deployment topology without unsafe customer actions/data.
+## 8. Failure semantics
 
-## 7. Remote production prerequisites
+- invalid tool args → deterministic B1 block before transport;
+- policy/authorization denial → no consequential transport;
+- missing/conflicting evidence → clarify/abstain/escalate, never fabricate;
+- provider failure → safe failure mode, no invented conclusion/action;
+- TRACTIAN failure → normalized unavailable/error evidence, no false success;
+- read-only runtime lease loss → generation fencing prevents stale finalization;
+- action ownership ambiguity (future action path) → `UNCERTAIN`, never blind replacement attempt;
+- quota exhaustion → fail/degrade safely, never auto-upgrade to paid;
+- SSE gap → recover through durable cursor/catch-up.
 
-Before a deployment may be called production, record the systematic infrastructure decision/ADR and provide:
+## 9. Rollback
 
-- remote frontend/API URL(s);
-- selected USD0 remote PostgreSQL-compatible store;
-- selected USD0 IAM configuration;
-- selected USD0 hosted model/provider configuration;
-- selected USD0 telemetry/monitoring path where external tooling is used;
-- secret/environment contract;
-- deployment topology/region;
-- migration strategy;
-- health/readiness/version endpoints;
-- build/commit/artifact identity;
-- rollback target/procedure;
-- strongest USD0 backup/export/PITR mechanism available;
-- quota/free-tier limits and fail-closed behavior;
-- evidence that actual cash cost remains USD0 and automatic paid spillover is impossible/disabled.
-
-Paid candidates may appear in research comparisons as references but cannot populate these selected-production fields.
-
-## 8. Production startup/configuration guards
-
-Production must fail closed or be considered ineligible when configured with:
-
-- localhost/loopback backend/DB/model endpoints;
-- local model server;
-- SQLite/DuckDB/filesystem production state;
-- provider-free/mock decision source;
-- development identity bypass;
-- a component requiring non-zero project cash spend;
-- automatic paid-overage/spillover behavior.
-
-Quota exhaustion must degrade/fail safely rather than authorize spending.
-
-## 9. Remote deployment procedure — contract
-
-Exact commands depend on the USD0 infrastructure selected by systematic comparison. Once selected, replace the provider-specific placeholders with executable steps.
+For a bad deployment:
 
 ```text
-merge protected main
-→ immutable build artifact
-→ deploy/migrate USD0 staging
-→ staging health + smoke
-→ staging authenticated browser E2E
-→ verify quota/cost guard
-→ production promotion
-→ production health + smoke
-→ synthetic safe run
-→ monitor errors/latency/event delivery/quota
-→ keep known-good rollback target where the selected free platform permits it
-```
-
-A deployment is not complete because a build succeeded. Remote health, persistence, authenticated access, live run behavior and zero-cost enforcement must be verified.
-
-## 10. Production smoke checklist
-
-After every production promotion verify:
-
-- expected commit/build/deploy revision;
-- health/readiness truthfulness;
-- DB connectivity/RLS scope;
-- authentication succeeds for authorized test user;
-- unauthorized/expired identity fails closed;
-- safe run submission;
-- genuine SSE events;
-- terminal state/evaluation persistence;
-- reconnect/catch-up;
-- evidence/lineage visibility;
-- no forbidden fields;
-- provider errors fail safely;
-- no action executes without governed confirmation;
-- free-tier/quota state is healthy;
-- actual project cash cost remains USD0;
-- no automatic paid spillover is enabled.
-
-## 11. Failure/recovery behavior
-
-- **Invalid arguments:** B1 blocks before transport.
-- **Authorization/policy denial:** stop before consequential transport and preserve safe denial/audit evidence.
-- **Missing/conflicting evidence:** clarify, abstain or escalate; never fabricate certainty.
-- **Provider failure:** never manufacture a conclusion/action from malformed/unavailable output.
-- **Read-only runtime ownership loss:** generation fencing prevents stale finalization; eligible expired read-only work may transfer according to the handoff contract.
-- **Consequential action ownership loss:** converge to `UNCERTAIN`; never start a replacement external transport automatically.
-- **Process/deployment restart:** recovery remains conservative/idempotent and never authorizes blind action replay.
-- **Quota exhaustion/free-tier suspension:** fail/degrade safely, expose status and preserve durable state; never cross to paid operation automatically.
-- **Database/provider outage:** preserve safe user-visible state/handoff according to the selected topology and record recovery evidence.
-
-## 12. Backup and restore
-
-For the selected USD0 database topology:
-
-1. identify the strongest free backup/PITR/export capability;
-2. create known test state;
-3. run a controlled restore/reconstruction drill in isolation;
-4. verify tenant/action/run/evaluation integrity;
-5. record recovery time and possible data-loss window;
-6. update RTO/RPO claims only from measured evidence.
-
-If a stronger backup/HA feature is paid-only, document that limitation; do not enable it.
-
-## 13. Security/privacy rules
-
-Never expose provider secrets, auth headers, signing secrets, benchmark/gold truth, raw sensitive provider/tool material, private action arguments/idempotency keys or hidden chain-of-thought.
-
-Tenant/permission authority remains server-owned. Production end-user auth is not described as OIDC/SSO until the standards-based flow is actually deployed/tested.
-
-Also treat cost-boundary bypass as a security/operations failure: credentials/config must not allow normal workflows to silently incur paid charges.
-
-## 14. Operational diagnosis order
-
-```text
-DNS/TLS/deployment health
-→ USD0 quota/cost guard
-→ user authentication/session
-→ tenant ownership/RLS
-→ runtime preparation/ownership
-→ hosted decision provider
-→ controller decision
-→ tool proposal
-→ B1 validation
-→ B2/B3 policy
-→ TRACTIAN transport
-→ normalized evidence
-→ terminal outcome
-→ trace validation/evaluator
-→ PostgreSQL safe projection
-→ wake-up/SSE
-→ browser reducer/render
-```
-
-Do not mask one layer with uncontrolled retries/fallbacks from another.
-
-## 15. Rollback procedure — contract
-
-```text
-identify bad deployment
-→ stop further promotion
-→ preserve evidence/logs
-→ verify DB migration compatibility
-→ route/deploy previous known-good eligible artifact
+stop further promotion
+→ preserve failing evidence/logs
+→ identify last known-good eligible artifact
+→ verify DB compatibility
+→ restore/redeploy known-good frontend/backend as applicable
 → production smoke
-→ verify durable runs/actions remain safe
-→ verify USD0/cost guard
+→ verify tenant/action/cost boundaries
 → document incident + regression
 ```
 
-Never use a paid rollback service/plan as an implicit fallback if that would violate the project constraint.
+Do not change frozen evidence to erase the failed candidate.
 
-## 16. Provider experiment state
+## 10. Backup / restore
 
-Historical D01/D02 Cloudflare packets remain frozen evidence.
+Final RTO/RPO claims are still pending. Before claiming them:
 
-D02 completed 32/32 attempts at USD0 and preserved safe failure/trace behavior, but the tested GLM and Nemotron candidates failed frozen M1/M4/M7 promotion gates. Therefore current provider state is `NO_SELECTION`.
+1. identify the strongest USD0 export/backup mechanism actually available;
+2. create known tenant/run/evaluation test state;
+3. take export/backup;
+4. restore into isolated safe environment;
+5. verify counts, hashes/identity where applicable, tenant isolation and run/evaluation integrity;
+6. measure recovery time/data-loss window;
+7. publish only the measured RTO/RPO boundary.
 
-Cloudflare is not rejected for being expensive; it passed the cost gate. It is not selected because the tested candidates did not pass the technical gates. A materially new USD0 Cloudflare candidate may be evaluated only through a new preregistered experiment; consumed D01/D02 packets are not replayed.
+## 11. Security/privacy
 
-There is no paid provider fallback.
+Never log/project:
 
-## 17. Final presentation sequence
+- provider/API/database/auth secrets;
+- raw sensitive upstream payloads without a justified sanitized contract;
+- benchmark gold/evaluator-private material;
+- private action custody/idempotency keys;
+- hidden chain-of-thought.
 
-The final presentation should operate the normal remote USD0 product:
+See [`SECURITY-MODEL.md`](SECURITY-MODEL.md) and root [`SECURITY.md`](../SECURITY.md).
+
+## 12. Incident priority
 
 ```text
-1. show Production Health / build identity / USD0 boundary health
-2. authenticate as a normal authorized user
-3. submit a representative industrial request
-4. watch live run + architecture/trace growth
-5. inspect tool/policy/evidence path
-6. inspect terminal conclusion
-7. inspect evaluator after runtime completion
-8. inspect output lineage / dynamic analytics
-9. show clarify/abstain/escalate safe behavior
-10. show governed pending action + confirmation in authorized safe profile
-11. show provider/model state
-12. show remote production/load/recovery evidence and exact limitations
+P0: auth/tenant escape, secret leak, unauthorized action, paid-spillover, release-identity bypass
+P0: product cannot safely complete/stop a real read-only run
+P1: wrong conclusion/tool/evidence/mode behavior
+P1: persistence/SSE/history breakage
+P1: severe first-user friction
+P2: non-blocking visual/polish issue
 ```
 
-Do not use a separate demo-only or paid serving stack.
+## 13. Final presentation path
 
-## 18. Final completion checklist
+Use the normal hosted product, not a special demo stack:
 
-Before final production freeze:
-
-- repository cleanup/rebaseline merged;
-- `final-ci-required` green on exact final SHA;
-- historical evidence intact;
-- actual project cash cost remains USD0;
-- no selected component can silently spill into paid usage;
-- remote product works independently of developer machines;
-- local-dependency guard passes;
-- USD0 standards-based IAM + multi-user/tenant tests pass;
-- branch protection + CI/CD enforced;
-- staging/production smoke + rollback tested;
-- production observability live;
-- remote load/soak evidence exists before capacity/SLO claims;
-- backup/restore/recovery evidence exists before RTO/RPO/HA claims;
-- semantic calibration remains `NOT READY` unless real labels exist;
-- operational-value claims remain `NOT READY` unless real human measurements exist;
-- provider/model remains truthful (`NO_SELECTION` unless a new USD0 hosted challenger wins);
-- no secrets/private evaluator material in repo/artifacts/frontend;
-- documentation matches deployed/code state;
-- no last-minute framework expansion without measured need.
-
-If a gate is not closed, report the exact limitation instead of broadening the claim or relaxing a user-specified hard constraint.
+1. show public health/release/guardrails;
+2. sign in normally;
+3. submit a representative investigation from Results;
+4. show live progress and terminal next step;
+5. open Evidence for support;
+6. open Investigation for runtime/Trace Graph/history;
+7. open Engineering for evaluator/architecture/capabilities;
+8. demonstrate safe CLARIFY/ABSTAIN/ESCALATE behavior as quota/evidence permits;
+9. show proposal-only action boundary without executing a consequential external change;
+10. show final evidence/non-claims accurately.

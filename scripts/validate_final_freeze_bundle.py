@@ -16,11 +16,17 @@ from academy_tractian.final_freeze_bundle import (
 
 def main() -> int:
     manifest = load_final_freeze_manifest(ROOT)
-    failures = validate_final_freeze_manifest(manifest, ROOT)
+    validation_scope = "historical-snapshot"
+    failures = validate_final_freeze_manifest(
+        manifest,
+        ROOT,
+        artifact_mode=validation_scope,
+    )
     statuses = Counter(decision.status for decision in manifest.decisions)
 
     status = "PASS" if not failures else "FAIL"
     print(f"FINAL_FREEZE_BUNDLE_VALIDATION={status}")
+    print(f"FINAL_FREEZE_VALIDATION_SCOPE={validation_scope.upper().replace('-', '_')}")
     print(f"FINAL_FREEZE_BUNDLE_STATE={manifest.bundle_state}")
     print(f"FINAL_FREEZE_BUNDLE_SHA256={manifest.manifest_sha256}")
     print(f"FINAL_FREEZE_ARTIFACTS={len(manifest.artifacts)}")

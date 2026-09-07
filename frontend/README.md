@@ -18,6 +18,12 @@ POST /api/runs
 
 There are no frontend fixtures, fake progress timers or demo-only runtime paths in this slice.
 
+## Production source contract
+
+The hosted `production-web` service must build from the canonical release branch `release/production-final`, with Railway root directory `frontend` and `Dockerfile.production`. A Railway **Redeploy** reuses the previously captured source snapshot; it is not evidence that the current branch head was fetched. Production release evidence must therefore record the deployed commit SHA and compare it with the intended release head.
+
+The same-origin Caddy boundary proxies the product API/SSE and managed Neon Auth endpoints. The proxy intentionally canonicalizes the upstream Neon Auth `Host` and `X-Forwarded-Host` while preserving the public browser `Origin`, so upstream base-URL resolution does not leak an internal `/academy_tractian` path and origin/CSRF checks remain meaningful.
+
 ## Local development
 
 Start the production API on `127.0.0.1:8000`, then:

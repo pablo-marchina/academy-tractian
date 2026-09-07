@@ -1,77 +1,86 @@
-# GitHub Actions — Active CI and Historical Research Workflows
+# GitHub Actions — Workflow Lifecycle
 
-`.github/workflows/` contains both the **current product CI surface** and a large set of historical/experimental execution wrappers retained for provenance.
+This directory contains current product CI, intentional hosted promotion gates, specialized validation and historical research workflows. **Workflow presence is not execution authorization.**
 
-Workflow presence is not authorization. Current project state comes from [`docs/ACTIVE-PROJECT-STATUS.md`](../../docs/ACTIVE-PROJECT-STATUS.md), and active execution priorities come from [`docs/DELIVERY-PLAN.md`](../../docs/DELIVERY-PLAN.md). The legacy `CURRENT-PROJECT-STATUS.md` path is frozen/hash-pinned evidence and must not be used as mutable state.
+Current state: [`../../docs/ACTIVE-PROJECT-STATUS.md`](../../docs/ACTIVE-PROJECT-STATUS.md).
 
-## Current required product CI
+## 1. Required product regression
 
-The stable top-level gate is:
+Stable top-level gate:
 
-- `final-ci-required.yml`
+- `final-ci-required.yml` → `required-gate`
 
-It composes the current required contracts:
+It composes/requires the principal reproduction/browser/distributed-correctness contracts. Branch protection should use the stable required status rather than every historical experiment workflow.
 
-- `clean-clone-full-product-reproduction.yml`;
-- `full-product-playwright.yml`;
-- `horizontal-runtime-handoff.yml`;
-- `action-execution-lease.yml`.
+Current UX baseline `2ca6215...` passed `final-ci-required`, clean clone and full Playwright.
 
-`required-gate` is the stable status context intended for branch protection.
+## 2. Hosted production promotion
 
-These workflows represent the active product regression surface. Changes to their meaning are material and should be reviewed like production code.
+`hosted-production-release0-agent.yml` is intentionally **manual (`workflow_dispatch`)** and requires:
 
-## Specialized active validation
+```text
+expected_sha = exact backend/runtime Git SHA intentionally promoted
+```
 
-Additional workflows remain useful for targeted validation, benchmarking, diagnosis and production hardening. This includes PostgreSQL operational/recovery checks, remote-production build/runtime checks, load/concurrency checks and hard-freeze validation. Their presence does not make their outputs stronger than the current canonical status/acceptance documents.
+It proves the exact hosted backend Release 0 read-only path and required modes. It must not auto-run merely because a large PR contains old backend diffs or a frontend/docs commit advances the branch.
 
-`repository-branch-hygiene.yml` is a repository-maintenance workflow, not a product acceptance gate. It has two deliberately narrow responsibilities:
+This distinction is important:
 
-1. perform the one-time 2026-09-05 deletion sweep using the exact audited allowlist in `docs/archive/legacy-branches-2026-09-05.txt`;
-2. after that, delete only same-repository head branches of PRs that GitHub reports as actually merged.
+```text
+PR/branch regression green
+≠ backend production promotion
+```
 
-It never glob-deletes arbitrary new development branches and refuses to delete `main`.
+Backend promotion remains an explicit operational decision with exact-SHA evidence.
 
-## Historical / experimental workflows
+`hosted-production-g2-smoke.yml` remains the hosted release-integrity smoke; exact expected SHA is used for intentional promotion, while ordinary integrity checks need not pretend every branch SHA is already serving.
 
-Many provider-specific, one-shot and experiment-specific YAML files are intentionally retained because they are referenced by frozen evidence, Actions provenance, ADRs or reproduction paths.
+## 3. Frontend deployment/regression
 
-Examples include historical provider-free/provider-live campaigns and experiment-specific EV/D-series wrappers.
+Frontend UX can advance independently when its build/browser gates pass and the backend contract remains compatible. Record frontend deployment SHA separately from the immutable promoted backend runtime SHA.
 
-Do not infer that these workflows are safe or authorized to rerun simply because they still exist.
+## 4. Specialized active validation
 
-## Lifecycle rules
+Examples include:
 
-- retain consumed/failed workflows when needed for provenance or reproducibility;
-- do not rerun a one-shot/consumed workflow merely because its YAML remains present;
-- prefer a new versioned workflow/authorization when a prospectively allowed material execution changes;
-- pin source/runtime contracts where the frozen protocol requires it;
-- separate provider-free checks from live-provider execution;
-- never expose provider/evaluator/blind secrets or hidden outcomes through cleanup or logging changes;
-- a workflow that executes multiple scientific gates must not be used when the current authorization permits only an earlier subset.
+- production runtime/build checks;
+- PostgreSQL operational/RLS/recovery checks;
+- observability/realtime checks;
+- EDD/provider-free checks;
+- Railway IaC contract;
+- targeted hosted smoke gates.
 
-## Cleanup rule
+These are evidence for their exact scope, not automatic proof of broader production SLO/security/value claims.
 
-Do not bulk-delete or rename historical workflow YAML for visual cleanliness.
+## 5. Historical / experimental workflows
 
-Before physical cleanup, prove the workflow is not:
+Provider experiment packets, one-shot E/EV/D-series campaigns and older research workflows are retained because frozen results/ADRs/provenance may reference them.
 
-- referenced by a frozen manifest/result;
-- referenced by an Actions provenance record or ADR;
-- required by a reproduction path;
-- referenced from an active workflow.
+Do not rerun consumed experiments simply because YAML is present. Changed scientific execution requires a new prospective authorization/protocol.
 
-When a historical workflow is unsafe to leave triggerable, disable it prospectively while preserving the exact historical source/run provenance.
+## 6. Workflow lifecycle labels
 
-## Rule for new workflows
+Every new workflow should clearly fit one class:
 
-Avoid adding one workflow per small code path.
+- `required` — ordinary product merge regression;
+- `promotion` — intentional hosted release acceptance;
+- `specialized` — targeted engineering validation;
+- `repository-maintenance` — narrow repo operation;
+- `experimental` — preregistered/research execution;
+- `historical-one-shot` — retained only for provenance.
 
-Prefer:
+Prefer reusable scripts/modules + a small number of stable top-level workflows over one YAML file per small code path.
 
-1. reusable workflow contracts;
-2. a small stable set of top-level gates;
-3. matrix jobs for equivalent variants;
-4. scripts/modules for shared logic rather than duplicated YAML.
+## 7. Safety rules
 
-Every new workflow should have an explicit lifecycle: `required`, `specialized`, `repository-maintenance`, `experimental`, or `historical-one-shot`.
+- never print provider/database/auth/evaluator/blind secrets;
+- separate provider-free regression from live-provider consumption;
+- preserve exact source/protocol identity for frozen campaigns;
+- do not silently relax expected SHA, quota, route/model or gold-isolation gates;
+- never treat a skipped/not-triggered workflow as a pass;
+- preserve failed/consumed attempts where scientifically material;
+- do not bulk-delete historical YAML before proving it is unreferenced.
+
+## 8. Cleanup
+
+Physical deletion/rename is allowed only after proving the workflow is not referenced by frozen evidence, ADRs, active workflows, reproduction contracts or Actions provenance. When unsafe to rerun but provenance-sensitive, disable future triggers rather than falsifying history.

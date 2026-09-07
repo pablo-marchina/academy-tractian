@@ -6,7 +6,7 @@ from threading import Lock
 from time import perf_counter
 from typing import Any, Callable
 
-from .evaluation import ProductionEvaluator
+from .evaluation import ProductionEvaluator, TraceEvaluator
 from .observability import SafeEvidenceRef, SafeEvent, SafeRun
 from .observability_contract import ObservabilityStoreContract
 from .production_telemetry import ProductionTelemetry
@@ -83,6 +83,7 @@ class HorizontalRuntimeSupervisor:
         observe_state: Callable[[str, str], None],
         execution_enabled: Callable[[], bool],
         lease_seconds: float = 15.0,
+        evaluator: TraceEvaluator | None = None,
     ) -> None:
         if not instance_id or len(instance_id) > 128:
             raise ValueError("instance_id must be within [1, 128] characters")
@@ -105,6 +106,7 @@ class HorizontalRuntimeSupervisor:
         self.observe_state = observe_state
         self.execution_enabled = execution_enabled
         self.lease_seconds = lease_seconds
+        self.evaluator = evaluator or ProductionEvaluator()
         self._renew_every_seconds = max(1.0, lease_seconds / 3.0)
         self._lock = Lock()
         # Capacity observation + durable claim + local submit form one replica-local reservation.
@@ -124,22 +126,6 @@ class HorizontalRuntimeSupervisor:
         with self._lock:
             return sum(not item.future.done() for item in self._active.values())
 
-    def _submit_claim(self, claim: RuntimeHandoffClaim) -> Future[object]:
-        future = self.executor.submit(self._execute_claim, claim)
-        now = perf_counter()
-        with self._lock:
-            self._active[claim.envelope.run_id] = _ActiveClaim(
-                claim=claim,
-                future=future,
-                last_renew_perf=now,
-            )
-            self._claims_started += 1
-            if claim.previous_state == "running":
-                self._recovery_claims_started += 1
-        self.observe_state(claim.envelope.run_id, "running")
-        self.bind_future(claim.envelope.run_id, future)
-        return future
-
     def dispatch_specific(self, run_id: str) -> Future[object] | None:
         if not self.execution_enabled():
             return None
@@ -158,6 +144,22 @@ class HorizontalRuntimeSupervisor:
             if claim is None:
                 return None
             return self._submit_claim(claim)
+
+    def _submit_claim(self, claim: RuntimeHandoffClaim) -> Future[object]:
+        future = self.executor.submit(self._execute_claim, claim)
+        now = perf_counter()
+        with self._lock:
+            self._active[claim.envelope.run_id] = _ActiveClaim(
+                claim=claim,
+                future=future,
+                last_renew_perf=now,
+            )
+            self._claims_started += 1
+            if claim.previous_state == "running":
+                self._recovery_claims_started += 1
+        self.observe_state(claim.envelope.run_id, "running")
+        self.bind_future(claim.envelope.run_id, future)
+        return future
 
     def _cleanup_and_renew(self) -> None:
         now = perf_counter()
@@ -230,7 +232,7 @@ class HorizontalRuntimeSupervisor:
             guarded_sink.assert_active()
             trace = prepared.execute()
             guarded_sink.assert_active()
-            report = ProductionEvaluator().evaluate(trace)
+            report = self.evaluator.evaluate(trace)
             guarded_sink.assert_active()
             self.observability_store.persist_trace(trace, evaluation=report)
         except Exception:
