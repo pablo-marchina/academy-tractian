@@ -22,13 +22,14 @@ jobs:
           echo "0db58e29d6f5c86ef1838acf31c4caed788b393eb1807345fabd157c8de5bb9a  /tmp/tractian-runtime.tar.gz" | sha256sum -c -
           tar -xzf /tmp/tractian-runtime.tar.gz -C /tmp/tractian-runtime
 
-      - name: Print only safe resource identifiers for governed-action grants
+      - name: Print safe resource identifiers and action endpoint semantics
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
+          import ast, json, re
 
           root = Path('/tmp/tractian-runtime')
+          target = 'comp_papel_sul'
           patterns = {
               'company': re.compile(r'\bcomp_[A-Za-z0-9_-]+\b'),
               'asset': re.compile(r'\basset_[A-Za-z0-9_-]+\b'),
@@ -37,7 +38,27 @@ jobs:
               'case': re.compile(r'\bcase_[A-Za-z0-9_-]+\b'),
           }
           found = {key: set() for key in patterns}
-          allowed_suffixes = {'.py', '.json', '.jsonl', '.csv', '.md', '.txt', '.yaml', '.yml'}
+          papel = {key: set() for key in ('asset','analysis','model','case')}
+          allowed_suffixes = {'.py','.json','.jsonl','.csv','.md','.txt','.yaml','.yml'}
+
+          def walk(value, inherited_company=None):
+              if isinstance(value, dict):
+                  company = inherited_company
+                  for key in ('company_id','companyId','organization_id','organizationId'):
+                      if value.get(key) == target:
+                          company = target
+                  if company == target:
+                      for v in value.values():
+                          if isinstance(v, str):
+                              for kind in papel:
+                                  if patterns[kind].fullmatch(v) and v not in {'asset_id','analysis_id','model_id','case_id'}:
+                                      papel[kind].add(v)
+                  for v in value.values():
+                      walk(v, company)
+              elif isinstance(value, list):
+                  for item in value:
+                      walk(item, inherited_company)
+
           for path in root.rglob('*'):
               if not path.is_file() or path.suffix.lower() not in allowed_suffixes:
                   continue
@@ -47,56 +68,9 @@ jobs:
                   continue
               for key, pattern in patterns.items():
                   found[key].update(pattern.findall(text))
-          for key in ('company', 'asset', 'analysis', 'model', 'case'):
-              print(f'RESOURCE_IDS[{key}]=' + ','.join(sorted(found[key])))
-          PY
-
-      - name: Map action-resource identifiers to Papel Sul without exposing payloads
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import json, re
-
-          root = Path('/tmp/tractian-runtime')
-          target = 'comp_papel_sul'
-          id_patterns = {
-              'asset': re.compile(r'^asset_[A-Za-z0-9_-]+$'),
-              'analysis': re.compile(r'^analysis_[A-Za-z0-9_-]+$'),
-              'model': re.compile(r'^model_[A-Za-z0-9_-]+$'),
-              'case': re.compile(r'^case_[A-Za-z0-9_-]+$'),
-          }
-          found = {key: set() for key in id_patterns}
-          source_hints = set()
-
-          def walk(value, inherited_company=None):
-              if isinstance(value, dict):
-                  company = inherited_company
-                  for key in ('company_id', 'companyId', 'organization_id', 'organizationId'):
-                      if value.get(key) == target:
-                          company = target
-                  if company == target:
-                      for v in value.values():
-                          if isinstance(v, str):
-                              for kind, pattern in id_patterns.items():
-                                  if pattern.fullmatch(v) and v not in {'asset_id','analysis_id','model_id','case_id'}:
-                                      found[kind].add(v)
-                  for v in value.values():
-                      walk(v, company)
-              elif isinstance(value, list):
-                  for item in value:
-                      walk(item, inherited_company)
-
-          for path in root.rglob('*'):
-              if not path.is_file():
-                  continue
-              suffix = path.suffix.lower()
-              if suffix in {'.json', '.jsonl'}:
+              if path.suffix.lower() in {'.json','.jsonl'}:
                   try:
-                      text = path.read_text(encoding='utf-8')
-                  except (UnicodeDecodeError, OSError):
-                      continue
-                  try:
-                      if suffix == '.json':
+                      if path.suffix.lower() == '.json':
                           walk(json.loads(text))
                       else:
                           for line in text.splitlines():
@@ -104,28 +78,47 @@ jobs:
                               except json.JSONDecodeError: pass
                   except json.JSONDecodeError:
                       pass
-              if suffix in {'.py', '.json', '.jsonl', '.csv', '.md', '.txt', '.yaml', '.yml'}:
-                  try:
-                      text = path.read_text(encoding='utf-8')
-                  except (UnicodeDecodeError, OSError):
-                      continue
-                  if target in text and any(marker in text for marker in ('/analyses/', '/models/', '/cases/', 'analysis_id', 'model_id', 'case_id')):
-                      source_hints.add(str(path.relative_to(root)))
 
-          for kind in ('asset', 'analysis', 'model', 'case'):
-              print(f'PAPEL_SUL_RESOURCE_IDS[{kind}]=' + ','.join(sorted(found[kind])))
-          print('PAPEL_SUL_ACTION_SOURCE_FILES=' + ','.join(sorted(source_hints)))
+          for key in ('company','asset','analysis','model','case'):
+              vals = sorted(v for v in found[key] if v not in {'asset_id','analysis_id','model_id','case_id','model_dump'})
+              print(f'RESOURCE_IDS[{key}]=' + ','.join(vals))
+          for key in ('asset','analysis','model','case'):
+              print(f'PAPEL_SUL_RESOURCE_IDS[{key}]=' + ','.join(sorted(papel[key])))
 
-          # Print only source-code lines that define action endpoint behavior or ID generation.
-          safe_markers = ('/analyses/', '/models/', '/cases/', 'analysis_id', 'model_id', 'case_id')
-          for rel in sorted(source_hints):
-              path = root / rel
+          # Inspect only Python source implementing the supplied API. Print route declarations and
+          # nearby control-flow identifiers; never print fixtures, bodies, secrets, or arbitrary data.
+          route_tokens = ('/assets/', '/analyses/', '/models/', '/cases/', 'reprocess', 'specialist', 'retraining', 'escalat')
+          for path in root.rglob('*.py'):
               try:
-                  lines = path.read_text(encoding='utf-8').splitlines()
+                  text = path.read_text(encoding='utf-8')
               except (UnicodeDecodeError, OSError):
                   continue
-              for idx, line in enumerate(lines, start=1):
-                  stripped = line.strip()
-                  if any(marker in stripped for marker in safe_markers) and len(stripped) <= 300:
-                      print(f'SOURCE_HINT[{rel}:{idx}]={stripped}')
+              if not any(token in text.lower() for token in route_tokens):
+                  continue
+              try:
+                  tree = ast.parse(text)
+              except SyntaxError:
+                  continue
+              lines = text.splitlines()
+              for node in ast.walk(tree):
+                  if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                      continue
+                  decorators = []
+                  for dec in node.decorator_list:
+                      try: rendered = ast.unparse(dec)
+                      except Exception: rendered = ''
+                      decorators.append(rendered)
+                  blob = ' '.join(decorators + [node.name]).lower()
+                  if not any(token.strip('/').lower() in blob for token in ('assets','analyses','models','cases','reprocess','specialist','retraining','escalat')):
+                      continue
+                  start = max(1, min([getattr(d,'lineno',node.lineno) for d in node.decorator_list] or [node.lineno]))
+                  end = min(len(lines), getattr(node,'end_lineno',node.lineno), start + 45)
+                  print(f'ENDPOINT_FUNCTION[{path.relative_to(root)}:{node.name}:{start}-{end}]')
+                  for i in range(start, end + 1):
+                      s = lines[i-1].strip()
+                      # Restrict output to code structure relevant to resource existence, ownership,
+                      # status and route semantics. Skip literals likely to contain arbitrary payloads.
+                      if any(tok in s.lower() for tok in ('@app.','@router.','def ','analysis_id','model_id','case_id','asset_id','company_id','404','403','not_found','get(',' in ','return ','status_code','raise ')):
+                          if len(s) <= 300:
+                              print(f'ENDPOINT_HINT[{path.relative_to(root)}:{i}]={s}')
           PY
