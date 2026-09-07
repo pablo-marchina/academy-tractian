@@ -10,7 +10,7 @@ async function openProduct(page: import("@playwright/test").Page) {
 }
 
 test.describe("Release 0 first-user UX", () => {
-  test("explains the read-only product and guided intents before engineering detail", async ({ page }) => {
+  test("explains the read-only product and keeps Quick Start usable before engineering detail", async ({ page }) => {
     await openProduct(page);
 
     await expect(page.getByRole("heading", { name: "Investigate industrial evidence without guessing." })).toBeVisible();
@@ -18,13 +18,14 @@ test.describe("Release 0 first-user UX", () => {
     await expect(page.getByText("QUICK START")).toBeVisible();
     await expect(page.getByRole("heading", { name: "What do you need to understand?" })).toBeVisible();
 
-    const investigate = page.locator(".experience-intents button").filter({ hasText: "INVESTIGATE" }).first();
-    await expect(investigate).toBeVisible();
-    await investigate.click();
+    const quickStart = page.getByTestId("quick-start-option").first();
+    await expect(quickStart).toBeVisible();
+    await quickStart.click();
     await expect(page.getByLabel("Industrial request")).not.toHaveValue("");
 
     await expect(page.getByText("ENGINEERING DETAILS")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Industrial capability & readiness" })).toBeVisible();
+    await expect(page.getByText("Capability contract unavailable")).toBeVisible();
+    await expect(page.getByText("starter examples only")).toBeVisible();
   });
 
   test("turns a safe terminal mode into a customer-first next step", async ({ page }) => {
