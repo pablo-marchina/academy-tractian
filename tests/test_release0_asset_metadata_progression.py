@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from academy_tractian.cloudflare_provider_client import CLOUDFLARE_GLM_MODEL_ID
-from academy_tractian.release_provider import Release0CloudflareDecisionClient
-from academy_tractian.release_provider_v10 import Release0ProviderDecisionSourceV10
+from academy_tractian.release_provider_v10 import (
+    Release0CloudflareDecisionClientV10,
+    Release0ProviderDecisionSourceV10,
+)
 from academy_tractian.runtime import canonical_tool_registry
 from research.e2.controller import ControllerContext, ControllerObservation
 
@@ -13,7 +15,7 @@ class NeverCalledTransport:
 
 
 def _source() -> Release0ProviderDecisionSourceV10:
-    client = Release0CloudflareDecisionClient(
+    client = Release0CloudflareDecisionClientV10(
         api_token="test-token",
         account_id="abc123",
         model_id=CLOUDFLARE_GLM_MODEL_ID,
@@ -62,8 +64,6 @@ def test_asset_metadata_read_is_not_offered_after_asset_discovery() -> None:
     assert "get_asset" not in _tool_names(request)
     assert _tool_names(request) == {
         "list_analyses",
-        "get_data_quality",
-        "get_baseline",
         "get_rms",
         "get_spectrum",
     }
@@ -83,5 +83,4 @@ def test_successful_asset_metadata_read_cannot_loop_on_get_asset() -> None:
 
     names = _tool_names(request)
     assert "get_asset" not in names
-    assert "list_analyses" in names
-    assert {"get_data_quality", "get_baseline", "get_rms", "get_spectrum"} <= names
+    assert names == {"list_analyses", "get_rms", "get_spectrum"}
