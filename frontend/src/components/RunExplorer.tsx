@@ -23,6 +23,12 @@ function resultLabel(run: SafeRun): string {
   return "Analysis finished";
 }
 
+function statusDescription(run: SafeRun): string {
+  if (run.errors > 0) return `${run.errors} recorded error${run.errors === 1 ? "" : "s"}`;
+  if (run.policy_blocks > 0) return `${run.policy_blocks} safety block${run.policy_blocks === 1 ? "" : "s"}`;
+  return run.completed ? "Finished normally" : "Still running";
+}
+
 export function RunExplorer({
   runs,
   selectedRunId,
@@ -37,12 +43,12 @@ export function RunExplorer({
   onSelect: (runId: string | null) => void;
 }) {
   return (
-    <article className="panel run-explorer-panel">
+    <article className="panel run-explorer-panel" aria-busy={loading}>
       <div className="section-heading compact">
         <div>
           <p className="eyebrow">SAVED ANALYSES</p>
           <h2>Previous analyses</h2>
-          <p className="section-supporting-copy">Open an earlier analysis to review its answer and evidence.</p>
+          <p className="section-supporting-copy">Choose an analysis by its order and result. Internal IDs stay hidden unless you open technical details.</p>
         </div>
         {selectedRunId && liveRunId && (
           <button className="ghost-button" type="button" onClick={() => onSelect(null)}>
@@ -52,7 +58,7 @@ export function RunExplorer({
       </div>
 
       {loading ? (
-        <p className="muted">Loading previous analyses…</p>
+        <div className="empty-state small" role="status"><strong>Loading previous analyses…</strong><p>Saved results will appear here when they are ready.</p></div>
       ) : runs.length === 0 ? (
         <div className="empty-state small">
           <strong>No previous analyses yet</strong>
@@ -61,16 +67,18 @@ export function RunExplorer({
       ) : (
         <div className="run-table-wrap">
           <table className="run-table friendly-run-table">
+            <caption className="visually-hidden">Saved analyses, their status and result</caption>
             <thead>
               <tr>
-                <th>Analysis</th>
-                <th>Status</th>
-                <th>Result</th>
+                <th scope="col">Analysis</th>
+                <th scope="col">Status</th>
+                <th scope="col">Result</th>
               </tr>
             </thead>
             <tbody>
               {runs.map((run, index) => {
                 const selected = run.run_id === (selectedRunId ?? liveRunId);
+                const analysisNumber = runs.length - index;
                 return (
                   <tr key={run.run_id} className={selected ? "run-row-selected" : undefined}>
                     <td>
@@ -78,13 +86,18 @@ export function RunExplorer({
                         type="button"
                         className="run-select-button"
                         aria-current={selected ? "true" : undefined}
+                        aria-label={`Analysis ${analysisNumber}: ${resultLabel(run)}. ${selected ? "Currently selected." : "Open analysis."}`}
                         onClick={() => onSelect(run.run_id === liveRunId ? null : run.run_id)}
                       >
-                        <strong>Analysis {runs.length - index}</strong>
-                        <small title={run.run_id}>{run.run_id.slice(0, 10)}…</small>
+                        <strong>Analysis {analysisNumber}</strong>
+                        <small>{selected ? "Selected" : "Open analysis"}</small>
+                        <span className="visually-hidden">{run.run_id.slice(0, 10)}</span>
                       </button>
                     </td>
-                    <td><span className={`run-state-pill state-${runTone(run)}`}>{run.completed ? "Finished" : "In progress"}</span></td>
+                    <td>
+                      <span className={`run-state-pill state-${runTone(run)}`}>{run.completed ? "Finished" : "In progress"}</span>
+                      <small className="run-status-detail">{statusDescription(run)}</small>
+                    </td>
                     <td>{resultLabel(run)}</td>
                   </tr>
                 );
