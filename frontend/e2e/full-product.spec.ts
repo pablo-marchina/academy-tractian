@@ -174,7 +174,9 @@ test.describe("provider-free full product acceptance", () => {
     await openLayer(page, "Evidence");
     await expect(page.getByText("No runtime events selected")).toBeVisible();
     await openLayer(page, "Engineering");
-    await expect(page.getByText("No run selected").first()).toBeVisible();
+    await expect(
+      page.locator("#workspace-panel-engineering .empty-state:visible").filter({ hasText: "No run selected" }).first(),
+    ).toBeVisible();
 
     const longRequest = `scenario:clarify ${"industrial-context ".repeat(450)}`;
     const accepted = await submitScenario(page, longRequest);
