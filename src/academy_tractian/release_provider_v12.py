@@ -51,6 +51,8 @@ _RELEASE0_V12_CONDITION_GOAL_MARKERS = (
     "happening",
     "investig",
     "diagnos",
+    "diagnó",
+    "confi",
     "compar",
     "evid",
     "certeza",
