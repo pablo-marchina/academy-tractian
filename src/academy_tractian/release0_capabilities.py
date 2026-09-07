@@ -45,13 +45,14 @@ _GUIDED_INTENTS: tuple[dict[str, str], ...] = (
     },
     {
         "intent_id": "EXECUTE",
-        "label": "Execute (proposal only)",
-        "runtime_mapping": "EXECUTION_DEFERRED",
-        "release0_behavior": "ACTION_PROPOSAL_ONLY",
+        "label": "Execute",
+        "runtime_mapping": "GOVERNED_CONFIRMATION",
+        "release0_behavior": "ACTION_PROPOSAL_THEN_EXPLICIT_CONFIRMATION",
         "prompt_template": (
-            "Evaluate whether the requested operational action is justified. Gather the required live evidence first. "
-            "If an action is warranted, produce the appropriate action proposal with a clear justification; otherwise "
-            "clarify, abstain, or escalate. Release 0 must not claim that any consequential action was executed."
+            "Evaluate whether the requested operational action is justified and gather the required live evidence first. "
+            "If an action is warranted, create the exact governed action proposal with a clear justification. External "
+            "execution may occur only when the deployment capability, server-owned authorization and explicit requester "
+            "confirmation all allow it. Never claim success until the external API has explicitly accepted the action."
         ),
     },
 )
@@ -66,7 +67,7 @@ _EXPECTED_OUTPUTS: tuple[dict[str, str], ...] = (
     {"output_id": "policy", "label": "Policy decisions", "description": "Deterministic allow/block/containment decisions at the safety boundary."},
     {"output_id": "lineage", "label": "Output lineage", "description": "Traceable runtime and evaluation cards linking output back to observable evidence."},
     {"output_id": "evaluation", "label": "Post-runtime evaluation", "description": "Evaluator-isolated blocking and diagnostic checks after the terminal trace."},
-    {"output_id": "action_proposal", "label": "Governed action proposal", "description": "Proposal and policy evidence remain observable while external execution is disabled in Release 0."},
+    {"output_id": "action_proposal", "label": "Governed action", "description": "Exact proposal, confirmation, policy and execution evidence remain observable without exposing private authorization material."},
     {"output_id": "realtime", "label": "Realtime + persisted history", "description": "SSE live progress with durable reconnect/catch-up and historical run retrieval."},
 )
 
@@ -83,6 +84,7 @@ def build_release0_capability_manifest(
     cost_policy: str,
     paid_fallback_enabled: bool,
     local_serving_enabled: bool,
+    actions_enabled: bool = False,
 ) -> dict[str, Any]:
     """Build the browser-safe Release 0 contract from the canonical runtime registry.
 
@@ -97,6 +99,7 @@ def build_release0_capability_manifest(
     read_count = 0
     action_count = 0
     read_path_enabled = provider_calls_enabled and tractian_transport_enabled
+    action_path_enabled = actions_enabled and read_path_enabled
 
     for tool in registry.values():
         if tool.kind is ToolKind.READ:
@@ -104,7 +107,12 @@ def build_release0_capability_manifest(
             availability = "LIVE_READ" if read_path_enabled else "UNAVAILABLE"
         else:
             action_count += 1
-            availability = "PROPOSAL_ONLY" if provider_calls_enabled else "UNAVAILABLE"
+            if action_path_enabled:
+                availability = "EXECUTABLE_WITH_CONFIRMATION"
+            elif provider_calls_enabled:
+                availability = "PROPOSAL_ONLY"
+            else:
+                availability = "UNAVAILABLE"
 
         tools.append(
             {
@@ -146,6 +154,7 @@ def build_release0_capability_manifest(
         "release": {
             "git_sha": release_git_sha,
             "read_only_user_path_enabled": safe_release_ready,
+            "governed_action_path_enabled": action_path_enabled,
             "cost_policy": cost_policy,
             "paid_fallback_enabled": paid_fallback_enabled,
             "local_serving_enabled": local_serving_enabled,
@@ -163,16 +172,21 @@ def build_release0_capability_manifest(
             "read_path_enabled": read_path_enabled,
         },
         "action_execution": {
-            "enabled": False,
-            "mode": "PROPOSAL_ONLY",
-            "external_side_effects_allowed": False,
-            "explanation": "Release 0 exposes action proposals and deterministic policy evidence, but never executes consequential external actions.",
+            "enabled": action_path_enabled,
+            "mode": "GOVERNED_CONFIRMATION" if action_path_enabled else "PROPOSAL_ONLY",
+            "external_side_effects_allowed": action_path_enabled,
+            "explanation": (
+                "All five canonical action operations can execute only after deterministic permission/scope checks, exact server-custodied proposal confirmation and durable idempotency claiming."
+                if action_path_enabled
+                else "Action proposals and deterministic policy evidence remain available, but external execution is disabled by the production action switch."
+            ),
         },
         "tool_summary": {
             "total": len(tools),
             "reads": read_count,
             "actions": action_count,
             "live_reads": sum(item["availability"] == "LIVE_READ" for item in tools),
+            "executable_actions": sum(item["availability"] == "EXECUTABLE_WITH_CONFIRMATION" for item in tools),
             "proposal_only_actions": sum(item["availability"] == "PROPOSAL_ONLY" for item in tools),
         },
         "read_semantics": list(READ_SEMANTICS),
@@ -207,6 +221,7 @@ def install_release0_capabilities(
         cost_policy=config.cost_policy,
         paid_fallback_enabled=config.paid_fallback_enabled,
         local_serving_enabled=config.local_serving_enabled,
+        actions_enabled=config.actions_enabled,
     )
     app.state.release0_capability_manifest = manifest
 
