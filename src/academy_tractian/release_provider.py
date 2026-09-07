@@ -30,11 +30,12 @@ from .provider_clients import (
 
 NO_PROVIDER_SELECTION_STATE = "NO_SELECTION"
 PROVISIONAL_RELEASE_PROVIDER_STATE = "PROVISIONAL_RELEASE_PROVIDER"
-RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v8"
+RELEASE0_PROVIDER_INSTRUCTION_VERSION = "release0-provider-instruction-v9"
 RELEASE0_MAX_COMPLETION_TOKENS = 1024
 _RELEASE0_MAX_GROUNDED_DOC_IDS = 32
 _RELEASE0_MAX_GROUNDING_DEPTH = 8
 _RELEASE0_MAX_DOC_ID_LENGTH = 256
+_RELEASE0_MAX_GROUNDED_RESOURCE_IDS = 128
 
 _RELEASE0_REQUIRED_FIELDS = [
     "schema_version",
@@ -46,6 +47,27 @@ _RELEASE0_REQUIRED_FIELDS = [
     "message",
     "reason_code",
 ]
+
+_ASSET_DISCOVERY_TOOL_NAMES = frozenset(
+    {
+        "get_asset",
+        "list_analyses",
+        "get_analysis",
+        "get_baseline",
+        "get_rms",
+        "get_spectrum",
+        "get_data_quality",
+    }
+)
+_ASSET_DIAGNOSTIC_TOOL_NAMES = frozenset(
+    {
+        "get_analysis",
+        "get_baseline",
+        "get_rms",
+        "get_spectrum",
+        "get_data_quality",
+    }
+)
 
 
 def _release0_base_properties(*, kind: list[str]) -> dict[str, object]:
@@ -155,6 +177,13 @@ For kind=CLARIFY, ESCALATE, or ABSTAIN:
 - Set tool_name=null, arguments={}, evidence_id=null, and final=null.
 - Put the customer-safe explanation in top-level message and a stable non-secret reason in top-level reason_code.
 
+Grounded identifier discovery and evidence sufficiency:
+- Never ask the customer to supply company_id, asset_id, analysis_id, or another internal resource identifier when an exact value can be obtained from prior public observations and authorized read tools.
+- For fleet-wide asset criticality, prioritization, or "what is happening" investigations, use the authenticated user context to discover the company when needed, list that company's assets, then inspect the selected asset's analysis or technical evidence before concluding.
+- Use only exact structured identifiers observed from tool results. Do not infer identifiers from prose or invent them.
+- CLARIFY only when required context cannot be resolved through the authorized read surface. Missing an identifier is not a reason to clarify when a safe read can discover it.
+- Do not claim a highest-criticality asset or explain a fault from identity context alone. Comparative claims require asset evidence; diagnostic claims require analysis or technical evidence.
+
 Knowledge investigation stopping rule:
 - search_knowledge accepts only q and optional type. get_knowledge_doc accepts only doc_id.
 - If search_knowledge is available, use it at most once in a run. After any search_knowledge observation, the runtime deliberately narrows the supplied tool surface.
@@ -207,6 +236,142 @@ def _tool_variant(tool: ProviderToolDefinition) -> dict[str, object]:
 
 def _normalized_request(value: str) -> str:
     return " ".join(value.casefold().split())
+
+
+def _asset_investigation_request(user_request: str) -> bool:
+    """Conservative multilingual detector for fleet/asset investigations that need domain evidence."""
+
+    normalized = _normalized_request(user_request)
+    has_asset_scope = any(marker in normalized for marker in ("asset", "assets", "ativo", "ativos"))
+    has_investigative_goal = any(
+        marker in normalized
+        for marker in (
+            "critic",
+            "maior",
+            "highest",
+            "most critical",
+            "priorit",
+            "attention",
+            "atencao",
+            "atenção",
+            "acontecendo",
+            "happening",
+            "investig",
+            "diagnos",
+        )
+    )
+    return has_asset_scope and has_investigative_goal
+
+
+def _successful_observation(context: ControllerContext, tool_name: str):
+    return next(
+        (
+            observation
+            for observation in reversed(context.observations)
+            if observation.tool_name == tool_name
+            and observation.executed
+            and observation.status == "success"
+        ),
+        None,
+    )
+
+
+def _append_bounded_identifier(found: list[str], seen: set[str], value: Any) -> None:
+    if not isinstance(value, str):
+        return
+    identifier = value.strip()
+    if not identifier or len(identifier) > _RELEASE0_MAX_DOC_ID_LENGTH or identifier in seen:
+        return
+    if len(found) >= _RELEASE0_MAX_GROUNDED_RESOURCE_IDS:
+        return
+    seen.add(identifier)
+    found.append(identifier)
+
+
+def _extract_company_ids(value: Any) -> tuple[str, ...]:
+    found: list[str] = []
+    seen: set[str] = set()
+
+    def visit(node: Any, *, depth: int) -> None:
+        if depth > _RELEASE0_MAX_GROUNDING_DEPTH or len(found) >= _RELEASE0_MAX_GROUNDED_RESOURCE_IDS:
+            return
+        if isinstance(node, Mapping):
+            for key in ("company_id", "companyId"):
+                _append_bounded_identifier(found, seen, node.get(key))
+            company = node.get("company")
+            if isinstance(company, Mapping):
+                for key in ("company_id", "companyId", "id"):
+                    _append_bounded_identifier(found, seen, company.get(key))
+            for child in node.values():
+                visit(child, depth=depth + 1)
+        elif isinstance(node, (list, tuple)):
+            for child in node:
+                visit(child, depth=depth + 1)
+
+    visit(value, depth=0)
+    return tuple(found)
+
+
+def _extract_collection_ids(
+    value: Any,
+    *,
+    explicit_keys: tuple[str, ...],
+    collection_keys: tuple[str, ...],
+) -> tuple[str, ...]:
+    """Extract exact resource ids from a known collection response, never from free text."""
+
+    found: list[str] = []
+    seen: set[str] = set()
+
+    def add_record(record: Any) -> None:
+        if not isinstance(record, Mapping):
+            return
+        for key in explicit_keys:
+            _append_bounded_identifier(found, seen, record.get(key))
+        _append_bounded_identifier(found, seen, record.get("id"))
+
+    if isinstance(value, (list, tuple)):
+        for record in value:
+            add_record(record)
+        return tuple(found)
+
+    if not isinstance(value, Mapping):
+        return ()
+
+    for key in explicit_keys:
+        _append_bounded_identifier(found, seen, value.get(key))
+
+    for collection_key in collection_keys:
+        collection = value.get(collection_key)
+        if isinstance(collection, (list, tuple)):
+            for record in collection:
+                add_record(record)
+        elif isinstance(collection, Mapping):
+            nested_items = collection.get("items")
+            if isinstance(nested_items, (list, tuple)):
+                for record in nested_items:
+                    add_record(record)
+
+    return tuple(found)
+
+
+def _constrain_tool_parameter(tool, parameter_name: str, values: tuple[str, ...]):
+    parameters = tuple(
+        parameter.model_copy(
+            update={
+                "parameter_schema": {
+                    **deepcopy(parameter.parameter_schema),
+                    "enum": list(values),
+                }
+            }
+        )
+        if parameter.name == parameter_name
+        else parameter
+        for parameter in tool.parameters
+    )
+    if not any(parameter.name == parameter_name for parameter in parameters):
+        raise RuntimeError(f"release0_tool_parameter_contract_drift:{tool.name}:{parameter_name}")
+    return tool.model_copy(update={"parameters": parameters})
 
 
 def _explicit_no_tool_request(user_request: str) -> bool:
@@ -280,6 +445,24 @@ def _terminal_variants_for_request(
     return [control_variant]
 
 
+def _mandatory_asset_continuation(request: ProviderDecisionRequest) -> bool:
+    """Return true only when the runtime has deliberately exposed a grounded next read stage."""
+
+    if not _asset_investigation_request(request.user_request) or not request.tools:
+        return False
+    names = {tool.name for tool in request.tools}
+    successful = {
+        observation.tool_name
+        for observation in request.observations
+        if observation.executed and observation.status == "success"
+    }
+    if "get_current_user" in successful and "list_assets_by_company" not in successful:
+        return names == {"list_assets_by_company"}
+    if "list_assets_by_company" in successful and not (successful & _ASSET_DIAGNOSTIC_TOOL_NAMES):
+        return bool(names) and names <= _ASSET_DISCOVERY_TOOL_NAMES
+    return False
+
+
 def _schema_for_visible_tools(request: ProviderDecisionRequest) -> dict[str, object]:
     """Bind provider output to exactly this turn's visible tools and explicit safe terminal intent."""
 
@@ -287,7 +470,7 @@ def _schema_for_visible_tools(request: ProviderDecisionRequest) -> dict[str, obj
     variants = template.get("oneOf")
     if not isinstance(variants, list) or len(variants) != 3:
         raise RuntimeError("release0_provider_schema_contract_drift")
-    terminal_variants = _terminal_variants_for_request(
+    terminal_variants = [] if _mandatory_asset_continuation(request) else _terminal_variants_for_request(
         variants[1:],
         user_request=request.user_request,
     )
@@ -374,15 +557,7 @@ class Release0CloudflareDecisionClient(CloudflareWorkersAIChatCompletionsDecisio
 
 
 class Release0ProviderDecisionSource(ProviderDecisionSource):
-    """Read-only adaptive provider surface with deterministic grounded stopping.
-
-    Before knowledge search, Release 0 exposes all canonical read tools unless the user explicitly
-    prohibits tool use. Once a search observation exists, the surface can only narrow: a successful
-    search with exact structured ``doc_id`` evidence may expose one constrained
-    ``get_knowledge_doc`` continuation; every other search outcome and every document observation
-    produces a terminal-only provider request. The full canonical registry remains owned by the
-    runtime/HarnessRunner, so B1/B2/B3 still independently validate every executed proposal.
-    """
+    """Read-only adaptive provider surface with deterministic grounded stopping and discovery."""
 
     @staticmethod
     def _latest_search_observation(context: ControllerContext):
@@ -415,22 +590,75 @@ class Release0ProviderDecisionSource(ProviderDecisionSource):
 
     @staticmethod
     def _constrain_doc_tool(tool, doc_ids: tuple[str, ...]):
-        parameters = tuple(
-            parameter.model_copy(
-                update={
-                    "parameter_schema": {
-                        **deepcopy(parameter.parameter_schema),
-                        "enum": list(doc_ids),
-                    }
+        return _constrain_tool_parameter(tool, "doc_id", doc_ids)
+
+    @staticmethod
+    def _asset_discovery_registry(context: ControllerContext, visible: Mapping[str, Any]):
+        if not _asset_investigation_request(context.user_request):
+            return None
+
+        current_user = _successful_observation(context, "get_current_user")
+        assets = _successful_observation(context, "list_assets_by_company")
+
+        if current_user is not None and assets is None:
+            company_ids = _extract_company_ids(current_user.body)
+            tool = visible.get("list_assets_by_company")
+            if len(company_ids) == 1 and tool is not None:
+                return {
+                    "list_assets_by_company": _constrain_tool_parameter(
+                        tool,
+                        "company_id",
+                        company_ids,
+                    )
                 }
-            )
-            if parameter.name == "doc_id"
-            else parameter
-            for parameter in tool.parameters
+            return None
+
+        if assets is None:
+            return None
+
+        if any(_successful_observation(context, name) is not None for name in _ASSET_DIAGNOSTIC_TOOL_NAMES):
+            return None
+
+        asset_ids = _extract_collection_ids(
+            assets.body,
+            explicit_keys=("asset_id", "assetId"),
+            collection_keys=("assets", "items", "data", "results"),
         )
-        if not any(parameter.name == "doc_id" for parameter in parameters):
-            raise RuntimeError("release0_get_knowledge_doc_contract_drift")
-        return tool.model_copy(update={"parameters": parameters})
+        if not asset_ids:
+            return None
+
+        restricted: dict[str, Any] = {}
+        analyses = _successful_observation(context, "list_analyses")
+        for name in (
+            "get_asset",
+            "get_data_quality",
+            "get_baseline",
+            "get_rms",
+            "get_spectrum",
+        ):
+            tool = visible.get(name)
+            if tool is not None:
+                restricted[name] = _constrain_tool_parameter(tool, "asset_id", asset_ids)
+
+        if analyses is None:
+            tool = visible.get("list_analyses")
+            if tool is not None:
+                restricted["list_analyses"] = _constrain_tool_parameter(tool, "asset_id", asset_ids)
+        else:
+            analysis_ids = _extract_collection_ids(
+                analyses.body,
+                explicit_keys=("analysis_id", "analysisId"),
+                collection_keys=("analyses", "items", "data", "results"),
+            )
+            tool = visible.get("get_analysis")
+            if analysis_ids and tool is not None:
+                restricted["get_analysis"] = _constrain_tool_parameter(
+                    tool,
+                    "analysis_id",
+                    analysis_ids,
+                )
+
+        return restricted or None
 
     def _visible_registry(self, context: ControllerContext):
         if _explicit_no_tool_request(context.user_request):
@@ -444,19 +672,22 @@ class Release0ProviderDecisionSource(ProviderDecisionSource):
             return {}
 
         search_observation = self._latest_search_observation(context)
-        if search_observation is None:
-            return visible
+        if search_observation is not None:
+            doc_ids = self._grounded_doc_ids(context)
+            if not doc_ids:
+                return {}
+            doc_tool = visible.get("get_knowledge_doc")
+            if doc_tool is None:
+                raise RuntimeError("release0_get_knowledge_doc_missing")
+            return {
+                "get_knowledge_doc": self._constrain_doc_tool(doc_tool, doc_ids)
+            }
 
-        doc_ids = self._grounded_doc_ids(context)
-        if not doc_ids:
-            return {}
+        asset_discovery = self._asset_discovery_registry(context, visible)
+        if asset_discovery is not None:
+            return asset_discovery
 
-        doc_tool = visible.get("get_knowledge_doc")
-        if doc_tool is None:
-            raise RuntimeError("release0_get_knowledge_doc_missing")
-        return {
-            "get_knowledge_doc": self._constrain_doc_tool(doc_tool, doc_ids)
-        }
+        return visible
 
     def build_request(self, context: ControllerContext) -> ProviderDecisionRequest:
         return build_provider_decision_request(
