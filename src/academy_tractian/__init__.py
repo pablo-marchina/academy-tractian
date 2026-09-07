@@ -1,3 +1,4 @@
+# Release promotion marker: PR #197 asset-discovery hotfix; no runtime semantics.
 from .action_safety import (
     ACTION_SAFETY_POLICY_VERSION,
     ActionIdempotencyBinding,
