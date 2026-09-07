@@ -252,12 +252,66 @@ input {
   line-height: 1.45;
 }
 
+#dynamic-data-explorer label > small {
+  display: block;
+  min-height: 34px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
 #dynamic-data-explorer label > select,
 #dynamic-data-explorer label > input,
 .pilot-form select,
 .pilot-form textarea,
 .auth-form input {
   margin-top: 6px;
+}
+
+.analytics-builder-intro,
+.analytics-run-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.analytics-builder-intro span,
+.analytics-run-row span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.analytics-filter-disclosure {
+  margin-top: 12px;
+}
+
+.analytics-filter-disclosure .filter-row {
+  padding: 12px 0;
+}
+
+.analytics-run-row > div {
+  min-width: 0;
+}
+
+.analytics-run-row > div strong,
+.analytics-run-row > div span {
+  display: block;
+}
+
+.analytics-result-section {
+  margin-top: 16px;
+}
+
+.analytics-table-alternative {
+  margin-top: 12px;
 }
 
 .analytics-table caption,
@@ -359,6 +413,37 @@ input {
   min-height: 40px;
 }
 
+.password-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+  margin-top: 6px;
+}
+
+.auth-form .password-field input {
+  min-width: 0;
+  margin-top: 0;
+}
+
+.password-toggle {
+  min-width: 72px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.auth-recovery .ghost-button {
+  margin-top: 12px;
+}
+
+.auth-session-error {
+  max-width: 720px;
+  margin: 12px auto;
+}
+
 /* Loading and disabled controls must still look intentional, not broken. */
 [aria-busy="true"] {
   cursor: progress;
@@ -402,8 +487,23 @@ textarea:disabled {
   }
 
   .action-card-heading,
-  .section-heading {
+  .section-heading,
+  .analytics-run-row,
+  .analytics-builder-intro {
     align-items: flex-start;
+  }
+
+  .analytics-run-row,
+  .analytics-builder-intro {
+    flex-direction: column;
+  }
+
+  .analytics-run-row button {
+    width: 100%;
+  }
+
+  .password-field {
+    grid-template-columns: 1fr;
   }
 }
 
