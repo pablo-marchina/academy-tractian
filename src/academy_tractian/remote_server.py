@@ -174,7 +174,10 @@ def app_factory():
         action_authorization_source = ConfiguredServerOwnedActionAuthorizationSource.from_json(
             config.action_authorization_grants_json.get_secret_value()
         )
-        authorization_resolver = action_authorization_source.resolve_user
+        # Pass the source object itself: it remains compatible with the user-id resolver protocol,
+        # while the remote confirmation endpoint can additionally require its tenant-aware
+        # authorize_context() method before any external execution is prepared.
+        authorization_resolver = action_authorization_source
     elif config.provider_calls_enabled:
         authorization_resolver = release0_read_only_action_principal
     else:
