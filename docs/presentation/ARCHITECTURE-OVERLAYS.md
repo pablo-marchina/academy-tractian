@@ -13,7 +13,7 @@ flowchart TB
     V13[V13 DecisionSource]
     AC[AgentController]
     HR[HarnessRunner + ToolSpec]
-    TR[supplied TRACTIAN API]
+    TR[Supplied TRACTIAN API]
     EV[Evidence + RunTrace]
     PE[ProductionEvaluator]
     DB[Neon PostgreSQL]
@@ -77,7 +77,7 @@ label absent from authorized fleet
 → bounded unavailable terminal
 ```
 
-## 4. Canonical tool execution
+## 4. Canonical read execution
 
 ```mermaid
 flowchart LR
@@ -171,34 +171,84 @@ flowchart LR
 
 Draw no arrow from evaluator-private reference to runtime/model.
 
-## 9. Consequential action boundary
+## 9. Governed consequential action boundary
 
 ```mermaid
 flowchart LR
     M[Model Proposal]
-    V[Validation]
-    C[Confirmation Boundary]
-    A[Authorization / Custody]
-    I[Idempotency + Lease]
-    X[External Consequential Execution]
+    V[Deterministic Validation]
+    CU[Private Exact Custody]
+    C[Explicit Confirmation]
+    A[Server-owned Grant + Resource Scope]
+    I[Persistent Idempotency]
+    L[Lease / Fencing]
+    VA[Server-owned Vendor Actor]
+    X[One Typed External Attempt]
+    S[Accepted / Not Accepted / Blocked / Uncertain]
 
-    M --> V --> C --> A --> I --> X
+    M --> V --> CU --> C --> A --> I --> L --> VA --> X --> S
 ```
 
-Overlay on X:
+Overlay:
 
 ```text
-RELEASE 0
-DISABLED / DENY-ALL
+LOCAL GOVERNED ARCHITECTURE: PROMOTED / CI-QUALIFIED
+5-ACTION VENDOR ACCEPTANCE: NOT YET PROVEN
+CURRENT LIVE BLOCKER: update_asset_config → HTTP 403 / accepted=false
 ```
 
-## 10. Production deployment
+## 10. Local requester vs vendor actor
+
+```mermaid
+flowchart LR
+    U[Authenticated Product User]
+    G[Tenant/Resource Grant]
+    C[Confirmation + Custody + Idempotency + Audit]
+    M[(company_id, required_permission)]
+    V[Server-owned TRACTIAN Actor]
+    T[Vendor Action Endpoint]
+
+    U --> G --> C --> M --> V --> T
+```
+
+Key line:
+
+```text
+local user = authorization/audit principal
+vendor actor = server-owned final network identity
+browser/model = never actor authority
+```
+
+Missing/ambiguous mapping must fail closed. Corrective routing is still in progress; do not mark it as already promoted.
+
+## 11. Failed validation containment
+
+```mermaid
+flowchart LR
+    S[Fresh Railway Snapshot]
+    P[Pre-deploy 5-action Smoke]
+    F[One Action Fails]
+    A[Abort Candidate Deployment]
+    H[Previous Healthy Production Remains Serving]
+
+    S --> P --> F --> A --> H
+```
+
+Observed live case:
+
+```text
+update_asset_config → 403 / accepted=false
+candidate validation deployment → FAILED SAFE
+healthy previous deployment → remained serving
+```
+
+## 12. Production deployment
 
 ```mermaid
 flowchart TB
     B[Browser]
     W[production-web\nRailway\n1bc124a...]
-    API[production-api\nRailway\n08866da...]
+    API[production-api\nRailway\nsource 3545d75...]
     AUTH[Neon Auth]
     CF[Cloudflare Workers AI\nprovisional]
     TR[Supplied TRACTIAN API\n47561c...]
@@ -213,7 +263,19 @@ flowchart TB
     API --> DB
 ```
 
-## 11. Durable realtime
+Deployment-provenance inset:
+
+```text
+Git source SHA
+→ baked artifact identity
+→ configured release SHA
+→ Railway runtime SHA
+
+Generic redeploy may reuse captured snapshot.
+Fresh config/source claim requires fresh deployment snapshot.
+```
+
+## 13. Durable realtime
 
 ```mermaid
 flowchart LR
@@ -230,7 +292,7 @@ flowchart LR
 
 PostgreSQL rows/cursors are authoritative; notification only reduces latency.
 
-## 12. Current task-driven UI
+## 14. Current task-driven UI
 
 ```mermaid
 flowchart TB
@@ -256,18 +318,26 @@ flowchart TB
     T --> ST
 ```
 
-## 13. Final recap
+UX north star:
+
+```text
+one main question / one obvious primary action per screen
+technical depth only when useful
+```
+
+## 15. Final recap
 
 ```text
 1  Server-validated identity / tenant
 2  Durable run ownership
 3  V13 grounding + AgentController
 4  ToolSpec deterministic validation
-5  HarnessRunner + remote TRACTIAN I/O
+5  HarnessRunner + remote TRACTIAN reads
 6  Evidence + RunTrace
 7  Terminal + response_mode semantics
 8  Post-runtime ProductionEvaluator
-9  PostgreSQL + authenticated SSE + task-driven UI
+9  Governed action custody + exact confirmation + grant + idempotency + lease
+10 Server-owned vendor actor + explicit acceptance + fail-closed deployment validation
 ```
 
-End on this complete causal path.
+End with the explicit limitation: **the action architecture is promoted locally, but the five vendor endpoints are not yet 5/5 live-proven.**
