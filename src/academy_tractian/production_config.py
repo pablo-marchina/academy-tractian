@@ -44,6 +44,7 @@ _PROVIDER_REQUIRED_ENV = (
     "ACADEMY_PROVIDER_ACCOUNT_ID",
     "ACADEMY_PROVIDER_API_TOKEN",
 )
+_ACTION_REQUIRED_ENV = ("ACADEMY_ACTION_AUTHORIZATION_GRANTS_JSON",)
 
 
 def _parse_bool(value: str, *, name: str) -> bool:
@@ -154,6 +155,8 @@ class RemoteProductionConfig(BaseModel):
     tractian_transport_enabled: bool = False
     tractian_base_url: str | None = Field(default=None, max_length=2048)
     tractian_server_headers_json: SecretStr | None = None
+    actions_enabled: bool = False
+    action_authorization_grants_json: SecretStr | None = None
 
     @field_validator("internal_dsn", "scoped_dsn")
     @classmethod
@@ -211,6 +214,16 @@ class RemoteProductionConfig(BaseModel):
         raw = value.get_secret_value().strip()
         if not raw:
             raise ValueError("provider API token must be non-empty")
+        return SecretStr(raw)
+
+    @field_validator("action_authorization_grants_json")
+    @classmethod
+    def validate_action_authorization_grants_json(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is None:
+            return None
+        raw = value.get_secret_value().strip()
+        if not raw:
+            raise ValueError("action authorization grants must be non-empty when configured")
         return SecretStr(raw)
 
     @field_validator("public_base_url")
@@ -305,6 +318,16 @@ class RemoteProductionConfig(BaseModel):
             raise ValueError(
                 "TRACTIAN endpoint/headers cannot be configured while ACADEMY_TRACTIAN_TRANSPORT_ENABLED is false"
             )
+
+        if self.actions_enabled:
+            if not self.provider_calls_enabled:
+                raise ValueError("enabled actions require live provider calls")
+            if not self.tractian_transport_enabled:
+                raise ValueError("enabled actions require the configured TRACTIAN transport")
+            if self.action_authorization_grants_json is None:
+                raise ValueError("enabled actions require server-owned action authorization grants")
+        elif self.action_authorization_grants_json is not None:
+            raise ValueError("action authorization grants cannot be configured while actions are disabled")
         return self
 
     @classmethod
@@ -314,6 +337,10 @@ class RemoteProductionConfig(BaseModel):
             environ.get("ACADEMY_PROVIDER_CALLS_ENABLED", "false"),
             name="ACADEMY_PROVIDER_CALLS_ENABLED",
         )
+        actions_enabled = _parse_bool(
+            environ.get("ACADEMY_ACTIONS_ENABLED", "false"),
+            name="ACADEMY_ACTIONS_ENABLED",
+        )
         required = list(_BASE_REQUIRED_ENV)
         if browser_iam_mode == "signed-bearer":
             required.extend(_SIGNED_BEARER_REQUIRED_ENV)
@@ -321,6 +348,8 @@ class RemoteProductionConfig(BaseModel):
             required.extend(_NEON_AUTH_REQUIRED_ENV)
         if provider_calls_enabled:
             required.extend(_PROVIDER_REQUIRED_ENV)
+        if actions_enabled:
+            required.extend(_ACTION_REQUIRED_ENV)
         missing = [name for name in required if not environ.get(name, "").strip()]
         if missing:
             raise ValueError(
@@ -330,6 +359,7 @@ class RemoteProductionConfig(BaseModel):
         runtime_secret = environ.get("ACADEMY_RUNTIME_IDENTITY_SECRET", "").strip()
         provider_token = environ.get("ACADEMY_PROVIDER_API_TOKEN", "").strip()
         tractian_headers = environ.get("ACADEMY_TRACTIAN_SERVER_HEADERS_JSON", "")
+        action_grants = environ.get("ACADEMY_ACTION_AUTHORIZATION_GRANTS_JSON", "")
         return cls(
             environment=environ["ACADEMY_ENVIRONMENT"],
             internal_dsn=SecretStr(environ["ACADEMY_POSTGRES_INTERNAL_DSN"]),
@@ -369,6 +399,10 @@ class RemoteProductionConfig(BaseModel):
             tractian_server_headers_json=(
                 SecretStr(tractian_headers) if tractian_headers.strip() else None
             ),
+            actions_enabled=actions_enabled,
+            action_authorization_grants_json=(
+                SecretStr(action_grants) if action_grants.strip() else None
+            ),
         )
 
     def tractian_server_headers(self) -> dict[str, str]:
@@ -392,9 +426,10 @@ class RemoteProductionConfig(BaseModel):
             "paid_fallback_enabled": self.paid_fallback_enabled,
             "local_serving_enabled": self.local_serving_enabled,
             "provider_calls_enabled": self.provider_calls_enabled,
+            "actions_enabled": self.actions_enabled,
         }
-        # Keep the existing NO_SELECTION metadata contract byte-compatible for infrastructure
-        # probes. Release 0 adds only non-secret provider/model identity when calls are active.
+        # Keep secret-bearing authorization/provider material server-side. Release metadata exposes
+        # only non-secret provider/model identity when live model calls are active.
         if self.provider_calls_enabled:
             metadata.update(
                 {
