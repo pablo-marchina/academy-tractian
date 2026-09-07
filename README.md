@@ -2,7 +2,7 @@
 
 Production-oriented **Industrial Agent + Evaluation** product built around the supplied TRACTIAN API.
 
-**Release 0 is live.** The public product is remotely hosted, authenticated, multi-user/tenant-isolated, backed by Neon PostgreSQL, uses a provisional hosted model provider and real typed TRACTIAN reads, persists safe evidence/evaluation, and streams progress through REST/SSE. The governed consequential-action path is now implemented and enabled in production configuration, but complete five-action upstream acceptance is **not yet proven** because the live write smoke found an upstream identity/permission mismatch on `update_asset_config`.
+**Release 0 is live and prospectively hardened.** The public product is remotely hosted, authenticated, multi-user/tenant-isolated, backed by Neon PostgreSQL, uses a provisional hosted model provider and real typed TRACTIAN reads, persists safe evidence/evaluation, streams progress through REST/SSE, and now has a governed consequential-action path whose five canonical endpoints have passed the current hosted production smoke.
 
 > Current state changes quickly. Use [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md) as the mutable source of truth. Historical/frozen evidence is intentionally not rewritten. Repository source identity, backend runtime identity, frontend identity and supplied-API identity are tracked separately.
 
@@ -33,14 +33,13 @@ Start with [`docs/GETTING-STARTED.md`](docs/GETTING-STARTED.md).
 - 18-operation TRACTIAN capability contract: **13 reads + 5 governed action operations**;
 - genuine provider → controller → typed TRACTIAN read → evidence → terminal → evaluation path;
 - customer-visible evidence semantics: `complete`, `partial`, `inconclusive`, `conflict`, `unavailable`;
-- terminal behavior including ORIENT/FINAL, CLARIFY, ABSTAIN and ESCALATE;
-- explicit human-readable asset-label grounding (`R310`, `R420`, `PM-22`, etc.) through authenticated fleet discovery rather than asking users for internal IDs;
-- condition-evidence requirements before diagnostic terminal answers;
-- data-quality-specific evidence requirements;
+- explicit asset-label grounding and condition/data-quality evidence gates;
 - durable history, authenticated SSE/reconnect and safe provenance;
 - task-driven UX: **Home / Analyses / Technical**, with result/evidence detail contextual to the selected run;
 - governed action custody, exact confirmation, server-owned authorization grants, persistent idempotency, lease/fencing and `UNCERTAIN` containment;
-- auditable manual production write smoke that requires all five action endpoints to return an accepted HTTP status and `accepted=true`;
+- server-owned vendor actor routing by `(company_id, required_permission)` for consequential TRACTIAN calls;
+- auditable production write smoke using the same action-routing boundary as production;
+- current production smoke result: **5/5 canonical actions returned HTTP 200 with `accepted=true`**;
 - project cash-cost policy: **USD0 hard gate; no automatic paid fallback**.
 
 The full frozen Provider Tournament v3 still has final state `NO_SELECTION`. The Release 0 provider is intentionally **provisional**, not a final superiority claim.
@@ -49,7 +48,7 @@ The full frozen Provider Tournament v3 still has final state `NO_SELECTION`. The
 
 | Component | Current hosted identity | Evidence |
 |---|---|---|
-| backend/runtime source | `3545d75c00ca30419e0f47e8b1950aa50cbbf462` | Railway deployment `2cbc4215-f59a-4947-8691-0d4776458445` — SUCCESS; later healthy redeploy remained on same source |
+| backend/runtime source | `d43644d22df8e3ee5bb5a1532bbea3512c3a7ac0` | Railway deployment `b1259276-0c1b-425b-bf81-ab9a748a5089` — SUCCESS + five-action smoke PASS |
 | frontend UX | `1bc124a8d4dbd029178ff8129b25452129445de7` | Railway deployment `f78e88cd-82c2-4fcf-8f59-a51168f10fad` — SUCCESS |
 | supplied TRACTIAN API | `47561c1175181b508139e23e6e39b555c1347d57` | hosted supplied-API deployment |
 
@@ -71,41 +70,39 @@ The production validation loop closed real issues found through hosted prompts/t
 #210  force initial identity grounding and suppress repeated completed data-quality reads
 #211  enable governed execution architecture for all five canonical actions
 #213  add auditable manual production smoke for all five governed writes
+#214  route governed writes through server-owned company+permission TRACTIAN actors
 ```
 
-Current read-path live checks include:
+### Governed-write progression
 
-- data quality: `get_current_user → list_assets_by_company → get_data_quality → get_rms → get_rms(point_id) → FINAL`, `complete`, 0 errors/blocks;
-- unavailable comparison: authenticated fleet discovery correctly reports R420 absent rather than inventing a cross-tenant asset or asking for its internal ID;
-- causal investigation: `get_current_user → list_assets_by_company → get_spectrum → point-specific spectrum drill-down → FINAL`, `partial`, 0 errors/blocks.
+PR #211 merged at `1a1e7139...` and enabled the local governed execution path. PR #213 merged at `3545d75...` and added the auditable five-write smoke. Its first fresh production validation correctly failed closed when `update_asset_config` returned HTTP 403, leaving the prior healthy deployment serving.
 
-Repeated tool names are not automatically loops: an asset-level read followed by a `point_id`-specific read is legitimate progressive drill-down. Redundancy must be evaluated by operation **and arguments/resource**, not tool name alone.
+Inspection of the supplied runtime showed the root cause: the tested company uses different upstream actors for `action_low` and `action_high + escalate`. PR #214 therefore separated the authenticated local product user from the provider-side TRACTIAN actor. The local user remains authoritative for grant resolution, tenant/resource ownership, confirmation, idempotency and observability; only canonical ACTION calls are remapped at the final network boundary through immutable server-owned company+permission bindings.
 
-### Governed-write truth
-
-PR #211 was merged at `1a1e7139bfa0361416120b3f21937c4048b5bb1f`; PR #213 was merged at `3545d75c00ca30419e0f47e8b1950aa50cbbf462`. The required CI matrix for #213 was green, including clean-clone reproduction, PostgreSQL action lease/fencing, horizontal recovery, production image smoke, Chromium Playwright and the final required gate.
-
-A fresh Railway pre-deploy validation then executed the real five-action smoke. The validation correctly **failed closed** when `update_asset_config` returned HTTP 403 with `accepted=false`. The failed validation deployment did not replace the prior healthy production deployment.
-
-Investigation of the immutable supplied TRACTIAN runtime showed why: for the production company scope under test, upstream `action_low` and `action_high + escalate` are represented by different supplied-runtime users. The existing runner binding forwards the local requester identity as `x-user-id`, so one local product user cannot satisfy all upstream permission families by identity forwarding alone.
-
-The corrective architecture now in progress separates:
+PR #214:
 
 ```text
-local product user
-→ tenant/resource authorization + confirmation + custody + idempotency + audit
-
-server-owned TRACTIAN actor
-→ selected only at the final vendor boundary by company + required permission
+head          1b63898eda14c04fa5c245c75a9d719ea138816f
+merge         d43644d22df8e3ee5bb5a1532bbea3512c3a7ac0
+required CI   all triggered final gates SUCCESS
+Railway       b1259276-0c1b-425b-bf81-ab9a748a5089 — SUCCESS
 ```
 
-Until that route is merged, retested and all five writes return explicit acceptance, **do not claim universal governed-action readiness**.
+Hosted smoke v2:
 
-See:
+```text
+reprocess_analysis           200 accepted=true
+request_specialist_analysis  200 accepted=true
+update_asset_config          200 accepted=true
+request_retraining           200 accepted=true
+escalate_case                200 accepted=true
+```
 
-- [`docs/progress/2026-09-07-release0-live-hardening-v13.md`](docs/progress/2026-09-07-release0-live-hardening-v13.md)
-- [`docs/progress/2026-09-07-production-governed-actions-ux-and-validation.md`](docs/progress/2026-09-07-production-governed-actions-ux-and-validation.md)
-- [`docs/GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md`](docs/GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md)
+The safe smoke also recorded `credentials_recorded=false`, `local_user_ids_recorded=false`, `upstream_user_ids_recorded=false`, `resource_ids_recorded=false` and `response_bodies_recorded=false`.
+
+This proves five-endpoint acceptance for the **current tested release/configuration**. It is not a guarantee that an external service can never fail in the future.
+
+See [`docs/progress/2026-09-07-production-governed-actions-ux-and-validation.md`](docs/progress/2026-09-07-production-governed-actions-ux-and-validation.md).
 
 ## Documentation map
 
@@ -139,33 +136,16 @@ authenticated remote user
 → HarnessRunner
 → typed TRACTIAN reads / governed action proposal
 → normalized evidence or private action custody
-→ ORIENT | CLARIFY | ABSTAIN | ESCALATE
-   + complete | partial | inconclusive | conflict | unavailable
-→ exact operator confirmation for consequential action
-→ deterministic authorization / idempotency / lease boundary
-→ one governed external action attempt when all gates pass
+→ terminal/result or exact operator confirmation
+→ deterministic local action authorization / idempotency / lease
+→ server-owned company+permission TRACTIAN actor
+→ one governed external action attempt
+→ explicit upstream acceptance / safe non-success state
 → deterministic post-runtime evaluator
 → durable safe projection
 → REST/SSE
 → Home / result detail / Analyses / Technical
 ```
-
-The governed action path is a separate high-consequence boundary. Its local safety machinery is promoted; its complete five-endpoint live acceptance remains an open gate.
-
-## Repository layout
-
-| Path | Purpose |
-|---|---|
-| `src/academy_tractian/` | production runtime, APIs, storage, safety, observability, evaluation and governed actions |
-| `frontend/` | React/TypeScript task-driven product and Playwright acceptance |
-| `tests/` | backend product/regression/integration tests |
-| `research/e2/` | accepted controller/tool/trace/evaluation harness |
-| `research/experiments/` | preregistered experiments |
-| `research/frozen/` | immutable evidence contracts/inputs |
-| `research/results/` | machine-readable results/closures |
-| `scripts/` | deterministic validation/reporting/operations wrappers |
-| `docs/` | active docs plus preserved historical evidence |
-| `.github/workflows/` | required CI, promotion gates and preserved research workflows |
 
 ## Core engineering rules
 
