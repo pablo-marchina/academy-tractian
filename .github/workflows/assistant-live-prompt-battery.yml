@@ -1,0 +1,37 @@
+name: assistant-live-prompt-battery
+
+on:
+  push:
+    branches:
+      - test/live-prompt-battery-20260907
+    paths:
+      - scripts/assistant_live_prompt_battery.py
+      - .github/workflows/assistant-live-prompt-battery.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: assistant-live-prompt-battery-20260907
+  cancel-in-progress: true
+
+jobs:
+  live-prompt-battery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ACADEMY_PRODUCTION_WEB_BASE_URL: https://production-web-production-c9d1.up.railway.app
+      ACADEMY_EXPECTED_RELEASE_GIT_SHA: 08866da60245f58f217981b7ae668b10be45cc67
+      ACADEMY_BATTERY_REPORT_PATH: assistant-live-prompt-battery-report.json
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run isolated production prompt battery
+        run: python scripts/assistant_live_prompt_battery.py
+      - name: Upload prompt battery report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assistant-live-prompt-battery-report
+          path: assistant-live-prompt-battery-report.json
+          if-no-files-found: warn
+          retention-days: 7
