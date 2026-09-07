@@ -117,9 +117,9 @@ export default function App() {
     live.follow(run);
   };
 
-  const selectHistoricalRun = (runId: string) => {
+  const selectHistoricalRun = (runId: string | null) => {
     setHistoricalRunId(runId);
-    setActiveTab("results");
+    if (runId) setActiveTab("results");
   };
 
   const blockingChecks = selectedEvaluation?.items.filter((check) => check.blocking) ?? [];
