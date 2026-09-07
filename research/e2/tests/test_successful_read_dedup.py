@@ -53,65 +53,20 @@ def _registry() -> dict[str, ToolSpec]:
     }
 
 
-def _runner(transport, *, dedupe=False):
+def _historical_runner(transport):
     return HarnessRunner(
-        run_id="dedupe",
-        scenario_id="dedupe",
+        run_id="historical",
+        scenario_id="historical",
         config_hash="a" * 64,
         registry=_registry(),
         binding=ExecutionBinding(identity_id="identity", user_id="user"),
         transport=transport,
         strict_arguments=True,
-        reject_duplicate_successful_reads=dedupe,
     )
 
 
-def test_historical_harness_default_still_allows_duplicate_reads() -> None:
-    transport = RecordingTransport()
-    runner = _runner(transport)
-    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
-    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
-    assert len(transport.calls) == 2
-
-
-def test_duplicate_successful_read_is_blocked_before_second_transport_call() -> None:
-    transport = RecordingTransport()
-    runner = _runner(transport, dedupe=True)
-    first = runner.execute_tool("read_asset", {"asset_id": "asset-a"})
-    second = runner.execute_tool("read_asset", {"asset_id": "asset-a"})
-    assert first.executed
-    assert not second.executed
-    assert second.blocked_code == "DUPLICATE_SUCCESSFUL_READ"
-    assert len(transport.calls) == 1
-
-
-def test_same_read_tool_with_different_arguments_remains_allowed() -> None:
-    transport = RecordingTransport()
-    runner = _runner(transport, dedupe=True)
-    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
-    assert runner.execute_tool("read_asset", {"asset_id": "asset-b"}).executed
-    assert len(transport.calls) == 2
-
-
-def test_failed_read_is_not_recorded_as_successful_duplicate() -> None:
-    transport = RecordingTransport(status_code=503)
-    runner = _runner(transport, dedupe=True)
-    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
-    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
-    assert len(transport.calls) == 2
-
-
-def test_action_calls_are_never_intercepted_by_read_deduplication() -> None:
-    transport = RecordingTransport()
-    runner = _runner(transport, dedupe=True)
-    assert runner.execute_tool("touch_asset", {"asset_id": "asset-a"}).executed
-    assert runner.execute_tool("touch_asset", {"asset_id": "asset-a"}).executed
-    assert len(transport.calls) == 2
-
-
-def test_observable_production_runner_enables_deduplication_by_default() -> None:
-    transport = RecordingTransport()
-    runner = ObservableHarnessRunner(
+def _production_runner(transport):
+    return ObservableHarnessRunner(
         observability_publisher=NullPublisher(),
         run_id="observable-dedupe",
         scenario_id="observable-dedupe",
@@ -121,8 +76,60 @@ def test_observable_production_runner_enables_deduplication_by_default() -> None
         transport=transport,
         strict_arguments=True,
     )
+
+
+def test_frozen_historical_harness_still_allows_duplicate_reads() -> None:
+    transport = RecordingTransport()
+    runner = _historical_runner(transport)
     assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
+    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
+    assert len(transport.calls) == 2
+
+
+def test_production_wrapper_blocks_duplicate_successful_read_before_transport() -> None:
+    transport = RecordingTransport()
+    runner = _production_runner(transport)
+    first = runner.execute_tool("read_asset", {"asset_id": "asset-a"})
     second = runner.execute_tool("read_asset", {"asset_id": "asset-a"})
+    assert first.executed
     assert not second.executed
     assert second.blocked_code == "DUPLICATE_SUCCESSFUL_READ"
+    assert len(transport.calls) == 1
+
+
+def test_production_wrapper_allows_same_read_tool_with_different_arguments() -> None:
+    transport = RecordingTransport()
+    runner = _production_runner(transport)
+    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
+    assert runner.execute_tool("read_asset", {"asset_id": "asset-b"}).executed
+    assert len(transport.calls) == 2
+
+
+def test_failed_read_is_not_recorded_as_successful_duplicate() -> None:
+    transport = RecordingTransport(status_code=503)
+    runner = _production_runner(transport)
+    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
+    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
+    assert len(transport.calls) == 2
+
+
+def test_action_calls_are_never_intercepted_by_read_deduplication() -> None:
+    transport = RecordingTransport()
+    runner = _production_runner(transport)
+    assert runner.execute_tool("touch_asset", {"asset_id": "asset-a"}).executed
+    assert runner.execute_tool("touch_asset", {"asset_id": "asset-a"}).executed
+    assert len(transport.calls) == 2
+
+
+def test_duplicate_read_trace_records_proposal_and_contained_policy_check_only() -> None:
+    transport = RecordingTransport()
+    runner = _production_runner(transport)
+    assert runner.execute_tool("read_asset", {"asset_id": "asset-a"}).executed
+    before = len(runner.trace.events)
+    duplicate = runner.execute_tool("read_asset", {"asset_id": "asset-a"})
+    assert not duplicate.executed
+    new_events = runner.trace.events[before:]
+    assert [event.event_type for event in new_events] == ["tool_proposal", "policy_check"]
+    assert new_events[-1].metadata["violation"] == "DUPLICATE_SUCCESSFUL_READ"
+    assert new_events[-1].metadata["contained"] is True
     assert len(transport.calls) == 1
