@@ -11,8 +11,8 @@ interface TabDefinition {
 
 const TABS: readonly TabDefinition[] = [
   { id: "results", number: "1", label: "Overview", description: "Answer and next step" },
-  { id: "evidence", number: "2", label: "Why this answer?", description: "Sources and evidence" },
-  { id: "investigation", number: "3", label: "History", description: "Past analyses and process" },
+  { id: "evidence", number: "2", label: "Why this answer?", description: "Evidence used" },
+  { id: "investigation", number: "3", label: "History", description: "Saved analyses" },
   { id: "engineering", number: "4", label: "Technical details", description: "For specialists" },
 ];
 
@@ -24,14 +24,13 @@ interface Props {
   hasEvaluation: boolean;
 }
 
-function tabStatus(tab: WorkspaceTabId, evidenceCount: number, eventCount: number, hasEvaluation: boolean): string | null {
+function tabStatus(tab: WorkspaceTabId, evidenceCount: number, hasEvaluation: boolean): string | null {
   if (tab === "evidence" && evidenceCount > 0) return `${evidenceCount} source${evidenceCount === 1 ? "" : "s"}`;
-  if (tab === "investigation" && eventCount > 0) return `${eventCount} step${eventCount === 1 ? "" : "s"}`;
-  if (tab === "engineering" && hasEvaluation) return "checks ready";
+  if (tab === "engineering" && hasEvaluation) return "evaluation ready";
   return null;
 }
 
-export function DepthTabs({ activeTab, onChange, evidenceCount, eventCount, hasEvaluation }: Props) {
+export function DepthTabs({ activeTab, onChange, evidenceCount, hasEvaluation }: Props) {
   const activate = (index: number) => {
     const next = TABS[index];
     onChange(next.id);
@@ -53,12 +52,12 @@ export function DepthTabs({ activeTab, onChange, evidenceCount, eventCount, hasE
     <nav className="depth-navigation" aria-label="Analysis sections">
       <div className="depth-navigation-copy">
         <strong>Start with the answer.</strong>
-        <span>You can open more detail only when you need it.</span>
+        <span>Open more detail only when it helps your decision.</span>
       </div>
       <div className="depth-tablist" role="tablist" aria-label="Analysis sections">
         {TABS.map((tab, index) => {
           const selected = activeTab === tab.id;
-          const status = tabStatus(tab.id, evidenceCount, eventCount, hasEvaluation);
+          const status = tabStatus(tab.id, evidenceCount, hasEvaluation);
           return (
             <button
               type="button"
