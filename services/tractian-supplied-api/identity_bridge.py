@@ -9,6 +9,10 @@ from typing import Any
 
 _RUNTIME_ROOT = Path("/srv/tractian")
 _MAX_USER_ID_BYTES = 256
+_EXPECTED_CASE_FIELDS = frozenset(
+    {"id", "ticket_id", "company_id", "user_id", "asset_id", "message"}
+)
+_EXPECTED_CASE_COUNT = 17
 
 
 def _validate_user_id(value: str, *, label: str) -> str:
@@ -23,47 +27,45 @@ def _validate_user_id(value: str, *, label: str) -> str:
     return normalized
 
 
-def _case_sources(path: Path | None = None) -> tuple[Path, ...]:
+def _candidate_sources(path: Path | None = None) -> tuple[Path, ...]:
     if path is not None:
         return (path,)
     configured = os.environ.get("ACADEMY_TRACTIAN_CASE_SOURCE")
     if configured:
         return (Path(configured),)
-
-    candidates = tuple(
-        sorted(
-            candidate
-            for candidate in _RUNTIME_ROOT.rglob("cases.json")
-            if "agent-input" in candidate.parts and candidate.is_file()
-        )
-    )
+    candidates = tuple(sorted(item for item in _RUNTIME_ROOT.rglob("cases.json") if item.is_file()))
     if not candidates:
         raise RuntimeError("tractian_domain_identity_case_source_unavailable")
     return candidates
 
 
-def _case_rows(source: Path) -> list[object]:
+def _sanitized_case_rows(source: Path) -> list[dict[str, object]] | None:
     payload = json.loads(source.read_text(encoding="utf-8"))
-    if isinstance(payload, list):
-        return payload
-    if isinstance(payload, dict) and isinstance(payload.get("cases"), list):
-        return payload["cases"]
-    raise RuntimeError("tractian_domain_identity_case_source_invalid")
+    if not isinstance(payload, list) or len(payload) != _EXPECTED_CASE_COUNT:
+        return None
+    if not all(isinstance(item, dict) and set(item) == _EXPECTED_CASE_FIELDS for item in payload):
+        return None
+    return payload
 
 
 def load_domain_user_ids(path: Path | None = None) -> tuple[str, ...]:
-    """Load only agent-visible synthetic user ids from the supplied cases surfaces."""
+    """Load ids only from the schema-verified, agent-visible sanitized case surface."""
 
     user_ids: set[str] = set()
-    for source in _case_sources(path):
-        for row in _case_rows(source):
-            if not isinstance(row, dict):
-                continue
+    matched_source = False
+    for source in _candidate_sources(path):
+        rows = _sanitized_case_rows(source)
+        if rows is None:
+            continue
+        matched_source = True
+        for row in rows:
             raw = row.get("user_id")
             if not isinstance(raw, str):
-                continue
+                raise RuntimeError("tractian_domain_identity_case_source_invalid")
             user_ids.add(_validate_user_id(raw, label="TRACTIAN domain user id"))
 
+    if not matched_source:
+        raise RuntimeError("tractian_domain_identity_sanitized_case_source_unavailable")
     if not user_ids:
         raise RuntimeError("tractian_domain_identity_pool_unavailable")
     return tuple(sorted(user_ids))
@@ -88,8 +90,8 @@ class SyntheticDomainIdentityBridge:
 
     Neon remains authoritative for browser authentication, tenancy and run ownership. The supplied
     API has its own synthetic user universe, so its x-user-id cannot be the Neon primary key.
-    This bridge derives a stable synthetic persona from agent-visible cases without exposing the
-    mapped id to the browser or changing the inner service-authentication boundary.
+    This bridge derives a stable synthetic persona from the schema-verified agent-visible cases
+    without exposing the mapped id to the browser or changing service authentication.
     """
 
     def __init__(self, app: Any, *, domain_user_ids: tuple[str, ...]) -> None:
