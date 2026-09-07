@@ -145,14 +145,7 @@ export default function App() {
           hasEvaluation={Boolean(selectedEvaluation?.count)}
         />
 
-        <section
-          className="workspace-layer"
-          id="workspace-panel-results"
-          role="tabpanel"
-          aria-labelledby="workspace-tab-results"
-          tabIndex={0}
-          hidden={activeTab !== "results"}
-        >
+        <section className="workspace-layer" id="workspace-panel-results" role="tabpanel" aria-labelledby="workspace-tab-results" tabIndex={0} hidden={activeTab !== "results"}>
           <LayerIntro
             eyebrow="LAYER 1 · USER OUTCOME"
             title="Answer first"
@@ -181,14 +174,7 @@ export default function App() {
           </section>
         </section>
 
-        <section
-          className="workspace-layer"
-          id="workspace-panel-evidence"
-          role="tabpanel"
-          aria-labelledby="workspace-tab-evidence"
-          tabIndex={0}
-          hidden={activeTab !== "evidence"}
-        >
+        <section className="workspace-layer" id="workspace-panel-evidence" role="tabpanel" aria-labelledby="workspace-tab-evidence" tabIndex={0} hidden={activeTab !== "evidence"}>
           <LayerIntro
             eyebrow="LAYER 2 · EXPLAINABILITY"
             title="See why the answer is supported"
@@ -209,18 +195,11 @@ export default function App() {
           </section>
         </section>
 
-        <section
-          className="workspace-layer"
-          id="workspace-panel-investigation"
-          role="tabpanel"
-          aria-labelledby="workspace-tab-investigation"
-          tabIndex={0}
-          hidden={activeTab !== "investigation"}
-        >
+        <section className="workspace-layer" id="workspace-panel-investigation" role="tabpanel" aria-labelledby="workspace-tab-investigation" tabIndex={0} hidden={activeTab !== "investigation"}>
           <LayerIntro
             eyebrow="LAYER 3 · OPERATIONAL INVESTIGATION"
             title="Inspect how the investigation ran"
-            description="Work with persisted history, runtime metrics, execution topology, all product operations and governed action proposals."
+            description="Work with persisted history, runtime metrics, execution topology and governed action proposals without entering system-wide engineering analytics."
             depth="runtime detail"
           />
 
@@ -240,26 +219,20 @@ export default function App() {
           <div className="layer-stack">
             <article className="panel visual-panel"><div className="section-heading compact"><div><p className="eyebrow">EXECUTION TOPOLOGY</p><h2>Trace Graph</h2></div><span className="count-pill">derived from {selectedEvents.length} safe events</span></div><TraceGraph events={selectedEvents} /></article>
             <ActionControl selectedRunId={selectedRunId} onFollowExecution={followActionRun} />
-            <OperationsWorkspace selectedRunId={selectedRunId} />
           </div>
         </section>
 
-        <section
-          className="workspace-layer"
-          id="workspace-panel-engineering"
-          role="tabpanel"
-          aria-labelledby="workspace-tab-engineering"
-          tabIndex={0}
-          hidden={activeTab !== "engineering"}
-        >
+        <section className="workspace-layer" id="workspace-panel-engineering" role="tabpanel" aria-labelledby="workspace-tab-engineering" tabIndex={0} hidden={activeTab !== "engineering"}>
           <LayerIntro
             eyebrow="LAYER 4 · ENGINEERING & EVALUATION"
             title="Open the full observability surface"
-            description="Deep inspection of evaluator isolation, implementation-backed architecture, capability contracts and controlled research collectors. Hidden reasoning and secrets remain excluded."
+            description="Deep inspection of system-wide observability, evaluator isolation, implementation-backed architecture, capability contracts and controlled research collectors. Hidden reasoning and secrets remain excluded."
             depth="maximum detail"
           />
 
           <div className="layer-stack">
+            <OperationsWorkspace selectedRunId={selectedRunId} />
+
             <article className="panel evaluation-panel"><div className="evaluator-boundary"><p className="eyebrow">POST-RUNTIME ONLY</p><span>Evaluator isolated from agent-time state</span></div><h2>Evaluation</h2>{!selectedRun?.completed ? <div className="empty-state small"><strong>Not evaluated yet</strong><p>Evaluation appears only after the runtime has emitted its terminal trace.</p></div> : !selectedEvaluationReady ? <p className="muted">Runtime finished. Waiting for post-runtime evaluation persistence…</p> : selectedEvaluation?.count ? <><div className="evaluation-score"><strong>{passedChecks}/{blockingChecks.length}</strong><span>blocking checks passed</span></div><ul className="check-list">{selectedEvaluation.items.map((check) => <li key={check.check_name}><span className={check.passed ? "check-pass" : "check-fail"}>{check.passed ? "PASS" : "FAIL"}</span><span>{check.check_name}</span></li>)}</ul></> : <p className="muted">No safe evaluation rows are available.</p>}</article>
 
             <article className="panel visual-panel">
