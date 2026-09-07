@@ -22,100 +22,88 @@ jobs:
           echo "0db58e29d6f5c86ef1838acf31c4caed788b393eb1807345fabd157c8de5bb9a  /tmp/tractian-runtime.tar.gz" | sha256sum -c -
           tar -xzf /tmp/tractian-runtime.tar.gz -C /tmp/tractian-runtime
 
-      - name: Extract only identity fields associated with Papel Sul resources
+      - name: Resolve keyed seed resource identities for Papel Sul
         run: |
           python - <<'PY'
           from pathlib import Path
-          import csv, io, json, re
+          import json
 
           root = Path('/tmp/tractian-runtime')
+          seed_path = root / 'data' / 'seed.json'
+          seed = json.loads(seed_path.read_text(encoding='utf-8'))
           target_company = 'comp_papel_sul'
           target_asset = 'asset_V301'
-          candidates = {'analysis': set(), 'model': set(), 'case': set()}
-          files_with_asset = []
 
-          def add_record(record, source):
+          print('SEED_TOP_LEVEL_KEYS=' + ','.join(sorted(map(str, seed.keys()))))
+
+          analysis_ids = set()
+          model_ids = set()
+          asset_ids = {target_asset}
+          case_ids = set()
+
+          def rows(section_name):
+              section = seed.get(section_name)
+              if isinstance(section, dict):
+                  return list(section.items())
+              if isinstance(section, list):
+                  return [(str(item.get('id') or idx), item) for idx, item in enumerate(section) if isinstance(item, dict)]
+              return []
+
+          for key, record in rows('analyses'):
               if not isinstance(record, dict):
-                  return
-              vals = {str(k): v for k, v in record.items()}
-              company = vals.get('company_id') or vals.get('companyId')
-              asset = vals.get('asset_id') or vals.get('assetId')
-              if company != target_company and asset != target_asset and target_asset not in map(str, vals.values()):
-                  return
-              files_with_asset.append(source)
-              rid = vals.get('analysis_id') or vals.get('analysisId')
-              generic_id = vals.get('id')
-              if rid:
-                  candidates['analysis'].add(str(rid))
-              elif asset == target_asset and generic_id and any(k in vals for k in ('status','diagnosis','severity','prediction','score')):
-                  candidates['analysis'].add(str(generic_id))
-              mid = vals.get('model_id') or vals.get('modelId')
-              if mid:
-                  candidates['model'].add(str(mid))
-              cid = vals.get('case_id') or vals.get('caseId')
-              if cid:
-                  candidates['case'].add(str(cid))
-              elif company == target_company and generic_id and str(generic_id).startswith('case_'):
-                  candidates['case'].add(str(generic_id))
-
-          def walk(value, source):
-              if isinstance(value, dict):
-                  add_record(value, source)
-                  for child in value.values():
-                      walk(child, source)
-              elif isinstance(value, list):
-                  for child in value:
-                      walk(child, source)
-
-          for path in root.rglob('*'):
-              if not path.is_file():
                   continue
-              try:
-                  text = path.read_text(encoding='utf-8')
-              except (UnicodeDecodeError, OSError):
-                  continue
-              rel = str(path.relative_to(root))
-              suffix = path.suffix.lower()
-              if suffix == '.json':
-                  try: walk(json.loads(text), rel)
-                  except json.JSONDecodeError: pass
-              elif suffix == '.jsonl':
-                  for line in text.splitlines():
-                      try: walk(json.loads(line), rel)
-                      except json.JSONDecodeError: pass
-              elif suffix == '.csv':
-                  try:
-                      for row in csv.DictReader(io.StringIO(text)):
-                          add_record(row, rel)
-                  except csv.Error:
-                      pass
-              if target_asset in text:
-                  files_with_asset.append(rel)
-                  # Parse key/value identity tokens even from Python/YAML/Markdown fixtures.
-                  for key, value in re.findall(r'["\']?(analysis_id|analysisId|model_id|modelId|case_id|caseId|id)["\']?\s*[:=]\s*["\']([A-Za-z0-9_.:-]+)["\']', text):
-                      window = text[max(0, text.find(value)-1200):text.find(value)+1200]
-                      if target_asset not in window and target_company not in window:
-                          continue
-                      if key in ('analysis_id','analysisId'):
-                          candidates['analysis'].add(value)
-                      elif key in ('model_id','modelId'):
-                          candidates['model'].add(value)
-                      elif key in ('case_id','caseId') or value.startswith('case_'):
-                          candidates['case'].add(value)
+              if record.get('asset_id') == target_asset or record.get('assetId') == target_asset:
+                  rid = record.get('id') or record.get('analysis_id') or record.get('analysisId') or key
+                  analysis_ids.add(str(rid))
+                  mid = record.get('model_id') or record.get('modelId') or record.get('model')
+                  if isinstance(mid, str) and mid.strip():
+                      model_ids.add(mid.strip())
 
-          print('PAPEL_SUL_ACTION_ANALYSIS_IDS=' + ','.join(sorted(candidates['analysis'])))
-          print('PAPEL_SUL_ACTION_MODEL_IDS=' + ','.join(sorted(candidates['model'])))
-          print('PAPEL_SUL_ACTION_CASE_IDS=' + ','.join(sorted(candidates['case'])))
-          print('PAPEL_SUL_ASSET_SOURCE_FILES=' + ','.join(sorted(set(files_with_asset))))
+          # Models may be a dict keyed by canonical model id. Keep only explicit ids referenced by
+          # Papel Sul analysis rows; if none are referenced, report all model keys so ownership can
+          # be verified from store semantics rather than guessed.
+          model_section = seed.get('models')
+          all_model_ids = set()
+          if isinstance(model_section, dict):
+              all_model_ids.update(map(str, model_section.keys()))
+          elif isinstance(model_section, list):
+              for record in model_section:
+                  if isinstance(record, dict):
+                      rid = record.get('id') or record.get('model_id') or record.get('modelId')
+                      if rid: all_model_ids.add(str(rid))
 
-          # Print store implementation structure only, so we can determine canonical backing files.
-          for path in root.rglob('*.py'):
-              try: lines = path.read_text(encoding='utf-8').splitlines()
-              except (UnicodeDecodeError, OSError): continue
-              for i, line in enumerate(lines, 1):
-                  low = line.lower()
-                  if any(name in low for name in ('def get_analysis','def list_analyses','def get_model','analyses =','models =','analyses_path','models_path')):
-                      s = line.strip()
-                      if len(s) <= 300:
-                          print(f'STORE_HINT[{path.relative_to(root)}:{i}]={s}')
+          # Cases live in a separate file in the supplied runtime.
+          cases_path = root / 'data' / 'cases.json'
+          if cases_path.is_file():
+              cases = json.loads(cases_path.read_text(encoding='utf-8'))
+              def walk_cases(value, inherited_company=None):
+                  if isinstance(value, dict):
+                      company = value.get('company_id') or value.get('companyId') or inherited_company
+                      asset = value.get('asset_id') or value.get('assetId')
+                      cid = value.get('id') or value.get('case_id') or value.get('caseId')
+                      if company == target_company and (asset in (None, target_asset)) and isinstance(cid, str) and cid.startswith('case_'):
+                          case_ids.add(cid)
+                      for child in value.values(): walk_cases(child, company)
+                  elif isinstance(value, list):
+                      for child in value: walk_cases(child, inherited_company)
+              walk_cases(cases)
+
+          print('PAPEL_SUL_ACTION_ASSET_IDS=' + ','.join(sorted(asset_ids)))
+          print('PAPEL_SUL_ACTION_ANALYSIS_IDS=' + ','.join(sorted(analysis_ids)))
+          print('PAPEL_SUL_REFERENCED_MODEL_IDS=' + ','.join(sorted(model_ids)))
+          print('SUPPLIED_MODEL_IDS=' + ','.join(sorted(all_model_ids)))
+          print('PAPEL_SUL_ACTION_CASE_IDS=' + ','.join(sorted(case_ids)))
+
+          # Show only the store method bodies needed to understand ownership/existence semantics.
+          store_path = root / 'api' / 'app' / 'store.py'
+          lines = store_path.read_text(encoding='utf-8').splitlines()
+          for start, end, label in ((108, 135, 'ANALYSES'), (150, 170, 'MODELS')):
+              print(f'STORE_SECTION[{label}]')
+              for i in range(start, min(end, len(lines)) + 1):
+                  s = lines[i-1].strip()
+                  if s and len(s) <= 300:
+                      print(f'STORE_HINT[{i}]={s}')
+
+          if not analysis_ids or not case_ids or not all_model_ids:
+              raise SystemExit('governed action resource set incomplete')
           PY
