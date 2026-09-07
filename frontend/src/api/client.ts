@@ -1,3 +1,4 @@
+import { emitManagedAuthSignal, managedAuthSignalForResponse } from "../auth/managedAuthEvents";
 import type { ActionExecutionAccepted, PendingActionSafe } from "./actionTypes";
 import type {
   OperationalPilotAssignment,
@@ -51,6 +52,8 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // Keep status-only public error when JSON detail is unavailable.
     }
+    const authSignal = managedAuthSignalForResponse(response.status, detail);
+    if (authSignal !== null) emitManagedAuthSignal(authSignal);
     throw new Error(detail);
   }
 
