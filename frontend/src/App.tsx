@@ -16,6 +16,7 @@ import { ActionControl } from "./components/ActionControl";
 import { ArchitectureExplorer } from "./components/ArchitectureExplorer";
 import { OperationalValueCollector } from "./components/OperationalValueCollector";
 import { OperationsWorkspace } from "./components/OperationsWorkspace";
+import { ProductExperience } from "./components/ProductExperience";
 import { Release0CapabilitySurface } from "./components/Release0CapabilitySurface";
 import { RunExplorer } from "./components/RunExplorer";
 import { SemanticReviewCollector } from "./components/SemanticReviewCollector";
@@ -114,17 +115,29 @@ export default function App() {
       </header>
 
       <main>
+        <ProductExperience
+          selectedRun={selectedRun}
+          events={selectedEvents}
+          executionStatus={executionQuery.data?.status}
+          connection={live.connection}
+          hasLiveRun={Boolean(live.accepted)}
+          viewingHistorical={viewingHistorical}
+          onUsePrompt={setRequestText}
+        />
+
         <section className="control-panel">
-          <div className="section-heading"><div><p className="eyebrow">LIVE RUN</p><h2>Execute the production agent</h2></div>{live.accepted && <button className="ghost-button" type="button" onClick={live.clear}>Clear live run</button>}</div>
+          <div className="section-heading"><div><p className="eyebrow">START AN INVESTIGATION</p><h2>What do you need to understand?</h2></div>{live.accepted && <button className="ghost-button" type="button" onClick={live.clear}>Clear live run</button>}</div>
           <form className="request-form" onSubmit={submit}>
             <label htmlFor="agent-request">Industrial request</label>
-            <textarea id="agent-request" value={requestText} onChange={(event) => setRequestText(event.target.value)} placeholder="Inspect the asset evidence, investigate anomalies, and return a safe conclusion." maxLength={20_000} rows={4} />
+            <textarea id="agent-request" value={requestText} onChange={(event) => setRequestText(event.target.value)} placeholder="Describe the alert, asset, analysis or evidence you want the agent to investigate. Include identifiers when you have them." maxLength={20_000} rows={4} />
             <div className="request-actions"><span>{requestText.length.toLocaleString()} / 20,000</span><button type="submit" disabled={!requestText.trim() || live.submitting}>{live.submitting ? "Submitting…" : "Start production run"}</button></div>
           </form>
           {live.error && <div className="error-banner">{live.error}</div>}
         </section>
 
-        <Release0CapabilitySurface events={selectedEvents} onUsePrompt={setRequestText} />
+        <div className="engineering-divider">
+          <div><p className="eyebrow">ENGINEERING DETAILS</p><h2>Inspect history, trace, policy and system internals</h2><p>The sections below are secondary to the customer-safe outcome above and never expose hidden chain-of-thought.</p></div>
+        </div>
 
         <RunExplorer runs={runsQuery.data?.items ?? []} selectedRunId={historicalRunId} liveRunId={live.accepted?.run_id ?? null} loading={runsQuery.isLoading} onSelect={setHistoricalRunId} />
 
@@ -146,7 +159,7 @@ export default function App() {
           </article>
 
           <aside className="side-stack">
-            <article className="panel terminal-panel"><p className="eyebrow">CUSTOMER-SAFE OUTPUT</p><h2>Terminal outcome</h2>{!selectedRun?.completed ? <div className="empty-state small"><strong>Runtime not complete</strong><p>No terminal result is shown until the persisted run is actually complete.</p></div> : <dl className="detail-list"><div><dt>Decision</dt><dd>{valueOrDash(selectedRun.terminal_decision)}</dd></div><div><dt>Response mode</dt><dd>{valueOrDash(selectedRun.terminal_response_mode)}</dd></div><div><dt>Reason</dt><dd>{valueOrDash(selectedRun.terminal_reason_code)}</dd></div><div className="message-detail"><dt>Message</dt><dd>{valueOrDash(selectedRun.terminal_message)}</dd></div></dl>}</article>
+            <article className="panel terminal-panel"><p className="eyebrow">CUSTOMER-SAFE OUTPUT · TECHNICAL VIEW</p><h2>Terminal outcome</h2>{!selectedRun?.completed ? <div className="empty-state small"><strong>Runtime not complete</strong><p>No terminal result is shown until the persisted run is actually complete.</p></div> : <dl className="detail-list"><div><dt>Decision</dt><dd>{valueOrDash(selectedRun.terminal_decision)}</dd></div><div><dt>Response mode</dt><dd>{valueOrDash(selectedRun.terminal_response_mode)}</dd></div><div><dt>Reason</dt><dd>{valueOrDash(selectedRun.terminal_reason_code)}</dd></div><div className="message-detail"><dt>Message</dt><dd>{valueOrDash(selectedRun.terminal_message)}</dd></div></dl>}</article>
             <article className="panel evaluation-panel"><div className="evaluator-boundary"><p className="eyebrow">POST-RUNTIME ONLY</p><span>Evaluator isolated from agent-time state</span></div><h2>Evaluation</h2>{!selectedRun?.completed ? <div className="empty-state small"><strong>Not evaluated yet</strong><p>Evaluation appears only after the runtime has emitted its terminal trace.</p></div> : !selectedEvaluationReady ? <p className="muted">Runtime finished. Waiting for post-runtime evaluation persistence…</p> : selectedEvaluation?.count ? <><div className="evaluation-score"><strong>{passedChecks}/{blockingChecks.length}</strong><span>blocking checks passed</span></div><ul className="check-list">{selectedEvaluation.items.map((check) => <li key={check.check_name}><span className={check.passed ? "check-pass" : "check-fail"}>{check.passed ? "PASS" : "FAIL"}</span><span>{check.check_name}</span></li>)}</ul></> : <p className="muted">No safe evaluation rows are available.</p>}</article>
           </aside>
         </section>
@@ -158,6 +171,7 @@ export default function App() {
           {architectureQuery.data ? <ArchitectureExplorer manifest={architectureQuery.data} events={selectedEvents} hasRun={Boolean(selectedRunId)} hasEvaluation={Boolean(selectedEvaluation?.count)} /> : <div className="empty-state graph-empty"><strong>Architecture manifest unavailable</strong><p>The UI will not substitute hard-coded architecture when the backend manifest is missing.</p></div>}
         </article>
 
+        <Release0CapabilitySurface events={selectedEvents} onUsePrompt={setRequestText} />
         <ActionControl selectedRunId={selectedRunId} onFollowExecution={followActionRun} />
         <OperationsWorkspace selectedRunId={selectedRunId} />
         <OperationalValueCollector />
