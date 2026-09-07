@@ -374,7 +374,7 @@ test.describe("provider-free full product acceptance", () => {
       method: "POST",
       body: { confirm: true },
     });
-    expect(duplicate.status()).toBe(409);
+    expect(duplicate.status).toBe(409);
 
     await assertSseReplayClean(page, accepted.run_id);
     await assertSseReplayClean(page, confirmation.execution_run_id);
