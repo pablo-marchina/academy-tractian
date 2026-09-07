@@ -6,77 +6,100 @@ async function openProduct(page: import("@playwright/test").Page) {
     "x-e2e-organization": "ux-pilot-org",
   });
   await page.goto("/");
-  await expect(page.getByText("API healthy")).toBeVisible();
+  await expect(page.getByText("System online")).toBeVisible();
 }
 
-test.describe("Release 0 progressive-depth UX", () => {
-  test("starts with results and progressively discloses deeper observability", async ({ page }) => {
+test.describe("user-first progressive disclosure UX", () => {
+  test("keeps the primary path understandable without runtime vocabulary", async ({ page }) => {
     await openProduct(page);
 
-    const resultsTab = page.getByRole("tab", { name: /Results/ });
-    const evidenceTab = page.getByRole("tab", { name: /Evidence/ });
-    const investigationTab = page.getByRole("tab", { name: /Investigation/ });
-    const engineeringTab = page.getByRole("tab", { name: /Engineering/ });
+    const overviewTab = page.getByRole("tab", { name: /Overview/ });
+    const evidenceTab = page.getByRole("tab", { name: /Why this answer/ });
+    const historyTab = page.getByRole("tab", { name: /History/ });
+    const technicalTab = page.getByRole("tab", { name: /Technical details/ });
 
-    await expect(resultsTab).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "Answer first" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Investigate industrial evidence without guessing." })).toBeVisible();
-    await expect(page.getByText("No external actions")).toBeVisible();
-    await expect(page.getByText("starter examples only")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "What do you need to understand?" })).toBeVisible();
+    await expect(overviewTab).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("heading", { name: "What would you like to understand?" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ask about your equipment in your own words." })).toBeVisible();
+    await expect(page.getByText("You do not need to know technical commands or internal IDs.")).toBeVisible();
+    await expect(page.getByText("Does not guess")).toBeVisible();
+    await expect(page.getByText("Does not change equipment")).toBeVisible();
+    await expect(page.getByLabel("What would you like to understand?")).toBeVisible();
 
-    await expect(page.getByRole("heading", { name: "Canonical event timeline" })).toBeHidden();
-    await expect(page.getByRole("heading", { name: "Trace Graph" })).toBeHidden();
     await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeHidden();
+    await expect(page.getByRole("heading", { name: "Trace graph" })).toBeHidden();
+    await expect(page.locator(".metric-grid")).toBeHidden();
 
     const quickStart = page.getByTestId("quick-start-option").first();
     await expect(quickStart).toBeVisible();
     await quickStart.click();
-    await expect(page.getByLabel("Industrial request")).not.toHaveValue("");
+    await expect(page.getByLabel("What would you like to understand?")).not.toHaveValue("");
 
     await evidenceTab.click();
     await expect(evidenceTab).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "See why the answer is supported" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Canonical event timeline" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "See what the assistant checked" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What happened during the analysis" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeHidden();
-    await expect(page.getByText("starter examples only")).toBeHidden();
 
-    await investigationTab.click();
-    await expect(page.getByRole("heading", { name: "Inspect how the investigation ran" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Trace Graph" })).toBeVisible();
+    await historyTab.click();
+    await expect(page.getByRole("heading", { name: "Review previous analyses" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Previous analyses" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Trace graph" })).toBeHidden();
+    await page.getByText("Show how this analysis ran").click();
+    await expect(page.getByRole("heading", { name: "Trace graph" })).toBeVisible();
 
-    await engineeringTab.click();
-    await expect(page.getByRole("heading", { name: "Open the full observability surface" })).toBeVisible();
+    await technicalTab.click();
+    await expect(page.getByRole("heading", { name: "Engineering and evaluation" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeVisible();
     await expect(page.getByText("Capability contract unavailable")).toBeVisible();
 
-    await engineeringTab.press("Home");
-    await expect(resultsTab).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "Answer first" })).toBeVisible();
+    await technicalTab.press("Home");
+    await expect(overviewTab).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("heading", { name: "What would you like to understand?" })).toBeVisible();
 
-    await resultsTab.press("End");
-    await expect(engineeringTab).toHaveAttribute("aria-selected", "true");
+    await overviewTab.press("End");
+    await expect(technicalTab).toHaveAttribute("aria-selected", "true");
   });
 
-  test("keeps the safe outcome primary while technical proof is available on deeper tabs", async ({ page }) => {
+  test("shows a plain-language outcome while raw codes stay opt-in", async ({ page }) => {
     await openProduct(page);
 
-    await page.getByLabel("Industrial request").fill("scenario:clarify");
-    await page.getByRole("button", { name: "Start production run" }).click();
+    await page.getByLabel("What would you like to understand?").fill("scenario:clarify");
+    await page.getByRole("button", { name: "Start analysis" }).click();
 
     const outcome = page.getByTestId("customer-outcome-summary");
     await expect(outcome).toBeVisible({ timeout: 20_000 });
-    await expect(outcome.getByRole("heading", { name: "More context needed" })).toBeVisible();
+    await expect(outcome.getByRole("heading", { name: "More information needed" })).toBeVisible();
     await expect(outcome).toContainText("What to do next");
-    await expect(outcome).toContainText("Provide the missing context");
-    await expect(outcome).toContainText("SUPPORTING EVIDENCE");
+    await expect(outcome).toContainText("Add the information requested");
+    await expect(outcome).toContainText("INFORMATION CHECKED");
+    await expect(outcome).not.toContainText("ASK_CLARIFICATION");
 
-    await page.getByRole("tab", { name: /Evidence/ }).click();
+    await page.getByRole("button", { name: "See why this answer" }).click();
     await expect(page.locator(".terminal-panel")).toBeVisible();
+    await expect(page.locator(".terminal-panel")).toContainText("More information needed");
+    await expect(page.locator(".terminal-panel")).not.toContainText("ASK_CLARIFICATION");
+
+    await page.getByText("Show internal result codes").click();
     await expect(page.locator(".terminal-panel")).toContainText("ASK_CLARIFICATION");
 
-    await page.getByRole("tab", { name: /Engineering/ }).click();
+    await page.getByRole("tab", { name: /Technical details/ }).click();
     await expect(page.locator(".evaluation-panel")).toBeVisible();
     await expect(page.locator(".evaluation-panel")).toContainText("blocking checks passed");
+  });
+
+  test("history uses explicit keyboard-focusable controls instead of clickable rows", async ({ page }) => {
+    await openProduct(page);
+    await page.getByLabel("What would you like to understand?").fill("scenario:clarify");
+    await page.getByRole("button", { name: "Start analysis" }).click();
+    await expect(page.getByTestId("customer-outcome-summary")).toBeVisible({ timeout: 20_000 });
+
+    await page.getByRole("tab", { name: /History/ }).click();
+    const firstAnalysis = page.getByRole("button", { name: /Analysis 1/ }).first();
+    await expect(firstAnalysis).toBeVisible();
+    await firstAnalysis.focus();
+    await expect(firstAnalysis).toBeFocused();
+    await firstAnalysis.press("Enter");
+    await expect(page.getByRole("tab", { name: /Overview/ })).toHaveAttribute("aria-selected", "true");
   });
 });
