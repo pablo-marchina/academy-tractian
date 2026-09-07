@@ -179,7 +179,8 @@ def test_g10_unknown_asset_is_not_invented_or_widened_to_other_assets() -> None:
     assert request.tools == ()
     assert "FINAL" in _schema_kinds(request)
     instruction = _client().build_http_request(request).body["messages"][0]["content"]
-    assert "Never ask for an internal asset_id" in instruction
+    assert "internal asset_id" in instruction
+    assert "authorized discovery path" in instruction
 
 
 def test_ambiguous_human_alias_fails_closed_instead_of_auto_selecting() -> None:
