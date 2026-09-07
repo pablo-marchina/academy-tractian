@@ -1,0 +1,56 @@
+name: tractian-action-auth-preflight
+
+on:
+  push:
+    branches:
+      - ops/fix-governed-write-smoke-runner-20260907
+    paths:
+      - ".github/workflows/tractian-action-auth-preflight.yml"
+  workflow_dispatch:
+
+jobs:
+  inspect-upstream-action-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install parquet reader
+        run: python -m pip install --disable-pip-version-check pandas pyarrow
+      - name: Reconstruct immutable supplied runtime
+        run: |
+          mkdir -p /tmp/tractian-runtime
+          cat services/tractian-supplied-api/runtime.bundle.b64.part* | base64 -d > /tmp/tractian-runtime.tar.gz
+          echo "0db58e29d6f5c86ef1838acf31c4caed788b393eb1807345fabd157c8de5bb9a  /tmp/tractian-runtime.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/tractian-runtime.tar.gz -C /tmp/tractian-runtime
+      - name: Print only upstream user identity and action permission contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import pandas as pd
+
+          root = Path('/tmp/tractian-runtime')
+          users = pd.read_parquet(root / 'data' / 'users.parquet')
+          print('USER_COLUMNS=' + ','.join(map(str, users.columns.tolist())))
+          for _, row in users.iterrows():
+              permissions = row.get('permissions')
+              try:
+                  permissions = json.loads(permissions) if isinstance(permissions, str) else permissions
+              except json.JSONDecodeError:
+                  pass
+              print(f"UPSTREAM_USER[id={row.get('id')}]=permissions:{permissions};company_id:{row.get('company_id')}")
+
+          main = (root / 'api' / 'app' / 'main.py').read_text(encoding='utf-8').splitlines()
+          for i, line in enumerate(main, 1):
+              low = line.lower()
+              if any(token in low for token in ('permission', 'x-user-id', 'update_asset', 'reprocess', 'request-specialist', 'request-retraining', 'escalate')):
+                  start = max(1, i - 3)
+                  end = min(len(main), i + 6)
+                  print(f'CODE_CONTEXT[{start}:{end}]')
+                  for n in range(start, end + 1):
+                      s = main[n-1].strip()
+                      if s and len(s) <= 360:
+                          print(f'LINE[{n}]={s}')
+          PY
