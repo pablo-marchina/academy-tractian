@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 
 from research.e2.controller import ControllerContext, ControllerDecision, DecisionSource
@@ -116,6 +117,27 @@ def release0_read_only_action_principal(*, user_id: str) -> ProductionActionPrin
     )
 
 
+def _assert_actor_coverage_for_active_grants(
+    *,
+    raw_authorization_grants: str,
+    authorization_source: ConfiguredServerOwnedActionAuthorizationSource,
+    actor_source: ConfiguredServerOwnedUpstreamActionActorSource,
+) -> None:
+    """Make incomplete provider-side action identity a boot blocker, not a runtime surprise."""
+
+    decoded = json.loads(raw_authorization_grants)
+    if not isinstance(decoded, list):
+        raise RuntimeError("validated action authorization grants lost list shape")
+    for item in decoded:
+        if not isinstance(item, dict) or item.get("active", True) is not True:
+            continue
+        user_id = item.get("user_id")
+        if not isinstance(user_id, str) or not user_id:
+            raise RuntimeError("validated action authorization grant lost user identity")
+        principal = authorization_source(user_id=user_id)
+        actor_source.assert_complete_for_principal(principal)
+
+
 def _configure_runtime_evaluator(app, *, provider_calls_enabled: bool) -> None:
     """Bind the remote runtime evaluator to the serving provider mode before startup.
 
@@ -177,11 +199,17 @@ def app_factory():
             raise RuntimeError(
                 "enabled actions require server-owned ACADEMY_TRACTIAN_ACTION_ACTORS_JSON"
             )
+        raw_authorization_grants = config.action_authorization_grants_json.get_secret_value()
         action_authorization_source = ConfiguredServerOwnedActionAuthorizationSource.from_json(
-            config.action_authorization_grants_json.get_secret_value()
+            raw_authorization_grants
         )
         action_actor_source = ConfiguredServerOwnedUpstreamActionActorSource.from_json(
             raw_action_actors
+        )
+        _assert_actor_coverage_for_active_grants(
+            raw_authorization_grants=raw_authorization_grants,
+            authorization_source=action_authorization_source,
+            actor_source=action_actor_source,
         )
         # Pass the source object itself: it remains compatible with the user-id resolver protocol,
         # while the remote confirmation endpoint can additionally require its tenant-aware
