@@ -1,5 +1,5 @@
 schema_version: academy-tractian-decision-registry-v1
-updated_at: 2026-09-05
+updated_at: 2026-09-06
 rules:
   material_decision_requires:
     - requirement_or_risk
@@ -39,10 +39,11 @@ decisions:
       - backend source branch corrected to release/production-final
       - service moved to Railway US East Metal
       - managed IAM mode removes the old browser HMAC signing secret requirement
-      - current fail-closed boot reports only ACADEMY_POSTGRES_INTERNAL_DSN and ACADEMY_POSTGRES_SCOPED_DSN missing
       - production-api deployment healthcheck is /health with 60 second timeout
       - production-api restart policy is explicitly ON_FAILURE with five retries
-      - serving boot remains unproved until approved PostgreSQL DSN secret injection
+      - Release 0 backend/runtime 082d6f115c070fdc898df749b4b3018efd9ceeab served successfully with exact artifact identity
+      - hosted G2 and Release 0 acceptance proved the remote backend path with Neon, managed IAM, provider, TRACTIAN read, persistence and SSE
+      - no localhost, local model, local database or developer process participates in the promoted serving path
     decision_state: QUALIFIED
     reversal_trigger: A currently eligible hosted alternative materially improves production fit under the same hard gates or Railway fails the remote boot/capacity/cost gates.
 
@@ -63,6 +64,9 @@ decisions:
       - run_ownership is owned by academy_tractian_owner, not the scoped role
       - isolated validation branch RLS test exposed org-a and denied org-b under academy.organization_id=org-a
       - academy_live_scoped explicitly excluded because it has BYPASSRLS
+      - hosted Release 0 persisted run, evidence, evaluation and reconnect state on Neon
+      - hosted two-user acceptance preserved tenant isolation across REST and SSE for the tested release scope
+      - final capacity and restore/RTO/RPO evidence remain separate open gates
     decision_state: PREFERRED
     reversal_trigger: Neon fails remote reconnect/cursor-catch-up/capacity/cost gates, free-tier limitations prevent the required measured production envelope, or another eligible candidate materially dominates it.
 
@@ -83,14 +87,10 @@ decisions:
       - backend NeonAuthRuntimeContextProvider revalidates managed session server-side with cookie-cache bypass
       - backend ignores browser organization/role headers and derives a personal tenant from authenticated user id when no managed active organization exists
       - impersonated, mismatched, missing and unavailable sessions fail closed in regression tests
-      - production-runtime regression passed for the managed-session backend composition before the release-identity change
-      - provider-free full Chromium acceptance passed after production-only auth gating
-      - prior final-ci-required checkpoint completed required-gate SUCCESS across clean clone, browser, horizontal runtime and action lease
-      - Neon Auth Better Auth is now provisioned on Neon production main
-      - production-web origin is trusted on production-main Auth
-      - production-web redeployed SUCCESS against production-main Auth host
-      - current email/password configuration does not require email verification, so verified-email identity is not claimed
-      - remote authenticated backend E2E remains blocked on PostgreSQL secret injection
+      - Neon Auth Better Auth is provisioned on Neon production main and the Railway production-web origin is trusted
+      - hosted Release 0 acceptance exercised real signup/sign-in/session behavior through the public product
+      - hosted two-user negative cases denied cross-tenant run/evidence/SSE access and rejected browser-forged authority
+      - current email/password configuration does not require email verification, so verified-email identity and enterprise SSO are not claimed
     decision_state: QUALIFIED
     reversal_trigger: Managed-session remote multi-tenant acceptance fails, OAuth/OIDC becomes an explicit delivery requirement, email-verification requirements cannot be satisfied under the production envelope, or another eligible design proves materially better under the same security gates.
 
@@ -109,7 +109,9 @@ decisions:
       - campaign is partitioned into five UTC daily packets of 34 calls under the USD0 free-neuron envelope
       - conservative packet-start quota gate prevents paid spillover and quota-blind execution
       - validator and provider-free regression tests enforce scenario count, repetitions, provenance, route/model integrity, schema, safety, gold isolation, cash cost and quota policy
-      - v3 live provider execution has not occurred and no candidate is promoted
+      - Release 0 separately qualified Cloudflare @cf/zai-org/glm-4.7-flash as a provisional serving provider for the read-only release path
+      - Release 0 provisional qualification is outside the frozen v3 decision denominator and does not promote a final tournament winner
+      - v3 live provider execution has not occurred and no candidate is promoted by this decision record
     decision_state: NO_SELECTION
     reversal_trigger: New preregistered v3 live evidence shows a currently eligible candidate passes every promotion gate.
 
@@ -131,12 +133,10 @@ decisions:
       - no automatic read or write retry is present; consequential writes therefore cannot be blindly replayed by the transport
       - upstream transport failure is normalized without raw exception disclosure
       - production configuration is fail-closed and keeps TRACTIAN endpoint/header data outside public release metadata
-      - provider/model selection and TRACTIAN integration now have independent state; default is provider NO_SELECTION plus TRACTIAN UNCONFIGURED plus deny-all actions
-      - a fully specified endpoint/header configuration may advance only to CONFIGURED_UNVERIFIED because transport construction performs zero remote I/O
-      - no Bearer, API-key or other authentication scheme is assumed because an authoritative remote partner endpoint/auth contract has not been recovered
-      - adversarial composition tests prove partial configuration rejection, zero-I/O construction, secret masking, state/config mismatch rejection and no provider/action promotion
-      - validated implementation head a9356e217fbf7c94549849a7cdb8554a449e947b passed clean-clone, production-runtime unit, standalone wheel, production image, Playwright and final-ci-required required-gate
-      - no real TRACTIAN request or reachability claim has been made
+      - adversarial composition tests prove partial configuration rejection, zero-I/O construction, secret masking and state/config mismatch rejection
+      - hosted predeploy bounded connectivity executed canonical search_knowledge through ProductionTractianTransport and observed HTTP 200
+      - hosted Release 0 agent acceptance exercised a real typed TRACTIAN read through provider, controller, HarnessRunner, transport, evidence persistence and terminal evaluation
+      - Release 0 capability contract exposes 13 live reads and 5 proposal-only actions while external consequential action execution remains disabled
     decision_state: PREFERRED
     reversal_trigger: A measured interoperability requirement appears that the direct typed adapter cannot satisfy, or live partner-contract evidence proves that the chosen direct HTTP boundary cannot preserve the required security/write semantics.
 
@@ -165,13 +165,13 @@ decisions:
       - frontend Dockerfile.production builds React/Vite and serves through Caddy
       - service moved to Railway US East Metal with one replica
       - public HTTPS domain allocated
-      - source-branch misconfiguration was identified and corrected rather than bypassed
       - Caddy routes /auth same-origin and /api plus SSE to production-api over Railway private networking
       - production Docker image forces VITE_BROWSER_AUTH_ENABLED=true
       - production-main Neon Auth host installed as the /auth upstream
-      - post-production-Auth-host Railway deployment reached SUCCESS
       - production-web restart policy is explicitly ON_FAILURE with five retries
-      - provider-free Chromium acceptance remains green because external IAM is not required in the test Vite build
+      - Release 0 public frontend/auth/API path passed hosted acceptance
+      - UX baseline 2ca6215ccc07664a9551e8363e438f0930a4d995 passed full-product Playwright, clean-clone and final-ci-required
+      - Railway reported a SUCCESS deployment of UX baseline 2ca6215ccc07664a9551e8363e438f0930a4d995
     decision_state: PREFERRED
     reversal_trigger: Remote page/auth/API acceptance or cost/availability gates fail, or a simpler eligible host materially improves measured production fit.
 
@@ -227,8 +227,8 @@ decisions:
       - .railway/railway.ts uses a named production partial and preserve() for Railway-managed values
       - historical hosted-pilot is intentionally outside the production partial
       - repository static validator rejects literal PostgreSQL URLs and accidental hosted-pilot management
-      - dedicated TypeScript DSL CI was added
-      - live railway config plan/apply is still required before claiming IaC ownership convergence
+      - dedicated TypeScript DSL CI is part of the active validation surface and remains green on the current UX/docs line
+      - live railway config plan/apply convergence remains a separate infrastructure ownership claim unless explicitly evidenced
     decision_state: PREFERRED
     reversal_trigger: Railway IaC cannot produce a non-destructive converged plan for the two production services, current IaC defects block safe use, or another lower-complexity supported mechanism proves materially safer and more reproducible.
 
@@ -241,7 +241,7 @@ decisions:
     metrics: [independent_identity_signal_count, mismatch_acceptance_count, missing_identity_acceptance_count, pre_dependency_rejection]
     hard_gates: [mismatch_acceptance_equals_0, missing_baked_identity_acceptance_equals_0, release_endpoint_without_verified_artifact_equals_0]
     evidence:
-      - production Dockerfile now requires Railway Git-backed RAILWAY_GIT_COMMIT_SHA and rejects absent or malformed build identity
+      - production Dockerfile requires Railway Git-backed RAILWAY_GIT_COMMIT_SHA and rejects absent or malformed build identity
       - exact build SHA is baked into /app/.academy-release-identity.json and org.opencontainers.image.revision
       - baked identity uses an extra-forbidden frozen Pydantic contract and is read before remote product builders
       - configured ACADEMY_RELEASE_GIT_SHA must equal the baked identity before PostgreSQL/IAM composition
@@ -249,8 +249,9 @@ decisions:
       - /api/meta/release v3 exposes safe artifact verification fields rather than relying on a single mutable SHA
       - negative unit tests cover missing, corrupt, malformed, extra-field and mismatch cases before delegate invocation
       - production-runtime Docker smoke proves positive identity and negative malformed-build/runtime-mismatch behavior
-      - production-runtime is now consumed by final-ci-required so artifact identity is a required source-level release gate
-      - current complete-head CI and hosted Railway v3 observation remain pending
+      - production-runtime is consumed by final-ci-required so artifact identity is a required source-level release gate
+      - hosted G2 and Release 0 acceptance observed the exact promoted backend/runtime SHA 082d6f115c070fdc898df749b4b3018efd9ceeab
+      - current UX baseline 2ca6215ccc07664a9551e8363e438f0930a4d995 separately passed the complete branch regression surface without being misrepresented as a backend promotion
     decision_state: PREFERRED
     reversal_trigger: Railway no longer supplies a trustworthy Git-backed build identity, the image build path changes so the baked file is not authoritative, or a stronger signed provenance/attestation mechanism becomes necessary under the same USD0 and complexity constraints.
 
@@ -263,14 +264,14 @@ decisions:
     metrics: [historical_false_positive_count, current_head_tamper_acceptance_count, frozen_historical_tamper_acceptance_count, missing_artifact_acceptance_count]
     hard_gates: [historical_manifest_rewrite_equals_0, current_head_tamper_acceptance_equals_0, frozen_historical_tamper_acceptance_equals_0, missing_artifact_acceptance_equals_0]
     evidence:
-      - clean-clone failure isolated to the dated bundle artifact_0 blob while 651 Python tests and the PostgreSQL/controller/reproduction campaigns passed on the observed failing job
-      - artifact_0 is final-ci-required.yml recorded by the 2026-09-04 manifest before later required Railway IaC and production-runtime identity gates were added
+      - clean-clone failure isolated to the dated bundle artifact_0 blob while the Python/PostgreSQL/controller/reproduction campaigns passed on the observed failing job
+      - artifact_0 is final-ci-required.yml recorded by the 2026-09-04 manifest before later Railway IaC and production-runtime identity gates were added
       - the historical JSON bundle remains unchanged rather than being re-pinned to future code
-      - validator now exposes explicit current-head and historical-snapshot artifact scopes
+      - validator exposes explicit current-head and historical-snapshot artifact scopes
       - current-head remains strict for every registered artifact and is the required behavior for a future final freeze
       - historical-snapshot still checks manifest hash, schema, paths, decisions, evidence registration, non-claims, branch-protection truth and byte identity of frozen_historical_evidence
       - regression tests cover current-head drift rejection, historical current-role evolution, frozen evidence tamper rejection and missing artifact rejection
-      - clean-clone script now prints HISTORICAL_SNAPSHOT explicitly instead of silently applying a relaxed rule
-      - complete-head CI after this correction remains pending
+      - clean-clone script prints HISTORICAL_SNAPSHOT explicitly instead of silently applying a relaxed rule
+      - UX baseline 2ca6215ccc07664a9551e8363e438f0930a4d995 completed clean-clone and final-ci-required successfully after this correction
     decision_state: PREFERRED
     reversal_trigger: A stronger immutable snapshot mechanism records and retrieves historical Git blobs directly without relying on a later worktree, or the historical/current role model proves unable to preserve both provenance and strict future-freeze integrity.
