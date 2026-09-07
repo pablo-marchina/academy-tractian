@@ -1,33 +1,33 @@
 # 5-Minute Technical Screenplay
 
 **Audience:** technical reviewer already knows the challenge.  
-**Goal:** explain the current promoted architecture and prove it with one persisted V13 hosted run.  
+**Goal:** explain the current promoted architecture, prove it with persisted hosted evidence, and state the governed-action live gap exactly.  
 **Style:** no business introduction, no generic AI explanation, no feature tour.
 
 ## Timing contract
 
 | Time | On screen | Technical point |
 |---:|---|---|
-| 00:00–00:28 | architecture overlay | identity, agent, tool, evidence/eval boundaries |
+| 00:00–00:28 | architecture overlay | identity, agent, tool, evidence/eval/action boundaries |
 | 00:28–00:55 | signed-in **Home** + identity overlay | browser is not authority; managed-session resilience |
-| 00:55–01:25 | submit or select PRIMARY R310 run | V13 explicit asset grounding starts with server-owned identity/fleet discovery |
-| 01:25–02:05 | **Technical → Current analysis** | structured decisions, tool args, asset→point drill-down, TRACTIAN I/O |
-| 02:05–02:40 | selected **Result** + evidence | terminal decision versus `response_mode`; evidence lineage |
-| 02:40–03:05 | **Analyses** → unavailable R420 run | fail closed when requested label is absent from authorized fleet |
-| 03:05–03:42 | **Technical → Quality** | post-runtime evaluator / blocking checks |
-| 03:42–04:08 | **Technical → Actions** | proposal ≠ authorization; external execution disabled |
-| 04:08–04:38 | deployment/auth/realtime overlay | Railway + Neon + Cloudflare + supplied API; 401/503 session semantics |
-| 04:38–05:00 | final architecture recap | end-to-end auditability and current non-claims |
+| 00:55–01:25 | PRIMARY R310 run | V13 asset grounding via server-owned identity/fleet discovery |
+| 01:25–02:05 | **Technical → Current analysis** | typed decisions, tool args, asset→point drill-down, TRACTIAN read I/O |
+| 02:05–02:40 | selected **Result** + evidence | terminal decision vs `response_mode`; evidence lineage |
+| 02:40–03:05 | **Analyses** → unavailable R420 run | fail closed when requested label is absent |
+| 03:05–03:38 | **Technical → Quality** | post-runtime evaluator / blocking checks |
+| 03:38–04:15 | **Technical → Actions** | governed custody/confirmation/idempotency/lease + truthful live 403 limitation |
+| 04:15–04:40 | deployment/auth/realtime overlay | exact source, Railway snapshot discipline, Neon/Cloudflare/TRACTIAN |
+| 04:40–05:00 | final recap | end-to-end auditability + explicit non-claims |
 
 ## 00:00–00:28 — Current architecture
 
-Show the runtime boundary overlay:
+Show:
 
 ```text
 Browser / task-driven React
 → Railway production-web
 → FastAPI production-api
-→ managed AuthenticatedRuntimeContext
+→ AuthenticatedRuntimeContext
 → V13 DecisionSource ↔ AgentController
 → HarnessRunner / ToolSpec
 → supplied TRACTIAN API
@@ -37,13 +37,23 @@ Browser / task-driven React
 → authenticated SSE / UI
 ```
 
-Say that identity/tenant, tool authority and evaluator-private state are all outside model authority.
+Add a separate action branch:
+
+```text
+proposal
+→ private custody
+→ exact confirmation
+→ trusted grant/resource scope
+→ idempotency + lease
+→ server-owned vendor actor
+→ one typed write
+```
+
+Say: identity/tenant, tool authority, action authority and evaluator-private state are outside model authority.
 
 ## 00:28–00:55 — Home and identity/session boundary
 
-Show signed-in **Home**. Keep the service state and primary question visible.
-
-Overlay:
+Show signed-in **Home**.
 
 ```text
 managed cookie
@@ -53,53 +63,51 @@ managed cookie
 → PostgreSQL org scope / RLS
 ```
 
-Add small resilience note:
+Resilience note:
 
 ```text
 GET/HEAD: ≤2 s validated-context reuse
-POST/run create: fresh validation
+POST/non-read: fresh validation
 401 invalid ≠ 503 auth unavailable
 ```
 
-Explain this was hardened after a real dashboard fan-out incident; no stale-on-error or browser authority was introduced.
+Explain this was hardened after a real dashboard fan-out incident without introducing stale auth or browser authority.
 
 ## 00:55–01:25 — V13 asset grounding
 
-Use/select `run_97b91f6e0feb91184283` or submit its equivalent R310 causal question if intentionally consuming a live run.
-
-Overlay:
+Use/select `run_97b91f6e0feb91184283`.
 
 ```text
 "R310" human label
 → get_current_user
-→ company_id from structured observation
+→ company_id from authorized structured observation
 → list_assets_by_company
 → asset_R310 from authorized fleet
 → condition evidence
 ```
 
-Key point: customer does not need to provide internal `company_id`/`asset_id`, and missing labels do not authorize another tenant scope.
+Key point: customer does not supply internal IDs; missing labels do not authorize another tenant.
 
 ## 01:25–02:05 — Technical current analysis / tool execution
 
-Open **Technical → Current analysis** for the primary run.
+Open **Technical → Current analysis**.
 
-Show at least:
+Show model/tool transition, canonical tool, arguments/resource, result/status/evidence and trace sequence.
 
-- model/tool transition;
-- canonical tool name;
-- arguments/resource target;
-- HTTP/result/evidence state;
-- trace sequence.
+For spectrum refinement explain:
 
-For the R310 run, point out spectrum refinement. Explain that repeated `get_spectrum` names are not automatically loops: the remote path moved from asset-level to point-specific evidence. Redundancy is determined from operation + normalized args/resource + evidence contribution.
+```text
+same tool family
++ more specific point_id target
+= progressive drill-down, not automatically a loop
+```
 
 Execution overlay:
 
 ```text
 structured TOOL decision
 → ToolSpec lookup
-→ deterministic argument/policy checks
+→ deterministic validation/policy
 → HarnessRunner
 → ProductionTractianTransport
 → typed HTTPS
@@ -109,50 +117,42 @@ structured TOOL decision
 
 ## 02:05–02:40 — Result, evidence and response semantics
 
-Return to the selected **Result** and its contextual evidence.
-
-Explain two separate contracts:
+Return to **Result**.
 
 ```text
 terminal decision = what controller does next
 response_mode      = how completely evidence supports the message
 ```
 
-Show `partial` on the R310 causal run. Explain that a probable bearing mechanism can be useful and directional while still not being fully proven root cause.
+Show `partial` on the R310 causal run. Explain probable mechanism can be useful without being fully proven root cause.
 
-Response-mode vocabulary:
+Vocabulary:
 
-- complete;
-- partial;
-- inconclusive;
-- conflict;
-- unavailable.
+```text
+complete | partial | inconclusive | conflict | unavailable
+```
 
-Show one evidence reference linked back to a tool observation if possible. Explicitly say hidden chain-of-thought is not required or exposed.
+Show an evidence reference. Auditability comes from observable calls/args/status/evidence/events, not hidden chain-of-thought.
 
-## 02:40–03:05 — Analyses / missing resource fail-closed
+## 02:40–03:05 — Missing resource fail-closed
 
-Open **Analyses**, select `run_547b2a62d84ef56a3d3d`, then its result.
+Open `run_547b2a62d84ef56a3d3d`.
 
-The prompt asked to compare R310 and R420. Authorized fleet discovery found R310 but not R420, so the correct result was `unavailable`.
-
-Explain:
+R310 was authorized; R420 was absent from the authorized fleet. Correct behavior:
 
 ```text
 missing label
-≠ ask user for hidden internal ID
-≠ guess another plant/company
-≠ fabricate comparison
-→ bounded unavailable result
+≠ hidden-ID request
+≠ other-company guess
+≠ fabricated comparison
+→ bounded unavailable
 ```
 
-Do not claim this proves quality of a true two-asset comparison; it proves missing-resource safety/grounding.
+Do not present this as proof of true bilateral comparison quality.
 
-## 03:05–03:42 — Technical Quality / evaluator
+## 03:05–03:38 — Quality / evaluator
 
-Open **Technical → Quality** for the primary run.
-
-Show the post-runtime pipeline:
+Open **Technical → Quality**.
 
 ```text
 completed RunTrace
@@ -161,47 +161,68 @@ completed RunTrace
 → safe persisted evaluation
 ```
 
-Prioritize real persisted checks such as execution-chain integrity, model-call provenance, production-trace identity, proposal contract validity, read-only action safety and terminal consistency.
+Mention execution-chain integrity, model-call provenance, production-trace identity, proposal-contract validity and terminal consistency where visible. Evaluator-private truth is never supplied to the running agent.
 
-Explain evaluator-private truth is not supplied to the running agent.
-
-## 03:42–04:08 — Technical Actions / consequence boundary
+## 03:38–04:15 — Actions / consequence boundary
 
 Open **Technical → Actions**.
 
-Overlay:
+Do **not** use the old `DISABLED / DENY-ALL` overlay.
+
+Show:
 
 ```text
-model may propose
-→ deterministic validation
-→ proposal/control state
-→ confirmation/custody/idempotency/lease architecture
-→ external consequential execution
+model proposal
+→ deterministic policy
+→ private exact custody
+→ explicit confirmation
+→ server-owned grant/resource scope
+→ persistent idempotency
+→ action execution lease/fencing
+→ server-owned vendor actor
+→ one remote action attempt
+→ ACCEPTED | NOT_ACCEPTED | BLOCKED | UNCERTAIN
 ```
 
-Mark the last step:
+Then state the current evidence boundary:
 
 ```text
-RELEASE 0: DISABLED / DENY-ALL
+local governed architecture: implemented + CI-qualified
+production composition: enabled
+five-action vendor acceptance: NOT PROVEN
+live blocker: update_asset_config -> HTTP 403 / accepted=false
 ```
 
-Do not imply action execution simply because action contracts exist in the codebase.
+Explain the failed validation deployment did not replace healthy production.
 
-## 04:08–04:38 — Deployment, auth and realtime
+Then explain root cause in one sentence: the supplied runtime has distinct vendor actors for low-impact and high-impact/escalation permissions, so local product identity must remain the authorization/audit principal while the final TRACTIAN actor is selected server-side by company + required permission.
+
+Do not say the corrective actor-routing branch is already merged or proven.
+
+## 04:15–04:40 — Deployment, auth and realtime
 
 Show:
 
 ```text
 Browser
-→ Railway production-web 1bc124a...
-→ Railway production-api 08866da...
+→ production-web 1bc124a...
+→ production-api source 3545d75...
    ├→ Neon Auth
    ├→ Cloudflare provisional provider
    ├→ supplied TRACTIAN API 47561c...
    └→ Neon PostgreSQL
 ```
 
-Then realtime:
+Mention PR #213 required gate `34164123263` passed source/artifact/browser/action-lease regressions.
+
+Operational point:
+
+```text
+Railway generic redeploy can reuse a captured snapshot
+fresh config/source evidence requires a fresh deployment snapshot
+```
+
+Realtime:
 
 ```text
 runtime transition
@@ -213,22 +234,21 @@ runtime transition
 → React projection
 ```
 
-Explain component SHAs are tracked independently and source/docs commits do not automatically become a backend deployment.
-
-## 04:38–05:00 — Final recap
+## 04:40–05:00 — Final recap
 
 End with:
 
 ```text
 1 server-owned identity/tenant
 2 durable run ownership
-3 V13 grounded DecisionSource + AgentController
+3 V13 grounded decisions
 4 typed ToolSpec validation
 5 HarnessRunner + remote TRACTIAN reads
 6 evidence + RunTrace
 7 terminal + response_mode
 8 post-runtime evaluator
-9 PostgreSQL + authenticated SSE + task-driven UI
+9 governed action custody/confirmation/idempotency/lease
+10 explicit vendor acceptance required + fail-closed deployment validation
 ```
 
-Final claim boundary: strong current read-only product; not final provider superiority, not all-read live coverage, not consequential action readiness, not final SLO/security/value proof.
+Final claim boundary: hosted/hardened real product with governed action machinery, but not final provider superiority, not all-read coverage, not five-action vendor readiness, not final SLO/security/recovery/value/human-usability proof.
