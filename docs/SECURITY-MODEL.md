@@ -1,26 +1,23 @@
 # Active Security Model
 
 **Status:** ACTIVE threat/trust-boundary model  
-**Last reviewed:** 2026-09-06 BRT  
-**Release scope:** promoted read-only Release 0
+**Last reviewed:** 2026-09-07 BRT  
+**Release scope:** hosted read-only Release 0 V13
 
-This document follows the practical four-question threat-model loop: **What are we working on? What can go wrong? What are we doing about it? Did we do a good enough job?**
-
-It is not a claim that the full final SECURITY-V1 campaign is complete.
+This is not a claim that the full final SECURITY-V1 campaign is complete.
 
 ## 1. What are we working on?
 
-A remote multi-user industrial agent/evaluation product:
-
 ```text
 browser
-→ Railway public frontend
-→ managed Neon Auth + Railway FastAPI
+→ Railway production-web
+→ Neon managed auth + Railway FastAPI
 → server-owned tenant context
 → Neon PostgreSQL/RLS
 → Cloudflare provisional provider
+→ V13 grounded DecisionSource/controller
 → typed TRACTIAN reads
-→ evidence/terminal/evaluator
+→ evidence/terminal/response_mode/evaluator
 → authenticated REST/SSE
 ```
 
@@ -33,126 +30,152 @@ browser
 - evaluator/gold/blind research truth;
 - release/provenance identity;
 - USD0/no-paid-spillover boundary;
-- safe customer outputs;
+- safe grounded customer outputs;
 - availability/quota within free-tier limits.
 
 ### Trust boundaries
 
 1. browser ↔ public origin;
-2. public web proxy ↔ managed auth/API;
+2. web proxy ↔ managed auth/API;
 3. API ↔ Neon Auth;
 4. API ↔ PostgreSQL/RLS;
 5. runtime ↔ model provider;
 6. model output ↔ deterministic controller/tool/policy;
-7. API ↔ TRACTIAN external system;
-8. runtime state ↔ post-runtime evaluator;
+7. API ↔ TRACTIAN;
+8. runtime ↔ post-runtime evaluator;
 9. private/raw state ↔ browser-safe observability;
-10. free-tier operation ↔ paid cost boundary.
+10. free-tier operation ↔ paid boundary.
 
 ## 2. What can go wrong?
 
 | Threat | Primary impact |
 |---|---|
 | forged/missing/impersonated session | unauthorized access |
+| auth validation fan-out overloads managed identity | availability/session instability |
+| stale auth served during outage | unauthorized continued access |
 | browser asserts organization/role/permission | privilege/tenant escalation |
 | RLS misconfiguration/BYPASSRLS role | cross-tenant disclosure |
-| model attempts unknown/malformed/unauthorized tool | safety boundary bypass |
-| prompt/tool output injection tries to control policy | unsafe action/claim |
+| model invents or asks user for internal resource ID | grounding/UX failure; potential unsafe resource reference |
+| missing explicit asset label triggers cross-scope speculation | tenant/grounding failure |
+| model compares assets with evidence for only one | unsupported operational conclusion |
+| baseline/data quality treated as fault proof | false diagnosis |
+| model attempts unknown/malformed/unauthorized tool | safety bypass |
+| prompt/tool output injection controls policy | unsafe action/claim |
 | redirect/credential leak at TRACTIAN boundary | secret disclosure |
 | provider/model/route silently substituted | provenance/cost/quality failure |
-| automatic paid fallback/quota overage | violates USD0 hard constraint |
+| automatic paid fallback | USD0 violation |
 | raw upstream/evaluator/private material reaches browser | privacy/scientific leakage |
 | SSE reorder/gap treated as truth | incorrect visible state |
 | stale runtime/action owner finalizes after lease loss | incorrect/duplicate state |
 | consequential action duplicated/replayed | external side effect |
 | release SHA decoupled from artifact | false deployment provenance |
-| resource exhaustion | availability/quota loss |
 
-## 3. What are we doing about it?
-
-### Identity / tenant
+## 3. Identity / tenant mitigations
 
 - managed session validated server-side;
-- tenant/permissions are server-owned;
-- browser authority headers ignored/rejected as authority;
+- tenant/permissions server-owned;
+- browser authority headers ignored/rejected;
 - PostgreSQL scoped role + RLS independent boundary;
-- hosted two-user REST/SSE negative acceptance.
+- hosted tenant negative acceptance;
+- impersonated managed sessions rejected.
 
-### Model/tool authority
+### Read-burst session resilience
 
-- provider returns typed decisions/proposals, not raw execution authority;
+Current #207 contract:
+
+```text
+GET/HEAD
+→ cookie digest
+→ ≤2 s validated-context cache
+→ bounded LRU (256)
+→ striped singleflight
+→ Neon Auth when cache miss
+
+POST/non-read
+→ always fresh Neon Auth validation
+```
+
+Security invariants:
+
+- raw cookie never stored in read cache;
+- cache digest is SHA-256;
+- expired entry is deleted and never stale-on-error;
+- managed auth redirect not followed with cookie;
+- invalid 401/403 → API 401;
+- unexpected/unavailable identity response → API 503 + Retry-After;
+- frontend invalid signal exits authenticated state;
+- frontend unavailable signal exposes retryable protected state;
+- focus/visibility return reconciles the session.
+
+## 4. Model/tool/grounding authority
+
+- provider returns typed decisions/proposals, not execution authority;
 - `HarnessRunner` is exclusive real tool boundary;
-- schema/policy/evidence gates are deterministic;
+- schema/policy/evidence gates deterministic;
 - bounded turns/timeouts/payloads;
-- no hidden provider fallback.
+- no hidden provider fallback;
+- human-readable asset labels resolve only against structured IDs observed from authenticated company/fleet responses;
+- comparison evidence is required per selected asset;
+- missing label closes the authorized tool path rather than expanding scope;
+- response-mode semantics have no permission effect.
 
-### TRACTIAN network
+## 5. TRACTIAN network
 
 - canonical 18-operation registry;
 - server-owned credentials/headers;
 - HTTPS/base URL restrictions;
 - bounded timeout/request/response sizes;
 - redirects disabled;
-- no blind write retry.
+- no blind write retry;
+- Release 0 external action execution disabled.
 
-### Evidence / observability
+## 6. Evidence / observability
 
 - durable safe event projection;
 - raw sensitive/private/gold/chain-of-thought fields excluded;
-- evaluator runs post-runtime;
+- evaluator post-runtime;
 - SSE wake-up not authorization/correctness truth;
-- durable cursor supports catch-up.
+- durable cursor catch-up.
 
-### Consequential actions
+Repeated tool names must not be flagged as loops without considering arguments/resource. Legitimate asset→point drill-down is allowed; exact same-resource/args repetition without useful evidence remains a reliability concern.
 
-Release 0 external action execution is disabled. The codebase additionally has private custody, explicit confirmation, idempotency and non-transferable lease/fencing design for future promotion.
+## 7. Cost
 
-### Cost
-
-- USD0 is a hard eligibility rule;
+- USD0 hard eligibility rule;
 - no automatic paid fallback;
-- quota exhaustion should fail/degrade rather than spend;
-- provider selection and route identity are explicit.
+- quota exhaustion fails/degrades rather than spends;
+- provider/model/route identity explicit.
 
-### Release provenance
+## 8. Release provenance
 
 - baked/configured/runtime backend identity cross-check;
-- hosted promotion requires exact expected SHA.
+- exact-SHA promotion evidence;
+- frontend/backend/supplied-API identities tracked independently;
+- original acceptance SHA remains historical when runtime later hardens.
 
-## 4. Did we do a good enough job?
+## 9. Evidence already passed for current scope
 
-### Evidence already passed for Release 0 scope
-
-- hosted managed auth path;
-- two-user/tenant REST/SSE negatives;
-- forged browser authority negatives;
-- real provider + real typed TRACTIAN read;
-- safe terminal modes;
+- original hosted managed-auth/two-user tenant acceptance;
+- #207 managed-session regression suite + post-deploy tested burst without recurrence in tested scope;
+- V13 explicit asset grounding/data-quality/missing-resource live retests;
+- V13 blocking structural evaluations all pass for the three final runs;
+- real provider + typed TRACTIAN reads;
 - exact backend release identity;
-- provider-free adversarial/regression suite;
-- full Playwright/required CI on current UX baseline;
-- external action calls = 0 in Release 0 acceptance.
+- required CI/Playwright on the relevant backend/frontend heads;
+- external action calls remain zero in Release 0 live testing.
 
-### Still required before broader final claims
+## 10. Still required before broader claims
 
 - full SECURITY-V1 hosted campaign;
-- resource-exhaustion/load boundary;
+- larger session/concurrency/resource-exhaustion campaign;
 - provider/TRACTIAN/DB failure campaign at final topology;
 - restore/recovery evidence;
-- governed real action adversarial campaign before enabling actions;
+- real action adversarial campaign before enabling actions;
 - final provider tournament;
-- any additional privacy/security checks introduced by new features.
+- broader semantic/anti-hallucination/false-precision live testing.
 
-## 5. Change trigger
+## 11. Change trigger
 
-Revisit this model after:
+Revisit this model after new external dependency/provider, auth/tenant/storage change, consequential action enablement, new browser data class, major topology change, security incident/finding or adaptive policy that influences tool/resource behavior.
 
-- new external dependency/provider;
-- auth/tenant/storage change;
-- consequential action enablement;
-- new data class exposed to browser;
-- major deployment/topology change;
-- security incident/finding;
-- new adaptive policy that influences tool/resource behavior.
-
-Security findings should follow root [`SECURITY.md`](../SECURITY.md).
+Security findings follow root [`SECURITY.md`](../SECURITY.md).

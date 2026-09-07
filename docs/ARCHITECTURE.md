@@ -1,69 +1,63 @@
 # Academy × TRACTIAN — Architecture
 
 **Status:** ACTIVE canonical architecture  
-**Last verified:** 2026-09-06 BRT  
-**Promoted backend/runtime:** `082d6f115c070fdc898df749b4b3018efd9ceeab`  
-**Current hosted frontend UX:** `2ca6215ccc07664a9551e8363e438f0930a4d995`  
-**Current hosted supplied API:** `47561c1175181b508139e23e6e39b555c1347d57`  
-**Validated PR #196 head:** `d7e941b1e0ee380f3cca43816521c88eddc20e9c`  
-**Main integration merge:** `9fbfbe0c5b5b80dc23941ac2850125834641e32b`
+**Last verified:** 2026-09-07 BRT  
+**Promoted backend/runtime:** `08866da60245f58f217981b7ae668b10be45cc67`  
+**Current hosted frontend UX:** `1bc124a8d4dbd029178ff8129b25452129445de7`  
+**Current hosted supplied API:** `47561c1175181b508139e23e6e39b555c1347d57`
 
-This document describes the architecture that is **actually promoted/hosted now**, then separates future hardening from current claims. Repository integration and hosted component identities are deliberately distinct; the merge into `main` is not treated as an automatic redeploy.
-
-The diagrams use a C4-inspired zoom: system context first, then containers, then the dynamic investigation path. Detail is added only where it changes responsibilities or trust boundaries.
+This document describes the architecture actually hosted now. Repository/source identity and hosted component identities are deliberately separate; a source merge or docs commit is not an automatic backend promotion.
 
 ## 1. System context
 
 ```mermaid
 flowchart LR
-    U[Person: authenticated industrial user/reviewer]
-    S[Software System: Academy × TRACTIAN\nIndustrial Agent + Evaluation]
-    A[External System: Neon Auth]
-    P[External System: Cloudflare Workers AI]
-    T[External System: supplied TRACTIAN API]
-    D[External System: Neon PostgreSQL]
+    U[Authenticated industrial user/reviewer]
+    S[Academy × TRACTIAN\nIndustrial Agent + Evaluation]
+    A[Neon Auth]
+    P[Cloudflare Workers AI]
+    T[Supplied TRACTIAN API]
+    D[Neon PostgreSQL]
 
-    U -->|HTTPS: asks, reviews evidence and history| S
-    S -->|server-side session validation| A
-    S -->|bounded structured model decision call| P
-    S -->|typed HTTPS read operations| T
-    S -->|tenant-scoped durable state/evidence/evaluation| D
+    U -->|HTTPS questions/history/review| S
+    S -->|managed session validation| A
+    S -->|bounded structured decision| P
+    S -->|typed HTTPS reads| T
+    S -->|tenant-scoped durable state/evidence/eval| D
 ```
 
-**Scope:** Academy × TRACTIAN product.  
-**External dependencies:** identity, model provider, TRACTIAN API and hosted PostgreSQL.  
-**Key boundary:** browser input is never authority for tenant/role/permissions.
+Key boundary: browser input and model output are never authority for tenant/role/permissions.
 
 ## 2. Production containers
 
 ```mermaid
 flowchart TB
     B[Browser\nReact 19 SPA]
-    W[production-web\nCaddy + static Vite build\nRailway]
+    W[production-web\nCaddy + Vite build\nRailway]
     API[production-api\nFastAPI/Uvicorn\nRailway]
-    AUTH[Neon Auth\nmanaged session]
+    AUTH[Neon Auth]
     DB[Neon PostgreSQL\noperational + RLS + observability]
     CF[Cloudflare Workers AI\nprovisional GLM-4.7-Flash]
-    TR[TRACTIAN API\n18 canonical operation contract]
+    TR[Supplied TRACTIAN API\n18-operation contract]
 
     B -->|HTTPS same origin| W
-    W -->|/auth/* HTTPS proxy| AUTH
-    W -->|/api/* + SSE private routing| API
-    API -->|validate managed session| AUTH
-    API -->|psycopg / TLS| DB
+    W -->|/auth/*| AUTH
+    W -->|/api/* + SSE| API
+    API -->|server-managed session validation| AUTH
+    API -->|TLS/psycopg| DB
     API -->|structured DecisionSource call| CF
     API -->|typed bounded HTTPS read| TR
 ```
 
-| Container | Responsibility | Technology/current state |
+| Container | Responsibility | Current state |
 |---|---|---|
-| browser SPA | user interaction + safe visualization | React, TypeScript, TanStack Query, React Flow/ECharts |
-| `production-web` | public HTTPS origin/static serving/proxy | Caddy on Railway |
-| `production-api` | auth context, runtime, tools, policy, evaluation, REST/SSE | Python 3.11+, FastAPI/Uvicorn |
-| Neon Auth | managed session lifecycle | server-validated managed auth |
-| Neon PostgreSQL | durable operational truth + tenant RLS + safe observability/evals | PostgreSQL + psycopg |
+| browser SPA | task-driven user interaction + safe visualization | Home / Analyses / Technical; contextual result/evidence |
+| `production-web` | public HTTPS origin/static serving/proxy | Caddy on Railway, `1bc124a...` |
+| `production-api` | auth context, runtime, tools, policy, evaluation, REST/SSE | V13, `08866da...` |
+| Neon Auth | managed session lifecycle | server-validated, bounded read-burst coalescing |
+| Neon PostgreSQL | durable operational truth + tenant RLS + observability/evals | PostgreSQL + psycopg |
 | Cloudflare Workers AI | provisional Release 0 decisions | `@cf/zai-org/glm-4.7-flash` |
-| supplied TRACTIAN API | canonical industrial evidence | 13 reads live; 5 actions represented but external execution disabled |
+| supplied TRACTIAN API | canonical industrial evidence | 13 read operations available; 5 action operations not externally executable in Release 0 |
 
 ## 3. Dynamic investigation flow
 
@@ -72,56 +66,123 @@ sequenceDiagram
     actor User
     participant Web as React/Caddy
     participant API as FastAPI
+    participant Auth as Neon Auth
     participant DB as Neon PostgreSQL
     participant Model as Cloudflare
     participant Tool as HarnessRunner
     participant T as TRACTIAN
     participant Eval as ProductionEvaluator
 
-    User->>Web: submit industrial request
+    User->>Web: submit equipment question
     Web->>API: POST /api/runs (managed session)
+    API->>Auth: fresh session validation for non-read request
     API->>API: derive server-owned tenant/runtime context
     API->>DB: persist run ownership/state
-    API->>Model: bounded DecisionSource request
+    API->>Model: bounded structured decision request
     Model-->>API: typed decision/tool proposal
     API->>Tool: validate + execute canonical read
-    Tool->>T: bounded typed HTTPS request
+    Tool->>T: typed HTTPS request
     T-->>Tool: evidence response
     Tool-->>API: normalized observation/evidence
     API->>Model: next bounded decision when needed
-    Model-->>API: FINAL / CLARIFY / ABSTAIN / ESCALATE
+    Model-->>API: terminal decision + response_mode
     API->>DB: persist terminal trace/evidence
-    API->>Eval: post-runtime deterministic evaluation
+    API->>Eval: deterministic post-runtime evaluation
     Eval-->>DB: safe evaluation projection
     API-->>Web: authenticated SSE + durable catch-up
-    Web-->>User: Results first; deeper evidence/runtime/engineering on demand
+    Web-->>User: result first; Analyses/Technical on demand
 ```
 
 The evaluator is post-runtime. Evaluator-private truth is not supplied to the model.
 
-## 4. Runtime responsibility boundaries
+## 4. V13 Release 0 decision layer
+
+The current serving provider wrapper is intentionally layered so each production fix stays narrow and testable:
+
+```text
+base Release 0 provider contract
+→ V10: nested ID grounding + condition-evidence/stopping constraints
+→ V11: response_mode epistemic semantics
+→ V12: explicit human asset labels, bilateral comparisons, data-quality requirements
+→ V13: initial identity grounding + completed single-asset quality suppression
+```
+
+`remote_server.py` serves `build_release_provider_decision_source_factory_v13`.
+
+### V11 response semantics
+
+`response_mode` is separate from terminal authority:
+
+```text
+complete      all material requested parts supported
+partial       useful supported answer + material probabilistic/incomplete part
+inconclusive no reliable directional answer after inspecting relevant evidence
+conflict      material observations contradict
+unavailable   required authorized evidence could not be obtained
+```
+
+### V12/V13 explicit-asset grounding
+
+For investigative requests with labels like `R310`:
+
+```text
+label in user request
+→ get_current_user
+→ structured company_id
+→ list_assets_by_company
+→ structured authorized asset IDs
+→ map human label to fleet resource
+→ constrain subsequent tool schemas to observed IDs
+```
+
+If the label is absent, the tool surface closes and the terminal must report bounded unavailability. The model may not expand itself to another tenant/company.
+
+For a multi-asset comparison, the runtime requires condition evidence for every requested asset present in the authorized fleet before a comparative conclusion.
+
+### Condition and data-quality gates
+
+- diagnostic questions require condition evidence (`get_analysis`, `get_rms`, `get_spectrum`) before terminal where required;
+- baseline/data quality do not substitute for condition evidence;
+- explicit data-quality questions require `get_data_quality`;
+- completed single-asset `get_data_quality` is removed from the visible surface;
+- `get_asset` is suppressed after fleet listing has already grounded metadata.
+
+## 5. Tool execution boundary
 
 ```text
 DecisionSource
-→ proposes next typed decision
+→ structured decision/proposal
 
 AgentController
-→ owns bounded control flow
+→ bounded control flow
 
 HarnessRunner
-→ exclusive canonical tool execution boundary
+→ canonical tool execution boundary
 
 B1 schema/argument validation
 B2 permission/resource/policy
-B3 evidence/authorization boundary where applicable
 
 ProductionTractianTransport
-→ owns real network contract, server credentials, timeout/size/redirect rules
+→ real network contract, server credentials, timeout/size/redirect rules
 ```
 
 A model cannot directly perform network I/O or grant itself permissions.
 
-## 5. Identity and tenant boundary
+## 6. Progressive technical drill-down
+
+The runtime may refine a successful read when structured output exposes a more specific point/resource:
+
+```text
+get_rms(asset_R310)
+→ discover point_id
+→ get_rms(asset_R310, point_id=pt_R310_de)
+```
+
+or equivalent spectrum progression.
+
+This is not an exact duplicate loop. Stopping/redundancy evaluation should consider normalized arguments, resource target and incremental evidence contribution.
+
+## 7. Managed identity and session resilience
 
 ```text
 managed HttpOnly browser session
@@ -132,17 +193,32 @@ managed HttpOnly browser session
 → RLS
 ```
 
-Rules:
+Read-burst resilience:
 
-- browser organization/role/permission headers are not authority;
-- missing, invalid, mismatched or unavailable sessions fail closed;
-- default runtime permissions are server-defined;
-- RLS is an independent database boundary;
-- same-origin SSE carries the authenticated browser session naturally.
+```text
+GET / HEAD
+→ SHA-256(cookie) lookup
+→ ≤2 s bounded validated-context cache
+→ singleflight on miss
+→ Neon Auth when needed
 
-The hosted Release 0 two-user campaign passed cross-tenant REST/SSE negative cases for its tested scope.
+POST / non-read
+→ bypass read cache
+→ fresh Neon Auth validation
+```
 
-## 6. Evidence and realtime architecture
+Properties:
+
+- raw cookie is not cached;
+- max 256 read contexts;
+- no stale-on-error after expiry;
+- invalid session = 401;
+- temporary auth-service unavailability = 503 + `Retry-After: 1`;
+- browser reconciles auth on managed-auth signal, focus and visibility return.
+
+RLS remains independent from this cache and from the model.
+
+## 8. Evidence and realtime architecture
 
 ```text
 canonical runtime transition
@@ -150,88 +226,75 @@ canonical runtime transition
 → authoritative (run_id, sequence) cursor
 → PostgreSQL commit
 → LISTEN/NOTIFY wake-up
-→ bounded durable catch-up reads
+→ bounded durable catch-up
 → authenticated SSE
 → idempotent React state
 ```
 
 PostgreSQL rows/cursors are truth. `LISTEN/NOTIFY` is only wake-up; missed notifications cannot become missing authoritative state.
 
-Browser projections exclude raw secrets, private action custody, evaluator-private material and hidden chain-of-thought.
+Raw secrets, private action custody, evaluator-private material and hidden chain-of-thought are excluded from browser projections.
 
-## 7. UX architecture — progressive depth
+## 9. Current UX architecture
 
-The current hosted frontend intentionally separates user and engineering needs:
-
-```text
-01 Results
-   answer, next step, onboarding, guided entry, live stages
-        ↓ when needed
-02 Evidence
-   canonical safe trail + persisted terminal/evidence coverage
-        ↓ when needed
-03 Investigation
-   history, execution state, metrics, Trace Graph, action proposal/control
-        ↓ when needed
-04 Engineering
-   capabilities, architecture, evaluator, analytics, controlled research collectors
-```
-
-Every layer operates on the same selected persisted run. New runs and history selection return to Results first.
-
-Accessibility includes tab/tabpanel semantics and keyboard Arrow Left/Right, Home and End navigation.
-
-## 8. Capability and action boundary
-
-Canonical registry invariant:
+Hosted UX is task-driven rather than globally depth-tab driven:
 
 ```text
-18 operations total
-13 READ  → LIVE_READ in Release 0 when provider + TRACTIAN path are available
-5 ACTION → PROPOSAL_ONLY in Release 0
+Home
+  ask one question / examples / service state
+    ↓ run
+Result
+  conclusion + next step + contextual evidence
+    ↙                         ↘
+Analyses                    Technical
+persisted history           analysis / quality / data / system / actions / studies
 ```
 
-The codebase contains a stronger governed action architecture (custody, explicit confirmation, idempotency, leases/fencing, uncertainty semantics), but **production Release 0 authorization is deny-all for consequential external execution**.
+Technical depth still exposes the same underlying runtime/evaluation/capability evidence; it is simply organized by user task.
 
-Proposal visibility is not execution authority.
+## 10. Capability and action boundary
 
-## 9. Provider boundary
+```text
+18 canonical operations
+13 READ  → available through Release 0 read path when provider + TRACTIAN transport are enabled
+5 ACTION → represented/proposal-only; external execution disabled
+```
 
-Two states deliberately coexist:
+The codebase contains stronger governed action machinery (custody, confirmation, idempotency, leases/fencing, uncertainty), but **production Release 0 authorization is deny-all for consequential external execution**.
 
-- **Release 0 serving:** Cloudflare GLM-4.7-Flash is provisional and allowed for the promoted read-only path.
-- **Final provider selection:** frozen Provider Tournament v3 remains `NO_SELECTION` pending 170 preregistered attempts.
+## 11. Provider boundary
+
+- Release 0 serving: Cloudflare GLM-4.7-Flash is provisional.
+- Final provider selection: frozen Provider Tournament v3 remains `NO_SELECTION`.
 
 No hidden fallback may silently replace provider/model/route or cross into paid operation.
 
-## 10. Release/deployment identity
+## 12. Release/deployment identity
 
-Repository and hosted identities are tracked independently:
+Current hosted identities:
 
-- promoted backend/runtime: `082d6f115c070fdc898df749b4b3018efd9ceeab`;
-- current hosted frontend UX: `2ca6215ccc07664a9551e8363e438f0930a4d995`;
-- current hosted supplied API: `47561c1175181b508139e23e6e39b555c1347d57`;
-- validated source head merged from PR #196: `d7e941b1e0ee380f3cca43816521c88eddc20e9c`;
-- repository integration commit on `main`: `9fbfbe0c5b5b80dc23941ac2850125834641e32b`.
+- backend/runtime `08866da60245f58f217981b7ae668b10be45cc67`;
+- frontend `1bc124a8d4dbd029178ff8129b25452129445de7`;
+- supplied API `47561c1175181b508139e23e6e39b555c1347d57`.
 
-The backend production artifact binds configured release SHA to baked artifact identity and Railway runtime identity before serving a production claim. A frontend or supplied-API deployment may advance independently; neither a source merge nor a docs-only commit implies a new backend runtime promotion.
+Original Release 0 acceptance remains historical at backend `082d6f...`.
 
-## 11. Evaluation architecture
+Backend production artifacts bind configured release SHA to baked artifact identity and Railway runtime identity before serving a production claim. Component deployments may advance independently.
 
-Primary layer:
+## 13. Evaluation architecture
 
 ```text
 RunTrace
 → deterministic structural/safety/trajectory checks
 → safe evaluation projection
-→ Engineering/Eval surfaces
+→ Technical quality/analysis surfaces
 ```
 
-Human-dependent semantic calibration remains separate and not gating until real blinded labels establish reliability.
+Current live V13 runs passed blocking checks including execution-chain integrity, model-call provenance, production-trace identity, proposal-contract validity, read-only action safety and terminal consistency.
 
-Operational-value collection is also a controlled study. Its dataset must not be polluted with casual product feedback.
+Human semantic calibration remains separate and non-gating until real blinded labels establish reliability.
 
-## 12. Technology decisions currently promoted
+## 14. Technology decisions currently promoted
 
 | Area | State |
 |---|---|
@@ -240,52 +303,19 @@ Operational-value collection is also a controlled study. Its dataset must not be
 | FastAPI + REST/SSE | promoted |
 | PostgreSQL serving truth | promoted |
 | PostgreSQL LISTEN/NOTIFY wake-up | promoted; rows remain truth |
-| React/Vite/Caddy | promoted frontend path |
-| Railway frontend/backend | hosted Release 0 path |
-| Neon PostgreSQL | hosted Release 0 path |
-| Neon managed auth | hosted Release 0 path |
+| React/Vite/Caddy | promoted task-driven frontend |
+| Railway frontend/backend | hosted Release 0 |
+| Neon PostgreSQL/Auth | hosted Release 0 |
 | Cloudflare GLM-4.7-Flash | provisional Release 0 only |
 | DuckDB | dev/benchmark compatibility only |
 | RAG/vector DB | NO_CHANGE |
 | persistent memory | NO_CHANGE |
 | multi-agent | NO_CHANGE |
-| MCP | NO_CHANGE unless interoperability gap appears |
+| MCP | NO_CHANGE unless measured interoperability gap appears |
 | LangGraph migration | NO_CHANGE unless challenger wins |
 | Redis/Kafka/Kubernetes | NO_CHANGE unless measured need appears |
-| adaptive stopping/routing | not promoted; evaluator/challenger scope only |
+| adaptive stopping/routing | not promoted; challenger/evaluator scope only |
 
-## 13. Trust boundaries and active risks
+## 15. Current non-claims
 
-See [`SECURITY-MODEL.md`](SECURITY-MODEL.md) for the active OWASP-style threat model. Architecturally critical boundaries are:
-
-1. browser ↔ same-origin frontend/API;
-2. API ↔ managed identity;
-3. runtime/model ↔ deterministic policy/tool authority;
-4. API ↔ TRACTIAN credentials/network;
-5. application ↔ tenant-scoped PostgreSQL/RLS;
-6. runtime ↔ post-runtime evaluator;
-7. safe observability ↔ private/raw state;
-8. project free-tier operation ↔ paid-spillover boundary.
-
-## 14. Current non-claims
-
-Do not claim final provider superiority, OAuth/OIDC/enterprise SSO, consequential external action readiness, full SECURITY-V1, final production capacity/SLO/HA/RTO/RPO, human semantic calibration, observed time savings or adaptive-policy superiority until the corresponding evidence exists.
-
-## 15. Architecture change gate
-
-A material architecture change requires:
-
-```text
-measured requirement/gap
-→ USD0 + safety eligibility
-→ simple current baseline
-→ systematic research
-→ credible alternatives
-→ metrics/hard gates
-→ controlled comparison
-→ failure/production-fit analysis
-→ decision + reversal trigger
-→ ADR/registry + regression + docs sync
-```
-
-Architecture is not improved by increasing component count.
+Do not claim final provider superiority, OAuth/OIDC/enterprise SSO, consequential external action readiness, full SECURITY-V1, final production capacity/SLO/HA/RTO/RPO, human semantic calibration, observed time savings, complete live coverage of all 13 reads or adaptive-policy superiority until corresponding evidence exists.

@@ -1,119 +1,108 @@
 # Getting Started — Release 0
 
 **Audience:** first-time product user or reviewer  
-**Goal:** complete one safe industrial investigation and understand the result without needing runtime knowledge  
+**Goal:** complete one safe industrial investigation without needing runtime knowledge  
 **Public product:** https://production-web-production-c9d1.up.railway.app
 
 ## What Release 0 does
 
-Release 0 investigates industrial questions with a live hosted model and the supplied TRACTIAN **read** API surface. It grounds its output in persisted evidence and can stop safely instead of guessing.
+Release 0 investigates industrial questions with a live hosted model and the supplied TRACTIAN **read** API surface. It grounds answers in authorized structured observations and can stop safely instead of guessing.
 
-It may return:
-
-- **FINAL / ORIENT** — a customer-safe conclusion is available;
-- **CLARIFY** — required context is missing;
-- **ABSTAIN** — the evidence does not justify a conclusion;
-- **ESCALATE** — uncertainty/conflict should be handed to a qualified human.
-
-External consequential actions are disabled. The product may expose action proposals/policy evidence for inspection, but Release 0 does not execute them against TRACTIAN.
+External consequential actions are disabled. The product may expose proposal/policy state under Technical, but Release 0 does not execute those actions against TRACTIAN.
 
 ## 1. Sign in
 
-Open the public product and create/sign into a managed account. Tenant scope is determined by the server; do not expect browser headers or request fields to control organization/permissions.
+Open the public product and sign in/create an account. Tenant scope is server-owned. Browser headers or request text cannot choose organization, role or permissions.
 
-## 2. Start in **Results**
+If sign-in/session infrastructure is temporarily unavailable, the UI shows a retryable authentication state. Invalid/expired sessions and temporary auth-service outages are deliberately different conditions.
 
-The product intentionally opens at the lowest-complexity layer.
+## 2. Start on **Home**
 
-Before a run, Results explains:
+Home asks one primary question: **What do you want to understand?**
 
-- what the product can do;
-- the read-only Release 0 boundary;
-- useful starting postures;
-- which guarantees are active.
+Write a normal equipment question. You do **not** need to know internal `company_id` or `asset_id` values when the requested asset can be discovered through your authorized fleet.
 
-When server-owned guided intents are available, Quick Start uses them. In environments where that manifest is unavailable, the UI labels local starter prompts as **examples only**; they are not presented as runtime capabilities.
-
-You can always write your own request. Include concrete asset, analysis, telemetry or time identifiers when you have them.
-
-Example shape:
+Useful examples:
 
 ```text
-Investigate why this asset/analysis produced the observed alert.
-Use only evidence you can actually inspect, state uncertainty,
-and tell me what I should verify next.
+Which equipment needs attention today, and why?
+
+Investigate R310 and tell me what the technical data indicate about its condition.
+
+Is the data quality for R310 sufficient to trust the current diagnosis?
+
+What is the most likely cause of the problem on R310, and how certain is that conclusion?
 ```
+
+Human-readable labels such as `R310` are resolved through authenticated identity → company → fleet discovery. If a label is not in the accessible fleet, the safe result is to say it was not found — not to invent another scope.
 
 ## 3. Follow live progress
 
-For a live investigation, the user-facing stages are:
+The user-facing stages are intentionally human-readable. They derive from safe runtime events and are **not chain-of-thought**.
 
-```text
-Preparing
-→ AI deciding
-→ Reading TRACTIAN
-→ Reviewing evidence
-→ Evaluating
-→ Complete
-```
+A run may include identity/fleet discovery followed by analysis, RMS, spectrum, baseline, data-quality or knowledge reads depending on the question.
 
-These are derived from safe runtime events. They are **not chain-of-thought** and do not expose hidden model reasoning.
+A repeated tool name is not automatically a loop. For example an asset-level RMS/spectrum call may be followed by a more specific `point_id` call when the first response exposes a point that materially improves the investigation.
 
-## 4. Read the outcome first
+## 4. Read the result and evidence status
 
-When complete, Results foregrounds:
+Two different concepts matter:
 
-1. the terminal outcome;
-2. the customer-safe message;
-3. response/evidence semantics when available;
-4. what to do next;
-5. compact supporting evidence references.
+### Terminal decision
 
-Mode-specific behavior:
+The controller may orient/answer, clarify, abstain or escalate depending on the runtime state.
 
-- **FINAL:** review conclusion + evidence; no external change is executed for you.
-- **CLARIFY:** provide the missing context identified by the message and run again.
-- **ABSTAIN:** add the missing evidence/identifier rather than treating the absence of a conclusion as failure.
-- **ESCALATE:** hand the reason and evidence context to a qualified human reviewer.
+### `response_mode`
 
-## 5. Go deeper only when useful
+This describes how completely the inspected evidence supports the customer-visible answer:
 
-The four layers keep the **same persisted run context**.
+- **complete** — every material part of the request is supported;
+- **partial** — a useful conclusion is supported but a material part remains probabilistic/incomplete;
+- **inconclusive** — evidence was inspected but does not support a reliable directional answer;
+- **conflict** — material observations contradict one another;
+- **unavailable** — required authorized evidence could not be obtained.
 
-### Results — Answer & next step
+A likely mechanism can be useful without being fully proven. For example, a supported asset prioritization plus a probable causal mechanism should normally be `partial`, not `inconclusive`.
 
-Use this for normal operation and first review.
+## 5. Navigate the product
 
-### Evidence — Why this answer
+### Home
 
-Use this to inspect the canonical safe event trail, evidence IDs, tool names, safe HTTP status/latency metadata and persisted terminal output.
+Start a new equipment question and see current service state.
 
-Raw secret-bearing upstream payloads are not exposed.
+### Result / evidence detail
 
-### Investigation — Runtime & operations
+After submission, the selected run opens its customer-safe conclusion, next step and supporting evidence. Evidence is contextual to the result rather than a permanent top-level destination.
 
-Use this for run history, execution state, event/tool/policy metrics, Trace Graph and governed action proposal/control state.
+### Analyses
 
-### Engineering — Architecture & evals
+Browse/select persisted prior runs. Selecting one opens that run's result context.
 
-Use this for deep observability: capability contract, architecture overlay, post-runtime evaluator, system analytics and controlled semantic/operational-value research collectors.
+### Technical
 
-These research collectors are **not** casual thumbs-up/down feedback. Their protocols must remain controlled.
+Use specialist depth only when needed. Current sections include:
 
-## 6. Historical runs
+- **Current analysis** — trace, evidence, tools and policy;
+- **Quality** — post-runtime evaluation/provider evidence;
+- **Data** — persisted quantitative views;
+- **System** — health, architecture and capabilities;
+- **Actions** — governed proposal/control boundary;
+- **Studies** — controlled human semantic/operational-value research.
 
-Open Investigation to select a persisted run. Selecting history keeps the same depth model and returns you to Results first so the outcome is not hidden behind engineering detail.
+Controlled research collectors are **not** casual feedback channels.
+
+## 6. Evidence discipline
+
+Treat claims at the strength the evidence supports:
+
+- metadata/criticality can prioritize investigation but does not alone prove a fault mechanism;
+- baseline/data quality can support trust/context but are not substitutes for current condition evidence when the question asks what is happening;
+- RMS supports magnitude/trend conclusions but should not be forced into an unsupported precise causal diagnosis;
+- spectrum can support frequency-mechanism hypotheses, but causal certainty still depends on the available evidence;
+- unavailable/missing asset labels must fail closed.
 
 ## 7. What the product does not claim
 
-Release 0 does not claim:
-
-- final provider/model superiority;
-- consequential external action readiness;
-- exhaustive semantic accuracy;
-- completed full SECURITY-V1 campaign;
-- final capacity/SLO/HA/RTO/RPO;
-- measured human time savings;
-- adaptive-policy superiority.
+Release 0 does not claim final provider superiority, consequential external action readiness, exhaustive semantic accuracy, completed full SECURITY-V1, final capacity/SLO/HA/RTO/RPO, measured human time savings or adaptive-policy superiority.
 
 For exact current status, use [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md).

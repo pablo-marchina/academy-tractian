@@ -1,74 +1,87 @@
 # Full-product Playwright Acceptance
 
 **Status:** ACTIVE browser/product regression contract  
-**Current UX baseline:** `2ca6215ccc07664a9551e8363e438f0930a4d995` — PASS
+**Current hosted UX:** `1bc124a8d4dbd029178ff8129b25452129445de7` — deployed SUCCESS
 
-This gate validates **user tasks and safety invariants**, not a brittle screenshot/layout implementation. It runs the real product controller/tool/persistence/evaluation/SSE/frontend path with a deterministic provider-free dependency substitution so CI consumes no live provider quota.
+This gate validates **user tasks and safety invariants**, not a brittle screenshot/layout implementation. It runs the product controller/tool/persistence/evaluation/SSE/frontend path with deterministic provider-free substitution so CI consumes no live provider quota.
 
-## Executed test topology
+Provider-free substitution is a CI dependency replacement, not a production claim. Production hosted validation separately proves real provider/IAM/TRACTIAN behavior.
 
-```text
-Chromium
-→ React/Vite
-→ REST/SSE
-→ FastAPI
-→ PostgreSQL operational/RLS state
-→ production runtime/controller/HarnessRunner
-→ typed ToolSpec + deterministic policy
-→ bounded provider-free dependency substitute
-→ RunTrace/evaluator
-→ durable safe projection
-→ React
-```
-
-Provider-free substitution is a CI dependency replacement, not a production claim. Production hosted acceptance separately proves real provider/IAM/TRACTIAN behavior.
-
-## User-experience contract
+## User-experience contract — current task-driven UI
 
 A first-time browser session must be able to:
 
-- start in **Results**;
-- understand the Release 0 read-only product boundary;
-- see Quick Start options even when server-owned Release 0 capability metadata is absent, with fallbacks explicitly labelled as examples;
-- populate/edit a request;
+- start on **Home**;
+- understand the read-only product boundary without engineering knowledge;
+- enter/edit a normal equipment question;
 - submit a run;
 - see safe human-readable progress;
-- receive a mode-specific terminal next step;
-- move through **Results / Evidence / Investigation / Engineering**;
-- navigate depth tabs by keyboard;
-- select persisted history and return to Results-first interpretation;
-- remain usable at constrained/mobile viewports without horizontal page overflow.
+- receive a customer-safe result/next step;
+- inspect supporting evidence contextually;
+- navigate to **Analyses** and select persisted history;
+- navigate to **Technical** and access Current analysis / Quality / Data / System / Actions / Studies;
+- recover cleanly from invalid managed session;
+- distinguish temporary auth unavailability with retry UI;
+- reconcile session on focus/visibility return;
+- remain usable at constrained/mobile viewports without horizontal overflow.
+
+The previous Results/Evidence/Investigation/Engineering global tabs are not the current primary navigation acceptance contract.
 
 ## Evidence / runtime contract
 
 - genuine persisted SSE events render in sequence without logical duplicates;
 - reconnect/catch-up uses durable cursor semantics;
 - evaluation does not appear before runtime completion;
-- Evidence shows canonical safe event/evidence context;
-- Investigation exposes runtime metrics/history/Trace Graph/action state;
-- Engineering exposes capability/architecture/evaluator/analytics surfaces;
+- result/evidence detail derives from persisted safe run events;
+- Technical Current analysis exposes trace/tool/policy evidence;
+- Technical Quality exposes post-runtime evaluation;
+- Technical System exposes architecture/capability/health evidence;
 - terminal UI is derived from persisted terminal evidence, not fabricated progress;
 - long requests and empty states behave predictably.
 
+## Auth/session contract
+
+Browser acceptance should cover the #207 semantics at the UI boundary:
+
+- protected API invalid-session signal clears authenticated product state;
+- temporary `managed_session_unavailable` enters a distinct retryable unavailable state;
+- unavailable state does not invite credential entry until session service is retryable;
+- focus/visibility triggers session reconciliation;
+- frontend never becomes tenant/role/permission authority.
+
+Backend unit/integration tests own the exact 2-second cache/singleflight/fresh-non-read behavior; Playwright owns the user-visible browser state transitions.
+
 ## Safety / isolation contract
 
-- CLARIFY, ABSTAIN, ESCALATE and failure/blocked-action outcomes are visible;
-- proposal/confirmation action semantics remain separate;
-- duplicate confirmation is rejected in the acceptance profile;
+- CLARIFY/ABSTAIN/ESCALATE/unavailable/failure outcomes remain visible when applicable;
+- action proposal/confirmation semantics remain separate;
+- duplicate confirmation is rejected in acceptance profiles that exercise governed action machinery;
 - other user/organization contexts cannot read/stream/confirm protected state;
-- forbidden private keys are absent from browser/API/SSE projections;
-- unsupported chart/data types remain constrained by server/browser contracts.
+- forbidden private keys are absent from browser/API/SSE projections.
 
-The provider-free action acceptance profile can exercise governed action machinery for regression purposes; that **does not mean external consequential actions are enabled in the hosted Release 0 product**.
+Provider-free action acceptance can exercise dormant governed action machinery for regression; it does **not** mean external actions are enabled in hosted Release 0.
+
+## Agent/grounding contract in browser regression
+
+Where deterministic fixture data permits, preserve regressions for:
+
+- human-readable explicit asset label → authorized discovery rather than internal-ID question;
+- no redundant `get_asset` after fleet discovery;
+- condition evidence required before relevant diagnostic terminal;
+- data-quality requirement and no same-resource quality repetition after success;
+- response-mode label/message consistency;
+- missing asset fails closed.
+
+Do not encode brittle assumptions that every same-name RMS/spectrum call is redundant; point-specific drill-down can be valid.
 
 ## CI environment
 
-The workflow uses PostgreSQL, a scoped non-owner/non-superuser/non-BYPASSRLS role, Python 3.11, Node 24, committed npm lockfile and pinned Playwright Chromium.
+Workflow uses PostgreSQL, scoped non-owner/non-superuser/non-BYPASSRLS role, Python 3.11, Node 24, committed npm lockfile and pinned Playwright Chromium.
 
-On failure, retain Playwright report/trace/screenshots/video and backend/frontend logs. A browser acceptance claim is valid only for the exact green SHA.
+On failure retain Playwright report/trace/screenshots/video and backend/frontend logs. Browser acceptance is valid only for the exact green SHA.
 
-## Current evidence
+## Evidence boundaries
 
-At `2ca6215...`, `full-product-playwright` completed successfully alongside clean-clone and `final-ci-required`. The same frontend SHA later deployed successfully to Railway.
+PR #209/current task-driven frontend passed the required frontend/browser regression surface before Railway deployment. PR #210/current V13 backend separately passed its required backend/full-product regression surface before backend promotion.
 
-Do not use this provider-free gate as evidence of production provider latency/quality, hosted IAM reliability or TRACTIAN availability; those require hosted acceptance.
+Do not use provider-free Playwright as evidence of production provider latency/quality, hosted IAM availability SLO or TRACTIAN availability.
