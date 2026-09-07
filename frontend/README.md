@@ -2,6 +2,8 @@
 
 Production-oriented React frontend for the Academy × TRACTIAN industrial agent.
 
+> Release promotion marker: PR #197 asset-discovery and response-semantics hotfix; documentation only.
+
 ## Current vertical slice
 
 The Live Run Cockpit consumes only the real safe product API:
