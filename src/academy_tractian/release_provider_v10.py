@@ -15,7 +15,6 @@ from .provider_clients import UrllibProviderJsonTransport
 from .release_provider import (
     Release0CloudflareDecisionClient,
     Release0ProviderDecisionSource,
-    _ASSET_DIAGNOSTIC_TOOL_NAMES,
     _append_bounded_identifier,
     _asset_investigation_request,
     _constrain_tool_parameter,
@@ -31,6 +30,13 @@ _RELEASE0_V10_COLLECTION_WRAPPERS = frozenset(
 )
 _RELEASE0_V10_NON_REPEATABLE_CONTEXT_READS = frozenset(
     {"get_current_user", "list_assets_by_company"}
+)
+_RELEASE0_V10_CONDITION_EVIDENCE_READS = frozenset(
+    {"get_analysis", "get_rms", "get_spectrum"}
+)
+_RELEASE0_V10_MANDATORY_CONDITION_READS = (
+    "get_rms",
+    "get_spectrum",
 )
 
 
@@ -151,9 +157,14 @@ class Release0ProviderDecisionSourceV10(Release0ProviderDecisionSource):
         if assets is None:
             return None
 
+        # A baseline or data-quality read is supporting context, not evidence of the asset's current
+        # condition. For "what is happening" investigations, keep FINAL unavailable until the run
+        # has observed an analysis, RMS measurement, or spectrum. This prevents a reference-only
+        # read from terminating the investigation while the answer itself admits more evidence is
+        # required.
         if any(
             _successful_observation(context, name) is not None
-            for name in _ASSET_DIAGNOSTIC_TOOL_NAMES
+            for name in _RELEASE0_V10_CONDITION_EVIDENCE_READS
         ):
             return None
 
@@ -168,15 +179,11 @@ class Release0ProviderDecisionSourceV10(Release0ProviderDecisionSource):
 
         restricted: dict[str, Any] = {}
         analyses = _successful_observation(context, "list_analyses")
-        # list_assets_by_company already grounds asset identity and fleet metadata. get_asset is a
-        # metadata read rather than diagnostic evidence, so re-offering it here can consume the
-        # entire bounded tool budget without making progress toward "what is happening".
-        for name in (
-            "get_data_quality",
-            "get_baseline",
-            "get_rms",
-            "get_spectrum",
-        ):
+
+        # Keep the mandatory diagnostic stage adaptive, but only expose reads that can directly
+        # explain present condition. Baseline and data-quality remain available once condition
+        # evidence exists, but they cannot consume the bounded budget before that evidence exists.
+        for name in _RELEASE0_V10_MANDATORY_CONDITION_READS:
             tool = visible.get(name)
             if tool is not None:
                 restricted[name] = _constrain_tool_parameter(tool, "asset_id", asset_ids)
