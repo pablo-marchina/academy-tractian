@@ -9,6 +9,11 @@ from research.e2.transport import build_b0_request
 
 from .runtime import canonical_tool_registry
 from .tractian_transport import ProductionTractianTransport
+from .trusted_action_authorization import ConfiguredServerOwnedActionAuthorizationSource
+from .upstream_action_actors import (
+    ConfiguredServerOwnedUpstreamActionActorSource,
+    ServerOwnedUpstreamActionActorTransport,
+)
 
 
 JUSTIFICATION = (
@@ -101,10 +106,23 @@ def main() -> None:
     if not isinstance(server_headers, dict) or not server_headers:
         raise RuntimeError("TRACTIAN smoke headers must be a non-empty JSON object")
 
+    authorization_source = ConfiguredServerOwnedActionAuthorizationSource.from_json(
+        _required("ACADEMY_ACTION_AUTHORIZATION_GRANTS_JSON")
+    )
+    actor_source = ConfiguredServerOwnedUpstreamActionActorSource.from_json(
+        _required("ACADEMY_TRACTIAN_ACTION_ACTORS_JSON")
+    )
+    principal = authorization_source(user_id=user_id)
+    actor_source.assert_complete_for_principal(principal)
+
     capability = _check_capabilities()
-    transport = ProductionTractianTransport(
-        base_url=base_url,
-        server_headers={str(k): str(v) for k, v in server_headers.items()},
+    transport = ServerOwnedUpstreamActionActorTransport(
+        transport=ProductionTractianTransport(
+            base_url=base_url,
+            server_headers={str(k): str(v) for k, v in server_headers.items()},
+        ),
+        authorization_resolver=authorization_source,
+        actor_source=actor_source,
     )
     registry = canonical_tool_registry()
     binding = ExecutionBinding(
@@ -141,11 +159,13 @@ def main() -> None:
     print(
         json.dumps(
             {
-                "schema_version": "governed-write-production-smoke-v1",
+                "schema_version": "governed-write-production-smoke-v2",
                 "status": "PASS",
                 "capability": capability,
                 "actions": results,
                 "credentials_recorded": False,
+                "local_user_ids_recorded": False,
+                "upstream_user_ids_recorded": False,
                 "resource_ids_recorded": False,
                 "response_bodies_recorded": False,
             },
