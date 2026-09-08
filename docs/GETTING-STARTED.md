@@ -1,108 +1,174 @@
-# Getting Started — Release 0
+# Getting Started — Hosted Product
 
 **Audience:** first-time product user or reviewer  
-**Goal:** complete one safe industrial investigation without needing runtime knowledge  
-**Public product:** https://production-web-production-c9d1.up.railway.app
+**Goal:** understand and exercise the normal hosted industrial-agent product without internal runtime knowledge  
+**Public product:** https://production-web-production-c9d1.up.railway.app  
+**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)
 
-## What Release 0 does
+## Important current checkpoint
 
-Release 0 investigates industrial questions with a live hosted model and the supplied TRACTIAN **read** API surface. It grounds answers in authorized structured observations and can stop safely instead of guessing.
+The product is live and multi-user, but the current OpenRouter V14 provider migration is still under functional acceptance. As of 2026-09-08, a real authenticated B204 campaign reaches the provider call but fails before the first TRACTIAN read because the provider completion ends with `finish_reason=length`.
 
-External consequential actions are disabled. The product may expose proposal/policy state under Technical, but Release 0 does not execute those actions against TRACTIAN.
+This means the hosted UI/auth/history/system remain real, but a new live run may currently end in a safe provider failure rather than a successful industrial investigation. Do not interpret that safe failure as a successful functional result.
+
+Governed consequential actions are no longer merely conceptual: the production transport architecture exists and a controlled 5/5 action smoke passed. However, final end-user/adversarial action acceptance remains open, so do not use Actions as if every live user/action scenario were fully certified.
 
 ## 1. Sign in
 
-Open the public product and sign in/create an account. Tenant scope is server-owned. Browser headers or request text cannot choose organization, role or permissions.
+Open the public product and sign in/create an account. Tenant scope is server-owned. Browser headers, prompt text and model output cannot choose the canonical organization, permissions or action authority.
 
-If sign-in/session infrastructure is temporarily unavailable, the UI shows a retryable authentication state. Invalid/expired sessions and temporary auth-service outages are deliberately different conditions.
+Invalid/expired sessions and temporary auth-service outages are distinct:
 
-## 2. Start on **Home**
+- invalid session → re-authentication;
+- temporary managed-auth unavailability → retryable protected state.
 
-Home asks one primary question: **What do you want to understand?**
+## 2. Start on Home
 
-Write a normal equipment question. You do **not** need to know internal `company_id` or `asset_id` values when the requested asset can be discovered through your authorized fleet.
+Home asks the user what they want to understand. Use normal equipment language; do not provide internal `company_id`/`asset_id` values unless the workflow explicitly exposes a supported reason.
 
-Useful examples:
+Examples:
 
 ```text
 Which equipment needs attention today, and why?
 
-Investigate R310 and tell me what the technical data indicate about its condition.
+Investigate B204 and explain its current condition using the available evidence.
 
-Is the data quality for R310 sufficient to trust the current diagnosis?
+Check the data quality for B204 and tell me whether the measurements are reliable enough for a maintenance decision.
 
-What is the most likely cause of the problem on R310, and how certain is that conclusion?
+Why is B204 vibrating more than usual? State the most likely mechanism only if the evidence supports it.
 ```
 
-Human-readable labels such as `R310` are resolved through authenticated identity → company → fleet discovery. If a label is not in the accessible fleet, the safe result is to say it was not found — not to invent another scope.
+Human labels should resolve through authenticated identity → company → fleet discovery. Missing labels should fail closed rather than expand scope.
 
-## 3. Follow live progress
+## 3. Understand live progress
 
-The user-facing stages are intentionally human-readable. They derive from safe runtime events and are **not chain-of-thought**.
+Displayed progress is a safe runtime projection, not chain-of-thought.
 
-A run may include identity/fleet discovery followed by analysis, RMS, spectrum, baseline, data-quality or knowledge reads depending on the question.
+A successful investigation may traverse:
 
-A repeated tool name is not automatically a loop. For example an asset-level RMS/spectrum call may be followed by a more specific `point_id` call when the first response exposes a point that materially improves the investigation.
+```text
+managed auth
+→ provider decision
+→ identity/fleet grounding
+→ typed TRACTIAN analysis/RMS/spectrum/baseline/data-quality/knowledge reads
+→ evidence
+→ terminal + response_mode
+→ post-runtime evaluation
+```
 
-## 4. Read the result and evidence status
+Current V14 failure signature is different:
 
-Two different concepts matter:
+```text
+managed auth          succeeds
+run submission        succeeds
+provider decision     fails closed
+TRACTIAN tool calls   0
+terminal reason       DECISION_SOURCE_FAILURE
+```
 
-### Terminal decision
+A safe failure is preferable to accepting truncated model output, but it is not a completed investigation.
 
-The controller may orient/answer, clarify, abstain or escalate depending on the runtime state.
+## 4. Read the result and evidence state
+
+Two concepts remain distinct:
+
+### Terminal outcome
+
+The controller may answer/orient, clarify, abstain or escalate depending on the observed runtime state.
 
 ### `response_mode`
 
-This describes how completely the inspected evidence supports the customer-visible answer:
-
-- **complete** — every material part of the request is supported;
-- **partial** — a useful conclusion is supported but a material part remains probabilistic/incomplete;
-- **inconclusive** — evidence was inspected but does not support a reliable directional answer;
-- **conflict** — material observations contradict one another;
+- **complete** — all material requested parts supported;
+- **partial** — useful supported conclusion with a material incomplete/probabilistic part;
+- **inconclusive** — inspected evidence cannot support a reliable directional answer;
+- **conflict** — material evidence conflicts;
 - **unavailable** — required authorized evidence could not be obtained.
 
-A likely mechanism can be useful without being fully proven. For example, a supported asset prioritization plus a probable causal mechanism should normally be `partial`, not `inconclusive`.
+A provider/runtime failure is not automatically one of these successful evidence modes; inspect Technical/Verification when the run did not reach the intended evidence path.
 
 ## 5. Navigate the product
 
 ### Home
 
-Start a new equipment question and see current service state.
+Start a task and see current service/run state.
 
 ### Result / evidence detail
 
-After submission, the selected run opens its customer-safe conclusion, next step and supporting evidence. Evidence is contextual to the result rather than a permanent top-level destination.
+Shows the selected run's customer-safe conclusion/failure state, next step and contextual supporting evidence.
 
 ### Analyses
 
-Browse/select persisted prior runs. Selecting one opens that run's result context.
+Browse persisted prior runs. Historical V13 successful runs may remain visible; they are valid historical evidence but must not be confused with proof that the current V14 provider path is green.
 
 ### Technical
 
-Use specialist depth only when needed. Current sections include:
+Specialist depth includes, as available:
 
-- **Current analysis** — trace, evidence, tools and policy;
-- **Quality** — post-runtime evaluation/provider evidence;
+- **Current analysis** — trace/evidence/tools/policy;
+- **Quality / Verification** — structural evaluation and independent claim state;
 - **Data** — persisted quantitative views;
-- **System** — health, architecture and capabilities;
-- **Actions** — governed proposal/control boundary;
-- **Studies** — controlled human semantic/operational-value research.
+- **System** — health, architecture, provider/capability/release identity;
+- **Actions** — governed proposal/confirmation/control state;
+- **Studies** — controlled semantic/operational-value research.
 
-Controlled research collectors are **not** casual feedback channels.
+Technical surfaces should distinguish `VERIFIED`, `FAILED`, `NOT_VERIFIED`, `NOT_REACHED` and similar scoped states rather than presenting one generic quality percentage.
 
-## 6. Evidence discipline
+## 6. Repeated tool calls
 
-Treat claims at the strength the evidence supports:
+Repeated tool names are not automatically loops.
 
-- metadata/criticality can prioritize investigation but does not alone prove a fault mechanism;
-- baseline/data quality can support trust/context but are not substitutes for current condition evidence when the question asks what is happening;
-- RMS supports magnitude/trend conclusions but should not be forced into an unsupported precise causal diagnosis;
-- spectrum can support frequency-mechanism hypotheses, but causal certainty still depends on the available evidence;
-- unavailable/missing asset labels must fail closed.
+Valid example:
 
-## 7. What the product does not claim
+```text
+get_rms(asset)
+→ get_rms(asset, point_id=observed_point)
+```
 
-Release 0 does not claim final provider superiority, consequential external action readiness, exhaustive semantic accuracy, completed full SECURITY-V1, final capacity/SLO/HA/RTO/RPO, measured human time savings or adaptive-policy superiority.
+Current runtime hardening suppresses an **exact already-successful operation + normalized arguments/resource** from executing twice while preserving same-tool/different-argument drill-down.
 
-For exact current status, use [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md).
+## 7. Governed actions
+
+Five canonical consequential actions exist under a server-owned governed path. The browser/model may propose, but cannot own permissions, resource/company authority, upstream TRACTIAN actor identity, credentials, confirmation fingerprints, idempotency or kill switch.
+
+A real action requires:
+
+```text
+proposal
+→ deterministic policy/resource validation
+→ private custody
+→ explicit opaque-ID confirmation
+→ fresh server-owned authorization
+→ idempotency + execution lease
+→ server-owned TRACTIAN actor transport
+→ persisted outcome/evaluation
+```
+
+The controlled transport smoke passed 5/5, but full hosted adversarial/end-user action acceptance is still pending. Treat that distinction explicitly.
+
+## 8. Evidence discipline
+
+- metadata/criticality may prioritize investigation but not prove a fault mechanism;
+- baseline/data quality support context/trust but do not replace current-condition evidence;
+- RMS supports magnitude/trend evidence without guaranteeing a precise cause;
+- spectrum may support frequency-mechanism hypotheses but causal certainty must remain evidence-calibrated;
+- comparison claims need evidence for every compared resource;
+- missing resources fail closed;
+- provider/model/dependency failures must remain visible rather than being converted into a confident answer.
+
+## 9. What the product does not currently claim
+
+Do not claim:
+
+- current OpenRouter V14 functional acceptance while B204 is 0/3;
+- that the current V14 B204 campaign reached TRACTIAN tools;
+- final provider superiority;
+- complete recent live coverage of all 13 reads;
+- full governed-action SECURITY-V1/end-user readiness;
+- distributed exactly-once external side effects;
+- final production capacity/SLO/HA/RTO/RPO;
+- human semantic calibration;
+- measured human time savings;
+- branch-protection enforcement while GitHub reports `main.protected=false`;
+- superiority of LangGraph/multi-agent/RAG/etc. without a measured challenger win.
+
+For exact current facts, always prefer [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md) over historical Release 0/V13 documentation.

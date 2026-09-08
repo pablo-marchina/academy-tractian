@@ -1,76 +1,104 @@
 # Main Branch Protection Contract
 
 **Status:** repository CI ready; GitHub enforcement **not yet applied**  
-**Observed on 2026-09-04:** `main.protected = false`; repository rulesets = `[]`.
+**Last observed:** 2026-09-08 BRT  
+**Observed state:** `main.protected = false`; required status-check enforcement = `off`.
 
-## Why one required check
+This remains a P0 release-governance gap. A green CI workflow is not equivalent to GitHub technically preventing a direct/unchecked branch mutation.
 
-Most project workflows are intentionally path-filtered. Requiring a path-filtered check directly can leave an unrelated PR permanently waiting because GitHub never creates that check.
+## Current repository state
 
-The repository therefore exposes one always-triggered final check:
+Latest branch metadata reports:
+
+```text
+main SHA                       4364364266c6a88d4affd85cb3a734c774cd42c8
+main.protected                 false
+protection.enabled             false
+required-check enforcement     off
+required contexts/checks       []
+```
+
+The functional-closure work is currently isolated on draft PR #222 and is intentionally not accepted/merged until hosted OpenRouter V14 functional acceptance is green.
+
+## Why one stable required check
+
+Most project workflows are path-filtered, research-specific, provider-specific or manually promoted. Requiring them individually can leave unrelated PRs waiting or couple branch governance to experiments.
+
+Use the stable aggregate contract:
 
 ```text
 final-ci-required
 └── required-gate
-    ├── clean-clone current-product reproduction
-    └── full-product Chromium acceptance
+    ├── clean-clone/current-product reproduction
+    ├── full-product browser acceptance
+    └── any reusable hard product gates wired by the current workflow revision
 ```
 
-`required-gate` uses `if: always()` and fails unless both reusable workflows return `success`. It runs on every pull request, every push to `main`, and manual dispatch.
+The workflow README is authoritative for the exact current dependency graph. `required-gate` is the stable branch-protection context; live provider experiments, exact-SHA production promotion and research workflows remain separate evidence.
 
-The specialized workflows remain independently runnable and continue to provide detailed evidence; branch protection needs only the stable aggregate check.
+## Required GitHub settings
 
-## Required GitHub ruleset / branch-protection settings
-
-Target: repository default branch `main`.
+Target: `main`.
 
 Recommended enforcement:
 
-1. **Restrict deletions:** enabled.
-2. **Block force pushes:** enabled.
-3. **Require a pull request before merging:** enabled.
-4. **Required approvals:** `0` while this is a single-maintainer/student repository; requiring self-approval would make legitimate work impossible. Increase this only when an independent reviewer is actually available.
-5. **Require conversation resolution before merging:** enabled.
-6. **Require status checks to pass:** enabled.
-7. **Required status check:** the stable `required-gate` check produced by `.github/workflows/final-ci-required.yml` (confirm the exact GitHub UI context after its first successful run before saving the ruleset).
-8. **Require branch to be up to date before merging / strict status checks:** enabled unless merge-queue behavior is intentionally configured instead.
-9. **Require linear history:** enabled; project PRs are squash-merged.
-10. **Allow force pushes:** disabled.
-11. **Allow branch deletion:** disabled.
+1. restrict deletions;
+2. block force pushes;
+3. require pull request before merge;
+4. required approvals `0` only while this remains a single-maintainer/student repository without an independent available reviewer; increase when real review capacity exists;
+5. require conversation resolution;
+6. require status checks;
+7. require the stable `required-gate` context from `.github/workflows/final-ci-required.yml`;
+8. require branch to be up to date before merge unless an intentional merge-queue policy supersedes it;
+9. require linear history if squash-merge remains the project convention;
+10. disable force pushes;
+11. disable deletion.
 
-Do not require provider-live workflows, research diagnostics, or other path-filtered checks individually. They may not run for every PR and are not suitable as unconditional required contexts.
+Do **not** make provider-live workflows, rate-limit probes, research tournament jobs, one-shot hosted diagnostics or exact-SHA promotion workflows unconditional required contexts. They are evidence/operations surfaces, not always-triggered PR checks.
 
-## Final CI semantics
+## Release branch
 
-The clean-clone reusable workflow proves from a clean checkout:
+Production is sourced from `release/production-final`. The same principle applies: production source should not be mutable through unchecked force/direct push when the platform/account permits an enforceable rule. Do not state release-branch protection is currently verified unless GitHub metadata for that branch has been read after the rule is configured.
 
-- PostgreSQL-backed full Python suite;
-- identity/RLS, load and restart P0 campaigns;
-- frozen EV and delivery-evidence reproduction;
-- final handoff audit;
-- locked frontend install/typecheck/tests/build;
-- zero tracked repository mutation.
+## Exact-SHA release relationship
 
-The browser reusable workflow proves:
+Branch protection is only one gate. Final release evidence must also prove:
 
-- real provider-free backend/frontend startup;
-- PostgreSQL-backed product acceptance;
-- Chromium full-product E2E;
-- browser-safe semantic-review and operational-value participant flows;
-- responsive frontend behavior and safe observability surfaces.
+```text
+candidate required CI        PASS
+candidate functional gate    PASS
+candidate security gates     PASS as applicable
+production deployment SHA    exact candidate SHA
+release identity endpoint    exact candidate SHA
+```
 
-The aggregate required job does not reinterpret results or select thresholds; it only requires both contracts to be green.
+PR/head success without exact production promotion is not a production acceptance claim.
+
+Current production backend is `5611687556b3d50c31f20fa85ede794f2500f05c`, while the functional-closure PR is intentionally ahead. This divergence is acceptable during closure but must disappear for the final accepted candidate.
 
 ## Enforcement verification
 
-After GitHub Settings are changed, verify all of the following before claiming this P0 fully closed:
+After applying GitHub Settings, verify before declaring the gap closed:
 
 ```text
-GET branch metadata → protected=true
-repository ruleset/protection read → required status check present
-open test PR → direct merge blocked while required-gate is pending/failing
-required-gate success → merge becomes eligible
-force push/deletion remain blocked
+branch metadata → protected=true
+protection/ruleset → required-gate present
+new PR → merge blocked while required-gate pending/failing
+required-gate success → merge eligible
+force push → blocked
+deletion → blocked
 ```
 
-The connected GitHub integration used during this development session exposes ruleset/branch-protection reads but no ruleset/protection write action. Therefore repository code can make protection ready and auditable, but **must not claim enforcement until GitHub Settings actually reports it**.
+If the connected GitHub integration cannot mutate repository administration settings, apply them in GitHub Settings and use connector/REST metadata only to verify. Do not downgrade the requirement because the automation lacks admin permission.
+
+## Evidence language
+
+Allowed now:
+
+> The repository exposes a stable required CI gate and is branch-protection-ready, but GitHub currently reports `main.protected=false`, so enforcement remains open.
+
+Not allowed now:
+
+> Direct/unchecked changes to main are technically blocked.
+
+Update this file and `ACTIVE-PROJECT-STATUS.md` only after GitHub itself reports the protection active.

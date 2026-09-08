@@ -8,6 +8,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
@@ -72,11 +73,14 @@ def _json_request(
     method: str = "GET",
     payload: dict[str, Any] | None = None,
     timeout: float = 30.0,
+    cookie_header: str | None = None,
 ) -> tuple[int, Any]:
     body = None if payload is None else json.dumps(payload).encode("utf-8")
     headers = {"Accept": "application/json"}
     if body is not None:
         headers["Content-Type"] = "application/json"
+    if cookie_header:
+        headers["Cookie"] = cookie_header
     request = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
         with opener.open(request, timeout=timeout) as response:
@@ -92,10 +96,10 @@ def _json_request(
         return int(exc.code), decoded
 
 
-def _signin(opener: urllib.request.OpenerDirector, product_origin: str) -> None:
+def _signin(opener: urllib.request.OpenerDirector, auth_origin: str) -> None:
     status, _ = _json_request(
         opener,
-        f"{product_origin}/auth/sign-in/email",
+        f"{auth_origin}/auth/sign-in/email",
         method="POST",
         payload={
             "email": _required("QA_EMAIL").strip().lower(),
@@ -105,12 +109,16 @@ def _signin(opener: urllib.request.OpenerDirector, product_origin: str) -> None:
     )
     if status != 200:
         raise RuntimeError(f"qa sign-in failed: http_{status}")
-    status, session = _json_request(
-        opener,
-        f"{product_origin}/auth/get-session?disableCookieCache=true",
-    )
+    status, session = _json_request(opener, f"{auth_origin}/auth/get-session?disableCookieCache=true")
     if status != 200 or not isinstance(session, dict) or not isinstance(session.get("user"), dict):
         raise RuntimeError(f"qa session validation failed: http_{status}")
+
+
+def _cookie_header(cookie_jar: http.cookiejar.CookieJar) -> str:
+    values = [f"{cookie.name}={cookie.value}" for cookie in cookie_jar]
+    if not values:
+        raise RuntimeError("qa managed-session cookie missing after sign-in")
+    return "; ".join(values)
 
 
 def _assert_release(opener: urllib.request.OpenerDirector, api_origin: str) -> str:
@@ -121,15 +129,16 @@ def _assert_release(opener: urllib.request.OpenerDirector, api_origin: str) -> s
     release = payload.get("release")
     actual = release.get("git_sha") if isinstance(release, dict) else None
     if actual != expected:
-        raise RuntimeError("release identity mismatch")
+        raise RuntimeError(f"release identity mismatch:{actual}")
     return expected
 
 
 def _wait_for_run(
     opener: urllib.request.OpenerDirector,
-    product_origin: str,
+    run_origin: str,
     accepted: dict[str, Any],
     *,
+    cookie_header: str,
     deadline_s: float = 120.0,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     execution_path = str(accepted["execution_path"])
@@ -137,9 +146,10 @@ def _wait_for_run(
     deadline = time.monotonic() + deadline_s
     last_execution_status = "accepted"
     while time.monotonic() < deadline:
-        status, execution = _json_request(opener, f"{product_origin}{execution_path}")
+        status, execution = _json_request(opener, f"{run_origin}{execution_path}", cookie_header=cookie_header)
         if status != 200 or not isinstance(execution, dict):
-            raise RuntimeError(f"execution polling failed: http_{status}")
+            detail = execution.get("detail") if isinstance(execution, dict) else None
+            raise RuntimeError(f"execution polling failed: http_{status}:{detail or 'unknown'}")
         last_execution_status = str(execution.get("status"))
         if last_execution_status in {"completed", "failed"}:
             break
@@ -147,25 +157,25 @@ def _wait_for_run(
     else:
         raise RuntimeError("execution polling timed out")
 
-    status, run = _json_request(opener, f"{product_origin}{run_path}")
+    status, run = _json_request(opener, f"{run_origin}{run_path}", cookie_header=cookie_header)
     if status != 200 or not isinstance(run, dict):
-        raise RuntimeError(f"run fetch failed: http_{status}")
+        detail = run.get("detail") if isinstance(run, dict) else None
+        raise RuntimeError(f"run fetch failed: http_{status}:{detail or 'unknown'}")
     status, event_payload = _json_request(
         opener,
-        f"{product_origin}/api/runs/{urllib.parse.quote(str(accepted['run_id']))}/events",
+        f"{run_origin}/api/runs/{urllib.parse.quote(str(accepted['run_id']))}/events",
+        cookie_header=cookie_header,
     )
     if status != 200 or not isinstance(event_payload, dict) or not isinstance(event_payload.get("items"), list):
-        raise RuntimeError(f"event fetch failed: http_{status}")
+        detail = event_payload.get("detail") if isinstance(event_payload, dict) else None
+        raise RuntimeError(f"event fetch failed: http_{status}:{detail or 'unknown'}")
     run["_execution_status"] = last_execution_status
     return run, [item for item in event_payload["items"] if isinstance(item, dict)]
 
 
 def _evaluate(case: Case, run: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
-    tools = [
-        str(event.get("tool_name"))
-        for event in events
-        if event.get("event_type") == "tool_call" and event.get("tool_name")
-    ]
+    call_events = [event for event in events if event.get("event_type") == "tool_call" and event.get("tool_name")]
+    tools = [str(event.get("tool_name")) for event in call_events]
     failures: list[str] = []
     if run.get("_execution_status") != "completed":
         failures.append(f"execution:{run.get('_execution_status')}")
@@ -179,7 +189,8 @@ def _evaluate(case: Case, run: dict[str, Any], events: list[dict[str, Any]]) -> 
     response_mode = run.get("terminal_response_mode")
     if response_mode not in case.allowed_response_modes:
         failures.append(f"unexpected_response_mode:{response_mode}")
-    terminal = str(run.get("terminal_message") or "").lower()
+    terminal_message = str(run.get("terminal_message") or "")
+    terminal = terminal_message.lower()
     for fragment in case.forbidden_terminal_fragments:
         if fragment.lower() in terminal:
             failures.append(f"forbidden_terminal_fragment:{fragment}")
@@ -187,40 +198,67 @@ def _evaluate(case: Case, run: dict[str, Any], events: list[dict[str, Any]]) -> 
     if reason in {"DECISION_SOURCE_FAILURE", "TOOL_BOUNDARY_FAILURE", "TOOL_CALL_BUDGET_EXHAUSTED", "TURN_BUDGET_EXHAUSTED"}:
         failures.append(f"runtime_failure:{reason}")
 
-    seen: dict[tuple[str, str, int | None], int] = {}
+    exact_call_counts: Counter[tuple[str, str]] = Counter()
+    for event in call_events:
+        fingerprint = event.get("arguments_sha256")
+        if isinstance(fingerprint, str) and fingerprint:
+            exact_call_counts[(str(event.get("tool_name")), fingerprint)] += 1
+    if any(count >= 2 for count in exact_call_counts.values()):
+        failures.append("exact_duplicate_successful_call")
+
+    seen_failed_results: Counter[tuple[str, int | None]] = Counter()
     for event in events:
         if event.get("event_type") != "tool_result" or not event.get("tool_name"):
             continue
-        key = (str(event.get("tool_name")), str(event.get("argument_names") or ""), event.get("status_code"))
-        seen[key] = seen.get(key, 0) + 1
-    repeated_failures = [key for key, count in seen.items() if count >= 2 and isinstance(key[2], int) and key[2] >= 400]
-    if repeated_failures:
+        seen_failed_results[(str(event.get("tool_name")), event.get("status_code"))] += 1
+    if any(count >= 2 and isinstance(status, int) and status >= 400 for (_tool, status), count in seen_failed_results.items()):
         failures.append("non_progress_repeated_failed_call")
+
+    policy_violations = [
+        str(event.get("policy_violation"))
+        for event in events
+        if event.get("event_type") == "policy_check" and event.get("policy_violation")
+    ]
+    model_failures = [
+        str(event.get("failure_code"))
+        for event in events
+        if event.get("event_type") == "model_call" and event.get("failure_code")
+    ]
 
     return {
         "case_id": case.case_id,
         "run_id": run.get("run_id"),
         "status": "PASS" if not failures else "FAIL",
         "tool_sequence": tools,
+        "tool_counts": dict(sorted(Counter(tools).items())),
         "response_mode": response_mode,
         "reason_code": reason,
+        "terminal_message": terminal_message,
+        "policy_violations": policy_violations,
+        "model_failures": model_failures,
         "failures": failures,
     }
 
 
+def _emit_case(result: dict[str, Any]) -> None:
+    print(json.dumps({"schema_version": "live-functional-case-v4", **result}, sort_keys=True, ensure_ascii=False), flush=True)
+
+
 def main() -> int:
-    product_origin = _origin(_required("TARGET_BASE_URL"))
-    api_origin = _origin(os.environ.get("TARGET_API_BASE_URL", "").strip() or product_origin)
+    auth_origin = _origin(_required("TARGET_BASE_URL"))
+    run_origin = _origin(os.environ.get("TARGET_RUN_BASE_URL", "").strip() or auth_origin)
+    api_origin = _origin(os.environ.get("TARGET_API_BASE_URL", "").strip() or run_origin)
     asset_label = _validated_asset_label(_required("QA_ASSET_LABEL"))
     cases = _cases(asset_label)
     cookie_jar = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookie_jar))
 
     try:
+        _signin(opener, auth_origin)
+        cookie_header = _cookie_header(cookie_jar)
         release_sha = _assert_release(opener, api_origin)
-        _signin(opener, product_origin)
     except Exception as exc:
-        print(json.dumps({"schema_version": "live-functional-campaign-v2", "status": "BLOCKED", "reason": type(exc).__name__}, sort_keys=True))
+        print(json.dumps({"schema_version": "live-functional-campaign-v4", "status": "BLOCKED", "reason": f"{type(exc).__name__}:{str(exc)[:256]}"}, sort_keys=True), flush=True)
         return 2
 
     results: list[dict[str, Any]] = []
@@ -228,22 +266,26 @@ def main() -> int:
         try:
             status, accepted = _json_request(
                 opener,
-                f"{product_origin}/api/runs",
+                f"{run_origin}/api/runs",
                 method="POST",
                 payload={"user_request": case.prompt},
+                cookie_header=cookie_header,
             )
             if status != 202 or not isinstance(accepted, dict) or not accepted.get("run_id"):
-                results.append({"case_id": case.case_id, "status": "FAIL", "failures": [f"submit_http_{status}"]})
-                continue
-            run, events = _wait_for_run(opener, product_origin, accepted)
-            results.append(_evaluate(case, run, events))
+                detail = accepted.get("detail") if isinstance(accepted, dict) else None
+                result = {"case_id": case.case_id, "status": "FAIL", "failures": [f"submit_http_{status}:{detail or 'unknown'}"]}
+            else:
+                run, events = _wait_for_run(opener, run_origin, accepted, cookie_header=cookie_header)
+                result = _evaluate(case, run, events)
         except Exception as exc:
-            results.append({"case_id": case.case_id, "status": "FAIL", "failures": [type(exc).__name__]})
+            result = {"case_id": case.case_id, "status": "FAIL", "failures": [f"{type(exc).__name__}:{str(exc)[:256]}"]}
+        results.append(result)
+        _emit_case(result)
 
     passed = sum(item.get("status") == "PASS" for item in results)
     summary = {
-        "schema_version": "live-functional-campaign-v2",
-        "campaign": os.environ.get("QA_RUN_REV", "FINAL-V1-2026-09-08"),
+        "schema_version": "live-functional-campaign-v4",
+        "campaign": os.environ.get("QA_RUN_REV", "FUNCTIONAL-CLOSURE-V1"),
         "release_sha": release_sha,
         "asset_label": asset_label,
         "total": len(results),
@@ -252,10 +294,11 @@ def main() -> int:
         "all_pass": passed == len(results),
         "results": results,
         "credentials_recorded": False,
+        "session_material_recorded": False,
         "raw_provider_material_recorded": False,
         "raw_tool_bodies_recorded": False,
     }
-    print(json.dumps(summary, sort_keys=True))
+    print(json.dumps(summary, sort_keys=True, ensure_ascii=False), flush=True)
     return 0 if summary["all_pass"] else 1
 
 

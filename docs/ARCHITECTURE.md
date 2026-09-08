@@ -1,12 +1,12 @@
 # Academy × TRACTIAN — Architecture
 
 **Status:** ACTIVE canonical architecture  
-**Last verified:** 2026-09-07 BRT  
-**Promoted backend/runtime:** `08866da60245f58f217981b7ae668b10be45cc67`  
-**Current hosted frontend UX:** `1bc124a8d4dbd029178ff8129b25452129445de7`  
-**Current hosted supplied API:** `47561c1175181b508139e23e6e39b555c1347d57`
+**Last verified:** 2026-09-08 BRT  
+**Hosted backend/runtime:** `5611687556b3d50c31f20fa85ede794f2500f05c`  
+**Hosted frontend:** `4364364266c6a88d4affd85cb3a734c774cd42c8`  
+**Hosted supplied API:** `47561c1175181b508139e23e6e39b555c1347d57`
 
-This document describes the architecture actually hosted now. Repository/source identity and hosted component identities are deliberately separate; a source merge or docs commit is not an automatic backend promotion.
+This document describes the promoted architecture and its current runtime state. The OpenRouter V14 provider migration is deployed but not yet functionally accepted; the current B204 campaign fails at the first provider decision with a truncated completion before any TRACTIAN tool call.
 
 ## 1. System context
 
@@ -15,51 +15,51 @@ flowchart LR
     U[Authenticated industrial user/reviewer]
     S[Academy × TRACTIAN\nIndustrial Agent + Evaluation]
     A[Neon Auth]
-    P[Cloudflare Workers AI]
+    P[OpenRouter\nfixed-free V14]
     T[Supplied TRACTIAN API]
     D[Neon PostgreSQL]
 
-    U -->|HTTPS questions/history/review| S
+    U -->|HTTPS questions/history/confirmation| S
     S -->|managed session validation| A
     S -->|bounded structured decision| P
-    S -->|typed HTTPS reads| T
-    S -->|tenant-scoped durable state/evidence/eval| D
+    S -->|typed HTTPS reads / governed writes| T
+    S -->|tenant-scoped durable state/evidence/eval/custody| D
 ```
 
-Key boundary: browser input and model output are never authority for tenant/role/permissions.
+Browser input and model output are never authority for tenant, role, permissions, resource ownership, credentials, action identity, confirmation or idempotency.
 
 ## 2. Production containers
 
 ```mermaid
 flowchart TB
-    B[Browser\nReact 19 SPA]
-    W[production-web\nCaddy + Vite build\nRailway]
+    B[Browser\nReact SPA]
+    W[production-web\nCaddy + Vite\nRailway]
     API[production-api\nFastAPI/Uvicorn\nRailway]
     AUTH[Neon Auth]
     DB[Neon PostgreSQL\noperational + RLS + observability]
-    CF[Cloudflare Workers AI\nprovisional GLM-4.7-Flash]
-    TR[Supplied TRACTIAN API\n18-operation contract]
+    OR[OpenRouter\nNemotron 3 Super 120B free]
+    TR[Supplied TRACTIAN API\n13 reads + 5 actions]
 
     B -->|HTTPS same origin| W
     W -->|/auth/*| AUTH
     W -->|/api/* + SSE| API
-    API -->|server-managed session validation| AUTH
+    API -->|server-managed validation| AUTH
     API -->|TLS/psycopg| DB
-    API -->|structured DecisionSource call| CF
-    API -->|typed bounded HTTPS read| TR
+    API -->|structured DecisionSource call| OR
+    API -->|typed bounded HTTP| TR
 ```
 
 | Container | Responsibility | Current state |
 |---|---|---|
-| browser SPA | task-driven user interaction + safe visualization | Home / Analyses / Technical; contextual result/evidence |
-| `production-web` | public HTTPS origin/static serving/proxy | Caddy on Railway, `1bc124a...` |
-| `production-api` | auth context, runtime, tools, policy, evaluation, REST/SSE | V13, `08866da...` |
-| Neon Auth | managed session lifecycle | server-validated, bounded read-burst coalescing |
-| Neon PostgreSQL | durable operational truth + tenant RLS + observability/evals | PostgreSQL + psycopg |
-| Cloudflare Workers AI | provisional Release 0 decisions | `@cf/zai-org/glm-4.7-flash` |
-| supplied TRACTIAN API | canonical industrial evidence | 13 read operations available; 5 action operations not externally executable in Release 0 |
+| browser SPA | task-driven interaction + safe visualization | hosted at frontend `436436426...` |
+| `production-web` | public HTTPS origin/static/proxy | Railway `SUCCESS` |
+| `production-api` | auth, runtime, tools, actions, evaluation, REST/SSE | V14 composition `561168755...` |
+| Neon Auth | managed session lifecycle | server-validated; fresh writes; bounded read coalescing |
+| Neon PostgreSQL | durable operational truth + RLS + observability/evals/action custody | promoted production truth |
+| OpenRouter | provisional model DecisionSource | pinned `nvidia/nemotron-3-super-120b-a12b:free`; V14 E2E currently failing |
+| supplied TRACTIAN API | industrial evidence/action boundary | hosted; controlled governed-write smoke 5/5 |
 
-## 3. Dynamic investigation flow
+## 3. Read/investigation flow
 
 ```mermaid
 sequenceDiagram
@@ -67,255 +67,211 @@ sequenceDiagram
     participant Web as React/Caddy
     participant API as FastAPI
     participant Auth as Neon Auth
-    participant DB as Neon PostgreSQL
-    participant Model as Cloudflare
+    participant DB as PostgreSQL
+    participant Model as OpenRouter
+    participant Ctrl as AgentController
     participant Tool as HarnessRunner
     participant T as TRACTIAN
     participant Eval as ProductionEvaluator
 
     User->>Web: submit equipment question
-    Web->>API: POST /api/runs (managed session)
-    API->>Auth: fresh session validation for non-read request
-    API->>API: derive server-owned tenant/runtime context
-    API->>DB: persist run ownership/state
-    API->>Model: bounded structured decision request
-    Model-->>API: typed decision/tool proposal
-    API->>Tool: validate + execute canonical read
-    Tool->>T: typed HTTPS request
-    T-->>Tool: evidence response
-    Tool-->>API: normalized observation/evidence
-    API->>Model: next bounded decision when needed
-    Model-->>API: terminal decision + response_mode
-    API->>DB: persist terminal trace/evidence
-    API->>Eval: deterministic post-runtime evaluation
+    Web->>API: POST /api/runs
+    API->>Auth: fresh managed-session validation
+    API->>API: derive server-owned tenant context
+    API->>DB: persist ownership/execution state
+    API->>Model: strict structured V14 decision request
+    Model-->>API: typed decision proposal
+    API->>Ctrl: bounded controller transition
+    Ctrl->>Tool: canonical tool request
+    Tool->>T: typed HTTPS read
+    T-->>Tool: industrial evidence
+    Tool-->>Ctrl: normalized observation
+    Ctrl->>Model: next decision when needed
+    Model-->>Ctrl: terminal + response_mode
+    Ctrl->>DB: trace/evidence/terminal
+    Ctrl->>Eval: post-runtime deterministic evaluation
     Eval-->>DB: safe evaluation projection
-    API-->>Web: authenticated SSE + durable catch-up
-    Web-->>User: result first; Analyses/Technical on demand
+    API-->>Web: authenticated REST/SSE + durable catch-up
 ```
 
-The evaluator is post-runtime. Evaluator-private truth is not supplied to the model.
+The current B204 V14 campaign stops at `Model-->>API`: the provider returns `finish_reason=length`, so V14 rejects the incomplete decision and never grants tool authority.
 
-## 4. V13 Release 0 decision layer
+## 4. Provider decision layer
 
-The current serving provider wrapper is intentionally layered so each production fix stays narrow and testable:
+Serving semantics are layered:
 
 ```text
-base Release 0 provider contract
-→ V10: nested ID grounding + condition-evidence/stopping constraints
-→ V11: response_mode epistemic semantics
-→ V12: explicit human asset labels, bilateral comparisons, data-quality requirements
-→ V13: initial identity grounding + completed single-asset quality suppression
+base Release 0 contract
+→ V10 nested ID grounding + condition-evidence/stopping
+→ V11 response_mode semantics
+→ V12 human asset labels/comparisons/data quality
+→ V13 initial identity grounding + duplicate-quality suppression
+→ V14 fixed-free OpenRouter adapter, preserving V13 agent semantics
 ```
 
-`remote_server.py` serves `build_release_provider_decision_source_factory_v13`.
+Current composition uses `build_release_provider_decision_source_factory_v14`.
 
-### V11 response semantics
-
-`response_mode` is separate from terminal authority:
+### V14 exact provider contract
 
 ```text
-complete      all material requested parts supported
-partial       useful supported answer + material probabilistic/incomplete part
-inconclusive no reliable directional answer after inspecting relevant evidence
-conflict      material observations contradict
-unavailable   required authorized evidence could not be obtained
+provider_id = openrouter
+model_id    = nvidia/nemotron-3-super-120b-a12b:free
+route_id    = openrouter.chat_completions.v1.fixed_free
+fallbacks   = disabled
+cost        = USD0 hard gate
 ```
 
-### V12/V13 explicit-asset grounding
+The request is non-streaming, single-choice, temperature 0, strict JSON Schema over the currently visible tools. The adapter performs no retry, output repair, credential lookup or provider-side tool execution.
 
-For investigative requests with labels like `R310`:
+A response is accepted only when the model identity is pinned, there is exactly one assistant choice, `finish_reason=stop`, no provider-side tool/function call is present, and nonempty decision content passes the existing V13 structured decision contract.
+
+### Current failure localization
+
+Sanitized probe:
 
 ```text
-label in user request
-→ get_current_user
-→ structured company_id
-→ list_assets_by_company
-→ structured authorized asset IDs
-→ map human label to fleet resource
-→ constrain subsequent tool schemas to observed IDs
+HTTP 200
+served model = exact pin
+assistant content present
+finish_reason = length
 ```
 
-If the label is absent, the tool surface closes and the terminal must report bounded unavailability. The model may not expand itself to another tenant/company.
+The subsequent bounded 1024/default, 1024/minimized-reasoning and 4096/default comparison was blocked by HTTP 429 for all variants. No workaround is promoted.
 
-For a multi-asset comparison, the runtime requires condition evidence for every requested asset present in the authorized fleet before a comparative conclusion.
-
-### Condition and data-quality gates
-
-- diagnostic questions require condition evidence (`get_analysis`, `get_rms`, `get_spectrum`) before terminal where required;
-- baseline/data quality do not substitute for condition evidence;
-- explicit data-quality questions require `get_data_quality`;
-- completed single-asset `get_data_quality` is removed from the visible surface;
-- `get_asset` is suppressed after fleet listing has already grounded metadata.
-
-## 5. Tool execution boundary
+## 5. Agent/tool authority boundary
 
 ```text
-DecisionSource
-→ structured decision/proposal
-
-AgentController
+OpenRouter DecisionSource
+→ typed proposal only
+→ AgentController
 → bounded control flow
-
-HarnessRunner
-→ canonical tool execution boundary
-
-B1 schema/argument validation
-B2 permission/resource/policy
-
-ProductionTractianTransport
-→ real network contract, server credentials, timeout/size/redirect rules
+→ HarnessRunner
+→ B1 schema/argument validation
+→ B2 permission/resource/policy
+→ B3 evidence/authorization requirements
+→ ProductionTractianTransport
 ```
 
-A model cannot directly perform network I/O or grant itself permissions.
+The model cannot perform network I/O or authorize itself.
 
-## 6. Progressive technical drill-down
+### Non-progress invariant
 
-The runtime may refine a successful read when structured output exposes a more specific point/resource:
+Exact successful duplicate calls are suppressed by operation + normalized argument/resource fingerprint. Same tool with different arguments remains eligible for genuine progressive drill-down such as asset-level RMS followed by point-specific RMS.
 
-```text
-get_rms(asset_R310)
-→ discover point_id
-→ get_rms(asset_R310, point_id=pt_R310_de)
+## 6. Governed consequential-action flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant API as Product API
+    participant DB as PostgreSQL custody/ledger
+    participant Authz as Server-owned authorization
+    participant T as TRACTIAN actor transport
+    participant Eval as Action evaluator
+
+    API->>DB: persist exact action proposal/custody
+    User->>API: confirm opaque action_id
+    API->>Authz: fresh tenant/user/resource/permission validation
+    API->>DB: claim idempotency + execution lease
+    API->>T: one bounded action attempt via server-owned upstream actor
+    T-->>API: accepted / not accepted / uncertain transport outcome
+    API->>DB: lease-fenced state + terminal persistence
+    API->>Eval: post-action evaluation
 ```
 
-or equivalent spectrum progression.
+Required authority remains server-owned: grants, tenant/company scope, upstream action actor, credentials, kill switch, confirmation fingerprint and idempotency.
 
-This is not an exact duplicate loop. Stopping/redundancy evaluation should consider normalized arguments, resource target and incremental evidence contribution.
+The controlled production pre-deploy smoke proved five executable governed action transports, all accepted with HTTP 200. This does not replace the pending full hosted action adversarial/security campaign.
 
-## 7. Managed identity and session resilience
+## 7. Identity and tenant boundary
 
 ```text
-managed HttpOnly browser session
-→ server-side Neon session validation
-→ authenticated user + active/personal organization scope
+managed HttpOnly session
+→ server-side Neon validation
+→ authenticated user + active organization
 → AuthenticatedRuntimeContext
 → transaction-local PostgreSQL organization scope
 → RLS
 ```
 
-Read-burst resilience:
+GET/HEAD may reuse a server-validated context for ≤2 s using a SHA-256 cookie digest and bounded singleflight cache. POST/non-read always receives fresh managed-session validation. Raw cookies are not cached; expired context is never served stale on error; invalid session is 401 and temporary auth dependency failure is 503.
+
+RLS remains independent from model/provider behavior.
+
+## 8. Persistence, realtime and evaluation
 
 ```text
-GET / HEAD
-→ SHA-256(cookie) lookup
-→ ≤2 s bounded validated-context cache
-→ singleflight on miss
-→ Neon Auth when needed
-
-POST / non-read
-→ bypass read cache
-→ fresh Neon Auth validation
-```
-
-Properties:
-
-- raw cookie is not cached;
-- max 256 read contexts;
-- no stale-on-error after expiry;
-- invalid session = 401;
-- temporary auth-service unavailability = 503 + `Retry-After: 1`;
-- browser reconciles auth on managed-auth signal, focus and visibility return.
-
-RLS remains independent from this cache and from the model.
-
-## 8. Evidence and realtime architecture
-
-```text
-canonical runtime transition
-→ sanitized immutable event row
+canonical transition
+→ sanitized immutable PostgreSQL event
 → authoritative (run_id, sequence) cursor
-→ PostgreSQL commit
+→ commit
 → LISTEN/NOTIFY wake-up
 → bounded durable catch-up
 → authenticated SSE
-→ idempotent React state
+→ idempotent React projection
 ```
 
-PostgreSQL rows/cursors are truth. `LISTEN/NOTIFY` is only wake-up; missed notifications cannot become missing authoritative state.
+Rows/cursors are truth; NOTIFY is wake-up only. Raw secrets, grant material, private custody, evaluator-private gold and hidden reasoning are excluded from browser-safe projections.
 
-Raw secrets, private action custody, evaluator-private material and hidden chain-of-thought are excluded from browser projections.
+Evaluation is post-runtime and deterministic where structural truth exists. The serving evaluator requires live model-call provenance when provider calls are enabled.
 
-## 9. Current UX architecture
-
-Hosted UX is task-driven rather than globally depth-tab driven:
+## 9. UX architecture
 
 ```text
 Home
-  ask one question / examples / service state
-    ↓ run
-Result
-  conclusion + next step + contextual evidence
-    ↙                         ↘
-Analyses                    Technical
-persisted history           analysis / quality / data / system / actions / studies
+→ ask / progress / result
+→ contextual evidence
+→ Analyses: persisted history
+→ Technical: trace / quality / data / system / actions / verification / studies
 ```
 
-Technical depth still exposes the same underlying runtime/evaluation/capability evidence; it is simply organized by user task.
+The frontend visualizes live server-owned architecture/runtime/evaluation state but owns no authorization or agent policy.
 
-## 10. Capability and action boundary
-
-```text
-18 canonical operations
-13 READ  → available through Release 0 read path when provider + TRACTIAN transport are enabled
-5 ACTION → represented/proposal-only; external execution disabled
-```
-
-The codebase contains stronger governed action machinery (custody, confirmation, idempotency, leases/fencing, uncertainty), but **production Release 0 authorization is deny-all for consequential external execution**.
-
-## 11. Provider boundary
-
-- Release 0 serving: Cloudflare GLM-4.7-Flash is provisional.
-- Final provider selection: frozen Provider Tournament v3 remains `NO_SELECTION`.
-
-No hidden fallback may silently replace provider/model/route or cross into paid operation.
-
-## 12. Release/deployment identity
+## 10. Hosted identity / release separation
 
 Current hosted identities:
 
-- backend/runtime `08866da60245f58f217981b7ae668b10be45cc67`;
-- frontend `1bc124a8d4dbd029178ff8129b25452129445de7`;
+- backend `5611687556b3d50c31f20fa85ede794f2500f05c`;
+- frontend `4364364266c6a88d4affd85cb3a734c774cd42c8`;
 - supplied API `47561c1175181b508139e23e6e39b555c1347d57`.
 
-Original Release 0 acceptance remains historical at backend `082d6f...`.
+The functional-closure PR is intentionally ahead of production. A source/docs commit is not a production promotion. Final acceptance requires exact accepted candidate SHA == deployed production SHA.
 
-Backend production artifacts bind configured release SHA to baked artifact identity and Railway runtime identity before serving a production claim. Component deployments may advance independently.
-
-## 13. Evaluation architecture
-
-```text
-RunTrace
-→ deterministic structural/safety/trajectory checks
-→ safe evaluation projection
-→ Technical quality/analysis surfaces
-```
-
-Current live V13 runs passed blocking checks including execution-chain integrity, model-call provenance, production-trace identity, proposal-contract validity, read-only action safety and terminal consistency.
-
-Human semantic calibration remains separate and non-gating until real blinded labels establish reliability.
-
-## 14. Technology decisions currently promoted
+## 11. Technology decisions
 
 | Area | State |
 |---|---|
 | custom `AgentController` | promoted baseline |
-| typed `HarnessRunner` / `ToolSpec` | hard execution boundary |
-| FastAPI + REST/SSE | promoted |
-| PostgreSQL serving truth | promoted |
-| PostgreSQL LISTEN/NOTIFY wake-up | promoted; rows remain truth |
-| React/Vite/Caddy | promoted task-driven frontend |
-| Railway frontend/backend | hosted Release 0 |
-| Neon PostgreSQL/Auth | hosted Release 0 |
-| Cloudflare GLM-4.7-Flash | provisional Release 0 only |
+| typed `HarnessRunner` / ToolSpec | hard execution boundary |
+| FastAPI/Pydantic | promoted |
+| PostgreSQL + RLS | promoted production truth |
+| LISTEN/NOTIFY + durable cursor | promoted wake-up/realtime design |
+| React/TypeScript/TanStack Query/React Flow/ECharts | promoted UX/visualization stack |
+| Railway + Neon | hosted production |
+| OpenRouter V14 | provisional serving provider; functional gate currently FAIL |
 | DuckDB | dev/benchmark compatibility only |
-| RAG/vector DB | NO_CHANGE |
-| persistent memory | NO_CHANGE |
-| multi-agent | NO_CHANGE |
-| MCP | NO_CHANGE unless measured interoperability gap appears |
-| LangGraph migration | NO_CHANGE unless challenger wins |
-| Redis/Kafka/Kubernetes | NO_CHANGE unless measured need appears |
-| adaptive stopping/routing | not promoted; challenger/evaluator scope only |
+| LangGraph migration | `NO_CHANGE` |
+| multi-agent | `NO_CHANGE` |
+| RAG/vector DB/persistent memory | `NO_CHANGE` |
+| MCP | `NO_CHANGE` absent measured interoperability gap |
+| Redis/Kafka/Kubernetes | `NO_CHANGE` absent measured need |
+| adaptive stopping/routing | challenger only after quantitative win |
 
-## 15. Current non-claims
+The present blocker is provider completion/availability, not evidence for a topology rewrite.
 
-Do not claim final provider superiority, OAuth/OIDC/enterprise SSO, consequential external action readiness, full SECURITY-V1, final production capacity/SLO/HA/RTO/RPO, human semantic calibration, observed time savings, complete live coverage of all 13 reads or adaptive-policy superiority until corresponding evidence exists.
+## 12. Current non-claims
+
+Do not claim:
+
+- OpenRouter V14 functional acceptance while B204 is 0/3;
+- that the V14 campaign reached TRACTIAN reads;
+- final provider superiority/selection;
+- broad 13-read live coverage;
+- final end-user/action SECURITY-V1 completion;
+- distributed exactly-once external side effects;
+- evidence-derived production capacity/SLO/HA/RTO/RPO;
+- human semantic calibration or measured operational time savings;
+- branch-protection enforcement while GitHub reports `main.protected=false`;
+- any new orchestration/framework superiority without a controlled challenger win.
+
+See [`progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md`](progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md) for the exact current evidence.

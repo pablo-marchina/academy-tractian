@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from hashlib import sha256
+import json
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -45,6 +46,7 @@ class SafeEvent(_FrozenModel):
     turn_index: int | None = None
     tool_call_count: int | None = None
     argument_names: tuple[str, ...] = ()
+    arguments_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     method: str | None = None
     path_template: str | None = None
     tool_kind: str | None = None
@@ -100,6 +102,16 @@ class SafeEvaluation(_FrozenModel):
 
 def safe_run_id(raw_run_id: str) -> str:
     return "run_" + sha256(raw_run_id.encode("utf-8")).hexdigest()[:20]
+
+
+def _argument_fingerprint(arguments: dict[str, Any] | None) -> str:
+    canonical = json.dumps(
+        arguments or {},
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return sha256(canonical).hexdigest()
 
 
 def _scalar_text(value: Any, *, max_length: int = 4096) -> str | None:
@@ -162,6 +174,7 @@ def project_event(*, raw_run_id: str, event: TraceEvent) -> SafeEvent:
         )
     elif event.event_type == "tool_proposal":
         fields["argument_names"] = tuple(sorted((event.arguments or {}).keys()))
+        fields["arguments_sha256"] = _argument_fingerprint(event.arguments)
     elif event.event_type == "policy_check":
         fields.update(
             policy_stage=_scalar_text(metadata.get("stage"), max_length=64),
@@ -172,6 +185,7 @@ def project_event(*, raw_run_id: str, event: TraceEvent) -> SafeEvent:
     elif event.event_type == "tool_call":
         fields.update(
             argument_names=tuple(sorted((event.arguments or {}).keys())),
+            arguments_sha256=_argument_fingerprint(event.arguments),
             method=_scalar_text(metadata.get("method"), max_length=16),
             path_template=_scalar_text(metadata.get("path"), max_length=512),
             tool_kind=_scalar_text(metadata.get("kind"), max_length=64),

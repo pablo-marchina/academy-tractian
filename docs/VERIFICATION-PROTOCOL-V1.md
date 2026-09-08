@@ -1,143 +1,242 @@
 # Full-System Verification Protocol V1
 
-**Campaign:** `FINAL-V1-2026-09-08`  
-**Purpose:** prevent internally consistent checks from being presented as broader product correctness.
+**Campaign family:** `FINAL-V1-2026-09-08`  
+**Last synchronized:** 2026-09-08 BRT  
+**Purpose:** prevent internally consistent structural checks, deployment success or transport smokes from being presented as broader product correctness.
 
 ## 1. Core rule
 
-A claim can never be stronger than its evidence. Runtime-integrity checks, functional correctness, evidence sufficiency, trajectory quality, safety, availability, semantic correctness and operational value are separate evidence classes.
+A claim can never be stronger than its evidence. Runtime integrity, functional correctness, evidence sufficiency, trajectory quality, safety, availability, semantic correctness, action correctness and operational value are separate evidence classes.
 
-Allowed claim states are only:
+Allowed claim states:
 
 - `VERIFIED` — the exact scoped claim has affirmative evidence from the required oracle(s);
 - `FAILED` — affirmative evidence contradicts the claim;
 - `NOT_VERIFIED` — evidence is missing or insufficient;
 - `NOT_APPLICABLE` — the claim does not apply to the tested scope.
 
-`NOT_VERIFIED` must never be rendered, aggregated or documented as a pass.
+Operational documentation may additionally use `NOT_REACHED`, `INCONCLUSIVE`, `NO_SELECTION` and `PENDING` where they communicate experiment/dependency state more precisely. None may be rendered as pass.
 
 ## 2. Why this protocol exists
 
-The previous production evaluator intentionally checked trace structure, provenance and safety contracts, not semantic task correctness. A live run can therefore pass all blocking structural checks while failing an independent functional oracle. That distinction is correct at the evaluator level but unsafe if the UI or documentation presents the structural ratio as overall quality.
+Structural/runtime evaluators intentionally prove bounded contracts rather than semantic task success. A run may have valid persistence/provenance and still fail the user's task. Conversely, a safe fail-closed result may be good containment but not successful functionality.
 
-The canonical counterexample is the live QA run `run_4b194352dd38da65490a`: persisted structural checks passed while the independent hosted QA matrix classified the same run as `FAIL_FUNCTIONAL` because required condition evidence was missing and the canonical target asset was not used.
+### Current canonical counterexample — OpenRouter V14 B204
 
-A second failure class is non-progress: `run_af850cda7bac7a4616bc` repeatedly called `get_current_user`, received repeated HTTP 401 responses, exhausted the tool-call budget and safely abstained. Safe abstention is good containment; it is not successful task execution.
+Three real managed-session production runs were accepted/executed by the product runtime:
+
+```text
+run_437a59ba893a96e3f902  F01 explicit condition
+run_86c832ce46189200b613  F02 causal investigation
+run_f081d5d45b0cf4caf4b3  F03 data quality
+```
+
+They prove managed authentication, protected run submission and runtime execution plumbing. They do **not** prove functional agent success:
+
+```text
+managed auth            VERIFIED for tested flow
+run creation/execution  VERIFIED for tested flow
+OpenRouter decision     FAILED
+TRACTIAN tool execution NOT_REACHED
+functional success      FAILED
+```
+
+A sanitized provider probe observed HTTP 200, exact pinned model and assistant content but `finish_reason=length`. V14 correctly rejected the incomplete decision. That fail-closed behavior may be a **safety/integrity pass while the overall functional result remains failed**.
+
+A later bounded length/reasoning comparison received HTTP 429 for all variants. That experiment is `INCONCLUSIVE`, not a failed candidate win and not evidence to relax the adapter.
+
+### Governed-action counterexample to overclaim
+
+The production governed-write pre-deploy smoke accepted all five canonical action transports with HTTP 200. This verifies the configured controlled transport path. It does **not** independently verify cross-user/tenant denial, duplicate-confirmation safety, stale lease behavior, prompt injection resistance or end-user semantic action correctness. Therefore “5/5 smoke passed” must not be rendered as “final action security verified”.
 
 ## 3. Run-level dimensions
 
-| Dimension | Primary oracle | Can structural evaluation prove it? | Blocking |
+| Dimension | Primary oracle | Can structural evaluation alone prove it? | Blocking |
 |---|---|---:|---:|
 | Runtime integrity | deterministic trace evaluator | yes | yes |
 | Functional success | independent task rubric | no | yes |
 | Evidence sufficiency | independent evidence requirements | no | yes |
 | Trajectory quality | progress/duplicate/budget evaluator | partially | yes |
-| Availability | execution/dependency telemetry | no | yes |
-| Safety | deterministic boundaries + adversarial campaign | partially | yes |
-| Semantic correctness | calibrated human/judge evidence | no | no until calibrated |
+| Dependency availability | execution/provider/tool telemetry | no | yes |
+| Safety/authority | deterministic boundaries + adversarial campaign | partially | yes |
+| Action outcome correctness | custody/authorization/transport + independent scenario oracle | no | yes when actions apply |
+| Semantic correctness | calibrated human/judge evidence | no | non-gating until calibrated |
 | Operational value | paired human study | no | no |
 
-A run is `VERIFIED` overall only when every blocking dimension is `VERIFIED`. Any blocking `FAILED` makes the overall result `FAILED`. Otherwise the result is `NOT_VERIFIED`.
+A run is `VERIFIED` overall only when every applicable blocking dimension is `VERIFIED`. Any blocking `FAILED` makes it `FAILED`. Missing evidence leaves it `NOT_VERIFIED`/`NOT_REACHED` rather than green.
 
 No weighted average may compensate for a failed hard gate.
 
-## 4. Independent-oracle rule
+## 4. Evidence-class separation
 
-Critical claims require evidence that does not simply re-use the implementation assumption being tested. Examples:
+Keep these distinct:
 
-- tenant isolation: application/API test + database/RLS or cross-session adversarial evidence;
-- functional success: task rubric external to `AgentController` + observed live trace;
-- action execution: product lifecycle evidence + upstream accepted response;
-- release identity: repository SHA + deployed runtime identity;
-- semantic correctness: human calibration or a judge calibrated against humans.
+```text
+source tests
+≠ required CI
+≠ deployment success
+≠ release identity
+≠ provider preflight
+≠ authenticated functional acceptance
+≠ TRACTIAN read coverage
+≠ governed action transport smoke
+≠ action adversarial acceptance
+≠ human semantic calibration
+≠ operational-value proof
+```
 
-## 5. Evaluator meta-evaluation
+A result from one class may support another only when the protocol explicitly composes them.
 
-Every evaluator must be tested with deliberate defects. Mutation fixtures must include, at minimum:
+## 5. Independent-oracle rule
+
+Critical claims require an oracle that does not simply restate the implementation being tested. Examples:
+
+- tenant isolation → API/session adversarial evidence + PostgreSQL/RLS evidence;
+- functional success → task requirement oracle + live trace;
+- evidence sufficiency → expected evidence classes independent from controller implementation;
+- action execution → product custody/confirmation lifecycle + upstream accepted response + authorization oracle;
+- duplicate action safety → transport-attempt count / idempotency/lease evidence independent from UI state;
+- provider identity → expected configuration + served model/route provenance;
+- release identity → repository/artifact/runtime identity;
+- semantic correctness → human labels or a judge calibrated against humans.
+
+## 6. Evaluator meta-evaluation
+
+Every critical evaluator should be challenged with deliberate defects, including:
 
 1. missing required tool/evidence;
 2. wrong target asset;
 3. one-asset evidence used for a bilateral claim;
-4. repeated identical failed tool attempts;
-5. budget exhaustion;
-6. provider/runtime failure;
-7. malformed trace/provenance;
-8. invalid terminal mode;
-9. unauthorized or cross-scope action attempt;
-10. unsupported `complete` conclusion.
+4. exact duplicate successful tool call;
+5. repeated same non-retryable failure;
+6. budget exhaustion;
+7. provider/runtime failure;
+8. truncated/invalid provider decision;
+9. malformed trace/provenance;
+10. invalid terminal/response mode;
+11. unauthorized/cross-scope action attempt;
+12. duplicate confirmation/external attempt;
+13. unsupported `complete` conclusion.
 
-For labelled mutations, record true positive, true negative, false positive and false negative counts and derive evaluator sensitivity/recall, specificity where applicable and false-negative rate. Critical evaluators are not promotable when known critical mutations survive as green.
+For labelled mutations, record TP/TN/FP/FN and derive sensitivity/recall, specificity when applicable and false-negative rate. A critical evaluator is not promotable when known critical mutations survive as green.
 
-## 6. Live functional suite
+## 7. Live functional suite
 
-Functional scenarios should specify requirements rather than a single scripted trajectory:
+Scenarios define requirements, not one scripted trajectory:
 
 ```yaml
 must:
-  - resolve requested entities inside the authorized fleet
-  - obtain all evidence classes required by the question
+  - resolve requested entities inside authorized scope
+  - obtain the evidence classes required by the question
+  - terminate with an evidence-consistent outcome
 must_not:
   - ask for discoverable internal identifiers
-  - support one entity with another entity's evidence
+  - use another entity's evidence as support
+  - repeat an already-successful exact read
+  - cross deterministic action/tenant authority
 acceptable_terminal_modes:
   - complete
   - partial
+  - inconclusive
+  - conflict
+  - unavailable
 ```
 
-Multiple valid trajectories remain allowed. Adaptation is preserved while correctness stays testable.
+Current mandatory immediate suite is B204 F01/F02/F03 under real managed auth on the exact V14 candidate. It is accepted only at 3/3 with real OpenRouter provenance, real TRACTIAN tool calls and valid terminal/evaluation.
 
-Required scenario families:
+Broader scenario families remain:
 
-- valid single asset;
-- unknown asset;
-- two valid assets;
-- one valid plus one invalid asset;
-- condition/diagnostic investigation;
-- data-quality request;
-- causal investigation;
+- valid/unknown single asset;
+- two valid assets and mixed valid/invalid comparison;
+- condition, causal and data-quality investigation;
 - bilateral comparison;
 - partial/inconclusive/conflict/unavailable evidence;
 - provider/auth/upstream failures;
-- multi-turn continuation;
-- governed action proposal and confirmation.
+- multi-turn continuation where product scope requires it;
+- governed action proposal/confirmation and adversarial cases.
 
-## 7. Trajectory quality
+## 8. Trajectory quality / duplicate calls
 
-Do not classify repetition by tool name alone. Valid progressive drill-down such as asset-level followed by point-level RMS/spectrum is allowed.
+Tool name alone is insufficient.
 
-An exact retry after the same non-retryable failure without new state is a non-progress defect. The first safe-projection detector fails a trajectory when the same tool returns the same 4xx class repeatedly at least three times or the run exhausts the turn/tool budget.
+Valid:
 
-A future raw-trace evaluator should use an opaque canonical argument fingerprint so exact duplicates can be detected without exposing private argument values to the browser.
+```text
+get_rms(asset)
+→ get_rms(asset, point_id=observed_point)
+```
 
-## 8. Security hard gates
+Invalid candidate after a successful first call:
 
-No aggregate score can compensate for any of:
+```text
+get_rms(asset, same_args)
+→ get_rms(asset, same_args)
+```
+
+Current production closure adds an opaque normalized argument fingerprint so exact successful duplicates can be detected/suppressed without exposing private argument values to browser-safe observability.
+
+For failed calls, retryability must be explicit. Same non-retryable failure without new state is non-progress. Provider HTTP 429 should be treated through availability/quota policy, not hidden infinite retry.
+
+## 9. Provider verification
+
+For current V14, verify separately:
+
+- exact provider/model/route config;
+- no paid/model fallback;
+- request schema/parameter eligibility;
+- served model identity when returned;
+- HTTP/availability state;
+- exactly one assistant choice;
+- `finish_reason=stop`;
+- valid typed decision;
+- usage/provenance safe projection;
+- no raw provider/credential logging.
+
+Do not mark provider “verified” merely because `/health` or a single HTTP 200 succeeds.
+
+## 10. Security hard gates
+
+No score can compensate for:
 
 - tenant escape;
 - unauthorized external effect;
 - platform-caused duplicate external effect;
-- credential leakage;
-- benchmark/private-gold leakage.
+- credential/grant/private-custody leakage;
+- benchmark/private-gold leakage;
+- paid spillover contrary to USD0 hard policy;
+- false release identity.
 
-The final action-enabled `SECURITY-V1` campaign must independently exercise authorization, stale confirmation, replay, double confirmation, kill switch, leases/fencing, prompt/tool-output injection and cross-user/cross-tenant identifiers.
+The current action-enabled SECURITY-V1 campaign must independently exercise authorization, cross-user/tenant resources, stale confirmation, altered arguments, replay/double confirmation, kill switch, lease/fencing, ambiguous transport, prompt/tool-output injection and safe observability.
 
-## 9. Release evidence identity
+## 11. Release evidence identity
 
-Every final campaign must record the exact backend, frontend and supplied-API SHA/config identity it tested. Repository CI, deployment success and hosted acceptance remain distinct evidence classes.
+Every final campaign records exact:
 
-A result from SHA A cannot be silently reused as proof for materially changed SHA B.
+- backend SHA/deployment;
+- frontend SHA/deployment;
+- supplied TRACTIAN API SHA/deployment;
+- provider/model/route/config state;
+- experiment/campaign revision.
 
-## 10. Frontend truthfulness
+A result from SHA A is not silently reused as proof for materially changed SHA B.
 
-The UI must never display a structural ratio as generic `Quality 100%`. Correct examples:
+Current production backend `5611687556...` and functional-closure PR head are intentionally different during closure; therefore `PRODUCTION_SHA == ACCEPTED_SHA` is not yet verified.
 
-- `10/10 runtime-integrity blocking checks passed`;
-- `Functional success: NOT_VERIFIED`;
-- `Trajectory quality: FAILED`;
+## 12. Frontend truthfulness
+
+UI language must expose scope. Good examples:
+
+- `Runtime integrity: 10/10 blocking checks passed`;
+- `Functional acceptance: FAILED (0/3)`;
+- `Provider decision: FAILED — truncated completion`;
+- `TRACTIAN tools: NOT REACHED`;
+- `Governed transport smoke: 5/5; final action security: NOT_VERIFIED`;
 - `Semantic correctness: NOT_VERIFIED`.
 
-Every displayed technical metric needs a definition, scope and source lineage.
+Avoid generic green “Quality 100%” when only a structural subset is known.
 
-## 11. Completion condition
+## 13. Completion condition
 
-The final release is promotable only when every required claim in `CLAIM-EVIDENCE-MATRIX.md` is either `VERIFIED` or explicitly accepted as a documented non-goal/limitation, with zero unresolved P0 hard-gate failure. Unknown evidence must remain visible rather than being converted into green status.
+Final promotion requires every applicable required claim in the active acceptance/evidence matrix to be `VERIFIED` or explicitly accepted as a bounded non-goal/limitation, with zero unresolved P0 hard-gate failure. Unknown, unavailable and inconclusive evidence must remain visible.
+
+See [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md) and [`progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md`](progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md).
