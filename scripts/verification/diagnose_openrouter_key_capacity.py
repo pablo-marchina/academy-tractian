@@ -9,6 +9,7 @@ OPENROUTER_KEY_URL = "https://openrouter.ai/api/v1/key"
 REQUIRED_CAPACITY = 85
 FREE_TIER_DAILY_CAPACITY = 50
 CREDIT_BACKED_FREE_MODEL_DAILY_CAPACITY = 1000
+DEFAULT_TOKEN_ENV = "ACADEMY_PROVIDER_API_TOKEN"
 
 
 def required(name: str) -> str:
@@ -19,7 +20,10 @@ def required(name: str) -> str:
 
 
 def main() -> int:
-    token = required("ACADEMY_PROVIDER_API_TOKEN")
+    token_env = os.environ.get("OPENROUTER_DIAGNOSTIC_TOKEN_ENV", DEFAULT_TOKEN_ENV).strip() or DEFAULT_TOKEN_ENV
+    if token_env not in {"ACADEMY_PROVIDER_API_TOKEN", "PRODUCTION_PROVIDER_API_TOKEN"}:
+        raise RuntimeError("openrouter_diagnostic_token_env_not_allowlisted")
+    token = required(token_env)
     req = urllib.request.Request(
         OPENROUTER_KEY_URL,
         headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
@@ -41,9 +45,10 @@ def main() -> int:
     result = "PASS" if published_daily_capacity >= REQUIRED_CAPACITY else "FAIL"
 
     safe = {
-        "schema_version": "openrouter-key-capacity-diagnostic-v1",
+        "schema_version": "openrouter-key-capacity-diagnostic-v2",
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "provider_id": "openrouter",
+        "credential_slot": token_env,
         "required_capacity": REQUIRED_CAPACITY,
         "is_free_tier": is_free_tier,
         "published_free_model_daily_capacity": published_daily_capacity,
