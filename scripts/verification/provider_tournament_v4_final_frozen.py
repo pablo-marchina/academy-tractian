@@ -16,6 +16,11 @@ only serving-boundary normalizations that are outside candidate quality:
    rejects Python urllib's default browser signature with Cloudflare error 1010 even though the
    same API key/model are valid. This transport normalization is applied identically to both
    candidates and changes no prompt, schema, model, scoring, retry, or fallback behavior.
+4. Groq calls are deterministically paced after each attempt using the live-account 8,000 TPM
+   limit observed before the scored run. Pacing happens strictly outside the provider-call timer,
+   so latency metrics remain request latency rather than benchmark scheduler delay. A 429 remains
+   a scored failure; the cooldown only prevents one throttled attempt from mechanically cascading
+   into subsequent attempts. No request is retried.
 
 No retries, fallbacks, JSON repair, rubric changes, dataset changes, or candidate-specific scoring
 changes are introduced here.
@@ -26,6 +31,7 @@ import importlib.util
 import os
 from pathlib import Path
 import sys
+import time
 
 CORE_PATH = Path(__file__).with_name("provider_tournament_v4_final.py")
 SPEC = importlib.util.spec_from_file_location("provider_tournament_v4_final_core", CORE_PATH)
@@ -38,7 +44,11 @@ SPEC.loader.exec_module(core)
 _real_identity = core.ProviderCallIdentity
 _real_audit_integrity = core._audit_integrity
 _real_build_http_request = core.OpenAICompatTournamentClient.build_http_request
+_real_attempt = core._attempt
 USER_AGENT = "academy-tractian-provider-tournament/1.0"
+GROQ_TPM_LIMIT = 8000.0
+GROQ_PACING_MARGIN_SECONDS = 1.0
+GROQ_429_COOLDOWN_SECONDS = 60.0
 
 
 def _audit_model_id(value: str) -> str:
@@ -69,6 +79,23 @@ def _build_http_request_with_explicit_user_agent(self, request):
     )
 
 
+def _attempt_with_provider_pacing(**kwargs):
+    row = _real_attempt(**kwargs)
+    if row.get("candidate_id") != "groq-gpt-oss-120b":
+        return row
+
+    exception_code = str(row.get("exception_code") or "")
+    if exception_code == "HTTP_STATUS:429":
+        time.sleep(GROQ_429_COOLDOWN_SECONDS)
+        return row
+
+    total_tokens = row.get("total_tokens")
+    if isinstance(total_tokens, int) and total_tokens > 0:
+        delay = (float(total_tokens) / GROQ_TPM_LIMIT) * 60.0 + GROQ_PACING_MARGIN_SECONDS
+        time.sleep(delay)
+    return row
+
+
 def _install_tournament_specific_cloudflare_credentials() -> None:
     account = os.environ.get("TOURNAMENT_CLOUDFLARE_ACCOUNT_ID", "").strip()
     token = os.environ.get("TOURNAMENT_CLOUDFLARE_API_TOKEN", "").strip()
@@ -86,6 +113,7 @@ def main() -> int:
     core.ProviderCallIdentity = _safe_provider_call_identity
     core._audit_integrity = _safe_audit_integrity
     core.OpenAICompatTournamentClient.build_http_request = _build_http_request_with_explicit_user_agent
+    core._attempt = _attempt_with_provider_pacing
     return core.main()
 
 
