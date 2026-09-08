@@ -127,10 +127,12 @@ def _availability_dimension(
     completed = _as_bool(run.get("completed")) is True
     reason = _failure_reason(run)
     error_events = sum(1 for event in events if event.get("event_type") == "error")
-    auth_failures = sum(
+    # A safe projection emits both tool_result and observation rows for one upstream call.
+    # Count only tool_result so one 401 is never doubled into two independent failures.
+    auth_failed_calls = sum(
         1
         for event in events
-        if event.get("event_type") in {"tool_result", "observation"}
+        if event.get("event_type") == "tool_result"
         and event.get("status_code") in {401, 403}
     )
 
@@ -141,7 +143,7 @@ def _availability_dimension(
         failures.append(reason)
     if error_events:
         failures.append("runtime_error_event")
-    if auth_failures >= 2:
+    if auth_failed_calls >= 2:
         failures.append("repeated_upstream_auth_failure")
 
     if failures:
@@ -152,7 +154,7 @@ def _availability_dimension(
             scope="run_completion_and_visible_dependency_failures_v1",
             summary="The run did not complete the requested serving path without a material availability failure.",
             evidence=tuple(failures),
-            metrics={"error_events": error_events, "auth_failure_events": auth_failures},
+            metrics={"error_events": error_events, "auth_failed_calls": auth_failed_calls},
             limitations=("Legitimate domain-level data unavailability is not treated as a service failure by itself.",),
         )
 
@@ -161,9 +163,12 @@ def _availability_dimension(
         status="VERIFIED",
         blocking=True,
         scope="run_completion_and_visible_dependency_failures_v1",
-        summary="The persisted run completed without a visible runtime/dependency failure in this scope.",
-        metrics={"error_events": 0, "auth_failure_events": auth_failures},
-        limitations=("This is per-run evidence, not an availability SLO.",),
+        summary="The persisted run completed without a visible material runtime/dependency failure in this scope.",
+        metrics={"error_events": 0, "auth_failed_calls": auth_failed_calls},
+        limitations=(
+            "This is per-run evidence, not an availability SLO.",
+            "One recovered authorization failure is recorded as telemetry but does not alone prove run-level unavailability.",
+        ),
     )
 
 
