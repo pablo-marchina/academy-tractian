@@ -13,7 +13,7 @@ from academy_tractian.provider_clients import PROVIDER_DECISION_JSON_SCHEMA, PRO
 from academy_tractian.runtime import canonical_tool_registry
 from research.e2.controller import ControllerContext
 
-SCHEMA_VERSION = "provider-prompt-contract-probe-v3"
+SCHEMA_VERSION = "provider-prompt-contract-probe-v4"
 SYNTHETIC_ASSET_ID = "asset_prompt_probe_001"
 EXPECTED_TOOL = "get_asset"
 PROVIDERS = {
@@ -50,13 +50,17 @@ def safe_error(payload: Any) -> dict[str, str]:
     }
 
 
+def _schema_copy() -> dict[str, Any]:
+    return json.loads(json.dumps(PROVIDER_DECISION_JSON_SCHEMA))
+
+
 def _json_schema_response_format() -> dict[str, Any]:
     return {
         "type": "json_schema",
         "json_schema": {
             "name": "provider_decision_payload",
             "strict": False,
-            "schema": json.loads(json.dumps(PROVIDER_DECISION_JSON_SCHEMA)),
+            "schema": _schema_copy(),
         },
     }
 
@@ -82,16 +86,18 @@ def request_body(provider_id: str, model: str, request_text: str) -> dict[str, A
             }
         )
     elif provider_id == "nvidia":
-        # Live catalog discovery is authoritative for this credential. The
-        # currently served Nemotron 3 Super route and NVIDIA's hosted examples
-        # both use max_tokens plus chat_template_kwargs.enable_thinking.
-        # Reasoning is disabled for this contract probe because the application
-        # requires exactly one final JSON payload and owns all strict validation.
+        # The credential's live catalog and NVIDIA's current hosted examples both
+        # identify Nemotron 3 Super as the supported route. NVIDIA recommends
+        # guided_json for reliable schema-constrained generation and the model card
+        # recommends temperature=1.0/top_p=0.95. App-side Pydantic relational
+        # validation remains the final fail-closed boundary.
         body.update(
             {
+                "temperature": 1.0,
+                "top_p": 0.95,
                 "max_tokens": 512,
-                "top_p": 1,
                 "chat_template_kwargs": {"enable_thinking": False},
+                "guided_json": _schema_copy(),
             }
         )
     elif provider_id == "openrouter":
@@ -191,7 +197,7 @@ def main() -> int:
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "academy-tractian-provider-prompt-contract-probe/3.0",
+            "User-Agent": "academy-tractian-provider-prompt-contract-probe/4.0",
         },
     )
 
