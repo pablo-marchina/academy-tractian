@@ -1,111 +1,85 @@
 # Documentation Hub
 
 **Status:** ACTIVE documentation index  
-**Last verified:** 2026-09-07 BRT  
+**Last verified:** 2026-09-08 BRT  
 **Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
+**Current provider-selection state:** [`PROVIDER-QUALIFICATION-STATUS-2026-09-08.md`](PROVIDER-QUALIFICATION-STATUS-2026-09-08.md)  
 **Public product:** https://production-web-production-c9d1.up.railway.app
 
-The repository intentionally contains:
-
-1. a **small active documentation surface** that answers current user/operator/developer/reviewer questions;
-2. a **large immutable evidence history** preserving experiments, ADRs, audits and prior states.
-
-Do not treat an old file as current truth merely because it remains in Git.
+The repository intentionally separates a small mutable documentation surface from a large immutable evidence history. Never treat an old experiment/audit as current truth merely because it remains in Git.
 
 ## Start by task
 
-### Use or learn the product
+### Use the product
 
-- [`GETTING-STARTED.md`](GETTING-STARTED.md) — task-driven Home / Analyses / Technical flow, result/evidence semantics and safe prompting.
-- [`RELEASE-0-ACCEPTANCE.md`](RELEASE-0-ACCEPTANCE.md) — immutable original Release 0 gate plus prospective live-hardening status.
+- [`GETTING-STARTED.md`](GETTING-STARTED.md) — Home / Analyses / Technical flow and safe prompting.
+- [`RELEASE-0-ACCEPTANCE.md`](RELEASE-0-ACCEPTANCE.md) — immutable original Release 0 acceptance.
 
-### Record the 5-minute technical presentation
+### Need current facts
 
-- [`presentation/README.md`](presentation/README.md) — entrypoint and current identities.
-- [`presentation/EXACT-5-MIN-RECORDING-SCRIPT.md`](presentation/EXACT-5-MIN-RECORDING-SCRIPT.md) — exact recording path aligned to the current task-driven UI.
-- [`presentation/05-MIN-TECHNICAL-SCREENPLAY.md`](presentation/05-MIN-TECHNICAL-SCREENPLAY.md) — technical intent/timing.
-- [`presentation/SCREEN-SHOT-LIST.md`](presentation/SCREEN-SHOT-LIST.md) — current hosted screens/evidence.
-- [`presentation/ARCHITECTURE-OVERLAYS.md`](presentation/ARCHITECTURE-OVERLAYS.md) — simplified runtime/deployment overlays.
-- [`presentation/RECORDING-CHECKLIST.md`](presentation/RECORDING-CHECKLIST.md) — preflight/claim discipline.
+- [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md) — mutable overall state.
+- [`PROVIDER-QUALIFICATION-STATUS-2026-09-08.md`](PROVIDER-QUALIFICATION-STATUS-2026-09-08.md) — canonical provider-selection, Groq qualification and causal-debug state.
+- [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md) — dependency-ordered next work.
+- [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md) — final-project Definition of Done.
+- [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md) — TAPI crosswalk.
+- [`CODEBASE-MAP.md`](CODEBASE-MAP.md) — implementation ownership.
+- [`../CHANGELOG.md`](../CHANGELOG.md) — notable product/research evolution.
 
-### Perform an operation
+### Understand or operate the architecture
 
-- [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md) — production smoke, exact-SHA promotion, auth diagnosis, rollback and recovery.
-- [`PLAYWRIGHT-ACCEPTANCE.md`](PLAYWRIGHT-ACCEPTANCE.md) — current browser/product acceptance contract.
-- [`../CONTRIBUTING.md`](../CONTRIBUTING.md) — development workflow.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — promoted production architecture plus experimental provider boundary.
+- [`FINAL-HANDOFF-RUNBOOK.md`](FINAL-HANDOFF-RUNBOOK.md) — operation, exact-SHA promotion, provider gate, rollback and recovery.
+- [`SECURITY-MODEL.md`](SECURITY-MODEL.md) — trust/security model.
+- [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md) — engineering constitution.
+- [`adr/README.md`](adr/README.md) — accepted decision history.
 
-### Need exact current facts
+### Presentation
 
-- [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md) — mutable current state and hosted identities.
-- [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md) — final-project Definition of Done and open gates.
-- [`TAPI-DELIVERY-COVERAGE-2026-09-02.md`](TAPI-DELIVERY-COVERAGE-2026-09-02.md) — assignment-to-product crosswalk.
-- [`CODEBASE-MAP.md`](CODEBASE-MAP.md) — code ownership/navigation, including V10–V13 release-provider layers.
-- [`decision-registry.yaml`](decision-registry.yaml) — material decision states; release qualification does not silently rewrite frozen experiments.
-- [`../CHANGELOG.md`](../CHANGELOG.md) — notable product evolution.
+- [`presentation/README.md`](presentation/README.md) — claim-safe 5-minute pack entrypoint.
+- [`presentation/EXACT-5-MIN-RECORDING-SCRIPT.md`](presentation/EXACT-5-MIN-RECORDING-SCRIPT.md) — exact recording path.
+- [`presentation/RECORDING-CHECKLIST.md`](presentation/RECORDING-CHECKLIST.md) — preflight and non-claims.
 
-### Understand why
+### Chronological / research evidence
 
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — current system context, V13 orchestration, auth resilience, dynamic flow and trust boundaries.
-- [`PROJECT-PRINCIPLES.md`](PROJECT-PRINCIPLES.md) — governance/engineering constitution.
-- [`SECURITY-MODEL.md`](SECURITY-MODEL.md) — active threat/trust-boundary model.
-- [`adr/README.md`](adr/README.md) + `adr/*` — accepted material decision history.
-- [`DOCUMENTATION-GUIDE.md`](DOCUMENTATION-GUIDE.md) — documentation architecture/lifecycle.
-
-### Chronological/research evidence
-
-- [`PROJECT-PROGRESS-LOG.md`](PROJECT-PROGRESS-LOG.md) — historical project chronology.
-- [`progress/2026-09-07-release0-live-hardening-v13.md`](progress/2026-09-07-release0-live-hardening-v13.md) — current live-hardening episode, incidents, PRs, deployments and V13 run matrix.
-- [`progress/`](progress/) — append-only dated progress/evidence notes.
-- [`research/`](research/) — documentation/research-specific evidence notes.
-- [`../research/README.md`](../research/README.md) — broader experiment/evidence tree.
+- [`progress/2026-09-07-release0-live-hardening-v13.md`](progress/2026-09-07-release0-live-hardening-v13.md) — V13 production hardening episode.
+- [`progress/2026-09-08-provider-qualification-and-causal-debug.md`](progress/2026-09-08-provider-qualification-and-causal-debug.md) — append-only provider qualification and causal-debug episode.
+- [`progress/`](progress/) — dated append-only progress notes.
+- [`../research/`](../research/) — frozen populations, manifests, results and broader experiments.
 
 ## Canonical ownership
 
 | Question | Mutable owner |
 |---|---|
 | Where are we now? | `ACTIVE-PROJECT-STATUS.md` |
+| What is the current provider decision? | `PROVIDER-QUALIFICATION-STATUS-2026-09-08.md` |
 | What are we doing next? | `DELIVERY-PLAN.md` |
 | What architecture is promoted? | `ARCHITECTURE.md` |
 | What must be true at final delivery? | `DELIVERY-ACCEPTANCE.md` |
-| What does the TAPI map to? | `TAPI-DELIVERY-COVERAGE-2026-09-02.md` |
+| What does TAPI map to? | `TAPI-DELIVERY-COVERAGE-2026-09-02.md` |
 | Where does code live? | `CODEBASE-MAP.md` |
-| How do I operate/recover it? | `FINAL-HANDOFF-RUNBOOK.md` |
-| What changed for humans? | root `CHANGELOG.md` |
-| Why was a durable decision made? | ADR / decision registry |
+| How do I operate/promote/rollback? | `FINAL-HANDOFF-RUNBOOK.md` |
+| What changed? | root `CHANGELOG.md` |
 
-The root `README.md` is an entrypoint, not another status database.
+The root `README.md` remains an entrypoint, not another independent status database.
 
 ## Documentation lifecycle
 
 ### ACTIVE — edit prospectively
 
-- this index;
-- `GETTING-STARTED.md`;
-- `ACTIVE-PROJECT-STATUS.md`;
-- `DELIVERY-PLAN.md`;
-- `ARCHITECTURE.md`;
-- `CODEBASE-MAP.md`;
-- `DELIVERY-ACCEPTANCE.md`;
-- `TAPI-DELIVERY-COVERAGE-2026-09-02.md`;
-- `FINAL-HANDOFF-RUNBOOK.md`;
-- `PLAYWRIGHT-ACCEPTANCE.md`;
-- `SECURITY-MODEL.md`;
-- `DOCUMENTATION-GUIDE.md`;
-- `PROJECT-PRINCIPLES.md` when governance itself changes;
-- root `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `SECURITY.md`;
-- current presentation pack.
+This hub, `GETTING-STARTED.md`, `ACTIVE-PROJECT-STATUS.md`, provider status, `DELIVERY-PLAN.md`, `ARCHITECTURE.md`, `CODEBASE-MAP.md`, `DELIVERY-ACCEPTANCE.md`, TAPI coverage, handoff/runbook, current security/browser docs, root README/CHANGELOG and the current presentation pack.
 
-### FROZEN / HISTORICAL — do not rewrite later history into them
+### FROZEN / HISTORICAL — do not rewrite
 
-- `CURRENT-PROJECT-STATUS.md` — legacy mutable-looking filename, hash-pinned by freeze evidence;
-- `RUBRIC-TO-EVIDENCE.md` — hash-pinned hard-freeze evidence;
+- `CURRENT-PROJECT-STATUS.md`;
+- `RUBRIC-TO-EVIDENCE.md`;
 - accepted/frozen ADRs;
-- `research/frozen/*` and consumed experiment manifests/results;
-- committed `docs/progress/*` notes;
-- date-stamped audits, preregistrations and preflights;
+- `research/frozen/*`;
+- consumed experiment manifests/results;
+- already committed `docs/progress/*` notes;
+- date-stamped audits/preregistrations/preflights;
 - custody/blind/locked evidence.
 
-When a frozen statement becomes outdated, add a prospective record and link from active docs. **Never rewrite old evidence to make history look cleaner.**
+When history becomes outdated, add a prospective record and link to it. Never modify historical evidence to make an unsuccessful experiment look successful.
 
 ### SUPERSEDED compatibility paths
 
@@ -114,8 +88,12 @@ When a frozen statement becomes outdated, add a prospective record and link from
 - `ARCHITECTURE-ROADMAP.md` → `ARCHITECTURE.md`;
 - `REPOSITORY-GUIDE.md` → this hub + `CONTRIBUTING.md`.
 
-## Anti-drift update rule
+## 2026-09-08 anti-drift update
 
-When material state changes, update the documents that own the changed question, then add a dated append-only evidence/progress note when the event is historically material.
+The provider documentation now explicitly records:
 
-This 2026-09-07 sync follows that rule: frozen evidence remains untouched; active owners and presentation material are updated to the hardened V13/task-driven production state.
+- paired Cloudflare/Groq V4 did not produce a comparative result because Cloudflare was quota-blocked and then removed from the requested path;
+- Groq-only GPT-OSS-120B completed 85/85 and ended `NO_SELECTION`;
+- hard gates were not weakened;
+- current work is causal diagnosis of finish/schema/reasoning failures, then strict-schema challengers only if justified;
+- production provider/topology were not changed by this research work.
