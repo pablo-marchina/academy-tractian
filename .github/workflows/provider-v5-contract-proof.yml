@@ -20,6 +20,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]" -e "research/e2[dev]" "PyYAML>=6,<7"
+      - name: Capture supplied runtime bundle layout
+        shell: bash
+        run: |
+          cat services/tractian-supplied-api/runtime.bundle.b64.part* | tr -d '\n\r' | base64 --decode > runtime.bundle.tar.gz
+          tar -tzf runtime.bundle.tar.gz | sort > runtime-bundle-members.txt
+          cat runtime-bundle-members.txt
       - name: Execute verified ActionRequest proof
         id: proof
         shell: bash
@@ -35,7 +41,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: provider-v5-contract-proof-diagnostics
-          path: provider-v5-proof.log
+          path: |
+            provider-v5-proof.log
+            runtime-bundle-members.txt
           if-no-files-found: error
           retention-days: 1
       - name: Enforce proof success
