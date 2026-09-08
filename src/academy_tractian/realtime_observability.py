@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import json
 import logging
 from threading import Lock
 from time import perf_counter
 from typing import Any, Protocol
 
 from research.e2.controller import AgentController
-from research.e2.models import RunTrace
-from research.e2.runner import HarnessRunner
+from research.e2.models import RunTrace, ToolKind
+from research.e2.runner import HarnessRunner, ToolExecution
 
 from .observability import SafeEvidenceRef, SafeEvent, SafeRun, project_trace
 from .observability_contract import ObservabilityStoreContract
@@ -15,6 +16,20 @@ from .production_telemetry import ProductionTelemetry
 
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _canonical_read_signature(tool_name: str, arguments: dict[str, Any]) -> str | None:
+    try:
+        return json.dumps(
+            {"tool_name": tool_name, "arguments": arguments},
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+    except (TypeError, ValueError):
+        # Invalid/non-JSON arguments remain owned by the frozen B1 validator in HarnessRunner.
+        return None
 
 
 class SafeObservabilityEventSink(Protocol):
@@ -164,7 +179,7 @@ class FailIsolatedObservabilityPublisher:
 
 
 class ObservableHarnessRunner(HarnessRunner):
-    """Production opt-in wrapper preserving HarnessRunner's execution ownership."""
+    """Production wrapper with safe observability and exact successful-READ loop containment."""
 
     def __init__(
         self,
@@ -173,6 +188,7 @@ class ObservableHarnessRunner(HarnessRunner):
         **kwargs: Any,
     ) -> None:
         self.observability_publisher = observability_publisher
+        self._successful_read_signatures: set[str] = set()
         super().__init__(**kwargs)
         canonical_append_perf = perf_counter()
         self.observability_publisher.publish_trace_state(
@@ -187,6 +203,46 @@ class ObservableHarnessRunner(HarnessRunner):
             self.trace,
             canonical_append_perf=canonical_append_perf,
         )
+
+    def execute_tool(
+        self,
+        tool_name: str,
+        arguments: dict[str, Any],
+        *,
+        evidence_id: str | None = None,
+    ) -> ToolExecution:
+        if tool_name not in self.registry:
+            raise KeyError(tool_name)
+        tool = self.registry[tool_name]
+        signature = (
+            _canonical_read_signature(tool_name, arguments)
+            if tool.kind is ToolKind.READ
+            else None
+        )
+        if signature is not None and signature in self._successful_read_signatures:
+            # Match the frozen HarnessRunner trace contract: a proposal is visible before the
+            # production wrapper contains the duplicate. No transport or action policy is touched.
+            self._emit("tool_proposal", tool_name=tool.name, arguments=dict(arguments))
+            return self._block(
+                tool=tool,
+                code="DUPLICATE_SUCCESSFUL_READ",
+                reason="an identical read already completed successfully in this run",
+                stage="B1",
+            )
+
+        result = super().execute_tool(
+            tool_name,
+            arguments,
+            evidence_id=evidence_id,
+        )
+        if (
+            signature is not None
+            and result.executed
+            and result.response is not None
+            and 200 <= result.response.status_code < 300
+        ):
+            self._successful_read_signatures.add(signature)
+        return result
 
 
 class ObservableAgentController(AgentController):

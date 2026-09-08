@@ -23,6 +23,7 @@ _DEFAULT_TIMEOUT_SECONDS = 5.0
 _READ_SESSION_CACHE_TTL_SECONDS = 2.0
 _MAX_READ_SESSION_CACHE_ENTRIES = 256
 _SESSION_SINGLEFLIGHT_STRIPES = 64
+_CACHE_ELIGIBLE_WRITE_ROUTES = frozenset({("POST", "/api/runs")})
 
 
 SessionFetcher = Callable[[str], tuple[int, bytes]]
@@ -79,10 +80,15 @@ class NeonAuthRuntimeContextProvider:
     identity, role and permissions are never accepted from request headers or JSON payloads.
 
     Read-only request bursts are coalesced behind a bounded two-second server cache keyed by a
-    one-way digest of the opaque cookie. This is deliberately much shorter than a normal session
-    cache: it exists only to prevent dashboard fan-out from turning every GET/SSE into a separate
-    managed-auth network validation. Non-read requests always bypass this cache and force a fresh
-    managed-session validation. Expired cache entries are never used as stale-on-error fallback.
+    one-way digest of the opaque cookie. The same bounded cache is eligible for POST /api/runs
+    because that route only submits a read-only investigation; it cannot execute a TRACTIAN action.
+    All other write routes remain fresh-validation boundaries, including action confirmation.
+    Expired cache entries are never used as stale-on-error fallback.
+
+    On a cache miss, cache-eligible routes still validate through managed Neon Auth but allow the
+    auth service's signed cookie cache. Fresh-validation routes explicitly bypass that upstream
+    cookie cache. This keeps consequential writes fail-closed without forcing a database-backed
+    auth lookup for every investigation submission and subsequent polling burst.
 
     Until shared-organization onboarding is exposed in the product, an authenticated user with no
     active organization receives a deterministic personal tenant derived from the server-verified
@@ -138,6 +144,14 @@ class NeonAuthRuntimeContextProvider:
     @staticmethod
     def _cache_key(cookie: str) -> str:
         return hashlib.sha256(cookie.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _cache_eligible_request(request: Request) -> bool:
+        method = request.method.upper()
+        if method in {"GET", "HEAD"}:
+            return True
+        path = request.url.path.rstrip("/") or "/"
+        return (method, path) in _CACHE_ELIGIBLE_WRITE_ROUTES
 
     def _cached_context(self, cache_key: str) -> AuthenticatedRuntimeContext | None:
         now = self._clock()
@@ -249,9 +263,9 @@ class NeonAuthRuntimeContextProvider:
     def __call__(self, request: Request) -> AuthenticatedRuntimeContext:
         cookie = self._cookie(request)
         cache_key = self._cache_key(cookie)
-        read_only = request.method.upper() in {"GET", "HEAD"}
+        cache_eligible = self._cache_eligible_request(request)
 
-        if not read_only:
+        if not cache_eligible:
             return self._validated_context(
                 cookie=cookie,
                 cache_key=cache_key,

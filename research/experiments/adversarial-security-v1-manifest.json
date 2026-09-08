@@ -35,7 +35,7 @@
     },
     {
       "path": "src/academy_tractian/neon_auth_identity.py",
-      "git_blob_sha1": "510b60dfd4f2145f5cdbd78b090bb4197ba0ea48"
+      "git_blob_sha1": "aba45a8388cb39ddce7822af7c6cf4e9f3c6d93e"
     },
     {
       "path": "src/academy_tractian/action_execution_lease.py",
