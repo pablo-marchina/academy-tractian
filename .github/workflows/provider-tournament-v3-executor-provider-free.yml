@@ -12,6 +12,7 @@ on:
       - "scripts/research/run_provider_tournament_v3_scheduled_packet.py"
       - "scripts/research/validate_provider_tournament_v3.py"
       - "tests/test_provider_tournament_v3.py"
+      - "tests/test_provider_tournament_v3_governance.py"
       - "research/experiments/provider-tournament-v3-manifest.json"
       - "research/experiments/provider-tournament-v3-population.json"
       - "research/experiments/provider-tournament-v3-selection-rule-amendment-v1.json"
@@ -52,10 +53,10 @@ jobs:
       - name: Validate frozen preregistration
         run: python scripts/research/validate_provider_tournament_v3.py
       - name: Run v3 provider-free tests
-        run: pytest -q tests/test_provider_tournament_v3.py
+        run: pytest -q tests/test_provider_tournament_v3.py tests/test_provider_tournament_v3_governance.py
       - name: Preserve Cloudflare and Release 0 regressions
         run: |
           pytest -q \
             tests/test_cloudflare_provider_client.py \
             tests/test_cloudflare_provider_provenance_v2.py \
-            tests/test_release_provider_v13.py
+            tests/test_release0_initial_grounding_v13.py
