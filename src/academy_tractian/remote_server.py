@@ -25,6 +25,7 @@ from .upstream_action_actors import (
     ConfiguredServerOwnedUpstreamActionActorSource,
     ServerOwnedUpstreamActionActorTransport,
 )
+from .verification_api import install_verification_api
 
 
 PROVIDER_SELECTION_STATE = NO_PROVIDER_SELECTION_STATE
@@ -274,6 +275,7 @@ def app_factory():
         provider_selection_state=provider_selection_state,
         tractian_transport_state=tractian_transport_state,
     )
+    install_verification_api(app)
     return app
 
 

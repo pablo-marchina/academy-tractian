@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from urllib.parse import urlparse
 from urllib.request import urlopen
 
 from research.e2.models import ExecutionBinding
@@ -17,9 +18,10 @@ from .upstream_action_actors import (
 
 
 JUSTIFICATION = (
-    "Operator explicitly approved this exact governed production write smoke against the supplied "
-    "TRACTIAN test runtime after the production safety gates passed."
+    "Automated deployment canary write against the project-supplied synthetic TRACTIAN runtime. "
+    "This verifies transport integration only and is not evidence of a human-approved product action."
 )
+_EXPECTED_ENVIRONMENT_CLASS = "SUPPLIED_SYNTHETIC_CANARY"
 
 
 def _required(name: str) -> str:
@@ -27,6 +29,31 @@ def _required(name: str) -> str:
     if not value:
         raise RuntimeError(f"missing required smoke variable: {name}")
     return value
+
+
+def _normalized_origin(value: str) -> tuple[str, str, int | None]:
+    parsed = urlparse(value if "://" in value else f"https://{value}")
+    scheme = parsed.scheme.lower()
+    host = (parsed.hostname or "").lower()
+    if scheme != "https" or not host:
+        raise RuntimeError("smoke endpoint must resolve to an HTTPS origin")
+    return scheme, host, parsed.port
+
+
+def _assert_service_binding() -> None:
+    environment_class = _required("SMOKE_ENVIRONMENT_CLASS")
+    if environment_class != _EXPECTED_ENVIRONMENT_CLASS:
+        raise RuntimeError("write smoke is allowed only for the supplied synthetic canary environment")
+
+    tractian_base = _required("ACADEMY_TRACTIAN_BASE_URL")
+    production_api = _required("SMOKE_PRODUCTION_API_URL")
+    supplied_service_url = _required("RAILWAY_SERVICE_TRACTIAN_SUPPLIED_API_URL")
+    production_service_url = _required("RAILWAY_SERVICE_PRODUCTION_API_URL")
+
+    if _normalized_origin(tractian_base) != _normalized_origin(supplied_service_url):
+        raise RuntimeError("write smoke TRACTIAN endpoint is not the Railway supplied-API service")
+    if _normalized_origin(production_api) != _normalized_origin(production_service_url):
+        raise RuntimeError("write smoke capability endpoint is not the Railway production-api service")
 
 
 def _load_action_targets() -> dict[str, str]:
@@ -73,7 +100,7 @@ def _arguments(tool_name: str, resource_id: str) -> dict[str, object]:
     raise RuntimeError(f"unexpected smoke action: {tool_name}")
 
 
-def _check_capabilities() -> dict[str, object]:
+def _check_capabilities(*, expected_sha: str) -> dict[str, object]:
     base = _required("SMOKE_PRODUCTION_API_URL").rstrip("/")
     with urlopen(f"{base}/api/release0/capabilities", timeout=15) as response:  # noqa: S310
         payload = json.loads(response.read().decode("utf-8"))
@@ -82,6 +109,8 @@ def _check_capabilities() -> dict[str, object]:
     release = payload.get("release", {})
     if response.status != 200:
         raise RuntimeError(f"capability smoke failed: http_{response.status}")
+    if release.get("git_sha") != expected_sha:
+        raise RuntimeError("capability smoke failed: deployed release SHA does not match candidate SHA")
     if summary.get("actions") != 5 or summary.get("executable_actions") != 5:
         raise RuntimeError("capability smoke failed: five executable actions not advertised")
     if execution.get("enabled") is not True or execution.get("mode") != "GOVERNED_CONFIRMATION":
@@ -90,6 +119,7 @@ def _check_capabilities() -> dict[str, object]:
         raise RuntimeError("capability smoke failed: governed action path disabled")
     return {
         "http_status": response.status,
+        "release_sha_matches_candidate": True,
         "actions": summary.get("actions"),
         "executable_actions": summary.get("executable_actions"),
         "mode": execution.get("mode"),
@@ -98,6 +128,12 @@ def _check_capabilities() -> dict[str, object]:
 
 
 def main() -> None:
+    _assert_service_binding()
+    candidate_sha = _required("ACADEMY_RELEASE_GIT_SHA")
+    railway_sha = os.environ.get("RAILWAY_GIT_COMMIT_SHA", "").strip()
+    if railway_sha and railway_sha != candidate_sha:
+        raise RuntimeError("write smoke candidate SHA disagrees with Railway deployment SHA")
+
     user_id = _required("SMOKE_USER_ID")
     targets = _load_action_targets()
     base_url = _required("ACADEMY_TRACTIAN_BASE_URL")
@@ -115,7 +151,7 @@ def main() -> None:
     principal = authorization_source(user_id=user_id)
     actor_source.assert_complete_for_principal(principal)
 
-    capability = _check_capabilities()
+    capability = _check_capabilities(expected_sha=candidate_sha)
     transport = ServerOwnedUpstreamActionActorTransport(
         transport=ProductionTractianTransport(
             base_url=base_url,
@@ -159,8 +195,10 @@ def main() -> None:
     print(
         json.dumps(
             {
-                "schema_version": "governed-write-production-smoke-v2",
+                "schema_version": "governed-write-production-smoke-v3",
                 "status": "PASS",
+                "environment_class": _EXPECTED_ENVIRONMENT_CLASS,
+                "candidate_sha_verified": True,
                 "capability": capability,
                 "actions": results,
                 "credentials_recorded": False,
