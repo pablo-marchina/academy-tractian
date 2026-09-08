@@ -146,53 +146,12 @@ class ProviderCallIdentity(_FrozenModel):
 
 ProviderCallFailureCode = Literal[
     "CLIENT_FAILURE",
-    "PROVIDER_RATE_LIMITED",
-    "PROVIDER_HTTP_CLIENT_ERROR",
-    "PROVIDER_HTTP_SERVER_ERROR",
-    "PROVIDER_TRANSPORT_FAILURE",
-    "PROVIDER_RESPONSE_PROTOCOL_INVALID",
     "RESPONSE_TYPE_INVALID",
     "RESPONSE_JSON_INVALID",
     "RESPONSE_PAYLOAD_INVALID",
     "UNKNOWN_TOOL",
     "PROPOSAL_REJECTED",
 ]
-
-
-def _classify_client_failure(error: Exception) -> ProviderCallFailureCode:
-    """Map provider-client exceptions to stable, sanitized model-call failure categories.
-
-    The adapter deliberately reads only structured ``code`` and ``status_code`` attributes. It
-    never records exception text, response bodies, request bodies, headers, or credentials.
-    """
-
-    code = getattr(error, "code", None)
-    status_code = getattr(error, "status_code", None)
-
-    if code == "HTTP_STATUS" and isinstance(status_code, int):
-        if status_code == 429:
-            return "PROVIDER_RATE_LIMITED"
-        if 400 <= status_code <= 499:
-            return "PROVIDER_HTTP_CLIENT_ERROR"
-        if 500 <= status_code <= 599:
-            return "PROVIDER_HTTP_SERVER_ERROR"
-
-    if code in {"TRANSPORT_FAILURE", "NETWORK_FAILURE", "TIMEOUT"}:
-        return "PROVIDER_TRANSPORT_FAILURE"
-
-    if isinstance(code, str) and (
-        code.startswith("OPENROUTER_")
-        or code
-        in {
-            "TRANSPORT_RESPONSE_INVALID",
-            "HTTP_JSON_INVALID",
-            "HTTP_JSON_NOT_OBJECT",
-            "RESPONSE_JSON_INVALID",
-        }
-    ):
-        return "PROVIDER_RESPONSE_PROTOCOL_INVALID"
-
-    return "CLIENT_FAILURE"
 
 
 def _canonical_sha256(payload: Any) -> str:
@@ -447,13 +406,13 @@ class ProviderDecisionSource(DecisionSource):
 
         try:
             raw_result = self.client.complete(request)
-        except Exception as exc:
+        except Exception:
             self._record_call(
                 request=request,
                 response_sha256=None,
                 outcome="failure",
                 decision_kind=None,
-                failure_code=_classify_client_failure(exc),
+                failure_code="CLIENT_FAILURE",
                 started_ns=started_ns,
                 finished_ns=self._clock_ns(),
             )
