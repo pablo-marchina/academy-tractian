@@ -1,11 +1,11 @@
 # Codebase Map
 
 **Status:** ACTIVE implementation navigation  
-**Last verified:** 2026-09-07 BRT
+**Last verified:** 2026-09-08 BRT
 
-Use this before adding a file: **which existing domain owns the change?**
+Use this before adding a file: **which existing domain owns the change?** Production runtime and provider research are intentionally separate.
 
-## End-to-end ownership
+## End-to-end production ownership
 
 ```text
 frontend task-driven UI
@@ -13,121 +13,147 @@ frontend task-driven UI
 → managed-session product API
 → PostgreSQL runtime ownership/RLS
 → V13 DecisionSource / AgentController
-→ HarnessRunner / ToolSpec / TRACTIAN transport
+→ HarnessRunner / canonical ToolSpec
+→ typed TRACTIAN transport
 → evidence + terminal + response_mode
 → evaluator
 → PostgreSQL safe projection
 → result / Analyses / Technical UI
 ```
 
-## Backend domains — `src/academy_tractian/`
+## `src/academy_tractian/` — production domains
 
 ### Runtime / orchestration
 
-`runtime.py`, `realtime_runtime.py`, `decision_source.py`, `runtime_handoff_supervisor.py`, run-access/execution-store modules own decision-loop lifecycle, durable ownership and execution state.
+`runtime.py`, `realtime_runtime.py`, `decision_source.py`, runtime handoff/access/execution-store modules own decision-loop lifecycle and durable ownership.
 
-### Release 0 provider / production composition
+### Release 0 provider composition
 
-Current serving chain is explicit:
-
-- `release_provider.py` — base Release 0 provider contract/schema;
-- `release_provider_v10.py` — structured nested ID extraction, condition-evidence/stopping constraints;
-- `release_provider_v11.py` — customer-visible response-mode semantics;
-- `release_provider_v12.py` — explicit human asset labels, comparison grounding, data-quality requirements, post-fleet `get_asset` suppression;
-- `release_provider_v13.py` — force initial `get_current_user` for explicit-asset investigations and suppress completed single-asset data-quality reads;
-- `remote_server.py` — serves the V13 factory;
+- `release_provider.py` — base Release 0 provider contract;
+- `release_provider_v10.py` — nested ID extraction and condition/stopping constraints;
+- `release_provider_v11.py` — response-mode semantics;
+- `release_provider_v12.py` — explicit asset labels/comparisons/data-quality requirements;
+- `release_provider_v13.py` — initial identity grounding and completed quality-read suppression;
+- `remote_server.py` — production composition;
 - `production_config.py` — production environment contract.
 
-Do not infer final provider selection from Release 0 composition. Frozen provider decision remains separate.
+Do not infer final provider selection from the Release 0 serving wrapper.
 
 ### TRACTIAN capability / transport
 
-Canonical ToolSpecs live under the accepted `research/e2` registry and production transport/normalization modules. `ProductionTractianTransport` owns the real network contract.
+Canonical ToolSpecs/accepted E2 registry and production normalization/transport modules own the 18-operation contract. `ProductionTractianTransport` owns real network I/O behind `HarnessRunner`.
 
-All real tool execution stays behind `HarnessRunner`; do not create a second network bypass.
+Do not create a second model→network bypass.
 
-### Product APIs
+### Identity / tenant / persistence
 
-`product_api.py`, `postgres_product_api.py`, authenticated/Neon-auth product composition, observability APIs and action product APIs own HTTP/runtime integration. `/api/runs` is authenticated and derives trusted context server-side; payload contains only the user request.
+Managed Neon-auth modules derive server-owned runtime context; PostgreSQL scoped stores/RLS remain the independent tenant boundary. Browser state is a projection, not authorization truth.
 
-### Identity / tenant scope
+### Consequential actions
 
-Key current owners:
+Action-safety/custody/idempotency/lease/recovery modules contain future governed execution machinery. Release 0 external action execution remains disabled.
 
-- `neon_auth_identity.py` — managed-session validation, ≤2 s GET/HEAD cache, SHA-256 cookie key, singleflight, fresh non-read validation, 401/503 distinction;
-- `neon_authenticated_postgres_product_api.py` — managed-session product composition and browser-safe session context;
-- PostgreSQL scoped product stores/RLS — independent tenant boundary.
+### Observability / evaluation
 
-Browser code must never become canonical tenant/permission authority.
+Observability/realtime/evaluator modules own safe traces, durable cursors, evaluation and browser-safe projections. Structural evaluation remains deterministic-first.
 
-### Consequential actions / safety
+## `frontend/` — current product
 
-Controlled-action, action-safety, production-action, custody/idempotency/lease/recovery/evaluation modules contain the stronger future action architecture. Release 0 external execution remains disabled.
+Primary UX:
 
-### PostgreSQL persistence
+```text
+Home → selected Result/Evidence
+Analyses → persisted history
+Technical → Current analysis / Quality / Data / System / Actions / Studies
+```
 
-Operational state, observability, runtime handoff, action state, semantic review and operational-value stores use PostgreSQL in production. Do not silently move production truth to local files/DuckDB.
+Authentication components must distinguish invalid session from temporary managed-auth unavailability and must never become tenant authority.
 
-### Observability / realtime
+## Provider research ownership
 
-`observability*`, `realtime_observability.py`, `realtime_wakeup.py`, `production_telemetry.py` and operational read-model modules own safe traces and delivery. Durable cursor/state is authoritative; wake-up is not authorization/correctness truth.
+Provider experiments belong under `research/experiments/` and `scripts/verification/`. They are not production composition until separately promoted.
 
-### Evaluation / EDD
+### Frozen population / manifests
 
-Deterministic evaluation, EDD, semantic calibration, failure/stability/communication campaigns and operational-value research live here. New adaptive/model/framework behavior enters as a challenger/evaluation surface before replacing a promoted path.
+- `research/experiments/provider-tournament-v3-population.json` — 17-scenario frozen population;
+- `research/experiments/provider-tournament-v4-final-manifest.json` — V4 Cloudflare/Groq protocol and pre-scored transport amendment;
+- `research/experiments/provider-qualification-v4-1-groq-final-manifest.json` — Groq-only 85-attempt qualification manifest.
 
-## Frontend — `frontend/src/`
+Population SHA-256:
 
-### Top-level composition
+`4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9`
 
-- `App.tsx` — task-driven application state with `home`, `result`, `evidence`, `history`, `technical` views;
-- `components/PrimaryNavigation.tsx` — primary Home / Analyses / Technical navigation;
-- `components/ProductExperience.tsx` — customer-facing run result/progress/outcome semantics;
-- `components/RunExplorer.tsx`, `TraceGraph.tsx`, `OperationsWorkspace.tsx` — history/runtime/technical inspection;
-- `components/ArchitectureExplorer.tsx`, `Release0CapabilitySurface.tsx`, `ActionControl.tsx` — system/capability/action-depth surfaces.
+### V4 tournament/transport artifacts
 
-### Authentication
+Important historical experiment identities:
 
-- `auth/AuthBoundary.tsx` — checking/anonymous/authenticated/unavailable states, focus/visibility reconciliation and retry UI;
-- `auth/managedAuthEvents.ts` — protected-API auth signals;
-- browser API client — classifies invalid session separately from temporary managed-session unavailability.
+- `scripts/verification/provider_tournament_v4_final.py` — generic V4 scoring/execution core;
+- final transport/pacing protocol checkpoint — `22ef052b292bb77618973cc6447f08970dc13159`;
+- pinned bootstrap — `a34f1c6cce26219df6c06772ec2ea5599637e391`.
 
-### Current task-driven information architecture
+Cloudflare quota preflights and Groq transport preflights are non-scored evidence.
 
-**Home** owns question entry and first-use simplicity.  
-**Result/evidence** owns the selected run's conclusion/support.  
-**Analyses** owns persisted history.  
-**Technical** groups Current analysis / Quality / Data / System / Actions / Studies.
+### Groq-only final qualification
 
-The earlier `DepthTabs`/four-layer components/styles may remain for compatibility/history, but they are not the current primary navigation contract.
+- `scripts/verification/provider_qualification_v4_1_groq_final.py` — runner commit `1ad041fdcbe4424a79239fff6382df67e8bc2bfe`;
+- `scripts/verification/bootstrap_provider_qualification_v4_1_groq_final.py` — bootstrap `6fc9d84262efaf6d57925a83ba59f07425cfc717`.
 
-Frontend state visualizes server-owned truth; it does not decide tenant authority or agent policy.
+This path completed 85/85 and returned `NO_SELECTION`; it must not be repurposed into a passing artifact.
+
+### Causal failure diagnostic
+
+- `scripts/verification/provider_failure_diagnostic_v1.py` — commit `426b0ecacf8b794199b78380a5de5837603e29e3`;
+- frozen bootstrap — `7826a46d0209c1072a75b59f527dac82b3437a82`;
+- health-preserving bootstrap — `b71172bf1f42d4be074560336e58c42539cbfe1c`.
+
+Purpose: distinguish completion-budget, reasoning-effort and best-effort structured-output failure causes. It is not a promotion benchmark.
+
+### Groq rate/admission diagnostic
+
+- `scripts/verification/groq_benchmark_rate_diagnostic_v2.py` — `8cec9f8d7e596bda27a4459ac4130319547d2f5e`;
+- pinned bootstrap — `0ecc8365f3908f6ddc8521998436a30eee2d5507`.
+
+Purpose: explain HTTP admission/rate behavior for benchmark-shaped requests without storing raw prompt/response/credentials. At the current documentation checkpoint it has not yet produced a canonical result.
+
+## Strict-output challenger ownership
+
+Future strict-schema code should be generated from existing canonical ToolSpecs/OpenAPI/Release 0 decision structures. Do not hand-maintain a parallel generic action schema.
+
+Required source chain:
+
+```text
+canonical tool registry / supplied OpenAPI
+→ closed per-tool argument schema
+→ closed TOOL/FINAL/CLARIFY/ESCALATE/ABSTAIN variants
+→ provider strict structured output
+→ ProviderDecisionPayload
+→ canonical argument/policy validation
+```
+
+The exact supplied `ActionRequest` definition is still a prerequisite for complete strict action variants.
+
+## Railway experiment boundary
+
+`qa-live-prompt-matrix` is a disposable research execution slot, not production serving. Overlapping deployments have contaminated partial diagnostics; do not combine attempts from different deployment windows into one claimed causal matrix.
+
+Account service capacity currently prevents a sixth dedicated provider-lab service, so experiment isolation must be explicitly controlled before long runs.
 
 ## Tests
 
-- `tests/` — backend/product/regression/integration, including Release 0 V10–V13 and managed-session regression coverage;
-- frontend Vitest — pure UI/auth/result semantics;
-- `frontend/e2e/` + Playwright — task-driven browser acceptance;
-- `research/e2/tests/` — accepted controller/tool/evaluator harness.
-
-PR #210 passed the complete required backend regression surface before merge. PR #209 passed the required frontend/browser surface before the current frontend deployment.
-
-## Workflows
-
-See [`../.github/workflows/README.md`](../.github/workflows/README.md). Distinguish normal regression, intentional exact-SHA production promotion and historical one-shot research workflows.
-
-## Research / scripts
-
-- `research/` preserves experiment protocol/evidence; it is not miscellaneous code.
-- `scripts/` should be thin CLI/validation/operations wrappers; reusable logic belongs in the package.
+- `tests/` — backend/product/regression/integration;
+- frontend Vitest/Playwright — UI/auth/product acceptance;
+- `research/e2/tests/` — controller/tool/evaluator harness;
+- provider verification scripts — controlled research only, with frozen identities where required.
 
 ## New-code checklist
 
-1. Which domain owns the responsibility?
-2. Does an existing module already expose the needed contract?
-3. Is it production logic or experiment/CLI-only logic?
-4. Does a measured gap justify a new abstraction?
-5. Does behavior need an evaluator/baseline before promotion?
-6. Could the path become frozen evidence or external contract?
+1. Which domain owns this behavior?
+2. Production logic or research-only logic?
+3. Is there already a canonical contract to derive from?
+4. Does the change alter a frozen protocol/population/rubric?
+5. Is a new abstraction justified by measured evidence?
+6. Does the candidate require a preflight before benchmark exposure?
+7. Can the change affect tenant/action/cost authority?
+8. What regression/evaluation gates are required before promotion?
 
-Prefer extending a clear owner over creating another parallel path.
+Prefer extending canonical owners over creating parallel contracts.
