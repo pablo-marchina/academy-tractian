@@ -3,10 +3,9 @@
 **Use this file literally while recording.**  
 **Target:** 5:00  
 **Language:** Portuguese  
-**Hosted backend:** `08866da60245f58f217981b7ae668b10be45cc67`  
-**Hosted frontend:** `1bc124a8d4dbd029178ff8129b25452129445de7`
+**Provider claim checkpoint:** 2026-09-08 — Groq GPT-OSS-120B 85/85 = `NO_SELECTION`; production provider unchanged.
 
-> Se algum valor visual diferir, fale o valor real exibido. Não improvise uma claim.
+> Se algum valor visual ou hosted identity diferir, fale o valor real exibido e consulte `../ACTIVE-PROJECT-STATUS.md`. Não improvise uma claim.
 
 ## Antes de 00:00
 
@@ -40,7 +39,7 @@ Browser / React
 
 **Fala:**
 
-> “Vou começar pela arquitetura realmente promovida. Identidade e tenant ficam fora da LLM. O `AgentController` controla o loop, a V13 do `DecisionSource` só pode propor decisões estruturadas, toda execução externa passa pelo `HarnessRunner` e pelo contrato canônico de `ToolSpec`, e o evaluator roda apenas depois do runtime. O modelo nunca recebe autoridade para escolher tenant, permissions ou fazer I/O de rede diretamente.”
+> “Vou começar pela arquitetura realmente promovida. Identidade e tenant ficam fora da LLM. O `AgentController` controla o loop, o `DecisionSource` só pode propor decisões estruturadas, toda execução externa passa pelo `HarnessRunner` e pelo contrato canônico de `ToolSpec`, e o evaluator roda depois do runtime. O modelo nunca recebe autoridade para escolher tenant, permissions ou fazer I/O de rede diretamente.”
 
 ---
 
@@ -60,7 +59,7 @@ managed session
 
 **Fala:**
 
-> “Este é o produto hospedado atual. O fluxo começa em Home com uma pergunta normal sobre o equipamento. A sessão é validada no servidor e o backend deriva usuário, organização e permissões. Para bursts de leitura, o servidor pode reutilizar por no máximo dois segundos um contexto já validado; uma criação de run continua exigindo validação fresca. Sessão inválida é 401 e indisponibilidade temporária do serviço de identidade é 503. Isso reduz fan-out sem criar stale auth.”
+> “O fluxo começa em Home com uma pergunta normal sobre o equipamento. A sessão é validada no servidor e o backend deriva usuário, organização e permissões. Reads podem reutilizar brevemente um contexto já validado; criação de run continua exigindo validação fresca. Sessão inválida é 401 e indisponibilidade temporária de identidade é 503. Isso reduz fan-out sem criar stale auth.”
 
 ---
 
@@ -70,7 +69,7 @@ managed session
 
 **Fala:**
 
-> “O usuário pode falar em R310 sem conhecer IDs internos. A V13 força primeiro `get_current_user`, extrai o company ID apenas de uma observação estruturada autorizada, lista a frota da empresa e só então resolve R310 para o recurso interno. Se o label não existir na frota autorizada, o agente não pode inventar outro tenant nem pedir que o usuário descubra o asset ID por fora.”
+> “O usuário pode falar em R310 sem conhecer IDs internos. O runtime começa pela identidade, extrai o company ID apenas de observação estruturada autorizada, lista a frota e só então resolve R310. Se o label não existir na frota autorizada, o agente não inventa outro tenant nem transfere para o usuário a obrigação de descobrir um asset ID interno.”
 
 Overlay:
 
@@ -92,21 +91,9 @@ Mostre a sequência do PRIMARY e uma chamada de spectrum.
 
 **Fala:**
 
-> “Aqui aparece a execução observável. A saída do provider não é código: é uma decisão tipada. Para uma tool call, o nome e os argumentos precisam resolver contra o registry, passar pela validação determinística e somente o `HarnessRunner` pode chamar o transporte TRACTIAN.”
+> “Aqui aparece a execução observável. A saída do provider não é código: é uma decisão tipada. Para uma tool call, nome e argumentos precisam resolver contra o registry, passar pela validação determinística e somente o `HarnessRunner` pode chamar o transporte TRACTIAN.”
 
-> “Neste run existem chamadas sucessivas de spectrum, mas isso não é automaticamente um loop. O acesso progride do ativo para um `point_id` específico. Então nossa métrica de redundância compara tool, argumentos e recurso alvo; não apenas o nome da tool.”
-
-Overlay:
-
-```text
-DecisionSource
-→ ToolSpec
-→ validation
-→ HarnessRunner
-→ typed HTTPS
-→ TRACTIAN
-→ observation/evidence
-```
+> “Chamadas sucessivas de spectrum não são automaticamente loop: este run progride do ativo para um `point_id`. Redundância é avaliada por operação, argumentos, recurso e contribuição de evidência.”
 
 ---
 
@@ -118,11 +105,7 @@ DecisionSource
 
 > “O terminal e o `response_mode` são contratos diferentes. O terminal diz o que o controller faz; o `response_mode` diz quão completamente a evidência sustenta a mensagem. Aqui o modo é `partial`: existe evidência direcional compatível com mecanismo de rolamento, mas a causa raiz continua probabilística.”
 
-> “Os modos são `complete`, `partial`, `inconclusive`, `conflict` e `unavailable`. A regra importante é não chamar uma resposta útil de inconclusiva só porque a explicação causal ainda tem incerteza.”
-
-Aponte uma evidence reference. Diga:
-
-> “A auditabilidade vem de calls, args, status, evidence IDs e eventos persistidos — não de expor chain-of-thought.”
+> “Os modos são `complete`, `partial`, `inconclusive`, `conflict` e `unavailable`. A auditabilidade vem de calls, argumentos, status, evidence IDs e eventos persistidos — não de expor chain-of-thought.”
 
 ---
 
@@ -132,7 +115,7 @@ Aponte uma evidence reference. Diga:
 
 **Fala:**
 
-> “Este segundo caso testa fail-closed. O pedido compara R310 e R420, mas R420 não apareceu na frota autorizada da empresa. O resultado correto foi `unavailable`: ele não inventou o ativo, não mudou de tenant e não pediu um ID interno impossível de justificar. Isso prova o comportamento de recurso ausente; não é uma claim de que já validamos uma comparação bilateral com dois ativos reais.”
+> “Este caso testa fail-closed. O pedido compara R310 e R420, mas R420 não apareceu na frota autorizada. O correto foi `unavailable`: não inventou o ativo, não mudou de tenant e não pediu um ID sem origem autorizada. Isso prova recurso ausente, não uma comparação bilateral real.”
 
 ---
 
@@ -142,17 +125,17 @@ Aponte uma evidence reference. Diga:
 
 **Fala:**
 
-> “Depois do runtime entra o `ProductionEvaluator`. Ele recebe o `RunTrace` concluído; referências privadas de avaliação não entram no contexto do agente.”
+> “Depois do runtime entra o `ProductionEvaluator`. Ele recebe o `RunTrace` concluído; referências privadas de avaliação não entram no contexto do agente. Os checks estruturais localizam regressões no processo, não só no texto final.”
 
-> “Nos runs V13 finais, os checks blocking persistidos passaram, incluindo integridade da cadeia de execução, proveniência das chamadas do modelo, identidade do trace de produção, validade das propostas, segurança read-only e consistência terminal. Isso permite localizar regressões no processo, não só no texto final.”
+> “Essa mesma disciplina rejeitou uma configuração de provider que parecia atraente: Groq com GPT-OSS-120B completou 85 de 85 casos, mas ficou em 81,18% de rubric pass, 82,35% de reliability e nove contract failures. O resultado oficial foi `NO_SELECTION`; então não promovemos o provider nem reduzimos a régua.”
 
 Overlay:
 
 ```text
 RunTrace complete
-→ ProductionEvaluator
-→ deterministic checks
-→ safe persisted projection
+→ deterministic evaluation
+→ hard gates
+→ PASS | NO_SELECTION
 ```
 
 ---
@@ -163,9 +146,7 @@ RunTrace complete
 
 **Fala:**
 
-> “Reads e ações consequenciais não compartilham autoridade. A LLM pode propor uma action, mas proposal não é autorização. O código contém boundaries para validação, confirmação, custody, idempotência e leases, porém a Release 0 mantém execução externa consequencial em deny-all. Portanto, nenhum teste desta apresentação deve executar uma mudança real.”
-
-Overlay com último passo marcado `DISABLED`.
+> “Reads e ações consequenciais não compartilham autoridade. A LLM pode propor uma action, mas proposal não é autorização. Existem boundaries para validação, confirmação, custody, idempotência e leases, porém a Release 0 mantém execução externa consequencial em deny-all.”
 
 ---
 
@@ -175,19 +156,19 @@ Overlay com último passo marcado `DISABLED`.
 
 ```text
 Browser
-→ production-web 1bc124a...
-→ production-api 08866da...
+→ production-web / Railway
+→ production-api / Railway
    ├→ Neon Auth
-   ├→ Cloudflare Workers AI
-   ├→ supplied TRACTIAN API 47561c...
+   ├→ provider provisório
+   ├→ supplied TRACTIAN API
    └→ Neon PostgreSQL
 ```
 
 **Fala:**
 
-> “Frontend e backend estão no Railway, estado durável e RLS ficam no Neon, o provider provisório é Cloudflare e as reads usam remotamente a API fornecida pela TRACTIAN para o projeto. Os três componentes têm identidades de deployment separadas.”
+> “Frontend e backend estão no Railway, estado durável e RLS ficam no Neon, o provider de produção continua provisório e as reads usam remotamente a API fornecida da TRACTIAN. A pesquisa de provider roda separada: o `NO_SELECTION` do Groq não alterou production-api nem production-web.”
 
-> “No realtime, a linha persistida no PostgreSQL é a verdade. `LISTEN/NOTIFY` só acorda o consumidor; o catch-up por cursor e o SSE autenticado recuperam o estado durável.”
+> “No realtime, a linha persistida no PostgreSQL é a verdade. `LISTEN/NOTIFY` só acorda o consumidor; catch-up por cursor e SSE autenticado recuperam o estado durável.”
 
 ---
 
@@ -197,9 +178,9 @@ Browser
 
 **Fala:**
 
-> “O sistema fecha um caminho auditável: identidade server-owned, ownership persistido, decisão V13 groundeada, validação tipada, I/O apenas pelo `HarnessRunner`, evidência e `RunTrace`, terminal com semântica explícita de evidência, evaluator pós-runtime e projeção durável para a UI.”
+> “O sistema fecha um caminho auditável: identidade server-owned, ownership persistido, decisão groundeada, validação tipada, I/O apenas pelo `HarnessRunner`, evidência e `RunTrace`, terminal com semântica explícita, evaluator pós-runtime e projeção durável para a UI.”
 
-> “O que nós já provamos é um produto read-only hospedado e progressivamente hardenado. Ainda não afirmamos provider final, cobertura live de todas as reads, actions consequenciais, SLO final ou calibração humana completa.”
+> “Já provamos um produto read-only hospedado e um framework que inclusive rejeita candidatos que não passam os gates. Ainda não afirmamos provider final, actions consequenciais, SLO final ou calibração humana completa.”
 
 **STOP.**
 
@@ -208,10 +189,10 @@ Browser
 ```text
 00:00 architecture overlay
 00:28 hosted product / Home
-00:55 Analyses → PRIMARY (ou Home → pergunta)
+00:55 Analyses → PRIMARY
 01:25 Technical → Current analysis
-02:05 selected Result / evidence detail
-02:40 Analyses → run_547b2...
+02:05 selected Result / evidence
+02:40 Analyses → unavailable run
 03:05 PRIMARY → Technical → Quality
 03:42 Technical → Actions
 04:08 deployment overlay
@@ -224,10 +205,12 @@ Browser
 Nunca diga:
 
 - “Cloudflare é o melhor/final provider”;
+- “Groq venceu o provider tournament”;
+- “o tournament Cloudflare-vs-Groq final foi concluído”;
+- “strict structured output já está aprovado/promovido”;
 - “todas as 18 operações executam em produção”;
 - “actions externas estão habilitadas”;
 - “R420 existe em outro tenant/planta” sem observação autorizada;
 - “mesma tool duas vezes é necessariamente loop”;
-- “API corporativa de produção da TRACTIAN”;
-- “o agente expõe seu raciocínio interno”;
-- “V13 já provou SLO/segurança/capacidade final”.
+- “o agente expõe raciocínio interno”;
+- “já provamos SLO/segurança/capacidade final”.
