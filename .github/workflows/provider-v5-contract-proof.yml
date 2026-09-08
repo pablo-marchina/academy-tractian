@@ -1,0 +1,97 @@
+name: provider-v5-contract-proof
+
+on:
+  pull_request:
+    branches:
+      - experiment/provider-tournament-final-20260908
+
+permissions:
+  contents: read
+
+jobs:
+  action-request-proof:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install proof dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" -e "research/e2[dev]" "PyYAML>=6,<7"
+      - name: Capture supplied runtime bundle layout and OpenAPI
+        shell: bash
+        run: |
+          cat services/tractian-supplied-api/runtime.bundle.b64.part* | tr -d '\n\r' | base64 --decode > runtime.bundle.tar.gz
+          tar -tzf runtime.bundle.tar.gz | sort > runtime-bundle-members.txt
+          mkdir hosted-runtime
+          tar -xzf runtime.bundle.tar.gz -C hosted-runtime
+          python - <<'PY'
+          import hashlib
+          import importlib
+          import json
+          import sys
+          from pathlib import Path
+
+          bundle = Path("runtime.bundle.tar.gz").read_bytes()
+          manifest = json.loads(Path("services/tractian-supplied-api/manifest.json").read_text(encoding="utf-8"))
+          actual_sha = hashlib.sha256(bundle).hexdigest()
+          assert actual_sha == manifest["runtime_bundle_sha256"]
+          assert manifest["runtime_bundle_parts"] == 7
+
+          sys.path.insert(0, str((Path("hosted-runtime") / "api").resolve()))
+          module = importlib.import_module("app.main")
+          runtime = module.app.openapi()
+
+          action_ops = [
+              ("PATCH", "/assets/{assetId}"),
+              ("POST", "/analyses/{analysisId}/reprocess"),
+              ("POST", "/analyses/{analysisId}/request-specialist"),
+              ("POST", "/models/{modelId}/request-retraining"),
+              ("POST", "/cases/{caseId}/escalate"),
+          ]
+          actions = {}
+          for method, path in action_ops:
+              op = runtime["paths"][path][method.lower()]
+              actions[f"{method} {path}"] = (((op.get("requestBody") or {}).get("content") or {}).get("application/json") or {}).get("schema")
+
+          out = {
+              "runtime_bundle_sha256": actual_sha,
+              "runtime_bundle_parts": manifest["runtime_bundle_parts"],
+              "openapi_version": runtime.get("openapi"),
+              "component_schema_names": sorted(((runtime.get("components") or {}).get("schemas") or {}).keys()),
+              "has_action_request_component": "ActionRequest" in (((runtime.get("components") or {}).get("schemas") or {})),
+              "action_request_schemas": actions,
+          }
+          Path("hosted-runtime-openapi-summary.json").write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          Path("hosted-runtime-openapi.json").write_text(json.dumps(runtime, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          print(json.dumps(out, indent=2, ensure_ascii=False))
+          PY
+      - name: Execute verified ActionRequest proof
+        id: proof
+        shell: bash
+        run: |
+          set +e
+          python -m pytest -q -s tests/test_provider_v5_contract_proof.py > provider-v5-proof.log 2>&1
+          code=$?
+          cat provider-v5-proof.log
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload proof diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-v5-contract-proof-diagnostics
+          path: |
+            provider-v5-proof.log
+            runtime-bundle-members.txt
+            hosted-runtime-openapi-summary.json
+            hosted-runtime-openapi.json
+          if-no-files-found: error
+          retention-days: 1
+      - name: Enforce proof success
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.proof.outputs.exit_code }}" = "0"
