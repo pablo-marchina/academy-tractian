@@ -19,7 +19,7 @@ async function submitScenario(page: Page, scenario: string) {
 
 async function openTechnicalSection(
   page: Page,
-  section: "Current analysis" | "Quality" | "Data" | "System" | "Actions" | "Studies",
+  section: "Current analysis" | "Verification" | "Data" | "System" | "Actions" | "Studies",
 ) {
   await page.getByRole("button", { name: "Technical", exact: true }).click();
   const task = page.locator(".technical-task-menu").getByRole("button", { name: new RegExp(`^${section}`) });
@@ -84,8 +84,14 @@ test.describe("task-driven low-literacy UX", () => {
     await expect(page.getByRole("button", { name: "← Result" })).toBeVisible();
     await expect(page.locator("main")).not.toContainText("ASK_CLARIFICATION");
 
-    await openTechnicalSection(page, "Quality");
-    await expect(page.locator(".evaluation-panel")).toContainText("blocking checks passed");
+    await openTechnicalSection(page, "Verification");
+    const verification = page.getByRole("heading", { name: "Selected analysis verification" }).locator("..");
+    await expect(page.getByRole("heading", { name: "Selected analysis verification" })).toBeVisible();
+    await expect(page.locator(".evaluation-panel")).toContainText("overall hard-gate status");
+    await expect(page.locator(".evaluation-panel")).toContainText("Functional Success");
+    await expect(page.locator(".evaluation-panel")).toContainText("Evidence Sufficiency");
+    await expect(page.locator(".evaluation-panel")).not.toContainText("Quality 100%");
+    void verification;
   });
 
   test("history is a keyboard-focusable recognition list", async ({ page }) => {
