@@ -1,7 +1,8 @@
 # 5-Minute Technical Screenplay
 
 **Audience:** technical reviewer already knows the challenge.  
-**Goal:** explain the current promoted architecture and prove it with one persisted V13 hosted run.  
+**Goal:** explain the promoted architecture, prove it with hosted evidence, and show that the evaluation framework can reject an unqualified provider.  
+**Provider checkpoint:** 2026-09-08 — Groq GPT-OSS-120B 85/85 = `NO_SELECTION`; production unchanged.  
 **Style:** no business introduction, no generic AI explanation, no feature tour.
 
 ## Timing contract
@@ -9,19 +10,17 @@
 | Time | On screen | Technical point |
 |---:|---|---|
 | 00:00–00:28 | architecture overlay | identity, agent, tool, evidence/eval boundaries |
-| 00:28–00:55 | signed-in **Home** + identity overlay | browser is not authority; managed-session resilience |
-| 00:55–01:25 | submit or select PRIMARY R310 run | V13 explicit asset grounding starts with server-owned identity/fleet discovery |
-| 01:25–02:05 | **Technical → Current analysis** | structured decisions, tool args, asset→point drill-down, TRACTIAN I/O |
-| 02:05–02:40 | selected **Result** + evidence | terminal decision versus `response_mode`; evidence lineage |
-| 02:40–03:05 | **Analyses** → unavailable R420 run | fail closed when requested label is absent from authorized fleet |
-| 03:05–03:42 | **Technical → Quality** | post-runtime evaluator / blocking checks |
-| 03:42–04:08 | **Technical → Actions** | proposal ≠ authorization; external execution disabled |
-| 04:08–04:38 | deployment/auth/realtime overlay | Railway + Neon + Cloudflare + supplied API; 401/503 session semantics |
-| 04:38–05:00 | final architecture recap | end-to-end auditability and current non-claims |
+| 00:28–00:55 | signed-in Home | server-owned tenant/session resilience |
+| 00:55–01:25 | PRIMARY R310 run | explicit asset grounding |
+| 01:25–02:05 | Technical → Current analysis | structured decisions, typed I/O, drill-down |
+| 02:05–02:40 | Result + evidence | terminal vs `response_mode` |
+| 02:40–03:05 | unavailable R420 run | authorized missing-resource fail-closed |
+| 03:05–03:42 | Technical → Quality | post-runtime evaluation + provider rejection evidence |
+| 03:42–04:08 | Technical → Actions | proposal ≠ authorization; external execution disabled |
+| 04:08–04:38 | deployment/realtime overlay | production vs provider-research boundary |
+| 04:38–05:00 | final recap | auditability + current non-claims |
 
 ## 00:00–00:28 — Current architecture
-
-Show the runtime boundary overlay:
 
 ```text
 Browser / task-driven React
@@ -37,13 +36,11 @@ Browser / task-driven React
 → authenticated SSE / UI
 ```
 
-Say that identity/tenant, tool authority and evaluator-private state are all outside model authority.
+Identity/tenant, tool authority and evaluator-private state are outside model authority.
 
 ## 00:28–00:55 — Home and identity/session boundary
 
-Show signed-in **Home**. Keep the service state and primary question visible.
-
-Overlay:
+Show signed-in Home.
 
 ```text
 managed cookie
@@ -53,155 +50,126 @@ managed cookie
 → PostgreSQL org scope / RLS
 ```
 
-Add small resilience note:
+Resilience note:
 
 ```text
-GET/HEAD: ≤2 s validated-context reuse
+GET/HEAD: bounded validated-context reuse
 POST/run create: fresh validation
 401 invalid ≠ 503 auth unavailable
 ```
 
-Explain this was hardened after a real dashboard fan-out incident; no stale-on-error or browser authority was introduced.
+No stale-on-error or browser-owned authority.
 
-## 00:55–01:25 — V13 asset grounding
+## 00:55–01:25 — Asset grounding
 
-Use/select `run_97b91f6e0feb91184283` or submit its equivalent R310 causal question if intentionally consuming a live run.
-
-Overlay:
+Use/select the persisted R310 causal run.
 
 ```text
 "R310" human label
 → get_current_user
 → company_id from structured observation
 → list_assets_by_company
-→ asset_R310 from authorized fleet
+→ authorized asset_R310
 → condition evidence
 ```
 
-Key point: customer does not need to provide internal `company_id`/`asset_id`, and missing labels do not authorize another tenant scope.
+Customer does not need internal IDs. Missing labels do not authorize another tenant scope.
 
-## 01:25–02:05 — Technical current analysis / tool execution
+## 01:25–02:05 — Technical / Current analysis
 
-Open **Technical → Current analysis** for the primary run.
-
-Show at least:
-
-- model/tool transition;
-- canonical tool name;
-- arguments/resource target;
-- HTTP/result/evidence state;
-- trace sequence.
-
-For the R310 run, point out spectrum refinement. Explain that repeated `get_spectrum` names are not automatically loops: the remote path moved from asset-level to point-specific evidence. Redundancy is determined from operation + normalized args/resource + evidence contribution.
-
-Execution overlay:
+Show the model/tool transition, canonical tool, arguments/resource, status/evidence and trace sequence.
 
 ```text
 structured TOOL decision
 → ToolSpec lookup
 → deterministic argument/policy checks
 → HarnessRunner
-→ ProductionTractianTransport
 → typed HTTPS
 → supplied TRACTIAN API
 → normalized observation
 ```
 
-## 02:05–02:40 — Result, evidence and response semantics
+For repeated RMS/spectrum calls, distinguish valid asset→point refinement from exact duplicate calls using arguments/resource/evidence contribution.
 
-Return to the selected **Result** and its contextual evidence.
-
-Explain two separate contracts:
-
-```text
-terminal decision = what controller does next
-response_mode      = how completely evidence supports the message
-```
-
-Show `partial` on the R310 causal run. Explain that a probable bearing mechanism can be useful and directional while still not being fully proven root cause.
-
-Response-mode vocabulary:
-
-- complete;
-- partial;
-- inconclusive;
-- conflict;
-- unavailable.
-
-Show one evidence reference linked back to a tool observation if possible. Explicitly say hidden chain-of-thought is not required or exposed.
-
-## 02:40–03:05 — Analyses / missing resource fail-closed
-
-Open **Analyses**, select `run_547b2a62d84ef56a3d3d`, then its result.
-
-The prompt asked to compare R310 and R420. Authorized fleet discovery found R310 but not R420, so the correct result was `unavailable`.
+## 02:05–02:40 — Result and evidence semantics
 
 Explain:
 
 ```text
-missing label
-≠ ask user for hidden internal ID
-≠ guess another plant/company
-≠ fabricate comparison
-→ bounded unavailable result
+terminal decision = runtime outcome
+response_mode      = evidence completeness
 ```
 
-Do not claim this proves quality of a true two-asset comparison; it proves missing-resource safety/grounding.
+Show `partial` on the R310 causal run. A useful directional mechanism can remain probabilistic. Show evidence lineage without hidden chain-of-thought.
 
-## 03:05–03:42 — Technical Quality / evaluator
+## 02:40–03:05 — Missing resource fail-closed
 
-Open **Technical → Quality** for the primary run.
+Open the R420-unavailable run.
 
-Show the post-runtime pipeline:
+```text
+missing authorized label
+≠ hidden-ID request
+≠ cross-tenant guess
+≠ fabricated comparison
+→ unavailable
+```
+
+This proves missing-resource safety, not a bilateral comparison with two real assets.
+
+## 03:05–03:42 — Quality / evaluator and provider qualification
+
+Show the post-runtime evaluator:
 
 ```text
 completed RunTrace
-→ ProductionEvaluator
 → deterministic structural/safety/trajectory checks
 → safe persisted evaluation
 ```
 
-Prioritize real persisted checks such as execution-chain integrity, model-call provenance, production-trace identity, proposal contract validity, read-only action safety and terminal consistency.
-
-Explain evaluator-private truth is not supplied to the running agent.
-
-## 03:42–04:08 — Technical Actions / consequence boundary
-
-Open **Technical → Actions**.
-
-Overlay:
+Then state the current provider evidence precisely:
 
 ```text
-model may propose
+Groq openai/gpt-oss-120b
+85/85 attempts
+69/85 rubric pass = 81.18%
+70/85 reliability = 82.35%
+9 contract failures
+selection = NO_SELECTION
+```
+
+The evaluation framework did not relax gates or hide failed attempts. Cloudflare GPT-OSS was quota-blocked in non-scored preflight and then removed from the requested path, so there is no completed Cloudflare-vs-Groq final tournament claim.
+
+Current research asks why the Groq configuration failed: completion budget, reasoning effort and best-effort vs strict structured output.
+
+## 03:42–04:08 — Consequential action boundary
+
+```text
+model proposal
 → deterministic validation
-→ proposal/control state
 → confirmation/custody/idempotency/lease architecture
 → external consequential execution
 ```
 
-Mark the last step:
+Mark external execution **DISABLED / DENY-ALL** for Release 0.
 
-```text
-RELEASE 0: DISABLED / DENY-ALL
-```
-
-Do not imply action execution simply because action contracts exist in the codebase.
-
-## 04:08–04:38 — Deployment, auth and realtime
-
-Show:
+## 04:08–04:38 — Deployment, provider and realtime boundary
 
 ```text
 Browser
-→ Railway production-web 1bc124a...
-→ Railway production-api 08866da...
+→ Railway production-web
+→ Railway production-api
    ├→ Neon Auth
-   ├→ Cloudflare provisional provider
-   ├→ supplied TRACTIAN API 47561c...
+   ├→ provisional production provider
+   ├→ supplied TRACTIAN API
    └→ Neon PostgreSQL
+
+separate QA/research execution
+→ frozen provider population/runners
+→ qualification evidence
+→ no automatic production promotion
 ```
 
-Then realtime:
+Then:
 
 ```text
 runtime transition
@@ -213,22 +181,20 @@ runtime transition
 → React projection
 ```
 
-Explain component SHAs are tracked independently and source/docs commits do not automatically become a backend deployment.
+Source/docs/provider-research commits do not automatically become production deployments.
 
 ## 04:38–05:00 — Final recap
-
-End with:
 
 ```text
 1 server-owned identity/tenant
 2 durable run ownership
-3 V13 grounded DecisionSource + AgentController
+3 grounded DecisionSource + AgentController
 4 typed ToolSpec validation
-5 HarnessRunner + remote TRACTIAN reads
+5 HarnessRunner + TRACTIAN reads
 6 evidence + RunTrace
 7 terminal + response_mode
-8 post-runtime evaluator
+8 post-runtime evaluator / hard gates
 9 PostgreSQL + authenticated SSE + task-driven UI
 ```
 
-Final claim boundary: strong current read-only product; not final provider superiority, not all-read live coverage, not consequential action readiness, not final SLO/security/value proof.
+Final claim boundary: strong current read-only product and a provider evaluation framework that has rejected the tested Groq configuration; **no final provider winner**, no consequential action readiness, no final SLO/security/value proof.
