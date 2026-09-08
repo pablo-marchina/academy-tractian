@@ -1,0 +1,63 @@
+{
+  "schema_version": "provider-tournament-v3-immediate-final-result-v2",
+  "decision_id": "DP-004",
+  "campaign_id": "DP-004-provider-tournament-v3-immediate-single-day-v2",
+  "executed_at_utc": "2026-09-08T01:48:38Z/2026-09-08T01:53:00Z",
+  "execution_environment": {
+    "platform": "Railway",
+    "project_id": "1bc5ef82-644c-4c1b-a530-55721f05af7d",
+    "service": "hosted-pilot",
+    "deployment_id": "499450ea-62d8-491a-bcb4-722a19f3845c",
+    "source_main_sha": "4865e8357903b1367d845365b1f43f68df545158",
+    "isolated_candidate_runtime_sha": "5548dbedfda71d3c4480defecca6166ab114dd5e",
+    "workers_plan_state": "WORKERS_PAID"
+  },
+  "population_sha256": "4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9",
+  "experimental_unit": "scenario",
+  "repetitions_per_candidate": 1,
+  "total_live_attempts": 34,
+  "packet_observed_neurons": 2923.601439,
+  "candidate_summaries": {
+    "cloudflare-glm-4.7-flash": {
+      "attempt_count": 17,
+      "hard_gate_failures": ["RELIABILITY"],
+      "hard_gate_pass": false,
+      "operational_outcome_accuracy": 0.058823529411764705,
+      "success_rate": 0.058823529411764705,
+      "tool_selection_and_argument_validity_composite": 1.0,
+      "median_latency_ms": 6998,
+      "total_neurons": 469.94780000000003
+    },
+    "cloudflare-nemotron-3-120b-a12b": {
+      "attempt_count": 17,
+      "hard_gate_failures": ["RELIABILITY"],
+      "hard_gate_pass": false,
+      "operational_outcome_accuracy": 0.5294117647058824,
+      "success_rate": 0.5882352941176471,
+      "tool_selection_and_argument_validity_composite": 0.95,
+      "median_latency_ms": 4996,
+      "total_neurons": 2453.6536390000006
+    }
+  },
+  "bootstrap": null,
+  "tie_breaker_used": null,
+  "selection": "NO_SELECTION",
+  "selection_reason": "NO_CANDIDATE_PASSED_HARD_GATES",
+  "automatic_promotion": false,
+  "production_config_changed": false,
+  "repeat_stability_not_measured": true,
+  "cost_evidence": {
+    "marginal_inference_cash_cost_target_usd": 0,
+    "actual_marginal_cash_cost_proven": false,
+    "reason": "A preceding Railway healthcheck-aborted run may have consumed unobserved Neurons before the successful recovery run; no zero-cash-cost claim is made without authoritative billing evidence."
+  },
+  "aborted_run": {
+    "deployment_id": "26dc3f54-0c49-4226-aaaa-124f0b630405",
+    "terminal_status": "FAILED",
+    "cause": "Railway healthcheck terminated process before HTTP server bind",
+    "final_result_observed": false,
+    "partial_outcomes_used_for_adaptation": false,
+    "included_in_scientific_denominator": false
+  },
+  "conclusion": "DP-004 is closed with NO_SELECTION. Neither frozen candidate is eligible for promotion under the preregistered reliability hard gate."
+}
