@@ -1,16 +1,16 @@
 # Academy × TRACTIAN — Non-Negotiable Project Principles
 
 **Status:** ACTIVE mandatory governance  
-**Last rebaseline:** 2026-09-06 BRT  
+**Last rebaseline:** 2026-09-08 BRT  
 **Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
-**Execution plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)  
-**Documentation contract:** [`DOCUMENTATION-GUIDE.md`](DOCUMENTATION-GUIDE.md)
+**Provider state:** [`PROVIDER-QUALIFICATION-STATUS-2026-09-08.md`](PROVIDER-QUALIFICATION-STATUS-2026-09-08.md)  
+**Execution plan:** [`DELIVERY-PLAN.md`](DELIVERY-PLAN.md)
 
 These principles override convenience, novelty, implementation momentum and prior provisional choices.
 
 ## North Star
 
-> Deliver the strongest defensible TRACTIAN × Inteli product: a remote, multi-user, production-oriented **Agent + Evaluation** platform whose behavior, architecture, safety, quality and operational value are measurable and observable, while keeping **actual project cash cost = USD 0**.
+> Deliver the strongest defensible TRACTIAN × Inteli product: a remote, multi-user, production-oriented **Agent + Evaluation** platform whose behavior, architecture, safety, quality and operational value are measurable and observable.
 
 A workstream must map to at least one of:
 
@@ -24,35 +24,20 @@ If it maps to none, defer it.
 
 ## P0 — Real production, remote-first, never demo-first
 
-The production serving path must not depend on:
+Production serving must not depend on localhost/loopback, a developer laptop/manual process, local model serving, local-file database truth, scripted/mock provider responses or browser-owned tenant/permission authority.
 
-- localhost/loopback services;
-- a developer laptop/manual process;
-- local model serving;
-- SQLite/DuckDB/filesystem as production truth;
-- test doubles/scripted scenario sources/mock provider responses;
-- browser-provided tenant/role/permission authority.
+Local/test execution is valid for reproduction and controlled research, not as evidence of the hosted production claim.
 
-Local execution is valid for tests/reproduction/benchmarks, not as evidence of the hosted production claim.
-
-## P0 — USD0 is a hard eligibility gate
+## P0 — Cost/paid-spillover boundary is explicit
 
 ```text
-actual project cash cost > USD 0            → INELIGIBLE
-silent paid spillover / automatic billing   → FORBIDDEN
-USD0 candidate                              → eligible for technical evaluation
-USD0 + all applicable hard gates            → eligible for promotion
-no eligible candidate passes                → NO_SELECTION / explicit blocker
+silent paid spillover / automatic billing → FORBIDDEN
+provider/account quota exhausted          → fail/degrade explicitly
+eligible candidate + applicable hard gates→ eligible for promotion
+no candidate passes                       → NO_SELECTION / explicit blocker
 ```
 
-Rules:
-
-1. zero cost is necessary, not sufficient;
-2. paid alternatives may be researched only as external references while this constraint applies;
-3. quotas/free tiers must be understood and observed;
-4. exhaustion must fail/degrade safely rather than spend;
-5. no automatic paid fallback is allowed;
-6. an explicit limitation is better than silently relaxing the constraint.
+Zero-cost constraints are eligibility constraints, not quality evidence. A candidate does not become preferred merely because it is free/available.
 
 ## Source hierarchy
 
@@ -68,26 +53,20 @@ Record discrepancies instead of silently harmonizing them.
 
 ## P1 — Systematic research before material choices
 
-Every material decision follows:
-
 ```text
 decision question / measured gap
 → requirement/risk
 → hard constraints
 → primary-source research
-→ simple baseline + credible eligible alternatives
+→ baseline + credible eligible alternatives
 → preregistered metrics/hard gates
 → controlled quantitative comparison
 → failure/robustness/production-fit analysis
-→ Pareto interpretation
 → decision + reversal trigger
-→ ADR/registry
 → regression protection
 ```
 
-Do not add a technology because it is popular or appears in an example.
-
-Current examples of **NO_CHANGE unless evidence demands otherwise** include LangGraph migration, multi-agent, RAG/vector DB, persistent memory, MCP, Redis/Kafka and Kubernetes/microservices.
+Do not add technology because it is popular. LangGraph migration, multi-agent, RAG/vector DB, persistent memory, MCP, Redis/Kafka and Kubernetes remain `NO_CHANGE` unless a measured gap and controlled win justify them.
 
 ## Decision states
 
@@ -95,30 +74,20 @@ Current examples of **NO_CHANGE unless evidence demands otherwise** include Lang
 - `RESEARCHED` — credible evidence/options mapped;
 - `INELIGIBLE` — violates a hard constraint;
 - `QUALIFIED` — passes minimum gates;
-- `PREFERRED` — best-supported eligible current candidate;
-- `FROZEN` — accepted for the stated evidence scope;
+- `PREFERRED` — best-supported eligible candidate;
+- `FROZEN` — accepted for stated evidence scope;
 - `REJECTED` — evidence rejects candidate;
 - `NO_CHANGE` — current simpler path remains preferred;
-- `NO_SELECTION` — no candidate deserves final promotion;
+- `NO_SELECTION` — no candidate/configuration deserves final promotion;
 - `SUPERSEDED` — prospectively replaced by stronger evidence.
 
-Release qualification and final selection are not the same thing. Release 0 may use a **provisional** provider while final Provider Tournament state remains `NO_SELECTION`.
+A completed negative qualification is valuable evidence. On 2026-09-08 Groq GPT-OSS-120B completed 85/85 and returned `NO_SELECTION`; the correct response is causal diagnosis/new challenger evidence, not redefining success after seeing the result.
 
 ## P2 — Quantitative before qualitative
 
-When measurement is valid, prefer:
+When measurement is valid, prefer rates/distributions, p50/p95/p99, paired deltas, uncertainty/effect sizes, failure/error rates, quota/cost, repeat stability, calibration/agreement and task/value deltas.
 
-- rates/distributions;
-- p50/p95/p99;
-- paired deltas;
-- uncertainty/effect sizes;
-- failure/error rates;
-- resource/quota/cash cost;
-- repeat stability;
-- calibration/agreement metrics;
-- task completion/friction/value deltas.
-
-Qualitative evidence complements measurements where semantics/user experience cannot be reduced safely to exact checks.
+Qualitative evidence complements measurement where semantics/user experience cannot safely be reduced to exact checks.
 
 ## P3 — Adaptive where valuable; deterministic where safety-critical
 
@@ -128,8 +97,8 @@ Potentially adaptive only after challenger evidence:
 - evidence/tool ordering;
 - stopping;
 - clarify/abstain/escalate thresholds;
-- provider routing among USD0-eligible candidates;
-- bounded retry/backoff where semantics permit it;
+- provider routing among eligible candidates;
+- bounded retry/backoff where protocol semantics allow it;
 - contextual resource budgets;
 - visualization prioritization.
 
@@ -137,12 +106,14 @@ Always deterministic/hard-gated:
 
 - authentication/tenant binding;
 - RLS/authorization/permissions;
-- schema validation;
+- application schema/argument validation;
 - action confirmation/custody/idempotency/leases/fencing;
 - privacy/field deny-lists;
 - evaluator/gold isolation;
-- hard turn/time/resource caps;
-- USD0/no-paid-spillover boundary.
+- hard resource caps;
+- cost/no-hidden-paid-fallback boundary.
+
+Provider `strict:true`, if later used, is an additional structural barrier and never replaces deterministic application/policy validation.
 
 ## P4 — Eval-Driven Development
 
@@ -155,55 +126,50 @@ requirement
 → implementation
 → repeated/sliced evaluation
 → diagnosis
-→ promote/reject/no-change
+→ promote | reject | no-change | no-selection
 → regression guard
 ```
+
+Rules:
 
 - deterministic truth beats an LLM judge where exact checks exist;
 - semantic judges are non-gating until human calibrated;
 - preserve failed/consumed attempts;
-- separate infrastructure failure from task-quality failure;
-- evaluate the operational conclusion **and** observable process: tool, arguments, evidence, stopping, escalation/action and safety.
+- distinguish preflight from scored evidence;
+- separate infrastructure/admission failure from task-quality failure;
+- do not selectively retry/repair failed scored attempts;
+- evaluate operational conclusion **and** observable process: tool, arguments, evidence, stopping, escalation/action and safety.
 
 ## P5 — Evidence-backed claims only
 
-A source/CI result does not automatically prove deployed production properties.
+A source commit, provider marketing page, CI result or successful preflight does not automatically prove a deployed production property.
 
-Claim-specific remote evidence is required for claims such as:
+Claim-specific remote evidence is required for production IAM/tenant safety, provider/TRACTIAN integration, capacity/SLO, backup/restore, RTO/RPO/HA, end-to-end security and operational time savings.
 
-- production IAM/tenant safety;
-- provider/TRACTIAN integration;
-- capacity/SLO;
-- backup/restore;
-- RTO/RPO/HA;
-- end-to-end security;
-- operational time savings.
-
-The current Release 0 hosted evidence proves its exact read-only scope; broader final claims remain open until separately measured.
+The current provider claim is explicitly **no final winner**. A future challenger must pass unchanged gates, fresh 85/85 and Academy live E2E before production promotion.
 
 ## P6 — User experience without sacrificing observability
 
-The frontend should make the normal user task simple **and** preserve deep technical evidence for reviewers.
-
-Current pattern:
+Current task-driven pattern:
 
 ```text
-Results → Evidence → Investigation → Engineering
+Home
+→ contextual Result / Evidence
+→ Analyses for persisted history
+→ Technical for specialist depth
 ```
 
 Principles:
 
 - answer/next step before internals;
 - progressive disclosure instead of information deletion;
-- all visible status derived from safe server-owned evidence;
+- visible status derives from safe server-owned evidence;
 - no fabricated progress;
 - no secrets/private evaluator truth/hidden chain-of-thought;
 - accessibility and first-time-user comprehension are product requirements;
-- lightweight product feedback must remain separate from controlled research datasets.
+- lightweight product feedback remains separate from controlled research datasets.
 
 ## P7 — Documentation/provenance is part of the product
-
-Active docs and historical evidence have different jobs:
 
 ```text
 active docs = current prospectively editable truth
@@ -213,20 +179,22 @@ frozen/history = immutable evidence for original scope
 Rules:
 
 - one mutable owner per question;
-- document by user task (tutorial/how-to/reference/explanation);
-- update architecture/runbook/acceptance/security/changelog with material changes;
+- provider selection has its own canonical mutable status;
+- document by user task;
+- update architecture/runbook/acceptance/security/changelog after material changes;
 - preserve accepted ADRs/frozen progress/results;
-- supersede prospectively rather than rewriting historical rationale;
-- claims and diagrams must match the system that actually exists.
+- supersede prospectively rather than rewrite history;
+- negative experiment results remain negative evidence;
+- claims/diagrams must match the system that actually exists.
 
 ## Completion gate for material work
 
-A material workstream is done only when applicable conditions hold:
+A workstream is done only when applicable conditions hold:
 
 - [ ] explicit requirement/risk/user objective;
 - [ ] baseline + decision question;
 - [ ] credible alternatives researched;
-- [ ] USD0/no-paid-spillover eligibility verified;
+- [ ] eligibility/cost boundary verified;
 - [ ] metrics/hard gates defined;
 - [ ] controlled evaluation exists where selection matters;
 - [ ] stochastic uncertainty/repetition measured where relevant;
@@ -240,4 +208,4 @@ A material workstream is done only when applicable conditions hold:
 - [ ] frozen history unchanged;
 - [ ] claims remain bounded by evidence.
 
-If an applicable item is missing, the correct status is research/experimental/pending/non-claim — not a stronger label.
+If an applicable item is missing, the correct state is research/experimental/pending/non-claim — not a stronger label.
