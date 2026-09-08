@@ -1,0 +1,82 @@
+name: railway-exact-commit-deploy-ops
+
+on:
+  pull_request:
+    branches:
+      - release/production-final
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-release-base-exactly:
+    runs-on: ubuntu-latest
+    env:
+      RAILWAY_ACCOUNT_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+      RAILWAY_PROJECT_TOKEN: ${{ secrets.RAILWAY_PROJECT_TOKEN }}
+      RAILWAY_PROJECT_ACCESS_TOKEN: ${{ secrets.RAILWAY_PROJECT_ACCESS_TOKEN }}
+      RAILWAY_SERVICE_ID: 42e12bb3-8f86-4e9f-bda7-bac1fc001ccb
+      RAILWAY_ENVIRONMENT_ID: 97242dcf-42ea-4d98-bf36-db0e71ecfcc8
+      RELEASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - name: Deploy exact release base commit through Railway Public API
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          endpoint = "https://backboard.railway.com/graphql/v2"
+          service_id = os.environ["RAILWAY_SERVICE_ID"]
+          environment_id = os.environ["RAILWAY_ENVIRONMENT_ID"]
+          commit_sha = os.environ["RELEASE_SHA"]
+
+          account_token = (os.environ.get("RAILWAY_ACCOUNT_TOKEN") or os.environ.get("RAILWAY_API_TOKEN") or "").strip()
+          project_token = (os.environ.get("RAILWAY_PROJECT_TOKEN") or os.environ.get("RAILWAY_PROJECT_ACCESS_TOKEN") or "").strip()
+          if not account_token and not project_token:
+              print("::error::No Railway API token secret is configured for this repository.")
+              raise SystemExit(78)
+
+          query = """mutation serviceInstanceDeployV2($serviceId: String!, $environmentId: String!, $commitSha: String!) { serviceInstanceDeployV2(serviceId: $serviceId, environmentId: $environmentId, commitSha: $commitSha) }"""
+          payload = json.dumps({
+              "query": query,
+              "variables": {
+                  "serviceId": service_id,
+                  "environmentId": environment_id,
+                  "commitSha": commit_sha,
+              },
+          }).encode("utf-8")
+          headers = {"Content-Type": "application/json"}
+          if account_token:
+              headers["Authorization"] = "Bearer " + account_token
+          else:
+              headers["Project-Access-Token"] = project_token
+
+          request = urllib.request.Request(endpoint, data=payload, headers=headers, method="POST")
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  body = json.loads(response.read().decode("utf-8"))
+          except urllib.error.HTTPError as exc:
+              print(f"::error::Railway API HTTP failure: {exc.code}")
+              raise SystemExit(1)
+          except Exception as exc:
+              print(f"::error::Railway API transport failure: {type(exc).__name__}")
+              raise SystemExit(1)
+
+          if body.get("errors"):
+              safe = [{"message": e.get("message"), "code": (e.get("extensions") or {}).get("code")} for e in body["errors"]]
+              print("::error::Railway GraphQL failure: " + json.dumps(safe, sort_keys=True))
+              raise SystemExit(1)
+
+          deployment_id = (body.get("data") or {}).get("serviceInstanceDeployV2")
+          if not isinstance(deployment_id, str) or not deployment_id:
+              print("::error::Railway API did not return a deployment id")
+              raise SystemExit(1)
+
+          print("Railway exact-commit deployment created successfully.")
+          print("deployment_id=" + deployment_id)
+          print("commit_sha=" + commit_sha)
+          PY
