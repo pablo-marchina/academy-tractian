@@ -40,8 +40,8 @@ jobs:
           assert actual_sha == manifest["runtime_bundle_sha256"]
           assert manifest["runtime_bundle_parts"] == 7
 
-          sys.path.insert(0, str(Path("hosted-runtime").resolve()))
-          module = importlib.import_module("api.app")
+          sys.path.insert(0, str((Path("hosted-runtime") / "api").resolve()))
+          module = importlib.import_module("app.main")
           runtime = module.app.openapi()
 
           action_ops = [
