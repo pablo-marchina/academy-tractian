@@ -51,7 +51,7 @@ def groq_candidate(model_id: str) -> HostedRouteCandidateV2:
         candidate_id=f"groq:{model_id}",
         provider_id="groq",
         model_id=model_id,
-        route_id="groq.openai_compat.chat_completions.v1.strict_json_schema",
+        route_id="groq.openai_compat.chat_completions.v1.json_schema",
         endpoint="https://api.groq.com/openai/v1/chat/completions",
         max_token_field="max_completion_tokens",
     )
@@ -61,7 +61,7 @@ NVIDIA_CANDIDATE = HostedRouteCandidateV2(
     candidate_id="nvidia:nvidia/nemotron-3-super-120b-a12b",
     provider_id="nvidia",
     model_id="nvidia/nemotron-3-super-120b-a12b",
-    route_id="nvidia.integrate.chat_completions.v1.strict_json_schema",
+    route_id="nvidia.integrate.chat_completions.v1.json_schema",
     endpoint="https://integrate.api.nvidia.com/v1/chat/completions",
 )
 
@@ -69,7 +69,7 @@ OPENROUTER_CANDIDATE = HostedRouteCandidateV2(
     candidate_id="openrouter:nvidia/nemotron-3-super-120b-a12b:free",
     provider_id="openrouter",
     model_id="nvidia/nemotron-3-super-120b-a12b:free",
-    route_id="openrouter.chat_completions.v1.free.strict_json_schema.no_fallback",
+    route_id="openrouter.chat_completions.v1.free.json_schema.no_fallback",
     endpoint="https://openrouter.ai/api/v1/chat/completions",
     openrouter_no_fallback=True,
     acceptable_response_model_ids=(
@@ -91,7 +91,7 @@ def _provider_request_text(request: ProviderDecisionRequest) -> str:
 def _schema_envelope() -> dict[str, Any]:
     return {
         "name": "provider_decision_payload",
-        "strict": True,
+        "strict": False,
         "schema": json.loads(json.dumps(PROVIDER_DECISION_JSON_SCHEMA)),
     }
 
