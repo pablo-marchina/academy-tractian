@@ -8,7 +8,7 @@ import sys
 import tarfile
 import urllib.request
 
-FROZEN_RUNNER_SHA = "1c1a63cd9ec8e3642c459c01b8985eaa9c58d964"
+FROZEN_RUNNER_SHA = "22ef052b292bb77618973cc6447f08970dc13159"
 ARCHIVE_URL = (
     "https://github.com/pablo-marchina/academy-tractian/archive/"
     f"{FROZEN_RUNNER_SHA}.tar.gz"
