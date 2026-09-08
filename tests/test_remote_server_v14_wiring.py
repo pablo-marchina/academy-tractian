@@ -10,7 +10,7 @@ class _ProviderEnabledConfig:
     provider_calls_enabled = True
 
 
-def test_remote_decision_source_factory_uses_v14_builder(monkeypatch) -> None:
+def test_remote_decision_source_factory_uses_knowledge_enforced_v14_builder(monkeypatch) -> None:
     config = cast(RemoteProductionConfig, _ProviderEnabledConfig())
     sentinel = object()
     seen: dict[str, object] = {}
@@ -25,7 +25,7 @@ def test_remote_decision_source_factory_uses_v14_builder(monkeypatch) -> None:
     monkeypatch.setattr(remote_server, "validate_release_provider_config", fake_validate)
     monkeypatch.setattr(
         remote_server,
-        "build_release_provider_decision_source_factory_v14",
+        "build_release_provider_decision_source_factory_v14_knowledge",
         fake_build,
     )
 
