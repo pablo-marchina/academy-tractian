@@ -1,0 +1,164 @@
+{
+  "schema_version": "provider-tournament-cross-provider-v2-manifest",
+  "decision_id": "DP-006",
+  "status": "PREREGISTERED_BEFORE_ANY_DP006_INFERENCE_CALL",
+  "purpose": "Execute a valid Groq x NVIDIA x OpenRouter provider+model tournament using the immutable Provider Tournament v3 operational contract after DP-005 proved its original route identities unavailable.",
+  "predecessor": {
+    "decision_id": "DP-005",
+    "closure_path": "research/experiments/provider-tournament-cross-provider-v1-closure.json",
+    "github_actions_run_id": 34225336595,
+    "result": "NO_SELECTION_INFRASTRUCTURE_INVALID"
+  },
+  "source_contract": {
+    "tournament_version": "provider-tournament-v3",
+    "manifest_path": "research/experiments/provider-tournament-v3-manifest.json",
+    "manifest_git_blob_sha1": "d18e0203b2eef4cb1e12ccb4668f4ea70b51054c",
+    "population_path": "research/experiments/provider-tournament-v3-population.json",
+    "population_git_blob_sha1": "6f81c748b560f2a7a12f52bea36c78b5ef98ea77",
+    "population_sha256": "4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9",
+    "rubric_adjudicator": "academy_tractian.provider_tournament_v3.adjudicate_v3_rubric",
+    "contract_mutation_allowed": false
+  },
+  "model_discovery_evidence": {
+    "script": "scripts/research/discover_hosted_provider_models_v1.py",
+    "github_actions_run_id": 34225640607,
+    "head_sha": "3270a265cf53b9d52aab219206128027cdbaaf59",
+    "groq_models_endpoint_status": 403,
+    "nvidia_models_endpoint_status": 200,
+    "openrouter_models_endpoint_status": 200,
+    "inference_calls_in_discovery": 0
+  },
+  "candidate_selection_policy": {
+    "selection_occurs_before_evaluated_observations": true,
+    "criteria_in_order": [
+      "credential_or_official-route availability",
+      "hosted remote endpoint",
+      "USD0-capable route for this experiment",
+      "structured-output compatibility with the existing provider-decision schema",
+      "sufficient context/output ceilings",
+      "agentic reasoning and instruction-following fit"
+    ],
+    "groq": {
+      "provider_id": "groq",
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "already_rejected": ["openai/gpt-oss-120b"],
+      "eligibility_probe_order": ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"],
+      "selection_rule": "first candidate in the preregistered order passing the exact structured-output eligibility probe; no later candidate is probed after a pass",
+      "research_basis": "Current official Groq docs list all three models as strict JSON Schema Structured Outputs models; 120B is already unavailable to this credential from DP-005."
+    },
+    "nvidia": {
+      "provider_id": "nvidia",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "candidate": "nvidia/nemotron-3-super-120b-a12b",
+      "selection_rule": "single preregistered candidate must pass exact structured-output eligibility probe",
+      "research_basis": "Credential-visible in run 34225640607; NVIDIA currently exposes it as a hosted free endpoint and describes it as optimized for agentic reasoning, planning, tool calling and structured-output training."
+    },
+    "openrouter": {
+      "provider_id": "openrouter",
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "candidate": "nvidia/nemotron-3-super-120b-a12b:free",
+      "selection_rule": "single preregistered zero-price candidate must pass exact structured-output eligibility probe and capacity gate",
+      "routing": {"allow_fallbacks": false, "require_parameters": true},
+      "research_basis": "Credential-visible and zero-price in run 34225640607; current OpenRouter model metadata declares JSON Schema response_format support."
+    }
+  },
+  "eligibility_protocol": {
+    "evaluated_population_used": false,
+    "private_truth_used": false,
+    "probes_count_toward_tournament_denominator": false,
+    "automatic_retries": 0,
+    "automatic_fallbacks": 0,
+    "probe_payload": "synthetic provider-decision request built with the production ProviderDecisionSource schema and canonical tool registry, without a v3 scenario or rubric",
+    "pass_conditions": [
+      "HTTP 2xx",
+      "exact provider/model route identity is acceptable",
+      "response parses through ProviderDecisionSource into a valid ControllerDecision",
+      "usage accounting is present",
+      "no provider-native tool call",
+      "no raw provider request/response persisted"
+    ],
+    "openrouter_capacity_gate": {
+      "endpoint": "GET https://openrouter.ai/api/v1/key",
+      "log_only": ["request_succeeded", "is_free_tier_boolean"],
+      "required_for_85_attempt_geometry": "is_free_tier must be false; otherwise the documented 50 requests/day free-tier ceiling is below the 85 evaluated calls required for this candidate",
+      "no_credit_balance_or_usage_amount_logged": true
+    },
+    "three_way_requirement": "All Groq, NVIDIA and OpenRouter candidates must pass eligibility and OpenRouter capacity before the 255-observation tournament starts. If any provider fails, DP-006 closes NO_SELECTION/ELIGIBILITY_FAILED and no partial quality tournament is interpreted."
+  },
+  "experimental_design": {
+    "experimental_unit": "scenario",
+    "scenario_count": 17,
+    "repetitions_per_candidate": 5,
+    "candidate_count": 3,
+    "attempts_per_candidate": 85,
+    "total_live_evaluated_attempts": 255,
+    "candidate_order": "balanced_cyclic_rotation_by_scenario_and_repetition",
+    "failed_attempts_remain_in_denominator": true,
+    "warmup_calls_inside_tournament": 0
+  },
+  "request_contract": {
+    "ai_gateway_used": false,
+    "automatic_fallbacks": 0,
+    "automatic_json_repair": false,
+    "automatic_retries": 0,
+    "controller_owns_agent_loop": true,
+    "failed_attempts_remain_in_denominator": true,
+    "harness_runner_owns_tool_execution": true,
+    "max_input_tokens": 8000,
+    "max_output_tokens": 512,
+    "n": 1,
+    "provider_native_tool_execution": false,
+    "provider_side_state": false,
+    "stream": false,
+    "structured_output": "strict_json",
+    "temperature": 0,
+    "warmup_calls": 0,
+    "web_search_used": false
+  },
+  "hard_gates": {
+    "H02_private_gold_leakage": 0,
+    "H04_policy_binding_bypass": 0,
+    "H06_H10_provenance_integrity_rate": 1.0,
+    "H10_raw_provider_material_recorded": false,
+    "H10_usage_accounting_required_on_success": true,
+    "H11_min_success_rate": 0.9375,
+    "automatic_retry_count": 0,
+    "automatic_fallback_count": 0
+  },
+  "primary_metric": {
+    "name": "operational_outcome_accuracy",
+    "scoring": "frozen_v3_deterministic_rubric",
+    "material_improvement_absolute": 0.02
+  },
+  "selection_rule": {
+    "bootstrap_method": "hierarchical_paired_bootstrap",
+    "bootstrap_resamples": 10000,
+    "confidence_level": 0.95,
+    "bootstrap_seed": 20260908,
+    "sole_hard_gate_eligible_candidate": "PROMOTE",
+    "multiple_eligible_candidates": "PROMOTE only if paired operational-outcome accuracy advantage is at least 0.02 and CI95 lower bound is greater than zero against every other eligible candidate",
+    "otherwise": "INCONCLUSIVE",
+    "latency_is_not_a_post_hoc_quality_tiebreaker": true,
+    "automatic_production_promotion": false
+  },
+  "secondary_metrics": [
+    "structured_response_success_rate",
+    "canonical_tool_selection_validity",
+    "canonical_argument_validity",
+    "repeat_stability",
+    "provider_success_rate",
+    "latency_p50_ms",
+    "latency_p95_ms",
+    "latency_p99_ms",
+    "input_tokens",
+    "output_tokens",
+    "failure_code_distribution"
+  ],
+  "evidence_policy": {
+    "raw_provider_request_recorded": false,
+    "raw_provider_response_recorded": false,
+    "secret_material_recorded": false,
+    "request_sha256_recorded": true,
+    "sanitized_provider_metadata_only": true
+  }
+}
