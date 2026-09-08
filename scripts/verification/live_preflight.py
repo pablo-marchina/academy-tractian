@@ -41,7 +41,13 @@ def main() -> int:
     release = payload.get("release") if isinstance(payload, dict) else None
     actual = release.get("git_sha") if isinstance(release, dict) else None
     release_match = bool(expected and actual == expected)
-    print(json.dumps({"phase": "release", "http_status": release_status, "expected_present": bool(expected), "sha_match": release_match}, sort_keys=True))
+    print(json.dumps({
+        "phase": "release",
+        "http_status": release_status,
+        "expected_sha": expected or None,
+        "reported_sha": actual,
+        "sha_match": release_match,
+    }, sort_keys=True))
 
     email = os.environ.get("QA_EMAIL", "").strip().lower()
     password = os.environ.get("QA_PASSWORD", "")
