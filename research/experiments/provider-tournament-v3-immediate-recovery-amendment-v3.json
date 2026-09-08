@@ -1,0 +1,29 @@
+{
+  "schema_version": "provider-tournament-v3-immediate-recovery-amendment-v3",
+  "decision_id": "DP-004",
+  "campaign_id": "DP-004-provider-tournament-v3-immediate-single-day-v2",
+  "status": "FROZEN_BEFORE_RECOVERY_RUN",
+  "trigger": {
+    "failed_railway_deployment_id": "26dc3f54-0c49-4226-aaaa-124f0b630405",
+    "failure_class": "HOST_HEALTHCHECK_TERMINATED_PROCESS_BEFORE_HTTP_BIND",
+    "lease_acquired": true,
+    "final_result_observed": false,
+    "final_result_persisted": false,
+    "partial_packet_artifact_survived": false
+  },
+  "recovery_rule": {
+    "discard_aborted_infrastructure_attempts_from_scientific_denominator": true,
+    "reason": "No partial model outcome was exposed to the operator or used to adapt candidates, prompts, population, scoring, or selection rules.",
+    "restart_exact_frozen_34_attempt_geometry": true,
+    "candidate_population_prompt_and_scoring_unchanged": true,
+    "lease_takeover_allowed_only_when": [
+      "previous Railway deployment is terminal FAILED",
+      "active lease purpose exactly equals this campaign_id",
+      "new runtime is the same campaign recovery"
+    ],
+    "other_campaign_lease_takeover_forbidden": true,
+    "health_endpoint_must_bind_before_background_tournament": true
+  },
+  "cost_note": "The aborted infrastructure run may have consumed unobserved Workers AI Neurons. The recovery run prioritizes the user's explicit same-session completion order. The final evidence must not assert actual zero marginal cash cost unless independently proven; it may only retain the zero-cost target field.",
+  "selection_rule_unchanged": true
+}
