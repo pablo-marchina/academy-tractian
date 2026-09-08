@@ -2,3 +2,5 @@
 
 This module is intentionally not imported by production code.
 """
+
+# Recovery redeploy marker: 2026-09-08T20:42Z
