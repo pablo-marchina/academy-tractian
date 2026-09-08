@@ -1,0 +1,50 @@
+name: nvidia-v15-serving-probe
+
+on:
+  push:
+    branches:
+      - v15-nvidia-serving-20260908
+    paths:
+      - ".github/workflows/nvidia-v15-serving-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-serving-probe:
+    runs-on: ubuntu-24.04
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Assert hosted secret and compile probe
+        run: |
+          test -n "${NVIDIA_API_KEY:-}"
+          python -m py_compile scripts/nvidia_v15_serving_probe.py
+      - name: Execute sanitized historical and candidate probes
+        run: |
+          python scripts/nvidia_v15_serving_probe.py --require-candidate-pass | tee /tmp/nvidia-v15-serving-probe.json
+      - name: Assert official evaluation cases remain untouched
+        run: |
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/nvidia-v15-serving-probe.json'))
+          assert x['provider_calls'] == 3
+          assert x['official_cases_loaded'] == 0
+          assert x['official_cases_consumed'] == 0
+          assert x['raw_response_body_persisted'] is False
+          assert x['credential_persisted'] is False
+          assert x['candidate_pass'] is True
+          print('NVIDIA_V15_SYNTHETIC_SERVING_PROBE_PASS')
+          PY
+      - name: Upload sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nvidia-v15-serving-probe
+          path: /tmp/nvidia-v15-serving-probe.json
+          if-no-files-found: warn
+          retention-days: 30
