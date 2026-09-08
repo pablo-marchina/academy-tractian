@@ -127,10 +127,50 @@ def test_pure_quality_read_is_not_reoffered_after_success() -> None:
     assert "FINAL" in _schema_kinds(request)
 
 
+def test_repeated_identical_single_asset_rms_is_removed_from_next_surface() -> None:
+    prompt = "Why is R310 vibrating more than usual? Identify the most likely mechanism only if the evidence supports it."
+    repeated = {"asset_id": "asset_R310", "point_id": "ftf", "rms": [1.2, 1.3, 1.4]}
+    request = _source().build_request(
+        _context(
+            prompt,
+            _identity(),
+            _assets("asset_R310"),
+            _observation("get_rms", repeated),
+            _observation("get_rms", repeated),
+        )
+    )
+
+    names = _tool_names(request)
+    assert "get_rms" not in names
+    assert "get_spectrum" in names
+    assert "FINAL" in _schema_kinds(request)
+
+
+def test_distinct_single_asset_rms_observations_remain_eligible() -> None:
+    prompt = "Why is R310 vibrating more than usual? Identify the most likely mechanism only if the evidence supports it."
+    request = _source().build_request(
+        _context(
+            prompt,
+            _identity(),
+            _assets("asset_R310"),
+            _observation(
+                "get_rms",
+                {"asset_id": "asset_R310", "point_id": "de", "rms": [1.2, 1.3]},
+            ),
+            _observation(
+                "get_rms",
+                {"asset_id": "asset_R310", "point_id": "nde", "rms": [1.5, 1.7]},
+            ),
+        )
+    )
+
+    assert "get_rms" in _tool_names(request)
+
+
 def test_v13_preserves_v12_grounding_instruction() -> None:
     request = _source().build_request(_context("Summarize the available evidence."))
     instruction = _client().build_http_request(request).body["messages"][0]["content"]
 
     assert RELEASE0_V12_GROUNDING_INSTRUCTION in instruction
     assert RELEASE0_V13_GROUNDING_INSTRUCTION in instruction
-    assert RELEASE0_V13_GROUNDING_VERSION == "release0-initial-asset-grounding-v1"
+    assert RELEASE0_V13_GROUNDING_VERSION == "release0-initial-asset-grounding-v2"
