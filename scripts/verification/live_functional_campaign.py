@@ -8,6 +8,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
@@ -139,7 +140,8 @@ def _wait_for_run(
     while time.monotonic() < deadline:
         status, execution = _json_request(opener, f"{product_origin}{execution_path}")
         if status != 200 or not isinstance(execution, dict):
-            raise RuntimeError(f"execution polling failed: http_{status}")
+            detail = execution.get("detail") if isinstance(execution, dict) else None
+            raise RuntimeError(f"execution polling failed: http_{status}:{detail or 'unknown'}")
         last_execution_status = str(execution.get("status"))
         if last_execution_status in {"completed", "failed"}:
             break
@@ -149,13 +151,15 @@ def _wait_for_run(
 
     status, run = _json_request(opener, f"{product_origin}{run_path}")
     if status != 200 or not isinstance(run, dict):
-        raise RuntimeError(f"run fetch failed: http_{status}")
+        detail = run.get("detail") if isinstance(run, dict) else None
+        raise RuntimeError(f"run fetch failed: http_{status}:{detail or 'unknown'}")
     status, event_payload = _json_request(
         opener,
         f"{product_origin}/api/runs/{urllib.parse.quote(str(accepted['run_id']))}/events",
     )
     if status != 200 or not isinstance(event_payload, dict) or not isinstance(event_payload.get("items"), list):
-        raise RuntimeError(f"event fetch failed: http_{status}")
+        detail = event_payload.get("detail") if isinstance(event_payload, dict) else None
+        raise RuntimeError(f"event fetch failed: http_{status}:{detail or 'unknown'}")
     run["_execution_status"] = last_execution_status
     return run, [item for item in event_payload["items"] if isinstance(item, dict)]
 
@@ -179,7 +183,8 @@ def _evaluate(case: Case, run: dict[str, Any], events: list[dict[str, Any]]) -> 
     response_mode = run.get("terminal_response_mode")
     if response_mode not in case.allowed_response_modes:
         failures.append(f"unexpected_response_mode:{response_mode}")
-    terminal = str(run.get("terminal_message") or "").lower()
+    terminal_message = str(run.get("terminal_message") or "")
+    terminal = terminal_message.lower()
     for fragment in case.forbidden_terminal_fragments:
         if fragment.lower() in terminal:
             failures.append(f"forbidden_terminal_fragment:{fragment}")
@@ -187,25 +192,49 @@ def _evaluate(case: Case, run: dict[str, Any], events: list[dict[str, Any]]) -> 
     if reason in {"DECISION_SOURCE_FAILURE", "TOOL_BOUNDARY_FAILURE", "TOOL_CALL_BUDGET_EXHAUSTED", "TURN_BUDGET_EXHAUSTED"}:
         failures.append(f"runtime_failure:{reason}")
 
-    seen: dict[tuple[str, str, int | None], int] = {}
+    seen_failed_results: Counter[tuple[str, int | None]] = Counter()
     for event in events:
         if event.get("event_type") != "tool_result" or not event.get("tool_name"):
             continue
-        key = (str(event.get("tool_name")), str(event.get("argument_names") or ""), event.get("status_code"))
-        seen[key] = seen.get(key, 0) + 1
-    repeated_failures = [key for key, count in seen.items() if count >= 2 and isinstance(key[2], int) and key[2] >= 400]
-    if repeated_failures:
+        seen_failed_results[(str(event.get("tool_name")), event.get("status_code"))] += 1
+    if any(count >= 2 and isinstance(status, int) and status >= 400 for (_tool, status), count in seen_failed_results.items()):
         failures.append("non_progress_repeated_failed_call")
+
+    policy_violations = [
+        str(event.get("policy_violation"))
+        for event in events
+        if event.get("event_type") == "policy_check" and event.get("policy_violation")
+    ]
+    model_failures = [
+        str(event.get("failure_code"))
+        for event in events
+        if event.get("event_type") == "model_call" and event.get("failure_code")
+    ]
 
     return {
         "case_id": case.case_id,
         "run_id": run.get("run_id"),
         "status": "PASS" if not failures else "FAIL",
         "tool_sequence": tools,
+        "tool_counts": dict(sorted(Counter(tools).items())),
         "response_mode": response_mode,
         "reason_code": reason,
+        "terminal_message": terminal_message,
+        "policy_violations": policy_violations,
+        "model_failures": model_failures,
         "failures": failures,
     }
+
+
+def _emit_case(result: dict[str, Any]) -> None:
+    print(
+        json.dumps(
+            {"schema_version": "live-functional-case-v3", **result},
+            sort_keys=True,
+            ensure_ascii=False,
+        ),
+        flush=True,
+    )
 
 
 def main() -> int:
@@ -220,7 +249,7 @@ def main() -> int:
         release_sha = _assert_release(opener, api_origin)
         _signin(opener, product_origin)
     except Exception as exc:
-        print(json.dumps({"schema_version": "live-functional-campaign-v2", "status": "BLOCKED", "reason": type(exc).__name__}, sort_keys=True))
+        print(json.dumps({"schema_version": "live-functional-campaign-v3", "status": "BLOCKED", "reason": type(exc).__name__}, sort_keys=True), flush=True)
         return 2
 
     results: list[dict[str, Any]] = []
@@ -233,16 +262,27 @@ def main() -> int:
                 payload={"user_request": case.prompt},
             )
             if status != 202 or not isinstance(accepted, dict) or not accepted.get("run_id"):
-                results.append({"case_id": case.case_id, "status": "FAIL", "failures": [f"submit_http_{status}"]})
-                continue
-            run, events = _wait_for_run(opener, product_origin, accepted)
-            results.append(_evaluate(case, run, events))
+                detail = accepted.get("detail") if isinstance(accepted, dict) else None
+                result = {
+                    "case_id": case.case_id,
+                    "status": "FAIL",
+                    "failures": [f"submit_http_{status}:{detail or 'unknown'}"],
+                }
+            else:
+                run, events = _wait_for_run(opener, product_origin, accepted)
+                result = _evaluate(case, run, events)
         except Exception as exc:
-            results.append({"case_id": case.case_id, "status": "FAIL", "failures": [type(exc).__name__]})
+            result = {
+                "case_id": case.case_id,
+                "status": "FAIL",
+                "failures": [f"{type(exc).__name__}:{str(exc)[:256]}"],
+            }
+        results.append(result)
+        _emit_case(result)
 
     passed = sum(item.get("status") == "PASS" for item in results)
     summary = {
-        "schema_version": "live-functional-campaign-v2",
+        "schema_version": "live-functional-campaign-v3",
         "campaign": os.environ.get("QA_RUN_REV", "FINAL-V1-2026-09-08"),
         "release_sha": release_sha,
         "asset_label": asset_label,
@@ -255,7 +295,7 @@ def main() -> int:
         "raw_provider_material_recorded": False,
         "raw_tool_bodies_recorded": False,
     }
-    print(json.dumps(summary, sort_keys=True))
+    print(json.dumps(summary, sort_keys=True, ensure_ascii=False), flush=True)
     return 0 if summary["all_pass"] else 1
 
 
