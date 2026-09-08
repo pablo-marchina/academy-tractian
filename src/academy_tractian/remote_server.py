@@ -10,6 +10,7 @@ from research.e2.transport import RequestTransport, TransportResponse
 from .evaluation import ProductionEvaluationPolicy, ProductionEvaluator
 from .production_actions_v2 import ProductionActionPrincipal
 from .production_config import RemoteProductionConfig
+from .read_capable_action_authorization import ReadCapableConfiguredActionAuthorizationResolver
 from .release0_capabilities import install_release0_capabilities
 from .release_identity import load_artifact_release_identity
 from .release_provider import (
@@ -212,10 +213,12 @@ def app_factory():
             authorization_source=action_authorization_source,
             actor_source=action_actor_source,
         )
-        # Pass the source object itself: it remains compatible with the user-id resolver protocol,
-        # while the remote confirmation endpoint can additionally require its tenant-aware
-        # authorize_context() method before any external execution is prepared.
-        authorization_resolver = action_authorization_source
+        # Ordinary authenticated users must retain read access even when they have no consequential
+        # action grant. Proposal-time authorization therefore gets a zero-action fallback while
+        # final confirmation continues to use strict tenant-aware authorize_context().
+        authorization_resolver = ReadCapableConfiguredActionAuthorizationResolver(
+            action_authorization_source
+        )
     elif raw_action_actors:
         raise RuntimeError(
             "TRACTIAN upstream action actors cannot be configured while actions are disabled"
