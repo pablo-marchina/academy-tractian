@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - release/production-final
-    paths:
-      - ".github/workflows/railway-exact-commit-deploy-ops.yml"
 
 permissions:
   contents: read
@@ -28,7 +26,6 @@ jobs:
           python - <<'PY'
           import json
           import os
-          import sys
           import urllib.error
           import urllib.request
 
