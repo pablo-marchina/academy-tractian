@@ -7,6 +7,9 @@ on:
       - experiment/provider-eligibility-dp007-20260908
     paths:
       - scripts/verification/provider_prompt_contract_probe.py
+      - scripts/verification/diagnose_nvidia_catalog.py
+      - scripts/verification/diagnose_openrouter_key_capacity.py
+      - tests/test_provider_prompt_contract_probe.py
       - .github/workflows/provider-prompt-contract-eligibility.yml
 
 permissions:
@@ -27,24 +30,43 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
-      - name: Install project
-        run: python -m pip install -q .
+      - name: Install project and focused test dependency
+        run: |
+          python -m pip install -q .
+          python -m pip install -q pytest
+      - name: Run prompt-contract regression tests
+        run: python -m pytest -q tests/test_provider_prompt_contract_probe.py
       - name: Verify provider credentials are available
         shell: bash
         run: |
           test -n "$NVIDIA_API_KEY"
           test -n "$OPENROUTER_API_KEY"
-      - name: Run sanitized synthetic probes
+      - name: Run sanitized discovery and synthetic probes
         id: probes
         shell: bash
         run: |
           mkdir -p research/evidence/live/provider-prompt-contract
           set +e
-          PROVIDER_PROMPT_PROBE_PROVIDER=nvidia python -u scripts/verification/provider_prompt_contract_probe.py > research/evidence/live/provider-prompt-contract/nvidia.txt 2>&1
+
+          python -u scripts/verification/diagnose_nvidia_catalog.py > research/evidence/live/provider-prompt-contract/nvidia-catalog.txt 2>&1
+          NVIDIA_CATALOG_RC=$?
+
+          ACADEMY_PROVIDER_API_TOKEN="$OPENROUTER_API_KEY" \
+          OPENROUTER_DIAGNOSTIC_TOKEN_ENV=ACADEMY_PROVIDER_API_TOKEN \
+          python -u scripts/verification/diagnose_openrouter_key_capacity.py > research/evidence/live/provider-prompt-contract/openrouter-capacity.txt 2>&1
+          OPENROUTER_CAPACITY_RC=$?
+
+          PROVIDER_PROMPT_PROBE_PROVIDER=nvidia \
+          python -u scripts/verification/provider_prompt_contract_probe.py > research/evidence/live/provider-prompt-contract/nvidia.txt 2>&1
           NVIDIA_RC=$?
-          PROVIDER_PROMPT_PROBE_PROVIDER=openrouter python -u scripts/verification/provider_prompt_contract_probe.py > research/evidence/live/provider-prompt-contract/openrouter.txt 2>&1
+
+          PROVIDER_PROMPT_PROBE_PROVIDER=openrouter \
+          python -u scripts/verification/provider_prompt_contract_probe.py > research/evidence/live/provider-prompt-contract/openrouter.txt 2>&1
           OPENROUTER_RC=$?
+
           set -e
+          echo "nvidia_catalog_rc=$NVIDIA_CATALOG_RC" >> "$GITHUB_OUTPUT"
+          echo "openrouter_capacity_rc=$OPENROUTER_CAPACITY_RC" >> "$GITHUB_OUTPUT"
           echo "nvidia_rc=$NVIDIA_RC" >> "$GITHUB_OUTPUT"
           echo "openrouter_rc=$OPENROUTER_RC" >> "$GITHUB_OUTPUT"
       - name: Persist sanitized evidence
@@ -52,11 +74,17 @@ jobs:
         run: |
           git config user.name "academy-tractian-ci"
           git config user.email "academy-tractian-ci@users.noreply.github.com"
-          git add research/evidence/live/provider-prompt-contract/nvidia.txt research/evidence/live/provider-prompt-contract/openrouter.txt
-          git commit -m "evidence(provider): persist prompt contract probes" || true
+          git add \
+            research/evidence/live/provider-prompt-contract/nvidia-catalog.txt \
+            research/evidence/live/provider-prompt-contract/openrouter-capacity.txt \
+            research/evidence/live/provider-prompt-contract/nvidia.txt \
+            research/evidence/live/provider-prompt-contract/openrouter.txt
+          git commit -m "evidence(provider): persist eligibility discovery" || true
           git push origin HEAD:experiment/provider-eligibility-dp007-20260908
-      - name: Enforce prompt contract gate
+      - name: Enforce eligibility gates
         shell: bash
         run: |
+          test "${{ steps.probes.outputs.nvidia_catalog_rc }}" = "0"
+          test "${{ steps.probes.outputs.openrouter_capacity_rc }}" = "0"
           test "${{ steps.probes.outputs.nvidia_rc }}" = "0"
           test "${{ steps.probes.outputs.openrouter_rc }}" = "0"
