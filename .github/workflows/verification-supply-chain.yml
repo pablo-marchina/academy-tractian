@@ -22,7 +22,9 @@ jobs:
           python -m pip install -e .
           python -m pip install pip-audit
       - name: Audit resolved third-party Python environment
-        run: python -m pip_audit --strict --skip-editable
+        run: |
+          python -m pip uninstall -y academy-tractian
+          python -m pip_audit --strict
 
   frontend-dependencies:
     runs-on: ubuntu-latest
