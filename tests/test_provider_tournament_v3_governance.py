@@ -29,14 +29,20 @@ class _Transport:
 
     def post_json(self, request: ProviderHttpRequest) -> ProviderHttpResponse:
         self.calls += 1
-        return ProviderHttpResponse(status_code=200, headers={}, body={"ok": True})
+        return ProviderHttpResponse(status_code=200, body={"ok": True})
 
 
 def test_budget_transport_checks_gate_before_network() -> None:
     gate = _Gate(blocked=True)
     inner = _Transport()
     transport = BudgetGatedProviderJsonTransport(gate=gate, inner=inner)  # type: ignore[arg-type]
-    request = ProviderHttpRequest(method="POST", url="https://example.test", headers={}, body={})
+    request = ProviderHttpRequest(
+        method="POST",
+        url="https://example.test",
+        headers={},
+        body={},
+        timeout_seconds=1.0,
+    )
     with pytest.raises(RuntimeError, match="blocked"):
         transport.post_json(request)
     assert gate.calls == 1

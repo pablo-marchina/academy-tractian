@@ -27,6 +27,7 @@ from .provider_free_semantic_review import (
     provider_free_semantic_review_permissions,
     register_provider_free_semantic_review_packet,
 )
+from .verification_api import install_verification_api
 
 
 class ProviderFreeScenarioDecisionSource(DecisionSource):
@@ -230,6 +231,9 @@ def build_provider_free_product():
     )
     register_provider_free_operational_value_packet(app)
     register_provider_free_semantic_review_packet(app)
+    # Keep the acceptance topology API-compatible with remote production. The verifier consumes
+    # the same sanitized store and access-policy boundaries and performs no provider/network I/O.
+    install_verification_api(app)
     return app
 
 

@@ -123,6 +123,18 @@ def test_release_provider_is_composed_without_enabling_actions_or_boot_time_prov
         lambda: ARTIFACT_IDENTITY,
     )
 
+    class _NoIoBudgetGate:
+        def ensure_schema(self) -> None:
+            return None
+
+        def assert_provider_available(self) -> None:
+            return None
+
+    monkeypatch.setattr(
+        "academy_tractian.release_provider_v13.production_provider_budget_gate_from_env",
+        lambda: _NoIoBudgetGate(),
+    )
+
     def fake_create_remote_production_app(**kwargs):
         captured.update(kwargs)
         return FastAPI()

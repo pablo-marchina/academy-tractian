@@ -94,7 +94,7 @@ async function openHistory(page: Page): Promise<void> {
 
 async function openTechnicalSection(
   page: Page,
-  section: "Current analysis" | "Quality" | "Data" | "System" | "Actions" | "Studies",
+  section: "Current analysis" | "Verification" | "Data" | "System" | "Actions" | "Studies",
 ): Promise<void> {
   await page.getByRole("button", { name: "Technical", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Technical", exact: true })).toBeVisible();
@@ -253,15 +253,15 @@ test.describe("provider-free full product acceptance", () => {
     await leakAudit.assertClean();
   });
 
-  test("real runtime, SSE reconnect/catch-up, evaluation and technical drilldown", async ({ page }) => {
+  test("real runtime, SSE reconnect/catch-up, verification and technical drilldown", async ({ page }) => {
     await configureActor(page);
     const leakAudit = installJsonLeakAudit(page);
     await openProduct(page);
 
     const accepted = await submitScenario(page, "scenario:slow investigate asset evidence");
 
-    await openTechnicalSection(page, "Quality");
-    await expect(page.locator(".evaluation-panel")).toContainText("Not evaluated yet");
+    await openTechnicalSection(page, "Verification");
+    await expect(page.locator(".evaluation-panel")).toContainText("Verification waits for terminal state");
 
     await openCurrentResult(page);
     await page.context().setOffline(true);
@@ -298,8 +298,13 @@ test.describe("provider-free full product acceptance", () => {
     await expect(dynamic).toBeVisible();
     await expect(dynamic.locator(".query-result-meta")).toContainText(`scope ${accepted.run_id}`);
 
-    await openTechnicalSection(page, "Quality");
-    await expect(page.locator(".evaluation-panel")).toContainText("blocking checks passed");
+    await openTechnicalSection(page, "Verification");
+    await expect(page.getByRole("heading", { name: "Selected analysis verification" })).toBeVisible();
+    await expect(page.locator(".evaluation-panel")).toContainText("overall hard-gate status");
+    await expect(page.locator(".evaluation-panel")).toContainText("Runtime Integrity");
+    await expect(page.locator(".evaluation-panel")).toContainText("Functional Success");
+    await expect(page.locator(".evaluation-panel")).toContainText("Evidence Sufficiency");
+    await expect(page.locator(".evaluation-panel")).not.toContainText("Quality 100%");
     await expect(page.getByRole("heading", { name: "Evaluation metrics" })).toBeVisible();
 
     await openTechnicalSection(page, "System");

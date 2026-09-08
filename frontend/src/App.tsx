@@ -20,6 +20,7 @@ import { PrimaryNavigation, type PrimaryDestination } from "./components/Primary
 import { ProductExperience } from "./components/ProductExperience";
 import { Release0CapabilitySurface } from "./components/Release0CapabilitySurface";
 import { RunExplorer } from "./components/RunExplorer";
+import { RunVerificationPanel } from "./components/RunVerificationPanel";
 import { SemanticReviewCollector } from "./components/SemanticReviewCollector";
 import { TraceGraph } from "./components/TraceGraph";
 import { useLiveRun } from "./hooks/useLiveRun";
@@ -35,7 +36,7 @@ const QUESTION_EXAMPLES = [
 
 const TECHNICAL_SECTIONS: Array<{ id: TechnicalSection; label: string; description: string }> = [
   { id: "analysis", label: "Current analysis", description: "Trace, evidence, tools and policy" },
-  { id: "quality", label: "Quality", description: "Evaluation and provider evidence" },
+  { id: "quality", label: "Verification", description: "Claim-bounded assurance and provider evidence" },
   { id: "data", label: "Data", description: "Explore persisted analytics" },
   { id: "system", label: "System", description: "Health, architecture and capabilities" },
   { id: "actions", label: "Actions", description: "Governed external actions" },
@@ -79,7 +80,7 @@ function evidenceItems(events: SafeEvent[]) {
 function technicalHeading(section: TechnicalSection): { title: string; description: string } {
   switch (section) {
     case "analysis": return { title: "How did this analysis run?", description: "Inspect the safe trace, persisted evidence, lineage, tool activity and deterministic policy checks for the selected analysis." };
-    case "quality": return { title: "How strong is the system's evidence of quality?", description: "Review post-runtime evaluation and governed provider experiments without mixing evaluator state into the runtime." };
+    case "quality": return { title: "What has actually been verified?", description: "Separate runtime integrity from functional success, evidence sufficiency, trajectory quality, availability, safety and human-calibrated evidence." };
     case "data": return { title: "What do the persisted data show?", description: "Build quantitative views over runs, events and evaluations using the safe analytics contract." };
     case "system": return { title: "Is the production system healthy?", description: "Inspect measured runtime health, the implementation-backed architecture and the capabilities currently exposed by the release." };
     case "actions": return { title: "What external action is being proposed?", description: "Review exact server-held action state, consequence and confirmation boundaries before any governed execution." };
@@ -152,8 +153,6 @@ export default function App() {
   const evidence = useMemo(() => evidenceItems(selectedEvents), [selectedEvents]);
   const serviceOnline = healthQuery.data?.status === "ok";
   const viewingHistorical = historicalRunId !== null;
-  const blockingChecks = selectedEvaluation?.items.filter((check) => check.blocking) ?? [];
-  const passedChecks = blockingChecks.filter((check) => check.passed).length;
 
   const currentPrimaryDestination: PrimaryDestination = view === "history" ? "history" : view === "technical" ? "technical" : "home";
 
@@ -395,19 +394,7 @@ export default function App() {
                 )}
 
                 {technicalSection === "quality" && (
-                  <article className="panel evaluation-panel">
-                    <div className="section-heading compact"><div><h2>Selected analysis evaluation</h2></div></div>
-                    {!selectedRun?.completed ? (
-                      <div className="empty-state small"><strong>Not evaluated yet</strong><p>Evaluation appears after the runtime has emitted its terminal trace.</p></div>
-                    ) : !selectedEvaluationReady ? (
-                      <p className="muted">Runtime finished. Waiting for post-runtime evaluation persistence…</p>
-                    ) : selectedEvaluation?.count ? (
-                      <>
-                        <div className="evaluation-score"><strong>{passedChecks}/{blockingChecks.length}</strong><span>blocking checks passed</span></div>
-                        <ul className="check-list">{selectedEvaluation.items.map((check) => <li key={check.check_name}><span className={check.passed ? "check-pass" : "check-fail"}>{check.passed ? "PASS" : "FAIL"}</span><span>{check.check_name}</span></li>)}</ul>
-                      </>
-                    ) : <p className="muted">No safe evaluation rows are available.</p>}
-                  </article>
+                  <RunVerificationPanel runId={selectedRunId} completed={Boolean(selectedRun?.completed)} />
                 )}
 
                 {technicalSection === "system" && (
