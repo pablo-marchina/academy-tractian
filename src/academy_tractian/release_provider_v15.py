@@ -32,8 +32,8 @@ from .release_provider_v14 import (
 
 
 NVIDIA_PROVIDER_ID = "nvidia"
-NVIDIA_MODEL_ID = "openai/gpt-oss-120b"
-NVIDIA_ROUTE_ID = "nvidia.chat_completions.v1.gpt_oss_120b"
+NVIDIA_MODEL_ID = "nvidia/nemotron-3-super-120b-a12b"
+NVIDIA_ROUTE_ID = "nvidia.chat_completions.v1.nemotron_3_super_120b_a12b"
 NVIDIA_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
 NVIDIA_ACCOUNT_SENTINEL = "nvidia"
 
