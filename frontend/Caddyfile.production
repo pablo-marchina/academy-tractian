@@ -21,9 +21,11 @@
 
     # Keep API and SSE browser traffic same-origin. Railway private networking carries the
     # service-to-service hop; no public API URL is required by the browser for normal product use.
+    # The default preserves the production topology while allowing an isolated candidate web
+    # service to target a candidate API through ACADEMY_API_HOST during live acceptance testing.
     @backend path /api/* /health
     handle @backend {
-        reverse_proxy http://production-api.railway.internal:8000 {
+        reverse_proxy http://{$ACADEMY_API_HOST:production-api.railway.internal}:8000 {
             # Explicitly disable response buffering so Server-Sent Events are forwarded live.
             flush_interval -1
         }
