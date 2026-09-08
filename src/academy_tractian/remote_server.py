@@ -21,6 +21,11 @@ from .release_provider_v14 import (
     build_release_provider_decision_source_factory_v14,
     validate_release_provider_config_v14,
 )
+from .release_provider_v15 import (
+    NVIDIA_PROVIDER_ID,
+    build_release_provider_decision_source_factory_v15,
+    validate_release_provider_config_v15,
+)
 from .remote_production import create_remote_production_app, load_remote_production_config
 from .tractian_transport import ProductionTractianTransport
 from .trusted_action_authorization import ConfiguredServerOwnedActionAuthorizationSource
@@ -85,6 +90,9 @@ def _tractian_transport_state(config: RemoteProductionConfig) -> str:
 def _decision_source_factory(config: RemoteProductionConfig):
     if not config.provider_calls_enabled:
         return NoSelectedProviderDecisionSource
+    if config.provider_id == NVIDIA_PROVIDER_ID:
+        validate_release_provider_config_v15(config)
+        return build_release_provider_decision_source_factory_v15(config)
     validate_release_provider_config_v14(config)
     return build_release_provider_decision_source_factory_v14(config)
 
