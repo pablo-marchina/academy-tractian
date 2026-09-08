@@ -44,16 +44,14 @@ flowchart LR
     S --> V --> U --> O --> C --> TX --> RLS
 ```
 
-Resilience inset:
-
 ```text
-GET/HEAD → SHA256(cookie) → ≤2s validated cache → singleflight
+GET/HEAD → bounded validated cache → singleflight
 POST/non-read → fresh validation
 expired cache → never stale-on-error
 401 invalid ≠ 503 unavailable
 ```
 
-## 3. V13 explicit-asset grounding
+## 3. Explicit-asset grounding
 
 ```mermaid
 flowchart LR
@@ -68,13 +66,13 @@ flowchart LR
     Q --> U --> C --> F --> A --> E --> T
 ```
 
-Missing label path:
+Missing label:
 
 ```text
-label absent from authorized fleet
+absent from authorized fleet
 → no cross-scope expansion
-→ no request for hidden asset_id
-→ bounded unavailable terminal
+→ no hidden-ID request
+→ bounded unavailable
 ```
 
 ## 4. Canonical tool execution
@@ -105,7 +103,7 @@ flowchart LR
     A --> P --> S --> E
 ```
 
-Key line: same tool name does not imply duplicate; compare arguments/resource/evidence contribution.
+Same tool name does not imply duplicate; compare arguments/resource/evidence contribution.
 
 ## 6. Evidence / trace lineage
 
@@ -126,7 +124,7 @@ flowchart LR
     R --> RT
 ```
 
-Audit external observable artifacts, not hidden chain-of-thought.
+Audit observable artifacts, not hidden chain-of-thought.
 
 ## 7. Terminal + response-mode overlay
 
@@ -150,7 +148,7 @@ flowchart TB
     M --> U
 ```
 
-Key line: terminal controls runtime outcome; response mode describes epistemic support. Neither grants authorization.
+Terminal controls runtime outcome; response mode describes epistemic support. Neither grants authorization.
 
 ## 8. Evaluator isolation
 
@@ -197,23 +195,71 @@ DISABLED / DENY-ALL
 ```mermaid
 flowchart TB
     B[Browser]
-    W[production-web\nRailway\n1bc124a...]
-    API[production-api\nRailway\n08866da...]
+    W[production-web / Railway]
+    API[production-api / Railway]
     AUTH[Neon Auth]
-    CF[Cloudflare Workers AI\nprovisional]
-    TR[Supplied TRACTIAN API\n47561c...]
+    P[Provisional production provider]
+    TR[Supplied TRACTIAN API]
     DB[Neon PostgreSQL]
 
     B -->|HTTPS| W
     W -->|/api + SSE| API
     W -->|/auth| AUTH
     API --> AUTH
-    API --> CF
+    API --> P
     API --> TR
     API --> DB
 ```
 
-## 11. Durable realtime
+The provider box remains provisional until a separately qualified candidate is promoted.
+
+## 11. Provider research / promotion boundary — 2026-09-08
+
+```mermaid
+flowchart LR
+    POP[Frozen 17×5 population]
+    C[Candidate serving config]
+    VAL[ProviderDecisionPayload + rubric]
+    G[Hard gates]
+    R[Qualification result]
+    E2E[Academy live E2E]
+    PROD[Explicit production promotion]
+
+    POP --> C --> VAL --> G --> R
+    R -->|only if gate-pass winner| E2E --> PROD
+```
+
+Current evidence inset:
+
+```text
+Groq GPT-OSS-120B
+85/85
+81.18% rubric pass
+82.35% reliability
+9 contract failures
+→ NO_SELECTION
+→ no production promotion
+```
+
+Cloudflare GPT-OSS was quota-blocked in non-scored preflight and then removed from the requested path; do not draw a comparative winner arrow.
+
+## 12. Strict-output challenger — research only
+
+```mermaid
+flowchart LR
+    REG[Canonical ToolSpecs / supplied OpenAPI]
+    S[Closed TOOL / terminal variants]
+    LLM[Provider strict structured output]
+    PD[ProviderDecisionPayload]
+    ARG[Argument / policy validation]
+    AC[AgentController]
+
+    REG --> S --> LLM --> PD --> ARG --> AC
+```
+
+The provider's constrained decoder is an extra barrier, not a replacement for deterministic application validation. Exact `ActionRequest` recovery is still required for complete action variants.
+
+## 13. Durable realtime
 
 ```mermaid
 flowchart LR
@@ -230,7 +276,7 @@ flowchart LR
 
 PostgreSQL rows/cursors are authoritative; notification only reduces latency.
 
-## 12. Current task-driven UI
+## 14. Current task-driven UI
 
 ```mermaid
 flowchart TB
@@ -256,18 +302,18 @@ flowchart TB
     T --> ST
 ```
 
-## 13. Final recap
+## 15. Final recap
 
 ```text
 1  Server-validated identity / tenant
 2  Durable run ownership
-3  V13 grounding + AgentController
+3  Grounded DecisionSource + AgentController
 4  ToolSpec deterministic validation
 5  HarnessRunner + remote TRACTIAN I/O
 6  Evidence + RunTrace
 7  Terminal + response_mode semantics
-8  Post-runtime ProductionEvaluator
+8  Post-runtime evaluation / hard gates
 9  PostgreSQL + authenticated SSE + task-driven UI
 ```
 
-End on this complete causal path.
+Optional final provider line: **evaluation rejected the tested Groq configuration; provider selection remains open.**
