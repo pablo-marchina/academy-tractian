@@ -122,15 +122,26 @@ def _tool_calls(trace: RunTrace) -> list[TraceEvent]:
     return [event for event in trace.events if event.event_type == "tool_call"]
 
 
-def _successful_tools(trace: RunTrace) -> set[str]:
+def _successful_call_ids(trace: RunTrace) -> set[str]:
     successful: set[str] = set()
     for event in trace.events:
-        if event.event_type != "tool_result" or not event.tool_name:
+        if event.event_type != "tool_result" or not event.call_id:
             continue
         status = event.metadata.get("status_code")
         if isinstance(status, int) and 200 <= status < 300:
-            successful.add(event.tool_name)
+            successful.add(event.call_id)
     return successful
+
+
+def _successful_calls(trace: RunTrace) -> list[TraceEvent]:
+    successful_ids = _successful_call_ids(trace)
+    return [
+        event
+        for event in trace.events
+        if event.event_type == "tool_call"
+        and event.call_id is not None
+        and event.call_id in successful_ids
+    ]
 
 
 def _contains_scalar(value: Any, expected: str) -> bool:
@@ -201,14 +212,15 @@ def evaluate_functional_trace(trace: RunTrace, spec: FunctionalCaseSpec) -> Func
 
 
 def evaluate_evidence_trace(trace: RunTrace, spec: EvidenceRequirementSpec) -> EvidenceOracleReport:
-    """Evaluate evidence coverage separately from functional task success."""
+    """Evaluate evidence coverage separately from functional task success.
 
-    calls = _tool_calls(trace)
-    observed_tools = (
-        _successful_tools(trace)
-        if spec.require_successful_results
-        else {call.tool_name for call in calls if call.tool_name}
-    )
+    Successful evidence is correlated by call_id, never by tool name alone. A successful call for
+    asset B therefore cannot make a failed call for asset A count as evidence merely because both
+    used `get_rms` or another shared tool.
+    """
+
+    calls = _successful_calls(trace) if spec.require_successful_results else _tool_calls(trace)
+    observed_tools = {call.tool_name for call in calls if call.tool_name}
     failures: list[str] = []
     satisfied_groups = 0
 
@@ -219,11 +231,7 @@ def evaluate_evidence_trace(trace: RunTrace, spec: EvidenceRequirementSpec) -> E
             failures.append(f"MISSING_EVIDENCE_GROUP:{group.group_id}")
 
     for requirement in spec.required_resources:
-        matching_calls = [call for call in calls if call.tool_name in requirement.tools]
-        if spec.require_successful_results:
-            successful_names = _successful_tools(trace)
-            matching_calls = [call for call in matching_calls if call.tool_name in successful_names]
-        if not _resource_observed(matching_calls, requirement):
+        if not _resource_observed(calls, requirement):
             failures.append(f"MISSING_EVIDENCE_RESOURCE:{requirement.requirement_id}")
 
     return EvidenceOracleReport(
