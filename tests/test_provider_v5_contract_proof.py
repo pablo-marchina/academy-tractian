@@ -8,6 +8,13 @@ from pathlib import Path
 import tarfile
 from typing import Any
 
+import pytest
+
+# E0 is a historical research pipeline whose PyYAML dependency is intentionally not part of
+# the production runtime. Normal product suites may skip this proof; the dedicated proof CI
+# installs PyYAML and therefore must execute it rather than duplicating MergeDuplicateLoader.
+pytest.importorskip("yaml")
+
 from scripts.research.e0_contract_pipeline import (
     MergeDuplicateLoader,
     build_runtime_openapi,
