@@ -1,0 +1,54 @@
+name: Provider prompt contract eligibility
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/provider-eligibility-dp007-20260908
+    paths:
+      - scripts/verification/provider_prompt_contract_probe.py
+      - .github/workflows/provider-prompt-contract-eligibility.yml
+
+permissions:
+  contents: read
+
+jobs:
+  nvidia-prompt-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      PROVIDER_PROMPT_PROBE_PROVIDER: nvidia
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install project
+        run: python -m pip install -q .
+      - name: Verify NVIDIA credential is available
+        shell: bash
+        run: test -n "$NVIDIA_API_KEY"
+      - name: Run synthetic provider prompt contract probe
+        run: python -u scripts/verification/provider_prompt_contract_probe.py
+
+  openrouter-prompt-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      PROVIDER_PROMPT_PROBE_PROVIDER: openrouter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install project
+        run: python -m pip install -q .
+      - name: Verify OpenRouter credential is available
+        shell: bash
+        run: test -n "$OPENROUTER_API_KEY"
+      - name: Run synthetic provider prompt contract probe
+        run: python -u scripts/verification/provider_prompt_contract_probe.py
