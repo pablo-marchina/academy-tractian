@@ -46,5 +46,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install exact frozen NVIDIA probe transport
+        run: python -m pip install --disable-pip-version-check 'httpx==0.28.1'
+      - name: Compile sanitized probe
+        run: python -m py_compile scripts/research/p12_c4_nvidia_synthetic_probe.py
       - name: Run two-call sanitized NVIDIA compatibility probe
         run: python scripts/research/p12_c4_nvidia_synthetic_probe.py
