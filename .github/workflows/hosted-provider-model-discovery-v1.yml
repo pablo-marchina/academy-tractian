@@ -1,0 +1,31 @@
+name: hosted-provider-model-discovery-v1
+
+on:
+  push:
+    branches:
+      - fix/functional-acceptance-closure
+    paths:
+      - "scripts/research/discover_hosted_provider_models_v1.py"
+      - ".github/workflows/hosted-provider-model-discovery-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile discovery probe
+        run: python -m py_compile scripts/research/discover_hosted_provider_models_v1.py
+      - name: Discover credential-visible models without inference
+        run: python scripts/research/discover_hosted_provider_models_v1.py
