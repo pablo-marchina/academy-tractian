@@ -45,10 +45,16 @@ def main() -> int:
 
     output = []
     allow = {
-        "provider_id", "model_id", "route_id", "live_call", "outcome",
-        "decision_kind", "failure_code", "latency_ms", "adapter_client_invocations",
-        "adapter_retry_count", "adapter_fallback_used", "raw_request_recorded",
-        "raw_response_recorded", "exception_text_recorded", "turn_index", "tool_call_count",
+        "provider_id",
+        "model_id",
+        "route_id",
+        "live_call",
+        "outcome",
+        "decision_kind",
+        "failure_code",
+        "latency_ms",
+        "turn_index",
+        "tool_call_count",
     }
     for run_id in run_ids:
         status, payload = request(opener, f"{product}/api/runs/{urllib.parse.quote(run_id)}/events")
@@ -60,10 +66,28 @@ def main() -> int:
         for event in items:
             if not isinstance(event, dict) or event.get("event_type") != "model_call":
                 continue
+            # The public events endpoint returns SafeEvent as a flat projection.
+            # Keep a nested metadata fallback only for backwards compatibility with
+            # historical diagnostics; never emit fields outside the allow-list.
             metadata = event.get("metadata") if isinstance(event.get("metadata"), dict) else {}
-            calls.append({key: metadata.get(key) for key in sorted(allow) if key in metadata})
+            calls.append(
+                {
+                    key: event[key] if key in event else metadata.get(key)
+                    for key in sorted(allow)
+                    if key in event or key in metadata
+                }
+            )
         output.append({"run_id": run_id, "model_calls": calls})
-    print(json.dumps({"schema_version": "openrouter-model-call-diagnostic-v1", "runs": output, "credentials_recorded": False}, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "schema_version": "openrouter-model-call-diagnostic-v2",
+                "runs": output,
+                "credentials_recorded": False,
+            },
+            sort_keys=True,
+        )
+    )
     return 0
 
 
