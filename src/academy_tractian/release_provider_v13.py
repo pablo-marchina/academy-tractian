@@ -8,6 +8,8 @@ from research.e2.tool_registry import TOOLS
 from .cloudflare_provider_client import CLOUDFLARE_PROVIDER_ID
 from .decision_source import ProviderCallIdentity, ProviderDecisionRequest, ProviderDecisionSource
 from .production_config import RemoteProductionConfig
+from .provider_budget_gate import production_provider_budget_gate_from_env
+from .provider_budget_transport import BudgetGatedProviderJsonTransport
 from .provider_clients import ProviderHttpRequest, UrllibProviderJsonTransport
 from .release_provider import (
     RELEASE0_PROVIDER_DECISION_JSON_SCHEMA,
@@ -159,11 +161,16 @@ def build_release_provider_decision_source_v13(
     if config.provider_id != CLOUDFLARE_PROVIDER_ID:
         raise RuntimeError("release_provider_not_supported")
 
+    gate = production_provider_budget_gate_from_env()
+    gate.ensure_schema()
     client = Release0CloudflareDecisionClientV13(
         api_token=config.provider_api_token.get_secret_value(),
         account_id=config.provider_account_id,
         model_id=config.provider_model_id,
-        transport=UrllibProviderJsonTransport(),
+        transport=BudgetGatedProviderJsonTransport(
+            gate=gate,
+            inner=UrllibProviderJsonTransport(),
+        ),
         timeout_seconds=config.provider_timeout_seconds,
     )
     registry = {tool.name: tool for tool in TOOLS}
