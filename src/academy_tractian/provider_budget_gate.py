@@ -37,13 +37,7 @@ class ProviderBudgetLease:
 
 
 class PostgresProviderBudgetGate:
-    """Cross-process fail-closed budget lease for the shared Workers AI free allocation.
-
-    Production provider calls perform a read-only availability check immediately before
-    provider I/O. A tournament runner acquires the lease before the UTC reset and keeps it
-    until the packet is complete. Lease expiry prevents a crashed runner from blocking the
-    product indefinitely; an expired lease does not authorize replay of an uncertain call.
-    """
+    """Cross-process fail-closed budget lease for the shared Workers AI allocation."""
 
     def __init__(self, *, dsn: str, schema: str = DEFAULT_SCHEMA) -> None:
         if not dsn:
@@ -99,19 +93,24 @@ class PostgresProviderBudgetGate:
             raise ValueError("provider budget lease ttl must be in (0, 2h]")
         owner = uuid4().hex
         expires = current + ttl
+        allow_same_campaign_recovery = (
+            os.environ.get("ACADEMY_PROVIDER_BUDGET_ALLOW_SAME_PURPOSE_RECOVERY", "").strip() == "1"
+        )
         with psycopg.connect(self.dsn) as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (LEASE_NAME,))
                 cur.execute(
                     sql.SQL(
-                        "SELECT owner_token, expires_at FROM {}.provider_budget_leases "
+                        "SELECT owner_token, expires_at, purpose FROM {}.provider_budget_leases "
                         "WHERE lease_name = %s AND released_at IS NULL AND expires_at > %s"
                     ).format(_identifier(self.schema)),
                     (LEASE_NAME, current),
                 )
                 existing = cur.fetchone()
                 if existing is not None:
-                    raise ProviderBudgetLeaseError("active provider budget lease already exists")
+                    existing_purpose = existing[2]
+                    if not (allow_same_campaign_recovery and existing_purpose == purpose):
+                        raise ProviderBudgetLeaseError("active provider budget lease already exists")
                 cur.execute(
                     sql.SQL(
                         """
