@@ -6,9 +6,11 @@ on:
     branches:
       - experiment/provider-eligibility-dp007-20260908
     paths:
+      - src/academy_tractian/nvidia_provider_client.py
       - scripts/verification/provider_prompt_contract_probe.py
       - scripts/verification/diagnose_nvidia_catalog.py
       - scripts/verification/diagnose_openrouter_key_capacity.py
+      - tests/test_nvidia_provider_client.py
       - tests/test_provider_prompt_contract_probe.py
       - .github/workflows/provider-prompt-contract-eligibility.yml
 
@@ -34,14 +36,17 @@ jobs:
         run: |
           python -m pip install -q .
           python -m pip install -q pytest
-      - name: Run prompt-contract regression tests
-        run: python -m pytest -q tests/test_provider_prompt_contract_probe.py
+      - name: Run provider contract regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_provider_prompt_contract_probe.py \
+            tests/test_nvidia_provider_client.py
       - name: Verify provider credentials are available
         shell: bash
         run: |
           test -n "$NVIDIA_API_KEY"
           test -n "$OPENROUTER_API_KEY"
-      - name: Run sanitized discovery and synthetic probes
+      - name: Run sanitized discovery and eligible synthetic probes
         id: probes
         shell: bash
         run: |
@@ -56,13 +61,23 @@ jobs:
           python -u scripts/verification/diagnose_openrouter_key_capacity.py > research/evidence/live/provider-prompt-contract/openrouter-capacity.txt 2>&1
           OPENROUTER_CAPACITY_RC=$?
 
-          PROVIDER_PROMPT_PROBE_PROVIDER=nvidia \
-          python -u scripts/verification/provider_prompt_contract_probe.py > research/evidence/live/provider-prompt-contract/nvidia.txt 2>&1
-          NVIDIA_RC=$?
+          if [ "$NVIDIA_CATALOG_RC" = "0" ]; then
+            PROVIDER_PROMPT_PROBE_PROVIDER=nvidia \
+            python -u scripts/verification/provider_prompt_contract_probe.py > research/evidence/live/provider-prompt-contract/nvidia.txt 2>&1
+            NVIDIA_RC=$?
+          else
+            NVIDIA_RC=2
+            printf '%s\n' '{"schema_version":"provider-prompt-contract-skip-v1","provider_id":"nvidia","result":"SKIP","reason":"CATALOG_INELIGIBLE","benchmark_inputs_loaded":0,"credentials_recorded":false,"raw_provider_material_recorded":false}' > research/evidence/live/provider-prompt-contract/nvidia.txt
+          fi
 
-          PROVIDER_PROMPT_PROBE_PROVIDER=openrouter \
-          python -u scripts/verification/provider_prompt_contract_probe.py > research/evidence/live/provider-prompt-contract/openrouter.txt 2>&1
-          OPENROUTER_RC=$?
+          if [ "$OPENROUTER_CAPACITY_RC" = "0" ]; then
+            PROVIDER_PROMPT_PROBE_PROVIDER=openrouter \
+            python -u scripts/verification/provider_prompt_contract_probe.py > research/evidence/live/provider-prompt-contract/openrouter.txt 2>&1
+            OPENROUTER_RC=$?
+          else
+            OPENROUTER_RC=2
+            printf '%s\n' '{"schema_version":"provider-prompt-contract-skip-v1","provider_id":"openrouter","result":"SKIP","reason":"CAPACITY_INELIGIBLE","benchmark_inputs_loaded":0,"credentials_recorded":false,"raw_provider_material_recorded":false}' > research/evidence/live/provider-prompt-contract/openrouter.txt
+          fi
 
           set -e
           echo "nvidia_catalog_rc=$NVIDIA_CATALOG_RC" >> "$GITHUB_OUTPUT"
