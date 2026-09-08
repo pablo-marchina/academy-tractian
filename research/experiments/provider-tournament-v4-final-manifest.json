@@ -1,0 +1,114 @@
+{
+  "schema_version": "provider-tournament-v4-final-manifest-v1",
+  "status": "FROZEN",
+  "tournament_id": "provider-tournament-v4-final-20260908",
+  "source_baseline": {
+    "repository": "pablo-marchina/academy-tractian",
+    "git_sha": "4364364266c6a88d4affd85cb3a734c774cd42c8"
+  },
+  "population": {
+    "source": "research/experiments/provider-tournament-v3-population.json",
+    "sha256": "4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9",
+    "unit_count": 17,
+    "repetitions_per_candidate": 5,
+    "attempts_per_candidate": 85,
+    "total_attempts": 170
+  },
+  "scope": {
+    "claim": "best evaluated serving/provider path for OpenAI gpt-oss-120b on the frozen TRACTIAN industrial decision population",
+    "not_claimed": [
+      "best foundation model in the market",
+      "global production readiness",
+      "permission to promote the winner before winner-only E2E validation"
+    ]
+  },
+  "candidates": [
+    {
+      "candidate_id": "cloudflare-gpt-oss-120b",
+      "provider_id": "cloudflare",
+      "model_id": "@cf/openai/gpt-oss-120b",
+      "route_id": "cloudflare.workers_ai.openai_compat.chat_completions.v1",
+      "endpoint_kind": "openai-compatible-chat-completions",
+      "list_price_usd_per_m_input_tokens": 0.35,
+      "list_price_usd_per_m_output_tokens": 0.75
+    },
+    {
+      "candidate_id": "groq-gpt-oss-120b",
+      "provider_id": "groq",
+      "model_id": "openai/gpt-oss-120b",
+      "route_id": "groq.openai_compat.chat_completions.v1",
+      "endpoint_kind": "openai-compatible-chat-completions",
+      "list_price_usd_per_m_input_tokens": 0.15,
+      "list_price_usd_per_m_output_tokens": 0.6
+    }
+  ],
+  "semantic_request_contract": {
+    "system_instruction_source": "src/academy_tractian/provider_clients.py::PROVIDER_DECISION_SYSTEM_INSTRUCTION",
+    "reasoning_effort": "medium",
+    "reasoning_effort_transport": "same system-level 'Reasoning: medium' instruction for both candidates; no provider-specific reasoning override",
+    "structured_output_schema_source": "src/academy_tractian/provider_clients.py::PROVIDER_DECISION_JSON_SCHEMA",
+    "structured_output_mode": "json_schema; no automatic repair; application ProviderDecisionPayload validation remains authoritative",
+    "temperature": 0.0,
+    "n": 1,
+    "stream": false,
+    "max_completion_tokens": 512,
+    "provider_native_tool_execution": false,
+    "provider_side_state": false,
+    "web_search": false,
+    "automatic_retries": 0,
+    "automatic_fallbacks": 0,
+    "automatic_json_repair": false,
+    "failed_attempts_remain_in_denominator": true,
+    "controller_owns_agent_loop": true,
+    "canonical_tool_registry": true
+  },
+  "execution": {
+    "candidate_order": "counterbalanced by (unit_index + repetition_index) parity",
+    "pairing_key": [
+      "unit_id",
+      "repetition_index"
+    ],
+    "warmup_calls": 0,
+    "timeout_seconds": 60,
+    "raw_provider_material_persisted": false,
+    "secrets_in_output": false,
+    "run_environment": "isolated Railway one-shot service; production serving configuration is not mutated"
+  },
+  "hard_gates": {
+    "identity_or_private_material_attempts": 0,
+    "unknown_tool_proposals": 0,
+    "invalid_known_tool_arguments": 0,
+    "schema_or_contract_failure_rate_max": 0.0,
+    "minimum_success_rate": 0.9375
+  },
+  "selection_order": [
+    "hard gates",
+    "operational outcome accuracy",
+    "paired operational outcome delta with uncertainty",
+    "repeat stability",
+    "reliability",
+    "p95 latency",
+    "estimated list-price cost per rubric-pass attempt"
+  ],
+  "statistics": {
+    "proportion_interval": "Wilson 95%",
+    "paired_binary_test": "exact two-sided McNemar",
+    "paired_delta_interval": "paired bootstrap 95%, 20000 iterations, seed 20260908",
+    "minimum_material_quality_delta": 0.02
+  },
+  "decision_states": [
+    "PROMOTE:cloudflare-gpt-oss-120b",
+    "PROMOTE:groq-gpt-oss-120b",
+    "NO_SELECTION",
+    "INCONCLUSIVE"
+  ],
+  "post_selection_gate": {
+    "production_promotion_authorized_by_tournament_alone": false,
+    "winner_must_pass": [
+      "winner-only Academy E2E live validation",
+      "causal/RMS regression",
+      "auth/tenant/persistence/SSE smoke",
+      "action-safety gate if consequential actions are enabled"
+    ]
+  }
+}
