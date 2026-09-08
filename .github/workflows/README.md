@@ -1,96 +1,168 @@
 # GitHub Actions — Workflow Lifecycle
 
-This directory contains current product CI, intentional hosted promotion gates, specialized validation and historical research workflows. **Workflow presence is not execution authorization.**
+This directory contains current product CI, intentional exact-SHA promotion gates, specialized hosted verification, provider experiments and historical research workflows. **Workflow presence is not execution authorization, and workflow success is not automatically a production claim.**
 
-Current state: [`../../docs/ACTIVE-PROJECT-STATUS.md`](../../docs/ACTIVE-PROJECT-STATUS.md).
+Current state: [`../../docs/ACTIVE-PROJECT-STATUS.md`](../../docs/ACTIVE-PROJECT-STATUS.md).  
+Latest material episode: [`../../docs/progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md`](../../docs/progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md).
 
 ## 1. Required product regression
 
-Stable top-level gate:
+Stable branch-protection target:
 
 - `final-ci-required.yml` → `required-gate`
 
-It composes/requires the principal reproduction/browser/distributed-correctness contracts. Branch protection should use the stable required status rather than every historical experiment workflow.
+Use the stable aggregate status rather than making path-filtered/provider-live/research workflows individually required.
 
-Recent material baselines:
+Required CI proves deterministic product/reproduction contracts for its exact SHA. It does **not** prove:
 
-- backend V13 PR #210 passed all 8 required triggered workflows before merge to `08866da60245f58f217981b7ae668b10be45cc67`;
-- task-driven frontend PR #209 passed the required frontend/browser/full-product regression surface before merge/deployment to `1bc124a8d4dbd029178ff8129b25452129445de7`.
+- OpenRouter availability or hosted functional success;
+- all 13 TRACTIAN reads;
+- governed action upstream transport availability;
+- final action SECURITY-V1;
+- production capacity/SLO/restore;
+- semantic human correctness.
 
-## 2. Hosted backend promotion
+Latest GitHub metadata still reports `main.protected=false`; the required gate is ready for branch protection but enforcement is not active.
 
-`hosted-production-release0-agent.yml` is intentionally manual (`workflow_dispatch`) and requires an exact expected backend SHA for a full hosted acceptance campaign.
+## 2. Production promotion
 
-Repository CI and Railway exact-SHA deployment are different evidence classes:
+Production backend currently serves `5611687556b3d50c31f20fa85ede794f2500f05c` from `release/production-final`. Source/PR CI and Railway deployment/acceptance are separate:
 
 ```text
-PR/branch regression green
-≠ backend production promotion
-≠ full hosted acceptance campaign
+source tests
+→ required CI
+→ exact candidate identity
+→ exact Railway deploy
+→ /health + release identity
+→ hosted managed-auth functional/security campaign
+→ acceptance decision
 ```
 
-The original Release 0 acceptance remains workflow run `34069562818` at backend `082d6f...`.
+A generic redeploy or a source merge must not be used as evidence that the latest commit is running.
 
-The current V13 backend `08866da...` was prospectively validated through required CI, exact-SHA Railway deployment, TRACTIAN predeploy smoke, `/health` and targeted live prompt traces. Do not rewrite the historical workflow run to pretend it tested V13.
+Historical Release 0 workflows/runs remain historical; do not rewrite them to imply they tested current V14/governed-action production.
 
-`hosted-production-g2-smoke.yml` remains an exact-source release-integrity smoke for intentional promotion use.
+## 3. Current OpenRouter V14 / functional-closure workflows
 
-## 3. Frontend deployment/regression
+Draft PR #222 adds/uses workflow surfaces including:
 
-Frontend UX can advance independently when build/browser gates pass and backend contract remains compatible. Track frontend deployment SHA separately from backend runtime SHA.
+- `functional-provider-secret-presence.yml` — verifies required provider-secret configuration presence without exposing secret material;
+- `hosted-provider-model-discovery-v1.yml` — controlled hosted free/provider model discovery;
+- `provider-tournament-cross-provider-v1-live.yml` — prospective cross-provider live comparison;
+- `provider-tournament-cross-provider-v2-eligibility.yml` — eligibility/filtering before scientific comparison;
+- hosted/QA jobs that invoke safe provider probes and the authenticated functional campaign.
 
-Current hosted task-driven frontend: `1bc124a8d4dbd029178ff8129b25452129445de7`.
+Associated scripts distinguish separate questions:
 
-## 4. Specialized active validation
+```text
+provider secret/config exists?
+provider/model eligible/free?
+initial V14 request reproducible?
+response shape valid?
+completion truncates?
+quota/rate-limit permits comparison?
+B204 authenticated functional requirements pass?
+```
 
-Examples:
+Do not collapse them into one `provider PASS` flag.
 
-- production runtime/build checks;
-- PostgreSQL operational/RLS/recovery checks;
-- observability/realtime checks;
-- EDD/provider-free checks;
-- Railway IaC contract;
+## 4. Current hosted functional acceptance rule
+
+The live production path requires the real managed browser session. Current B204 suite:
+
+```text
+F01 explicit asset condition
+F02 causal investigation
+F03 data quality
+```
+
+Current result is 0/3 because the first OpenRouter decision fails before a TRACTIAN tool call. A sanitized probe observed HTTP 200 + exact model + assistant content but `finish_reason=length`. A bounded follow-up experiment hit HTTP 429 for every variant and remains `INCONCLUSIVE`.
+
+A final workflow/job may mark the migration functionally green only when the **exact deployed candidate SHA** gets 3/3 with:
+
+- real managed authentication;
+- exact OpenRouter provider/model/route provenance;
+- valid typed model decisions;
+- real TRACTIAN tool calls;
+- grounded terminal/response mode;
+- persisted evaluation/verification;
+- no tenant/action/cost/provenance hard-gate regression.
+
+Never add a production-auth bypass merely to automate this gate.
+
+## 5. Governed action workflows / smokes
+
+The controlled production pre-deploy governed-write smoke has exercised all five canonical action transports with HTTP 200 acceptance and no sensitive-material recording.
+
+Treat that as a **specialized/promotion evidence class**, not as full action security acceptance. Final action SECURITY-V1 still needs independent adversarial scenarios for cross-user/tenant authorization, altered confirmation, duplicate confirmation, lease loss, ambiguity/`UNCERTAIN`, kill switch, prompt/tool injection and leakage.
+
+## 6. Frontend regression/deployment
+
+Current hosted frontend is `4364364266c6a88d4affd85cb3a734c774cd42c8`. Frontend may advance independently from backend/supplied API if contracts remain compatible and browser gates pass.
+
+Provider-free Playwright is a deterministic CI dependency replacement. It cannot override a failing hosted OpenRouter functional campaign.
+
+## 7. Specialized validation
+
+Examples include:
+
+- production runtime/build/release checks;
+- PostgreSQL operational/RLS/recovery/distributed correctness;
+- observability/realtime/verification;
+- action custody/idempotency/lease regressions;
+- provider-free EDD/evaluator campaigns;
+- Railway/IaC contracts;
 - full-product Playwright;
-- targeted hosted smoke gates.
+- targeted hosted provider/TRACTIAN/action smoke gates.
 
-These are evidence for exact scope, not automatic proof of broader SLO/security/value claims.
+Each workflow proves only its declared scope.
 
-## 5. Live prompt testing and auth boundary
+## 8. Experimental workflow discipline
 
-The public `POST /api/runs` path requires the real managed browser session. Do not add a CI shortcut that bypasses server-owned session/tenant authority simply to make live prompting easy.
+Provider/model/framework/adaptive challengers follow:
 
-If automated hosted semantic/API coverage is required, design a separately authorized test-harness identity/session path with explicit scope and provenance. The Railway `hosted-pilot` service is currently a preflight process, not a second serving agent runtime.
+```text
+measured gap
+→ eligibility hard gates
+→ preregistered manifest/protocol
+→ controlled run
+→ machine-readable results
+→ failure/uncertainty analysis
+→ PROMOTE | REJECT | INCONCLUSIVE | NO_CHANGE | NO_SELECTION
+```
 
-## 6. Historical / experimental workflows
+Historical/consumed experiment YAML remains for provenance. Do not rerun consumed packets merely to seek a preferred answer.
 
-Provider experiment packets, one-shot E/EV/D-series campaigns and older research workflows are retained because frozen results/ADRs/provenance may reference them.
+## 9. Workflow lifecycle labels
 
-Do not rerun consumed experiments merely because YAML is present. Changed scientific execution requires a new prospective authorization/protocol.
+Every new workflow should be one of:
 
-## 7. Workflow lifecycle labels
-
-Every new workflow should fit one class:
-
-- `required` — ordinary product merge regression;
-- `promotion` — intentional hosted release acceptance;
-- `specialized` — targeted engineering validation;
+- `required` — ordinary merge regression;
+- `promotion` — intentional exact-SHA hosted release gate;
+- `specialized` — targeted engineering/security/production validation;
 - `repository-maintenance` — narrow repo operation;
-- `experimental` — preregistered/research execution;
+- `experimental` — preregistered research execution;
 - `historical-one-shot` — retained only for provenance.
 
-Prefer reusable scripts/modules + a small number of stable top-level workflows over one YAML file per small path.
+Prefer reusable scripts/modules + a small number of stable orchestration workflows over one YAML per tiny check.
 
-## 8. Safety rules
+## 10. Safety rules
 
-- never print provider/database/auth/evaluator/blind secrets;
-- separate provider-free regression from live-provider consumption;
-- preserve exact source/protocol identity for frozen campaigns;
-- do not silently relax expected SHA, quota, route/model or gold-isolation gates;
-- never treat skipped/not-triggered workflow as a pass;
-- preserve failed/consumed attempts where scientifically material;
-- do not bulk-delete historical YAML before proving it unreferenced;
-- do not introduce an auth bypass to automate production prompt tests.
+- never print provider/database/auth/TRACTIAN/grant/actor/evaluator/blind secrets;
+- never record raw provider material unless a separate explicitly sanitized protocol authorizes a safe subset;
+- keep provider-free regression distinct from live-provider consumption;
+- preserve exact SHA/protocol identity;
+- do not silently relax expected SHA, model/route, quota, cost or gold-isolation gates;
+- no paid/model fallback to make a workflow green;
+- no acceptance of truncated `finish_reason=length` output;
+- no unbounded provider retry loops;
+- never treat skipped/not-triggered jobs as pass;
+- preserve scientifically material failed/inconclusive attempts;
+- do not add managed-auth/tenant bypasses for hosted prompt tests;
+- do not delete historical workflows until unreferenced provenance is proven.
 
-## 9. Cleanup
+## 11. Cleanup / branch governance
 
-Physical deletion/rename is allowed only after proving the workflow is not referenced by frozen evidence, ADRs, active workflows, reproduction contracts or Actions provenance. When unsafe to rerun but provenance-sensitive, disable future triggers rather than falsifying history.
+When unsafe to rerun but provenance-sensitive, disable future triggers rather than falsifying history. Physical deletion/rename requires proof that no frozen evidence, ADR, active workflow, reproduction contract or Actions provenance references the file.
+
+Branch protection remains external configuration: after applying it, verify `main.protected=true` and the stable `required-gate` context before documenting enforcement as closed.

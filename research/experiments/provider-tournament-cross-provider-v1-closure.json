@@ -1,0 +1,44 @@
+{
+  "schema_version": "provider-tournament-cross-provider-v1-closure",
+  "decision_id": "DP-005",
+  "status": "CLOSED_NO_SELECTION_INFRASTRUCTURE_INVALID",
+  "executed_head_sha": "ff2751e7e0e2bac23583c146a7cad1a00973aca2",
+  "github_actions_run_id": 34225336595,
+  "source_contract": {
+    "manifest": "research/experiments/provider-tournament-cross-provider-v1-manifest.json",
+    "population_sha256": "4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9",
+    "scenario_count": 17,
+    "repetitions_per_candidate": 5,
+    "attempts_per_candidate": 85,
+    "total_attempts": 255
+  },
+  "observed_route_results": {
+    "groq-gpt-oss-120b": {
+      "attempts": 85,
+      "successful_provider_responses": 0,
+      "http_status_distribution": {"403": 85}
+    },
+    "nvidia-gpt-oss-120b": {
+      "attempts": 85,
+      "successful_provider_responses": 0,
+      "http_status_distribution": {"410": 85}
+    },
+    "openrouter-gpt-oss-120b-free": {
+      "attempts": 85,
+      "successful_provider_responses": 0,
+      "http_status_distribution": {"404": 85}
+    }
+  },
+  "selection": "NO_SELECTION",
+  "selection_reason": "NO_CANDIDATE_PASSED_HARD_GATES",
+  "interpretation": "The candidate-set route/model identities were operationally unavailable to the provisioned credentials/endpoints. Because zero candidate produced any provider decision, DP-005 is not evidence that the underlying models have zero intrinsic task quality and must not be used as a quality ranking.",
+  "evidence_integrity": {
+    "failed_attempts_retained": true,
+    "raw_provider_request_recorded": false,
+    "raw_provider_response_recorded": false,
+    "secret_material_recorded": false,
+    "production_config_changed": false,
+    "historical_result_may_be_overwritten": false
+  },
+  "next_decision": "DP-006 must preregister credential-visible/provider-supported current routes and eligibility probes before any new evaluated observation."
+}

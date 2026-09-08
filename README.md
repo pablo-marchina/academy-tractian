@@ -2,82 +2,189 @@
 
 Production-oriented **Industrial Agent + Evaluation** product built around the supplied TRACTIAN API.
 
-**Release 0 is live.** The public product is remotely hosted, authenticated, multi-user/tenant-isolated, backed by Neon PostgreSQL, uses a provisional hosted model provider and real typed TRACTIAN reads, persists safe evidence/evaluation, and streams progress through REST/SSE. Consequential external actions remain disabled.
+**The product is live; the current OpenRouter V14 migration is still under functional acceptance.** The public product is remotely hosted, authenticated, multi-user/tenant-isolated, backed by Neon PostgreSQL, exposes real typed TRACTIAN reads and governed consequential actions, persists safe evidence/evaluation, and streams progress through REST/SSE. The current backend uses a pinned fixed-free OpenRouter model route under a USD0/no-paid-fallback policy, but the latest authenticated B204 campaign fails before the first TRACTIAN read because the provider completion ends with `finish_reason=length`.
 
-> Current state changes quickly. Use [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md) as the mutable source of truth. Historical/frozen evidence is intentionally not rewritten. Repository source identity, backend runtime identity, frontend identity and supplied-API identity are tracked separately.
+> Current state changes quickly. Use [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md) as the mutable source of truth. Historical/frozen evidence is intentionally not rewritten. The full 2026-09-08 progress record is [`docs/progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md`](docs/progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md).
 
-## Try the product
+## Public product
 
-**Public URL:** https://production-web-production-c9d1.up.railway.app
+**URL:** https://production-web-production-c9d1.up.railway.app
 
-Current first-user flow:
+Current user flow:
 
 ```text
 sign in
 → Home: ask an equipment question
-→ human-readable live progress
-→ customer-safe result + response mode
-→ inspect supporting evidence when useful
-→ Analyses: reopen persisted runs
-→ Technical: trace, quality, data, system, actions and studies
+→ live authenticated run
+→ model decision
+→ typed TRACTIAN evidence when the provider decision succeeds
+→ customer-safe terminal + response_mode
+→ persisted deterministic evaluation
+→ Analyses / Technical drill-down
 ```
 
 Start with [`docs/GETTING-STARTED.md`](docs/GETTING-STARTED.md).
+
+## Current hosted identities
+
+| Component | Hosted identity | State |
+|---|---|---|
+| backend/runtime | `5611687556b3d50c31f20fa85ede794f2500f05c` | Railway deployment `542bf459-353d-432c-b2ff-b862cedf1574` — `SUCCESS` |
+| frontend UX | `4364364266c6a88d4affd85cb3a734c774cd42c8` | Railway deployment `8375d735-539c-46af-b299-9ee4aca8e505` — `SUCCESS` |
+| supplied TRACTIAN API | `47561c1175181b508139e23e6e39b555c1347d57` | deployment `d5593f37-64ec-442f-a168-d82490e58dbb` — `SUCCESS` |
+
+The functional-closure work is intentionally ahead of production on draft PR #222. Production SHA and PR head must not be described as equivalent until the exact accepted candidate is promoted.
 
 ## What is live now
 
 - managed browser authentication with server-owned tenant context;
 - Railway-hosted HTTPS frontend/API;
 - Neon PostgreSQL durable state + tenant RLS boundary;
-- provisional Release 0 provider: Cloudflare `@cf/zai-org/glm-4.7-flash`;
-- 18-operation TRACTIAN capability contract: **13 reads + 5 action operations represented as proposal-only capabilities**;
-- genuine provider → controller → typed TRACTIAN read → evidence → terminal → evaluation path;
+- provisional provider: OpenRouter V14, pinned to `nvidia/nemotron-3-super-120b-a12b:free`;
+- provider fallbacks disabled and actual project cash-cost policy fixed at **USD0**;
+- canonical 18-operation TRACTIAN contract: **13 reads + 5 governed action operations**;
+- `AgentController` + `HarnessRunner` remain the only orchestration/tool authority path;
+- deterministic schema/resource/policy/evidence boundaries;
 - customer-visible evidence semantics: `complete`, `partial`, `inconclusive`, `conflict`, `unavailable`;
 - terminal behavior including ORIENT/FINAL, CLARIFY, ABSTAIN and ESCALATE;
-- explicit human-readable asset-label grounding (`R310`, `R420`, `PM-22`, etc.) through authenticated fleet discovery rather than asking users for internal IDs;
-- condition-evidence requirements before diagnostic terminal answers;
-- data-quality-specific evidence requirements;
+- human-readable asset-label grounding through authenticated fleet discovery;
+- exact-success duplicate-call suppression while legitimate same-tool/different-argument drill-down remains allowed;
 - durable history, authenticated SSE/reconnect and safe provenance;
-- task-driven UX: **Home / Analyses / Technical**, with result/evidence detail contextual to the selected run;
-- no external consequential action execution;
-- project cash-cost policy: **USD0 hard gate; no automatic paid fallback**.
+- task-driven UX: **Home / Analyses / Technical**;
+- independent verification/evidence surfaces;
+- governed action custody/confirmation/authorization/idempotency/lease architecture;
+- no local production dependency.
 
-The full frozen Provider Tournament v3 still has final state `NO_SELECTION`. The Release 0 provider is intentionally **provisional**, not a final superiority claim.
+## Governed actions
 
-## Current production identities
-
-| Component | Current hosted identity | Evidence |
-|---|---|---|
-| backend/runtime | `08866da60245f58f217981b7ae668b10be45cc67` | Railway deployment `062c3cc4-4ac9-48ac-be06-2b4c490cea2a` — SUCCESS |
-| frontend UX | `1bc124a8d4dbd029178ff8129b25452129445de7` | Railway deployment `f78e88cd-82c2-4fcf-8f59-a51168f10fad` — SUCCESS |
-| supplied TRACTIAN API | `47561c1175181b508139e23e6e39b555c1347d57` | hosted supplied-API deployment |
-
-The original immutable Release 0 acceptance campaign remains anchored to backend `082d6f115c070fdc898df749b4b3018efd9ceeab`. The current backend is a **prospectively hardened descendant**, not a rewrite of that historical evidence.
-
-## Live-hardening highlights
-
-The production validation loop on 2026-09-07 closed several real issues found through user-driven prompts:
+A controlled production pre-deploy smoke proved the configured governed transport for all five canonical actions:
 
 ```text
-#197  continue grounded fleet discovery; stop asking for discoverable IDs
-#198  parse nested structured asset/analysis IDs safely
-#199  stop redundant get_asset metadata loops
-#200  require real condition evidence before diagnostic terminal
-#201  define response_mode semantics
-#207  harden managed-session resilience
-#208  ground explicit asset labels and comparisons
-#210  force initial identity grounding and suppress repeated completed data-quality reads
+reprocess_analysis            PASS / HTTP 200
+request_specialist_analysis  PASS / HTTP 200
+update_asset_config          PASS / HTTP 200
+request_retraining           PASS / HTTP 200
+escalate_case                PASS / HTTP 200
 ```
 
-Current V13 live checks include:
+Production action authority remains server-owned. The browser/model never supplies canonical permissions, tenant/company authority, upstream action identity, confirmation fingerprints, credentials or idempotency material. A 5/5 transport smoke is **not** the same claim as final end-user action/security acceptance; the hosted adversarial SECURITY-V1 action campaign remains open.
 
-- data quality: `get_current_user → list_assets_by_company → get_data_quality → get_rms → get_rms(point_id) → FINAL`, `complete`, 0 errors/blocks;
-- unavailable comparison: authenticated fleet discovery correctly reports R420 absent rather than inventing a cross-tenant asset or asking for its internal ID;
-- causal investigation: `get_current_user → list_assets_by_company → get_spectrum → point-specific spectrum drill-down → FINAL`, `partial`, 0 errors/blocks.
+See [`docs/GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md`](docs/GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md).
 
-Repeated tool names are not automatically loops: an asset-level read followed by a `point_id`-specific read is legitimate progressive drill-down. Redundancy must be evaluated by operation **and arguments/resource**, not tool name alone.
+## OpenRouter V14 — current functional gate
 
-See [`docs/progress/2026-09-07-release0-live-hardening-v13.md`](docs/progress/2026-09-07-release0-live-hardening-v13.md).
+Exact route:
+
+```text
+provider  openrouter
+model     nvidia/nemotron-3-super-120b-a12b:free
+route     openrouter.chat_completions.v1.fixed_free
+fallback  disabled
+cost      USD0 hard gate
+```
+
+A real managed-session B204 campaign created three production runs:
+
+```text
+F01 condition       run_437a59ba893a96e3f902
+F02 causal          run_86c832ce46189200b613
+F03 data quality    run_f081d5d45b0cf4caf4b3
+```
+
+All three proved authentication/run orchestration but failed functional acceptance with `DECISION_SOURCE_FAILURE` and **0 TRACTIAN tool calls**.
+
+A sanitized response-shape probe then localized the failure:
+
+```text
+HTTP 200
+exact pinned model served
+one assistant choice
+content present
+finish_reason = length
+```
+
+V14 correctly rejects truncated output rather than granting tool authority from an incomplete decision. A bounded follow-up experiment was blocked by HTTP 429 on all tested variants, so there is currently **no promoted length fix**.
+
+Current gate:
+
+```text
+managed auth                    PASS
+exact release identity          PASS
+OpenRouter configuration        PASS
+OpenRouter valid first decision FAIL
+TRACTIAN reads in V14 campaign  NOT REACHED
+valid terminal/evaluation       NOT READY
+```
+
+Do not work around this by accepting `finish_reason=length`, enabling paid/model fallback, silently changing the served model, bypassing structured output or introducing unbounded retries.
+
+## Promoted architecture
+
+```text
+authenticated remote user
+→ React/Caddy public origin
+→ managed auth + FastAPI
+→ server-owned tenant context
+→ PostgreSQL ownership/RLS
+→ OpenRouter V14 DecisionSource (provisional)
+→ custom AgentController
+→ HarnessRunner
+→ typed TRACTIAN read/action boundary
+→ normalized evidence / governed action proposal
+→ terminal + response_mode
+→ deterministic post-runtime evaluator
+→ PostgreSQL safe projection
+→ authenticated REST/SSE
+→ Home / Analyses / Technical
+```
+
+For confirmed consequential actions, the branch is:
+
+```text
+proposal
+→ deterministic policy
+→ private custody
+→ explicit confirmation
+→ fresh server-owned authorization + kill switch
+→ persistent idempotency
+→ non-transferable execution lease
+→ server-owned upstream TRACTIAN actor
+→ bounded remote attempt
+→ action evaluation + safe projection
+```
+
+## Architecture decisions that remain NO_CHANGE
+
+The current blocker is provider completion/availability, not an orchestration-topology gap. Keep the measured baseline unless a challenger wins:
+
+- custom `AgentController`;
+- `HarnessRunner` hard tool boundary;
+- FastAPI/Pydantic;
+- PostgreSQL + tenant RLS;
+- Neon managed auth;
+- PostgreSQL durable cursor + LISTEN/NOTIFY wake-up;
+- REST/SSE;
+- React/TypeScript/TanStack Query/React Flow/ECharts;
+- Railway/Neon hosted production.
+
+LangGraph migration, multi-agent, RAG/vector DB, persistent memory, MCP, Redis/Kafka and Kubernetes remain challengers only after a measured material gap.
+
+## Final open gates
+
+Before the strongest final-delivery claim, current open work includes:
+
+- make the authenticated OpenRouter V14 B204 matrix 3/3 with real TRACTIAN calls and valid terminal/evaluation;
+- broad live coverage of the 13 read operations;
+- full hosted SECURITY-V1, especially now that governed writes exist;
+- final load staircase/soak, measured capacity and evidence-derived SLO;
+- real restore drill with measured RTO/RPO;
+- human semantic calibration;
+- MANUAL vs AGENT-ASSISTED operational-value study;
+- final provider/tournament conclusion or explicit `NO_SELECTION`;
+- GitHub branch protection enforcement;
+- exact accepted-production SHA convergence and final immutable evidence freeze.
+
+Use `PASS`, `FAIL`, `NOT REACHED`, `NOT READY`, `PENDING`, `INCONCLUSIVE` and `NO_SELECTION` rather than strengthening a claim beyond evidence.
 
 ## Documentation map
 
@@ -85,55 +192,31 @@ See [`docs/progress/2026-09-07-release0-live-hardening-v13.md`](docs/progress/20
 |---|---|
 | use the product | [`docs/GETTING-STARTED.md`](docs/GETTING-STARTED.md) |
 | know the exact current state | [`docs/ACTIVE-PROJECT-STATUS.md`](docs/ACTIVE-PROJECT-STATUS.md) |
+| see the complete 2026-09-08 episode | [`docs/progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md`](docs/progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md) |
 | understand the architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | see what is next | [`docs/DELIVERY-PLAN.md`](docs/DELIVERY-PLAN.md) |
-| understand Release 0 evidence | [`docs/RELEASE-0-ACCEPTANCE.md`](docs/RELEASE-0-ACCEPTANCE.md) |
-| see final-project Definition of Done | [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) |
-| map the implementation | [`docs/CODEBASE-MAP.md`](docs/CODEBASE-MAP.md) |
+| see final Definition of Done | [`docs/DELIVERY-ACCEPTANCE.md`](docs/DELIVERY-ACCEPTANCE.md) |
+| map implementation ownership | [`docs/CODEBASE-MAP.md`](docs/CODEBASE-MAP.md) |
 | operate/recover the product | [`docs/FINAL-HANDOFF-RUNBOOK.md`](docs/FINAL-HANDOFF-RUNBOOK.md) |
+| operate governed actions | [`docs/GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md`](docs/GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md) |
 | map work to the TAPI | [`docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md`](docs/TAPI-DELIVERY-COVERAGE-2026-09-02.md) |
-| prepare the 5-minute technical presentation | [`docs/presentation/README.md`](docs/presentation/README.md) |
-| contribute safely | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| report a vulnerability | [`SECURITY.md`](SECURITY.md) |
+| understand security | [`docs/SECURITY-MODEL.md`](docs/SECURITY-MODEL.md) |
 | browse all documentation | [`docs/README.md`](docs/README.md) |
-
-## Promoted runtime path
-
-```text
-authenticated remote user
-→ task-driven React/Caddy public origin
-→ managed auth + FastAPI
-→ server-owned tenant context
-→ Neon PostgreSQL ownership/RLS
-→ Cloudflare provisional DecisionSource V13
-→ AgentController
-→ HarnessRunner
-→ typed TRACTIAN reads
-→ normalized evidence
-→ ORIENT | CLARIFY | ABSTAIN | ESCALATE
-   + complete | partial | inconclusive | conflict | unavailable
-→ deterministic post-runtime evaluator
-→ durable safe projection
-→ REST/SSE
-→ Home / result detail / Analyses / Technical
-```
-
-External actions are a separate governed architecture and are **not enabled in Release 0**.
 
 ## Repository layout
 
 | Path | Purpose |
 |---|---|
-| `src/academy_tractian/` | production runtime, APIs, storage, safety, observability and evaluation |
-| `frontend/` | React/TypeScript task-driven product and Playwright acceptance |
-| `tests/` | backend product/regression/integration tests |
+| `src/academy_tractian/` | production runtime, provider adapters, APIs, storage, safety, observability and evaluation |
+| `frontend/` | React/TypeScript product and browser acceptance |
+| `tests/` | backend/product/regression/integration tests |
 | `research/e2/` | accepted controller/tool/trace/evaluation harness |
 | `research/experiments/` | preregistered experiments |
 | `research/frozen/` | immutable evidence contracts/inputs |
 | `research/results/` | machine-readable results/closures |
-| `scripts/` | deterministic validation/reporting/operations wrappers |
+| `scripts/` | deterministic validation/research/operations wrappers |
 | `docs/` | active docs plus preserved historical evidence |
-| `.github/workflows/` | required CI, promotion gates and preserved research workflows |
+| `.github/workflows/` | CI, promotion, verification and research workflows |
 
 ## Core engineering rules
 
@@ -144,11 +227,9 @@ actual project cash cost = USD 0
 + multi-user tenant safety
 + quantitative / eval-driven decisions
 + adaptive only after measured advantage
-+ deterministic safety boundaries
++ deterministic authority and safety boundaries
 + live safe observability
 + claims no stronger than evidence
 ```
-
-Do not add orchestration/framework/infrastructure complexity because it is fashionable. LangGraph, multi-agent, RAG/vector DB, MCP, persistent memory, Redis/Kafka and Kubernetes remain challengers only after a measured gap and controlled comparison.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for notable product evolution.

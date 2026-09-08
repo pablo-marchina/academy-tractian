@@ -53,6 +53,8 @@ class NoConfiguredTractianTransport(RequestTransport):
         )
 
 
+# Compatibility alias for historical tests/imports. The canonical production concept is now
+# NoConfiguredTractianTransport; provider/model selection is governed only by DecisionSource.
 NoSelectedProviderTransport = NoConfiguredTractianTransport
 
 
@@ -187,6 +189,7 @@ def app_factory():
 
     tractian_transport_state = _tractian_transport_state(config)
     provider_selection_state = _provider_selection_state(config)
+    # Validate provider/TRACTIAN composition before PostgreSQL pools or runtime workers open.
     build_tractian_transport(config)
     decision_source_factory = _decision_source_factory(config)
 
@@ -212,6 +215,9 @@ def app_factory():
             authorization_source=action_authorization_source,
             actor_source=action_actor_source,
         )
+        # Ordinary authenticated users must retain read access even when they have no consequential
+        # action grant. Proposal-time authorization therefore gets a zero-action fallback while
+        # final confirmation continues to use strict tenant-aware authorize_context().
         authorization_resolver = ReadCapableConfiguredActionAuthorizationResolver(
             action_authorization_source
         )

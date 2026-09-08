@@ -1,0 +1,72 @@
+name: provider-tournament-cross-provider-v2-eligibility
+
+on:
+  push:
+    branches:
+      - fix/functional-acceptance-closure
+    paths:
+      - "src/academy_tractian/provider_tournament_cross_provider_v2.py"
+      - "tests/test_provider_tournament_cross_provider_v2.py"
+      - "scripts/research/run_provider_tournament_cross_provider_v2_eligibility.py"
+      - "research/experiments/provider-tournament-cross-provider-v2-manifest.json"
+      - ".github/workflows/provider-tournament-cross-provider-v2-eligibility.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provider-free-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install project
+        run: python -m pip install -e '.[dev]'
+      - name: Compile DP-006 code
+        run: |
+          python -m py_compile \
+            src/academy_tractian/provider_tournament_cross_provider_v2.py \
+            scripts/research/run_provider_tournament_cross_provider_v2_eligibility.py
+      - name: Run DP-006 provider-free gates
+        run: pytest -q tests/test_provider_tournament_cross_provider_v2.py
+
+  hosted-eligibility:
+    needs: provider-free-contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install project
+        run: python -m pip install -e '.[dev]'
+      - name: Assert hosted secrets present without printing them
+        shell: bash
+        run: |
+          test -n "${GROQ_API_KEY:-}"
+          test -n "${NVIDIA_API_KEY:-}"
+          test -n "${OPENROUTER_API_KEY:-}"
+      - name: Execute preregistered eligibility and retain sanitized evidence
+        shell: bash
+        run: |
+          mkdir -p artifacts/provider-tournament-cross-provider-v2
+          set -o pipefail
+          python scripts/research/run_provider_tournament_cross_provider_v2_eligibility.py \
+            | tee artifacts/provider-tournament-cross-provider-v2/eligibility.json
+      - name: Upload sanitized DP-006 eligibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-tournament-cross-provider-v2-eligibility
+          path: artifacts/provider-tournament-cross-provider-v2/eligibility.json
+          if-no-files-found: warn
+          retention-days: 30

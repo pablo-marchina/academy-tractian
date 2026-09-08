@@ -2,163 +2,272 @@
 
 **Status:** ACTIVE assignment/output reference  
 **Original filename checkpoint:** 2026-09-02  
-**Current rebaseline:** 2026-09-07 BRT  
-**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)
+**Current rebaseline:** 2026-09-08 BRT  
+**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
+**Latest material progress:** [`progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md`](progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md)
 
-This crosswalk separates TAPI/delivered-package expectations from project-added production/quality constraints.
+This crosswalk maps the **updated TAPI** to current product/evidence while separating explicit assignment requirements from project-added production constraints. Historical Release 0/V13 evidence remains valid for its original scope but is not the current runtime state.
 
-## 1. Integrated deliverable
+## 1. Integrated deliverable required by the updated TAPI
 
-The project delivers:
+The solution contains both required tracks:
 
-1. **Industrial Agent** — contextualizes/investigates industrial requests through typed TRACTIAN operations and produces safe grounded outcomes/proposals.
-2. **Agent Evaluation Framework** — evaluates observable tool/argument/trajectory/evidence/terminal/safety/failure/stability behavior and supports controlled experiments.
+1. **Industrial Agent** — contextualizes, investigates and may execute/escalate through typed TRACTIAN operations while preserving safe authority boundaries.
+2. **Agent Evaluation Framework** — evaluates observable tool/function selection, arguments, trajectory, evidence, response, safety/high-impact behavior, failure and stability with reproducible provenance.
 
-Release 0 Execute remains proposal-only; external consequential action execution is disabled.
+The updated TAPI expects API integration, technical experimentation and documented results/limitations. The project therefore treats configuration, deployment, functional acceptance, evaluation and final claims as separate evidence classes.
 
-## 2. TAPI/delivery expectations mapped to current evidence
+## 2. TAPI expectation → current evidence / boundary
 
-| Expectation | Current evidence / boundary |
+| TAPI expectation | Current evidence / boundary |
 |---|---|
-| functional agent | hosted V13 provider→controller→tool→evidence→terminal path |
-| supplied TRACTIAN API use | canonical 18-operation typed contract; multiple real read paths proven |
-| function/tool selection | ToolSpec proposals + trace/evaluator |
-| argument validity | typed schema/B1 validation + resource-ID constraints |
-| resource grounding | authenticated identity/company/fleet + structured observed IDs |
-| process/trajectory | RunTrace + Technical Current analysis / trace |
-| evidence use | persisted evidence IDs, normalized read semantics, lineage |
-| response/conclusion | customer-safe terminal + explicit `response_mode` semantics |
-| clarification/abstention/escalation | promoted terminal behavior + persisted traces |
-| missing resource | V13 R420 case fails closed without invented ID/scope |
-| data quality | V13 explicit quality read + condition evidence path |
-| condition diagnosis | V13 mandatory analysis/RMS/spectrum evidence gate |
-| safety/high-impact behavior | deterministic policy + external actions disabled |
-| failure/degraded behavior | provider/tool/evidence/auth failure semantics + safe modes |
-| stability | repeated/campaign evaluation surfaces; broader live matrix pending |
-| technical experiment | frozen provider/architecture/evaluator evidence |
-| result analysis | machine-readable results + Technical evaluation/analytics surfaces |
-| reproducibility | clean clone, lockfiles, required CI, exact release identity |
-| documentation | active docs + ADRs + runbook + changelog + append-only evidence |
-| demonstration | normal hosted task-driven product + Technical depth |
+| integrated agent | production runtime exists; current OpenRouter V14 provider migration is deployed but authenticated functional gate is currently **FAIL** |
+| supplied TRACTIAN API use | canonical 18-operation contract; historical real read evidence; controlled 5/5 governed action transport smoke |
+| contextualize | managed identity/tenant + authenticated fleet discovery + persisted run context |
+| investigate | typed tool proposals and evidence-driven controller/harness loop |
+| execute justified platform actions | governed action custody/confirmation/authorization/idempotency/lease/upstream-actor architecture; controlled transport smoke 5/5; final adversarial/end-user acceptance pending |
+| ask relevant questions | clarification terminal exists; discoverable internal IDs should be resolved rather than requested |
+| escalate to human | ESCALATE terminal + governed `escalate_case` action contract |
+| function/tool selection | typed DecisionSource proposal + ToolSpec registry + trace/evaluator |
+| argument accuracy | strict schema/B1 validation + observed-resource constraints + normalized argument fingerprints |
+| planning/stopping | custom `AgentController`, hard budgets and exact-success duplicate suppression; progressive drill-down preserved |
+| incomplete/failure handling | bounded complete/partial/inconclusive/conflict/unavailable + explicit provider/tool/auth/action failure states |
+| grounding | IDs only from authorized structured observations; human asset labels resolved via authenticated fleet |
+| memory/context | durable run/runtime context where needed; no unsupported persistent-memory layer claim |
+| traceability | PostgreSQL run/event/evidence/evaluation/verification projections + exact release/provider provenance |
+| high-impact safety | deterministic action authority; proposal ≠ execution; server-owned grants/actors/kill switch/idempotency/leases |
+| technical experiment | provider tournament/eligibility, V14 response-shape/length/rate-limit experiments, action/security/evaluator campaigns |
+| documented results | append-only progress/evidence, ADRs, manifests, machine-readable experiment results, active acceptance ledger |
+| reproducibility | exact SHA/deployment identities, lockfiles, required CI, clean-clone/browser workflows |
+| demonstration | normal hosted task-driven product; no separate demo-only stack |
 
-## 3. Project-added hard constraints
+## 3. Current product-added hard constraints
 
-- actual project cash cost = USD0;
-- no automatic paid spillover;
-- remote production serving with no developer-machine dependency;
-- multi-user tenant safety;
-- systematic research before material decisions;
-- quantitative/Eval-Driven Development;
-- adaptive behavior only after measured advantage over simpler baseline;
-- safe live frontend observability.
+These are stronger than the assignment minimum and must remain true for project claims:
 
-Final-quality gates include hosted security, capacity/SLO, restore/recovery, human semantic calibration and operational-value evidence.
+```text
+actual project cash cost = USD 0
+no automatic paid spillover
+no local production dependency
+multi-user tenant isolation
+server-owned action authority
+quantitative / Eval-Driven Development
+adaptive behavior only after measured advantage
+live safe observability
+claims no stronger than evidence
+```
 
-## 4. Current stack/state
+## 4. Current stack / architecture state
 
-| Layer | Current choice/state |
+| Layer | Current promoted choice/state |
 |---|---|
 | language | Python 3.11+ |
 | API | FastAPI + Uvicorn |
 | schemas | Pydantic 2.x |
-| orchestration | custom `AgentController` promoted baseline |
-| provider wrapper | Release 0 V13 (`release_provider_v13.py`) |
-| real tool boundary | `HarnessRunner` + canonical ToolSpec registry |
-| TRACTIAN transport | direct typed HTTPS adapter; live reads proved |
+| orchestration | custom `AgentController` baseline |
+| provider wrapper | `release_provider_v14.py` preserving V13 agent semantics |
+| hosted provider | OpenRouter fixed-free route, provisional |
+| exact model | `nvidia/nemotron-3-super-120b-a12b:free` |
+| provider fallback | disabled |
+| tool boundary | `HarnessRunner` + canonical ToolSpec registry |
+| TRACTIAN transport | typed real HTTP transport; 13 reads + 5 governed action operations |
+| actions | governed server-owned authorization/custody/confirmation/idempotency/lease/actor path |
 | durable state | Neon PostgreSQL + psycopg |
-| browser IAM | Neon managed session, server-owned scope, bounded read cache |
+| tenant boundary | server-owned scope + PostgreSQL RLS |
+| browser IAM | Neon managed session; bounded validated read cache; fresh non-read validation |
+| evaluation | deterministic-first post-runtime evaluator + independent verification + research layers |
+| realtime | durable PostgreSQL cursor + LISTEN/NOTIFY wake-up + authenticated SSE |
+| frontend | React/TypeScript/Vite/Caddy; Home / Analyses / Technical |
 | hosting | Railway production services |
-| provider | Cloudflare GLM-4.7-Flash provisional; final decision `NO_SELECTION` |
-| evaluation | deterministic-first production evaluator + controlled research layers |
-| realtime | durable Postgres cursor + LISTEN/NOTIFY wake-up + authenticated SSE |
-| frontend | React/TypeScript/Vite/Caddy, task-driven Home / Analyses / Technical |
 
-## 5. 18-operation contract
+No evidence currently justifies replacing this with LangGraph/multi-agent/RAG/vector DB/MCP/Redis/Kafka/Kubernetes.
+
+## 5. Canonical 18-operation contract
 
 ```text
-18 total canonical operations
-13 READ  → Release 0 read surface when provider + TRACTIAN transport enabled
-5 ACTION → represented/proposal-only; external execution disabled
+18 total operations
+13 READ
+5 ACTION
 ```
 
-Current live testing does **not** yet claim every one of the 13 reads has been exercised by a recent V13 user prompt. Contract coverage and live exercised coverage are distinct metrics.
+Current claim discipline:
 
-## 6. Current agent behavior relevant to TAPI
+- **contract coverage**: 18/18 represented;
+- **historical recent read evidence**: multiple real paths proven before V14;
+- **current V14 B204 read execution**: `NOT REACHED` because the provider first decision failed;
+- **governed action transport**: controlled smoke 5/5 accepted HTTP 200;
+- **full recent 13-read live coverage**: `PENDING`;
+- **full action security/end-user acceptance**: `PENDING`.
 
-### Discover instead of ask unnecessarily
+Do not collapse these into one generic “API integration PASS”.
 
-For asset investigations, V13 uses server-owned identity/company context and fleet listing to resolve discoverable IDs. Human labels like R310 are not treated as raw internal authority.
+## 6. Current OpenRouter V14 functional gate
 
-### Investigate with evidence appropriate to the question
+Production backend `5611687556b3d50c31f20fa85ede794f2500f05c` uses:
 
-- condition/diagnostic questions require analysis/RMS/spectrum evidence where applicable;
-- baseline/data-quality support context but do not replace condition evidence;
-- data-quality questions explicitly inspect data quality;
-- comparisons require evidence per requested asset;
-- missing requested resource returns bounded unavailability.
+```text
+provider = openrouter
+model    = nvidia/nemotron-3-super-120b-a12b:free
+route    = openrouter.chat_completions.v1.fixed_free
+```
+
+Real managed-session B204 runs:
+
+```text
+run_437a59ba893a96e3f902  F01 condition
+run_86c832ce46189200b613  F02 causal
+run_f081d5d45b0cf4caf4b3  F03 data quality
+```
+
+All 3 currently fail functional acceptance with `DECISION_SOURCE_FAILURE` and zero TRACTIAN tool calls.
+
+Safe provider diagnosis observed:
+
+```text
+HTTP 200
+exact pinned model served
+assistant content present
+finish_reason = length
+```
+
+V14 correctly refuses the truncated completion. A bounded follow-up comparison received HTTP 429 for every variant, so the proposed fix remains `INCONCLUSIVE` rather than promoted.
+
+This is a useful TAPI-aligned experiment: hypothesis, controlled variants, sanitized evidence, explicit limitation and no result laundering.
+
+## 7. Agent behavior relevant to TAPI
+
+### Contextualize / discover instead of asking unnecessarily
+
+Human-readable asset labels resolve through managed identity/company/fleet observations. The model does not get to invent tenant/company/resource IDs.
+
+### Investigate with appropriate evidence
+
+- condition/diagnostic questions require condition evidence where applicable;
+- baseline/data quality do not substitute for fault evidence;
+- explicit data-quality questions require data-quality evidence;
+- comparisons require evidence per selected resource;
+- missing resources fail closed.
+
+### Stop adaptively without losing deterministic safety
+
+The controller may adapt tool ordering/depth to observed evidence, but authority/safety remains deterministic. Exact successful duplicate operation + normalized arguments/resource is suppressed; same-tool/different-argument drill-down may remain valid.
 
 ### Communicate uncertainty
 
-`response_mode` separates evidence completeness from the controller terminal:
+Customer-visible evidence semantics remain:
 
-`complete | partial | inconclusive | conflict | unavailable`
+```text
+complete | partial | inconclusive | conflict | unavailable
+```
 
-This prevents ordinary causal uncertainty from being mislabeled as total inconclusiveness while still bounding unsupported claims.
+These are epistemic states, not permission states.
 
-## 7. User/reviewer outputs
+## 8. Execute / high-impact action path
 
-Current product exposes:
+The project now goes beyond proposal-only architecture. Current governed execution path is:
 
-- customer-safe result and next step;
+```text
+model proposes exact canonical action
+→ deterministic schema/resource/permission checks
+→ private PostgreSQL custody
+→ explicit opaque-ID confirmation
+→ fresh server-owned tenant/user authorization + kill switch
+→ persistent idempotency
+→ non-transferable action lease/fencing
+→ server-owned upstream TRACTIAN actor
+→ one bounded external attempt
+→ ACCEPTED | NOT_ACCEPTED | BLOCKED | UNCERTAIN
+→ post-action evaluation + safe projection
+```
+
+Controlled production pre-deploy evidence accepted all five canonical action transports. Final full hosted adversarial action security/semantic acceptance is still open, so the defensible claim is **governed action transport proven in controlled scope**, not “all consequential action behavior production-certified”.
+
+## 9. Evaluation framework coverage
+
+The project evaluates or has dedicated surfaces for:
+
+- tool/function selection;
+- arguments/resource grounding;
+- trajectory/stopping/duplicate calls;
+- evidence completeness/provenance;
+- terminal/response mode;
+- provider/model/release provenance;
+- safety/authorization/high-impact actions;
+- failures/degraded dependencies;
+- repeated-run stability;
+- independent claim/evidence verification;
+- semantic calibration protocol;
+- operational-value protocol.
+
+Structural evaluation is not presented as semantic correctness. Current V14 B204 is the explicit counterexample: runtime/auth plumbing can work while functional task execution fails.
+
+## 10. User/reviewer outputs
+
+Hosted UI exposes, as appropriate:
+
+- customer result and next step;
 - response/evidence semantics;
-- contextual evidence references;
+- evidence/lineage;
 - persisted history;
-- safe tool/model/policy provenance;
+- tool/model/policy/release provenance;
 - trace/runtime inspection;
-- deterministic post-runtime evaluation;
-- architecture/capability views;
-- proposal-only action/policy state;
-- analytics/research surfaces under Technical.
+- deterministic evaluation + verification distinction;
+- architecture/capability/action state;
+- research/analytics surfaces.
 
-The current UI organizes these by task rather than by four permanent engineering-depth tabs.
+Technical depth must never expose credentials, grant/custody material, benchmark-private gold or hidden reasoning.
 
-## 8. Evaluation coverage
+## 11. Deliberately not promoted
 
-Evaluation is designed to inspect correct function/tool, argument validity, trajectory, evidence/provenance, final operational conclusion, clarification/abstention/escalation, action safety, failures, repeated-run stability, reproducible identities and baseline-vs-candidate deltas.
+`NO_CHANGE` absent a measured gap/challenger win:
 
-Current V13 live traces pass structural blocking checks for their tested scope. Semantic judges remain non-gating until real human calibration.
+- LangGraph migration;
+- multi-agent topology;
+- RAG/vector DB;
+- persistent memory;
+- MCP;
+- Redis/Kafka;
+- Kubernetes/microservices;
+- adaptive runtime routing/stopping as a promoted replacement.
 
-## 9. Deliberately not promoted
+The current blocker is provider completion/availability, not evidence for architectural complexity.
 
-LangGraph migration, multi-agent topology, RAG/vector DB, persistent memory, MCP, Redis/Kafka, Kubernetes/microservices and adaptive stopping/routing need a measured gap, USD0 eligibility and controlled challenger win.
+## 12. Remaining final-delivery evidence
 
-## 10. Remaining final-delivery evidence
+Immediate:
 
-- broader recent V13 live coverage across canonical reads;
-- true bilateral comparison with two real fleet assets;
-- knowledge/model/analysis/baseline live coverage;
-- anti-hallucination/false-precision/conflict prompt matrix;
-- multi-turn behavior if required;
-- full Provider Tournament v3;
-- SECURITY-V1;
-- load/capacity and evidence-derived SLO;
-- restore/recovery;
-- governed consequential actions if promoted;
+1. safely characterize OpenRouter key-tier/rate-limit eligibility;
+2. reproduce/compare bounded V14 length fixes under eligible conditions;
+3. exact-SHA CI/deploy;
+4. make B204 F01/F02/F03 3/3 with real TRACTIAN calls + valid terminal/evaluation.
+
+Then:
+
+- broad current 13-read coverage;
+- full governed-action SECURITY-V1;
+- anti-hallucination/false-precision/conflict and dependency failure matrix;
+- remote load staircase/soak + measured capacity/evidence-derived SLO;
+- real restore drill + measured RTO/RPO;
 - human semantic calibration;
-- real operational-value comparison;
-- final evidence freeze.
+- MANUAL vs AGENT-ASSISTED operational-value study;
+- final provider experiment/selection or explicit `NO_SELECTION`;
+- GitHub branch protection;
+- exact accepted-production SHA convergence;
+- final immutable evidence freeze.
 
-## 11. Demonstration contract
+## 13. Demonstration contract
 
-Demonstrate the **normal hosted product**:
+Demonstrate the **normal hosted product**, not a separate demo stack:
 
 ```text
 sign in
 → Home: real equipment question
+→ real provider/tool/evidence path
 → Result: conclusion + response mode + evidence
-→ Analyses: persisted alternate run
-→ Technical: trace / evaluator / architecture / actions
-→ exact limitations/non-claims
+→ Analyses: persisted history
+→ Technical: trace / evaluator / verification / architecture / actions
+→ exact release/provider/action state
+→ explicit limitations/non-claims
 ```
 
-No separate demo-only, local or paid serving stack is compatible with the project claim.
+Until V14 is functionally green, do not present the current failing B204 path as the final successful agent demonstration. Historical successful V13 runs may be shown only when clearly labeled historical evidence.

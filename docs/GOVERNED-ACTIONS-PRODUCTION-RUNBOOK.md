@@ -1,8 +1,12 @@
 # Governed Actions Production Runbook
 
+**Status:** ACTIVE  
+**Last synchronized:** 2026-09-08 BRT  
+**Current claim:** governed action architecture is live/configurable and the controlled production transport smoke passed **5/5**; full hosted end-user/adversarial action acceptance remains pending.
+
 ## Scope
 
-This runbook covers the production rollout and rollback of the five canonical consequential TRACTIAN actions:
+This runbook covers rollout, verification, incident handling and rollback of the five canonical consequential TRACTIAN actions:
 
 - `reprocess_analysis` — requires `action_low`;
 - `request_specialist_analysis` — requires `action_low`;
@@ -10,132 +14,193 @@ This runbook covers the production rollout and rollback of the five canonical co
 - `request_retraining` — requires `action_high`;
 - `escalate_case` — requires `escalate`.
 
-The model/browser may propose an action, but they never own canonical permissions, organization/company authority, TRACTIAN credentials, confirmation fingerprints, idempotency material, or the action kill switch.
+The model/browser may propose an action, but never own canonical permissions, organization/company authority, TRACTIAN credentials, upstream action actor identity, confirmation fingerprints, idempotency material or the action kill switch.
 
-## Default state
+## Current production evidence
 
-Production remains fail-closed unless all action prerequisites are explicitly configured. The safe default is:
+A production pre-deploy smoke on the governed action path reported:
+
+```text
+mode                         GOVERNED_CONFIRMATION
+actions                      5
+executable_actions           5
+governed_action_path_enabled true
+status                       PASS
+```
+
+Controlled transport results:
+
+```text
+reprocess_analysis            accepted / HTTP 200
+request_specialist_analysis  accepted / HTTP 200
+update_asset_config          accepted / HTTP 200
+request_retraining           accepted / HTTP 200
+escalate_case                accepted / HTTP 200
+```
+
+The smoke recorded no credentials, resource IDs, local/upstream user IDs or response bodies.
+
+**Claim boundary:** this proves the configured governed transport for the smoke's server-owned bindings. It does not replace the pending full end-user/adversarial SECURITY-V1 campaign and does not prove distributed exactly-once external side effects.
+
+## Runtime composition
+
+Provider calls, TRACTIAN transport and actions are independent validated opt-ins. When actions are enabled, production must have both:
+
+1. a server-owned action authorization grant source; and
+2. server-owned upstream TRACTIAN action actor bindings with complete coverage for every active grant.
+
+Incomplete actor coverage is a boot blocker. Upstream action actors configured while actions are disabled are also rejected.
+
+Ordinary authenticated users without action grants may still use read paths through a zero-action principal; that fallback grants no consequential permission. Confirmation remains strict and tenant-aware.
+
+## Safe default / kill-switch posture
+
+The fail-closed configuration is still:
 
 ```text
 ACADEMY_ACTIONS_ENABLED=false
 ```
 
-With actions disabled, reads may still be live and action proposals may still be observable, but no confirmation can reach the external action transport.
+Use it for emergency rollback or any deployment where action prerequisites/security evidence are not valid. Current production may intentionally enable governed actions only when all required server-owned grant/actor/persistence/identity prerequisites are present; do not infer the live switch state from a historical document or source default. Check the current capability/health surface on the exact deployed SHA.
 
 ## Required production configuration
 
-Governed action execution may be enabled only when all of the following are true:
+Governed action execution may be enabled only when all are true:
 
-1. `ACADEMY_PROVIDER_CALLS_ENABLED=true` with the validated release provider configuration.
-2. `ACADEMY_TRACTIAN_TRANSPORT_ENABLED=true` with the remote HTTPS TRACTIAN endpoint and server-managed headers.
-3. `ACADEMY_ACTIONS_ENABLED=true`.
-4. `ACADEMY_ACTION_AUTHORIZATION_GRANTS_JSON` contains a valid non-empty server-owned grant document.
-5. The deployed artifact SHA, configured release SHA, and Railway runtime SHA agree.
-6. Durable PostgreSQL action custody, idempotency, run ownership, execution state, wakeup/handoff, and action execution lease stores are healthy.
+1. validated provider calls are enabled under the current zero-cost/no-fallback provider policy;
+2. real TRACTIAN transport is enabled with server-managed endpoint/headers;
+3. `ACADEMY_ACTIONS_ENABLED=true`;
+4. `ACADEMY_ACTION_AUTHORIZATION_GRANTS_JSON` contains valid server-owned grants;
+5. `ACADEMY_TRACTIAN_ACTION_ACTORS_JSON` contains complete server-owned upstream actor bindings for all active grants;
+6. artifact/configured/Railway runtime SHAs agree;
+7. PostgreSQL custody, idempotency, run ownership, execution state and action lease stores are healthy;
+8. current SECURITY-V1 policy does not contain a failing hard gate that forbids action execution.
 
-Example grant shape using non-production placeholder identifiers:
-
-```json
-[
-  {
-    "schema_version": "trusted-action-authorization-grant-v1",
-    "user_id": "operator-user-id",
-    "organization_id": "organization-id",
-    "user_company_id": "company-id",
-    "permissions": ["action_low", "action_high", "escalate"],
-    "resource_company_bindings": [
-      {"resource_id": "analysis-id", "company_id": "company-id"},
-      {"resource_id": "asset-id", "company_id": "company-id"},
-      {"resource_id": "model-id", "company_id": "company-id"},
-      {"resource_id": "case-id", "company_id": "company-id"}
-    ],
-    "policy_revision": "governed-execute-v1",
-    "active": true,
-    "source_owned": true
-  }
-]
-```
-
-Grant material is secret operational configuration. Do not place real user, tenant, company, resource, credential, or authorization data in source control, browser payloads, logs, or screenshots.
+Real grant/actor material is secret operational configuration. Never commit it or expose it in browser payloads, logs, screenshots, tickets or public evidence.
 
 ## Authorization invariants
 
-Every confirmed action must pass all of these independent gates:
+Every confirmed action must pass independently:
 
-- authenticated run/action ownership for the exact `organization_id` and `user_id`;
-- tenant-aware server-owned grant resolution for the same authenticated organization/user;
-- canonical ToolSpec permission (`action_low`, `action_high`, or `escalate`);
-- exact resource-to-company binding matching `user_company_id`;
-- exact server-custodied action fingerprint and arguments;
-- explicit requester confirmation of that existing action record;
+- authenticated action/run ownership for exact organization/user;
+- tenant-aware server-owned grant resolution;
+- canonical ToolSpec permission;
+- exact resource→company binding matching the authorized company;
+- exact server-custodied action arguments/fingerprint;
+- explicit requester confirmation of the existing opaque action record;
+- active global kill switch state;
 - durable idempotency claim before external I/O;
-- active action execution lease/generation ownership;
-- global host-owned action kill switch enabled.
+- non-transferable action execution lease/generation ownership;
+- server-owned upstream TRACTIAN actor binding for the authorized company/action.
 
-The confirmation request accepts only `{"confirm": true}`. Attempts to submit arguments, permissions, idempotency keys, resource authority, or other execution material through the confirmation payload must fail validation.
+The confirmation request may only confirm/reject the existing action. Browser/model data must never override arguments, permissions, resource authority, actor identity or idempotency.
 
 ## State semantics
 
-- `PENDING_CONFIRMATION`: proposal exists; no external side effect has been attempted.
-- `EXECUTING`: the platform has claimed the exact action and may attempt the external request once.
-- `ACCEPTED`: the external API explicitly accepted the action.
-- `NOT_ACCEPTED`: the external API explicitly did not accept it.
-- `BLOCKED`: deterministic policy denied execution.
-- `UNCERTAIN`: the platform cannot prove whether an external side effect occurred. Never auto-retry this state.
+- `PENDING_CONFIRMATION` — proposal exists; no external action attempt yet;
+- `EXECUTING` — exact action claimed; one bounded attempt may be in progress;
+- `ACCEPTED` — external API explicitly accepted;
+- `NOT_ACCEPTED` — external API explicitly did not accept;
+- `BLOCKED` — deterministic policy denied;
+- `UNCERTAIN` — external effect cannot be proven either way.
 
-`UNCERTAIN` is a terminal containment state for ambiguous writes, process loss, lease loss, or transport uncertainty. Operator investigation is required before any new action is proposed.
+`UNCERTAIN` is terminal containment. Never auto-retry it. Reconcile external system state before a newly reviewed proposal is allowed.
 
-## Promotion sequence
+## Pre-enable go/no-go
 
-1. Merge/deploy the code with `ACADEMY_ACTIONS_ENABLED=false`.
-2. Verify the exact release SHA and `/api/production/health` before enabling writes.
-3. Verify `/api/release0/capabilities` reports reads correctly and action execution remains `PROPOSAL_ONLY` while the switch is off.
-4. Configure the server-owned grants outside source control. Validate that only intended users/resources receive the minimum required permissions.
-5. Confirm the hosted security campaign required by the release policy is not in a failing or inconclusive state. Source-only evidence must never be represented as hosted production proof.
-6. Enable `ACADEMY_ACTIONS_ENABLED=true` only after provider, TRACTIAN transport, persistence, lease, identity, and authorization prerequisites are healthy.
-7. Verify `/api/release0/capabilities` reports exactly five `EXECUTABLE_WITH_CONFIRMATION` actions and `action_execution.mode=GOVERNED_CONFIRMATION`.
-8. Exercise the first real write only on an explicitly approved low-impact resource and with an operator who can independently verify the expected TRACTIAN-side effect.
-9. Confirm the action transitions to `ACCEPTED` only after the external API explicitly accepts it and that the execution run/evaluation is persisted.
-10. Do not automatically expand grants after the first successful write. Promotion of additional users/resources is an authorization change, not an inference from model quality.
+### Go only when
 
-## Go / no-go checks
+- exact deployed release identity is verified;
+- provider calls are healthy enough for the intended user/action flow under USD0/no paid fallback;
+- TRACTIAN transport is configured and server-managed;
+- action grants and upstream actors are complete/minimal;
+- PostgreSQL custody/idempotency/lease backends are healthy;
+- no unexpected `UNCERTAIN` action exists;
+- no tenant/observability/security hard gate is failing;
+- no secret-bearing authorization/actor material is exposed;
+- the currently required security campaign permits the rollout.
 
-Go only when all applicable release CI is green and the deployed host reports:
+### No-go when
 
-- correct exact release identity;
-- provider calls healthy under the configured zero-cost policy;
-- TRACTIAN transport configured and server-managed;
-- persistent stores ready;
-- action execution lease backend ready;
-- action kill switch state matches the intended rollout;
-- no unexpected `UNCERTAIN` action executions;
-- no cross-tenant authorization or observability failures;
-- no secret-bearing grant material in browser-safe metadata or observability.
+- provider functional acceptance for the required flow is failing;
+- exact release identity drifts;
+- an active grant lacks actor coverage;
+- cross-tenant/resource authorization cannot be proven;
+- external transport outcome is ambiguous without containment;
+- an unexplained `UNCERTAIN` exists;
+- cost/provider fallback could cross the USD0 boundary;
+- any security/evaluation hard gate fails.
 
-No-go if any prerequisite is missing, any security/evaluation hard gate fails, release identity drifts, the transport is unverified for the intended tenant, or an unexplained `UNCERTAIN` action exists.
+The current OpenRouter V14 B204 read campaign is failing before TRACTIAN tool execution. Do not use a successful action transport smoke to imply the agent-driven end-to-end action flow is functionally green under that provider.
+
+## First-action rollout sequence
+
+1. Deploy exact candidate with actions fail-closed unless the rollout is explicitly authorized.
+2. Verify `/health`, production health/capabilities and exact release SHA.
+3. Verify provider/model/route/cost identity and functional readiness for the intended action scenario.
+4. Verify real TRACTIAN transport.
+5. Configure minimal server-owned grants and complete upstream actor bindings outside source control.
+6. Run current hosted security/adversarial prerequisites.
+7. Enable actions only after all previous checks are green.
+8. Verify capability surface reports exactly five actions and governed-confirmation mode when intended.
+9. Exercise the first real consequential action only on an explicitly approved low-impact resource with independent external-side-effect verification.
+10. Confirm persisted custody→confirmation→execution→outcome→evaluation trace.
+11. Do not expand grants/users/resources automatically after success.
+
+## Required final adversarial campaign
+
+Before claiming final action readiness, test at least:
+
+- cross-user confirmation;
+- cross-tenant/company/resource binding;
+- forged browser/model permissions;
+- forged upstream actor identity;
+- altered confirmation arguments/fingerprint;
+- duplicate confirmation;
+- stale/lost action execution lease;
+- late response after lease loss;
+- ambiguous transport outcome → `UNCERTAIN`;
+- kill-switch denial;
+- prompt/tool-output injection attempting policy escape;
+- safe observability with no grant/actor/credential/custody leakage.
+
+Hard failure: any platform-caused unauthorized or duplicate external side effect.
 
 ## Emergency rollback
 
-There is intentionally no public HTTP endpoint that mutates the action kill switch.
+There is intentionally no public browser endpoint that mutates canonical action permissions or the kill switch.
 
-For remote production, disable new confirmations by setting:
+Disable new governed executions by setting:
 
 ```text
 ACADEMY_ACTIONS_ENABLED=false
 ```
 
-and promoting/restarting the host with that configuration. Verify `/api/production/health` reports the action kill switch engaged and `/api/release0/capabilities` no longer advertises executable actions.
+and deploying/restarting with that configuration. Verify the exact deployed SHA and that capabilities/health no longer advertise executable actions.
 
 Rollback rules:
 
-- never replay an `UNCERTAIN` action automatically;
+- never auto-replay `UNCERTAIN`;
 - never reuse an old idempotency claim for a new proposal;
-- do not weaken grants to work around a policy block;
-- do not expose a public/admin browser endpoint for canonical action permissions or kill-switch mutation;
-- preserve custody, ledger, execution, observability, and lease records for incident review.
+- never weaken grants to work around policy denial;
+- never expose a public/admin client-side permission or kill-switch authority;
+- preserve custody/ledger/execution/evaluation/lease records for incident review.
 
 ## Incident triage
 
-For an unexpected action outcome, capture only safe identifiers and states: action id, execution run id, tool name, impact, safe policy reason code, release SHA, and timestamps. Do not copy raw credentials, private grant JSON, raw TRACTIAN payloads, or private model reasoning into tickets or browser-visible evidence.
+Capture only safe identifiers/state needed for diagnosis: opaque action ID, execution run ID, tool name, safe impact class/reason code, release SHA and timestamps. Do not copy raw credentials, grant/actor JSON, raw TRACTIAN payloads or private model reasoning.
 
-If the external outcome cannot be independently established, leave the action as `UNCERTAIN`, keep automatic retry disabled, and require a new operator-reviewed proposal after the external system state has been reconciled.
+If external outcome cannot be independently established, leave the action `UNCERTAIN`, disable automatic retry and require external-state reconciliation plus a new operator-reviewed proposal.
+
+## Release claim discipline
+
+Use the following distinctions precisely:
+
+```text
+action architecture implemented       ≠ end-user action accepted
+governed transport smoke 5/5          ≠ full SECURITY-V1
+action accepted by TRACTIAN           ≠ distributed exactly-once guarantee
+source/CI green                        ≠ exact production SHA accepted
+```
+
+See [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md), [`SECURITY-MODEL.md`](SECURITY-MODEL.md) and the current dated progress note for the latest state.

@@ -1,218 +1,277 @@
 # Academy × TRACTIAN — Delivery Plan
 
 **Status:** ACTIVE execution plan  
-**Last rebaseline:** 2026-09-07 BRT  
+**Last rebaseline:** 2026-09-08 BRT  
 **Delivery target:** 2026-09-08  
 **Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
-**Final DoD:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)
+**Final DoD:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)  
+**Current progress record:** [`progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md`](progress/2026-09-08-openrouter-v14-governed-actions-functional-acceptance.md)
 
-This plan is dependency-ordered. It separates the already promoted/hardened Release 0 from the remaining evidence required for the strongest defensible final delivery.
+This plan is dependency-ordered. The highest-value work is no longer broad feature development; it is closing the exact hosted acceptance/evidence gaps on the current architecture without weakening safety or the USD0 constraint.
 
 ## North Star
 
 ```text
 real remote multi-user product
-+ real TRACTIAN evidence
++ real TRACTIAN evidence/actions
 + safe grounded agent behavior
-+ trustworthy evaluation
-+ usable task-driven frontend
++ trustworthy independent evaluation
++ task-driven live frontend
 + quantitative production/security/value evidence
++ exact release provenance
 + USD0 actual project cash cost
 ```
 
-## Phase 0 — Release 0 vertical slice — DONE
+## Phase 0 — Original hosted Release 0 — DONE / HISTORICAL
 
-Original minimum promotion passed on backend `082d6f115c070fdc898df749b4b3018efd9ceeab`, workflow `hosted-production-release0-agent`, run `34069562818`.
+Original minimum promotion established the public Railway product, Neon PostgreSQL, managed IAM, tenant negatives, provisional hosted provider, real typed TRACTIAN read path, evidence/terminal/evaluator persistence and SSE under a read-only boundary.
 
-That immutable acceptance proved:
+Do not rewrite that historical evidence to match current production.
 
-- Railway public product;
-- Neon PostgreSQL;
-- managed IAM + tenant negatives;
-- provisional hosted Cloudflare provider;
-- real typed TRACTIAN read path;
-- provider → controller → evidence → terminal → evaluator;
-- safe terminal states;
-- persistence + SSE;
-- 18-operation capability surface;
-- external actions disabled;
-- USD0/no-paid-spillover/no-local-dependency.
+## Phase 1 — V13 live grounding/session hardening — DONE / HISTORICAL
 
-## Phase 1 — Production live hardening — DONE FOR DISCOVERED BLOCKERS
+Completed through the 2026-09-07 live campaign:
 
-Current backend/runtime: `08866da60245f58f217981b7ae668b10be45cc67` (V13).
+- human asset-label grounding;
+- no discoverable-ID request loops;
+- nested structured-ID handling;
+- condition-evidence and data-quality requirements;
+- explicit response-mode semantics;
+- managed-session read-burst resilience;
+- legitimate asset→point drill-down distinction.
 
-Live prompting on 2026-09-07 found and prospectively fixed:
+## Phase 2 — Governed actions + verification + duplicate-call invariant — DONE FOR IMPLEMENTED/SMOKED SCOPE
 
-- discoverable-ID requests;
-- nested asset/analysis ID parsing gaps;
-- redundant post-fleet `get_asset` loops;
-- premature terminal before condition evidence;
-- ambiguous `response_mode` semantics;
-- managed-session fan-out causing `managed_session_unavailable`;
-- explicit asset-label grounding/comparison gaps;
-- repeated completed single-asset data-quality reads.
+2026-09-08 progress:
 
-Final V13 retests passed the targeted behaviors. See [`progress/2026-09-07-release0-live-hardening-v13.md`](progress/2026-09-07-release0-live-hardening-v13.md).
+- [x] server-owned upstream TRACTIAN action actor architecture;
+- [x] five canonical actions executable under governed confirmation configuration;
+- [x] controlled production pre-deploy smoke 5/5 accepted HTTP 200;
+- [x] no credentials/resource IDs/user IDs/response bodies recorded by the smoke;
+- [x] independent verification V1 / claim-bounded verification surfaces;
+- [x] preserve ordinary authenticated read access for users without action grants;
+- [x] exact-success duplicate-call suppression independent of provider;
+- [x] preserve same-tool/different-arguments progressive drill-down.
 
-### Guardrail from the retests
+Still open: full end-user/adversarial action SECURITY-V1 and broader semantic action evaluation.
 
-Do not optimize tool count by tool name alone. Asset-level → `point_id` RMS/spectrum calls can be legitimate drill-down. Exact-duplicate metrics must include normalized arguments/resource target and evidence contribution.
+## Phase 3 — OpenRouter V14 migration — DEPLOYED / FUNCTIONAL GATE FAILING
 
-## Phase 2 — Task-driven first-user UX — DONE / PILOT EVIDENCE NEXT
+Production backend `5611687556b3d50c31f20fa85ede794f2500f05c` serves V14:
 
-Current hosted frontend: `1bc124a8d4dbd029178ff8129b25452129445de7`.
+```text
+provider = openrouter
+model    = nvidia/nemotron-3-super-120b-a12b:free
+route    = openrouter.chat_completions.v1.fixed_free
+fallback = disabled
+cost     = USD0 hard gate
+```
 
-Completed:
+### What already passes
 
-- [x] task-first global navigation: Home / Analyses / Technical;
-- [x] single primary natural-language entry on Home;
-- [x] human-readable progress;
-- [x] customer-first result + next step;
-- [x] contextual evidence instead of permanent evidence-first navigation;
-- [x] persisted analysis history;
-- [x] Technical sections for analysis/quality/data/system/actions/studies;
-- [x] managed-auth unavailable/invalid recovery states;
-- [x] full engineering observability retained;
-- [x] frontend/Playwright/required regression green before promotion.
+- [x] production deploy success;
+- [x] exact release identity;
+- [x] managed authentication/session;
+- [x] protected run submission;
+- [x] provider request accepted at least once with HTTP 200;
+- [x] exact pinned model observed in sanitized provider response;
+- [x] no raw provider request/response or credentials recorded;
+- [x] adapter fails closed on invalid/truncated completion.
 
-Next UX evidence:
+### Current blocker
 
-- lightweight ordinary run feedback isolated from controlled research datasets;
-- first-time-user task completion/friction measurement;
-- accessibility/responsive regression on the current task-driven navigation.
+B204 authenticated functional matrix:
 
-## Phase 3 — Broad live prompt/API coverage — ACTIVE P1
+```text
+F01 condition      run_437a59ba893a96e3f902  FAIL
+F02 causal         run_86c832ce46189200b613  FAIL
+F03 data quality   run_f081d5d45b0cf4caf4b3  FAIL
+```
 
-The current live evidence is strong for several asset/condition/data-quality paths, but it does **not** yet prove all 13 read operations or all semantic failure modes.
+All three stop before the first TRACTIAN call with `DECISION_SOURCE_FAILURE`.
 
-Priority live matrix:
+Sanitized first-call probe:
+
+```text
+HTTP 200
+exact model served
+assistant content present
+finish_reason = length
+```
+
+A bounded length/reasoning experiment then received HTTP 429 for every variant, so no change is promoted.
+
+## Phase 4 — Immediate P0: close V14 functional acceptance
+
+Do in this exact dependency order:
+
+1. **Measure OpenRouter key-tier/rate-limit state safely.** Use the dedicated safe probe; record no secret or raw provider material.
+2. **Wait/retry only under a bounded experimental protocol** when provider eligibility allows; do not introduce runtime retry as a hidden workaround.
+3. **Reproduce `finish_reason=length`.** Keep the exact production schema/tool visibility and provider/model pin.
+4. **Compare bounded candidates.** Examples already instrumented: current budget, explicit reasoning minimization/exclusion if supported, larger bounded completion budget. Preserve `allow_fallbacks=false`, `require_parameters=true`, strict schema, exact free-model pin and USD0.
+5. **Promote only a measured winner.** If all candidates remain unavailable/inconclusive, keep `INCONCLUSIVE` rather than modifying the runtime from intuition.
+6. **Add/retain regression tests** for the exact adapter contract and prior V13 semantics.
+7. **Run required CI on the exact candidate SHA.**
+8. **Deploy exactly that SHA** to `production-api`.
+9. **Verify release identity** before user-facing functional testing.
+10. **Rerun B204 F01/F02/F03 through real managed authentication.**
+11. Require **3/3 PASS** with OpenRouter provenance, real TRACTIAN tool calls, grounded terminal/response mode and persisted evaluation.
+12. Only then mark the provider migration functionally accepted and remove PR #222 draft status/merge block.
+
+Explicitly forbidden as shortcuts:
+
+- accepting `finish_reason=length`;
+- paid/model/provider fallback;
+- silent model substitution;
+- disabling structured-output validation without a controlled challenger;
+- unbounded retries;
+- bypassing managed authentication;
+- marking configuration/preflight as functional success.
+
+## Phase 5 — Broad live read/trajectory coverage — NEXT AFTER V14 GREEN
+
+Once V14 is 3/3, execute the canonical read/behavior matrix on the exact accepted production SHA.
+
+Priority surface:
 
 1. identity/company/fleet context;
-2. valid two-asset comparison using **two assets actually present in the same authorized fleet**;
-3. `list_analyses` + `get_analysis`;
+2. two-asset same-fleet comparison;
+3. analyses list/detail;
 4. RMS asset→point drill-down;
 5. spectrum asset→point drill-down;
 6. baseline comparison;
 7. data quality + condition trust;
-8. `get_model` when a structured model ID is exposed;
-9. `search_knowledge` → `get_knowledge_doc` with exact observed doc ID;
+8. model detail with observed model ID;
+9. knowledge search → document detail with observed ID;
 10. unavailable/missing-resource behavior;
-11. conflict/inconclusive/partial/complete response-mode semantics;
-12. anti-hallucination and false-precision prompts;
-13. action/prompt-injection challenges with zero action execution.
+11. complete/partial/inconclusive/conflict/unavailable semantics;
+12. anti-hallucination/false-precision prompts;
+13. provider/TRACTIAN malformed/failure paths.
 
 Measure at minimum:
 
 ```text
-read-operation coverage / 13
-HTTP success rate
+read coverage / 13
+HTTP/tool success rate
 tool calls / run
-exact duplicate call rate
+exact duplicate-success rate
 legitimate drill-down rate
 budget exhaustion rate
-unnecessary ID request rate
-terminal semantic correctness
-response_mode semantic correctness
+provider failure rate
+unnecessary ID-request rate
+terminal correctness
+response_mode correctness
 unsupported material claim rate
-safe action refusal rate
+p50/p95/p99 end-to-end and provider/tool latency
 ```
 
-### Automation boundary
+## Phase 6 — Full governed-action SECURITY-V1 — P0/P1 AFTER V14 GREEN
 
-`POST /api/runs` requires the real managed browser session. Do not bypass auth merely to automate a prompt battery. The existing `hosted-pilot` Railway service is a preflight process, not a second live agent runtime. If fully automated hosted prompt execution is needed, create a separately authorized test-harness identity/session path that preserves the same production trust boundary and is explicitly scoped as test infrastructure.
+Now that real governed write transport exists, complete the adversarial campaign rather than describing actions as future-only.
 
-## Phase 4 — Final provider decision — PENDING
+Required scenarios include:
 
-Execute frozen Provider Tournament v3 exactly as preregistered:
+- cross-user confirmation attempt;
+- cross-tenant/resource-binding attempt;
+- forged permissions/resource authority in browser/model payload;
+- altered confirmation arguments/fingerprint;
+- duplicate confirmation;
+- stale/lost execution lease;
+- ambiguous transport → `UNCERTAIN` with no auto-retry;
+- kill-switch denial;
+- prompt/tool-output injection attempting policy escape;
+- credential/grant/private-custody leakage checks;
+- exact release/action actor provenance.
+
+Hard failure: platform-caused unauthorized or duplicate external side effect.
+
+## Phase 7 — Capacity, failure and recovery evidence
+
+After the exact functional candidate is stable:
+
+1. auth/session concurrent-user stress;
+2. load staircase (for example 1→2→5→10→20→40… until an evidence-based stop); measure throughput, success/errors, p50/p95/p99 and component saturation/quota;
+3. short soak at sustainable load;
+4. derive capacity/SLO only from the observed distribution and product need;
+5. provider/TRACTIAN/DB/backend/SSE degraded/failure campaigns;
+6. continuous external availability monitoring if needed for the final operational claim, separate from deploy-time health checks;
+7. known-state backup/export + controlled mutation + isolated restore + row/schema/hash/app smoke;
+8. record measured RTO/RPO only.
+
+Do not add paid HA/replicas merely to strengthen a claim under the USD0 rule. If the production topology remains single-replica, state that limitation.
+
+## Phase 8 — Human semantic calibration
+
+Use real blinded labels before semantic judges become gating:
+
+- ~30–50 representative outputs if available;
+- two independent raters where feasible;
+- adjudication;
+- agreement statistic (e.g. Cohen κ/Krippendorff α when appropriate);
+- confusion/error analysis;
+- precision/recall/F1 or task-appropriate metrics;
+- explicit confidence/causal-language rubric.
+
+No fabricated labels or agreement statistics.
+
+## Phase 9 — Operational value experiment
+
+Compare equivalent `MANUAL` vs `AGENT-ASSISTED` tasks. Measure time to correct decision/completion, correctness, missing information, human steps and escalation. Keep task/order assignment controlled or randomized where possible.
+
+Candidate primary KPI:
 
 ```text
-17 scenarios × 5 repetitions × 2 candidates = 170 attempts
+ΔT = T_manual - T_agent
+relative reduction = (T_manual - T_agent) / T_manual
 ```
 
-Release 0 Cloudflare qualification is not proof of final superiority. Output remains evidence-backed selection or `NO_SELECTION`.
+Report uncertainty/CI when sample size supports it. Do not claim time saved before real observations.
 
-## Phase 5 — Security, capacity and recovery — PENDING
+## Phase 10 — Provider/tournament final decision
 
-Order:
+The current OpenRouter migration is a provisional production route, not final superiority evidence. Frozen historical tournaments remain historical. Any new comparison must use a new preregistered experiment/eligibility packet and respect provider availability/free-tier eligibility.
 
-1. full hosted SECURITY-V1 campaign;
-2. remote auth/session burst and concurrent-user coverage;
-3. load staircase to measured saturation/quota boundary;
-4. derive SLO from observed distributions/product need;
-5. provider/TRACTIAN/DB/backend/SSE failure campaign;
-6. real backup/export/restore drill;
-7. measured RTO/RPO only if supported.
+Output must be evidence-backed selection or explicit `NO_SELECTION`.
 
-No paid feature may be enabled to manufacture a stronger claim.
+## Phase 11 — Branch protection / release governance
 
-## Phase 6 — Governed consequential actions — DISABLED / FUTURE GATE
-
-Only after IAM/provider/TRACTIAN/security evidence is adequate:
+Latest observed GitHub state still reports:
 
 ```text
-action proposal
-→ deterministic validation
-→ private custody
-→ explicit opaque-ID confirmation
-→ fresh authorization + kill switch
-→ persistent idempotency
-→ non-transferable lease/fencing
-→ one exact remote attempt
-→ SUCCEEDED | FAILED | UNCERTAIN
+main.protected = false
+required status-check enforcement = off
 ```
 
-Hard failure: platform-caused duplicate external side effect.
+Apply branch protection/ruleset using the stable required gate if account/repository controls permit it. Verify by reading the branch metadata after configuration. Do not claim enforcement until GitHub reports it.
 
-Release 0 remains deny-all for external action execution.
+## Phase 12 — Final evidence freeze — LAST
 
-## Phase 7 — Human semantic calibration and operational value — PENDING
+Freeze only after all applicable hard gates on the exact candidate topology are resolved:
 
-### Semantic calibration
-
-Use blinded real human labels/adjudication before any semantic LLM judge becomes gating. Include agreement/error analysis and a calibrated confidence vocabulary.
-
-The live R310 causal run is a useful future calibration example: the response mode was correctly `partial`, but wording such as “grau de certeza alto” should be judged against a defined evidence-based rubric before being treated as calibrated.
-
-### Operational value
-
-Compare equivalent cases:
-
-```text
-MANUAL vs AGENT-ASSISTED
-```
-
-Primary candidate KPI: time to correct operational decision. Do not claim time saved before real observations exist.
-
-## Phase 8 — Adaptive challengers — DEFERRED
-
-Only after a measured bottleneck may adaptive depth/tool ordering/stopping/provider routing compete. Auth, tenant scope, RLS, schemas, action custody/confirmation/idempotency/leases, evaluator isolation and cost caps remain deterministic.
-
-## Phase 9 — Final evidence freeze — LAST
-
-Freeze/link:
-
-- exact production component identities;
-- USD0 evidence;
-- TAPI coverage;
+- backend/frontend/supplied-API SHAs and deployment IDs;
+- provider/model/route/cost evidence;
+- authenticated V14 functional 3/3 evidence;
+- canonical read coverage;
+- governed-action security evidence;
 - IAM/RLS/security;
-- provider decision;
-- TRACTIAN behavior/read coverage;
-- mode/grounding/evaluation results;
-- load/SLO and recovery/restore evidence;
-- action state/limitations;
-- human/value evidence or explicit non-claim;
-- current task-driven UX evidence;
-- runbooks, changelog and reversal triggers.
+- evaluation/verification and semantic calibration or explicit limitation;
+- capacity/SLO and recovery/restore evidence or bounded non-claim;
+- operational value or explicit no-data limitation;
+- TAPI coverage;
+- runbooks/changelog/presentation;
+- branch-protection state;
+- final reproduction/required CI;
+- rollback/reversal triggers.
 
-## Priority rule until delivery
+## Priority rule until final delivery
 
 ```text
-P0 safety/broken production/correctness
-→ P1 live read/grounding/semantic coverage
-→ final hard-gate evidence
-→ documentation/presentation integration
-→ optional polish
+P0 broken hosted functionality / safety / tenant / action / cost
+→ exact functional acceptance
+→ security/read/capacity/recovery hard evidence
+→ human semantic/value evidence
+→ documentation/presentation freeze
+→ optional challengers/polish
 ```
 
-A late change that cannot be retested does not silently enter the release.
+Do not start a LangGraph/multi-agent/RAG/Redis/Kafka/Kubernetes rewrite to solve the current provider completion/rate-limit blocker. The current architecture remains `NO_CHANGE` unless a measured architectural gap appears.

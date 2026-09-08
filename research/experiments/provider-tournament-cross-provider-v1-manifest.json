@@ -1,0 +1,135 @@
+{
+  "schema_version": "provider-tournament-cross-provider-v1-manifest",
+  "decision_id": "DP-005",
+  "status": "PREREGISTERED_BEFORE_ANY_DP005_LIVE_CALL",
+  "purpose": "Select an immediately usable hosted USD0-capable decision-source route after the selected Cloudflare route became unavailable due provider quota, without changing the frozen operational evaluation contract.",
+  "source_contract": {
+    "tournament_version": "provider-tournament-v3",
+    "manifest_path": "research/experiments/provider-tournament-v3-manifest.json",
+    "manifest_git_blob_sha1": "d18e0203b2eef4cb1e12ccb4668f4ea70b51054c",
+    "population_path": "research/experiments/provider-tournament-v3-population.json",
+    "population_git_blob_sha1": "6f81c748b560f2a7a12f52bea36c78b5ef98ea77",
+    "population_sha256": "4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9",
+    "rubric_adjudicator": "academy_tractian.provider_tournament_v3.adjudicate_v3_rubric",
+    "contract_mutation_allowed": false
+  },
+  "experimental_design": {
+    "experimental_unit": "scenario",
+    "scenario_count": 17,
+    "repetitions_per_candidate": 5,
+    "candidate_count": 3,
+    "attempts_per_candidate": 85,
+    "total_live_attempts": 255,
+    "candidate_order": "balanced_cyclic_rotation_by_scenario_and_repetition",
+    "failed_attempts_remain_in_denominator": true,
+    "warmup_calls_inside_tournament": 0,
+    "eligibility_probes_are_not_tournament_observations": true
+  },
+  "controlled_model": {
+    "base_model": "openai/gpt-oss-120b",
+    "reason": "The same base model is currently exposed by all three hosted routes, reducing model identity as a confounder when comparing provider routes."
+  },
+  "candidates": [
+    {
+      "candidate_id": "groq-gpt-oss-120b",
+      "provider_id": "groq",
+      "model": "openai/gpt-oss-120b",
+      "route_id": "groq.openai_compat.chat_completions.v1",
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "secret_name": "GROQ_API_KEY",
+      "cash_cost_claim": "FREE_PLAN_CAPABLE_NOT_ASSUMED"
+    },
+    {
+      "candidate_id": "nvidia-gpt-oss-120b",
+      "provider_id": "nvidia",
+      "model": "openai/gpt-oss-120b",
+      "route_id": "nvidia.integrate.chat_completions.v1",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "secret_name": "NVIDIA_API_KEY",
+      "cash_cost_claim": "HOSTED_TRIAL_FREE_ENDPOINT_CAPABLE"
+    },
+    {
+      "candidate_id": "openrouter-gpt-oss-120b-free",
+      "provider_id": "openrouter",
+      "model": "openai/gpt-oss-120b:free",
+      "route_id": "openrouter.chat_completions.v1.free.no_fallback",
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "secret_name": "OPENROUTER_API_KEY",
+      "cash_cost_claim": "MODEL_VARIANT_ZERO_TOKEN_PRICE",
+      "routing": {
+        "allow_fallbacks": false,
+        "require_parameters": true
+      }
+    }
+  ],
+  "request_contract": {
+    "ai_gateway_used": false,
+    "automatic_fallbacks": 0,
+    "automatic_json_repair": false,
+    "automatic_retries": 0,
+    "controller_owns_agent_loop": true,
+    "failed_attempts_remain_in_denominator": true,
+    "harness_runner_owns_tool_execution": true,
+    "max_input_tokens": 8000,
+    "max_output_tokens": 512,
+    "n": 1,
+    "provider_native_tool_execution": false,
+    "provider_side_state": false,
+    "stream": false,
+    "structured_output": "strict_json",
+    "temperature": 0,
+    "warmup_calls": 0,
+    "web_search_used": false
+  },
+  "hard_gates": {
+    "H02_private_gold_leakage": 0,
+    "H04_policy_binding_bypass": 0,
+    "H06_H10_provenance_integrity_rate": 1.0,
+    "H10_raw_provider_material_recorded": false,
+    "H10_usage_accounting_required_on_success": true,
+    "H11_min_success_rate": 0.9375,
+    "automatic_retry_count": 0,
+    "automatic_fallback_count": 0
+  },
+  "primary_metric": {
+    "name": "operational_outcome_accuracy",
+    "scoring": "frozen_v3_deterministic_rubric",
+    "material_improvement_absolute": 0.02
+  },
+  "selection_rule": {
+    "bootstrap_method": "hierarchical_paired_bootstrap",
+    "bootstrap_resamples": 10000,
+    "confidence_level": 0.95,
+    "bootstrap_seed": 20260908,
+    "sole_hard_gate_eligible_candidate": "PROMOTE",
+    "multiple_eligible_candidates": "PROMOTE a candidate only if its paired operational-outcome accuracy advantage is at least 0.02 and the 95% CI lower bound is greater than 0 against every other eligible candidate.",
+    "otherwise": "INCONCLUSIVE",
+    "latency_is_not_a_post_hoc_quality_tiebreaker": true,
+    "automatic_production_promotion": false
+  },
+  "secondary_metrics": [
+    "structured_response_success_rate",
+    "canonical_tool_selection_validity",
+    "canonical_argument_validity",
+    "repeat_stability",
+    "provider_success_rate",
+    "latency_p50_ms",
+    "latency_p95_ms",
+    "latency_p99_ms",
+    "input_tokens",
+    "output_tokens",
+    "failure_code_distribution"
+  ],
+  "evidence_policy": {
+    "raw_provider_request_recorded": false,
+    "raw_provider_response_recorded": false,
+    "secret_material_recorded": false,
+    "request_sha256_recorded": true,
+    "response_sha256_only_via_sanitized_model_call_provenance": true
+  },
+  "external_research_snapshot_2026_09_08": {
+    "groq": "Official Groq documentation lists openai/gpt-oss-120b and JSON Schema Structured Outputs; free-plan rate limits also list the model.",
+    "nvidia": "Official NVIDIA API Catalog exposes openai/gpt-oss-120b at integrate.api.nvidia.com and documents structured output support.",
+    "openrouter": "OpenRouter exposes openai/gpt-oss-120b:free and provider routing supports allow_fallbacks=false and require_parameters=true."
+  }
+}

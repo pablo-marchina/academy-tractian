@@ -66,6 +66,29 @@ def _nonnegative_int_or_none(value: Any) -> int | None:
     return value
 
 
+def _accept_openrouter_completion_content(*, finish_reason: Any, content: Any) -> str:
+    """Validate OpenRouter terminal metadata without accepting a truncated JSON decision.
+
+    Nemotron's free OpenRouter route can return ``finish_reason=length`` even when the emitted
+    structured decision is already a complete JSON object. Accept that provider quirk only when
+    the content is independently proven to be a complete JSON object. This does not repair output,
+    retry, relax the downstream decision schema, or accept arbitrary truncation.
+    """
+
+    if finish_reason not in ("stop", "length"):
+        raise ProviderHttpClientError("OPENROUTER_FINISH_REASON_INVALID")
+    if not isinstance(content, str) or not content.strip():
+        raise ProviderHttpClientError("OPENROUTER_OUTPUT_TEXT_INVALID")
+    if finish_reason == "length":
+        try:
+            decoded = json.loads(content)
+        except Exception:
+            raise ProviderHttpClientError("OPENROUTER_FINISH_REASON_INVALID") from None
+        if not isinstance(decoded, Mapping):
+            raise ProviderHttpClientError("OPENROUTER_FINISH_REASON_INVALID")
+    return content
+
+
 class Release0OpenRouterDecisionClientV14:
     """One-shot fixed-free OpenRouter client preserving the accepted V13 agent semantics.
 
@@ -160,6 +183,7 @@ class Release0OpenRouterDecisionClientV14:
     def complete(self, request: ProviderDecisionRequest) -> str:
         response = self._invoke_once(self.build_http_request(request))
         served_model = response.get("model")
+        # OpenRouter's structured-output path may omit model; when present it must remain pinned.
         if served_model is not None and served_model != self.model_id:
             raise ProviderHttpClientError("OPENROUTER_MODEL_MISMATCH")
 
@@ -171,8 +195,6 @@ class Release0OpenRouterDecisionClientV14:
             raise ProviderHttpClientError("OPENROUTER_CHOICE_INVALID")
         if choice.get("index") not in (None, 0):
             raise ProviderHttpClientError("OPENROUTER_CHOICE_INDEX_INVALID")
-        if choice.get("finish_reason") != "stop":
-            raise ProviderHttpClientError("OPENROUTER_FINISH_REASON_INVALID")
 
         message = choice.get("message")
         if not isinstance(message, Mapping) or message.get("role") != "assistant":
@@ -181,9 +203,10 @@ class Release0OpenRouterDecisionClientV14:
             raise ProviderHttpClientError("OPENROUTER_TOOL_CALL_REJECTED")
         if message.get("function_call") is not None:
             raise ProviderHttpClientError("OPENROUTER_FUNCTION_CALL_REJECTED")
-        content = message.get("content")
-        if not isinstance(content, str) or not content.strip():
-            raise ProviderHttpClientError("OPENROUTER_OUTPUT_TEXT_INVALID")
+        content = _accept_openrouter_completion_content(
+            finish_reason=choice.get("finish_reason"),
+            content=message.get("content"),
+        )
 
         usage = response.get("usage")
         usage_map = usage if isinstance(usage, Mapping) else {}
