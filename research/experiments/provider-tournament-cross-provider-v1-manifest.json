@@ -58,8 +58,7 @@
       "cash_cost_claim": "MODEL_VARIANT_ZERO_TOKEN_PRICE",
       "routing": {
         "allow_fallbacks": false,
-        "require_parameters": true,
-        "data_collection": "deny"
+        "require_parameters": true
       }
     }
   ],
