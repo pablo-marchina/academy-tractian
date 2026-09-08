@@ -19,7 +19,7 @@ ENDPOINT = os.environ.get(
     "NVIDIA_ENDPOINT",
     "https://integrate.api.nvidia.com/v1/chat/completions",
 ).strip()
-MODEL = os.environ.get("NVIDIA_MODEL_ID", "openai/gpt-oss-120b").strip()
+MODEL = os.environ.get("NVIDIA_MODEL_ID", "nvidia/nemotron-3-super-120b-a12b").strip()
 TIMEOUT_SECONDS = 45.0
 
 
