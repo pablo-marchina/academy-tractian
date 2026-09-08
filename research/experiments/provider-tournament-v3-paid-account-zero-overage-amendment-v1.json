@@ -1,0 +1,72 @@
+{
+  "schema_version": "provider-tournament-v3-paid-account-zero-overage-amendment-v1",
+  "decision_id": "DP-004",
+  "created_date": "2026-09-08",
+  "status": "PREREGISTERED_BEFORE_ANY_V3_INFERENCE",
+  "reason": "Hosted readiness established that the existing Cloudflare account has Workers default_usage_model=standard. Current official Cloudflare pricing states that Workers Free and Workers Paid each receive a 10,000 Neuron/day allocation at no charge, with Workers Paid billing only usage above that included allocation. The original v3 plan-state gate was therefore stricter than the experiment's cash-cost objective and blocks the real hosted topology despite a bounded zero-overage execution being possible.",
+  "external_facts": [
+    {
+      "source": "Cloudflare Workers AI Pricing",
+      "url": "https://developers.cloudflare.com/workers-ai/platform/pricing/",
+      "verified_date": "2026-09-08",
+      "fact": "Workers AI is included in Free and Paid Workers plans; both receive 10,000 Neurons/day at no charge; Workers Paid is charged only above the 10,000-Neuron daily free allocation; allocation resets at 00:00 UTC."
+    },
+    {
+      "source": "Cloudflare GraphQL Analytics API limitations",
+      "url": "https://developers.cloudflare.com/analytics/graphql-api/",
+      "verified_date": "2026-09-08",
+      "fact": "GraphQL Analytics is not authoritative for billing usage and therefore is not used as the tournament cash-cost gate."
+    }
+  ],
+  "readiness_evidence": {
+    "hosted_probe_date_utc": "2026-09-08",
+    "provider_inference_used": false,
+    "raw_account_response_recorded": false,
+    "account_identifier_recorded": false,
+    "observed_default_usage_model": "standard",
+    "observed_account_subscription_count": 0,
+    "v3_attempts_consumed_before_amendment": 0
+  },
+  "unchanged": {
+    "manifest_git_blob": "d18e0203b2eef4cb1e12ccb4668f4ea70b51054c",
+    "population_git_blob": "6f81c748b560f2a7a12f52bea36c78b5ef98ea77",
+    "population_sha256": "4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9",
+    "candidates": true,
+    "population": true,
+    "request_contract": true,
+    "five_repetitions": true,
+    "failed_attempts_remain_in_denominator": true,
+    "no_retry": true,
+    "no_fallback": true,
+    "no_gateway": true,
+    "no_actions": true,
+    "selection_rule": "provider-tournament-v3-selection-rule-amendment-v1"
+  },
+  "superseded_fields_only": {
+    "original_workers_plan_required": "Free",
+    "new_account_plan_eligibility": ["Workers Free", "Workers Paid"],
+    "condition_for_workers_paid": "The campaign must remain entirely inside the account's included 10,000 Neuron/day allocation. Paid overage is forbidden.",
+    "cash_cost_interpretation": "Incremental Workers AI inference charge attributable to this campaign must equal USD 0.00. This amendment does not claim that an already-existing Workers Paid subscription has zero account subscription cost."
+  },
+  "zero_overage_proof": {
+    "free_allocation_neurons_per_utc_day": 10000,
+    "daily_packet_worst_case_neurons": 8433.617856,
+    "daily_headroom_neurons": 1566.382144,
+    "daily_packet_worst_case_below_9000": true,
+    "budget_lease_acquired_before_reset": true,
+    "production_workers_ai_calls_blocked_while_lease_active": true,
+    "packet_starts_within_600_seconds_after_reset": true,
+    "one_repetition_per_distinct_utc_reset": true,
+    "no_other_known_project_workers_ai_usage_during_lease": true,
+    "project_cannot_claim_global_account_exclusivity_outside_the_control_plane": true,
+    "failure_boundary": "If exclusive-account conditions cannot be established for a reset window, do not execute that packet. If any evidence suggests non-campaign account usage during the window, stop before the next provider call and return INCONCLUSIVE rather than risk overage."
+  },
+  "hard_gate_restatement": {
+    "H01": "Observed campaign inference overage charge must equal USD 0.00; any charged Neuron, prepaid credit, paid fallback or gateway billing is FAIL.",
+    "H07": "Every packet starts after a distinct 00:00 UTC reset under a budget lease acquired before reset, with no known account inference between reset and packet start.",
+    "H08": "Frozen worst-case campaign usage for that reset is 8433.617856 Neurons, strictly below both the 9000 operational ceiling and the 10000 included allocation."
+  },
+  "allowed_outcomes": ["PROMOTE", "NO_SELECTION", "INCONCLUSIVE"],
+  "automatic_production_provider_promotion": false,
+  "claim_boundary": "This amendment authorizes no additional model, prompt, scenario, retry, fallback, action or production promotion. It only makes the account-plan gate match the current Cloudflare no-charge allocation while preserving a stricter zero-overage ceiling."
+}
