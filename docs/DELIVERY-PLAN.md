@@ -1,12 +1,13 @@
 # Academy × TRACTIAN — Delivery Plan
 
 **Status:** ACTIVE execution plan  
-**Last rebaseline:** 2026-09-07 BRT  
+**Last rebaseline:** 2026-09-08 BRT  
 **Delivery target:** 2026-09-08  
 **Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
+**Provider state:** [`PROVIDER-QUALIFICATION-STATUS-2026-09-08.md`](PROVIDER-QUALIFICATION-STATUS-2026-09-08.md)  
 **Final DoD:** [`DELIVERY-ACCEPTANCE.md`](DELIVERY-ACCEPTANCE.md)
 
-This plan is dependency-ordered. It separates the already promoted/hardened Release 0 from the remaining evidence required for the strongest defensible final delivery.
+This plan is dependency-ordered. Release 0 is already hosted; remaining work maximizes the strongest defensible final claim without retroactively rewriting failed experiments or weakening hard gates.
 
 ## North Star
 
@@ -14,205 +15,214 @@ This plan is dependency-ordered. It separates the already promoted/hardened Rele
 real remote multi-user product
 + real TRACTIAN evidence
 + safe grounded agent behavior
-+ trustworthy evaluation
++ trustworthy deterministic-first evaluation
 + usable task-driven frontend
-+ quantitative production/security/value evidence
-+ USD0 actual project cash cost
++ provider reliability proven quantitatively
++ claim-specific security/capacity/recovery evidence
++ USD0/no-paid-spillover boundary
 ```
 
 ## Phase 0 — Release 0 vertical slice — DONE
 
-Original minimum promotion passed on backend `082d6f115c070fdc898df749b4b3018efd9ceeab`, workflow `hosted-production-release0-agent`, run `34069562818`.
+Immutable Release 0 acceptance already proved the hosted minimum: Railway product, managed IAM, Neon PostgreSQL/RLS, provisional hosted provider, typed TRACTIAN reads, provider→controller→evidence→terminal→evaluator flow, persistence/SSE, 18-operation capability surface, external actions disabled and USD0/no-local-production boundary.
 
-That immutable acceptance proved:
+## Phase 1 — V13 production live hardening — DONE FOR DISCOVERED BLOCKERS
 
-- Railway public product;
-- Neon PostgreSQL;
-- managed IAM + tenant negatives;
-- provisional hosted Cloudflare provider;
-- real typed TRACTIAN read path;
-- provider → controller → evidence → terminal → evaluator;
-- safe terminal states;
-- persistence + SSE;
-- 18-operation capability surface;
-- external actions disabled;
-- USD0/no-paid-spillover/no-local-dependency.
+The 2026-09-07 prompt-driven hardening addressed discoverable-ID requests, nested resource parsing, post-fleet metadata loops, missing condition evidence, response-mode semantics, managed-session fan-out, explicit asset grounding/comparisons and completed data-quality repetition.
 
-## Phase 1 — Production live hardening — DONE FOR DISCOVERED BLOCKERS
+See [`progress/2026-09-07-release0-live-hardening-v13.md`](progress/2026-09-07-release0-live-hardening-v13.md).
 
-Current backend/runtime: `08866da60245f58f217981b7ae668b10be45cc67` (V13).
+Guardrail: same-name RMS/spectrum calls are not loops by name alone; compare normalized arguments/resource/evidence contribution.
 
-Live prompting on 2026-09-07 found and prospectively fixed:
+## Phase 2 — Task-driven first-user UX — DONE / USER EVIDENCE REMAINS
 
-- discoverable-ID requests;
-- nested asset/analysis ID parsing gaps;
-- redundant post-fleet `get_asset` loops;
-- premature terminal before condition evidence;
-- ambiguous `response_mode` semantics;
-- managed-session fan-out causing `managed_session_unavailable`;
-- explicit asset-label grounding/comparison gaps;
-- repeated completed single-asset data-quality reads.
+Hosted UX is Home / Analyses / Technical with contextual result/evidence. First-time-user task/friction/accessibility measurement remains useful but is no longer the current blocking engineering path.
 
-Final V13 retests passed the targeted behaviors. See [`progress/2026-09-07-release0-live-hardening-v13.md`](progress/2026-09-07-release0-live-hardening-v13.md).
+## Phase 3 — Final provider path — ACTIVE P0/P1
 
-### Guardrail from the retests
+### 3.1 Paired V4 attempt — CLOSED WITHOUT COMPARATIVE RESULT
 
-Do not optimize tool count by tool name alone. Asset-level → `point_id` RMS/spectrum calls can be legitimate drill-down. Exact-duplicate metrics must include normalized arguments/resource target and evidence contribution.
+V4 prepared Cloudflare and Groq serving paths for GPT-OSS-120B on the same frozen 17×5 population. Cloudflare was quota-blocked during preflight, and the user explicitly removed Cloudflare from the requested path. No paired comparative winner may be claimed.
 
-## Phase 2 — Task-driven first-user UX — DONE / PILOT EVIDENCE NEXT
+### 3.2 Groq-only qualification — DONE / FAILED HARD GATES
 
-Current hosted frontend: `1bc124a8d4dbd029178ff8129b25452129445de7`.
+Groq `openai/gpt-oss-120b` completed the full 85/85 single-provider qualification.
 
-Completed:
-
-- [x] task-first global navigation: Home / Analyses / Technical;
-- [x] single primary natural-language entry on Home;
-- [x] human-readable progress;
-- [x] customer-first result + next step;
-- [x] contextual evidence instead of permanent evidence-first navigation;
-- [x] persisted analysis history;
-- [x] Technical sections for analysis/quality/data/system/actions/studies;
-- [x] managed-auth unavailable/invalid recovery states;
-- [x] full engineering observability retained;
-- [x] frontend/Playwright/required regression green before promotion.
-
-Next UX evidence:
-
-- lightweight ordinary run feedback isolated from controlled research datasets;
-- first-time-user task completion/friction measurement;
-- accessibility/responsive regression on the current task-driven navigation.
-
-## Phase 3 — Broad live prompt/API coverage — ACTIVE P1
-
-The current live evidence is strong for several asset/condition/data-quality paths, but it does **not** yet prove all 13 read operations or all semantic failure modes.
-
-Priority live matrix:
-
-1. identity/company/fleet context;
-2. valid two-asset comparison using **two assets actually present in the same authorized fleet**;
-3. `list_analyses` + `get_analysis`;
-4. RMS asset→point drill-down;
-5. spectrum asset→point drill-down;
-6. baseline comparison;
-7. data quality + condition trust;
-8. `get_model` when a structured model ID is exposed;
-9. `search_knowledge` → `get_knowledge_doc` with exact observed doc ID;
-10. unavailable/missing-resource behavior;
-11. conflict/inconclusive/partial/complete response-mode semantics;
-12. anti-hallucination and false-precision prompts;
-13. action/prompt-injection challenges with zero action execution.
-
-Measure at minimum:
+Official result: **`NO_SELECTION`**.
 
 ```text
-read-operation coverage / 13
-HTTP success rate
-tool calls / run
-exact duplicate call rate
-legitimate drill-down rate
-budget exhaustion rate
-unnecessary ID request rate
-terminal semantic correctness
-response_mode semantic correctness
-unsupported material claim rate
-safe action refusal rate
+rubric pass       69/85 = 81.18%
+reliability       70/85 = 82.35%
+contract failures 9
+repeat stability  11/17 = 64.71%
+p50               1.154 s
+p95               2.904 s
 ```
 
-### Automation boundary
+This run does not authorize production promotion.
 
-`POST /api/runs` requires the real managed browser session. Do not bypass auth merely to automate a prompt battery. The existing `hosted-pilot` Railway service is a preflight process, not a second live agent runtime. If fully automated hosted prompt execution is needed, create a separately authorized test-harness identity/session path that preserves the same production trust boundary and is explicitly scoped as test infrastructure.
+### 3.3 Causal failure diagnosis — ACTIVE
 
-## Phase 4 — Final provider decision — PENDING
+Current hypotheses:
 
-Execute frozen Provider Tournament v3 exactly as preregistered:
+- 512 tokens contribute to some finish failures;
+- 512 is not the sole cause of invalid payloads;
+- 2048 alone does not solve the structural failure class;
+- `strict:false` is strongly implicated in relationally invalid decision objects;
+- reasoning effort materially changes output size/latency/stability;
+- low reasoning is promising but not yet proven superior.
+
+Current planned diagnostic:
 
 ```text
-17 scenarios × 5 repetitions × 2 candidates = 170 attempts
+7 failure-prone/control scenarios × 3 configs = 21 calls
+B0 best-effort / medium / 512
+B1 best-effort / medium / 2048
+B2 best-effort / low / 2048
 ```
 
-Release 0 Cloudflare qualification is not proof of final superiority. Output remains evidence-backed selection or `NO_SELECTION`.
+Partial matrices affected by overlapping Railway deployments or admission throttling are not accepted as a completed 21/21 result.
+
+### 3.4 Rate/admission characterization — ACTIVE prerequisite
+
+Benchmark-shaped 2048-token Groq calls showed 429 behavior not adequately predicted by the earlier emitted-token pacing formula. Before re-running 21/21, measure the provider's effective request-admission behavior with the frozen one-shot diagnostic:
+
+- diagnostic `8cec9f8d7e596bda27a4459ac4130319547d2f5e`;
+- bootstrap `0ecc8365f3908f6ddc8521998436a30eee2d5507`.
+
+Do not treat a provider-capacity rejection as model-quality evidence.
+
+### 3.5 Recover canonical `ActionRequest` — PENDING
+
+Recover the exact supplied TRACTIAN OpenAPI component used by the five action request bodies. Do not guess it. Strict action-output variants cannot be declared complete until this contract is available.
+
+### 3.6 Build canonical `strict:true` challenger — PENDING AFTER 3.3/3.5
+
+Generate closed output variants from existing ToolSpecs/OpenAPI/Release 0 contracts:
+
+```text
+TOOL::<canonical tool> | FINAL | CLARIFY | ESCALATE | ABSTAIN
+```
+
+Keep `ProviderDecisionPayload`, argument validation, controller policy and action safety as deterministic post-generation barriers.
+
+### 3.7 Strict eligibility preflights — PENDING
+
+Run only small compatibility probes before exposing the frozen evaluation population. Eligibility must prove that the provider accepts the generated schema and produces application-valid decisions without repair.
+
+### 3.8 Freeze causally justified challengers — PENDING
+
+Expected set, only if evidence supports it:
+
+```text
+B0 original: best-effort / medium / 512
+B1 budget:   best-effort / medium / 2048
+C1 strict:   strict / medium / 2048
+C2 strict:   strict / low / 2048
+```
+
+C1/C2 are not automatically eligible merely because Groq advertises structured outputs.
+
+### 3.9 Controlled challenger comparison — PENDING
+
+Use the same rubric and same safety/contract semantics. No post-hoc gate relaxation.
+
+Original hard gates:
+
+```text
+private/binding attempts = 0
+unknown tools = 0
+invalid known-tool args = 0
+schema/contract failures = 0
+trace/provenance failures = 0
+reliability >= 93.75%
+```
+
+### 3.10 Winner-only fresh 85/85 — PENDING
+
+Only a challenger that wins the controlled comparison and passes hard gates receives a new full 17×5 qualification. Failed attempts remain denominator; no selective rerun.
+
+### 3.11 Academy live E2E before production — PENDING
+
+A qualification winner must still pass:
+
+- Academy live end-to-end behavior;
+- causal/RMS regression;
+- auth/tenant/persistence/SSE smoke;
+- provider failure behavior;
+- action-safety gate if actions are ever enabled.
+
+Only then may an explicit production provider promotion be considered.
+
+## Phase 4 — Broader live prompt/API coverage — P1
+
+Continue recent live coverage across canonical reads and semantic failure modes, including:
+
+1. identity/company/fleet;
+2. two real in-fleet assets for bilateral comparison;
+3. analyses/detail;
+4. RMS asset→point;
+5. spectrum asset→point;
+6. baseline;
+7. data quality;
+8. model;
+9. knowledge search/doc;
+10. unavailable/conflict/inconclusive/partial/complete;
+11. anti-hallucination/false precision;
+12. action/prompt-injection challenges with zero execution.
+
+Measure read coverage, tool/argument correctness, duplicate vs drill-down rate, terminal semantics, response-mode correctness, unsupported-claim rate and action refusal.
 
 ## Phase 5 — Security, capacity and recovery — PENDING
 
 Order:
 
-1. full hosted SECURITY-V1 campaign;
-2. remote auth/session burst and concurrent-user coverage;
-3. load staircase to measured saturation/quota boundary;
-4. derive SLO from observed distributions/product need;
+1. full hosted SECURITY-V1;
+2. auth/session burst and concurrent-user coverage;
+3. load staircase / saturation / quota boundary;
+4. evidence-derived SLO;
 5. provider/TRACTIAN/DB/backend/SSE failure campaign;
-6. real backup/export/restore drill;
+6. known-state backup/export and isolated restore;
 7. measured RTO/RPO only if supported.
 
-No paid feature may be enabled to manufacture a stronger claim.
+Do not enable paid features merely to manufacture stronger delivery evidence.
 
-## Phase 6 — Governed consequential actions — DISABLED / FUTURE GATE
+## Phase 6 — Consequential external actions — DISABLED / FUTURE GATE
 
-Only after IAM/provider/TRACTIAN/security evidence is adequate:
-
-```text
-action proposal
-→ deterministic validation
-→ private custody
-→ explicit opaque-ID confirmation
-→ fresh authorization + kill switch
-→ persistent idempotency
-→ non-transferable lease/fencing
-→ one exact remote attempt
-→ SUCCEEDED | FAILED | UNCERTAIN
-```
-
-Hard failure: platform-caused duplicate external side effect.
-
-Release 0 remains deny-all for external action execution.
+Release 0 remains proposal/read-only. If actions are ever promoted, require deterministic validation, private custody, explicit opaque-ID confirmation, fresh authorization/kill switch, persistent idempotency, lease/fencing and `UNCERTAIN` handling for ambiguous ownership.
 
 ## Phase 7 — Human semantic calibration and operational value — PENDING
 
-### Semantic calibration
+Semantic LLM judges remain non-gating until calibrated against blinded human labels. Operational-value claims require a real MANUAL vs AGENT-ASSISTED comparison; do not claim time saved from intuition.
 
-Use blinded real human labels/adjudication before any semantic LLM judge becomes gating. Include agreement/error analysis and a calibrated confidence vocabulary.
+## Phase 8 — Adaptive/framework challengers — DEFERRED
 
-The live R310 causal run is a useful future calibration example: the response mode was correctly `partial`, but wording such as “grau de certeza alto” should be judged against a defined evidence-based rubric before being treated as calibrated.
-
-### Operational value
-
-Compare equivalent cases:
-
-```text
-MANUAL vs AGENT-ASSISTED
-```
-
-Primary candidate KPI: time to correct operational decision. Do not claim time saved before real observations exist.
-
-## Phase 8 — Adaptive challengers — DEFERRED
-
-Only after a measured bottleneck may adaptive depth/tool ordering/stopping/provider routing compete. Auth, tenant scope, RLS, schemas, action custody/confirmation/idempotency/leases, evaluator isolation and cost caps remain deterministic.
+LangGraph, multi-agent, RAG/vector DB, MCP, persistent memory, Redis/Kafka/Kubernetes or adaptive stopping/routing require a measured gap and controlled win. Provider/schema work does not justify unrelated architecture migration.
 
 ## Phase 9 — Final evidence freeze — LAST
 
-Freeze/link:
+Freeze/link only after the applicable gates settle:
 
 - exact production component identities;
-- USD0 evidence;
-- TAPI coverage;
+- provider decision and qualification evidence;
+- TAPI/read coverage;
 - IAM/RLS/security;
-- provider decision;
-- TRACTIAN behavior/read coverage;
-- mode/grounding/evaluation results;
-- load/SLO and recovery/restore evidence;
+- evaluation/stability/failure evidence;
+- capacity/SLO/recovery;
 - action state/limitations;
 - human/value evidence or explicit non-claim;
-- current task-driven UX evidence;
-- runbooks, changelog and reversal triggers.
+- task-driven UX evidence;
+- runbooks/changelog/reversal triggers.
 
 ## Priority rule until delivery
 
 ```text
-P0 safety/broken production/correctness
-→ P1 live read/grounding/semantic coverage
-→ final hard-gate evidence
+P0 safety / broken production / tenant / action / cost
+→ P0 provider causal diagnosis + hard-gate qualification
+→ P1 live read/semantic coverage
+→ P1 security/capacity/recovery evidence
 → documentation/presentation integration
 → optional polish
 ```
 
-A late change that cannot be retested does not silently enter the release.
+A late change that cannot be retested does not silently enter production.
