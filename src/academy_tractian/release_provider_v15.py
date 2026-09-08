@@ -131,7 +131,6 @@ class Release0NvidiaDecisionClientV15:
                 {"role": "user", "content": _provider_request_text(request)},
             ],
             "temperature": 0,
-            "n": 1,
             "stream": False,
             "max_tokens": RELEASE0_MAX_COMPLETION_TOKENS,
             "reasoning_effort": "low",
