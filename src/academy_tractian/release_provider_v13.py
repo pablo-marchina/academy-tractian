@@ -32,7 +32,7 @@ from .release_provider_v12 import (
 )
 
 
-RELEASE0_V13_GROUNDING_VERSION = "release0-initial-asset-grounding-v1"
+RELEASE0_V13_GROUNDING_VERSION = "release0-initial-asset-grounding-v2"
 RELEASE0_V13_GROUNDING_INSTRUCTION = """
 Release 0 initial asset grounding:
 - If the request contains a human-readable asset label such as R310 or R420 and the authenticated
@@ -41,7 +41,37 @@ Release 0 initial asset grounding:
 - A successful single-asset get_data_quality read satisfies that requested quality check for the
   currently constrained asset. Do not repeat get_data_quality for the same single-asset question;
   advance to any still-required condition evidence or answer from the evidence already obtained.
+- Repeating a successful direct measurement read is useful only when it can add distinct evidence.
+  If the same measurement modality returns an observation identical to one already obtained for the
+  single constrained asset, do not request that modality again. Switch to complementary evidence or
+  produce the best bounded answer supported by the evidence already collected.
 """.strip()
+
+
+_DIRECT_MEASUREMENT_READS_V13 = ("get_rms", "get_spectrum")
+
+
+def _has_repeated_identical_success(context, tool_name: str) -> bool:
+    """Detect information-equivalent successful observations without inspecting private arguments.
+
+    Provider observations contain the response body but not runtime-owned identity or credentials.
+    Two equal successful bodies from the same direct measurement modality are therefore a useful
+    adaptive non-progress signal: another identical read cannot add evidence. Distinct responses
+    remain eligible, preserving legitimate multi-point or changing-state investigations.
+    """
+
+    prior_bodies: list[object] = []
+    for observation in context.observations:
+        if (
+            observation.tool_name != tool_name
+            or observation.status != "success"
+            or not observation.executed
+        ):
+            continue
+        if any(observation.body == prior for prior in prior_bodies):
+            return True
+        prior_bodies.append(observation.body)
+    return False
 
 
 def _mandatory_asset_continuation_v13(request: ProviderDecisionRequest) -> bool:
@@ -75,7 +105,7 @@ def _schema_for_visible_tools_v13(request: ProviderDecisionRequest) -> dict[str,
 
 
 class Release0CloudflareDecisionClientV13(Release0CloudflareDecisionClientV12):
-    """V12 semantics plus a schema-enforced initial identity grounding step."""
+    """V12 semantics plus schema-enforced grounding and adaptive non-progress guidance."""
 
     def build_http_request(self, request: ProviderDecisionRequest) -> ProviderHttpRequest:
         base = super().build_http_request(request)
@@ -105,7 +135,7 @@ class Release0CloudflareDecisionClientV13(Release0CloudflareDecisionClientV12):
 
 
 class Release0ProviderDecisionSourceV13(Release0ProviderDecisionSourceV12):
-    """Close V12's initial-grounding gap and remove completed quality reads from the surface."""
+    """Close initial-grounding and repeated-evidence gaps on explicit asset investigations."""
 
     @staticmethod
     def _asset_discovery_registry(context, visible: Mapping[str, object]):
@@ -122,10 +152,7 @@ class Release0ProviderDecisionSourceV13(Release0ProviderDecisionSourceV12):
 
     def _visible_registry(self, context):
         visible = dict(super()._visible_registry(context))
-        if not (
-            _asset_investigation_request_v12(context.user_request)
-            and _data_quality_request_v12(context.user_request)
-        ):
+        if not _asset_investigation_request_v12(context.user_request):
             return visible
 
         state = _asset_state_v12(context)
@@ -135,15 +162,28 @@ class Release0ProviderDecisionSourceV13(Release0ProviderDecisionSourceV12):
         if not selected_asset_ids or missing_labels:
             return visible
 
-        require_every = len(_explicit_asset_labels_v12(context.user_request)) >= 2
-        missing_quality = _requirement_missing_ids_v12(
-            observations=context.observations,
-            selected_asset_ids=selected_asset_ids,
-            tool_names=frozenset({"get_data_quality"}),
-            require_every_selected_asset=require_every,
-        )
-        if not missing_quality:
-            visible.pop("get_data_quality", None)
+        explicit_labels = _explicit_asset_labels_v12(context.user_request)
+        require_every = len(explicit_labels) >= 2
+
+        if _data_quality_request_v12(context.user_request):
+            missing_quality = _requirement_missing_ids_v12(
+                observations=context.observations,
+                selected_asset_ids=selected_asset_ids,
+                tool_names=frozenset({"get_data_quality"}),
+                require_every_selected_asset=require_every,
+            )
+            if not missing_quality:
+                visible.pop("get_data_quality", None)
+
+        # Single-asset investigations may legitimately query one modality at different points.
+        # Keep the modality available while observations differ; once a successful body repeats,
+        # another same-modality call is information-equivalent and is removed from the next model
+        # surface. Multi-asset comparisons retain V12's per-asset constrained progression.
+        if len(explicit_labels) == 1 and len(selected_asset_ids) == 1:
+            for tool_name in _DIRECT_MEASUREMENT_READS_V13:
+                if _has_repeated_identical_success(context, tool_name):
+                    visible.pop(tool_name, None)
+
         return visible
 
 
