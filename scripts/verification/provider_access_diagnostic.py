@@ -19,7 +19,7 @@ def _redact(text: str) -> str:
         value = os.environ.get(key, "").strip()
         if value:
             text = text.replace(value, "<redacted>")
-    return text[:240]
+    return text[:400]
 
 
 def _request(method: str, url: str, headers: dict[str, str], body: dict[str, Any] | None = None) -> tuple[int, Any]:
@@ -44,6 +44,10 @@ def _request(method: str, url: str, headers: dict[str, str], body: dict[str, Any
 def _error_summary(payload: Any) -> dict[str, Any]:
     result: dict[str, Any] = {}
     if isinstance(payload, dict):
+        if payload.get("non_json") is not None:
+            result["non_json"] = _redact(str(payload.get("non_json")))
+        if payload.get("transport_error") is not None:
+            result["transport_error"] = str(payload.get("transport_error"))
         error = payload.get("error")
         if isinstance(error, dict):
             if error.get("type") is not None:
@@ -77,7 +81,7 @@ def main() -> int:
         or os.environ.get("ACADEMY_PROVIDER_API_TOKEN", "").strip()
     )
 
-    report: dict[str, Any] = {"schema_version": "provider-access-diagnostic-v1"}
+    report: dict[str, Any] = {"schema_version": "provider-access-diagnostic-v2"}
 
     if groq_key:
         headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
