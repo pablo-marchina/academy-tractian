@@ -2,59 +2,108 @@
 
 **Status:** ACTIVE assignment/output reference  
 **Original filename checkpoint:** 2026-09-02  
-**Current rebaseline:** 2026-09-07 BRT  
-**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)
+**Current rebaseline:** 2026-09-08 BRT  
+**Current state:** [`ACTIVE-PROJECT-STATUS.md`](ACTIVE-PROJECT-STATUS.md)  
+**Provider evidence:** [`PROVIDER-QUALIFICATION-STATUS-2026-09-08.md`](PROVIDER-QUALIFICATION-STATUS-2026-09-08.md)
 
-This crosswalk separates TAPI/delivered-package expectations from project-added production/quality constraints.
+This crosswalk separates TAPI/delivered-package expectations from project-added production and quality constraints.
 
 ## 1. Integrated deliverable
 
-The project delivers:
+The project delivers both required tracks:
 
-1. **Industrial Agent** — contextualizes/investigates industrial requests through typed TRACTIAN operations and produces safe grounded outcomes/proposals.
-2. **Agent Evaluation Framework** — evaluates observable tool/argument/trajectory/evidence/terminal/safety/failure/stability behavior and supports controlled experiments.
+1. **Industrial Agent** — contextualizes/investigates industrial requests using typed TRACTIAN operations and produces safe grounded outcomes/proposals.
+2. **Agent Evaluation Framework** — evaluates observable tool selection, arguments, trajectory, evidence, terminal behavior, safety, failures and stability through reproducible controlled experiments.
 
-Release 0 Execute remains proposal-only; external consequential action execution is disabled.
+Consequential external execution remains disabled in the promoted Release 0 scope.
 
-## 2. TAPI/delivery expectations mapped to current evidence
+## 2. TAPI expectations mapped to current evidence
 
 | Expectation | Current evidence / boundary |
 |---|---|
-| functional agent | hosted V13 provider→controller→tool→evidence→terminal path |
-| supplied TRACTIAN API use | canonical 18-operation typed contract; multiple real read paths proven |
-| function/tool selection | ToolSpec proposals + trace/evaluator |
-| argument validity | typed schema/B1 validation + resource-ID constraints |
-| resource grounding | authenticated identity/company/fleet + structured observed IDs |
-| process/trajectory | RunTrace + Technical Current analysis / trace |
-| evidence use | persisted evidence IDs, normalized read semantics, lineage |
-| response/conclusion | customer-safe terminal + explicit `response_mode` semantics |
-| clarification/abstention/escalation | promoted terminal behavior + persisted traces |
-| missing resource | V13 R420 case fails closed without invented ID/scope |
-| data quality | V13 explicit quality read + condition evidence path |
-| condition diagnosis | V13 mandatory analysis/RMS/spectrum evidence gate |
-| safety/high-impact behavior | deterministic policy + external actions disabled |
-| failure/degraded behavior | provider/tool/evidence/auth failure semantics + safe modes |
-| stability | repeated/campaign evaluation surfaces; broader live matrix pending |
-| technical experiment | frozen provider/architecture/evaluator evidence |
-| result analysis | machine-readable results + Technical evaluation/analytics surfaces |
-| reproducibility | clean clone, lockfiles, required CI, exact release identity |
-| documentation | active docs + ADRs + runbook + changelog + append-only evidence |
+| functional agent | hosted provider→controller→tool→evidence→terminal path |
+| supplied TRACTIAN API use | canonical 18-operation contract; real read paths proven |
+| function/tool selection | ToolSpec proposals + deterministic/rubric evaluation |
+| argument validity | typed schema/B1 validation + resource constraints |
+| resource grounding | authenticated identity/company/fleet + observed IDs |
+| observable process/trajectory | RunTrace + persisted Technical analysis |
+| evidence use | normalized evidence IDs/lineage |
+| response quality | terminal + explicit response-mode semantics |
+| clarification/abstention/escalation | promoted terminal behavior + frozen provider scenarios |
+| unavailable/conflicting evidence | explicit failure scenarios in provider population |
+| high-impact behavior | action-governance scenarios + external execution disabled |
+| failure behavior | provider/tool/auth/evidence failure semantics |
+| stability | 17 scenarios × 5 repetitions in provider qualification |
+| technical experiment | provider V4/Groq qualification + causal serving diagnosis |
+| results/limitations | machine-readable frozen manifests/results + current canonical status |
+| reproducibility | exact source/population/runner/bootstrap identities |
+| documentation | active docs + append-only 2026-09-08 progress evidence |
 | demonstration | normal hosted task-driven product + Technical depth |
 
-## 3. Project-added hard constraints
+## 3. Provider/evaluation evidence added 2026-09-08
 
-- actual project cash cost = USD0;
-- no automatic paid spillover;
-- remote production serving with no developer-machine dependency;
-- multi-user tenant safety;
-- systematic research before material decisions;
-- quantitative/Eval-Driven Development;
-- adaptive behavior only after measured advantage over simpler baseline;
-- safe live frontend observability.
+The final provider work materially strengthens the TAPI evaluation track.
 
-Final-quality gates include hosted security, capacity/SLO, restore/recovery, human semantic calibration and operational-value evidence.
+### Frozen population
 
-## 4. Current stack/state
+```text
+17 industrial decision scenarios × 5 repetitions
+= 85 attempts per candidate
+```
+
+Population SHA-256:
+
+`4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9`
+
+It covers normal reads, arguments, clarification/failure cases, conflicting/unavailable evidence and action governance.
+
+### Groq-only full qualification
+
+After Cloudflare was quota-blocked and explicitly removed from the requested path, Groq GPT-OSS-120B completed 85/85 under the frozen rubric/gates.
+
+Result: **`NO_SELECTION`**.
+
+```text
+rubric pass       69/85 = 81.18%
+reliability       70/85 = 82.35%
+contract failures 9
+repeat stability  11/17 = 64.71%
+p50 latency       1.154 s
+p95 latency       2.904 s
+```
+
+This negative result is useful evaluation evidence: the framework detects a provider/model that often selects correct reads but fails structural/terminal stability requirements.
+
+### Failure-analysis experiment
+
+The subsequent causal diagnostic separates:
+
+- completion-budget/finish effects;
+- best-effort structured-output conformance;
+- reasoning-effort effects.
+
+Observed evidence refutes “512 tokens are the only problem”: a call can finish normally with valid JSON and still violate the application decision contract.
+
+## 4. Evaluation quality / integrity boundary
+
+The project does **not** make the benchmark easier after a failure.
+
+Current hard provider gates remain:
+
+```text
+private/identity-material attempts = 0
+unknown-tool proposals = 0
+invalid known-tool arguments = 0
+schema/adapter contract failures = 0
+trace/provenance failures = 0
+reliability >= 93.75%
+```
+
+No automatic repair/fallback/selective rerun may hide scored failures.
+
+This supports the TAPI requirement that the full observable process, failure behavior and stability matter rather than just final prose quality.
+
+## 5. Current stack/state
 
 | Layer | Current choice/state |
 |---|---|
@@ -62,95 +111,78 @@ Final-quality gates include hosted security, capacity/SLO, restore/recovery, hum
 | API | FastAPI + Uvicorn |
 | schemas | Pydantic 2.x |
 | orchestration | custom `AgentController` promoted baseline |
-| provider wrapper | Release 0 V13 (`release_provider_v13.py`) |
+| production provider wrapper | Release 0 V13 line; provider remains provisional |
 | real tool boundary | `HarnessRunner` + canonical ToolSpec registry |
-| TRACTIAN transport | direct typed HTTPS adapter; live reads proved |
-| durable state | Neon PostgreSQL + psycopg |
-| browser IAM | Neon managed session, server-owned scope, bounded read cache |
+| TRACTIAN transport | direct typed HTTPS adapter |
+| durable state | Neon PostgreSQL + RLS |
+| browser IAM | Neon managed session; server-owned scope |
 | hosting | Railway production services |
-| provider | Cloudflare GLM-4.7-Flash provisional; final decision `NO_SELECTION` |
-| evaluation | deterministic-first production evaluator + controlled research layers |
+| provider final selection | **NO WINNER**; Groq-only 85/85 = `NO_SELECTION` |
+| evaluation | deterministic-first production evaluator + frozen research campaigns |
 | realtime | durable Postgres cursor + LISTEN/NOTIFY wake-up + authenticated SSE |
-| frontend | React/TypeScript/Vite/Caddy, task-driven Home / Analyses / Technical |
+| frontend | React/TypeScript/Vite/Caddy, Home / Analyses / Technical |
 
-## 5. 18-operation contract
+## 6. 18-operation contract
 
 ```text
 18 total canonical operations
-13 READ  → Release 0 read surface when provider + TRACTIAN transport enabled
+13 READ  → promoted read surface when provider + transport are enabled
 5 ACTION → represented/proposal-only; external execution disabled
 ```
 
-Current live testing does **not** yet claim every one of the 13 reads has been exercised by a recent V13 user prompt. Contract coverage and live exercised coverage are distinct metrics.
+Contract coverage and recent live user-prompt coverage remain distinct metrics.
 
-## 6. Current agent behavior relevant to TAPI
+## 7. Strict structured-output experiment
 
-### Discover instead of ask unnecessarily
+The current provider failure analysis justifies testing stricter structured decision generation, not weakening the controller contract.
 
-For asset investigations, V13 uses server-owned identity/company context and fleet listing to resolve discoverable IDs. Human labels like R310 are not treated as raw internal authority.
+Any `strict:true` challenger must derive closed per-tool/terminal variants from the canonical ToolSpecs/supplied OpenAPI, with `ProviderDecisionPayload` and deterministic argument/policy validation retained afterward.
 
-### Investigate with evidence appropriate to the question
+The exact supplied `ActionRequest` schema must be recovered before strict action variants are complete.
 
-- condition/diagnostic questions require analysis/RMS/spectrum evidence where applicable;
-- baseline/data-quality support context but do not replace condition evidence;
-- data-quality questions explicitly inspect data quality;
-- comparisons require evidence per requested asset;
-- missing requested resource returns bounded unavailability.
+## 8. Current agent behavior relevant to TAPI
 
-### Communicate uncertainty
-
-`response_mode` separates evidence completeness from the controller terminal:
-
-`complete | partial | inconclusive | conflict | unavailable`
-
-This prevents ordinary causal uncertainty from being mislabeled as total inconclusiveness while still bounding unsupported claims.
-
-## 7. User/reviewer outputs
-
-Current product exposes:
-
-- customer-safe result and next step;
-- response/evidence semantics;
-- contextual evidence references;
-- persisted history;
-- safe tool/model/policy provenance;
-- trace/runtime inspection;
-- deterministic post-runtime evaluation;
-- architecture/capability views;
-- proposal-only action/policy state;
-- analytics/research surfaces under Technical.
-
-The current UI organizes these by task rather than by four permanent engineering-depth tabs.
-
-## 8. Evaluation coverage
-
-Evaluation is designed to inspect correct function/tool, argument validity, trajectory, evidence/provenance, final operational conclusion, clarification/abstention/escalation, action safety, failures, repeated-run stability, reproducible identities and baseline-vs-candidate deltas.
-
-Current V13 live traces pass structural blocking checks for their tested scope. Semantic judges remain non-gating until real human calibration.
+- discover authorized resources instead of asking users for internal IDs when discoverable;
+- inspect evidence classes appropriate to the question;
+- preserve uncertainty through response modes;
+- fail closed for missing authorized resources;
+- keep actions proposal-only in the promoted product;
+- expose safe trace/evaluation evidence for review.
 
 ## 9. Deliberately not promoted
 
-LangGraph migration, multi-agent topology, RAG/vector DB, persistent memory, MCP, Redis/Kafka, Kubernetes/microservices and adaptive stopping/routing need a measured gap, USD0 eligibility and controlled challenger win.
+- Groq GPT-OSS-120B production use;
+- strict structured-output serving;
+- LangGraph migration;
+- multi-agent topology;
+- RAG/vector DB;
+- persistent memory;
+- MCP;
+- Redis/Kafka/Kubernetes;
+- adaptive stopping/routing.
+
+Each requires a measured gap and controlled promotion evidence.
 
 ## 10. Remaining final-delivery evidence
 
-- broader recent V13 live coverage across canonical reads;
-- true bilateral comparison with two real fleet assets;
-- knowledge/model/analysis/baseline live coverage;
-- anti-hallucination/false-precision/conflict prompt matrix;
-- multi-turn behavior if required;
-- full Provider Tournament v3;
-- SECURITY-V1;
-- load/capacity and evidence-derived SLO;
+- clean isolated 21/21 provider causal matrix;
+- exact `ActionRequest` recovery;
+- strict-schema eligibility/preflight if justified;
+- unchanged-rubric challenger comparison;
+- fresh 85/85 for a hard-gate winner;
+- Academy live E2E before provider promotion;
+- broader recent canonical read/semantic coverage;
+- true bilateral in-fleet comparison;
+- full SECURITY-V1;
+- load/capacity + evidence-derived SLO;
 - restore/recovery;
-- governed consequential actions if promoted;
 - human semantic calibration;
-- real operational-value comparison;
+- operational-value study or explicit non-claim;
 - final evidence freeze.
 
 ## 11. Demonstration contract
 
-Demonstrate the **normal hosted product**:
+Demonstrate the normal hosted product:
 
 ```text
 sign in
@@ -158,7 +190,7 @@ sign in
 → Result: conclusion + response mode + evidence
 → Analyses: persisted alternate run
 → Technical: trace / evaluator / architecture / actions
-→ exact limitations/non-claims
+→ exact provider/production limitations
 ```
 
-No separate demo-only, local or paid serving stack is compatible with the project claim.
+A truthful final presentation may say the provider framework rejected Groq GPT-OSS-120B under the current configuration; it must not call that run a production promotion or a comparative Cloudflare victory/loss.
