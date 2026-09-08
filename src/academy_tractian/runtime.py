@@ -6,7 +6,7 @@ from typing import Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from research.e2.controller import ControllerLimits, DecisionSource
+from research.e2.controller import AgentController, ControllerLimits, DecisionSource
 from research.e2.models import ExecutionBinding, RunTrace, ToolKind, ToolSpec
 from research.e2.runner import HarnessRunner
 from research.e2.tool_registry import (
@@ -23,7 +23,6 @@ from .action_safety import (
     ProductionActionAuthorizationContext,
     ProductionActionSafetyPolicy,
 )
-from .production_controller import ProductionAgentController
 
 
 class _FrozenModel(BaseModel):
@@ -91,9 +90,6 @@ class ProductionRuntime:
     auditable. ProductionActionSafetyPolicy owns the B2 action-safety decision, but this runtime
     still constructs it with execution disabled and zero permissions. No mutating action can
     reach transport in this slice.
-
-    The frozen ADR-004 controller remains unchanged for historical campaign provenance. Product
-    serving uses ``ProductionAgentController`` for prospective production-only invariants.
     """
 
     def __init__(
@@ -121,7 +117,7 @@ class ProductionRuntime:
         self.config_hash = _config_hash(self.config, self.registry)
 
     def run(self, request: ProductionRequest) -> RunTrace:
-        """Execute one production request through the hardened production controller."""
+        """Execute one production request through the validated provider-free controller."""
 
         binding = ExecutionBinding(
             identity_id=request.identity_id,
@@ -149,7 +145,7 @@ class ProductionRuntime:
             strict_arguments=True,
             resource_policy=resource_policy,
         )
-        controller = ProductionAgentController(
+        controller = AgentController(
             runner=runner,
             decision_source=self.decision_source,
             limits=ControllerLimits(
