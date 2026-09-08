@@ -1,0 +1,76 @@
+{
+  "schema_version": "provider-qualification-v4-1-groq-final-manifest-v1",
+  "status": "FROZEN",
+  "qualification_id": "provider-qualification-v4-1-groq-final-20260908",
+  "reason": "User explicitly removed Cloudflare from the final provider selection after Cloudflare remained unavailable due account quota. This is therefore a single-provider qualification, not a comparative tournament.",
+  "source_baseline": {
+    "repository": "pablo-marchina/academy-tractian",
+    "git_sha": "4364364266c6a88d4affd85cb3a734c774cd42c8"
+  },
+  "inherits_from": {
+    "manifest": "research/experiments/provider-tournament-v4-final-manifest.json",
+    "population_sha256": "4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9",
+    "scoring_core": "scripts/verification/provider_tournament_v4_final.py",
+    "serving_normalizations": "scripts/verification/provider_tournament_v4_final_frozen.py"
+  },
+  "candidate": {
+    "candidate_id": "groq-gpt-oss-120b",
+    "provider_id": "groq",
+    "model_id": "openai/gpt-oss-120b",
+    "route_id": "groq.openai_compat.chat_completions.v1"
+  },
+  "population": {
+    "unit_count": 17,
+    "repetitions": 5,
+    "attempt_count": 85,
+    "failed_attempts_remain_in_denominator": true
+  },
+  "protocol": {
+    "temperature": 0.0,
+    "max_completion_tokens": 512,
+    "reasoning_effort": "medium",
+    "automatic_retries": 0,
+    "automatic_fallbacks": 0,
+    "automatic_json_repair": false,
+    "provider_native_tool_execution": false,
+    "raw_provider_material_persisted": false,
+    "rate_limit_pacing_outside_latency_timer": true
+  },
+  "hard_gates": {
+    "identity_or_private_material_attempts": 0,
+    "unknown_tool_proposals": 0,
+    "invalid_known_tool_arguments": 0,
+    "schema_or_adapter_contract_failure_rate_max": 0.0,
+    "trace_provenance_failures": 0,
+    "successful_attempts_with_missing_usage": 0,
+    "minimum_success_rate": 0.9375
+  },
+  "selection_rule": {
+    "source": "existing V4 _select semantics for exactly one hard-gate-eligible candidate",
+    "pass": "PROMOTE:groq-gpt-oss-120b",
+    "fail": "NO_SELECTION",
+    "promotion_reason_on_pass": "SOLE_HARD_GATE_ELIGIBLE_CANDIDATE",
+    "production_promotion_authorized_by_qualification_alone": false
+  },
+  "reported_metrics": [
+    "operational_outcome_accuracy",
+    "Wilson 95% interval",
+    "reliability_success_rate",
+    "repeat_stability",
+    "tool unknown count",
+    "invalid argument count",
+    "contract failure count",
+    "trace failure count",
+    "latency p50/p95/p99",
+    "estimated list-price total cost",
+    "estimated list-price cost per rubric pass"
+  ],
+  "post_selection_gate": [
+    "winner-only Academy E2E live validation",
+    "causal/RMS regression",
+    "auth/tenant/persistence/SSE smoke",
+    "action-safety gate if consequential actions are enabled"
+  ],
+  "pre_scored_attempts": 0,
+  "non_scored_preflight_attempts_are_excluded": true
+}
