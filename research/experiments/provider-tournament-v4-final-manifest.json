@@ -72,7 +72,23 @@
     "timeout_seconds": 60,
     "raw_provider_material_persisted": false,
     "secrets_in_output": false,
-    "run_environment": "isolated Railway one-shot service; production serving configuration is not mutated"
+    "run_environment": "isolated Railway one-shot service; production serving configuration is not mutated",
+    "transport_headers": {
+      "user_agent": "academy-tractian-provider-tournament/1.0",
+      "accept": "application/json",
+      "applied_identically_to_both_candidates": true,
+      "reason": "Groq edge returned Cloudflare 1010 for Python urllib default browser signature during non-scored access preflight; explicit application identity restored normal API access without changing model semantics"
+    },
+    "groq_inter_attempt_pacing": {
+      "observed_live_account_tpm": 8000,
+      "measurement_source": "non-scored Groq preflight response headers on 2026-09-08",
+      "formula": "sleep(total_tokens / 8000 * 60 + 1 second) after each successful Groq attempt",
+      "http_429_cooldown_seconds": 60,
+      "pacing_included_in_provider_latency_metric": false,
+      "retry_after_failure": false,
+      "failed_attempts_remain_in_denominator": true,
+      "purpose": "prevent benchmark scheduler from inducing avoidable free-tier throttling; throughput/capacity is outside this provider-quality tournament"
+    }
   },
   "hard_gates": {
     "identity_or_private_material_attempts": 0,
@@ -110,5 +126,17 @@
       "auth/tenant/persistence/SSE smoke",
       "action-safety gate if consequential actions are enabled"
     ]
+  },
+  "pre_scored_run_amendment": {
+    "date": "2026-09-08",
+    "scored_attempts_completed_before_amendment": 0,
+    "non_scored_preflight_observations": [
+      "Groq default urllib signature rejected by edge with Cloudflare 1010; explicit application User-Agent yields model-list 200 and chat 200",
+      "Groq live account exposes 8000 TPM",
+      "Cloudflare tournament account returns Workers AI error 4006 because its 10000-Neuron daily free allocation is exhausted"
+    ],
+    "quality_or_scoring_rules_changed": false,
+    "population_changed": false,
+    "candidate_set_changed": false
   }
 }
