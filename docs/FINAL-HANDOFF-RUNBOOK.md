@@ -1,262 +1,328 @@
 # Academy × TRACTIAN — Production Handoff and Operations Runbook
 
 **Status:** ACTIVE operational how-to  
-**Last verified:** 2026-09-07 BRT  
+**Last verified:** 2026-09-08 BRT  
 **Public product:** https://production-web-production-c9d1.up.railway.app  
-**Current backend/runtime:** `08866da60245f58f217981b7ae668b10be45cc67`  
-**Current frontend:** `1bc124a8d4dbd029178ff8129b25452129445de7`
+**Current backend/runtime:** `5611687556b3d50c31f20fa85ede794f2500f05c`  
+**Backend deployment:** `542bf459-353d-432c-b2ff-b862cedf1574` — `SUCCESS`  
+**Current frontend:** `4364364266c6a88d4affd85cb3a734c774cd42c8`  
+**Frontend deployment:** `8375d735-539c-46af-b299-9ee4aca8e505` — `SUCCESS`
 
-This runbook covers current Release 0 V13 operation and safe future promotion. Local commands are development/reproduction only.
+This runbook covers the current hosted product, exact-SHA promotion, provider/action diagnostics and rollback. Local commands are development/reproduction only. Current OpenRouter V14 is deployed but **not functionally accepted**: the real authenticated B204 matrix currently fails at the first provider decision before any TRACTIAN read.
 
 ## 1. Production topology
 
 ```text
 Browser
-→ Railway production-web (Caddy / task-driven React)
+→ Railway production-web (Caddy / React)
    ├── /auth/* → Neon Auth
    └── /api/* + SSE → Railway production-api
                          ├→ Neon PostgreSQL/RLS
-                         ├→ Cloudflare provisional provider
+                         ├→ OpenRouter V14 fixed-free DecisionSource
+                         ├→ AgentController → HarnessRunner
                          └→ supplied TRACTIAN API
+                              ├→ 13 typed reads
+                              └→ 5 governed actions via server-owned action actors
 ```
-
-Release 0 is read-only with respect to consequential external TRACTIAN actions.
 
 ## 2. Hard operational envelope
 
-Production must preserve:
+Preserve at all times:
 
 - actual project cash cost = USD0;
-- no automatic paid spillover;
-- no localhost/developer-machine serving dependency;
-- managed user session + server-owned tenant authority;
-- PostgreSQL/RLS durable state;
-- exact backend release identity;
-- explicit provider/model route;
-- canonical typed TRACTIAN transport;
-- grounded structured resource IDs;
-- safe evidence/response-mode semantics;
-- no hidden reasoning/secrets in browser projections;
-- external consequential action execution disabled until separately promoted.
+- no automatic paid/model/provider fallback;
+- no localhost/developer-machine production dependency;
+- managed session + server-owned tenant/permission authority;
+- PostgreSQL/RLS durable truth;
+- exact release identity;
+- explicit provider/model/route provenance;
+- canonical `AgentController` + `HarnessRunner` authority boundary;
+- typed TRACTIAN transport only;
+- safe evidence/terminal/response-mode semantics;
+- no secrets/private gold/grants/custody/hidden reasoning in browser projections;
+- governed action confirmation/authorization/idempotency/lease invariants when actions are enabled.
 
-## 3. Health and diagnosis order
+## 3. Current provider identity
+
+```text
+provider_id  openrouter
+model_id     nvidia/nemotron-3-super-120b-a12b:free
+route_id     openrouter.chat_completions.v1.fixed_free
+fallbacks    disabled
+cost_policy  usd0-hard-gate
+```
+
+V14 accepts a provider decision only when there is exactly one assistant choice, exact model identity when returned, `finish_reason=stop`, no provider-side tool/function call and valid nonempty structured decision content.
+
+## 4. Health / diagnosis order
 
 ```text
 DNS/TLS/public frontend
 → managed auth/session
-→ production API /health + release identity
-→ Neon connectivity/RLS
-→ provider configuration/quota
+→ production API /health + exact release identity
+→ PostgreSQL/RLS
+→ provider configuration / model pin / quota
+→ provider response contract
 → DecisionSource/controller
-→ typed tool/policy
-→ TRACTIAN transport
+→ HarnessRunner/tool-policy
+→ TRACTIAN read/action transport
 → evidence/terminal/response_mode
-→ evaluator/persistence
+→ evaluator/verification/persistence
 → SSE/cursor catch-up
 → React projection
 ```
 
-Do not mask upstream problems with hidden retries/fallbacks.
+Never hide an upstream/provider problem with paid fallback, silent model substitution or unbounded retry.
 
-## 4. Managed-session incident diagnosis
+## 5. Current OpenRouter V14 incident signature
 
-If UI shows `managed_session_unavailable`:
-
-1. check `/health`; if health is 200, do not classify as general API outage;
-2. distinguish protected API `401` from `503`;
-3. `401 managed_session_invalid` means session must be re-established;
-4. `503 managed_session_unavailable` means managed identity validation is temporarily unavailable and is retryable;
-5. do not weaken auth or introduce stale-on-error to recover availability;
-6. verify GET/HEAD fan-out is using bounded 2-second server cache/singleflight;
-7. verify POST/non-read still validates fresh;
-8. verify frontend leaves authenticated state on invalid session and exposes retry on unavailable state.
-
-The #207 fix deliberately preserves fail-closed behavior while reducing identity-provider fan-out.
-
-## 5. Current frontend smoke
-
-After frontend-only promotion verify:
-
-1. public page loads/sign-in works;
-2. **Home** is the default primary destination;
-3. one natural-language question can be submitted;
-4. run opens customer result/progress;
-5. supporting evidence is reachable contextually;
-6. **Analyses** lists/selects persisted runs;
-7. **Technical** exposes Current analysis / Quality / Data / System / Actions / Studies;
-8. focus/visibility return does not cause a ghost-auth state;
-9. backend `/health` and release identity did not unexpectedly change;
-10. no external action execution is enabled.
-
-Frontend SHA may advance independently from backend SHA. Record both.
-
-## 6. Backend exact-SHA promotion
-
-A green PR/source merge does **not** automatically promote backend production.
-
-Procedure:
+The authenticated B204 functional campaign created:
 
 ```text
-select exact tested backend SHA
-→ required CI green
-→ set release identity variable without triggering an old snapshot
-→ trigger a fresh exact-commit Railway deployment
-→ verify build used exact RAILWAY_GIT_COMMIT_SHA
-→ wheel install + pip check
-→ TRACTIAN predeploy connectivity smoke
-→ application startup
-→ /health 200
-→ targeted live acceptance on the promoted behavior
+F01  run_437a59ba893a96e3f902
+F02  run_86c832ce46189200b613
+F03  run_f081d5d45b0cf4caf4b3
+```
+
+All three:
+
+```text
+managed auth          PASS
+POST /api/runs        202
+runtime worker        PASS
+OpenRouter decision   FAIL
+TRACTIAN calls        0
+terminal reason       DECISION_SOURCE_FAILURE
+```
+
+A sanitized response-shape probe observed:
+
+```text
+HTTP 200
+exact pinned model served
+assistant content present
+finish_reason = length
+```
+
+A bounded completion/reasoning comparison subsequently hit HTTP 429 for all variants and is therefore `INCONCLUSIVE`.
+
+### Operator rule
+
+Do not change the runtime until the provider quota/key-tier state is safely measured and the exact `length` failure can be reproduced under eligible conditions. Then compare only bounded fixes and promote a measured winner.
+
+## 6. Managed-session incident diagnosis
+
+If UI shows managed-session failure:
+
+1. check `/health`;
+2. distinguish protected API 401 from 503;
+3. 401 means invalid/expired session and must re-authenticate;
+4. 503 means temporary identity validation unavailability and is retryable;
+5. never add stale-on-error authorization;
+6. verify GET/HEAD bounded ≤2 s validated-context cache/singleflight;
+7. verify POST/non-read still fresh-validates;
+8. verify frontend reconciles state after invalid/unavailable signal and focus/visibility return.
+
+## 7. Frontend smoke
+
+After frontend promotion verify:
+
+1. public origin loads;
+2. sign-in works;
+3. Home is default task entry;
+4. natural-language question can be submitted;
+5. live progress/result state is truthful;
+6. supporting evidence is contextual;
+7. Analyses lists persisted runs;
+8. Technical exposes trace/quality/data/system/actions/verification/studies;
+9. frontend provider/action/release state matches backend-safe APIs;
+10. no browser surface exposes secret/private authority material.
+
+Record frontend and backend SHAs independently.
+
+## 8. Exact-SHA backend promotion
+
+A green source branch/PR is not production promotion.
+
+```text
+choose exact candidate SHA
+→ required CI green on that SHA
+→ hosted functional/security gates green for applicable scope
+→ trigger fresh Railway deploy from exact commit
+→ verify RAILWAY_GIT_COMMIT_SHA/artifact identity
+→ predeploy smokes
+→ application startup /health 200
+→ verify release endpoint exact SHA
+→ rerun targeted authenticated acceptance
 → record deployment/run evidence
 ```
 
-Do not use a generic redeploy when exact source provenance matters. A redeploy may reuse an old deployment snapshot.
-
-Current successful V13 deployment:
+Current backend:
 
 ```text
-SHA         08866da60245f58f217981b7ae668b10be45cc67
-deployment  062c3cc4-4ac9-48ac-be06-2b4c490cea2a
+SHA         5611687556b3d50c31f20fa85ede794f2500f05c
+deployment  542bf459-353d-432c-b2ff-b862cedf1574
 status      SUCCESS
 ```
 
-Original manual Release 0 acceptance workflow/run remains historical evidence and does not need to be falsified into a V13 acceptance run.
+It is a deployed candidate, not yet an accepted V14 functional release.
 
-## 7. Live agent smoke after backend promotion
+## 9. Authenticated V14 functional acceptance procedure
 
-At minimum choose prompts that verify:
+Use the real managed session; do not bypass auth.
 
-- identity/fleet discovery without asking for internal IDs;
-- one condition-evidence path;
-- data-quality path if changed;
-- response-mode semantics;
-- missing-resource fail closed;
-- read-only action challenge.
-
-Inspect Neon/Railway rather than only the displayed prose:
+Required immediate matrix:
 
 ```text
-run_id
-execution state
-tool sequence + arguments/status
-model calls
-tool proposals/calls
-policy blocks/errors
-terminal decision
-response_mode
-remote TRACTIAN HTTP path
-blocking evaluation checks
+B204 F01 explicit condition
+B204 F02 causal investigation
+B204 F03 data quality
 ```
 
-### Repetition rule
+For each run inspect:
 
-Do not count `get_rms`/`get_spectrum` repetitions by name only. Compare arguments and resource. Asset-level then `point_id`-specific read is valid drill-down; exact same target/args without new evidence is the redundancy candidate.
+- exact release SHA;
+- model/provider/route provenance;
+- model-call success/failure code;
+- tool sequence and normalized argument fingerprints;
+- real TRACTIAN HTTP calls/status;
+- policy blocks/errors;
+- terminal decision/message;
+- response mode;
+- persisted evidence/lineage;
+- structural/functional/evidence verification.
 
-## 8. Production smoke checklist
+Acceptance is 3/3 only when all cases reach real TRACTIAN tools and a valid grounded terminal/evaluation. `DECISION_SOURCE_FAILURE` or zero-tool completion is not a pass.
 
-- [ ] expected frontend deployment identity;
-- [ ] expected backend artifact/release SHA;
-- [ ] health truthful;
+## 10. Repetition / stopping rule
+
+Do not classify repetition by tool name alone.
+
+```text
+get_rms(asset)
+→ get_rms(asset, point_id=...)
+```
+
+may be valid drill-down. Exact successful duplicate operation + normalized arguments/resource must not execute twice in the same run after the evidence is already available.
+
+## 11. Governed action operation
+
+Current production architecture supports five canonical governed actions. Controlled pre-deploy smoke passed 5/5 HTTP 200.
+
+Before any real user-driven consequential action, verify:
+
+- exact release identity;
+- current provider functional readiness;
+- action capability mode;
+- server-owned authorization grant health;
+- complete upstream action actor coverage;
+- PostgreSQL custody/idempotency/action-lease health;
+- tenant/resource binding;
+- current SECURITY-V1 go/no-go state.
+
+Do not infer end-user action readiness from the 5/5 transport smoke.
+
+Detailed procedure: [`GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md`](GOVERNED-ACTIONS-PRODUCTION-RUNBOOK.md).
+
+## 12. Production smoke checklist
+
+- [ ] expected frontend SHA/deployment;
+- [ ] expected backend artifact/runtime SHA;
+- [ ] supplied API identity recorded;
+- [ ] `/health` truthful;
 - [ ] managed auth works;
-- [ ] invalid session 401 / temporary auth outage 503 behavior intact;
+- [ ] 401 vs 503 semantics intact;
 - [ ] tenant scope/RLS intact;
-- [ ] provider route/model explicit and no hidden fallback;
-- [ ] authorized fleet grounding works;
-- [ ] relevant TRACTIAN read succeeds;
-- [ ] no user request for discoverable internal IDs;
-- [ ] response_mode matches evidence/message;
-- [ ] safe provider/tool failure behavior;
-- [ ] terminal/evidence persist;
-- [ ] evaluator appears post-runtime;
-- [ ] authenticated SSE + reconnect/catch-up;
-- [ ] no forbidden/private fields in browser output;
-- [ ] no external consequential action execution;
-- [ ] USD0/no-paid-spillover boundary intact.
+- [ ] exact provider/model/route shown safely;
+- [ ] no hidden fallback / paid spillover;
+- [ ] provider decision contract succeeds for intended scenario;
+- [ ] real TRACTIAN read or governed action path succeeds as applicable;
+- [ ] exact duplicate-success suppression intact;
+- [ ] terminal/response mode matches evidence;
+- [ ] evaluator/verification persists post-runtime;
+- [ ] authenticated SSE/reconnect/catch-up;
+- [ ] no forbidden/private fields in browser/log evidence;
+- [ ] action mode/grants/actors match intended rollout;
+- [ ] no unexpected `UNCERTAIN` action;
+- [ ] branch/release governance state recorded.
 
-## 9. Local / CI reproduction
+## 13. Failure semantics
 
-```bash
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]" -e "research/e2[dev]"
-cd frontend
-npm ci --ignore-scripts --no-audit --no-fund
-```
-
-Representative validation:
-
-```bash
-python -m pytest -q tests
-cd frontend
-npm run typecheck
-npm test
-npm run build
-```
-
-Canonical full-product gates include `final-ci-required`, clean clone, full-product Playwright, production runtime and targeted Postgres/observability/EDD/IaC regressions.
-
-Provider-free CI is not a substitute for hosted provider/IAM/TRACTIAN acceptance.
-
-## 10. Failure semantics
-
-- invalid tool args → deterministic B1 block;
+- invalid tool args → deterministic schema block;
 - policy/authorization denial → no consequential transport;
-- missing authorized asset label → bounded unavailable, no cross-tenant guessing;
-- insufficient/conflicting evidence → calibrated response/terminal, never fabricate;
-- provider failure → safe failure mode;
+- missing asset → bounded unavailable, no cross-tenant guessing;
+- incomplete provider completion (`finish_reason != stop`) → provider decision failure, no tool authority;
+- provider HTTP 429/quota → explicit availability failure, never paid fallback;
 - TRACTIAN failure → normalized unavailable/error evidence;
-- managed-auth transient failure → 503 retryable, no stale auth;
-- read-only runtime lease loss → generation fencing;
-- future action ownership ambiguity → `UNCERTAIN`, no blind replacement attempt;
-- quota exhaustion → fail/degrade safely, never paid fallback;
+- managed-auth transient failure → 503, no stale auth;
+- runtime lease loss → generation fencing;
+- action ownership/transport ambiguity → `UNCERTAIN`, no blind replay;
 - SSE gap → durable cursor/catch-up.
 
-## 11. Rollback
+## 14. Rollback
 
 ```text
-stop further promotion
-→ preserve failing evidence/logs
-→ identify last known-good eligible artifact
-→ verify DB compatibility
-→ deploy known-good exact source/artifact
-→ production smoke
-→ verify tenant/action/cost boundaries
+stop promotion / disable risky capability if needed
+→ preserve failing evidence
+→ identify last known-good eligible exact artifact
+→ verify DB/schema compatibility
+→ deploy exact known-good source
+→ health/auth/tenant/provider/tool/action smoke
 → document incident + regression
 ```
 
-Do not change frozen evidence to erase a failed candidate.
+For action emergency stop set `ACADEMY_ACTIONS_ENABLED=false` and redeploy/restart exact configuration. Never auto-retry an `UNCERTAIN` action.
 
-## 12. Backup / restore
+Do not rewrite historical evidence to erase a failed candidate.
 
-Final RTO/RPO claims are still pending. A real drill must create known state, export/backup, restore to isolated safe environment, verify counts/integrity/tenant isolation and measure recovery/data-loss windows before any RTO/RPO claim.
+## 15. Backup / restore
 
-## 13. Security/privacy
-
-Never log/project provider/API/database/auth secrets, raw sensitive upstream payloads without a sanitized contract, benchmark gold/evaluator-private material, private action custody/idempotency keys or hidden chain-of-thought.
-
-See [`SECURITY-MODEL.md`](SECURITY-MODEL.md) and root [`SECURITY.md`](../SECURITY.md).
-
-## 14. Incident priority
+Final RTO/RPO remains unproven. Required real drill:
 
 ```text
-P0 auth/tenant escape, secret leak, unauthorized action, paid spillover, release-identity bypass
-P0 product cannot safely complete/stop a real read-only run
-P1 wrong grounding/conclusion/tool/evidence/response-mode behavior
-P1 persistence/SSE/history/session-resilience breakage
-P1 severe first-user friction
-P2 non-blocking visual/polish issue
+seed known state
+→ create real backup/export/restore point
+→ controlled mutation/loss scenario
+→ restore into isolated safe target
+→ verify schema + row counts + selected hashes + tenant isolation
+→ application smoke
+→ measure elapsed recovery and data-loss window
 ```
 
-## 15. Final presentation path
+Only then publish RTO/RPO.
 
-Use the normal hosted product, not a demo stack:
+## 16. Security / branch governance
 
-1. architecture overlay;
-2. signed-in Home/task boundary;
-3. one representative persisted/live investigation;
-4. result + response mode + supporting evidence;
-5. Analyses/history for a safe alternate outcome;
-6. Technical → Current analysis for trace/tools;
-7. Technical → Quality for evaluator;
-8. Technical → Actions for deny-all external execution boundary;
-9. deployment/auth/realtime overlay;
-10. limitations/non-claims.
+Current branch metadata still reports `main.protected=false`; the stable required CI gate exists but enforcement is external/pending. Do not describe direct mutation as technically blocked until GitHub reports protection active.
+
+Never log provider/API/database/auth secrets, raw private upstream/provider material, benchmark gold, action grant/actor JSON, private custody/idempotency or hidden reasoning.
+
+## 17. Incident priority
+
+```text
+P0 tenant escape / unauthorized action / secret leak / paid spillover / false release identity
+P0 real authenticated run cannot safely complete under promoted provider
+P1 wrong grounding/tool/evidence/terminal/response mode
+P1 persistence/SSE/session/action-state breakage
+P1 severe first-user friction
+P2 non-blocking visual polish
+```
+
+The current V14 0/3 authenticated functional gate is therefore a P0 release blocker.
+
+## 18. Final presentation / handoff path
+
+Use the normal hosted product and current state, not a demo stack:
+
+1. current architecture/provider/action overlay;
+2. signed-in Home;
+3. one verified successful persisted investigation after the V14 gate is green;
+4. result + response mode + evidence;
+5. Analyses/history;
+6. Technical trace/tool/evidence;
+7. Quality/Verification distinction;
+8. Actions governed-confirmation state and exact claim boundary;
+9. deployment/release provenance;
+10. remaining limitations/non-claims.
+
+Do not record a failed/incomplete V14 path as if it were final functional success. Historical V13 runs may be shown only when explicitly labeled historical.
