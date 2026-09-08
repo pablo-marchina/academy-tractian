@@ -16,9 +16,11 @@ from .release_identity import load_artifact_release_identity
 from .release_provider import (
     NO_PROVIDER_SELECTION_STATE,
     PROVISIONAL_RELEASE_PROVIDER_STATE,
-    validate_release_provider_config,
 )
-from .release_provider_v13 import build_release_provider_decision_source_factory_v13
+from .release_provider_v14 import (
+    build_release_provider_decision_source_factory_v14,
+    validate_release_provider_config_v14,
+)
 from .remote_production import create_remote_production_app, load_remote_production_config
 from .tractian_transport import ProductionTractianTransport
 from .trusted_action_authorization import ConfiguredServerOwnedActionAuthorizationSource
@@ -51,8 +53,6 @@ class NoConfiguredTractianTransport(RequestTransport):
         )
 
 
-# Compatibility alias for historical tests/imports. The canonical production concept is now
-# NoConfiguredTractianTransport; provider/model selection is governed only by DecisionSource.
 NoSelectedProviderTransport = NoConfiguredTractianTransport
 
 
@@ -83,8 +83,8 @@ def _tractian_transport_state(config: RemoteProductionConfig) -> str:
 def _decision_source_factory(config: RemoteProductionConfig):
     if not config.provider_calls_enabled:
         return NoSelectedProviderDecisionSource
-    validate_release_provider_config(config)
-    return build_release_provider_decision_source_factory_v13(config)
+    validate_release_provider_config_v14(config)
+    return build_release_provider_decision_source_factory_v14(config)
 
 
 def _provider_selection_state(config: RemoteProductionConfig) -> str:
@@ -187,7 +187,6 @@ def app_factory():
 
     tractian_transport_state = _tractian_transport_state(config)
     provider_selection_state = _provider_selection_state(config)
-    # Validate provider/TRACTIAN composition before PostgreSQL pools or runtime workers open.
     build_tractian_transport(config)
     decision_source_factory = _decision_source_factory(config)
 
@@ -213,9 +212,6 @@ def app_factory():
             authorization_source=action_authorization_source,
             actor_source=action_actor_source,
         )
-        # Ordinary authenticated users must retain read access even when they have no consequential
-        # action grant. Proposal-time authorization therefore gets a zero-action fallback while
-        # final confirmation continues to use strict tenant-aware authorize_context().
         authorization_resolver = ReadCapableConfiguredActionAuthorizationResolver(
             action_authorization_source
         )
