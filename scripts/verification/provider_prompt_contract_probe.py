@@ -13,7 +13,7 @@ from academy_tractian.provider_clients import PROVIDER_DECISION_JSON_SCHEMA, PRO
 from academy_tractian.runtime import canonical_tool_registry
 from research.e2.controller import ControllerContext
 
-SCHEMA_VERSION = "provider-prompt-contract-probe-v2"
+SCHEMA_VERSION = "provider-prompt-contract-probe-v3"
 SYNTHETIC_ASSET_ID = "asset_prompt_probe_001"
 EXPECTED_TOOL = "get_asset"
 PROVIDERS = {
@@ -25,7 +25,7 @@ PROVIDERS = {
     "nvidia": {
         "token_env": "NVIDIA_API_KEY",
         "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
-        "model": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
     },
     "openrouter": {
         "token_env": "OPENROUTER_API_KEY",
@@ -62,11 +62,10 @@ def _json_schema_response_format() -> dict[str, Any]:
 
 
 def request_body(provider_id: str, model: str, request_text: str) -> dict[str, Any]:
-    system_instruction = PROVIDER_DECISION_SYSTEM_INSTRUCTION
     body: dict[str, Any] = {
         "model": model,
         "messages": [
-            {"role": "system", "content": system_instruction},
+            {"role": "system", "content": PROVIDER_DECISION_SYSTEM_INSTRUCTION},
             {"role": "user", "content": request_text},
         ],
         "temperature": 0,
@@ -83,12 +82,18 @@ def request_body(provider_id: str, model: str, request_text: str) -> dict[str, A
             }
         )
     elif provider_id == "nvidia":
-        # NVIDIA's currently hosted v1.5 route documents the OpenAI-compatible
-        # chat-completions shape with max_tokens. Reasoning-off mode is requested
-        # in-band so the application can keep owning strict JSON validation even
-        # when the hosted profile does not advertise provider-side JSON schema.
-        body["messages"][0]["content"] = "/no_think\n" + system_instruction
-        body.update({"max_tokens": 512, "top_p": 1})
+        # Live catalog discovery is authoritative for this credential. The
+        # currently served Nemotron 3 Super route and NVIDIA's hosted examples
+        # both use max_tokens plus chat_template_kwargs.enable_thinking.
+        # Reasoning is disabled for this contract probe because the application
+        # requires exactly one final JSON payload and owns all strict validation.
+        body.update(
+            {
+                "max_tokens": 512,
+                "top_p": 1,
+                "chat_template_kwargs": {"enable_thinking": False},
+            }
+        )
     elif provider_id == "openrouter":
         # require_parameters deliberately fails closed when the selected route
         # cannot honor the exact request. Nemotron 3 Super advertises max_tokens,
@@ -186,7 +191,7 @@ def main() -> int:
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "academy-tractian-provider-prompt-contract-probe/2.0",
+            "User-Agent": "academy-tractian-provider-prompt-contract-probe/3.0",
         },
     )
 
