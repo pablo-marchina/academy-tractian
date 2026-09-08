@@ -165,7 +165,7 @@ def test_failed_search_does_not_trigger_document_or_retry_loop() -> None:
             _observation(
                 "search_knowledge",
                 {"error": "upstream unavailable"},
-                status="error",
+                status="failure",
                 status_code=503,
             ),
         )
