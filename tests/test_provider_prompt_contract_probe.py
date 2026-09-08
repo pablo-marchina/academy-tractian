@@ -27,7 +27,7 @@ def test_probe_never_imports_frozen_tournament_or_benchmark_population() -> None
     assert '"benchmark_inputs_loaded": 0' in source
 
 
-def test_nvidia_probe_uses_model_discovered_in_live_catalog_and_documented_reasoning_control() -> None:
+def test_nvidia_probe_uses_live_catalog_model_and_documented_guided_json_contract() -> None:
     probe = _load_probe()
     config = probe.PROVIDERS["nvidia"]
 
@@ -38,10 +38,13 @@ def test_nvidia_probe_uses_model_discovered_in_live_catalog_and_documented_reaso
     assert body["max_tokens"] == 512
     assert "max_completion_tokens" not in body
     assert "response_format" not in body
-    assert body["temperature"] == 0
+    assert body["temperature"] == 1.0
+    assert body["top_p"] == 0.95
     assert body["stream"] is False
     assert body["messages"][0]["content"] == probe.PROVIDER_DECISION_SYSTEM_INSTRUCTION
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
+    assert body["guided_json"] == probe.PROVIDER_DECISION_JSON_SCHEMA
+    assert body["guided_json"] is not probe.PROVIDER_DECISION_JSON_SCHEMA
 
 
 def test_openrouter_probe_requires_exact_capabilities_using_supported_max_tokens_name() -> None:
