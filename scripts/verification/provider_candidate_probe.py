@@ -37,27 +37,35 @@ def _request_config() -> tuple[str, dict[str, str], str]:
 
 def main() -> None:
     url, headers, model = _request_config()
+    provider = os.environ["PROVIDER_CANDIDATE_PROVIDER"]
+    max_completion_tokens = int(os.environ.get("PROVIDER_CANDIDATE_MAX_COMPLETION_TOKENS", "512"))
+    reasoning_effort = os.environ.get("PROVIDER_CANDIDATE_REASONING_EFFORT", "").strip()
     schema = {
         "type": "object",
         "properties": {"decision": {"type": "string", "enum": ["PASS"]}},
         "required": ["decision"],
         "additionalProperties": False,
     }
+    json_schema = schema
+    if provider == "groq":
+        json_schema = {"name": "provider_probe", "schema": schema, "strict": True}
     body = {
         "model": model,
         "messages": [
             {"role": "system", "content": "Return only data satisfying the supplied JSON schema."},
             {"role": "user", "content": "Return PASS."},
         ],
-        "response_format": {"type": "json_schema", "json_schema": schema},
+        "response_format": {"type": "json_schema", "json_schema": json_schema},
         "temperature": 0,
         "n": 1,
         "stream": False,
-        "max_completion_tokens": 64,
+        "max_completion_tokens": max_completion_tokens,
         "store": False,
         "tool_choice": "none",
         "parallel_tool_calls": False,
     }
+    if reasoning_effort:
+        body["reasoning_effort"] = reasoning_effort
     request = urllib.request.Request(
         url,
         data=json.dumps(body).encode("utf-8"),
@@ -74,10 +82,12 @@ def main() -> None:
         elapsed_ms = round((time.perf_counter() - started) * 1000)
         error_text = exc.read().decode("utf-8", errors="replace")[:1000]
         print(json.dumps({
-            "probe": "provider_candidate_contract_v1",
+            "probe": "provider_candidate_contract_v2",
             "status": exc.code,
-            "candidate_provider": os.environ["PROVIDER_CANDIDATE_PROVIDER"],
+            "candidate_provider": provider,
             "candidate_model": model,
+            "max_completion_tokens": max_completion_tokens,
+            "reasoning_effort": reasoning_effort or None,
             "latency_ms": elapsed_ms,
             "error_body": error_text,
         }, sort_keys=True))
@@ -99,15 +109,17 @@ def main() -> None:
         if key.startswith("x-ratelimit-") or key in {"retry-after"}
     }
     result = {
-        "probe": "provider_candidate_contract_v1",
+        "probe": "provider_candidate_contract_v2",
         "status": status,
-        "candidate_provider": os.environ["PROVIDER_CANDIDATE_PROVIDER"],
+        "candidate_provider": provider,
         "candidate_model": model,
         "observed_model": payload.get("model") if isinstance(payload, dict) else None,
         "object": payload.get("object") if isinstance(payload, dict) else None,
         "finish_reason": choice.get("finish_reason") if isinstance(choice, dict) else None,
         "schema_pass": isinstance(decoded, dict) and decoded.get("decision") == "PASS" and set(decoded) == {"decision"},
         "usage": payload.get("usage") if isinstance(payload, dict) else None,
+        "max_completion_tokens": max_completion_tokens,
+        "reasoning_effort": reasoning_effort or None,
         "latency_ms": elapsed_ms,
         "rate_limit_headers": rate_headers,
     }
