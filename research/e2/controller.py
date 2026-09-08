@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from enum import Enum
+import json
 from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .binding import validate_model_arguments
-from .models import Decision, ResponseMode, RunTrace, TraceEvent
+from .models import Decision, ResponseMode, RunTrace, ToolKind, TraceEvent
 from .runner import HarnessRunner, ToolExecution
 from .trace import append_event
 
@@ -136,6 +137,22 @@ class ControllerLimits(_FrozenModel):
     max_tool_calls: int = Field(default=6, ge=0, le=64)
 
 
+def _read_proposal_fingerprint(tool_name: str, arguments: dict[str, Any]) -> str:
+    """Canonical identity for one exact read proposal.
+
+    Provider decisions are JSON, so canonical JSON is sufficient and deliberately keeps this
+    invariant provider-independent. The fingerprint is used only within one run and is never
+    exposed to the model as authority.
+    """
+
+    return json.dumps(
+        {"tool_name": tool_name, "arguments": arguments},
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+
+
 class AgentController:
     """Provider-free single-agent controller over the frozen E2 execution boundary.
 
@@ -144,6 +161,10 @@ class AgentController:
     exclusively through HarnessRunner.execute_tool(). Auditable decision sources may expose
     sanitized model-call records through `drain_audit_records()`; the controller alone appends
     those records to the canonical trace.
+
+    Successful read calls are idempotent evidence within one run. An exact repeated read proposal
+    is contained before transport and returned to the decision source as a blocked observation so
+    a stochastic provider cannot burn the bounded tool budget repeating already-observed evidence.
     """
 
     def __init__(
@@ -259,6 +280,7 @@ class AgentController:
     def run(self, user_request: str) -> RunTrace:
         observations: list[ControllerObservation] = []
         tool_call_count = 0
+        successful_read_fingerprints: set[str] = set()
 
         for turn_index in range(self.limits.max_turns):
             context = ControllerContext(
@@ -303,6 +325,46 @@ class AgentController:
                 return self._finish_terminal(decision)
 
             assert decision.proposal is not None
+            proposal = decision.proposal
+            tool = self.runner.registry.get(proposal.tool_name)
+            fingerprint = None
+            if tool is not None and tool.kind is ToolKind.READ:
+                fingerprint = _read_proposal_fingerprint(
+                    proposal.tool_name,
+                    dict(proposal.arguments),
+                )
+                if fingerprint in successful_read_fingerprints:
+                    self._emit(
+                        "tool_proposal",
+                        tool_name=proposal.tool_name,
+                        arguments=dict(proposal.arguments),
+                    )
+                    self._emit(
+                        "policy_check",
+                        tool_name=proposal.tool_name,
+                        metadata={
+                            "allowed": False,
+                            "contained": True,
+                            "violation": "DUPLICATE_SUCCESSFUL_READ",
+                            "reason": "exact successful read already observed in this run",
+                            "stage": "CONTROLLER",
+                        },
+                    )
+                    observation = ControllerObservation(
+                        tool_name=proposal.tool_name,
+                        status="blocked",
+                        executed=False,
+                        blocked_code="DUPLICATE_SUCCESSFUL_READ",
+                    )
+                    observations.append(observation)
+                    self._emit(
+                        "observation",
+                        tool_name=proposal.tool_name,
+                        result=observation.model_dump(mode="json"),
+                        metadata={"controller_generated": True, "contained": True},
+                    )
+                    continue
+
             if tool_call_count >= self.limits.max_tool_calls:
                 return self._safe_abstain(
                     reason_code="TOOL_CALL_BUDGET_EXHAUSTED",
@@ -312,9 +374,9 @@ class AgentController:
             tool_call_count += 1
             try:
                 execution = self.runner.execute_tool(
-                    decision.proposal.tool_name,
-                    dict(decision.proposal.arguments),
-                    evidence_id=decision.proposal.evidence_id,
+                    proposal.tool_name,
+                    dict(proposal.arguments),
+                    evidence_id=proposal.evidence_id,
                 )
             except Exception:
                 return self._safe_abstain(
@@ -324,6 +386,8 @@ class AgentController:
 
             observation = self._observation_from_execution(execution)
             observations.append(observation)
+            if fingerprint is not None and observation.status == "success":
+                successful_read_fingerprints.add(fingerprint)
             if not execution.executed:
                 self._emit(
                     "observation",
