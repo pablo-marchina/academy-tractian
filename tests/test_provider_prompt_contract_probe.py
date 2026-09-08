@@ -27,20 +27,21 @@ def test_probe_never_imports_frozen_tournament_or_benchmark_population() -> None
     assert '"benchmark_inputs_loaded": 0' in source
 
 
-def test_nvidia_probe_uses_current_hosted_v15_contract_without_unadvertised_schema_parameter() -> None:
+def test_nvidia_probe_uses_model_discovered_in_live_catalog_and_documented_reasoning_control() -> None:
     probe = _load_probe()
     config = probe.PROVIDERS["nvidia"]
 
     body = probe.request_body("nvidia", config["model"], "synthetic-request")
 
-    assert config["model"] == "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+    assert config["model"] == "nvidia/nemotron-3-super-120b-a12b"
     assert body["model"] == config["model"]
     assert body["max_tokens"] == 512
     assert "max_completion_tokens" not in body
     assert "response_format" not in body
     assert body["temperature"] == 0
     assert body["stream"] is False
-    assert body["messages"][0]["content"].startswith("/no_think\n")
+    assert body["messages"][0]["content"] == probe.PROVIDER_DECISION_SYSTEM_INSTRUCTION
+    assert body["chat_template_kwargs"] == {"enable_thinking": False}
 
 
 def test_openrouter_probe_requires_exact_capabilities_using_supported_max_tokens_name() -> None:
