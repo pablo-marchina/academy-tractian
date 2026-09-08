@@ -1,264 +1,249 @@
 # Academy × TRACTIAN — Active Project Status
 
-**Status:** Release 0 **PROMOTED / HARDENED V13** / task-driven UX live  
-**Last verified:** 2026-09-07 BRT  
-**Promoted backend/runtime SHA:** `08866da60245f58f217981b7ae668b10be45cc67`  
-**Backend Railway deployment:** `062c3cc4-4ac9-48ac-be06-2b4c490cea2a` — `SUCCESS`  
-**Current hosted frontend UX SHA:** `1bc124a8d4dbd029178ff8129b25452129445de7`  
-**Frontend Railway deployment:** `f78e88cd-82c2-4fcf-8f59-a51168f10fad` — `SUCCESS`  
-**Current hosted supplied-API SHA:** `47561c1175181b508139e23e6e39b555c1347d57`  
-**Public product:** https://production-web-production-c9d1.up.railway.app  
-**Release branch:** `release/production-final`
+**Status:** Release 0 **PROMOTED / HARDENED**; provider finalization **ACTIVE / NO_SELECTION**  
+**Last verified:** 2026-09-08 BRT  
+**Repository `main` HEAD:** `4364364266c6a88d4affd85cb3a734c774cd42c8`  
+**Provider research branch:** `experiment/provider-tournament-final-20260908`  
+**Canonical provider state:** [`PROVIDER-QUALIFICATION-STATUS-2026-09-08.md`](PROVIDER-QUALIFICATION-STATUS-2026-09-08.md)  
+**Public product:** https://production-web-production-c9d1.up.railway.app
 
-This file is the mutable source of truth for **current execution state**. Frozen/history files remain immutable.
-
-The original Release 0 acceptance campaign remains anchored to backend `082d6f115c070fdc898df749b4b3018efd9ceeab`. The current backend `08866da...` is a prospectively tested/hardened descendant; updating this current-state document does not rewrite the original campaign.
+This is the mutable source of truth for current execution state. Frozen evidence remains immutable. Repository source identity, hosted backend identity, frontend identity, supplied-API identity and provider-research identities are intentionally separate.
 
 ## 1. Current objective
 
-The basic hosted vertical slice, response-mode semantics, explicit-asset grounding and managed-session incident are no longer blockers. Current objective:
+The Release 0 product is remotely hosted and the V13 live-hardening blockers discovered on 2026-09-07 were addressed prospectively. The highest-priority unresolved technical question is now provider reliability:
 
-> **systematically expand live API/prompt coverage, measure semantic/trajectory correctness and close final security/capacity/recovery/value gates without weakening the read-only production boundary.**
+> **find a provider/serving configuration that passes the existing structural, safety and reliability gates without relaxing them, then prove it again in Academy live E2E before any production promotion.**
 
-Current user path:
+Current provider work is explicitly research/qualification work. It has not replaced the production DecisionSource.
 
-```text
-authenticated remote user
-→ Home
-→ natural-language equipment question
-→ server-owned identity + authorized fleet discovery when needed
-→ live provider + typed TRACTIAN reads
-→ persisted evidence
-→ terminal decision + response_mode
-→ customer-first result + next step
-→ contextual evidence detail
-→ Analyses for persisted history
-→ Technical for trace/quality/data/system/actions/studies
-```
+## 2. Production boundary
 
-Consequential external action execution remains disabled.
+Current production claims remain:
 
-## 2. Current hosted component ledger
+- remote HTTPS product on Railway;
+- managed browser auth with server-owned tenant/permission context;
+- Neon PostgreSQL durable state + RLS boundary;
+- V13 grounded controller/tool/evidence behavior from the current Release 0 hardening line;
+- real typed TRACTIAN read path;
+- durable safe evidence/evaluation and authenticated REST/SSE;
+- task-driven Home / Analyses / Technical UX;
+- consequential external actions disabled;
+- USD0/no-automatic-paid-spillover policy.
 
-| Component | State | Identity / evidence |
-|---|---|---|
-| public HTTPS product | **PASS** | Railway public origin |
-| backend/runtime | **PASS / V13** | `08866da...`, deployment `062c3cc4...` |
-| frontend UX | **PASS / task-driven** | `1bc124a...`, deployment `f78e88cd...` |
-| supplied TRACTIAN API | **PASS / hosted** | `47561c...` |
-| Neon PostgreSQL | **PASS Release 0** | durable serving state + RLS |
-| managed browser auth | **PASS hardened scope** | server-owned context; read-burst cache + fresh mutation validation |
-| hosted provider | **PASS — PROVISIONAL** | Cloudflare Release 0 route |
-| typed TRACTIAN reads | **PASS** | real remote HTTP 2xx observed |
-| external consequential actions | **DISABLED** | Release 0 deny-all |
-| actual project cash cost | **USD0 policy** | no automatic paid fallback |
-| local/mock production dependency | **ZERO** | remote serving only |
+Provider research on 2026-09-08 deliberately did **not** modify `production-api` or `production-web`.
 
-## 3. Release 0 live-hardening sequence — 2026-09-07
+## 3. Current provider state
 
-The hardening work was driven by **actual production prompts and traces**, not hypothetical cleanup.
+### Production
 
-| PR | Problem found live | Production effect |
-|---|---|---|
-| #197 | agent could ask user for discoverable IDs after fleet evidence | continue grounded discovery; customer does not need internal IDs |
-| #198 | nested structured asset/analysis IDs were not reliably recovered | bounded structured nested ID extraction |
-| #199 | redundant `get_asset` loops after fleet listing | remove redundant metadata path |
-| #200 | terminal could occur after baseline without real condition evidence | require `get_analysis`/`get_rms`/`get_spectrum` condition evidence when needed |
-| #201 | useful directional answer could be labelled `inconclusive` | explicit `response_mode` semantics |
-| #207 | dashboard read burst caused `managed_session_unavailable` | bounded read-session coalescing + correct 401/503 semantics |
-| #208 | explicit labels/comparisons could request internal IDs or under-investigate | resolve labels through fleet; bilateral comparison evidence; data-quality requirement |
-| #210 | explicit label could still terminate before initial identity discovery; completed quality read could reappear | force `get_current_user` first; suppress completed single-asset `get_data_quality` |
+The currently promoted Release 0 provider remains **provisional**. No 2026-09-08 experiment authorizes a provider production change.
 
-Current backend serves `build_release_provider_decision_source_factory_v13`.
-
-## 4. V13 orchestration semantics
-
-### Response modes
-
-`response_mode` is customer-visible epistemic status, independent from authorization and distinct from the terminal decision:
-
-- `complete` — all material requested parts are supported;
-- `partial` — useful supported conclusion exists but a material part remains probabilistic/incomplete;
-- `inconclusive` — inspected evidence cannot support a reliable directional answer to the core question;
-- `conflict` — material observations contradict each other;
-- `unavailable` — required authorized evidence could not be obtained.
-
-Critical rule validated live: **supported directional answer + probabilistic causal mechanism → `partial`, not `inconclusive`.**
-
-### Asset grounding
-
-For an investigative request containing a human-readable label such as `R310`:
+### Frozen provider population
 
 ```text
-get_current_user
-→ list_assets_by_company(company_id from structured user observation)
-→ resolve label only against authorized fleet IDs
-→ inspect evidence required by the question
-→ terminal
+17 scenarios × 5 repetitions = 85 attempts per candidate
+population SHA256 = 4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9
 ```
 
-The runtime must not ask for a discoverable `company_id`/`asset_id`.
-
-For comparisons, evidence for one asset cannot authorize a comparative claim about another. If a requested label is not present in the authorized fleet, return bounded unavailability rather than inventing another company/tenant.
-
-### Evidence requirements
-
-- diagnostic/condition questions require condition evidence from `get_analysis`, `get_rms` or `get_spectrum` before terminal where applicable;
-- baseline/data quality alone are not substitutes for condition evidence when the core question asks what is happening;
-- explicit data-quality questions require `get_data_quality`;
-- once a successful single-asset data-quality read satisfies that requirement, it is removed from the visible surface for that question;
-- `list_assets_by_company` already grounds fleet metadata, so `get_asset` is suppressed as a redundant post-fleet read.
-
-## 5. Managed-session resilience — hardened after live incident
-
-Observed incident pattern:
+Hard gates remain:
 
 ```text
-/health = 200
-protected dashboard/API reads = 200 → 401/403 instability
-user-visible managed_session_unavailable
+private/identity-material attempts = 0
+unknown-tool proposals = 0
+invalid known-tool arguments = 0
+schema/adapter contract failures = 0
+trace provenance failures = 0
+successful attempts with missing usage = 0
+reliability >= 93.75%
 ```
 
-Root cause: every protected read forced remote strong Neon Auth validation; dashboard fan-out amplified transient identity-service dependency.
+No retry, fallback, JSON repair or selective removal of failed attempts is allowed to manufacture a pass.
 
-Current contract:
+## 4. V4 Cloudflare/Groq episode
 
-- GET/HEAD: server-validated context may be reused for ≤2 s;
-- cache key: SHA-256 of cookie only; raw cookie not cached;
-- 256-entry cap + singleflight coalescing;
-- POST/non-read: always fresh validation;
-- no stale-on-error after TTL;
-- invalid session: `401`;
-- temporary managed-auth failure: `503 managed_session_unavailable`, `Retry-After: 1`;
-- frontend reconciles auth on invalid/unavailable signals and on focus/visibility return.
+A final V4 comparison was prepared for GPT-OSS-120B on:
 
-Live retesting after #207 did not reproduce the earlier `managed_session_unavailable` burst. This is evidence for the tested scope, not a final auth availability SLO.
+- Cloudflare `@cf/openai/gpt-oss-120b`;
+- Groq `openai/gpt-oss-120b`.
 
-## 6. Final V13 live retest matrix
+Cloudflare reached Workers AI but returned 429 / error 4006 because the daily allocation was exhausted. These were preflight-only calls and were excluded from the scored denominator.
 
-### A. Data quality / diagnosis trust
+Groq initially returned a 403 generated by Cloudflare error 1010 at the provider edge when using the default Python `urllib` signature. An explicit application `User-Agent` plus `Accept: application/json` restored model-list and chat HTTP 200. This was treated as transport normalization, not a model-quality intervention.
 
-Run: `run_21813cb7b4ad9adbdc5e`
+The user then explicitly removed Cloudflare from the requested path. Therefore there is **no valid final Cloudflare-vs-Groq paired result**.
+
+## 5. Groq-only 85/85 qualification — COMPLETE
+
+The run was correctly reclassified as a single-provider qualification.
+
+Frozen artifacts:
+
+- manifest: `research/experiments/provider-qualification-v4-1-groq-final-manifest.json`;
+- runner: `1ad041fdcbe4424a79239fff6382df67e8bc2bfe`;
+- bootstrap: `6fc9d84262efaf6d57925a83ba59f07425cfc717`.
+
+Protocol:
+
+- `openai/gpt-oss-120b` via Groq;
+- 85/85 attempts;
+- same frozen population and rubric;
+- temperature 0;
+- reasoning medium;
+- max completion 512;
+- no retry/fallback/repair;
+- failures remain denominator;
+- raw provider material not persisted.
+
+### Official decision
+
+**`NO_SELECTION`**
+
+| Metric | Result |
+|---|---:|
+| rubric pass | 69/85 = **81.18%** |
+| reliability | 70/85 = **82.35%** |
+| contract failures | **9** |
+| repeat stability | 11/17 = **64.71%** |
+| p50 provider latency | **1.154 s** |
+| p95 provider latency | **2.904 s** |
+| estimated list-price total cost | **US$ 0.04051** |
+
+Unknown tools, invalid known-tool arguments and private/identity-material attempts were not the limiting class. The key blocker was structured decision / terminal reliability.
+
+Reproduced failure families include upstream-unavailable, action-governance, analysis-detail, model, spectrum and knowledge-search scenarios.
+
+## 6. Current causal-debug state
+
+After `NO_SELECTION`, failures were decomposed into three hypotheses:
+
+1. 512 completion tokens cause truncation/finish failures;
+2. best-effort JSON Schema (`strict:false`) permits relationally invalid controller decisions;
+3. reasoning effort materially changes length, latency and stability.
+
+Diagnostic artifacts:
+
+- runner `426b0ecacf8b794199b78380a5de5837603e29e3`;
+- frozen bootstrap `7826a46d0209c1072a75b59f527dac82b3437a82`;
+- health-preserving bootstrap `b71172bf1f42d4be074560336e58c42539cbfe1c`.
+
+Target diagnostic matrix:
 
 ```text
-get_current_user
-→ list_assets_by_company
-→ get_data_quality(asset_R310)
-→ get_rms(asset_R310)
-→ get_rms(asset_R310, point_id=pt_R310_de)
-→ FINAL
+7 scenarios × 3 configs = 21 calls
+B0 best-effort / medium / 512
+B1 best-effort / medium / 2048
+B2 best-effort / low / 2048
 ```
 
-Observed:
+### Evidence already established
 
-- `response_mode=complete`;
-- 5 tool calls;
-- all remote reads HTTP 200;
-- 0 errors;
-- 0 policy blocks;
-- `get_data_quality` executed once.
+- clean controls can pass all three configurations;
+- sampled `low/2048` decisions use far fewer reasoning tokens and materially lower latency than medium on simple decisions;
+- `ANALYSIS_DETAIL` has produced HTTP 200 + `finish_reason=stop` + valid JSON + root `ProviderDecisionPayload` validation failure;
+- the structural failure can occur with 2048 available tokens, so 512 is not the sole cause;
+- 2048 alone is not an evidence-backed fix;
+- best-effort structured output can vary structurally even with temperature zero.
 
-The two RMS calls are progressive asset → point drill-down, not an exact duplicate loop.
+Current interpretation:
 
-### B. Comparison with unavailable asset
+| Hypothesis | State |
+|---|---|
+| 512 contributes to some finish failures | probable |
+| 512 explains payload failures | refuted as sole cause |
+| 2048 alone fixes Groq | refuted |
+| `strict:false` contributes to invalid decisions | strongly supported |
+| reasoning effort is material | confirmed |
+| low > medium globally | promising, not proven |
+| hard gates should be weakened | no evidence |
 
-Run: `run_547b2a62d84ef56a3d3d`
+## 7. Strict-schema challenger direction
+
+The next serving challenger should not invent a parallel contract. It should derive constrained variants from the canonical ToolSpec/OpenAPI/Release 0 structures.
+
+Target conceptual contract:
 
 ```text
-get_current_user
-→ list_assets_by_company
-→ FINAL unavailable
+TOOL::<canonical tool>
+| FINAL
+| CLARIFY
+| ESCALATE
+| ABSTAIN
 ```
 
-R310 was present; R420 was not present in the authorized `comp_papel_sul` fleet. The agent did not invent R420, cross tenant scope or ask the user for its internal ID. This validates fail-closed missing-label behavior. It does **not** validate bilateral comparison quality; that requires two assets actually present in the same authorized fleet.
+Each variant should be closed (`additionalProperties=false`) and expose only legal fields/arguments. `ProviderDecisionPayload`, argument validation, controller policy and safety checks remain second-line deterministic barriers.
 
-### C. Probabilistic causal investigation
+The exact supplied TRACTIAN `ActionRequest` schema still needs to be recovered before strict action variants can be considered complete. It must not be guessed.
 
-Run: `run_97b91f6e0feb91184283`
+## 8. Experiment-infrastructure state
+
+Railway project currently uses five services. A sixth dedicated provider-lab service could not be provisioned under the account resource limit.
+
+The shared `qa-live-prompt-matrix` service was concurrently repurposed by OpenRouter/Nemotron work, causing overlapping deployments. Partial 21-call matrices affected by this interference were discarded rather than stitched together.
+
+A later non-overlapping Groq diagnostic still exposed 429 admission behavior on benchmark-shaped 2048-token requests. The earlier pacing formula based only on emitted `total_tokens / 8000` is therefore not a sufficient model of request admission.
+
+A one-shot benchmark-shaped rate diagnostic is now frozen:
+
+- diagnostic: `8cec9f8d7e596bda27a4459ac4130319547d2f5e`;
+- bootstrap: `0ecc8365f3908f6ddc8521998436a30eee2d5507`.
+
+At this status checkpoint it has **not yet produced a result**.
+
+A concurrent OpenRouter capacity probe reported a free-tier daily capacity of 50 free-model requests, below the 85-call final population; that observed route is not an eligible drop-in final qualification path without a capacity change.
+
+## 9. Approved continuation order
 
 ```text
-get_current_user
-→ list_assets_by_company
-→ get_spectrum(asset_R310)
-→ point-specific spectrum drill-down
-→ FINAL
+1. clean isolated 21/21 causal matrix
+2. recover exact ActionRequest
+3. generate canonical strict:true schema
+4. minimal strict eligibility preflights
+5. freeze only causally justified challengers
+6. evaluate with unchanged rubrics
+7. enforce unchanged hard gates
+8. fresh 85/85 for the hard-gate winner only
+9. Academy live E2E + causal/RMS + auth/tenant/persistence/SSE smoke
+10. explicit production-promotion decision only after those gates
 ```
 
-Observed:
+Expected challenger labels, only if justified:
 
-- `response_mode=partial`;
-- 5 tool calls;
-- remote reads HTTP 200;
-- 0 errors;
-- 0 policy blocks;
-- no request for `company_id` or `asset_id`.
+- B0 — best-effort / medium / 512;
+- B1 — best-effort / medium / 2048;
+- C1 — strict / medium / 2048;
+- C2 — strict / low / 2048.
 
-The answer identified bearing-related evidence as the most likely mechanism. Confidence wording remains a semantic-calibration target; `partial` correctly preserves that the causal conclusion is probabilistic.
+C1/C2 do not become candidates merely because strict mode exists; they need canonical schema eligibility and causal justification.
 
-All persisted blocking structural checks for these three runs passed, including execution-chain integrity, model-call provenance, production-trace identity, proposal-contract validity, read-only action safety and terminal consistency.
+## 10. Other final-delivery gates still open
 
-## 7. Repetition / stopping interpretation
+Beyond provider selection, final completion still requires claim-specific evidence for:
 
-Do **not** classify repetition by tool name alone.
-
-```text
-get_spectrum(asset_R310)
-→ get_spectrum(asset_R310, point_id=...)
-```
-
-or
-
-```text
-get_rms(asset_R310)
-→ get_rms(asset_R310, point_id=...)
-```
-
-can be valid progressive investigation. Redundancy metrics should compare `(tool, normalized arguments/resource target, evidence contribution)` and distinguish exact duplicate calls from drill-down.
-
-## 8. Current UX
-
-Hosted frontend `1bc124a...` is task-driven:
-
-- **Home** — one natural-language question, examples optional, service state visible;
-- **Result** — selected run conclusion, next step and contextual evidence access;
-- **Analyses** — persisted run history;
-- **Technical** — Current analysis / Quality / Data / System / Actions / Studies.
-
-The previous four global depth tabs remain historical UX context, not current navigation.
-
-## 9. Provider state
-
-Cloudflare `@cf/zai-org/glm-4.7-flash` remains a **provisional Release 0 provider**. Frozen Provider Tournament v3 remains `NO_SELECTION`; Release 0 qualification is not proof of final superiority.
-
-## 10. Deliberate non-claims / open final gates
-
-Release 0 still does **not** close:
-
-- broad live prompt/API coverage across all 13 read operations;
-- true bilateral comparison evaluation using two assets that actually exist in the same authorized fleet;
-- systematic multi-turn/context-retention live evaluation;
-- final Provider Tournament v3;
-- full SECURITY-V1 hosted campaign;
-- final remote load/capacity + evidence-derived SLO;
-- real backup/restore drill + measured RTO/RPO;
-- governed consequential external action execution;
+- broader recent live coverage across canonical reads and semantic failure modes;
+- true bilateral comparison with two authorized in-fleet assets;
+- full hosted SECURITY-V1;
+- capacity/load and evidence-derived SLO;
+- backup/restore and measured recovery claims;
 - human semantic calibration;
-- real MANUAL vs AGENT-ASSISTED operational-value study;
-- adaptive-policy superiority;
-- final evidence freeze/delivery bundle.
+- operational-value evidence or explicit non-claim;
+- final evidence freeze.
 
-## 11. Current priority order
+Consequential external action execution remains disabled unless separately promoted through its own safety contract.
 
-```text
-P0 auth/tenant/action/cost regression
-→ P1 broaden live prompt + canonical-read coverage
-→ P1 semantic/grounding/stopping failures
-→ comparative test using two actually available assets
-→ multi-turn + failure + session/concurrency tests
-→ final provider/security/load/recovery gates
-→ human calibration + operational value
-→ adaptive challengers only after measured gaps
-→ final evidence freeze
-```
+## 11. Current non-claims
 
-Do not add new architecture layers unless a measured blocker justifies them.
+Do not claim:
+
+- a final provider winner;
+- Groq superiority over Cloudflare;
+- that production uses Groq;
+- that 2048 fixes the observed structural failure;
+- that low reasoning is globally superior;
+- that strict mode has already passed eligibility;
+- that the causal 21/21 matrix is complete;
+- that the latest Groq rate diagnostic has a result;
+- that provider research changed production API/web serving.
+
+Canonical detail: [`PROVIDER-QUALIFICATION-STATUS-2026-09-08.md`](PROVIDER-QUALIFICATION-STATUS-2026-09-08.md).  
+Chronology: [`progress/2026-09-08-provider-qualification-and-causal-debug.md`](progress/2026-09-08-provider-qualification-and-causal-debug.md).
