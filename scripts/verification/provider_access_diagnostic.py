@@ -7,6 +7,8 @@ import urllib.error
 import urllib.request
 from typing import Any
 
+USER_AGENT = "academy-tractian-provider-tournament/1.0"
+
 
 def _redact(text: str) -> str:
     for key in (
@@ -24,7 +26,8 @@ def _redact(text: str) -> str:
 
 def _request(method: str, url: str, headers: dict[str, str], body: dict[str, Any] | None = None) -> tuple[int, Any]:
     data = None if body is None else json.dumps(body, separators=(",", ":")).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    request_headers = {"User-Agent": USER_AGENT, "Accept": "application/json", **headers}
+    req = urllib.request.Request(url, data=data, headers=request_headers, method=method)
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             raw = response.read().decode("utf-8", errors="replace")
@@ -81,7 +84,7 @@ def main() -> int:
         or os.environ.get("ACADEMY_PROVIDER_API_TOKEN", "").strip()
     )
 
-    report: dict[str, Any] = {"schema_version": "provider-access-diagnostic-v2"}
+    report: dict[str, Any] = {"schema_version": "provider-access-diagnostic-v3", "user_agent": USER_AGENT}
 
     if groq_key:
         headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
