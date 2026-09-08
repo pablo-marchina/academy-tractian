@@ -1,7 +1,7 @@
 # Documentation Guide
 
 **Status:** ACTIVE docs-as-code governance  
-**Last reviewed:** 2026-09-06 BRT  
+**Last reviewed:** 2026-09-07 BRT  
 **Research record:** [`research/2026-09-06-documentation-best-practices.md`](research/2026-09-06-documentation-best-practices.md)
 
 The documentation system is optimized for **finding the right answer quickly without destroying scientific provenance**.
@@ -67,7 +67,7 @@ Lifecycle values:
 - place advanced detail after basic information;
 - prefer links over duplicate explanations.
 
-The frontend follows the same principle through Results → Evidence → Investigation → Engineering progressive disclosure.
+The frontend follows the same principle through a **task-driven hierarchy**: Home for the question, contextual Result/evidence for the answer, Analyses for history and Technical for specialist depth. Documentation should mirror the current product task model rather than preserving obsolete UI taxonomy.
 
 ## 5. Architecture documentation
 
@@ -76,7 +76,7 @@ Use C4-inspired levels only when they add value:
 1. **System Context** — users + external systems, technology-light;
 2. **Containers** — major applications/data stores, technologies and communication;
 3. **Dynamic/Deployment** — only for flows/deployment claims that are hard to understand statically;
-4. Component/code diagrams only when they materially improve understanding.
+4. component/code diagrams only when they materially improve understanding.
 
 Every architecture diagram should be understandable on its own: state scope, name elements, label directional relationships/protocols, identify technologies where relevant, and explain trust boundaries.
 
@@ -84,17 +84,9 @@ Every architecture diagram should be understandable on its own: state scope, nam
 
 Create an ADR for a durable material architecture/semantic decision, not every code edit.
 
-An ADR should capture:
+An ADR should capture decision/status/date, context/problem, hard constraints, alternatives/baseline, decision/evidence, consequences/trade-offs and reversal trigger.
 
-- decision/status/date;
-- context/problem;
-- hard constraints;
-- considered alternatives/baseline;
-- decision + evidence/rationale;
-- consequences/trade-offs;
-- reversal trigger.
-
-Accepted/frozen ADRs are historical decision records. If a decision changes, supersede prospectively rather than rewriting the original rationale.
+Accepted/frozen ADRs are historical decision records. If a decision changes, supersede prospectively rather than rewriting original rationale.
 
 ## 7. Changelog rules
 
@@ -102,7 +94,7 @@ Accepted/frozen ADRs are historical decision records. If a decision changes, sup
 
 - keep `Unreleased` at the top;
 - use ISO dates for release/milestone entries;
-- group notable changes by Added / Changed / Fixed / Security (and Deprecated/Removed when applicable);
+- group notable changes by Added / Changed / Fixed / Security;
 - do not dump every commit;
 - include changes that matter to user/operator/reviewer behavior or security/compatibility.
 
@@ -110,22 +102,16 @@ Accepted/frozen ADRs are historical decision records. If a decision changes, sup
 
 Maintain both:
 
-- root `SECURITY.md` — how to report vulnerabilities;
-- `SECURITY-MODEL.md` — what the system protects, trust boundaries, threats, controls and open evidence.
+- root `SECURITY.md` — vulnerability reporting and supported security target;
+- `SECURITY-MODEL.md` — assets, trust boundaries, threats, controls and open evidence.
 
-Update the threat model after material feature, architecture/infrastructure or security-boundary changes.
+Update the threat model after material feature, architecture/infrastructure or security-boundary changes. A live incident such as the managed-session fan-out issue requires prospective security-model/runbook updates even when no confidentiality boundary was crossed.
 
 ## 9. Evidence versus documentation
 
 Evidence answers **what happened** under an exact protocol/identity. Active documentation answers **what is true now**.
 
-Never rewrite:
-
-- consumed experiment packets;
-- locked/frozen inputs/results;
-- accepted historical progress notes;
-- hash-pinned artifacts;
-- old ADR rationale.
+Never rewrite consumed experiment packets, locked/frozen inputs/results, committed historical progress notes, hash-pinned artifacts or old ADR rationale.
 
 Instead:
 
@@ -136,7 +122,21 @@ new evidence
 → old evidence unchanged
 ```
 
-## 10. Documentation Definition of Done
+A later production hardening SHA must therefore be documented **alongside**, not substituted into, an older immutable acceptance campaign.
+
+## 10. Production identity discipline
+
+Track these independently when they differ:
+
+- repository/source branch head;
+- backend runtime SHA/deployment;
+- frontend SHA/deployment;
+- supplied-API SHA/deployment;
+- exact historical acceptance/evidence SHA.
+
+A docs/source merge does not imply backend promotion. A frontend deploy does not rewrite backend identity. A later hardened backend does not retroactively change the original Release 0 acceptance SHA.
+
+## 11. Documentation Definition of Done
 
 For a material code/product change:
 
@@ -147,11 +147,25 @@ For a material code/product change:
 - [ ] Getting Started/Playwright updated if user flow changed;
 - [ ] security model updated if trust boundary changed;
 - [ ] changelog updated if human-visible;
-- [ ] ADR/decision record added if material decision;
+- [ ] presentation pack updated if current hosted UI/claims changed;
+- [ ] ADR/decision record added if a durable decision requires it;
+- [ ] append-only progress evidence added when historically material;
 - [ ] frozen evidence left untouched;
 - [ ] links remain relative where repository-local;
 - [ ] no claim exceeds evidence.
 
-## 11. Source research baseline
+## 12. Drift audit after a material sync
+
+Before merging documentation-only reconciliation:
+
+1. compare against current hosted backend/frontend/API identities;
+2. search active docs for superseded SHAs/UI vocabulary;
+3. check that historical/frozen files are not in the diff;
+4. ensure current-state facts have one owner and secondary docs link/qualify them;
+5. verify presentation instructions match the actual hosted navigation;
+6. run repository docs/link/regression gates that trigger for the PR;
+7. do not deploy application services merely because documentation changed.
+
+## 13. Source research baseline
 
 This guide was derived from official/current guidance captured in the research note, including Diátaxis, GitHub documentation practices, C4, ADR practices, OWASP threat modeling and Keep a Changelog. External guidance is adapted to this repository's stronger scientific-provenance constraints rather than copied mechanically.

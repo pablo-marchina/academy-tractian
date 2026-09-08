@@ -15,7 +15,7 @@
   "source_artifacts": [
     {
       "path": "src/academy_tractian/trusted_action_authorization.py",
-      "git_blob_sha1": "bdcdcea03f32133d4123543d5ea236337076a6fa"
+      "git_blob_sha1": "53797545d62abf70ea510ceb5d79fe0f560e58ae"
     },
     {
       "path": "src/academy_tractian/mode_acceptance_gate.py",
@@ -35,7 +35,7 @@
     },
     {
       "path": "src/academy_tractian/neon_auth_identity.py",
-      "git_blob_sha1": "e57e311311bafcf4bf3b1601544f3eea8f9061fb"
+      "git_blob_sha1": "510b60dfd4f2145f5cdbd78b090bb4197ba0ea48"
     },
     {
       "path": "src/academy_tractian/action_execution_lease.py",

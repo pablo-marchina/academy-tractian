@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 
 from research.e2.controller import ControllerContext, ControllerDecision, DecisionSource
@@ -16,14 +17,20 @@ from .release_provider import (
     PROVISIONAL_RELEASE_PROVIDER_STATE,
     validate_release_provider_config,
 )
-from .release_provider_v10 import build_release_provider_decision_source_factory_v10
+from .release_provider_v13 import build_release_provider_decision_source_factory_v13
 from .remote_production import create_remote_production_app, load_remote_production_config
 from .tractian_transport import ProductionTractianTransport
+from .trusted_action_authorization import ConfiguredServerOwnedActionAuthorizationSource
+from .upstream_action_actors import (
+    ConfiguredServerOwnedUpstreamActionActorSource,
+    ServerOwnedUpstreamActionActorTransport,
+)
 
 
 PROVIDER_SELECTION_STATE = NO_PROVIDER_SELECTION_STATE
 TRACTIAN_TRANSPORT_STATE_UNCONFIGURED = "UNCONFIGURED"
 TRACTIAN_TRANSPORT_STATE_CONFIGURED_UNVERIFIED = "CONFIGURED_UNVERIFIED"
+_UPSTREAM_ACTION_ACTORS_ENV = "ACADEMY_TRACTIAN_ACTION_ACTORS_JSON"
 
 
 class NoSelectedProviderDecisionSource(DecisionSource):
@@ -75,7 +82,7 @@ def _decision_source_factory(config: RemoteProductionConfig):
     if not config.provider_calls_enabled:
         return NoSelectedProviderDecisionSource
     validate_release_provider_config(config)
-    return build_release_provider_decision_source_factory_v10(config)
+    return build_release_provider_decision_source_factory_v13(config)
 
 
 def _provider_selection_state(config: RemoteProductionConfig) -> str:
@@ -108,6 +115,27 @@ def release0_read_only_action_principal(*, user_id: str) -> ProductionActionPrin
         permissions=frozenset(),
         resource_company_bindings=(),
     )
+
+
+def _assert_actor_coverage_for_active_grants(
+    *,
+    raw_authorization_grants: str,
+    authorization_source: ConfiguredServerOwnedActionAuthorizationSource,
+    actor_source: ConfiguredServerOwnedUpstreamActionActorSource,
+) -> None:
+    """Make incomplete provider-side action identity a boot blocker, not a runtime surprise."""
+
+    decoded = json.loads(raw_authorization_grants)
+    if not isinstance(decoded, list):
+        raise RuntimeError("validated action authorization grants lost list shape")
+    for item in decoded:
+        if not isinstance(item, dict) or item.get("active", True) is not True:
+            continue
+        user_id = item.get("user_id")
+        if not isinstance(user_id, str) or not user_id:
+            raise RuntimeError("validated action authorization grant lost user identity")
+        principal = authorization_source(user_id=user_id)
+        actor_source.assert_complete_for_principal(principal)
 
 
 def _configure_runtime_evaluator(app, *, provider_calls_enabled: bool) -> None:
@@ -144,11 +172,12 @@ def _configure_runtime_evaluator(app, *, provider_calls_enabled: bool) -> None:
 
 
 def app_factory():
-    """Compose the remote product in infrastructure-probe or read-only Release 0 mode.
+    """Compose the remote product with fail-closed reads and governed action execution.
 
-    Provider calls are opt-in and fail closed. Enabling them requires an explicitly configured
-    provisional Release 0 provider and a real configured TRACTIAN transport. Consequential
-    actions remain disabled by the production app composition regardless of provider state.
+    Provider calls, the TRACTIAN transport, and consequential actions are independent opt-ins.
+    Action execution additionally requires a valid server-owned grant document; the browser and
+    model never supply canonical permissions, resource ownership, provider-side action identity,
+    confirmation fingerprints or idempotency material.
     """
 
     config = load_remote_production_config()
@@ -160,16 +189,53 @@ def app_factory():
     build_tractian_transport(config)
     decision_source_factory = _decision_source_factory(config)
 
+    action_authorization_source = None
+    action_actor_source = None
+    raw_action_actors = os.environ.get(_UPSTREAM_ACTION_ACTORS_ENV, "").strip()
+    if config.actions_enabled:
+        if config.action_authorization_grants_json is None:
+            raise RuntimeError("validated action configuration is missing authorization grants")
+        if not raw_action_actors:
+            raise RuntimeError(
+                "enabled actions require server-owned ACADEMY_TRACTIAN_ACTION_ACTORS_JSON"
+            )
+        raw_authorization_grants = config.action_authorization_grants_json.get_secret_value()
+        action_authorization_source = ConfiguredServerOwnedActionAuthorizationSource.from_json(
+            raw_authorization_grants
+        )
+        action_actor_source = ConfiguredServerOwnedUpstreamActionActorSource.from_json(
+            raw_action_actors
+        )
+        _assert_actor_coverage_for_active_grants(
+            raw_authorization_grants=raw_authorization_grants,
+            authorization_source=action_authorization_source,
+            actor_source=action_actor_source,
+        )
+        # Pass the source object itself: it remains compatible with the user-id resolver protocol,
+        # while the remote confirmation endpoint can additionally require its tenant-aware
+        # authorize_context() method before any external execution is prepared.
+        authorization_resolver = action_authorization_source
+    elif raw_action_actors:
+        raise RuntimeError(
+            "TRACTIAN upstream action actors cannot be configured while actions are disabled"
+        )
+    elif config.provider_calls_enabled:
+        authorization_resolver = release0_read_only_action_principal
+    else:
+        authorization_resolver = deny_production_action_principal
+
     if config.tractian_transport_enabled:
-        transport_factory = lambda: build_tractian_transport(config)
+        if action_actor_source is None:
+            transport_factory = lambda: build_tractian_transport(config)
+        else:
+            def transport_factory() -> RequestTransport:
+                return ServerOwnedUpstreamActionActorTransport(
+                    transport=build_tractian_transport(config),
+                    authorization_resolver=authorization_resolver,
+                    actor_source=action_actor_source,
+                )
     else:
         transport_factory = NoConfiguredTractianTransport
-
-    authorization_resolver = (
-        release0_read_only_action_principal
-        if config.provider_calls_enabled
-        else deny_production_action_principal
-    )
 
     schema = os.environ.get("ACADEMY_POSTGRES_SCHEMA", "academy_operational")
     app = create_remote_production_app(
@@ -190,7 +256,17 @@ def app_factory():
     )
     app.state.provider_selection_state = provider_selection_state
     app.state.infrastructure_probe = not config.provider_calls_enabled
-    app.state.release0_read_only = config.provider_calls_enabled
+    app.state.release0_read_only = config.provider_calls_enabled and not config.actions_enabled
+    app.state.action_authorization_summary = (
+        action_authorization_source.safe_summary()
+        if action_authorization_source is not None
+        else {"configured_grants": 0, "active_grants": 0}
+    )
+    app.state.upstream_action_actor_summary = (
+        action_actor_source.safe_summary()
+        if action_actor_source is not None
+        else {"configured_bindings": 0, "configured_companies": 0}
+    )
     install_release0_capabilities(
         app,
         config=config,

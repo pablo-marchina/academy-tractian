@@ -1,6 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
-
-import { fetchRelease0Capabilities } from "../api/release0Client";
 import type { ExecutionStatus, SafeEvent, SafeRun } from "../api/types";
 
 interface Props {
@@ -10,41 +7,10 @@ interface Props {
   connection: string;
   hasLiveRun: boolean;
   viewingHistorical: boolean;
-  onUsePrompt: (prompt: string) => void;
+  onOpenEvidence: () => void;
+  onOpenTechnical: () => void;
+  onStartNew: () => void;
 }
-
-const STAGES = [
-  ["PREPARING", "Preparing"],
-  ["DECIDING", "AI deciding"],
-  ["READING", "Reading TRACTIAN"],
-  ["REVIEWING", "Reviewing evidence"],
-  ["EVALUATING", "Evaluating"],
-  ["COMPLETE", "Complete"],
-] as const;
-
-const STARTER_EXAMPLES = [
-  {
-    intent_id: "STARTER_CONTEXT",
-    label: "Understand the context",
-    release0_behavior: "EDIT_BEFORE_RUNNING",
-    prompt_template:
-      "Help me understand this industrial situation using only evidence you can actually inspect. State what is known, what is uncertain, and what additional identifier or evidence would help if the context is incomplete.",
-  },
-  {
-    intent_id: "STARTER_INVESTIGATE",
-    label: "Investigate evidence",
-    release0_behavior: "EDIT_BEFORE_RUNNING",
-    prompt_template:
-      "Investigate this industrial issue using the relevant read-only evidence available to you. Follow the evidence, do not guess unsupported facts, and return a concise customer-safe conclusion or stop safely if the evidence is insufficient.",
-  },
-  {
-    intent_id: "STARTER_REVIEW",
-    label: "Review a possible action",
-    release0_behavior: "NO_EXTERNAL_ACTIONS",
-    prompt_template:
-      "Review whether the operational action I am considering is supported by the available evidence. Do not execute anything. Explain what evidence supports or contradicts the action and what a human operator should verify next.",
-  },
-] as const;
 
 function currentStage(
   run: SafeRun | undefined,
@@ -52,78 +18,54 @@ function currentStage(
   executionStatus: ExecutionStatus | undefined,
   hasLiveRun: boolean,
 ): number {
-  if (run?.completed || executionStatus === "completed") return 5;
-  if (events.some((event) => event.event_type === "final_response" || event.event_type === "run_finished")) return 4;
-  if (events.some((event) => event.event_type === "observation" || event.event_type === "tool_result")) return 3;
-  if (events.some((event) => event.event_type === "tool_call")) return 2;
-  if (events.some((event) => event.event_type === "model_call")) return 1;
+  if (run?.completed || executionStatus === "completed") return 2;
+  if (events.some((event) => event.event_type === "observation" || event.event_type === "tool_result" || event.event_type === "final_response")) return 1;
   if (hasLiveRun || executionStatus === "accepted" || executionStatus === "running") return 0;
   return -1;
 }
 
-function decisionTitle(
-  decision: string | null | undefined,
-  responseMode: string | null | undefined,
-): string {
+function decisionTitle(decision: string | null | undefined, responseMode: string | null | undefined): string {
   if (decision === "ORIENT") {
     switch (responseMode) {
-      case "complete": return "Conclusion ready";
-      case "partial": return "Partial conclusion";
-      case "inconclusive": return "Evidence inconclusive";
-      case "conflict": return "Conflicting evidence";
-      case "unavailable": return "Evidence unavailable";
-      default: return "Investigation result";
+      case "complete": return "Analysis complete";
+      case "partial": return "Part of the answer is supported";
+      case "inconclusive": return "There is not enough data to conclude";
+      case "conflict": return "The evidence points in different directions";
+      case "unavailable": return "Required data is unavailable";
+      default: return "Analysis result";
     }
   }
   switch (decision) {
-    case "ASK_CLARIFICATION": return "More context needed";
-    case "ABSTAIN": return "Not enough evidence";
-    case "ESCALATE_HUMAN": return "Human review recommended";
-    default: return decision ? decision.replaceAll("_", " ").toLowerCase() : "Investigation result";
+    case "ASK_CLARIFICATION": return "More information is needed";
+    case "ABSTAIN": return "There is not enough evidence yet";
+    case "ESCALATE_HUMAN": return "A specialist should review this";
+    default: return "Analysis result";
   }
 }
 
-function decisionNextStep(
-  decision: string | null | undefined,
-  responseMode: string | null | undefined,
-): string {
+function resultStatus(decision: string | null | undefined, responseMode: string | null | undefined): string {
+  if (decision === "ESCALATE_HUMAN" || responseMode === "conflict") return "Needs attention";
+  if (decision === "ABSTAIN" || decision === "ASK_CLARIFICATION" || responseMode === "partial" || responseMode === "inconclusive" || responseMode === "unavailable") return "Check before deciding";
+  return "Ready to review";
+}
+
+function decisionNextStep(decision: string | null | undefined, responseMode: string | null | undefined): string {
   if (decision === "ORIENT") {
     switch (responseMode) {
-      case "complete":
-        return "Review the conclusion and supporting evidence. Release 0 will not execute a consequential change for you.";
-      case "partial":
-        return "Use only the supported portion of the result and review the stated gaps before making an operational decision.";
-      case "inconclusive":
-        return "The available evidence did not support a reliable conclusion. Review the missing or insufficient evidence before starting a follow-up investigation.";
-      case "conflict":
-        return "The evidence conflicts. Review the competing observations and resolve the contradiction before acting.";
-      case "unavailable":
-        return "Required evidence was unavailable. Restore or provide the missing source before relying on this investigation.";
-      default:
-        return "Review the customer-safe result and its supporting evidence before using it operationally.";
+      case "complete": return "Review the conclusion and its evidence before making an operational decision.";
+      case "partial": return "Use only the supported part of the answer and verify the missing information before acting.";
+      case "inconclusive": return "Check the missing or insufficient data, then run a follow-up analysis.";
+      case "conflict": return "Review the conflicting observations with a qualified specialist before acting.";
+      case "unavailable": return "Restore or provide the missing data source before relying on this analysis.";
+      default: return "Review the conclusion and supporting evidence before using it operationally.";
     }
   }
   switch (decision) {
-    case "ASK_CLARIFICATION":
-      return "Provide the missing context requested in the message and start a new investigation with that information.";
-    case "ABSTAIN":
-      return "The agent stopped instead of guessing. Add the missing asset, analysis, telemetry, timestamp or other evidence identified in the message.";
-    case "ESCALATE_HUMAN":
-      return "Hand the conclusion, reason and evidence context to a qualified human reviewer. The system intentionally did not resolve the uncertainty itself.";
-    default:
-      return "Use the customer-safe message as the primary output and open deeper tabs only when you need supporting detail.";
+    case "ASK_CLARIFICATION": return "Add the information requested in the answer and start a new analysis.";
+    case "ABSTAIN": return "Add the missing equipment, telemetry, time range or other evidence identified in the answer.";
+    case "ESCALATE_HUMAN": return "Share this result and its evidence with a qualified specialist. The assistant intentionally did not guess.";
+    default: return "Review the answer and its evidence before deciding what to do next.";
   }
-}
-
-function evidenceSummary(events: SafeEvent[]) {
-  const seen = new Set<string>();
-  const evidence: Array<{ id: string; tool: string | null; status: number | null }> = [];
-  for (const event of events) {
-    if (!event.evidence_id || seen.has(event.evidence_id)) continue;
-    seen.add(event.evidence_id);
-    evidence.push({ id: event.evidence_id, tool: event.tool_name, status: event.status_code });
-  }
-  return evidence.slice(0, 4);
 }
 
 export function ProductExperience({
@@ -133,128 +75,55 @@ export function ProductExperience({
   connection,
   hasLiveRun,
   viewingHistorical,
-  onUsePrompt,
+  onOpenEvidence,
+  onOpenTechnical,
+  onStartNew,
 }: Props) {
-  const capabilityQuery = useQuery({
-    queryKey: ["release0-capabilities"],
-    queryFn: fetchRelease0Capabilities,
-    staleTime: 60_000,
-  });
-  const stage = currentStage(selectedRun, events, executionStatus, hasLiveRun);
-  const evidence = evidenceSummary(events);
-  const serverIntents = capabilityQuery.data?.guided_intents ?? [];
-  const usingStarterExamples = !capabilityQuery.isLoading && serverIntents.length === 0;
-  const quickStartOptions = serverIntents.length > 0 ? serverIntents : usingStarterExamples ? STARTER_EXAMPLES : [];
   const hasRunContext = hasLiveRun || Boolean(selectedRun);
   const completed = Boolean(selectedRun?.completed);
+  const stage = currentStage(selectedRun, events, executionStatus, hasLiveRun);
 
-  const usePrompt = (prompt: string) => {
-    onUsePrompt(prompt);
-    window.requestAnimationFrame(() => {
-      document.getElementById("agent-request")?.focus();
-      document.getElementById("agent-request")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-  };
+  if (!hasRunContext) return null;
 
-  return (
-    <section className="experience-shell" aria-label="Release 0 user experience">
-      {!hasRunContext && (
-        <article className="experience-hero">
-          <div className="experience-copy">
-            <p className="eyebrow">RELEASE 0 · READ-ONLY PILOT</p>
-            <h2>Investigate industrial evidence without guessing.</h2>
-            <p>
-              Describe what you need to understand. The agent can inspect the supplied TRACTIAN read
-              APIs, ground its answer in evidence, and stop safely when the information is incomplete
-              or conflicting. External consequential actions stay disabled in this release.
-            </p>
-            <div className="experience-guardrails" aria-label="Release 0 guarantees">
-              <span>Live provider</span><span>Real TRACTIAN reads</span><span>Evidence-backed</span><span>No external actions</span>
-            </div>
-          </div>
-          <div className="experience-start">
-            <p className="eyebrow">QUICK START</p>
-            <strong>Choose a starting posture</strong>
-            <p className="muted">The preset fills the request. You can edit it before running.</p>
-            {usingStarterExamples && (
-              <p className="experience-source-note" role="status">
-                Server-owned guided intents are unavailable in this environment, so these are starter examples only. Runtime capabilities remain authoritative.
-              </p>
-            )}
-            <div className="experience-intents">
-              {quickStartOptions.map((intent) => (
-                <button
-                  type="button"
-                  data-testid="quick-start-option"
-                  key={intent.intent_id}
-                  onClick={() => usePrompt(intent.prompt_template)}
-                >
-                  <span>{intent.intent_id}</span>
-                  <strong>{intent.label}</strong>
-                  <small>{intent.release0_behavior.replaceAll("_", " ").toLowerCase()}</small>
-                </button>
-              ))}
-              {capabilityQuery.isLoading && <span className="muted">Loading guided investigations…</span>}
-            </div>
-          </div>
-        </article>
-      )}
-
-      {hasRunContext && !completed && (
-        <article className="experience-progress" aria-live="polite">
-          <div className="experience-progress-heading">
-            <div>
-              <p className="eyebrow">{viewingHistorical ? "PERSISTED INVESTIGATION" : "LIVE INVESTIGATION"}</p>
-              <h2>Investigation in progress</h2>
-            </div>
-            <span className="experience-connection">{viewingHistorical ? "history" : connection.toLowerCase()}</span>
-          </div>
-          <ol className="experience-stage-list">
-            {STAGES.map(([key, label], index) => (
-              <li key={key} className={index < stage ? "done" : index === stage ? "active" : "pending"}>
-                <span>{index < stage || stage === 5 ? "✓" : index + 1}</span>
-                <small>{label}</small>
+  if (!completed) {
+    const stages = ["Preparing the analysis", "Checking the available data", "Reviewing the result"];
+    return (
+      <section className="experience-shell task-experience-shell" aria-live="polite">
+        <article className="task-progress">
+          <h2>{viewingHistorical ? "Loading saved analysis" : "Analysing the available information"}</h2>
+          <p>{viewingHistorical ? "The saved result will appear here when it is ready." : "You can stay on this page. The result will appear here automatically."}</p>
+          <ol className="task-progress-list" aria-label="Analysis progress">
+            {stages.map((label, index) => (
+              <li key={label} className={index < stage ? "is-done" : index === stage ? "is-active" : ""}>
+                <span className="task-progress-marker" aria-hidden="true">{index < stage ? "✓" : index + 1}</span>
+                <strong>{label}</strong>
               </li>
             ))}
           </ol>
+          {!viewingHistorical && connection && <span className="visually-hidden">Connection status: {connection}</span>}
         </article>
-      )}
+      </section>
+    );
+  }
 
-      {completed && (
-        <article className="experience-outcome" data-testid="customer-outcome-summary">
-          <div className="experience-outcome-main">
-            <p className="eyebrow">WHAT YOU NEED TO KNOW</p>
-            <div className="experience-outcome-title">
-              <h2>{decisionTitle(selectedRun?.terminal_decision, selectedRun?.terminal_response_mode)}</h2>
-              {selectedRun?.terminal_response_mode && <span>{selectedRun.terminal_response_mode}</span>}
-            </div>
-            <p className="experience-message">{selectedRun?.terminal_message || "No customer-safe message was persisted."}</p>
-            <div className="experience-next-step">
-              <strong>What to do next</strong>
-              <p>{decisionNextStep(selectedRun?.terminal_decision, selectedRun?.terminal_response_mode)}</p>
-            </div>
-          </div>
-          <aside className="experience-evidence">
-            <p className="eyebrow">SUPPORTING EVIDENCE</p>
-            {evidence.length > 0 ? (
-              <ul>
-                {evidence.map((item) => (
-                  <li key={item.id}>
-                    <strong>{item.tool?.replaceAll("_", " ") ?? "Evidence"}</strong>
-                    <span>{item.status ? `HTTP ${item.status}` : "persisted"}</span>
-                    <small title={item.id}>{item.id}</small>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="muted">No safe evidence reference was persisted for this terminal path.</p>
-            )}
-            <small className="experience-evidence-note">
-              Open Evidence for the canonical trail, Investigation for runtime behavior, or Engineering for evaluator and architecture details.
-            </small>
-          </aside>
-        </article>
-      )}
+  return (
+    <section className="experience-shell task-experience-shell">
+      <article className="task-outcome" data-testid="customer-outcome-summary">
+        <span className="task-outcome-status">{resultStatus(selectedRun?.terminal_decision, selectedRun?.terminal_response_mode)}</span>
+        <h1>{decisionTitle(selectedRun?.terminal_decision, selectedRun?.terminal_response_mode)}</h1>
+        <p className="task-outcome-message">{selectedRun?.terminal_message || "No user-facing answer was saved for this analysis."}</p>
+
+        <section className="task-next-step" aria-labelledby="next-step-heading">
+          <h2 id="next-step-heading">What to do next</h2>
+          <p>{decisionNextStep(selectedRun?.terminal_decision, selectedRun?.terminal_response_mode)}</p>
+        </section>
+
+        <div className="task-outcome-actions">
+          <button type="button" className="task-primary-action" onClick={onOpenEvidence}>View evidence</button>
+          <button type="button" className="task-secondary-action" onClick={onStartNew}>New analysis</button>
+          <button type="button" className="task-tertiary-action" onClick={onOpenTechnical}>Technical details</button>
+        </div>
+      </article>
     </section>
   );
 }

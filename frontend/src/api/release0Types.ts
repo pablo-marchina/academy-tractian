@@ -1,4 +1,4 @@
-export type Release0ToolAvailability = "LIVE_READ" | "PROPOSAL_ONLY" | "UNAVAILABLE";
+export type Release0ToolAvailability = "LIVE_READ" | "EXECUTABLE_WITH_CONFIRMATION" | "PROPOSAL_ONLY" | "UNAVAILABLE";
 
 export interface Release0CapabilityParameter {
   name: string;
@@ -41,6 +41,7 @@ export interface Release0CapabilityManifest {
   release: {
     git_sha: string;
     read_only_user_path_enabled: boolean;
+    governed_action_path_enabled: boolean;
     cost_policy: string;
     paid_fallback_enabled: boolean;
     local_serving_enabled: boolean;
@@ -58,9 +59,9 @@ export interface Release0CapabilityManifest {
     read_path_enabled: boolean;
   };
   action_execution: {
-    enabled: false;
-    mode: "PROPOSAL_ONLY";
-    external_side_effects_allowed: false;
+    enabled: boolean;
+    mode: "GOVERNED_CONFIRMATION" | "PROPOSAL_ONLY";
+    external_side_effects_allowed: boolean;
     explanation: string;
   };
   tool_summary: {
@@ -68,6 +69,7 @@ export interface Release0CapabilityManifest {
     reads: number;
     actions: number;
     live_reads: number;
+    executable_actions: number;
     proposal_only_actions: number;
   };
   read_semantics: Array<"complete" | "partial" | "inconclusive" | "conflict" | "unavailable">;

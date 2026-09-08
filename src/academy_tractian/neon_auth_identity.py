@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from collections import OrderedDict
 from collections.abc import Callable
+import hashlib
 import json
+from threading import Lock
+from time import monotonic
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
@@ -16,9 +20,13 @@ _MAX_COOKIE_BYTES = 16 * 1024
 _MAX_SESSION_RESPONSE_BYTES = 64 * 1024
 _MAX_ID_BYTES = 256
 _DEFAULT_TIMEOUT_SECONDS = 5.0
+_READ_SESSION_CACHE_TTL_SECONDS = 2.0
+_MAX_READ_SESSION_CACHE_ENTRIES = 256
+_SESSION_SINGLEFLIGHT_STRIPES = 64
 
 
 SessionFetcher = Callable[[str], tuple[int, bytes]]
+Clock = Callable[[], float]
 
 
 class _NoAuthRedirectHandler(HTTPRedirectHandler):
@@ -69,7 +77,12 @@ class NeonAuthRuntimeContextProvider:
 
     The browser supplies only the opaque cookie created by the managed auth service. Tenant,
     identity, role and permissions are never accepted from request headers or JSON payloads.
-    A valid managed session is revalidated with cookie-cache bypass before each API/SSE request.
+
+    Read-only request bursts are coalesced behind a bounded two-second server cache keyed by a
+    one-way digest of the opaque cookie. This is deliberately much shorter than a normal session
+    cache: it exists only to prevent dashboard fan-out from turning every GET/SSE into a separate
+    managed-auth network validation. Non-read requests always bypass this cache and force a fresh
+    managed-session validation. Expired cache entries are never used as stale-on-error fallback.
 
     Until shared-organization onboarding is exposed in the product, an authenticated user with no
     active organization receives a deterministic personal tenant derived from the server-verified
@@ -83,18 +96,34 @@ class NeonAuthRuntimeContextProvider:
         base_url: str,
         timeout_seconds: float = _DEFAULT_TIMEOUT_SECONDS,
         fetch_session: SessionFetcher | None = None,
+        clock: Clock = monotonic,
     ) -> None:
         if not 0.5 <= timeout_seconds <= 30.0:
             raise ValueError("Neon Auth timeout must be between 0.5 and 30 seconds")
         self._base_url = _validated_auth_base_url(base_url)
         self._timeout_seconds = timeout_seconds
         self._fetch_session_override = fetch_session
+        self._clock = clock
+        self._cache_lock = Lock()
+        self._read_session_cache: OrderedDict[
+            str,
+            tuple[float, AuthenticatedRuntimeContext],
+        ] = OrderedDict()
+        self._singleflight_locks = tuple(Lock() for _ in range(_SESSION_SINGLEFLIGHT_STRIPES))
 
     @staticmethod
     def _unauthorized(detail: str = "managed_session_invalid") -> HTTPException:
         return HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail,
+        )
+
+    @staticmethod
+    def _unavailable() -> HTTPException:
+        return HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="managed_session_unavailable",
+            headers={"Retry-After": "1"},
         )
 
     def _cookie(self, request: Request) -> str:
@@ -106,8 +135,42 @@ class NeonAuthRuntimeContextProvider:
             raise self._unauthorized("managed_session_required")
         return cookie
 
-    def _network_fetch(self, cookie: str) -> tuple[int, bytes]:
-        url = f"{self._base_url}/get-session?disableCookieCache=true"
+    @staticmethod
+    def _cache_key(cookie: str) -> str:
+        return hashlib.sha256(cookie.encode("utf-8")).hexdigest()
+
+    def _cached_context(self, cache_key: str) -> AuthenticatedRuntimeContext | None:
+        now = self._clock()
+        with self._cache_lock:
+            cached = self._read_session_cache.get(cache_key)
+            if cached is None:
+                return None
+            expires_at, context = cached
+            if expires_at <= now:
+                self._read_session_cache.pop(cache_key, None)
+                return None
+            self._read_session_cache.move_to_end(cache_key)
+            return context
+
+    def _cache_context(self, cache_key: str, context: AuthenticatedRuntimeContext) -> None:
+        expires_at = self._clock() + _READ_SESSION_CACHE_TTL_SECONDS
+        with self._cache_lock:
+            self._read_session_cache[cache_key] = (expires_at, context)
+            self._read_session_cache.move_to_end(cache_key)
+            while len(self._read_session_cache) > _MAX_READ_SESSION_CACHE_ENTRIES:
+                self._read_session_cache.popitem(last=False)
+
+    def _invalidate_cached_context(self, cache_key: str) -> None:
+        with self._cache_lock:
+            self._read_session_cache.pop(cache_key, None)
+
+    def _singleflight_lock(self, cache_key: str) -> Lock:
+        stripe = int(cache_key[:8], 16) % len(self._singleflight_locks)
+        return self._singleflight_locks[stripe]
+
+    def _network_fetch(self, cookie: str, *, force_fresh: bool = True) -> tuple[int, bytes]:
+        suffix = "?disableCookieCache=true" if force_fresh else ""
+        url = f"{self._base_url}/get-session{suffix}"
         request = UrlRequest(
             url,
             headers={
@@ -128,22 +191,22 @@ class NeonAuthRuntimeContextProvider:
         except (URLError, TimeoutError, OSError) as exc:
             raise RuntimeError("managed_session_service_unavailable") from exc
 
-    def _fetch(self, cookie: str) -> tuple[int, bytes]:
+    def _fetch(self, cookie: str, *, force_fresh: bool) -> tuple[int, bytes]:
         if self._fetch_session_override is not None:
             return self._fetch_session_override(cookie)
-        return self._network_fetch(cookie)
+        return self._network_fetch(cookie, force_fresh=force_fresh)
 
-    def __call__(self, request: Request) -> AuthenticatedRuntimeContext:
-        cookie = self._cookie(request)
+    def _validated_context(self, *, cookie: str, cache_key: str, force_fresh: bool) -> AuthenticatedRuntimeContext:
         try:
-            response_status, raw = self._fetch(cookie)
+            response_status, raw = self._fetch(cookie, force_fresh=force_fresh)
         except RuntimeError as exc:
-            raise self._unauthorized("managed_session_unavailable") from exc
+            raise self._unavailable() from exc
 
         if response_status in {401, 403}:
+            self._invalidate_cached_context(cache_key)
             raise self._unauthorized("managed_session_invalid")
         if response_status != 200:
-            raise self._unauthorized("managed_session_unavailable")
+            raise self._unavailable()
 
         try:
             payload = _bounded_json_object(raw)
@@ -171,6 +234,7 @@ class NeonAuthRuntimeContextProvider:
                     label="managed active organization id",
                 )
         except (TypeError, ValueError, KeyError) as exc:
+            self._invalidate_cached_context(cache_key)
             raise self._unauthorized("managed_session_invalid") from exc
 
         return AuthenticatedRuntimeContext(
@@ -181,3 +245,33 @@ class NeonAuthRuntimeContextProvider:
             permissions=DEFAULT_RUNTIME_PERMISSIONS,
             seed=None,
         )
+
+    def __call__(self, request: Request) -> AuthenticatedRuntimeContext:
+        cookie = self._cookie(request)
+        cache_key = self._cache_key(cookie)
+        read_only = request.method.upper() in {"GET", "HEAD"}
+
+        if not read_only:
+            return self._validated_context(
+                cookie=cookie,
+                cache_key=cache_key,
+                force_fresh=True,
+            )
+
+        cached = self._cached_context(cache_key)
+        if cached is not None:
+            return cached
+
+        # Collapse concurrent misses for the same digest stripe. Re-check after taking the lock so
+        # one successful validation can satisfy the rest of the burst without another network call.
+        with self._singleflight_lock(cache_key):
+            cached = self._cached_context(cache_key)
+            if cached is not None:
+                return cached
+            context = self._validated_context(
+                cookie=cookie,
+                cache_key=cache_key,
+                force_fresh=False,
+            )
+            self._cache_context(cache_key, context)
+            return context

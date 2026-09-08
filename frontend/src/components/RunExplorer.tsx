@@ -1,10 +1,25 @@
 import type { SafeRun } from "../api/types";
 
-function runTone(run: SafeRun): string {
-  if (run.errors > 0) return "danger";
-  if (run.policy_blocks > 0) return "warning";
-  if (run.completed) return "success";
-  return "live";
+function resultLabel(run: SafeRun): string {
+  if (!run.completed) return "Analysis in progress";
+  if (run.terminal_decision === "ASK_CLARIFICATION") return "More information needed";
+  if (run.terminal_decision === "ABSTAIN") return "Not enough evidence";
+  if (run.terminal_decision === "ESCALATE_HUMAN") return "Specialist review recommended";
+  if (run.terminal_decision === "ORIENT") {
+    if (run.terminal_response_mode === "complete") return "Answer ready";
+    if (run.terminal_response_mode === "partial") return "Partial answer";
+    if (run.terminal_response_mode === "conflict") return "Conflicting evidence";
+    if (run.terminal_response_mode === "inconclusive") return "No reliable conclusion";
+    if (run.terminal_response_mode === "unavailable") return "Data unavailable";
+    return "Answer ready";
+  }
+  return "Analysis finished";
+}
+
+function preview(run: SafeRun): string {
+  const message = run.terminal_message?.trim();
+  if (!message) return run.completed ? "No saved answer text for this analysis." : "This analysis is still running.";
+  return message.length > 150 ? `${message.slice(0, 147)}…` : message;
 }
 
 export function RunExplorer({
@@ -20,64 +35,46 @@ export function RunExplorer({
   loading: boolean;
   onSelect: (runId: string | null) => void;
 }) {
-  return (
-    <article className="panel run-explorer-panel">
-      <div className="section-heading compact">
-        <div>
-          <p className="eyebrow">PERSISTED SAFE TELEMETRY</p>
-          <h2>Run Explorer</h2>
-        </div>
-        {selectedRunId && liveRunId && (
-          <button className="ghost-button" type="button" onClick={() => onSelect(null)}>
-            Follow live run
-          </button>
-        )}
-      </div>
+  if (loading) {
+    return <div className="task-empty" role="status">Loading saved analyses…</div>;
+  }
 
-      {loading ? (
-        <p className="muted">Loading persisted runs…</p>
-      ) : runs.length === 0 ? (
-        <div className="empty-state small">
-          <strong>No persisted runs</strong>
-          <p>Runs appear here only after the backend has persisted a safe run projection.</p>
-        </div>
-      ) : (
-        <div className="run-table-wrap">
-          <table className="run-table">
-            <thead>
-              <tr>
-                <th>Run</th>
-                <th>State</th>
-                <th>Decision</th>
-                <th>Events</th>
-                <th>Tools</th>
-                <th>Blocks</th>
-                <th>Errors</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((run) => {
-                const selected = run.run_id === (selectedRunId ?? liveRunId);
-                return (
-                  <tr
-                    key={run.run_id}
-                    className={selected ? "run-row-selected" : undefined}
-                    onClick={() => onSelect(run.run_id === liveRunId ? null : run.run_id)}
-                  >
-                    <td><code>{run.run_id.slice(0, 18)}</code></td>
-                    <td><span className={`run-state-pill state-${runTone(run)}`}>{run.completed ? "complete" : "active"}</span></td>
-                    <td>{run.terminal_decision ?? "—"}</td>
-                    <td>{run.event_count}</td>
-                    <td>{run.tool_calls}</td>
-                    <td>{run.policy_blocks}</td>
-                    <td>{run.errors}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+  if (runs.length === 0) {
+    return <div className="task-empty">No analyses yet. Start from Home and completed analyses will appear here.</div>;
+  }
+
+  return (
+    <article className="run-explorer-panel task-run-explorer">
+      {selectedRunId && liveRunId && (
+        <button className="task-text-button" type="button" onClick={() => onSelect(null)}>
+          Return to current analysis
+        </button>
       )}
+      <ol className="task-run-list" aria-label="Saved analyses">
+        {runs.map((run, index) => {
+          const selected = run.run_id === (selectedRunId ?? liveRunId);
+          const analysisNumber = runs.length - index;
+          return (
+            <li className="task-run-item" key={run.run_id}>
+              <button
+                type="button"
+                className="task-run-button"
+                aria-current={selected ? "true" : undefined}
+                aria-label={`Analysis ${analysisNumber}: ${resultLabel(run)}. Open analysis.`}
+                onClick={() => onSelect(run.run_id === liveRunId ? null : run.run_id)}
+              >
+                <span className="task-run-main">
+                  <strong>{resultLabel(run)}</strong>
+                  <span>{preview(run)}</span>
+                  <small>Analysis {analysisNumber} · {run.completed ? "Finished" : "In progress"}</small>
+                  <span className="visually-hidden">Run ID {run.run_id}</span>
+                </span>
+                <span className="task-run-arrow" aria-hidden="true">›</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
     </article>
   );
 }

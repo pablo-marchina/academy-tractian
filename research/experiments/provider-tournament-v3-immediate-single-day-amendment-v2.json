@@ -1,0 +1,80 @@
+{
+  "schema_version": "provider-tournament-v3-immediate-single-day-amendment-v2",
+  "decision_id": "DP-004",
+  "status": "PREREGISTERED_BEFORE_ANY_V3_LIVE_CALL",
+  "reason": "Operator requires DP-004 to conclude in the current session without waiting for additional UTC resets. No v3 live calls existed when this amendment was frozen.",
+  "supersedes_for_immediate_selection": [
+    "provider-tournament-v3-selection-rule-amendment-v1",
+    "provider-tournament-v3-paid-account-zero-overage-amendment-v1"
+  ],
+  "invariants_unchanged": {
+    "candidate_ids": [
+      "cloudflare-glm-4.7-flash",
+      "cloudflare-nemotron-3-120b-a12b"
+    ],
+    "population_sha256": "4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9",
+    "scenario_count": 17,
+    "request_contract_unchanged": true,
+    "temperature": 0,
+    "automatic_retries": 0,
+    "automatic_fallbacks": 0,
+    "automatic_json_repair": false,
+    "provider_native_tool_execution": false,
+    "raw_provider_material_recorded": false
+  },
+  "single_day_geometry": {
+    "repetitions_per_candidate": 1,
+    "attempts_per_candidate": 17,
+    "total_live_attempts": 34,
+    "experimental_unit": "scenario",
+    "repetition_index": 0,
+    "max_worst_case_neurons": 8433.617856
+  },
+  "cash_cost_policy": {
+    "marginal_inference_cash_cost_target_usd": 0,
+    "workers_paid_plan_allowed": true,
+    "workers_paid_daily_no_charge_allocation_neurons": 10000,
+    "paid_overage_is_not_an_objective": true,
+    "concurrent_project_workers_ai_usage_blocked_by_postgres_budget_lease": true,
+    "note": "The existing Workers Paid subscription is pre-existing account cost and is not represented as zero. The experiment targets zero marginal inference overage."
+  },
+  "hard_gates": {
+    "candidate_attempt_count": 17,
+    "minimum_success_rate": 0.9375,
+    "private_gold_attempt_allowed": false,
+    "identity_or_seed_binding_bypass_allowed": false,
+    "trace_integrity_required": true,
+    "raw_provider_material_allowed": false,
+    "resource_accounting_required_on_success": true
+  },
+  "primary_metric": "operational_outcome_accuracy",
+  "primary_comparison": {
+    "method": "paired_scenario_bootstrap",
+    "resamples": 10000,
+    "confidence_level": 0.95,
+    "random_seed": 20260908,
+    "material_improvement_absolute": 0.02,
+    "promote_on_confident_material_difference": true
+  },
+  "deterministic_tie_breakers_if_primary_is_not_confidently_material": [
+    "tool_selection_and_argument_validity_composite_desc",
+    "success_rate_desc",
+    "median_latency_ms_asc",
+    "total_neurons_asc",
+    "candidate_id_lexicographic_asc"
+  ],
+  "decision_rule": {
+    "if_no_candidate_passes_hard_gates": "NO_SELECTION",
+    "if_exactly_one_candidate_passes_hard_gates": "PROMOTE_SOLE_ELIGIBLE",
+    "if_two_candidates_pass_and_primary_is_confidently_material": "PROMOTE_PRIMARY_WINNER",
+    "if_two_candidates_pass_and_primary_is_not_confidently_material": "PROMOTE_FIRST_STRICT_TIE_BREAK_WINNER",
+    "automatic_production_config_change": false,
+    "allowed_final_outcomes": ["PROMOTE", "NO_SELECTION"]
+  },
+  "limitations": [
+    "This immediate protocol estimates cross-scenario quality but not repeat stability across UTC days.",
+    "The original five-repetition v3 remains stronger evidence for stability and may be run later, but it is not required for the immediate DP-004 selection ordered here.",
+    "M06 evidence grounding is not used as an independent tie-breaker because the public deterministic packet scorer does not independently score M06; inventing it after outcomes would be post-hoc."
+  ],
+  "live_calls_observed_before_freeze": 0
+}

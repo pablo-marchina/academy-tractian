@@ -12,55 +12,64 @@ Stable top-level gate:
 
 It composes/requires the principal reproduction/browser/distributed-correctness contracts. Branch protection should use the stable required status rather than every historical experiment workflow.
 
-Current UX baseline `2ca6215...` passed `final-ci-required`, clean clone and full Playwright.
+Recent material baselines:
 
-## 2. Hosted production promotion
+- backend V13 PR #210 passed all 8 required triggered workflows before merge to `08866da60245f58f217981b7ae668b10be45cc67`;
+- task-driven frontend PR #209 passed the required frontend/browser/full-product regression surface before merge/deployment to `1bc124a8d4dbd029178ff8129b25452129445de7`.
 
-`hosted-production-release0-agent.yml` is intentionally **manual (`workflow_dispatch`)** and requires:
+## 2. Hosted backend promotion
 
-```text
-expected_sha = exact backend/runtime Git SHA intentionally promoted
-```
+`hosted-production-release0-agent.yml` is intentionally manual (`workflow_dispatch`) and requires an exact expected backend SHA for a full hosted acceptance campaign.
 
-It proves the exact hosted backend Release 0 read-only path and required modes. It must not auto-run merely because a large PR contains old backend diffs or a frontend/docs commit advances the branch.
-
-This distinction is important:
+Repository CI and Railway exact-SHA deployment are different evidence classes:
 
 ```text
 PR/branch regression green
 ≠ backend production promotion
+≠ full hosted acceptance campaign
 ```
 
-Backend promotion remains an explicit operational decision with exact-SHA evidence.
+The original Release 0 acceptance remains workflow run `34069562818` at backend `082d6f...`.
 
-`hosted-production-g2-smoke.yml` remains the hosted release-integrity smoke; exact expected SHA is used for intentional promotion, while ordinary integrity checks need not pretend every branch SHA is already serving.
+The current V13 backend `08866da...` was prospectively validated through required CI, exact-SHA Railway deployment, TRACTIAN predeploy smoke, `/health` and targeted live prompt traces. Do not rewrite the historical workflow run to pretend it tested V13.
+
+`hosted-production-g2-smoke.yml` remains an exact-source release-integrity smoke for intentional promotion use.
 
 ## 3. Frontend deployment/regression
 
-Frontend UX can advance independently when its build/browser gates pass and the backend contract remains compatible. Record frontend deployment SHA separately from the immutable promoted backend runtime SHA.
+Frontend UX can advance independently when build/browser gates pass and backend contract remains compatible. Track frontend deployment SHA separately from backend runtime SHA.
+
+Current hosted task-driven frontend: `1bc124a8d4dbd029178ff8129b25452129445de7`.
 
 ## 4. Specialized active validation
 
-Examples include:
+Examples:
 
 - production runtime/build checks;
 - PostgreSQL operational/RLS/recovery checks;
 - observability/realtime checks;
 - EDD/provider-free checks;
 - Railway IaC contract;
+- full-product Playwright;
 - targeted hosted smoke gates.
 
-These are evidence for their exact scope, not automatic proof of broader production SLO/security/value claims.
+These are evidence for exact scope, not automatic proof of broader SLO/security/value claims.
 
-## 5. Historical / experimental workflows
+## 5. Live prompt testing and auth boundary
+
+The public `POST /api/runs` path requires the real managed browser session. Do not add a CI shortcut that bypasses server-owned session/tenant authority simply to make live prompting easy.
+
+If automated hosted semantic/API coverage is required, design a separately authorized test-harness identity/session path with explicit scope and provenance. The Railway `hosted-pilot` service is currently a preflight process, not a second serving agent runtime.
+
+## 6. Historical / experimental workflows
 
 Provider experiment packets, one-shot E/EV/D-series campaigns and older research workflows are retained because frozen results/ADRs/provenance may reference them.
 
-Do not rerun consumed experiments simply because YAML is present. Changed scientific execution requires a new prospective authorization/protocol.
+Do not rerun consumed experiments merely because YAML is present. Changed scientific execution requires a new prospective authorization/protocol.
 
-## 6. Workflow lifecycle labels
+## 7. Workflow lifecycle labels
 
-Every new workflow should clearly fit one class:
+Every new workflow should fit one class:
 
 - `required` — ordinary product merge regression;
 - `promotion` — intentional hosted release acceptance;
@@ -69,18 +78,19 @@ Every new workflow should clearly fit one class:
 - `experimental` — preregistered/research execution;
 - `historical-one-shot` — retained only for provenance.
 
-Prefer reusable scripts/modules + a small number of stable top-level workflows over one YAML file per small code path.
+Prefer reusable scripts/modules + a small number of stable top-level workflows over one YAML file per small path.
 
-## 7. Safety rules
+## 8. Safety rules
 
 - never print provider/database/auth/evaluator/blind secrets;
 - separate provider-free regression from live-provider consumption;
 - preserve exact source/protocol identity for frozen campaigns;
 - do not silently relax expected SHA, quota, route/model or gold-isolation gates;
-- never treat a skipped/not-triggered workflow as a pass;
+- never treat skipped/not-triggered workflow as a pass;
 - preserve failed/consumed attempts where scientifically material;
-- do not bulk-delete historical YAML before proving it is unreferenced.
+- do not bulk-delete historical YAML before proving it unreferenced;
+- do not introduce an auth bypass to automate production prompt tests.
 
-## 8. Cleanup
+## 9. Cleanup
 
 Physical deletion/rename is allowed only after proving the workflow is not referenced by frozen evidence, ADRs, active workflows, reproduction contracts or Actions provenance. When unsafe to rerun but provenance-sensitive, disable future triggers rather than falsifying history.

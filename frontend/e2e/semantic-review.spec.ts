@@ -30,17 +30,18 @@ function assertReviewerPayloadBlinded(payload: unknown): void {
   expect(serialized).not.toContain("sem-e2e-val-");
 }
 
-async function openEngineering(page: Page): Promise<void> {
-  const tab = page.getByRole("tab", { name: /Engineering/ });
-  await tab.click();
-  await expect(tab).toHaveAttribute("aria-selected", "true");
+async function openStudies(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Technical", exact: true }).click();
+  const studies = page.locator(".technical-task-menu").getByRole("button", { name: /^Studies/ });
+  await studies.click();
+  await expect(studies).toHaveAttribute("aria-current", "page");
 }
 
 async function openReviewer(page: Page, user: string) {
   await page.context().setExtraHTTPHeaders(actorHeaders(user));
   await page.goto("/");
-  await expect(page.getByText("API healthy")).toBeVisible();
-  await openEngineering(page);
+  await expect(page.locator(".task-service-state")).toContainText("Online");
+  await openStudies(page);
   await expect(page.getByRole("heading", { name: "Blind semantic review" })).toBeVisible();
 }
 
@@ -62,7 +63,7 @@ test.describe("semantic review full-product acceptance", () => {
     });
 
     await page.goto("/");
-    await openEngineering(page);
+    await openStudies(page);
     await expect(page.getByRole("heading", { name: "Blind semantic review" })).toBeVisible();
     expect(semanticRequests).toEqual([]);
 

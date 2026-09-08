@@ -32,17 +32,18 @@ function assertPilotPayloadBlinded(payload: unknown): void {
   }
 }
 
-async function openEngineering(page: Page): Promise<void> {
-  const tab = page.getByRole("tab", { name: /Engineering/ });
-  await tab.click();
-  await expect(tab).toHaveAttribute("aria-selected", "true");
+async function openStudies(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Technical", exact: true }).click();
+  const studies = page.locator(".technical-task-menu").getByRole("button", { name: /^Studies/ });
+  await studies.click();
+  await expect(studies).toHaveAttribute("aria-current", "page");
 }
 
 async function openParticipant(page: Page, user: string, organization = "e2e-org-a") {
   await page.context().setExtraHTTPHeaders(actorHeaders(user, organization));
   await page.goto("/");
-  await expect(page.getByText("API healthy")).toBeVisible();
-  await openEngineering(page);
+  await expect(page.locator(".task-service-state")).toContainText("Online");
+  await openStudies(page);
   await expect(page.getByRole("heading", { name: "Engineer effort study" })).toBeVisible();
 }
 
@@ -53,8 +54,8 @@ async function newActorPage(browser: Browser, user: string, organization = "e2e-
   });
   const page = await context.newPage();
   await page.goto("/");
-  await expect(page.getByText("API healthy")).toBeVisible();
-  await openEngineering(page);
+  await expect(page.locator(".task-service-state")).toContainText("Online");
+  await openStudies(page);
   return { context, page };
 }
 
@@ -76,7 +77,7 @@ test.describe("operational value collector full-product acceptance", () => {
     });
 
     await page.goto("/");
-    await openEngineering(page);
+    await openStudies(page);
     await expect(page.getByRole("heading", { name: "Engineer effort study" })).toBeVisible();
     await expect(page.getByTestId("pilot-start")).toBeVisible();
     expect(pilotRequests).toEqual([]);

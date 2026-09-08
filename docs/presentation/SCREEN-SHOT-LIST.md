@@ -1,475 +1,200 @@
 # Technical Presentation — Screen Shot List
 
-This is the exact capture plan for the 5-minute technical video.
+**Current UI:** task-driven Home / Analyses / Technical  
+**Current backend:** `08866da...`  
+**Current frontend:** `1bc124a...`
 
-Use together with [`05-MIN-TECHNICAL-SCREENPLAY.md`](05-MIN-TECHNICAL-SCREENPLAY.md).
-
-## Capture rule
-
-Every shot must answer at least one technical question:
-
-1. Who owns authority?
-2. Who owns control flow?
-3. Who can execute a tool?
-4. Where does external I/O happen?
-5. How does evidence become auditable?
-6. How is failure/uncertainty represented?
-7. How is the run evaluated independently?
-8. Where is durable truth stored?
-
-If a screen answers none of these, cut it.
-
----
+Every shot must prove an authority, execution, evidence, uncertainty, evaluation, persistence or deployment boundary. If it proves none, cut it.
 
 ## Shot 01 — Full architecture
 
-**Duration:** 20–25 s  
-**Source:** architecture overlay, not raw code.
+Show Browser → production-web → production-api → AuthenticatedRuntimeContext → V13 DecisionSource/AgentController → HarnessRunner/ToolSpec → supplied TRACTIAN API → Evidence/RunTrace → ProductionEvaluator → Neon PostgreSQL → SSE/UI.
 
-### Must show
+## Shot 02 — Authenticated Home
 
-```text
-Browser / React
-→ FastAPI production-api
-→ AgentController
-→ DecisionSource
-→ HarnessRunner / ToolSpec
-→ supplied TRACTIAN API
+Must show:
 
-RunTrace
-→ ProductionEvaluator
-→ Neon PostgreSQL
-→ SSE / Frontend
-```
+- hosted public product;
+- signed-in state;
+- Home question entry;
+- service online state.
 
-### Highlight in order
-
-1. identity/tenant boundary;
-2. runtime/control-flow boundary;
-3. tool/network boundary;
-4. evaluator/persistence boundary.
-
-### Do not show
-
-- every internal class;
-- every provider experiment;
-- all deployment metadata.
-
----
-
-## Shot 02 — Authenticated product + tenant context
-
-**Duration:** 20–25 s  
-**UI depth:** Results.
-
-### Must show
-
-- application is signed in;
-- current user/org context if safely visible;
-- no developer/local environment;
-- public hosted product UI.
-
-### Overlay
+Overlay:
 
 ```text
 managed session
 → server validation
 → AuthenticatedRuntimeContext
-→ PostgreSQL org scope
-→ RLS
+→ PostgreSQL org scope / RLS
 ```
 
-### Avoid
+Optional small line: `GET/HEAD ≤2 s validated reuse; POST fresh`.
 
-- cookies;
-- devtools Network headers;
-- auth tokens;
-- secret environment variables.
+Never show cookies/tokens/devtools secrets.
 
----
+## Shot 03 — R310 grounding path
 
-## Shot 03 — Submit primary run
+Use/select `run_97b91f6e0feb91184283` or submit equivalent prompt.
 
-**Duration:** 25–35 s  
-**UI depth:** Results.
-
-### Primary run requirements
-
-Choose one scenario that:
-
-- is already known to complete reliably;
-- requires 2–3 meaningful read operations;
-- returns evidence understandable on-screen;
-- terminates in a clear `FINAL` if possible;
-- has evaluation artifacts available after completion;
-- does not require consequential external action execution.
-
-### Must show
-
-- request text;
-- click/submit;
-- run created;
-- human-readable progress.
-
-### Architecture highlights
+Overlay:
 
 ```text
-Browser
-→ FastAPI
-→ persist run
-→ AgentController
-→ DecisionSource
+R310 label
+→ get_current_user
+→ list_assets_by_company
+→ asset_R310
 ```
 
----
+Technical point: discover authorized IDs instead of asking the customer.
 
-## Shot 04 — Structured decision + tool proposal
+## Shot 04 — Technical → Current analysis
 
-**Duration:** 15–20 s  
-**UI depth:** Investigation.
+Show one complete structured path with:
 
-### Must show
+- tool name;
+- normalized arguments/resource;
+- result/status;
+- evidence reference;
+- trace sequence.
 
-One real operation with:
+Prefer spectrum from the R310 primary run.
 
-- canonical tool name;
-- arguments;
-- validation/execution state;
-- associated result/evidence reference.
+## Shot 05 — Progressive point drill-down
 
-### Good examples
+Show asset-level and point-specific RMS/spectrum calls if both are visible.
 
-Prefer a read that is semantically obvious to the reviewer, such as an asset, analysis, model/data-state or related industrial resource lookup.
-
-### Overlay
+Label clearly:
 
 ```text
-DecisionSource
-→ structured TOOL_CALL
-→ ToolSpec registry
-→ B1/B2 deterministic checks
-→ HarnessRunner
+same tool family
++ different target/point_id
+= progressive drill-down, not exact duplicate
 ```
 
-### Narration anchor
+Do not call it a loop merely from tool name.
 
-“The model proposes; the execution boundary decides whether and how the call can run.”
+## Shot 06 — Result + response mode
 
----
+Show primary result with `partial` and supporting evidence.
 
-## Shot 05 — Remote TRACTIAN API result
-
-**Duration:** 15–20 s  
-**UI depth:** Investigation or Evidence.
-
-### Must show
-
-- successful remote read;
-- returned industrial information;
-- conversion into evidence/observation;
-- timing/status if already exposed safely.
-
-### Overlay
+Overlay:
 
 ```text
-HarnessRunner
-→ ProductionTractianTransport
-→ typed HTTPS
-→ supplied TRACTIAN API
-→ normalized evidence
+terminal decision ≠ response_mode
+partial = useful supported answer + material uncertainty
 ```
 
-### Required claim discipline
+## Shot 07 — Evidence lineage
 
-Say **“API fornecida pela TRACTIAN, hospedada remotamente para o projeto”** or equivalent.
-
-Do not call it TRACTIAN customer/corporate production infrastructure.
-
----
-
-## Shot 06 — Evidence lineage
-
-**Duration:** 20–25 s  
-**UI depth:** Evidence.
-
-### Must show
-
-At least one visible chain:
+Show one visible chain:
 
 ```text
-terminal/claim or observation
-→ evidence
-→ tool result
-→ tool name + arguments
-→ timestamp/resource/provenance
+result claim
+→ evidence ID
+→ normalized observation
+→ tool + arguments
+→ remote resource/status
 ```
 
-### Technical point
+Do not expose chain-of-thought.
 
-The final answer is not the only artifact; its supporting observable evidence is separately inspectable.
+## Shot 08 — Analyses / missing R420
 
----
+Select `run_547b2a62d84ef56a3d3d`.
 
-## Shot 07 — Trace / dynamic investigation
+Must show the bounded unavailable result that R420 was not found in the authorized fleet.
 
-**Duration:** 15–20 s  
-**UI depth:** Investigation.
+Technical point: no invented asset, no hidden-ID request, no cross-tenant speculation.
 
-### Must show
+## Shot 09 — Technical → Quality
 
-A timeline or graph containing multiple stages, ideally:
+Show persisted deterministic evaluation for a V13 run. Prefer blocking checks such as execution-chain integrity, model-call provenance, production-trace identity, proposal-contract validity, read-only action safety and terminal consistency.
 
-```text
-decision
-→ validation
-→ tool execution
-→ observation
-→ next decision
-→ terminal
-```
+## Shot 10 — Technical → Actions
 
-### Explicitly say
-
-`RunTrace` stores observable execution behavior. It does not expose hidden chain-of-thought.
-
----
-
-## Shot 08 — Main terminal result
-
-**Duration:** 15–20 s  
-**UI depth:** Results.
-
-### Must show
-
-- `FINAL` or actual terminal status;
-- concise conclusion;
-- next step;
-- evidence status/coverage if rendered.
-
-### Technical point
-
-Terminal state is structured, not just free-form text.
-
----
-
-## Shot 09 — Secondary safe-degradation run
-
-**Duration:** 15–20 s  
-**UI depth:** Results/Evidence.
-
-Use an already persisted run. Do not wait for a second live run.
-
-### Preferred
-
-`ESCALATE` with visible:
-
-- escalation reason;
-- evidence already collected;
-- unresolved condition;
-- human next step.
-
-### Alternative
-
-`ABSTAIN` or `CLARIFY` if it demonstrates the failure/uncertainty policy more clearly.
-
-### Technical point
-
-Insufficient/conflicting evidence changes the terminal policy instead of forcing a fabricated conclusion.
-
----
-
-## Shot 10 — Evaluation pipeline
-
-**Duration:** 15–20 s  
-**UI depth:** Engineering.
-
-### Must show
-
-```text
-completed RunTrace
-→ ProductionEvaluator
-→ deterministic checks
-→ persisted safe evaluation
-```
-
-### Technical point
-
-Evaluation is post-runtime and evaluator-private reference material is outside the agent context.
-
----
-
-## Shot 11 — Expected vs Observed / metrics
-
-**Duration:** 20–25 s  
-**UI depth:** Engineering / Eval.
-
-### Prioritize visible metrics in this order
-
-1. function/tool selection;
-2. arguments/validation;
-3. expected trajectory or read coverage;
-4. evidence correctness/coverage;
-5. terminal/decision correctness;
-6. action/escalation correctness;
-7. safety/failure behavior;
-8. stability.
-
-### Must not do
-
-- invent a metric that is not currently rendered/evidenced;
-- describe a semantic judge as authoritative if it is not human-calibrated;
-- show private gold text.
-
-### Visual comparison
-
-Prefer a compact table:
-
-```text
-Expected              Observed
-get_asset             get_asset       ✓
-get_analysis          get_analysis    ✓
-get_model_state       get_model_state ✓
-terminal: FINAL       FINAL           ✓
-```
-
----
-
-## Shot 12 — Action boundary
-
-**Duration:** 20–25 s  
-**UI depth:** Investigation / Engineering.
-
-### Must show
-
-- action capability exists;
-- proposal state;
-- explicit limitation.
-
-### Overlay
-
-```text
-LLM proposes
-→ deterministic schema/policy boundary
-→ action proposal
-→ confirmation/authorization architecture
-→ external execution
-```
-
-Place a strong visual label on the final step:
+Show current action capability/control state with strong overlay:
 
 ```text
 RELEASE 0
 EXTERNAL CONSEQUENTIAL EXECUTION DISABLED
 ```
 
-### Technical point
-
-Proposal visibility does not imply execution authority.
-
----
-
-## Shot 13 — Deployment architecture
-
-**Duration:** 20–25 s  
-**Source:** overlay diagram.
-
-### Must show
+## Shot 11 — Deployment
 
 ```text
 Browser
-→ Railway production-web
-→ Railway production-api
+→ Railway production-web 1bc124a...
+→ Railway production-api 08866da...
    ├→ Neon Auth
-   ├→ Cloudflare Workers AI
-   ├→ supplied TRACTIAN API
+   ├→ Cloudflare provisional provider
+   ├→ supplied TRACTIAN API 47561c...
    └→ Neon PostgreSQL
 ```
 
-### Then show realtime path
+## Shot 12 — Session resilience
+
+Overlay only; do not intentionally break auth while recording:
 
 ```text
-PostgreSQL event row
-→ commit
+invalid managed session → 401
+identity service unavailable → 503 + retry
+no stale-on-error
+```
+
+## Shot 13 — Durable realtime
+
+```text
+runtime event
+→ PostgreSQL commit
 → LISTEN/NOTIFY wake-up
-→ durable catch-up by cursor
+→ durable catch-up by run_id + sequence
 → authenticated SSE
 → React state
 ```
 
-### Technical point
-
-Rows/cursors are truth; notification is only wake-up.
-
----
-
-## Shot 14 — Final numbered architecture
-
-**Duration:** 15–20 s
-
-Reveal one number at a time:
+## Shot 14 — Final nine-step recap
 
 ```text
-1 Auth/session validation
-2 Tenant/run ownership
-3 AgentController + DecisionSource
+1 server-owned session/tenant
+2 durable ownership
+3 V13 grounding + AgentController
 4 ToolSpec validation
 5 HarnessRunner + TRACTIAN HTTPS
 6 Evidence + RunTrace
-7 Terminal policy
+7 terminal + response_mode
 8 ProductionEvaluator
-9 PostgreSQL + SSE
+9 PostgreSQL + SSE + task-driven UI
 ```
 
-End here. No extra outro animation is needed.
+## UI preparation
 
----
+### Home
 
-# UI preparation before recording
+- signed in;
+- service online;
+- question field clean.
 
-## Results
+### Analyses
 
-Have available:
+- primary R310 run known;
+- R420 unavailable run known;
+- optional data-quality run known.
 
-- empty/ready state before primary run;
-- primary run after completion;
-- one secondary `ESCALATE`/`ABSTAIN` persisted run.
+### Technical
 
-## Evidence
+- Current analysis trace readable;
+- Quality evaluation loaded;
+- Actions boundary visible;
+- System architecture/capabilities available as fallback.
 
-Ensure the primary run has:
+## Never show
 
-- multiple evidence records;
-- provenance/tool information visible;
-- no sensitive/private data.
-
-## Investigation
-
-Ensure the primary run has:
-
-- multiple events;
-- at least one tool call with arguments;
-- trace/timeline graph readable at 1080p.
-
-## Engineering
-
-Ensure there is a view that can show:
-
-- architecture/capabilities;
-- evaluator result;
-- expected-vs-observed or closest promoted equivalent;
-- action boundary/capability state.
-
----
-
-# What should never appear on screen
-
-- `.env` files;
-- terminal with secrets;
-- provider/API keys;
-- session cookies or authorization headers;
-- raw evaluator-private oracle/gold;
-- hidden chain-of-thought;
-- private benchmark paths containing protected material;
-- localhost as evidence of the production system;
-- unsupported “all actions live” wording;
-- unsupported “final best provider” wording.
+- `.env`;
+- API/provider/database keys;
+- cookies/session tokens;
+- authorization headers;
+- private action custody;
+- evaluator gold/private oracle;
+- hidden reasoning;
+- localhost as production evidence;
+- unsupported final-provider/action/SLO claims.

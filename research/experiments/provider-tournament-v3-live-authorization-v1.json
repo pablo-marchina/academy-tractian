@@ -1,0 +1,72 @@
+{
+  "schema_version": "provider-tournament-v3-live-authorization-v1",
+  "decision_id": "DP-004",
+  "created_date": "2026-09-07",
+  "status": "AUTHORIZED_BOUNDED_LIVE_SELECTION_CAMPAIGN",
+  "operator_authorization": {
+    "received": true,
+    "scope": "Develop and execute the Provider Tournament until the provider selection is concluded.",
+    "provider_inference_authorized": true,
+    "read_only_cloudflare_account_plan_probe_authorized": true,
+    "consequential_tractian_actions_authorized": false,
+    "automatic_production_provider_promotion_authorized": false
+  },
+  "frozen_inputs": {
+    "manifest_git_blob": "d18e0203b2eef4cb1e12ccb4668f4ea70b51054c",
+    "population_git_blob": "6f81c748b560f2a7a12f52bea36c78b5ef98ea77",
+    "population_sha256": "4205d00931150d83c510c7c6e58ad48bbd88da55654bac69ec35819af41299b9",
+    "candidate_ids": [
+      "cloudflare-glm-4.7-flash",
+      "cloudflare-nemotron-3-120b-a12b"
+    ],
+    "repetitions": 5,
+    "attempts_per_candidate": 85,
+    "max_provider_inference_calls": 170
+  },
+  "account_evidence": {
+    "mode": "READ_ONLY_OFFICIAL_CLOUDFLARE_ACCOUNT_API",
+    "allowed_endpoints": [
+      "GET /accounts/{account_id}/workers/account-settings",
+      "GET /accounts/{account_id}/subscriptions"
+    ],
+    "workers_free_must_be_proven": true,
+    "workers_paid_is_disqualifying": true,
+    "permission_failure_behavior": "FAIL_CLOSED_NO_PROVIDER_INFERENCE",
+    "raw_account_response_recording": false,
+    "account_identifier_recording": false,
+    "credential_recording": false
+  },
+  "reset_window": {
+    "provider_budget_lease_required_before_utc_reset": true,
+    "reset_time_utc": "00:00:00Z",
+    "packet_start_deadline_after_reset_seconds": 600,
+    "derived_available_neurons_after_exclusive_reset": 10000,
+    "minimum_required_available_neurons": 9000,
+    "production_provider_calls_blocked_while_lease_active": true,
+    "other_workers_ai_usage_allowed": false,
+    "lease_release_after_packet": true
+  },
+  "custody": {
+    "packet_claim_must_be_persisted_before_attempt_1": true,
+    "resume_after_claimed_or_uncertain": false,
+    "crash_after_claim_behavior": "UNCERTAIN_STOP_CAMPAIGN",
+    "automatic_retry": false,
+    "automatic_fallback": false,
+    "raw_provider_material_recorded": false
+  },
+  "zero_cost": {
+    "cash_cost_usd_required": 0,
+    "workers_paid_allowed": false,
+    "paid_fallback_allowed": false,
+    "ai_gateway_allowed": false,
+    "max_packet_neurons": 8433.617856,
+    "free_daily_neurons": 10000
+  },
+  "completion": {
+    "final_analysis": "provider-tournament-v3-selection-rule-amendment-v1",
+    "allowed_selection_results": ["PROMOTE", "NO_SELECTION", "INCONCLUSIVE"],
+    "selection_must_be_persisted": true,
+    "production_config_change_in_campaign": false
+  },
+  "claim_boundary": "This authorization permits only the bounded provider-selection experiment and read-only plan verification. It does not authorize TRACTIAN actions or automatic provider promotion."
+}

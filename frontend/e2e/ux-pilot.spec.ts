@@ -1,82 +1,142 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-async function openProduct(page: import("@playwright/test").Page) {
+async function openProduct(page: Page) {
   await page.context().setExtraHTTPHeaders({
     "x-e2e-user": "ux-pilot-user",
     "x-e2e-organization": "ux-pilot-org",
   });
   await page.goto("/");
-  await expect(page.getByText("API healthy")).toBeVisible();
+  await expect(page.locator(".task-service-state")).toContainText("Online");
+  await expect(page.getByRole("heading", { name: "What do you want to understand?" })).toBeVisible();
 }
 
-test.describe("Release 0 progressive-depth UX", () => {
-  test("starts with results and progressively discloses deeper observability", async ({ page }) => {
+async function submitScenario(page: Page, scenario: string) {
+  await page.getByRole("button", { name: "Home", exact: true }).click();
+  await page.getByLabel("Question about your equipment").fill(scenario);
+  await page.getByRole("button", { name: "Analyse", exact: true }).click();
+  await expect(page.getByTestId("customer-outcome-summary")).toBeVisible({ timeout: 20_000 });
+}
+
+async function openTechnicalSection(
+  page: Page,
+  section: "Current analysis" | "Quality" | "Data" | "System" | "Actions" | "Studies",
+) {
+  await page.getByRole("button", { name: "Technical", exact: true }).click();
+  const task = page.locator(".technical-task-menu").getByRole("button", { name: new RegExp(`^${section}`) });
+  await task.click();
+  await expect(task).toHaveAttribute("aria-current", "page");
+}
+
+async function assertNoHorizontalOverflow(page: Page): Promise<void> {
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
+}
+
+test.describe("task-driven low-literacy UX", () => {
+  test("keeps entry focused on one question and one primary action", async ({ page }) => {
     await openProduct(page);
 
-    const resultsTab = page.getByRole("tab", { name: /Results/ });
-    const evidenceTab = page.getByRole("tab", { name: /Evidence/ });
-    const investigationTab = page.getByRole("tab", { name: /Investigation/ });
-    const engineeringTab = page.getByRole("tab", { name: /Engineering/ });
+    await expect(page.getByRole("button", { name: "Home", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("button", { name: "Analyses", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Technical", exact: true })).toBeVisible();
+    await expect(page.getByLabel("Question about your equipment")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Analyse", exact: true })).toBeVisible();
 
-    await expect(resultsTab).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "Answer first" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Investigate industrial evidence without guessing." })).toBeVisible();
-    await expect(page.getByText("No external actions")).toBeVisible();
-    await expect(page.getByText("starter examples only")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "What do you need to understand?" })).toBeVisible();
+    await expect(page.getByText("Checks live data")).toHaveCount(0);
+    await expect(page.getByText("Shows its evidence")).toHaveCount(0);
+    await expect(page.getByText("Does not guess")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Trace" })).toHaveCount(0);
 
-    await expect(page.getByRole("heading", { name: "Canonical event timeline" })).toBeHidden();
-    await expect(page.getByRole("heading", { name: "Trace Graph" })).toBeHidden();
-    await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeHidden();
+    const examples = page.getByText("See example questions");
+    await expect(examples).toBeVisible();
+    await expect(page.getByText("Which equipment needs attention today, and why?")).toBeHidden();
+    await examples.click();
+    const example = page.getByRole("button", { name: "Which equipment needs attention today, and why?" });
+    await expect(example).toBeVisible();
+    await example.click();
+    await expect(page.getByLabel("Question about your equipment")).toHaveValue("Which equipment needs attention today, and why?");
 
-    const quickStart = page.getByTestId("quick-start-option").first();
-    await expect(quickStart).toBeVisible();
-    await quickStart.click();
-    await expect(page.getByLabel("Industrial request")).not.toHaveValue("");
+    await page.getByRole("button", { name: "Analyses", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Analyses", exact: true })).toBeVisible();
+    await expect(page.locator("table")).toHaveCount(0);
 
-    await evidenceTab.click();
-    await expect(evidenceTab).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "See why the answer is supported" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Canonical event timeline" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeHidden();
-    await expect(page.getByText("starter examples only")).toBeHidden();
-
-    await investigationTab.click();
-    await expect(page.getByRole("heading", { name: "Inspect how the investigation ran" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Trace Graph" })).toBeVisible();
-
-    await engineeringTab.click();
-    await expect(page.getByRole("heading", { name: "Open the full observability surface" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Architecture Explorer" })).toBeVisible();
-    await expect(page.getByText("Capability contract unavailable")).toBeVisible();
-
-    await engineeringTab.press("Home");
-    await expect(resultsTab).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "Answer first" })).toBeVisible();
-
-    await resultsTab.press("End");
-    await expect(engineeringTab).toHaveAttribute("aria-selected", "true");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await assertNoHorizontalOverflow(page);
   });
 
-  test("keeps the safe outcome primary while technical proof is available on deeper tabs", async ({ page }) => {
+  test("shows result, next step and evidence as a contextual sequence", async ({ page }) => {
     await openProduct(page);
-
-    await page.getByLabel("Industrial request").fill("scenario:clarify");
-    await page.getByRole("button", { name: "Start production run" }).click();
+    await submitScenario(page, "scenario:clarify");
 
     const outcome = page.getByTestId("customer-outcome-summary");
-    await expect(outcome).toBeVisible({ timeout: 20_000 });
-    await expect(outcome.getByRole("heading", { name: "More context needed" })).toBeVisible();
+    await expect(outcome.getByRole("heading", { name: "More information is needed" })).toBeVisible();
     await expect(outcome).toContainText("What to do next");
-    await expect(outcome).toContainText("Provide the missing context");
-    await expect(outcome).toContainText("SUPPORTING EVIDENCE");
+    await expect(outcome).toContainText("Add the information requested");
+    await expect(outcome).not.toContainText("ASK_CLARIFICATION");
+    await expect(outcome.getByRole("button", { name: "View evidence" })).toBeVisible();
 
-    await page.getByRole("tab", { name: /Evidence/ }).click();
-    await expect(page.locator(".terminal-panel")).toBeVisible();
-    await expect(page.locator(".terminal-panel")).toContainText("ASK_CLARIFICATION");
+    await outcome.getByRole("button", { name: "View evidence" }).click();
+    await expect(page.getByRole("heading", { name: "Why did we reach this conclusion?" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "← Result" })).toBeVisible();
+    await expect(page.locator("main")).not.toContainText("ASK_CLARIFICATION");
 
-    await page.getByRole("tab", { name: /Engineering/ }).click();
-    await expect(page.locator(".evaluation-panel")).toBeVisible();
+    await openTechnicalSection(page, "Quality");
     await expect(page.locator(".evaluation-panel")).toContainText("blocking checks passed");
+  });
+
+  test("history is a keyboard-focusable recognition list", async ({ page }) => {
+    await openProduct(page);
+    await submitScenario(page, "scenario:clarify");
+
+    await page.getByRole("button", { name: "Analyses", exact: true }).click();
+    const firstAnalysis = page.locator(".task-run-button").first();
+    await expect(firstAnalysis).toBeVisible();
+    await firstAnalysis.focus();
+    await expect(firstAnalysis).toBeFocused();
+    await firstAnalysis.press("Enter");
+    await expect(page.getByTestId("customer-outcome-summary")).toBeVisible();
+  });
+
+  test("technical depth is grouped by task instead of shown all at once", async ({ page }) => {
+    await openProduct(page);
+    await submitScenario(page, "scenario:slow investigate asset evidence");
+    await expect(page.getByTestId("customer-outcome-summary")).toBeVisible({ timeout: 20_000 });
+
+    await openTechnicalSection(page, "Current analysis");
+    await expect(page.getByRole("heading", { name: "Trace" })).toBeVisible();
+    await expect(page.getByText("Read the process as a list")).toBeVisible();
+    await page.getByText("Read the process as a list").click();
+    await expect(page.locator(".trace-text-alternative li").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Production health" })).toHaveCount(0);
+
+    await openTechnicalSection(page, "System");
+    await expect(page.getByRole("heading", { name: "Production health" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Architecture" })).toBeVisible();
+    await expect(page.locator(".architecture-component-button").first()).toBeVisible();
+    await page.locator(".architecture-component-button").first().focus();
+    await expect(page.locator(".architecture-component-button").first()).toBeFocused();
+    await expect(page.getByRole("heading", { name: "Output lineage" })).toHaveCount(0);
+
+    await openTechnicalSection(page, "Data");
+    const dynamic = page.locator("#dynamic-data-explorer");
+    await expect(dynamic.getByRole("heading", { name: "Dynamic Data Explorer" })).toBeVisible();
+    await expect(dynamic.getByText("2. Optional filter")).toBeVisible();
+  });
+
+  test("consequential actions keep consequence before confirmation", async ({ page }) => {
+    await openProduct(page);
+    await submitScenario(page, "scenario:pending-action");
+    await openTechnicalSection(page, "Actions");
+
+    const actionCard = page.locator(".action-card").first();
+    await expect(actionCard).toContainText("Before you confirm");
+    await expect(actionCard).toContainText("Confirm only if this is the intended action");
+    await expect(actionCard.getByText("Technical identifiers")).toBeVisible();
+    await expect(actionCard.getByText("Fingerprint", { exact: true })).toBeHidden();
+    await expect(actionCard.getByRole("button", { name: "Confirm exact action" })).toBeVisible();
   });
 });
