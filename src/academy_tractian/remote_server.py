@@ -27,6 +27,7 @@ from .upstream_action_actors import (
     ConfiguredServerOwnedUpstreamActionActorSource,
     ServerOwnedUpstreamActionActorTransport,
 )
+from .verification_api import install_verification_api
 
 
 PROVIDER_SELECTION_STATE = NO_PROVIDER_SELECTION_STATE
@@ -51,14 +52,10 @@ class NoConfiguredTractianTransport(RequestTransport):
         )
 
 
-# Compatibility alias for historical tests/imports. The canonical production concept is now
-# NoConfiguredTractianTransport; provider/model selection is governed only by DecisionSource.
 NoSelectedProviderTransport = NoConfiguredTractianTransport
 
 
 def build_tractian_transport(config: RemoteProductionConfig) -> RequestTransport:
-    """Build the TRACTIAN transport without performing a remote request."""
-
     if not config.tractian_transport_enabled:
         return NoConfiguredTractianTransport()
     if config.tractian_base_url is None:
@@ -66,18 +63,11 @@ def build_tractian_transport(config: RemoteProductionConfig) -> RequestTransport
     headers = config.tractian_server_headers()
     if not headers:
         raise RuntimeError("validated TRACTIAN configuration is missing server-managed headers")
-    return ProductionTractianTransport(
-        base_url=config.tractian_base_url,
-        server_headers=headers,
-    )
+    return ProductionTractianTransport(base_url=config.tractian_base_url, server_headers=headers)
 
 
 def _tractian_transport_state(config: RemoteProductionConfig) -> str:
-    return (
-        TRACTIAN_TRANSPORT_STATE_CONFIGURED_UNVERIFIED
-        if config.tractian_transport_enabled
-        else TRACTIAN_TRANSPORT_STATE_UNCONFIGURED
-    )
+    return TRACTIAN_TRANSPORT_STATE_CONFIGURED_UNVERIFIED if config.tractian_transport_enabled else TRACTIAN_TRANSPORT_STATE_UNCONFIGURED
 
 
 def _decision_source_factory(config: RemoteProductionConfig):
@@ -88,29 +78,14 @@ def _decision_source_factory(config: RemoteProductionConfig):
 
 
 def _provider_selection_state(config: RemoteProductionConfig) -> str:
-    return (
-        PROVISIONAL_RELEASE_PROVIDER_STATE
-        if config.provider_calls_enabled
-        else NO_PROVIDER_SELECTION_STATE
-    )
+    return PROVISIONAL_RELEASE_PROVIDER_STATE if config.provider_calls_enabled else NO_PROVIDER_SELECTION_STATE
 
 
 def deny_production_action_principal(*, user_id: str) -> ProductionActionPrincipal:
-    """Fail closed when no user-serving Release 0 runtime is enabled."""
-
     raise PermissionError(f"production_actions_not_enabled:{user_id}")
 
 
 def release0_read_only_action_principal(*, user_id: str) -> ProductionActionPrincipal:
-    """Bind a real user to a server-owned principal that authorizes reads and no actions.
-
-    ActionProposalRealtimeProductionRuntime resolves a principal before it knows whether the
-    model will select a read or an action tool. Release 0 therefore needs a valid principal for
-    genuine read-only runs, but it must not grant any consequential permission or resource
-    binding. Read tools bypass the action policy; every action proposal is deterministically
-    blocked before custody or transport because this principal has zero permissions.
-    """
-
     return ProductionActionPrincipal(
         user_id=user_id,
         user_company_id="__release0_read_only__",
@@ -125,8 +100,6 @@ def _assert_actor_coverage_for_active_grants(
     authorization_source: ConfiguredServerOwnedActionAuthorizationSource,
     actor_source: ConfiguredServerOwnedUpstreamActionActorSource,
 ) -> None:
-    """Make incomplete provider-side action identity a boot blocker, not a runtime surprise."""
-
     decoded = json.loads(raw_authorization_grants)
     if not isinstance(decoded, list):
         raise RuntimeError("validated action authorization grants lost list shape")
@@ -141,19 +114,6 @@ def _assert_actor_coverage_for_active_grants(
 
 
 def _configure_runtime_evaluator(app, *, provider_calls_enabled: bool) -> None:
-    """Bind the remote runtime evaluator to the serving provider mode before startup.
-
-    The generic product defaults to provider-free evaluation for backwards-compatible tests and
-    offline paths. Remote Release 0 is different by construction: a successful trace must contain
-    one validated model-call provenance record per live provider decision.
-
-    Composition tests intentionally replace the real production factory with a minimal FastAPI
-    application so they can assert dependency wiring without opening PostgreSQL resources. Those
-    doubles are not remote-serving applications and must remain side-effect free. A genuine remote
-    app sets ``app.state.remote_production = True``; for that topology the PostgreSQL horizontal
-    runtime supervisor is mandatory and absence remains a fail-closed boot blocker.
-    """
-
     supervisor = getattr(app.state, "runtime_handoff_supervisor", None)
     if supervisor is None:
         if getattr(app.state, "remote_production", False):
@@ -174,20 +134,11 @@ def _configure_runtime_evaluator(app, *, provider_calls_enabled: bool) -> None:
 
 
 def app_factory():
-    """Compose the remote product with fail-closed reads and governed action execution.
-
-    Provider calls, the TRACTIAN transport, and consequential actions are independent opt-ins.
-    Action execution additionally requires a valid server-owned grant document; the browser and
-    model never supply canonical permissions, resource ownership, provider-side action identity,
-    confirmation fingerprints or idempotency material.
-    """
-
     config = load_remote_production_config()
     artifact_release_identity = load_artifact_release_identity()
 
     tractian_transport_state = _tractian_transport_state(config)
     provider_selection_state = _provider_selection_state(config)
-    # Validate provider/TRACTIAN composition before PostgreSQL pools or runtime workers open.
     build_tractian_transport(config)
     decision_source_factory = _decision_source_factory(config)
 
@@ -198,29 +149,18 @@ def app_factory():
         if config.action_authorization_grants_json is None:
             raise RuntimeError("validated action configuration is missing authorization grants")
         if not raw_action_actors:
-            raise RuntimeError(
-                "enabled actions require server-owned ACADEMY_TRACTIAN_ACTION_ACTORS_JSON"
-            )
+            raise RuntimeError("enabled actions require server-owned ACADEMY_TRACTIAN_ACTION_ACTORS_JSON")
         raw_authorization_grants = config.action_authorization_grants_json.get_secret_value()
-        action_authorization_source = ConfiguredServerOwnedActionAuthorizationSource.from_json(
-            raw_authorization_grants
-        )
-        action_actor_source = ConfiguredServerOwnedUpstreamActionActorSource.from_json(
-            raw_action_actors
-        )
+        action_authorization_source = ConfiguredServerOwnedActionAuthorizationSource.from_json(raw_authorization_grants)
+        action_actor_source = ConfiguredServerOwnedUpstreamActionActorSource.from_json(raw_action_actors)
         _assert_actor_coverage_for_active_grants(
             raw_authorization_grants=raw_authorization_grants,
             authorization_source=action_authorization_source,
             actor_source=action_actor_source,
         )
-        # Pass the source object itself: it remains compatible with the user-id resolver protocol,
-        # while the remote confirmation endpoint can additionally require its tenant-aware
-        # authorize_context() method before any external execution is prepared.
         authorization_resolver = action_authorization_source
     elif raw_action_actors:
-        raise RuntimeError(
-            "TRACTIAN upstream action actors cannot be configured while actions are disabled"
-        )
+        raise RuntimeError("TRACTIAN upstream action actors cannot be configured while actions are disabled")
     elif config.provider_calls_enabled:
         authorization_resolver = release0_read_only_action_principal
     else:
@@ -252,10 +192,7 @@ def app_factory():
         max_workers=int(os.environ.get("ACADEMY_MAX_WORKERS", "4")),
         heartbeat_interval_ms=int(os.environ.get("ACADEMY_HEARTBEAT_INTERVAL_MS", "1000")),
     )
-    _configure_runtime_evaluator(
-        app,
-        provider_calls_enabled=config.provider_calls_enabled,
-    )
+    _configure_runtime_evaluator(app, provider_calls_enabled=config.provider_calls_enabled)
     app.state.provider_selection_state = provider_selection_state
     app.state.infrastructure_probe = not config.provider_calls_enabled
     app.state.release0_read_only = config.provider_calls_enabled and not config.actions_enabled
@@ -276,6 +213,7 @@ def app_factory():
         provider_selection_state=provider_selection_state,
         tractian_transport_state=tractian_transport_state,
     )
+    install_verification_api(app)
     return app
 
 
