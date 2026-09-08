@@ -3,7 +3,7 @@ from __future__ import annotations
 import http.cookiejar
 import json
 import os
-import sys
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -22,28 +22,36 @@ class Case:
     allowed_response_modes: tuple[str, ...] = ("complete", "partial", "inconclusive", "conflict", "unavailable")
 
 
-CASES: tuple[Case, ...] = (
-    Case(
-        case_id="F01_EXPLICIT_ASSET_CONDITION",
-        prompt="For asset R310, explain its current condition and what evidence supports that conclusion. Do not ask me for internal IDs that the system can discover.",
-        required_tools=("get_current_user", "list_assets_by_company"),
-        required_any=("get_analysis", "get_rms", "get_spectrum"),
-        forbidden_terminal_fragments=("company_id", "asset_id"),
-    ),
-    Case(
-        case_id="F02_EXPLICIT_ASSET_CAUSAL",
-        prompt="Why is R310 vibrating more than usual? Identify the most likely mechanism only if the available evidence supports it, and state what remains uncertain.",
-        required_tools=("get_current_user", "list_assets_by_company"),
-        required_any=("get_rms", "get_spectrum", "get_analysis"),
-        forbidden_terminal_fragments=("company_id", "asset_id"),
-    ),
-    Case(
-        case_id="F03_DATA_QUALITY",
-        prompt="Check the data quality for R310 and tell me whether the available measurements are reliable enough to use for a maintenance decision.",
-        required_tools=("get_current_user", "list_assets_by_company", "get_data_quality"),
-        forbidden_terminal_fragments=("company_id", "asset_id"),
-    ),
-)
+def _validated_asset_label(value: str) -> str:
+    label = value.strip()
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", label):
+        raise RuntimeError("invalid QA_ASSET_LABEL")
+    return label
+
+
+def _cases(asset_label: str) -> tuple[Case, ...]:
+    return (
+        Case(
+            case_id="F01_EXPLICIT_ASSET_CONDITION",
+            prompt=f"For asset {asset_label}, explain its current condition and what evidence supports that conclusion. Do not ask me for internal IDs that the system can discover.",
+            required_tools=("get_current_user", "list_assets_by_company"),
+            required_any=("get_analysis", "get_rms", "get_spectrum"),
+            forbidden_terminal_fragments=("company_id", "asset_id"),
+        ),
+        Case(
+            case_id="F02_EXPLICIT_ASSET_CAUSAL",
+            prompt=f"Why is {asset_label} vibrating more than usual? Identify the most likely mechanism only if the available evidence supports it, and state what remains uncertain.",
+            required_tools=("get_current_user", "list_assets_by_company"),
+            required_any=("get_rms", "get_spectrum", "get_analysis"),
+            forbidden_terminal_fragments=("company_id", "asset_id"),
+        ),
+        Case(
+            case_id="F03_DATA_QUALITY",
+            prompt=f"Check the data quality for {asset_label} and tell me whether the available measurements are reliable enough to use for a maintenance decision.",
+            required_tools=("get_current_user", "list_assets_by_company", "get_data_quality"),
+            forbidden_terminal_fragments=("company_id", "asset_id"),
+        ),
+    )
 
 
 def _required(name: str) -> str:
@@ -179,13 +187,8 @@ def _evaluate(case: Case, run: dict[str, Any], events: list[dict[str, Any]]) -> 
     if reason in {"DECISION_SOURCE_FAILURE", "TOOL_BOUNDARY_FAILURE", "TOOL_CALL_BUDGET_EXHAUSTED", "TURN_BUDGET_EXHAUSTED"}:
         failures.append(f"runtime_failure:{reason}")
 
-    # Explicit non-progress signal: exact same public tool/argument-name/status tuple repeats.
     seen: dict[tuple[str, str, int | None], int] = {}
-    call_by_id: dict[str, tuple[str, str]] = {}
     for event in events:
-        if event.get("event_type") == "tool_call" and event.get("tool_name"):
-            call_id = str(event.get("event_id") or event.get("sequence"))
-            call_by_id[call_id] = (str(event.get("tool_name")), str(event.get("argument_names") or ""))
         if event.get("event_type") != "tool_result" or not event.get("tool_name"):
             continue
         key = (str(event.get("tool_name")), str(event.get("argument_names") or ""), event.get("status_code"))
@@ -208,6 +211,8 @@ def _evaluate(case: Case, run: dict[str, Any], events: list[dict[str, Any]]) -> 
 def main() -> int:
     product_origin = _origin(_required("TARGET_BASE_URL"))
     api_origin = _origin(os.environ.get("TARGET_API_BASE_URL", "").strip() or product_origin)
+    asset_label = _validated_asset_label(_required("QA_ASSET_LABEL"))
+    cases = _cases(asset_label)
     cookie_jar = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookie_jar))
 
@@ -215,11 +220,11 @@ def main() -> int:
         release_sha = _assert_release(opener, api_origin)
         _signin(opener, product_origin)
     except Exception as exc:
-        print(json.dumps({"schema_version": "live-functional-campaign-v1", "status": "BLOCKED", "reason": type(exc).__name__}, sort_keys=True))
+        print(json.dumps({"schema_version": "live-functional-campaign-v2", "status": "BLOCKED", "reason": type(exc).__name__}, sort_keys=True))
         return 2
 
     results: list[dict[str, Any]] = []
-    for case in CASES:
+    for case in cases:
         try:
             status, accepted = _json_request(
                 opener,
@@ -237,9 +242,10 @@ def main() -> int:
 
     passed = sum(item.get("status") == "PASS" for item in results)
     summary = {
-        "schema_version": "live-functional-campaign-v1",
+        "schema_version": "live-functional-campaign-v2",
         "campaign": os.environ.get("QA_RUN_REV", "FINAL-V1-2026-09-08"),
         "release_sha": release_sha,
+        "asset_label": asset_label,
         "total": len(results),
         "passed": passed,
         "failed": len(results) - passed,
