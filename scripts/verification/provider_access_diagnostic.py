@@ -5,9 +5,18 @@ import json
 import os
 import urllib.error
 import urllib.request
-from typing import Any
+from typing import Any, Mapping
 
 USER_AGENT = "academy-tractian-provider-tournament/1.0"
+RATE_HEADERS = (
+    "x-ratelimit-limit-requests",
+    "x-ratelimit-remaining-requests",
+    "x-ratelimit-reset-requests",
+    "x-ratelimit-limit-tokens",
+    "x-ratelimit-remaining-tokens",
+    "x-ratelimit-reset-tokens",
+    "retry-after",
+)
 
 
 def _redact(text: str) -> str:
@@ -24,7 +33,12 @@ def _redact(text: str) -> str:
     return text[:400]
 
 
-def _request(method: str, url: str, headers: dict[str, str], body: dict[str, Any] | None = None) -> tuple[int, Any]:
+def _selected_headers(headers: Mapping[str, str]) -> dict[str, str]:
+    lower = {str(k).lower(): str(v) for k, v in headers.items()}
+    return {name: lower[name] for name in RATE_HEADERS if name in lower}
+
+
+def _request(method: str, url: str, headers: dict[str, str], body: dict[str, Any] | None = None) -> tuple[int, Any, dict[str, str]]:
     data = None if body is None else json.dumps(body, separators=(",", ":")).encode("utf-8")
     request_headers = {"User-Agent": USER_AGENT, "Accept": "application/json", **headers}
     req = urllib.request.Request(url, data=data, headers=request_headers, method=method)
@@ -32,16 +46,18 @@ def _request(method: str, url: str, headers: dict[str, str], body: dict[str, Any
         with urllib.request.urlopen(req, timeout=30) as response:
             raw = response.read().decode("utf-8", errors="replace")
             status = int(response.status)
+            response_headers = _selected_headers(response.headers)
     except urllib.error.HTTPError as exc:
         status = int(exc.code)
         raw = exc.read().decode("utf-8", errors="replace")
+        response_headers = _selected_headers(exc.headers)
     except Exception as exc:
-        return 0, {"transport_error": type(exc).__name__}
+        return 0, {"transport_error": type(exc).__name__}, {}
     try:
         payload: Any = json.loads(raw)
     except Exception:
         payload = {"non_json": _redact(raw)}
-    return status, payload
+    return status, payload, response_headers
 
 
 def _error_summary(payload: Any) -> dict[str, Any]:
@@ -84,20 +100,20 @@ def main() -> int:
         or os.environ.get("ACADEMY_PROVIDER_API_TOKEN", "").strip()
     )
 
-    report: dict[str, Any] = {"schema_version": "provider-access-diagnostic-v3", "user_agent": USER_AGENT}
+    report: dict[str, Any] = {"schema_version": "provider-access-diagnostic-v4", "user_agent": USER_AGENT}
 
     if groq_key:
         headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
-        status, payload = _request("GET", "https://api.groq.com/openai/v1/models", headers)
+        status, payload, rate_headers = _request("GET", "https://api.groq.com/openai/v1/models", headers)
         model_visible = False
         if status == 200 and isinstance(payload, dict) and isinstance(payload.get("data"), list):
             model_visible = any(
                 isinstance(item, dict) and item.get("id") == "openai/gpt-oss-120b"
                 for item in payload["data"]
             )
-        report["groq_models"] = {"status": status, "model_visible": model_visible, **_error_summary(payload)}
+        report["groq_models"] = {"status": status, "model_visible": model_visible, "rate_headers": rate_headers, **_error_summary(payload)}
 
-        status, payload = _request(
+        status, payload, rate_headers = _request(
             "POST",
             "https://api.groq.com/openai/v1/chat/completions",
             headers,
@@ -109,13 +125,13 @@ def main() -> int:
                 "stream": False,
             },
         )
-        report["groq_chat"] = {"status": status, **_error_summary(payload)}
+        report["groq_chat"] = {"status": status, "rate_headers": rate_headers, **_error_summary(payload)}
     else:
         report["groq"] = {"status": "missing_credentials"}
 
     if cf_account and cf_token:
         headers = {"Authorization": f"Bearer {cf_token}", "Content-Type": "application/json"}
-        status, payload = _request(
+        status, payload, rate_headers = _request(
             "POST",
             f"https://api.cloudflare.com/client/v4/accounts/{cf_account}/ai/v1/chat/completions",
             headers,
@@ -127,7 +143,7 @@ def main() -> int:
                 "stream": False,
             },
         )
-        report["cloudflare_chat"] = {"status": status, **_error_summary(payload)}
+        report["cloudflare_chat"] = {"status": status, "rate_headers": rate_headers, **_error_summary(payload)}
     else:
         report["cloudflare"] = {"status": "missing_credentials"}
 
