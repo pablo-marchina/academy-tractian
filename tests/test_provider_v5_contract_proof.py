@@ -52,6 +52,7 @@ def _verified_runtime_bundle() -> tuple[bytes, dict[str, Any]]:
 
 def _safe_extract(bundle: bytes, destination: Path) -> Path:
     destination = destination.resolve()
+    destination.mkdir(parents=True, exist_ok=True)
     with tarfile.open(fileobj=io.BytesIO(bundle), mode="r:gz") as archive:
         for member in archive.getmembers():
             target = (destination / member.name).resolve()
@@ -109,6 +110,7 @@ def test_action_request_is_extracted_from_verified_runtime_contract(tmp_path: Pa
     assert normalized_action_ops == runtime_action_ops
     assert len(runtime_action_ops) == 5
 
+    action_request_json = _canonical_json(normalized_action_request)
     proof = {
         "schema_version": "provider-v5-action-request-contract-proof-v1",
         "runtime_bundle_parts": EXPECTED_PART_COUNT,
@@ -120,9 +122,8 @@ def test_action_request_is_extracted_from_verified_runtime_contract(tmp_path: Pa
         "duplicate_keys": duplicates,
         "request_body_schema_match": True,
         "action_request_structural_match": True,
-        "action_request_sha256": hashlib.sha256(
-            _canonical_json(normalized_action_request)
-        ).hexdigest(),
+        "action_request_sha256": hashlib.sha256(action_request_json).hexdigest(),
         "action_operations": runtime_action_ops,
     }
+    print("PROVIDER_V5_ACTION_REQUEST_SCHEMA=" + action_request_json.decode("utf-8"))
     print("PROVIDER_V5_ACTION_REQUEST_PROOF=" + json.dumps(proof, sort_keys=True))
